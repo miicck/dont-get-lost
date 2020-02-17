@@ -7,10 +7,12 @@ public class world : MonoBehaviour
     // MAX_ALTITUDE also sets the general scale
     // of terrain features
     public const float MAX_ALTITUDE = 256f;
-    public const float MOUNTAIN_SIZE = MAX_ALTITUDE / 2f;
-    public const float MOUNTAIN_PERIOD = 3.342f * MAX_ALTITUDE;
-    public const float HILL_SIZE = MAX_ALTITUDE / 8f;
-    public const float HILL_PERIOD = 0.435f * MAX_ALTITUDE;
+    public const float MOUNTAIN_SIZE = MAX_ALTITUDE * 0.75f;
+    public const float MOUNTAIN_PERIOD = 1.123f * MOUNTAIN_SIZE;
+    public const float HILL_SIZE = MAX_ALTITUDE * 0.24f;
+    public const float HILL_PERIOD = 1.254f * HILL_SIZE;
+    public const float TERRAIN_ROUGHNESS_SIZE = player.HEIGHT / 10f;
+    public const float TERRAIN_ROUGHNESS_PERIOD = 1.544f * TERRAIN_ROUGHNESS_SIZE;
 
     // The grid of chunks around the player
     public const int CHUNK_RANGE = 1;
@@ -26,7 +28,7 @@ public class world : MonoBehaviour
         for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
             for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
             {
-                if (chunk_grid[x,z] == null) continue;
+                if (chunk_grid[x, z] == null) continue;
                 var p = chunk_grid[x, z].transform.position;
                 Gizmos.DrawWireCube(
                     p + new Vector3(chunk.SIZE / 2, MAX_ALTITUDE / 2, chunk.SIZE / 2),
@@ -134,7 +136,7 @@ public class world : MonoBehaviour
         }
     }
 
-    // How mountainous a particular point is
+    // How mountainous a particular point is on a scale of [0,1]
     public static float mountain_amt(float x, float z)
     {
         float m = Mathf.PerlinNoise(
@@ -144,23 +146,36 @@ public class world : MonoBehaviour
         return 2 * (m - 0.5f);
     }
 
-    // How hilly a particular point is
+    // How hilly a particular point is on a scale of [0,1]
     public static float hill_amt(float x, float z)
     {
-        return Mathf.PerlinNoise(
+        float h = Mathf.PerlinNoise(
             7.4343f + x / HILL_PERIOD,
             -3.334f + z / HILL_PERIOD);
+        if (h < 0.5f) return 0;
+        return 2 * (h - 0.5f);
+    }
+
+    // How rough the terrain is at a particular point on a scale of [0,1]
+    public static float terrain_roughness(float x, float z)
+    {
+        return Mathf.PerlinNoise(
+            6.432f + x / TERRAIN_ROUGHNESS_PERIOD,
+            3.322f + z / TERRAIN_ROUGHNESS_PERIOD
+        );
     }
 
     public static float altitude(float x, float z)
     {
         float m = mountain_amt(x, z);
         float h = hill_amt(x, z);
+        float r = terrain_roughness(x, z);
 
         m *= Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
         h *= Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
+        r *= Mathf.PerlinNoise(x / TERRAIN_ROUGHNESS_SIZE, z / TERRAIN_ROUGHNESS_SIZE);
 
-        float a = m * MOUNTAIN_SIZE + h * HILL_SIZE;
+        float a = m * MOUNTAIN_SIZE + h * HILL_SIZE + r * TERRAIN_ROUGHNESS_SIZE;
 
         return Mathf.Min(a, MAX_ALTITUDE);
     }

@@ -9,7 +9,9 @@ public class player : MonoBehaviour
     public const float WIDTH = 0.45f;
     public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
     public const float SPEED = 10f;
-    public const int MAX_MOVE_PROJ_REMOVE= 4;
+    public const float JUMP_VEL = 5f;
+    public const float GROUND_TEST_DIST = 0.15f;
+    public const int MAX_MOVE_PROJ_REMOVE = 4;
 
     new Camera camera;
 
@@ -33,13 +35,12 @@ public class player : MonoBehaviour
         get
         {
             return Physics.CapsuleCast(
-                lowerSpherePosition,
-                upperSpherePosition,
-                WIDTH / 2,
-                Vector3.down,
-                0.1f);
+                lowerSpherePosition, upperSpherePosition,
+                WIDTH / 2, Vector3.down, GROUND_TEST_DIST);
         }
     }
+
+    float yvel = 0;
 
     void OnDrawGizmos()
     {
@@ -75,18 +76,28 @@ public class player : MonoBehaviour
 
     void Update()
     {
-        if (!grounded)
-            tryMove(Vector3.down * Time.deltaTime * 5f);
+        // Gravity/Jumping
+        if (!grounded) yvel -= 9.81f * Time.deltaTime;
+        else if (yvel < 0) yvel = 0;
+        else if (Input.GetKeyDown(KeyCode.Space)) yvel += JUMP_VEL;
 
-        if (Input.GetKey(KeyCode.W))
-            tryMove(transform.forward * Time.deltaTime * SPEED);
-        if (Input.GetKey(KeyCode.A))
-            tryMove(-transform.right * Time.deltaTime * SPEED);
-        if (Input.GetKey(KeyCode.S))
-            tryMove(-transform.forward * Time.deltaTime * SPEED);
-        if (Input.GetKey(KeyCode.D))
-            tryMove(transform.right * Time.deltaTime * SPEED);
+        tryMove(yvel * Vector3.up * Time.deltaTime);
 
+        // Move in the x-z plane using WASD
+        float lr = 0;
+        float fb = 0;
+
+        if (Input.GetKey(KeyCode.W)) fb += 1.0f;
+        if (Input.GetKey(KeyCode.A)) lr -= 1.0f;
+        if (Input.GetKey(KeyCode.S)) fb -= 1.0f;
+        if (Input.GetKey(KeyCode.D)) lr += 1.0f;
+
+        Vector3 move = transform.right * lr + transform.forward * fb;
+        tryMove(move * Time.deltaTime * SPEED);
+
+        // Rotate the view using the mouse
+        // Note that horizontal moves rotate the player
+        // vertical moves rotate the camera
         transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
         camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
     }
