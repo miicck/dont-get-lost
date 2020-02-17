@@ -8,6 +8,8 @@ public class player : MonoBehaviour
     public const float HEIGHT = 1.8f;
     public const float WIDTH = 0.45f;
     public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
+    public const float SPEED = 10f;
+    public const int MAX_MOVE_PROJ_REMOVE= 4;
 
     new Camera camera;
 
@@ -41,37 +43,33 @@ public class player : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
+        if (grounded) Gizmos.color = Color.green;
+        else Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(upperSpherePosition, WIDTH / 2);
         Gizmos.DrawWireSphere(lowerSpherePosition, WIDTH / 2);
-
-        Gizmos.DrawLine(point_last, point_last + normal_last);
     }
 
-    Vector3 normal_last = Vector3.zero;
-    Vector3 point_last = Vector3.zero;
-
-    void tryMove(Vector3 move, int depth = 0)
+    void tryMove(Vector3 move, int attempts = 1)
     {
-        if (depth > 4) return;
+        // Max attempts = The number of projections that 
+        // cause collisions which can be removed from "move"
+        // before the whole move is rejected.
+        if (attempts > MAX_MOVE_PROJ_REMOVE) return;
 
+        // Check if this move will cause a collision
         RaycastHit hit;
         if (Physics.CapsuleCast(
-            lowerSpherePosition,
-            upperSpherePosition,
-            WIDTH / 2,
-            move.normalized,
-            out hit,
-            move.magnitude
-            ))
+            lowerSpherePosition, upperSpherePosition,
+            WIDTH / 2, move.normalized, out hit, move.magnitude))
         {
-            normal_last = hit.normal;
-            point_last = hit.point;
-
-            move += move.magnitude * hit.normal;
-            tryMove(move, depth + 1);
+            // Remove the offending projection of 
+            // the proposed move and try again
+            move -= 1.01f * Vector3.Project(move, hit.normal);
+            tryMove(move, attempts + 1);
             return;
         }
+
+        // Make the move
         transform.position += move;
     }
 
@@ -81,13 +79,13 @@ public class player : MonoBehaviour
             tryMove(Vector3.down * Time.deltaTime * 5f);
 
         if (Input.GetKey(KeyCode.W))
-            tryMove(transform.forward * Time.deltaTime * 5f);
+            tryMove(transform.forward * Time.deltaTime * SPEED);
         if (Input.GetKey(KeyCode.A))
-            tryMove(-transform.right * Time.deltaTime * 5f);
+            tryMove(-transform.right * Time.deltaTime * SPEED);
         if (Input.GetKey(KeyCode.S))
-            tryMove(-transform.forward * Time.deltaTime * 5f);
+            tryMove(-transform.forward * Time.deltaTime * SPEED);
         if (Input.GetKey(KeyCode.D))
-            tryMove(transform.right * Time.deltaTime * 5f);
+            tryMove(transform.right * Time.deltaTime * SPEED);
 
         transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
         camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);

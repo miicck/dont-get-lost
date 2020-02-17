@@ -9,11 +9,43 @@ public class chunk : MonoBehaviour
     // The side-length of a map chunk
     public const float SIZE = 256f;
 
+    public int x { get; private set; }
+    public int z { get; private set; }
+
+    // Check if the chunk coords are the same as those given
+    public bool check_coords(int x, int z)
+    {
+        return this.x == x && this.z == z;
+    }
+
+    // Check if this chunk is out of chunk range
+    // from the given player coordinates
+    public bool in_range(int player_x, int player_z)
+    {
+        if (this.x < player_x - world.CHUNK_RANGE) return false;
+        if (this.x > player_x + world.CHUNK_RANGE) return false;
+        if (this.z < player_z - world.CHUNK_RANGE) return false;
+        if (this.z > player_z + world.CHUNK_RANGE) return false;
+        return true;
+    }
+
+    // Set the neighbouring chunks of this chunk
+    public void update_neighbours(chunk north, chunk east, chunk south, chunk west)
+    {
+        Terrain left = east == null ? null : east.terrain;
+        Terrain right = west == null ? null : west.terrain;
+        Terrain top = north == null ? null : north.terrain;
+        Terrain bottom = south == null ? null : south.terrain;
+        terrain.SetNeighbors(left, top, right, bottom);
+    }
+
     // Generate and return the x^th, z^th map chunk
     public static chunk generate(int x, int z)
     {
         // Create the object hierarchy
         var chunk = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
+        chunk.x = x;
+        chunk.z = z;
         chunk.terrain = new GameObject("terrain").AddComponent<Terrain>();
         var tc = chunk.terrain.gameObject.AddComponent<TerrainCollider>();
         chunk.terrain.transform.SetParent(chunk.transform);
