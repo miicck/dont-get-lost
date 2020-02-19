@@ -111,12 +111,14 @@ public class player : MonoBehaviour
         player.camera = new GameObject("camera").AddComponent<Camera>();
         player.camera.transform.SetParent(player.transform);
         player.camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
+        player.camera.clearFlags = CameraClearFlags.SolidColor;
+        player.camera.backgroundColor = new Color(0.4f, 0.6f, 1.0f);
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
         player.transform.position =
             new Vector3(chunk.SIZE / 2,
-                        world.altitude(chunk.SIZE / 2, chunk.SIZE / 2) + 5f,
+                        world.MAX_ALTITUDE,
                         chunk.SIZE / 2);
 
         return player;

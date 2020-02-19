@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// The in-game representation of a chunk
 public class chunk : MonoBehaviour
 {
     Terrain terrain;
+    world_generator.chunk_info chunk_info;
 
     // The side-length of a map chunk
-    public const float SIZE = 256f;
+    public const int SIZE = 256;
+    public const int TERRAIN_RES = SIZE + 1;
 
     public int x { get; private set; }
     public int z { get; private set; }
@@ -51,6 +54,9 @@ public class chunk : MonoBehaviour
         chunk.terrain.transform.SetParent(chunk.transform);
         chunk.transform.position = new Vector3(x, 0, z) * SIZE;
 
+        // Load the chunk from disk
+        chunk.chunk_info = new world_generator.chunk_info("world_1", x, z);
+
         // Create the terrain heighmap
         var td = new TerrainData();
         chunk.terrain.terrainData = td;
@@ -59,7 +65,7 @@ public class chunk : MonoBehaviour
         // Set the heighmap resolution to the
         // chunk size + 1. This is done so there are
         // exactly size x size terrain squares.
-        int hres = (int)SIZE + 1;
+        int hres = SIZE + 1;
         td.heightmapResolution = hres;
         td.size = new Vector3(SIZE, world.MAX_ALTITUDE, SIZE);
 
@@ -67,14 +73,8 @@ public class chunk : MonoBehaviour
         // to an actual height of world.MAX_ALTITUDE).
         var heights = new float[hres, hres];
         for (int xt = 0; xt < hres; ++xt)
-        {
-            float xf = x * chunk.SIZE + (float)xt;
             for (int zt = 0; zt < hres; ++zt)
-            {
-                float zf = z * chunk.SIZE + (float)zt;
-                heights[zt, xt] = world.altitude(xf, zf) / world.MAX_ALTITUDE;
-            }
-        }
+                heights[zt, xt] = chunk.chunk_info.altitude[xt, zt];
 
         // Assign the heightmap to the terrain data
         td.SetHeights(0, 0, heights);
