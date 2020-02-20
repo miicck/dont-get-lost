@@ -65,16 +65,15 @@ public class chunk : MonoBehaviour
         // Set the heighmap resolution to the
         // chunk size + 1. This is done so there are
         // exactly size x size terrain squares.
-        int hres = SIZE + 1;
-        td.heightmapResolution = hres;
+        td.heightmapResolution = TERRAIN_RES;
         td.size = new Vector3(SIZE, world.MAX_ALTITUDE, SIZE);
 
         // Fill the heightmap (note that heights[i,j] = 1.0 corresponds
         // to an actual height of world.MAX_ALTITUDE).
-        var heights = new float[hres, hres];
-        for (int xt = 0; xt < hres; ++xt)
-            for (int zt = 0; zt < hres; ++zt)
-                heights[zt, xt] = chunk.chunk_info.altitude[xt, zt];
+        var heights = new float[TERRAIN_RES, TERRAIN_RES];
+        for (int xt = 0; xt < TERRAIN_RES; ++xt)
+            for (int zt = 0; zt < TERRAIN_RES; ++zt)
+                heights[zt, xt] = chunk.chunk_info.altitude[xt, zt] / world.MAX_ALTITUDE;
 
         // Assign the heightmap to the terrain data
         td.SetHeights(0, 0, heights);

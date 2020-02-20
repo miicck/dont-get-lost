@@ -6,7 +6,10 @@ using UnityEngine;
 // that are useful for procedural generation
 public static class procmath
 {
-    // Smoothly increases from 0 to 1
+    // Remap a float to another float
+    public delegate float remap(float f);
+
+    // Smoothly increases from 0 at x = thresh to 1 at x = 1
     public static float smooth_max_cos(float x, float thresh = 0f)
     {
         if (x < thresh) return 0;
@@ -14,27 +17,144 @@ public static class procmath
         return 1 - Mathf.Cos((x - thresh) * Mathf.PI / (2 * (1.0f - thresh)));
     }
 
-    // Add a Guassian with width w amplitude a to the given array 
-    // centred at x, z (w,x,z are in fractional coordinates)
-    public static void add_guassian(ref float[,] arr, float x, float z, float a, float w)
+    // Check if x, z is in range for a 2d array
+    public static bool in_range(ref float[,] arr, int x, int z)
     {
-        int width = arr.GetLength(0);
-        int height = arr.GetLength(1);
-        for (int i = 0; i < width; ++i)
-            for (int j = 0; j < height; ++j)
-            {
-                float fi = ((float)i / (float)width) - x;
-                float fj = ((float)j / (float)height) - z;
+        return x >= 0 && x < arr.GetLength(0) &&
+               z >= 0 && z < arr.GetLength(1);
+    }
 
-                arr[i, j] += Mathf.Exp(-(fi * fi + fj * fj) / (w * w));
+    // Rescale a float array so it has the given minimum and maximum values
+    public static void rescale(ref float[,] arr, float min, float max)
+    {
+        float min_found = float.MaxValue;
+        float max_found = float.MinValue;
+        for (int i = 0; i < arr.GetLength(0); ++i)
+            for (int j = 0; j < arr.GetLength(1); ++j)
+            {
+                float a = arr[i, j];
+                if (a > max_found) max_found = a;
+                if (a < min_found) min_found = a;
+            }
+
+        for (int i = 0; i < arr.GetLength(0); ++i)
+            for (int j = 0; j < arr.GetLength(1); ++j)
+                arr[i, j] = min +
+                (max - min) * (arr[i, j] - min_found)
+                / (max_found - min_found);
+    }
+
+    // Adds a smooth, dome-like structure to the given array at the
+    // given coordinates
+    public static void add_smooth_dome(ref float[,] arr,
+        int x, int z, int width, float height, remap height_map)
+    {
+        for (int i = -width / 2; i <= width / 2; ++i)
+            for (int j = -width / 2; j <= width / 2; ++j)
+            {
+                int ai = x + i;
+                int aj = z + j;
+                if (!in_range(ref arr, ai, aj)) continue;
+
+                float i_frac = (float)i / (float)(width / 2);
+                float j_frac = (float)j / (float)(width / 2);
+                float r = Mathf.Sqrt(i_frac * i_frac + j_frac * j_frac);
+                if (r > 1) continue;
+
+                float h = (1 + Mathf.Cos(r * Mathf.PI)) / 2f;
+                if (h < 0) h = 0;
+                arr[ai, aj] += height_map(h) * height;
             }
     }
 
-    // Returns a pyramid centred at x = z = 0.5.
-    public static float pyramid(float x, float z)
+    // Overload of the above with height_map = identity
+    public static void add_smooth_dome(ref float[,] arr,
+    int x, int z, int width, float height)
     {
-        x -= Mathf.Floor(x);
-        z -= Mathf.Floor(z);
+        add_smooth_dome(ref arr, x, z, width, height, (f) => f);
+    }
+
+    // Add a bulbus cone to the given array
+    public static void add_bulbus_cone(ref float[,] arr,
+        int x, int z, int max_radius, float height, float bulb_freq,
+        remap height_map, float rotation = 0)
+    {
+        for (int i = -max_radius; i <= max_radius; ++i)
+            for (int j = -max_radius; j <= max_radius; ++j)
+            {
+                int ai = x + i;
+                int aj = z + j;
+                if (!in_range(ref arr, ai, aj)) continue;
+
+                float r = Mathf.Sqrt((float)(i * i + j * j)) / (float)max_radius;
+                float theta = Mathf.Atan((float)j / (float)i);
+                if (i == 0) theta = Mathf.PI / 2;
+                float rmod = (Mathf.Cos(theta * bulb_freq) + 2f);
+                r *= rmod;
+
+                if (r > 1) continue;
+
+                float h = (1 + Mathf.Cos(r * Mathf.PI)) / 2f;
+
+                if (h < 0) continue;
+                if (h > 1) h = 1;
+
+                arr[ai, aj] += height_map(h) * height;
+            }
+    }
+
+    // Adds a pyramid-like structure to the given array
+    // at the given coordinates
+    public static void add_pyramid(ref float[,] arr,
+        int x, int z, int width, float height, remap height_map,
+        float rotation = 0)
+    {
+        float cos = Mathf.Cos(rotation);
+        float sin = Mathf.Sin(rotation);
+
+        for (int i = -width / 2; i <= width / 2; ++i)
+            for (int j = -width / 2; j <= width / 2; ++j)
+            {
+                int ai = x + i;
+                int aj = z + j;
+                if (!in_range(ref arr, ai, aj)) continue;
+
+                float i_frac = (float)i / (float)(width / 2);
+                float j_frac = (float)j / (float)(width / 2);
+
+                float i_rot = cos * i_frac - sin * j_frac;
+                float j_rot = sin * i_frac + cos * j_frac;
+
+                float h = 1.0f - Mathf.Abs(i_rot) - Mathf.Abs(j_rot);
+                if (h < 0) h = 0;
+
+                arr[ai, aj] += height_map(h) * height;
+            }
+    }
+
+    // Overload of the above with height_map = identity
+    public static void add_pyramid(ref float[,] arr,
+        int x, int z, int width, float height,
+        float rotation = 0)
+    {
+        add_pyramid(ref arr, x, z, width, height, (f) => f, rotation);
+    }
+
+    // Returns a pyramid centred at x = z = 0.5.
+    public static float pyramid(float x, float z, bool periodic = true)
+    {
+        if (periodic)
+        {
+            x -= Mathf.Floor(x);
+            z -= Mathf.Floor(z);
+        }
+        else
+        {
+            if (x > 1) return 0;
+            if (x < 0) return 0;
+            if (z > 1) return 0;
+            if (z < 0) return 0;
+        }
         return 1 - (Mathf.Abs(x - 0.5f) + Mathf.Abs(z - 0.5f)) * 2;
     }
 
