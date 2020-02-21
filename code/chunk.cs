@@ -2,15 +2,61 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// A biome represents a particular kind of geography
+public class biome
+{
+    // Maps a biome to a floating point value
+    public delegate float biome_float(biome b);
+
+    // Blend biome_float values together to get an overall 
+    // blended-biome value at x, z
+    public static float blend_biomes(float x, float z, biome_float del)
+    {
+        const float PERIOD = 512f;
+
+        float p = Mathf.PerlinNoise(x / PERIOD, z / PERIOD);
+        if (p > 0.6f) p = 1f;
+        else if (p < 0.4f) p = 0f;
+        else p = (p - 0.4f) / 0.2f;
+
+        var ocean_val = del(new ocean());
+        var hill_val = del(new hills());
+
+        return p * hill_val + (1 - p) * ocean_val;
+    }
+
+    // Return the altitude of this biome at (x, z), in meters
+    public virtual float altitude(float x, float z) { return 0; }
+
+    public class ocean : biome
+    {
+
+    }
+
+    public class hills : biome
+    {
+        public const float HILL_SIZE = 64f;
+
+        public override float altitude(float x, float z)
+        {
+            return HILL_SIZE *
+                Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
+        }
+    }
+}
+
 // The in-game representation of a chunk
 public class chunk : MonoBehaviour
 {
-    Terrain terrain;
-    world_generator.chunk_info chunk_info;
-
     // The side-length of a map chunk
     public const int SIZE = 256;
+
+    // The terrain resolution is set to SIZE + 1 so that
+    // there are exactly SIZE x SIZE terrain grid squares
     public const int TERRAIN_RES = SIZE + 1;
+
+    // The terrain of this chunk
+    Terrain terrain;
 
     public int x { get; private set; }
     public int z { get; private set; }
@@ -54,17 +100,22 @@ public class chunk : MonoBehaviour
         chunk.terrain.transform.SetParent(chunk.transform);
         chunk.transform.position = new Vector3(x, 0, z) * SIZE;
 
-        // Load the chunk from disk
-        chunk.chunk_info = new world_generator.chunk_info("world_1", x, z);
+        // Create the water level
+        var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        water.transform.SetParent(chunk.transform);
+        water.transform.localPosition = new Vector3(
+            chunk.SIZE / 2, world.SEA_LEVEL, chunk.SIZE / 2);
+        water.transform.localScale = Vector3.one * chunk.SIZE;
+        water.transform.forward = -Vector3.up;
+        var ren = water.gameObject.GetComponent<MeshRenderer>();
+        ren.material = Resources.Load<Material>("materials/water");
 
         // Create the terrain heighmap
         var td = new TerrainData();
         chunk.terrain.terrainData = td;
         tc.terrainData = td;
 
-        // Set the heighmap resolution to the
-        // chunk size + 1. This is done so there are
-        // exactly size x size terrain squares.
+        // Set the heighmap resolution/scale
         td.heightmapResolution = TERRAIN_RES;
         td.size = new Vector3(SIZE, world.MAX_ALTITUDE, SIZE);
 
@@ -73,7 +124,13 @@ public class chunk : MonoBehaviour
         var heights = new float[TERRAIN_RES, TERRAIN_RES];
         for (int xt = 0; xt < TERRAIN_RES; ++xt)
             for (int zt = 0; zt < TERRAIN_RES; ++zt)
-                heights[zt, xt] = chunk.chunk_info.altitude[xt, zt] / world.MAX_ALTITUDE;
+            {
+                // Get the global x and z coordinates
+                float xf = chunk.SIZE * x + xt;
+                float zf = chunk.SIZE * z + zt;
+                heights[zt, xt] = biome.blend_biomes(xf, zf,
+                    (b) => b.altitude(xf, zf)) / world.MAX_ALTITUDE;
+            }
 
         // Assign the heightmap to the terrain data
         td.SetHeights(0, 0, heights);

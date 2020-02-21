@@ -6,6 +6,7 @@ using UnityEngine;
 public class world : MonoBehaviour
 {
     public const float MAX_ALTITUDE = 256f;
+    public const float SEA_LEVEL = 16f;
 
     // The grid of chunks around the player
     public const int CHUNK_RANGE = 2;
@@ -83,7 +84,7 @@ public class world : MonoBehaviour
 
     void Start()
     {
-        world_generator.generate("world_1");
+        //world_generator.generate("world_1");
 
         player = player.create();
 
