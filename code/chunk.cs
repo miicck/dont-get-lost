@@ -49,7 +49,7 @@ public class biome
 public class chunk : MonoBehaviour
 {
     // The side-length of a map chunk
-    public const int SIZE = 256;
+    public const int SIZE = 64;
 
     // The terrain resolution is set to SIZE + 1 so that
     // there are exactly SIZE x SIZE terrain grid squares
@@ -67,22 +67,11 @@ public class chunk : MonoBehaviour
         return this.x == x && this.z == z;
     }
 
-    // Check if this chunk is out of chunk range
-    // from the given player coordinates
-    public bool in_range(int player_x, int player_z)
-    {
-        if (this.x < player_x - world.CHUNK_RANGE) return false;
-        if (this.x > player_x + world.CHUNK_RANGE) return false;
-        if (this.z < player_z - world.CHUNK_RANGE) return false;
-        if (this.z > player_z + world.CHUNK_RANGE) return false;
-        return true;
-    }
-
     // Set the neighbouring chunks of this chunk
     public void update_neighbours(chunk north, chunk east, chunk south, chunk west)
     {
-        Terrain left = east == null ? null : east.terrain;
-        Terrain right = west == null ? null : west.terrain;
+        Terrain right = east == null ? null : east.terrain;
+        Terrain left = west == null ? null : west.terrain;
         Terrain top = north == null ? null : north.terrain;
         Terrain bottom = south == null ? null : south.terrain;
         terrain.SetNeighbors(left, top, right, bottom);
@@ -98,7 +87,8 @@ public class chunk : MonoBehaviour
         chunk.terrain = new GameObject("terrain").AddComponent<Terrain>();
         var tc = chunk.terrain.gameObject.AddComponent<TerrainCollider>();
         chunk.terrain.transform.SetParent(chunk.transform);
-        chunk.transform.position = new Vector3(x, 0, z) * SIZE;
+        chunk.transform.position =
+            new Vector3((float)x - 0.5f, 0, (float)z - 0.5f) * SIZE;
 
         // Create the water level
         var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -114,6 +104,27 @@ public class chunk : MonoBehaviour
         var td = new TerrainData();
         chunk.terrain.terrainData = td;
         tc.terrainData = td;
+
+        // Create the terrain texture
+        SplatPrototype[] splats = new SplatPrototype[1];
+        var tex = new Texture2D(TERRAIN_RES, TERRAIN_RES);
+        var pixels = new Color[TERRAIN_RES * TERRAIN_RES];
+        for (int i = 0; i < TERRAIN_RES; ++i)
+            for (int j = 0; j < TERRAIN_RES; ++j)
+                pixels[i * TERRAIN_RES + j] = new Color(1, 0, 0, 0);
+        tex.SetPixels(pixels);
+        tex.Apply();
+
+        splats[0] = new SplatPrototype();
+        splats[0].texture = tex;
+        splats[0].tileSize = new Vector2(1, 1);
+        td.splatPrototypes = splats;
+
+        var alphamaps = new float[TERRAIN_RES, TERRAIN_RES, 1];
+        for (int i = 0; i < TERRAIN_RES; ++i)
+            for (int j = 0; j < TERRAIN_RES; ++j)
+                alphamaps[i, j, 0] = 1.0f;
+        td.SetAlphamaps(0, 0, alphamaps);
 
         // Set the heighmap resolution/scale
         td.heightmapResolution = TERRAIN_RES;

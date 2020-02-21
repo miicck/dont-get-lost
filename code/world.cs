@@ -7,25 +7,70 @@ public class world : MonoBehaviour
 {
     public const float MAX_ALTITUDE = 256f;
     public const float SEA_LEVEL = 16f;
+    public const float RENDER_RANGE = chunk.SIZE * 3;
 
-    // The grid of chunks around the player
-    public const int CHUNK_RANGE = 2;
-    public const int CHUNK_GRID_SIZE = CHUNK_RANGE * 2 + 1;
+    // The loaded chunks around the player
     List<chunk> loaded_chunks = new List<chunk>();
-    chunk[,] chunk_grid = new chunk[CHUNK_GRID_SIZE, CHUNK_GRID_SIZE];
+
+    // Find a particular x, z chunk if it exists
+    chunk find_in_loaded(int x, int z)
+    {
+        foreach (var c in loaded_chunks)
+            if (c.check_coords(x, z))
+                return c;
+        return null;
+    }
 
     // The player
     public player player { get; private set; }
 
-    void update_chunks(Vector3 player_position)
+    public int player_chunk_x
     {
-        // Find which chunk the player is in
-        int player_x = (int)(player_position.x / chunk.SIZE - 0.5f);
-        int player_z = (int)(player_position.z / chunk.SIZE - 0.5f);
+        get
+        {
+            return (int)Mathf.Round(
+                player.transform.position.x / chunk.SIZE);
+        }
+    }
 
+    public int player_chunk_z
+    {
+        get
+        {
+            return (int)Mathf.Round(
+                player.transform.position.z / chunk.SIZE);
+        }
+    }
+
+    // Check if a chunk at x, z is in render range
+    bool chunk_in_range(int x, int z)
+    {
+        var corner_dxs = new float[] { -0.5f, -0.5f, 0.5f, 0.5f };
+        var corner_dzs = new float[] { -0.5f, 0.5f, 0.5f, -0.5f };
+
+        // Find the nearest corner to the player
+        float min_dis = float.MaxValue;
+        for (int n = 0; n < 4; ++n)
+        {
+            float xc = ((float)x + corner_dxs[n]) * chunk.SIZE;
+            float zc = ((float)z + corner_dzs[n]) * chunk.SIZE;
+
+            float dx = xc - player.transform.position.x;
+            float dz = zc - player.transform.position.z;
+
+            float dis = dx * dx + dz * dz;
+            if (dis < min_dis)
+                min_dis = dis;
+        }
+
+        return Mathf.Sqrt(min_dis) <= RENDER_RANGE;
+    }
+
+    void update_chunks()
+    {
         // Get rid of chunks that are too far away
         foreach (var c in loaded_chunks.ToArray())
-            if (!c.in_range(player_x, player_z))
+            if (!chunk_in_range(c.x, c.z))
             {
                 loaded_chunks.Remove(c);
                 Destroy(c.gameObject);
@@ -33,66 +78,52 @@ public class world : MonoBehaviour
 
         // Check that all the neccasary chunks
         // exist, if not, generate them
-        for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
-            for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
+        int chunk_range = (int)((RENDER_RANGE / chunk.SIZE) + 1);
+        for (int dx = -chunk_range; dx <= chunk_range; ++dx)
+            for (int dz = -chunk_range; dz <= chunk_range; ++dz)
             {
                 // The actual world chunk coordinates
-                int xc = player_x - CHUNK_RANGE + x;
-                int zc = player_z - CHUNK_RANGE + z;
+                int xc = player_chunk_x + dx;
+                int zc = player_chunk_z + dz;
+                if (!chunk_in_range(xc, zc))
+                    continue;
 
                 // See if this chunk already exists
-                chunk found = null;
                 foreach (var c in loaded_chunks)
                     if (c.check_coords(xc, zc))
-                    {
-                        found = c;
-                        break;
-                    }
-
-                if (found != null)
-                {
-                    // Chunk found, update the chunk grid
-                    chunk_grid[x, z] = found;
-                    continue;
-                }
+                        goto found;
 
                 // Create a new chunk, add it to the
                 // loaded chunks list, update the chunk grid.
                 var new_chunk = chunk.generate(xc, zc);
                 new_chunk.transform.SetParent(transform);
                 loaded_chunks.Add(new_chunk);
-                chunk_grid[x, z] = new_chunk;
+
+            found: continue;
             }
 
-        // Update the neighbours of each chunk
-        for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
-            for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
-            {
-                chunk north = null;
-                chunk east = null;
-                chunk south = null;
-                chunk west = null;
-
-                if (x > 0) east = chunk_grid[x - 1, z];
-                if (z > 0) south = chunk_grid[x, z - 1];
-                if (x < CHUNK_GRID_SIZE - 1) west = chunk_grid[x + 1, z];
-                if (z < CHUNK_GRID_SIZE - 1) north = chunk_grid[x, z + 1];
-
-                chunk_grid[x, z].update_neighbours(north, east, south, west);
-            }
+        // Update chunk neighbours
+        foreach (var c in loaded_chunks)
+            c.update_neighbours(
+                find_in_loaded(c.x, c.z + 1),
+                find_in_loaded(c.x + 1, c.z),
+                find_in_loaded(c.x, c.z - 1),
+                find_in_loaded(c.x - 1, c.z)
+            );
     }
 
     void Start()
     {
-        //world_generator.generate("world_1");
-
+        // Create the player
         player = player.create();
 
+        // Create the sun
         var sun = new GameObject("sun").AddComponent<Light>();
         sun.transform.position = Vector3.zero;
         sun.transform.LookAt(new Vector3(1, -1, 1));
         sun.type = LightType.Directional;
 
+        // Remove the skybox and ambient lighting
         RenderSettings.skybox = null;
         RenderSettings.ambientSkyColor = Color.black;
     }
@@ -101,7 +132,7 @@ public class world : MonoBehaviour
     {
         // Make sure the chunks are loaded properly
         // around the player
-        update_chunks(player.transform.position);
+        update_chunks();
 
         // Toggle cursor visibility
         if (Input.GetKeyDown(KeyCode.C))
@@ -117,18 +148,5 @@ public class world : MonoBehaviour
                 Cursor.visible = true;
             }
         }
-    }
-
-    void OnDrawGizmos()
-    {
-        for (int x = 0; x < CHUNK_GRID_SIZE; ++x)
-            for (int z = 0; z < CHUNK_GRID_SIZE; ++z)
-            {
-                if (chunk_grid[x, z] == null) continue;
-                var p = chunk_grid[x, z].transform.position;
-                Gizmos.DrawWireCube(
-                    p + new Vector3(chunk.SIZE / 2, MAX_ALTITUDE / 2, chunk.SIZE / 2),
-                    new Vector3(chunk.SIZE, MAX_ALTITUDE, chunk.SIZE));
-            }
     }
 }

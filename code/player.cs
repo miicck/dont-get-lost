@@ -48,6 +48,7 @@ public class player : MonoBehaviour
         else Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(upperSpherePosition, WIDTH / 2);
         Gizmos.DrawWireSphere(lowerSpherePosition, WIDTH / 2);
+        Gizmos.DrawWireSphere(transform.position, world.RENDER_RANGE);
     }
 
     void tryMove(Vector3 move, int attempts = 1)
@@ -113,13 +114,11 @@ public class player : MonoBehaviour
         player.camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.backgroundColor = new Color(0.4f, 0.6f, 1.0f);
+        player.camera.farClipPlane = world.RENDER_RANGE;
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
-        player.transform.position =
-            new Vector3(chunk.SIZE / 2,
-                        world.MAX_ALTITUDE,
-                        chunk.SIZE / 2);
+        player.transform.position = Vector3.up * world.MAX_ALTITUDE;
 
         return player;
     }
