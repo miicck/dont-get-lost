@@ -63,6 +63,7 @@ public class world : MonoBehaviour
                 min_dis = dis;
         }
 
+        // Check if that corner is within render range
         return Mathf.Sqrt(min_dis) <= RENDER_RANGE;
     }
 
