@@ -120,6 +120,11 @@ public class player : MonoBehaviour
         // dont fall off of the map
         player.transform.position = Vector3.up * world.MAX_ALTITUDE;
 
+        var obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
+        obscurer.transform.SetParent(player.camera.transform);
+        obscurer.transform.localPosition = Vector3.zero;
+        obscurer.transform.localScale = Vector3.one * world.RENDER_RANGE;
+
         return player;
     }
 }

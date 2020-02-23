@@ -13,13 +13,6 @@ public class biome
         float x = (float)chunk_x * chunk.SIZE;
         float z = (float)chunk_z * chunk.SIZE;
 
-        //switch ((chunk_x + chunk_z) % 3)
-        // {
-        //     case 0: return new ocean();
-        //     case 1: return new hills();
-        //     case 2: return new mountains();
-        // }
-
         float p = Mathf.PerlinNoise(x / 256f, z / 256f);
         if (p < 0.33f) return new hills();
         if (p < 0.66f) return new mountains();
