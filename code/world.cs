@@ -7,7 +7,7 @@ public class world : MonoBehaviour
 {
     public const float MAX_ALTITUDE = 256f;
     public const float SEA_LEVEL = 16f;
-    public const float RENDER_RANGE = chunk.SIZE * 3;
+    public const float RENDER_RANGE = chunk.SIZE * 2;
 
     // The loaded chunks around the player
     List<chunk> loaded_chunks = new List<chunk>();
@@ -123,10 +123,11 @@ public class world : MonoBehaviour
         sun.transform.position = Vector3.zero;
         sun.transform.LookAt(new Vector3(1, -1, 1));
         sun.type = LightType.Directional;
+        sun.shadows = LightShadows.Soft;
 
         // Remove the skybox and ambient lighting
         RenderSettings.skybox = null;
-        RenderSettings.ambientSkyColor = Color.black;
+        RenderSettings.ambientSkyColor = new Color(0.4f, 0.4f, 0.4f);
     }
 
     void Update()
