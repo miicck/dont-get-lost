@@ -121,7 +121,7 @@ public class world : MonoBehaviour
         // Create the sun
         var sun = new GameObject("sun").AddComponent<Light>();
         sun.transform.position = Vector3.zero;
-        sun.transform.LookAt(new Vector3(1, -1, 1));
+        sun.transform.LookAt(new Vector3(1, -2, 1));
         sun.type = LightType.Directional;
         sun.shadows = LightShadows.Soft;
 

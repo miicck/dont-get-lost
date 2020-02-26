@@ -1,33 +1,71 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
-
 // A biome represents a particular kind of geography
+// biomes are rasterised on the same grid size as chunks
+// and interpolated between chunks via the biome_mixer class.
 public class biome
 {
-    // Maps a biome to a floating point value
-    public delegate float biome_float(biome b);
+    // The approximate size of a biome
+    const float SIZE = 256f;
 
+    // Constructors for all biome types
+    static List<ConstructorInfo> biome_constructors = null;
+
+    // Return the biome at the given chunk coordinates
     public static biome at(int chunk_x, int chunk_z)
     {
+        if (biome_constructors == null)
+        {
+            // Find the biome types
+            biome_constructors = new List<ConstructorInfo>();
+            var asem = Assembly.GetAssembly(typeof(biome));
+            var types = asem.GetTypes();
+            foreach (var t in types)
+            {
+                // Check if this type is a valid biome
+                if (!t.IsSubclassOf(typeof(biome))) continue;
+                if (t.IsAbstract) continue;
+
+                // Compile the list of biome constructors
+                var c = t.GetConstructor(new System.Type[0]);
+                biome_constructors.Add(c);
+            }
+        }
+
+        // For now, map perlin noise onto the set of biomes
         float x = (float)chunk_x * chunk.SIZE;
         float z = (float)chunk_z * chunk.SIZE;
-
-        float p = Mathf.PerlinNoise(x / 256f, z / 256f);
-        if (p < 0.33f) return new hills();
-        if (p < 0.66f) return new mountains();
-        return new ocean();
+        float p = Mathf.PerlinNoise(x / SIZE, z / SIZE);
+        int index = (int)(p * biome_constructors.Count);
+        return (biome)biome_constructors[index].Invoke(null);
     }
 
     // Return the altitude of this biome at (x, z), in meters
     public virtual float altitude(float x, float z) { return 0; }
+
+    // The color of the ground at a given x, z coordinate
     public virtual Color terrain_color(float x, float z) { return new Color(0.4f, 0.6f, 0.2f, 0); }
+
+    // The world objects that can be generated in this biome
+    public virtual string[] world_objects() { return new string[0]; }
+
+    // Get a world object from the world_objects list, given
+    // the location specification
+    public string get_world_object(chunk.location location)
+    {
+        var objs = world_objects();
+        if (objs.Length == 0) return null;
+        return objs[Random.Range(0, objs.Length)];
+    }
 
     public class ocean : biome
     {
         public override Color terrain_color(float x, float z)
         {
+            // Yellow sand
             return new Color(0.8f, 0.8f, 0f, 0f);
         }
     }
@@ -36,9 +74,13 @@ public class biome
     {
         public const float HILL_SIZE = 27.2f;
 
+        public override string[] world_objects()
+        {
+            return new string[] { "tree1" };
+        }
+
         public override float altitude(float x, float z)
         {
-            //return HILL_SIZE;
             return HILL_SIZE *
                 Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
         }
@@ -46,18 +88,28 @@ public class biome
 
     public class mountains : biome
     {
-        public const float MOUNTAIN_SIZE = 54.5f;
+        public const float MOUNTAIN_SIZE = 134.5f;
 
-		public override Color terrain_color(float x, float z)
+        public override string[] world_objects()
         {
+            return new string[] { "rocks1" };
+        }
+
+        public override Color terrain_color(float x, float z)
+        {
+            // Grey rock
             return new Color(0.5f, 0.5f, 0.5f, 0f);
         }
 
         public override float altitude(float x, float z)
         {
-            //return MOUNTAIN_SIZE;
-            return MOUNTAIN_SIZE *
+            float m1 = MOUNTAIN_SIZE *
                 Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
+
+            float m2 = hills.HILL_SIZE *
+                Mathf.PerlinNoise(x / hills.HILL_SIZE, z / hills.HILL_SIZE);
+
+            return m1 + m2;
         }
     }
 }
@@ -120,6 +172,9 @@ public class biome_mixer
     public T mix<T>(float x, float z,
         biome_get<T> getter, combine_func<T> combiner)
     {
+        const float MIN_THR = 0.25f;
+        const float DEL_THR = 0.25f;
+
         // Get the fractional coordinates within the chunk
         float xf = (x - this.x * chunk.SIZE) / chunk.SIZE;
         float zf = (z - this.z * chunk.SIZE) / chunk.SIZE;
@@ -128,14 +183,14 @@ public class biome_mixer
         //   xamt = the amount we blend east/west biomes in
         //     (xcoord tells us if we blend east or west)
         float zmod = (zf - 0.5f) * (zf - 0.5f) / 0.25f;
-        float xamt = blend_amount(xf, 0.25f + 0.25f * zmod);
-        int xcoord = blend_coord(xf, 0.25f + 0.25f * zmod);
+        float xamt = blend_amount(xf, MIN_THR + DEL_THR * zmod);
+        int xcoord = blend_coord(xf, MIN_THR + DEL_THR * zmod);
 
         //   zamt = the amount we blend north/south biomes in
         //     (zcoord tells us if we blend north or south)
         float xmod = (xf - 0.5f) * (xf - 0.5f) / 0.25f;
-        float zamt = blend_amount(zf, 0.25f + 0.25f * xmod);
-        int zcoord = blend_coord(zf, 0.25f + 0.25f * xmod);
+        float zamt = blend_amount(zf, MIN_THR + DEL_THR * xmod);
+        int zcoord = blend_coord(zf, MIN_THR + DEL_THR * xmod);
 
         //   damt = the amount we blend the diagonal biome in
         float damt = Mathf.Min(xamt, zamt);
@@ -190,5 +245,42 @@ public class biome_mixer
             }
             return result;
         });
+    }
+
+    // Get the name of a world object that should be generated at
+    // the given location
+    string get_world_object_name(chunk.location location)
+    {
+        return mix(x, z, (b) => b.get_world_object(location), (wos, ws) =>
+        {
+            if (ws.Length == 0)
+                return null;
+
+            // Work out the total weight
+            float total_weight = 0;
+            for (int i = 0; i < ws.Length; ++i)
+                total_weight += ws[i];
+
+            // Choose a random world_object by generating a random
+            // number in [0, total_weight] and mapping it to a list entry
+            float rand = Random.Range(0, total_weight);
+            total_weight = 0;
+            for (int i = 0; i < ws.Length; ++i)
+            {
+                total_weight += ws[i];
+                if (total_weight > rand)
+                    return wos[i];
+            }
+
+            return null;
+        });
+    }
+
+    // Use the above method to generate a world object given a location
+    public world_object spawn_world_object(chunk.location location)
+    {
+        string name = get_world_object_name(location);
+        if (name == null) return null;
+        return world_object.spawn(name, location);
     }
 }

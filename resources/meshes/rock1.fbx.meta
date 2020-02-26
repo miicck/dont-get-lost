@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 759ed98e8632f40e895d0c2ea09bb713
+guid: 1ec859284d5064178add3460311cab50
 ModelImporter:
   serializedVersion: 23
   fileIDToRecycleName:
@@ -8,7 +8,7 @@ ModelImporter:
     2100000: No Name
     2300000: //RootNode
     3300000: //RootNode
-    4300000: Icosphere
+    4300000: Sphere
     6400000: //RootNode
   externalObjects: {}
   materials:
@@ -64,8 +64,8 @@ ModelImporter:
     previousCalculatedGlobalScale: 1
     hasPreviousCalculatedGlobalScale: 0
   tangentSpace:
-    normalSmoothAngle: 60
-    normalImportMode: 0
+    normalSmoothAngle: 34
+    normalImportMode: 1
     tangentImportMode: 3
     normalCalculationMode: 4
   importAnimation: 1

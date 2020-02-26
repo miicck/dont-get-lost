@@ -5,6 +5,18 @@ using UnityEngine;
 // A chunk of the world
 public class chunk : MonoBehaviour
 {
+    // Get information about a particular
+    // location within a chunk
+    public class location
+    {
+        public chunk chunk;
+        public float x_world;
+        public float z_world;
+        public float altitude;
+        public Vector3 terrain_normal;
+        public Vector3 world_position { get { return new Vector3(x_world, altitude, z_world); } }
+    }
+
     // The side-length of a map chunk
     public const int SIZE = 64;
 
@@ -123,18 +135,18 @@ public class chunk : MonoBehaviour
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                if (Random.Range(0, 100) != 0)
+                if (Random.Range(0, 50) != 0)
                     continue;
 
-                float alt = heights[j, i] * world.MAX_ALTITUDE;
-                if (alt < world.SEA_LEVEL + 1.0f) continue;
+                location loc = new location();
+                loc.chunk = chunk;
+                loc.altitude = heights[j, i] * world.MAX_ALTITUDE;
+                loc.x_world = (x - 0.5f) * chunk.SIZE + i;
+                loc.z_world = (z - 0.5f) * chunk.SIZE + j;
+                loc.terrain_normal = td.GetInterpolatedNormal(
+                    i / (float)TERRAIN_RES, j / (float)TERRAIN_RES);
 
-                var t = world_object.create_random("trees");
-                t.transform.SetParent(chunk.transform);
-                t.transform.localPosition = new Vector3(i, alt, j);
-
-                t.transform.localScale = Vector3.one * Random.Range(0.6f, 1.4f);
-                t.transform.Rotate(0, Random.Range(0, 360f), 0);
+                chunk.local_biomes.spawn_world_object(loc);
             }
 
         return chunk;
