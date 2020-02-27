@@ -11,25 +11,37 @@ public class world_object : MonoBehaviour
     public float max_scale = 2.0f;
     public float min_altitude = world.SEA_LEVEL;
     public float max_altitude = world.MAX_ALTITUDE;
+    public float max_terrain_angle = 90f;
+    public float min_fertility = 0f;
 
-    // The library of world objects, indexed by type
-    static world_object[] library = null;
-
-    // Create a random world object.
-    public static world_object create_random()
+    // The library of all loaded world_objects
+    static Dictionary<string, world_object> library =
+        new Dictionary<string, world_object>();
+    public static world_object look_up(string name)
     {
-        if (library == null)
-            library = Resources.LoadAll<world_object>("world_objects/");
-        return library[Random.Range(0, library.Length)].inst();
+        world_object ret = null;
+        if (!library.TryGetValue(name, out ret))
+        {
+            ret = Resources.Load<world_object>("world_objects/" + name);
+            library[name] = ret;
+        }
+        return ret;
     }
 
     // Spawn the world object with the given name at the given location
     public static world_object spawn(string name, chunk.location location)
     {
-        var wo = Resources.Load<world_object>("world_objects/" + name).inst();
+        // Look up the selected world object
+        var wo = look_up(name);
 
-        if (location.altitude < wo.min_altitude) goto destroy;
-        if (location.altitude > wo.max_altitude) goto destroy;
+        // Check it can be placed here
+        if (location.altitude < wo.min_altitude) return null;
+        if (location.altitude > wo.max_altitude) return null;
+        if (location.terrain_angle > wo.max_terrain_angle) return null;
+        if (location.fertility < wo.min_fertility) return null;
+
+        // Create a copy of the world_object
+        wo = wo.inst();
 
         wo.transform.SetParent(location.chunk.transform);
         wo.transform.position = location.world_position;
@@ -39,9 +51,5 @@ public class world_object : MonoBehaviour
         if (wo.random_y_rotation) wo.transform.Rotate(0, Random.Range(0f, 360f), 0);
 
         return wo;
-
-    destroy:
-        Destroy(wo.gameObject);
-        return null;
     }
 }

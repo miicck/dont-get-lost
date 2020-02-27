@@ -256,3 +256,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2307ef892d2d7496bbddda412877f280, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  align_with_terrain_normal: 0
+  random_y_rotation: 1
+  min_scale: 1
+  max_scale: 3
+  min_altitude: 16
+  max_altitude: 256
+  max_terrain_angle: 45
+  min_fertility: 1

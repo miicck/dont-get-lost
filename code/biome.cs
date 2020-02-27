@@ -9,10 +9,12 @@ using UnityEngine;
 public class biome
 {
     // The approximate size of a biome
-    const float SIZE = 256f;
+    const float SIZE = 512f;
 
-    // Constructors for all biome types
+    // Constructors for all biome types and a corresponding
+    // random number in [0,1] for each
     static List<ConstructorInfo> biome_constructors = null;
+    static List<float> biome_random_numbers = null;
 
     // Return the biome at the given chunk coordinates
     public static biome at(int chunk_x, int chunk_z)
@@ -21,6 +23,7 @@ public class biome
         {
             // Find the biome types
             biome_constructors = new List<ConstructorInfo>();
+            biome_random_numbers = new List<float>();
             var asem = Assembly.GetAssembly(typeof(biome));
             var types = asem.GetTypes();
             foreach (var t in types)
@@ -32,19 +35,37 @@ public class biome
                 // Compile the list of biome constructors
                 var c = t.GetConstructor(new System.Type[0]);
                 biome_constructors.Add(c);
+                biome_random_numbers.Add(Random.Range(0, 1f));
             }
         }
 
-        // For now, map perlin noise onto the set of biomes
-        float x = (float)chunk_x * chunk.SIZE;
-        float z = (float)chunk_z * chunk.SIZE;
-        float p = Mathf.PerlinNoise(x / SIZE, z / SIZE);
-        int index = (int)(p * biome_constructors.Count);
-        return (biome)biome_constructors[index].Invoke(null);
+        // Map chunk coordinates onto real-world coordinates
+        // so perlin noise is generated in real world units
+        float x = (float)(chunk_x - 0.5f) * chunk.SIZE;
+        float z = (float)(chunk_z - 0.5f) * chunk.SIZE;
+
+        // Sample perlin noise amounts for each biome and generate
+        // the biome with the maximum value
+        float max_perl = float.MinValue;
+        int max_index = 0;
+        for (int i = 0; i < biome_constructors.Count; ++i)
+        {
+            float r = biome_random_numbers[i];
+            float p = Mathf.PerlinNoise(x / SIZE + r, z / SIZE - r);
+            if (p > max_perl)
+            {
+                max_perl = p;
+                max_index = i;
+            }
+        }
+        return (biome)biome_constructors[max_index].Invoke(null);
     }
 
     // Return the altitude of this biome at (x, z), in meters
     public virtual float altitude(float x, float z) { return 0; }
+
+    // Return how fertile the ground is in [0, 1] at x, z
+    public virtual float fertility(float x, float z) { return 1.0f; }
 
     // The color of the ground at a given x, z coordinate
     public virtual Color terrain_color(float x, float z) { return new Color(0.4f, 0.6f, 0.2f, 0); }
@@ -70,7 +91,7 @@ public class biome
         }
     }
 
-    public class hills : biome
+    public class grass_islands : biome
     {
         public const float HILL_SIZE = 27.2f;
 
@@ -89,6 +110,9 @@ public class biome
     public class mountains : biome
     {
         public const float MOUNTAIN_SIZE = 134.5f;
+        public const float HILL_SIZE = 34.4f;
+        public const float CLIFF_PERIOD = 54.2f;
+        public const float MAX_CLIFF_HEIGHT = 5f;
 
         public override string[] world_objects()
         {
@@ -97,19 +121,39 @@ public class biome
 
         public override Color terrain_color(float x, float z)
         {
-            // Grey rock
-            return new Color(0.5f, 0.5f, 0.5f, 0f);
+            // White cliff, grey rock
+            float c = clifness(x, z);
+            float b = 0.5f + 0.5f * c;
+            return new Color(b, b, b, 0f);
+        }
+
+        float clifness(float x, float z)
+        {
+            float val = Mathf.PerlinNoise(x / CLIFF_PERIOD, z / CLIFF_PERIOD);
+            if (val < 0.5f) return 0;
+            else return (val - 0.5f) * 2f;
+        }
+
+        public override float fertility(float x, float z)
+        {
+            // Few plants grow on mountain
+            return 0.25f;
         }
 
         public override float altitude(float x, float z)
         {
+            float cliff = clifness(x, z);
+
             float m1 = MOUNTAIN_SIZE *
                 Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
 
-            float m2 = hills.HILL_SIZE *
-                Mathf.PerlinNoise(x / hills.HILL_SIZE, z / hills.HILL_SIZE);
+            float m2 = HILL_SIZE *
+                Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
 
-            return m1 + m2;
+            float alt = m1 + m2;
+            float cliff_alt = MAX_CLIFF_HEIGHT * Mathf.Floor(alt / MAX_CLIFF_HEIGHT);
+
+            return alt * (1 - cliff) + cliff_alt * cliff;
         }
     }
 }
@@ -163,6 +207,15 @@ public class biome_mixer
 
     // Combine an array of T, with given weights
     public delegate T combine_func<T>(T[] to_combine, float[] weights);
+
+    // A simple combine_func to take a simple weighted average
+    public static float combine_func_average(float[] fs, float[] ws)
+    {
+        float total = 0;
+        for (int i = 0; i < fs.Length; ++i)
+            total += ws[i] * fs[i];
+        return total;
+    }
 
     // Take a biome and return a T
     public delegate T biome_get<T>(biome b);
@@ -221,13 +274,7 @@ public class biome_mixer
     // Mix the altitude
     public float altitude(float x, float z)
     {
-        return mix(x, z, (b) => b.altitude(x, z), (fs, ws) =>
-              {
-                  float total = 0;
-                  for (int i = 0; i < fs.Length; ++i)
-                      total += ws[i] * fs[i];
-                  return total;
-              });
+        return mix(x, z, (b) => b.altitude(x, z), combine_func_average);
     }
 
     // Mix the terrain color
@@ -244,6 +291,32 @@ public class biome_mixer
                 result.b += cs[i].b * ws[i];
             }
             return result;
+        });
+    }
+
+    // Mix the fertility
+    public float fertility(float x, float z)
+    {
+        return mix(x, z, (b) => b.fertility(x, z), combine_func_average);
+    }
+
+    // Get information on the biome mix
+    public string get_info(float x, float z)
+    {
+        return mix(x, z, (b) => b.GetType().Name, (ss, ws) =>
+        {
+            SortedDictionary<string, float> vals = 
+                new SortedDictionary<string, float>();
+            for (int i = 0; i < ss.Length; ++i)
+            {
+                if (!vals.ContainsKey(ss[i])) vals[ss[i]] = 0;
+                vals[ss[i]] += ws[i];
+            }
+
+            string ret = "";
+            foreach (var kv in vals)
+                ret += kv.Key + ": " + kv.Value + " ";
+            return ret;
         });
     }
 

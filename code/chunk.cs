@@ -5,7 +5,7 @@ using UnityEngine;
 // A chunk of the world
 public class chunk : MonoBehaviour
 {
-    // Get information about a particular
+    // Information about a particular
     // location within a chunk
     public class location
     {
@@ -13,12 +13,52 @@ public class chunk : MonoBehaviour
         public float x_world;
         public float z_world;
         public float altitude;
-        public Vector3 terrain_normal;
         public Vector3 world_position { get { return new Vector3(x_world, altitude, z_world); } }
+        public Vector3 terrain_normal;
+        public Color terrain_color;
+        public float fertility;
+
+        // Return the terrain angle (steepness) in degrees
+        public float terrain_angle
+        {
+            get
+            {
+                return Vector3.Angle(Vector3.up, terrain_normal);
+            }
+        }
+
+        public string debug_info()
+        {
+            // Get debug information, in string form, pertaining to this location
+            string ret = "";
+            ret += "X: " + x_world + " (" + (x_world - chunk.transform.position.x) + " in chunk) ";
+            ret += "Z: " + z_world + " (" + (z_world - chunk.transform.position.z) + " in chunk) \n";
+            ret += "Terrain altitude : " + altitude + "\n";
+            ret += "Biome mix: " + chunk.local_biomes.get_info(x_world, z_world) + "\n";
+            ret += "Terrain normal: " + terrain_normal + " (angle: " + terrain_angle + ")\n";
+            ret += "Terrain color: " + terrain_color + "\n";
+            ret += "Fertility: " + fertility + "\n";
+            return ret;
+        }
+    }
+
+    // Get the location infromation at the given position
+    public location location_at(Vector3 position)
+    {
+        // Get the position within this chunk
+        position -= transform.position;
+        int i = (int)position.x;
+        int j = (int)position.z;
+        if (!utils.in_range(i, SIZE)) return null;
+        if (!utils.in_range(j, SIZE)) return null;
+        return locations[i, j];
     }
 
     // The side-length of a map chunk
     public const int SIZE = 64;
+
+    // The location information
+    location[,] locations;
 
     // The terrain resolution is set to SIZE + 1 so that
     // there are exactly SIZE x SIZE terrain grid squares
@@ -56,32 +96,56 @@ public class chunk : MonoBehaviour
     // Generate and return the x^th, z^th map chunk
     public static chunk generate(int x, int z)
     {
-        // Create the object hierarchy
+        // Create the basic chunk object
         var chunk = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
+        chunk.transform.position = new Vector3(x, 0, z) * SIZE;
         chunk.x = x;
         chunk.z = z;
-        chunk.terrain = new GameObject("terrain").AddComponent<Terrain>();
-        var tc = chunk.terrain.gameObject.AddComponent<TerrainCollider>();
-        chunk.terrain.transform.SetParent(chunk.transform);
-        chunk.transform.position =
-            new Vector3((float)x - 0.5f, 0, (float)z - 0.5f) * SIZE;
 
+        // Actually generate the chunk
+        chunk.generate();
+        return chunk;
+    }
+
+    // Generate this chunk
+    void generate()
+    {
         // Get biome information around this chunk
-        chunk.local_biomes = new biome_mixer(x, z);
+        local_biomes = new biome_mixer(x, z);
+
+        // Fill the location information
+        locations = new location[TERRAIN_RES, TERRAIN_RES];
+        for (int i = 0; i < TERRAIN_RES; ++i)
+            for (int j = 0; j < TERRAIN_RES; ++j)
+            {
+                // Sample the location info from 
+                // the local_biomes biome_mixer
+                var loc = locations[i, j] = new location();
+                loc.chunk = this;
+                loc.x_world = (int)(x * SIZE + i);
+                loc.z_world = (int)(z * SIZE + j);
+                loc.altitude = local_biomes.altitude(loc.x_world, loc.z_world);
+                loc.terrain_color = local_biomes.terrain_color(loc.x_world, loc.z_world);
+                loc.fertility = local_biomes.fertility(loc.x_world, loc.z_world);
+            }
 
         // Create the water level
         var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        water.transform.SetParent(chunk.transform);
+        water.transform.SetParent(transform);
         water.transform.localPosition = new Vector3(
-            chunk.SIZE / 2, world.SEA_LEVEL, chunk.SIZE / 2);
-        water.transform.localScale = Vector3.one * chunk.SIZE;
+            SIZE / 2, world.SEA_LEVEL, SIZE / 2);
+        water.transform.localScale = Vector3.one * SIZE;
         water.transform.forward = -Vector3.up;
         var ren = water.gameObject.GetComponent<MeshRenderer>();
         ren.material = Resources.Load<Material>("materials/water");
 
-        // Create the terrain heighmap
+        // Create the terrain object, collider and datastructure
+        terrain = new GameObject("terrain").AddComponent<Terrain>();
+        var tc = terrain.gameObject.AddComponent<TerrainCollider>();
+        terrain.transform.SetParent(transform);
+        terrain.transform.localPosition = Vector3.zero;
         var td = new TerrainData();
-        chunk.terrain.terrainData = td;
+        terrain.terrainData = td;
         tc.terrainData = td;
 
         // Create the terrain texture
@@ -90,19 +154,14 @@ public class chunk : MonoBehaviour
         var pixels = new Color[TERRAIN_TEX_RES * TERRAIN_TEX_RES];
         for (int i = 0; i < TERRAIN_TEX_RES; ++i)
             for (int j = 0; j < TERRAIN_TEX_RES; ++j)
-            {
-                float xf = chunk.SIZE * x + i;
-                float zf = chunk.SIZE * z + j;
-                pixels[j * TERRAIN_TEX_RES + i] =
-                    chunk.local_biomes.terrain_color(xf, zf);
-            }
+                pixels[j * TERRAIN_TEX_RES + i] = locations[i, j].terrain_color;
         tex.SetPixels(pixels);
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.Apply();
 
         splats[0] = new SplatPrototype();
         splats[0].texture = tex;
-        splats[0].tileSize = new Vector2(1f, 1f) * chunk.SIZE;
+        splats[0].tileSize = new Vector2(1f, 1f) * SIZE;
         td.splatPrototypes = splats;
 
         var alphamaps = new float[TERRAIN_TEX_RES, TERRAIN_TEX_RES, 1];
@@ -118,37 +177,25 @@ public class chunk : MonoBehaviour
         // Fill the heightmap (note that heights[i,j] = 1.0 corresponds
         // to an actual height of world.MAX_ALTITUDE).
         var heights = new float[TERRAIN_RES, TERRAIN_RES];
-        for (int xt = 0; xt < TERRAIN_RES; ++xt)
-            for (int zt = 0; zt < TERRAIN_RES; ++zt)
-            {
-                // Get the global x and z coordinates
-                float xf = chunk.SIZE * x + xt;
-                float zf = chunk.SIZE * z + zt;
-                heights[zt, xt] = chunk.local_biomes.altitude(xf, zf) /
-                    world.MAX_ALTITUDE;
-            }
+        for (int i = 0; i < TERRAIN_RES; ++i)
+            for (int j = 0; j < TERRAIN_RES; ++j)
+                heights[i, j] = locations[j, i].altitude / world.MAX_ALTITUDE;
 
         // Assign the heightmap to the terrain data
         td.SetHeights(0, 0, heights);
+
+        // Sample terrain normals from the terrain data object
+        for (int i = 0; i < TERRAIN_RES; ++i)
+            for (int j = 0; j < TERRAIN_RES; ++j)
+                locations[i, j].terrain_normal = td.GetInterpolatedNormal(
+                    i / (float)TERRAIN_RES, j / (float)TERRAIN_RES);
 
         // Add world_objects to the chunk
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                if (Random.Range(0, 50) != 0)
-                    continue;
-
-                location loc = new location();
-                loc.chunk = chunk;
-                loc.altitude = heights[j, i] * world.MAX_ALTITUDE;
-                loc.x_world = (x - 0.5f) * chunk.SIZE + i;
-                loc.z_world = (z - 0.5f) * chunk.SIZE + j;
-                loc.terrain_normal = td.GetInterpolatedNormal(
-                    i / (float)TERRAIN_RES, j / (float)TERRAIN_RES);
-
-                chunk.local_biomes.spawn_world_object(loc);
+                if (Random.Range(0, 50) != 0) continue;
+                local_biomes.spawn_world_object(locations[i, j]);
             }
-
-        return chunk;
     }
 }

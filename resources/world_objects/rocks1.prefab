@@ -143,3 +143,6 @@ MonoBehaviour:
   random_y_rotation: 1
   min_scale: 0.5
   max_scale: 2
+  min_altitude: 16
+  max_altitude: 256
+  max_terrain_angle: 25

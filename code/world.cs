@@ -21,23 +21,24 @@ public class world : MonoBehaviour
         return null;
     }
 
-    // The player
-    public player player { get; private set; }
+    // The player and the chunk they are in
+    public static player player { get; private set; }
+    public static chunk player_chunk { get; private set; }
 
-    public int player_chunk_x
+    public static int player_chunk_x
     {
         get
         {
-            return (int)Mathf.Round(
+            return (int)Mathf.Round(-0.5f +
                 player.transform.position.x / chunk.SIZE);
         }
     }
 
-    public int player_chunk_z
+    public static int player_chunk_z
     {
         get
         {
-            return (int)Mathf.Round(
+            return (int)Mathf.Round(-0.5f +
                 player.transform.position.z / chunk.SIZE);
         }
     }
@@ -52,8 +53,8 @@ public class world : MonoBehaviour
         float min_dis = float.MaxValue;
         for (int n = 0; n < 4; ++n)
         {
-            float xc = ((float)x + corner_dxs[n]) * chunk.SIZE;
-            float zc = ((float)z + corner_dzs[n]) * chunk.SIZE;
+            float xc = ((float)x + corner_dxs[n] + 0.5f) * chunk.SIZE;
+            float zc = ((float)z + corner_dzs[n] + 0.5f) * chunk.SIZE;
 
             float dx = xc - player.transform.position.x;
             float dz = zc - player.transform.position.z;
@@ -111,10 +112,16 @@ public class world : MonoBehaviour
                 find_in_loaded(c.x, c.z - 1),
                 find_in_loaded(c.x - 1, c.z)
             );
+
+        // Update the player chunk
+        player_chunk = find_in_loaded(player_chunk_x, player_chunk_z);
     }
 
     void Start()
     {
+        // Create the ui
+        canvas.create();
+
         // Create the player
         player = player.create();
 
@@ -135,6 +142,9 @@ public class world : MonoBehaviour
         // Make sure the chunks are loaded properly
         // around the player
         update_chunks();
+
+        // Update the ui
+        canvas.update();
 
         // Toggle cursor visibility
         if (Input.GetKeyDown(KeyCode.C))
