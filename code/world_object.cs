@@ -27,29 +27,4 @@ public class world_object : MonoBehaviour
         }
         return ret;
     }
-
-    // Spawn the world object with the given name at the given location
-    public static world_object spawn(string name, chunk.location location)
-    {
-        // Look up the selected world object
-        var wo = look_up(name);
-
-        // Check it can be placed here
-        if (location.altitude < wo.min_altitude) return null;
-        if (location.altitude > wo.max_altitude) return null;
-        if (location.terrain_angle > wo.max_terrain_angle) return null;
-        if (location.fertility < wo.min_fertility) return null;
-
-        // Create a copy of the world_object
-        wo = wo.inst();
-
-        wo.transform.SetParent(location.chunk.transform);
-        wo.transform.position = location.world_position;
-
-        if (wo.align_with_terrain_normal) wo.transform.up = location.terrain_normal;
-        wo.transform.localScale = Vector3.one * Random.Range(wo.min_scale, wo.max_scale);
-        if (wo.random_y_rotation) wo.transform.Rotate(0, Random.Range(0f, 360f), 0);
-
-        return wo;
-    }
 }

@@ -3,29 +3,112 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// A biome represents a particular kind of geography
-// biomes are rasterised on the same grid size as chunks
-// and interpolated between chunks via the biome_mixer class.
-public class biome
+// A biome represents the largest singly-generated area of the map
+// and is used to define quantities that exist on the largest length
+// scales, such as the terrain.
+public abstract class biome
 {
-    // The approximate size of a biome
-    const float SIZE = 512f;
+    // The size of a biome in meters, is
+    // also the resolution of the point array
+    // which defines the biome.
+    public const int SIZE = 256;
+
+    // The minimum and maximum fraction of the
+    // biome edge that is used for blending into
+    // adjacent biomes.
+    public const float MIN_BLEND_FRAC = 0.25f;
+    public const float MAX_BLEND_FRAC = 0.5f;
+
+    public int x { get; private set; }
+    public int z { get; private set; }
+
+    // Coordinate transforms 
+    protected float grid_to_world_x(int i) { return x * SIZE + i - SIZE / 2; }
+    protected float grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
+
+    protected abstract void generate_grid();
+
+    public biome(int x, int z)
+    {
+        this.x = x;
+        this.z = z;
+        grid = new point[SIZE, SIZE];
+        generate_grid();
+    }
+
+    public void destroy()
+    {
+
+    }
+
+    // A particular point in the biome has these
+    // properties. They are either loaded from disk,
+    // or generated.
+    public class point
+    {
+        public float altitude = 0;
+        public float fertility = 1.0f;
+        public Color terrain_color = new Color(0.4f, 0.6f, 0.2f, 0);
+
+        public static point average(List<point> pts, List<float> wts)
+        {
+            point ret = new point();
+            ret.altitude = 0;
+            ret.fertility = 0;
+            ret.terrain_color = new Color(0, 0, 0, 0);
+
+            float total_weight = 0;
+            foreach (var f in wts) total_weight += f;
+            for (int i = 0; i < wts.Count; ++i)
+            {
+                float w = wts[i] / total_weight;
+                var p = pts[i];
+                ret.altitude += p.altitude * w;
+                ret.fertility += p.fertility * w;
+                ret.terrain_color.a += p.terrain_color.a * w;
+                ret.terrain_color.r += p.terrain_color.r * w;
+                ret.terrain_color.g += p.terrain_color.g * w;
+                ret.terrain_color.b += p.terrain_color.b * w;
+            }
+
+            return ret;
+        }
+    }
+
+    // The grid of points defining the biome
+    protected point[,] grid;
+
+    // Get a particular point in the biome in world
+    // coordinates. Clamps the biome point values
+    // outside the range of the biome.
+    public point get_point(int world_x, int world_z)
+    {
+        int biome_x = world_x - x * SIZE + SIZE / 2;
+        int biome_z = world_z - z * SIZE + SIZE / 2;
+        if (biome_x < 0) biome_x = 0;
+        if (biome_z < 0) biome_z = 0;
+        if (biome_x >= SIZE) biome_x = SIZE - 1;
+        if (biome_z >= SIZE) biome_z = SIZE - 1;
+        return grid[biome_x, biome_z];
+    }
 
     // Constructors for all biome types and a corresponding
     // random number in [0,1] for each
     static List<ConstructorInfo> biome_constructors = null;
-    static List<float> biome_random_numbers = null;
+    static List<float> biome_offsets = null;
 
-    // Return the biome at the given chunk coordinates
-    public static biome at(int chunk_x, int chunk_z)
+    // Return the biome at the given biome coordinates
+    public static biome at(int xb, int zb)
     {
         if (biome_constructors == null)
         {
             // Find the biome types
             biome_constructors = new List<ConstructorInfo>();
-            biome_random_numbers = new List<float>();
+            biome_offsets = new List<float>();
             var asem = Assembly.GetAssembly(typeof(biome));
             var types = asem.GetTypes();
+
+            float offset = 0f;
             foreach (var t in types)
             {
                 // Check if this type is a valid biome
@@ -33,16 +116,23 @@ public class biome
                 if (t.IsAbstract) continue;
 
                 // Compile the list of biome constructors
-                var c = t.GetConstructor(new System.Type[0]);
+                var c = t.GetConstructor(new System.Type[]{
+                    typeof(int), typeof(int)
+                });
                 biome_constructors.Add(c);
-                biome_random_numbers.Add(Random.Range(0, 1f));
+                biome_offsets.Add(offset);
+
+                // Offset each biome by an extra number that
+                // isn't comensurate with 1.0, so generator
+                // doesnt' repeat.
+                offset += Mathf.PI;
             }
         }
 
         // Map chunk coordinates onto real-world coordinates
         // so perlin noise is generated in real world units
-        float x = (float)(chunk_x - 0.5f) * chunk.SIZE;
-        float z = (float)(chunk_z - 0.5f) * chunk.SIZE;
+        float x = (float)(xb - 0.5f) * SIZE;
+        float z = (float)(zb - 0.5f) * SIZE;
 
         // Sample perlin noise amounts for each biome and generate
         // the biome with the maximum value
@@ -50,7 +140,7 @@ public class biome
         int max_index = 0;
         for (int i = 0; i < biome_constructors.Count; ++i)
         {
-            float r = biome_random_numbers[i];
+            float r = biome_offsets[i];
             float p = Mathf.PerlinNoise(x / SIZE + r, z / SIZE - r);
             if (p > max_perl)
             {
@@ -58,302 +148,102 @@ public class biome
                 max_index = i;
             }
         }
-        return (biome)biome_constructors[max_index].Invoke(null);
-    }
-
-    // Return the altitude of this biome at (x, z), in meters
-    public virtual float altitude(float x, float z) { return 0; }
-
-    // Return how fertile the ground is in [0, 1] at x, z
-    public virtual float fertility(float x, float z) { return 1.0f; }
-
-    // The color of the ground at a given x, z coordinate
-    public virtual Color terrain_color(float x, float z) { return new Color(0.4f, 0.6f, 0.2f, 0); }
-
-    // The world objects that can be generated in this biome
-    public virtual string[] world_objects() { return new string[0]; }
-
-    // Get a world object from the world_objects list, given
-    // the location specification
-    public string get_world_object(chunk.location location)
-    {
-        var objs = world_objects();
-        if (objs.Length == 0) return null;
-        return objs[Random.Range(0, objs.Length)];
-    }
-
-    public class ocean : biome
-    {
-        public override Color terrain_color(float x, float z)
-        {
-            // Yellow sand
-            return new Color(0.8f, 0.8f, 0f, 0f);
-        }
-    }
-
-    public class grass_islands : biome
-    {
-        public const float HILL_SIZE = 27.2f;
-
-        public override string[] world_objects()
-        {
-            return new string[] { "tree1" };
-        }
-
-        public override float altitude(float x, float z)
-        {
-            return HILL_SIZE *
-                Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
-        }
-    }
-
-    public class mountains : biome
-    {
-        public const float MOUNTAIN_SIZE = 134.5f;
-        public const float HILL_SIZE = 34.4f;
-        public const float CLIFF_PERIOD = 54.2f;
-        public const float MAX_CLIFF_HEIGHT = 5f;
-
-        public override string[] world_objects()
-        {
-            return new string[] { "rocks1" };
-        }
-
-        public override Color terrain_color(float x, float z)
-        {
-            // White cliff, grey rock
-            float c = clifness(x, z);
-            float b = 0.5f + 0.5f * c;
-            return new Color(b, b, b, 0f);
-        }
-
-        float clifness(float x, float z)
-        {
-            float val = Mathf.PerlinNoise(x / CLIFF_PERIOD, z / CLIFF_PERIOD);
-            if (val < 0.5f) return 0;
-            else return (val - 0.5f) * 2f;
-        }
-
-        public override float fertility(float x, float z)
-        {
-            // Few plants grow on mountain
-            return 0.25f;
-        }
-
-        public override float altitude(float x, float z)
-        {
-            float cliff = clifness(x, z);
-
-            float m1 = MOUNTAIN_SIZE *
-                Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
-
-            float m2 = HILL_SIZE *
-                Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
-
-            float alt = m1 + m2;
-            float cliff_alt = MAX_CLIFF_HEIGHT * Mathf.Floor(alt / MAX_CLIFF_HEIGHT);
-
-            return alt * (1 - cliff) + cliff_alt * cliff;
-        }
+        return (biome)biome_constructors[max_index].Invoke(
+            new object[] { xb, zb }
+        );
     }
 }
 
-// Mixes nearby biomes together
-public class biome_mixer
+public class grass_islands : biome
 {
-    public biome[,] local_biomes { get; private set; }
-    public int x { get; private set; }
-    public int z { get; private set; }
+    public const float HILL_SIZE = 27.2f;
 
-    public biome_mixer(int x, int z)
+    public grass_islands(int x, int z) : base(x, z) { }
+
+    protected override void generate_grid()
     {
-        // Save the centre-chunk coordinates
-        this.x = x;
-        this.z = z;
-
-        // Save the local biomes
-        local_biomes = new biome[3, 3];
-        for (int dx = -1; dx < 2; ++dx)
-            for (int dz = -1; dz < 2; ++dz)
-                local_biomes[dx + 1, dz + 1] =
-                    biome.at(x + dx, z + dz);
-    }
-
-    // Get the amount that we should blend in a
-    // particular direction, given the fractional
-    // coordinate along that direction
-    float blend_amount(float fraction, float threshold)
-    {
-        float f = fraction;
-        float t = threshold;
-        float ret = 0;
-        if (f < t) ret = (t - f) / t;
-        else if (f > 1 - t) ret = (f - (1 - t)) / t;
-        else ret = 0f;
-        return procmath.smooth_max_cos(ret);
-    }
-
-    // The coordinate in local_biomes that should be
-    // sampled in a particular direction, given the
-    // fractional coordinate along that direction
-    int blend_coord(float fraction, float threshold)
-    {
-        float f = fraction;
-        float t = threshold;
-        if (f < t) return 0;
-        if (f > 1 - t) return 2;
-        return 1;
-    }
-
-    // Combine an array of T, with given weights
-    public delegate T combine_func<T>(T[] to_combine, float[] weights);
-
-    // A simple combine_func to take a simple weighted average
-    public static float combine_func_average(float[] fs, float[] ws)
-    {
-        float total = 0;
-        for (int i = 0; i < fs.Length; ++i)
-            total += ws[i] * fs[i];
-        return total;
-    }
-
-    // Take a biome and return a T
-    public delegate T biome_get<T>(biome b);
-
-    // Mix local biome_get's together according to blend_amount's
-    // with a given combine_func
-    public T mix<T>(float x, float z,
-        biome_get<T> getter, combine_func<T> combiner)
-    {
-        const float MIN_THR = 0.25f;
-        const float DEL_THR = 0.25f;
-
-        // Get the fractional coordinates within the chunk
-        float xf = (x - this.x * chunk.SIZE) / chunk.SIZE;
-        float zf = (z - this.z * chunk.SIZE) / chunk.SIZE;
-
-        // Get the blend amounts and coordinates
-        //   xamt = the amount we blend east/west biomes in
-        //     (xcoord tells us if we blend east or west)
-        float zmod = (zf - 0.5f) * (zf - 0.5f) / 0.25f;
-        float xamt = blend_amount(xf, MIN_THR + DEL_THR * zmod);
-        int xcoord = blend_coord(xf, MIN_THR + DEL_THR * zmod);
-
-        //   zamt = the amount we blend north/south biomes in
-        //     (zcoord tells us if we blend north or south)
-        float xmod = (xf - 0.5f) * (xf - 0.5f) / 0.25f;
-        float zamt = blend_amount(zf, MIN_THR + DEL_THR * xmod);
-        int zcoord = blend_coord(zf, MIN_THR + DEL_THR * xmod);
-
-        //   damt = the amount we blend the diagonal biome in
-        float damt = Mathf.Min(xamt, zamt);
-
-        // Total used to normalise the result
-        float tot = 1.0f + xamt + zamt + damt;
-
-        // The things to combine across biomes 
-        T[] to_combine = new T[] {
-            getter(local_biomes[1,1]),           // Centre
-            getter(local_biomes[xcoord,1]),      // East or west
-            getter(local_biomes[1,zcoord]),      // North or south
-            getter(local_biomes[xcoord, zcoord]) // Diagonal
-        };
-
-        // The weights to combine them with
-        float[] weights = new float[] {
-            1.0f / tot, // Centre amt is always 1.0f
-            xamt / tot, // East/west amount
-            zamt / tot, // North/south amount
-            damt / tot  // Diagonal amount
-        };
-
-        // Return the combined result
-        return combiner(to_combine, weights);
-    }
-
-    // Mix the altitude
-    public float altitude(float x, float z)
-    {
-        return mix(x, z, (b) => b.altitude(x, z), combine_func_average);
-    }
-
-    // Mix the terrain color
-    public Color terrain_color(float x, float z)
-    {
-        return mix(x, z, (b) => b.terrain_color(x, z), (cs, ws) =>
-        {
-            Color result = new Color(0, 0, 0, 0);
-            for (int i = 0; i < cs.Length; ++i)
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
             {
-                result.a += cs[i].a * ws[i];
-                result.r += cs[i].r * ws[i];
-                result.g += cs[i].g * ws[i];
-                result.b += cs[i].b * ws[i];
+                point p = new point();
+                float xf = grid_to_world_x(i);
+                float zf = grid_to_world_z(j);
+                p.altitude = HILL_SIZE *
+                    Mathf.PerlinNoise(xf / HILL_SIZE, zf / HILL_SIZE);
+                grid[i, j] = p;
             }
-            return result;
-        });
     }
+}
 
-    // Mix the fertility
-    public float fertility(float x, float z)
-    {
-        return mix(x, z, (b) => b.fertility(x, z), combine_func_average);
-    }
+public class ocean : biome
+{
+    public ocean(int x, int z) : base(x, z) { }
 
-    // Get information on the biome mix
-    public string get_info(float x, float z)
+    protected override void generate_grid()
     {
-        return mix(x, z, (b) => b.GetType().Name, (ss, ws) =>
-        {
-            SortedDictionary<string, float> vals = 
-                new SortedDictionary<string, float>();
-            for (int i = 0; i < ss.Length; ++i)
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
             {
-                if (!vals.ContainsKey(ss[i])) vals[ss[i]] = 0;
-                vals[ss[i]] += ws[i];
+                point p = new point();
+                p.terrain_color = new Color(0.8f, 0.8f, 0f, 0f);
+                grid[i, j] = p;
             }
-
-            string ret = "";
-            foreach (var kv in vals)
-                ret += kv.Key + ": " + kv.Value + " ";
-            return ret;
-        });
     }
+}
 
-    // Get the name of a world object that should be generated at
-    // the given location
-    string get_world_object_name(chunk.location location)
+public class mountains : biome
+{
+    public const float MOUNTAIN_SIZE = 134.5f;
+    public const float HILL_SIZE = 34.4f;
+    public const float CLIFF_PERIOD = 54.2f;
+    public const float MAX_CLIFF_HEIGHT = 5f;
+
+    public mountains(int x, int z) : base(x, z) { }
+
+    protected override void generate_grid()
     {
-        return mix(x, z, (b) => b.get_world_object(location), (wos, ws) =>
-        {
-            if (ws.Length == 0)
-                return null;
-
-            // Work out the total weight
-            float total_weight = 0;
-            for (int i = 0; i < ws.Length; ++i)
-                total_weight += ws[i];
-
-            // Choose a random world_object by generating a random
-            // number in [0, total_weight] and mapping it to a list entry
-            float rand = Random.Range(0, total_weight);
-            total_weight = 0;
-            for (int i = 0; i < ws.Length; ++i)
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
             {
-                total_weight += ws[i];
-                if (total_weight > rand)
-                    return wos[i];
-            }
+                float xf = grid_to_world_x(i);
+                float zf = grid_to_world_z(j);
 
-            return null;
-        });
+                point p = new point();
+                p.terrain_color = terrain_color(xf, zf);
+                p.altitude = altitude(xf, zf);
+                grid[i, j] = p;
+            }
     }
 
-    // Use the above method to generate a world object given a location
-    public world_object spawn_world_object(chunk.location location)
+
+    Color terrain_color(float x, float z)
     {
-        string name = get_world_object_name(location);
-        if (name == null) return null;
-        return world_object.spawn(name, location);
+        // White cliff, grey rock
+        float c = clifness(x, z);
+        float b = 0.5f + 0.5f * c;
+        return new Color(b, b, b, 0f);
+    }
+
+    float clifness(float x, float z)
+    {
+        float val = Mathf.PerlinNoise(x / CLIFF_PERIOD, z / CLIFF_PERIOD);
+        if (val < 0.5f) return 0;
+        else return (val - 0.5f) * 2f;
+    }
+
+    float altitude(float x, float z)
+    {
+        float cliff = clifness(x, z);
+
+        float m1 = MOUNTAIN_SIZE *
+            Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
+
+        float m2 = HILL_SIZE *
+            Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
+
+        float alt = m1 + m2;
+        float cliff_alt = MAX_CLIFF_HEIGHT * Mathf.Floor(alt / MAX_CLIFF_HEIGHT);
+
+        return alt * (1 - cliff) + cliff_alt * cliff;
     }
 }

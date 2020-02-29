@@ -35,14 +35,14 @@ public static class canvas
         debug_info.color = Color.black;
     }
 
+    static string location_info()
+    {
+        return "No location info";
+    }
+
     public static void update()
     {
-        var loc = world.player_chunk.location_at(world.player.transform.position);
-        if (loc == null)
-        {
-            debug_info.text = "No location info";
-            return;
-        }
-        debug_info.text = loc.debug_info();
+        debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
+        debug_info.text += location_info();
     }
 }

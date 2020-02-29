@@ -17,4 +17,21 @@ public static class utils
     {
         return (i >= 0) && (i < size);
     }
+
+    // Rounds a float so 0.5 -> 1.0
+    public static int round(float f)
+    {
+        int ret = Mathf.FloorToInt(f);
+        f -= ret;
+        if (f < 0.5f) return ret;
+        return ret + 1;
+    }
+
+    // Get the sign of f (returning 0 if f is 0)
+    public static int sign(float f)
+    {
+        if (f < 0) return -1;
+        if (f > 0) return 1;
+        return 0;
+    }
 }

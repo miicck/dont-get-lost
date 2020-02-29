@@ -14,6 +14,13 @@ public class player : MonoBehaviour
     public const int MAX_MOVE_PROJ_REMOVE = 4;
 
     new Camera camera;
+    GameObject obscurer;
+
+    public void update_render_range()
+    {
+        obscurer.transform.localScale = Vector3.one * game.render_range;
+        camera.farClipPlane = game.render_range;
+    }
 
     // The position of the upper sphere of the player
     // (used for capsule-based collision)
@@ -48,7 +55,6 @@ public class player : MonoBehaviour
         else Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(upperSpherePosition, WIDTH / 2);
         Gizmos.DrawWireSphere(lowerSpherePosition, WIDTH / 2);
-        Gizmos.DrawWireSphere(transform.position, world.RENDER_RANGE);
     }
 
     void tryMove(Vector3 move, int attempts = 1)
@@ -114,16 +120,16 @@ public class player : MonoBehaviour
         player.camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.backgroundColor = new Color(0.4f, 0.6f, 1.0f);
-        player.camera.farClipPlane = world.RENDER_RANGE;
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
         player.transform.position = Vector3.up * world.MAX_ALTITUDE;
 
-        var obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
-        obscurer.transform.SetParent(player.camera.transform);
-        obscurer.transform.localPosition = Vector3.zero;
-        obscurer.transform.localScale = Vector3.one * world.RENDER_RANGE;
+        player.obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
+        player.obscurer.transform.SetParent(player.camera.transform);
+        player.obscurer.transform.localPosition = Vector3.zero;
+        
+        player.update_render_range();
 
         return player;
     }
