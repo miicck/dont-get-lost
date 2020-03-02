@@ -36,75 +36,99 @@ public abstract class biome
         this.z = z;
         grid = new point[SIZE, SIZE];
         if (!load())
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             generate_grid();
+            utils.log("Generated biome " + x + ", " + z + " (" + GetType().Name +
+                ") in " + sw.ElapsedMilliseconds + " ms", "generation");
+        }
     }
 
     public void destroy()
     {
         // Save the chunk to file
-        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Append))
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Create))
+        {
+            // Write the length of a point to the file
+            var bytes_00 = grid[0, 0].serialize();
+            int length = bytes_00.Length;
+            var length_bytes = System.BitConverter.GetBytes(length);
+            stream.Write(length_bytes, 0, length_bytes.Length);
+
+            // Write the points to the file
             for (int i = 0; i < SIZE; ++i)
                 for (int j = 0; j < SIZE; ++j)
-                    foreach (float f in grid[i, j].serialize())
-                        stream.Write(System.BitConverter.GetBytes(f), 0, sizeof(float));
-        utils.log("Saved biome " + x + ", " + z, "io");
+                {
+                    var bytes = grid[i, j].serialize();
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+        }
+        utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
 
     bool load()
     {
         // Read the chunk from file
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         if (!System.IO.File.Exists(filename())) return false;
         using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Open, System.IO.FileAccess.Read))
+        {
+            // Read the length of a point from the start of the file
+            byte[] legnth_bytes = new byte[sizeof(int)];
+            stream.Read(legnth_bytes, 0, legnth_bytes.Length);
+            int length = System.BitConverter.ToInt32(legnth_bytes, 0);
+
+            byte[] bytes = new byte[length];
             for (int i = 0; i < SIZE; ++i)
                 for (int j = 0; j < SIZE; ++j)
                 {
-                    float[] floats = new float[point.FLOATS_PER_POINT];
-                    for (int m = 0; m < point.FLOATS_PER_POINT; ++m)
-                    {
-                        byte[] bytes = new byte[sizeof(float)];
-                        stream.Read(bytes, 0, bytes.Length);
-                        floats[m] = System.BitConverter.ToSingle(bytes, 0);
-                    }
-                    grid[i, j] = new point(floats);
+                    stream.Read(bytes, 0, bytes.Length);
+                    grid[i, j] = new point(bytes);
                 }
-        utils.log("Loaded biome " + x + ", " + z, "io");
+        }
+        utils.log("Loaded biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
         return true;
     }
 
     // A particular point in the biome has these
     // properties. They are either loaded from disk,
     // or generated.
-    public class point
+    public struct point
     {
-        public float altitude = 0;
-        public float fertility = 1.0f;
-        public Color terrain_color = new Color(0.4f, 0.6f, 0.2f, 0);
+        public float altitude;
+        public Color terrain_color;
 
-        public const int FLOATS_PER_POINT = 5;
-
-        public float[] serialize()
+        // Serialise a point into bytes
+        public byte[] serialize()
         {
-            return new float[] { altitude, fertility, terrain_color.r, terrain_color.g, terrain_color.b };
+            float[] floats = new float[]
+            {
+                altitude, terrain_color.r, terrain_color.g, terrain_color.b
+            };
+            byte[] bytes = new byte[sizeof(float) * floats.Length];
+            System.Buffer.BlockCopy(floats, 0, bytes, 0, bytes.Length);
+            return bytes;
         }
 
-        public point() { }
-
-        public point(float[] floats)
+        // Construct a point from it's serialized floats
+        public point(byte[] bytes)
         {
-            altitude = floats[0];
-            fertility = floats[1];
-            terrain_color.r = floats[2];
-            terrain_color.g = floats[3];
-            terrain_color.b = floats[4];
+            altitude = System.BitConverter.ToSingle(bytes, 0);
+            terrain_color.r = System.BitConverter.ToSingle(bytes, sizeof(float));
+            terrain_color.g = System.BitConverter.ToSingle(bytes, 2 * sizeof(float));
+            terrain_color.b = System.BitConverter.ToSingle(bytes, 3 * sizeof(float));
             terrain_color.a = 0;
         }
 
+        // Computea a weighted average of a list of points
         public static point average(List<point> pts, List<float> wts)
         {
-            point ret = new point();
-            ret.altitude = 0;
-            ret.fertility = 0;
-            ret.terrain_color = new Color(0, 0, 0, 0);
+            point ret = new point
+            {
+                altitude = 0,
+                terrain_color = new Color(0, 0, 0, 0)
+            };
 
             float total_weight = 0;
             foreach (var f in wts) total_weight += f;
@@ -113,14 +137,27 @@ public abstract class biome
                 float w = wts[i] / total_weight;
                 var p = pts[i];
                 ret.altitude += p.altitude * w;
-                ret.fertility += p.fertility * w;
-                ret.terrain_color.a += p.terrain_color.a * w;
                 ret.terrain_color.r += p.terrain_color.r * w;
                 ret.terrain_color.g += p.terrain_color.g * w;
                 ret.terrain_color.b += p.terrain_color.b * w;
             }
 
             return ret;
+        }
+
+        public void apply_global_rules()
+        {
+            // Enforce beach color
+            const float SAND_START = world.SEA_LEVEL + 1f;
+            const float SAND_END = world.SEA_LEVEL + 2f;
+
+            if (altitude < SAND_START)
+                terrain_color = colors.sand;
+            else if (altitude < SAND_END)
+            {
+                float s = 1 - procmath.maps.linear_turn_on(altitude, SAND_START, SAND_END);
+                terrain_color = Color.Lerp(terrain_color, colors.sand, s);
+            }
         }
     }
 
@@ -146,9 +183,12 @@ public abstract class biome
     static List<ConstructorInfo> biome_constructors = null;
     static List<float> biome_offsets = null;
 
-    // Return the biome at the given biome coordinates
-    public static biome at(int xb, int zb)
+    // Generate the biome at the given biome coordinates
+    public static biome generate(int xb, int zb)
     {
+        if (xb == 0 && zb == 0)
+            return new mountains(0, 0);
+
         if (biome_constructors == null)
         {
             // Find the biome types
@@ -157,7 +197,6 @@ public abstract class biome
             var asem = Assembly.GetAssembly(typeof(biome));
             var types = asem.GetTypes();
 
-            float offset = 0f;
             foreach (var t in types)
             {
                 // Check if this type is a valid biome
@@ -169,19 +208,17 @@ public abstract class biome
                     typeof(int), typeof(int)
                 });
                 biome_constructors.Add(c);
-                biome_offsets.Add(offset);
 
-                // Offset each biome by an extra number that
-                // isn't comensurate with 1.0, so generator
-                // doesnt' repeat.
-                offset += Mathf.PI;
+                // Offset each biome by a ranbdom amount
+                // so generates differently each time
+                biome_offsets.Add(Random.Range(0, 1f));
             }
         }
 
         // Map chunk coordinates onto real-world coordinates
         // so perlin noise is generated in real world units
-        float x = (float)(xb - 0.5f) * SIZE;
-        float z = (float)(zb - 0.5f) * SIZE;
+        float x = (xb - 0.5f) * SIZE;
+        float z = (zb - 0.5f) * SIZE;
 
         // Sample perlin noise amounts for each biome and generate
         // the biome with the maximum value
@@ -197,6 +234,8 @@ public abstract class biome
                 max_index = i;
             }
         }
+
+        // Invoke the chosen biome constructor
         return (biome)biome_constructors[max_index].Invoke(
             new object[] { xb, zb }
         );
@@ -205,7 +244,7 @@ public abstract class biome
 
 public class grass_islands : biome
 {
-    public const float HILL_SIZE = 27.2f;
+    public const float ISLAND_SIZE = 27.2f;
 
     public grass_islands(int x, int z) : base(x, z) { }
 
@@ -217,8 +256,8 @@ public class grass_islands : biome
                 point p = new point();
                 float xf = grid_to_world_x(i);
                 float zf = grid_to_world_z(j);
-                p.altitude = HILL_SIZE *
-                    Mathf.PerlinNoise(xf / HILL_SIZE, zf / HILL_SIZE);
+                p.altitude = ISLAND_SIZE *
+                    Mathf.PerlinNoise(xf / ISLAND_SIZE, zf / ISLAND_SIZE);
                 grid[i, j] = p;
             }
     }
@@ -233,8 +272,10 @@ public class ocean : biome
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                point p = new point();
-                p.terrain_color = new Color(0.8f, 0.8f, 0f, 0f);
+                point p = new point
+                {
+                    terrain_color = colors.sand
+                };
                 grid[i, j] = p;
             }
     }
@@ -242,57 +283,58 @@ public class ocean : biome
 
 public class mountains : biome
 {
-    public const float MOUNTAIN_SIZE = 134.5f;
-    public const float HILL_SIZE = 34.4f;
-    public const float CLIFF_PERIOD = 54.2f;
-    public const float MAX_CLIFF_HEIGHT = 5f;
+    const int MIN_MOUNTAIN_WIDTH = 64;
+    const int MAX_MOUNTAIN_WIDTH = 128;
+    const float MAX_MOUNTAIN_HEIGHT = 128f;
+    const float MIN_MOUNTAIN_HEIGHT = 0f;
+    const float SNOW_START = 80f;
+    const float SNOW_END = 100f;
+    const float ROCK_START = 50f;
+    const float ROCK_END = 70f;
+    const float MOUNTAIN_DENSITY = 0.0008f;
 
     public mountains(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
+        var alt = new float[SIZE, SIZE];
+
+        const int MOUNTAIN_COUNT = (int)(MOUNTAIN_DENSITY * SIZE * SIZE);
+        for (int n = 0; n < MOUNTAIN_COUNT; ++n)
+        {
+            int xm = Random.Range(0, SIZE);
+            int zm = Random.Range(0, SIZE);
+            int width = Random.Range(MIN_MOUNTAIN_WIDTH, MAX_MOUNTAIN_WIDTH);
+            float rot = Random.Range(0, 360f);
+            procmath.float_2D_tools.add_pyramid(ref alt, xm, zm, width, 1, rot);
+        }
+
+        procmath.float_2D_tools.rescale(ref alt, MIN_MOUNTAIN_HEIGHT, MAX_MOUNTAIN_HEIGHT);
+
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
                 float xf = grid_to_world_x(i);
                 float zf = grid_to_world_z(j);
 
-                point p = new point();
-                p.terrain_color = terrain_color(xf, zf);
-                p.altitude = altitude(xf, zf);
+                point p = new point
+                {
+                    altitude = alt[i, j],
+
+                    terrain_color = colors.grass
+                };
+                if (p.altitude > SNOW_START)
+                {
+                    float s = procmath.maps.linear_turn_on(p.altitude, SNOW_START, SNOW_END);
+                    p.terrain_color = Color.Lerp(colors.rock, colors.snow, s);
+                }
+                else if (p.altitude > ROCK_START)
+                {
+                    float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
+                    p.terrain_color = Color.Lerp(colors.grass, colors.rock, r);
+                }
+
                 grid[i, j] = p;
             }
-    }
-
-
-    Color terrain_color(float x, float z)
-    {
-        // White cliff, grey rock
-        float c = clifness(x, z);
-        float b = 0.5f + 0.5f * c;
-        return new Color(b, b, b, 0f);
-    }
-
-    float clifness(float x, float z)
-    {
-        float val = Mathf.PerlinNoise(x / CLIFF_PERIOD, z / CLIFF_PERIOD);
-        if (val < 0.5f) return 0;
-        else return (val - 0.5f) * 2f;
-    }
-
-    float altitude(float x, float z)
-    {
-        float cliff = clifness(x, z);
-
-        float m1 = MOUNTAIN_SIZE *
-            Mathf.PerlinNoise(x / MOUNTAIN_SIZE, z / MOUNTAIN_SIZE);
-
-        float m2 = HILL_SIZE *
-            Mathf.PerlinNoise(x / HILL_SIZE, z / HILL_SIZE);
-
-        float alt = m1 + m2;
-        float cliff_alt = MAX_CLIFF_HEIGHT * Mathf.Floor(alt / MAX_CLIFF_HEIGHT);
-
-        return alt * (1 - cliff) + cliff_alt * cliff;
     }
 }

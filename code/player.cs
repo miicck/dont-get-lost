@@ -13,7 +13,7 @@ public class player : MonoBehaviour
     public const float GROUND_TEST_DIST = 0.15f;
     public const int MAX_MOVE_PROJ_REMOVE = 4;
 
-    Camera camera;
+    new Camera camera;
     GameObject obscurer;
 
     public void update_render_range()
@@ -119,15 +119,20 @@ public class player : MonoBehaviour
         player.camera.transform.SetParent(player.transform);
         player.camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
         player.camera.clearFlags = CameraClearFlags.SolidColor;
-        player.camera.backgroundColor = new Color(0.4f, 0.6f, 1.0f);
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
         player.transform.position = Vector3.up * world.MAX_ALTITUDE;
 
+        // Enforce the render limit with a sky-color object
         player.obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
-        player.obscurer.transform.SetParent(player.camera.transform);
+        player.obscurer.transform.SetParent(player.transform);
         player.obscurer.transform.localPosition = Vector3.zero;
+        var sky_color = player.obscurer.GetComponentInChildren<Renderer>().material.color;
+
+        // Make the sky the same color as the obscuring object
+        RenderSettings.skybox = null;    
+        player.camera.backgroundColor = sky_color;
 
         player.update_render_range();
 

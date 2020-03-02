@@ -6,6 +6,8 @@ public class game : MonoBehaviour
 {
     public static player player { get; private set; }
 
+    public bool regenerate = false;
+
     // How far the player can see
     private static float _render_range = 100f;
     private static float render_range_target = 100f;
@@ -22,6 +24,11 @@ public class game : MonoBehaviour
 
     void Start()
     {
+        // Delete the world if we're running from the editor
+        // so we regenerate every time
+        if (regenerate)
+            System.IO.Directory.Delete(world.save_folder(), true);
+
         // Create the ui
         canvas.create();
 
@@ -34,10 +41,7 @@ public class game : MonoBehaviour
         sun.transform.LookAt(new Vector3(1, -2, 1));
         sun.type = LightType.Directional;
         sun.shadows = LightShadows.Soft;
-
-        // Remove the skybox and ambient lighting
-        RenderSettings.skybox = null;
-        RenderSettings.ambientSkyColor = new Color(0.4f, 0.4f, 0.4f);
+        RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }
 
     void Update()

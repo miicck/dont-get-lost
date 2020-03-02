@@ -12,7 +12,7 @@ public static class world
     public static string save_folder()
     {
         // First, ensure the folder exists 
-        string folder = "/home/mick/programming/unity/dont_get_lost/worlds/" + name;
+        string folder = Application.persistentDataPath + "/worlds/" + name;
         System.IO.Directory.CreateDirectory(folder);
         return folder;
     }
@@ -266,12 +266,13 @@ public static class world
 
         // Linear blend for now
         if (n < thresh) return 0;
-        return procmath.smooth_max_cos((n - thresh) / (1 - thresh));
+        return procmath.maps.smooth_max_cos((n - thresh) / (1 - thresh));
     }
 
-    // Blend biomes together to get the average point
-    // information at the given x, z in world coords.
-    public static biome.point point(int x, int z)
+    // Blend biomes together to get the average of b2t at x, z in world coords.
+    public delegate T biome_to_t<T>(biome b, int x, int z);
+    public delegate T combine_func<T>(List<T> ts, List<float> ws);
+    public static T biome_mix<T>(int x, int z, biome_to_t<T> b2t, combine_func<T> combiner)
     {
         // Biome coordinates
         int bx = world_to_biome(x);
@@ -292,38 +293,44 @@ public static class world
 
         // Blend in the centre biome with weight 1
         if (biome_grid[gx, gz] == null)
-            biome_grid[gx, gz] = biome.at(bx, bz);
-        var points_to_average = new List<biome.point>() { biome_grid[gx, gz].get_point(x, z) };
-        var averaging_weights = new List<float>() { 1.0f };
+            biome_grid[gx, gz] = biome.generate(bx, bz);
+        var to_av = new List<T>() { b2t(biome_grid[gx, gz], x, z) };
+        var weights = new List<float>() { 1.0f };
 
         // Blend in the nearest east/west biome with weight xamt
         if (xamt > 1e-4f)
         {
             if (biome_grid[gx + dx, gz] == null)
-                biome_grid[gx + dx, gz] = biome.at(bx + dx, bz);
-            points_to_average.Add(biome_grid[gx + dx, gz].get_point(x, z));
-            averaging_weights.Add(xamt);
+                biome_grid[gx + dx, gz] = biome.generate(bx + dx, bz);
+            to_av.Add(b2t(biome_grid[gx + dx, gz], x, z));
+            weights.Add(xamt);
         }
 
         // Blend in the nearest north/south biome with weight zamt
         if (zamt > 1e-4)
         {
             if (biome_grid[gx, gz + dz] == null)
-                biome_grid[gx, gz + dz] = biome.at(bx, bz + dz);
-            points_to_average.Add(biome_grid[gx, gz + dz].get_point(x, z));
-            averaging_weights.Add(zamt);
+                biome_grid[gx, gz + dz] = biome.generate(bx, bz + dz);
+            to_av.Add(b2t(biome_grid[gx, gz + dz], x, z));
+            weights.Add(zamt);
         }
 
         // Blend in the nearest diagonal biome with weight damt
         if (damt > 1e-4)
         {
             if (biome_grid[gx + dx, gz + dz] == null)
-                biome_grid[gx + dx, gz + dz] = biome.at(bx + dx, bz + dz);
-            points_to_average.Add(biome_grid[gx + dx, gz + dz].get_point(x, z));
-            averaging_weights.Add(damt);
+                biome_grid[gx + dx, gz + dz] = biome.generate(bx + dx, bz + dz);
+            to_av.Add(b2t(biome_grid[gx + dx, gz + dz], x, z));
+            weights.Add(damt);
         }
 
-        return biome.point.average(points_to_average, averaging_weights);
+        return combiner(to_av, weights);
+    }
+
+    // Mixes biomes together to get a biome.point at x, z
+    public static biome.point point(int x, int z)
+    {
+        return biome_mix(x, z, (b, xw, zw) => b.get_point(xw, zw), biome.point.average);
     }
 
     public static void draw_gizmos(Vector3 centre)

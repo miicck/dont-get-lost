@@ -39,8 +39,7 @@ public static class utils
     static HashSet<string> opened = new HashSet<string>();
     public static void log(string s, string logfile)
     {
-        string filename =
-            "/home/mick/programming/unity/dont_get_lost/" + logfile + ".log";
+        string filename = Application.persistentDataPath + "/" + logfile + ".log";
 
         if (!opened.Contains(filename))
         {

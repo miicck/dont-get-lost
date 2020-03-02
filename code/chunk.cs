@@ -30,6 +30,8 @@ public class chunk
 
     public chunk(int x, int z)
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
         // Save my chunk-coordinates
         this.x = x;
         this.z = z;
@@ -61,11 +63,23 @@ public class chunk
         SplatPrototype[] splats = new SplatPrototype[1];
         var tex = new Texture2D(TERRAIN_RES, TERRAIN_RES);
         var pixels = new Color[TERRAIN_RES * TERRAIN_RES];
+
+#       if UNITY_2018_3_OR_NEWER // New terrain system
+        tex.wrapMode = TextureWrapMode.Clamp;
+        var terrain_layers = new TerrainLayer[1];
+        terrain_layers[0] = new TerrainLayer();
+        terrain_layers[0].diffuseTexture = tex;
+        terrain_layers[0].tileSize = new Vector2(1f, 1f) * SIZE;
+        td.terrainLayers = terrain_layers;
+        terrain.materialTemplate = Resources.Load<Material>("materials/terrain");
+#       else // Old terrain system
         tex.wrapMode = TextureWrapMode.Clamp;
         splats[0] = new SplatPrototype();
         splats[0].texture = tex;
         splats[0].tileSize = new Vector2(1f, 1f) * SIZE;
         td.splatPrototypes = splats;
+#       endif
+
         var alphamaps = new float[TERRAIN_RES, TERRAIN_RES, 1];
 
         // Set the heighmap resolution/scale
@@ -81,6 +95,7 @@ public class chunk
                 int x_world = grid_to_world_x(i);
                 int z_world = grid_to_world_z(j);
                 var point = world.point(x_world, z_world);
+                point.apply_global_rules();
 
                 // Texture/alphamap
                 pixels[j * TERRAIN_RES + i] = point.terrain_color;
@@ -88,6 +103,13 @@ public class chunk
 
                 // Heightmap (note it is the transpose for some reason)
                 heights[j, i] = point.altitude / world.MAX_ALTITUDE;
+
+                if (Random.Range(0,100) == 0)
+                {
+                    var t = world_object.look_up("tree1").inst();
+                    t.transform.SetParent(transform);
+                    t.transform.position = new Vector3(x_world, point.altitude, z_world);
+                }
             }
 
         // Apply the various maps
@@ -95,6 +117,8 @@ public class chunk
         tex.Apply();
         td.SetAlphamaps(0, 0, alphamaps);
         td.SetHeights(0, 0, heights);
+
+        utils.log("Chunk " + x + ", " + z + " created in " + sw.ElapsedMilliseconds + " ms", "generation");
     }
 
     public void destroy()

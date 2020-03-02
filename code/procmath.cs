@@ -6,34 +6,47 @@ using UnityEngine;
 // that are useful for procedural generation
 public static class procmath
 {
-    // Remap a float to another float
-    public delegate float remap(float f);
-
-    // Smoothly increases from 0 at x = thresh to 1 at x = 1
-    public static float smooth_max_cos(float x, float thresh = 0f)
+    // Maps for a single floating point value
+    public static class maps
     {
-        if (x < thresh) return 0;
-        if (x > 1) return 1;
-        return 1 - Mathf.Cos((x - thresh) * Mathf.PI / (2 * (1.0f - thresh)));
-    }
+        // Smoothly increases from 0 at x = thresh to 1 at x = 1
+        public static float smooth_max_cos(float x, float thresh = 0f)
+        {
+            if (x < thresh) return 0;
+            if (x > 1) return 1;
+            return 1 - Mathf.Cos((x - thresh) * Mathf.PI / (2 * (1.0f - thresh)));
+        }
 
-    // Maps x to a linear curve, smoothed towards x = 0 and x = 1
-    public static float end_smoothed_linear(float x, float smooth_range)
-    {
-        if (x < 0) return 0;
-        if (x > 1) return 1.0f;
+        // Maps x to a linear curve, smoothed towards x = 0 and x = 1
+        public static float end_smoothed_linear(float x, float smooth_range)
+        {
+            if (x < 0) return 0;
+            if (x > 1) return 1.0f;
 
-        float d = smooth_range;
-        float scale = 1f / (1 - d);
+            float d = smooth_range;
+            float scale = 1f / (1 - d);
 
-        if (x < d) return scale * x * x / (2 * d);
-        if (x < 1 - d) return scale * (x - d / 2f);
-        return scale * (1f - d - (1f - x) * (1f - x) / (2f * d));
+            if (x < d) return scale * x * x / (2 * d);
+            if (x < 1 - d) return scale * (x - d / 2f);
+            return scale * (1f - d - (1f - x) * (1f - x) / (2f * d));
+        }
+
+        // Map x to something which switches on at start and linearly
+        // increases to 1 at end
+        public static float linear_turn_on(float x, float start, float end)
+        {
+            if (x < start) return 0;
+            if (x > end) return 1;
+            return (x - start) / (end - start);
+        }
     }
 
     // Tools for manipulating 2D arrays of floats
     public static class float_2D_tools
     {
+        // Remap a float to another float
+        public delegate float remap(float f);
+
         // Generate a random normally-distributed number 
         // with mean 0, std dev = 1, using a box-muller tranform
         public static float random_normal()
@@ -214,8 +227,8 @@ public static class procmath
 
                     float i_rot = Mathf.Abs(cos * i_frac - sin * j_frac);
                     float j_rot = Mathf.Abs(sin * i_frac + cos * j_frac);
-                    i_rot = end_smoothed_linear(i_rot, smoothing_amt);
-                    j_rot = end_smoothed_linear(j_rot, smoothing_amt);
+                    i_rot = maps.end_smoothed_linear(i_rot, smoothing_amt);
+                    j_rot = maps.end_smoothed_linear(j_rot, smoothing_amt);
 
                     float h = 1.0f - i_rot - j_rot;
 
