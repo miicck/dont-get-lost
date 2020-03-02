@@ -70,6 +70,12 @@ public class game : MonoBehaviour
         canvas.update();
     }
 
+    void OnApplicationQuit()
+    {
+        // Save the world
+        world.destroy();
+    }
+
     void OnDrawGizmos()
     {
         if (player != null)

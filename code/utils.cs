@@ -34,4 +34,24 @@ public static class utils
         if (f > 0) return 1;
         return 0;
     }
+
+    // Log something to file
+    static HashSet<string> opened = new HashSet<string>();
+    public static void log(string s, string logfile)
+    {
+        string filename =
+            "/home/mick/programming/unity/dont_get_lost/" + logfile + ".log";
+
+        if (!opened.Contains(filename))
+        {
+            System.IO.File.Delete(filename);
+            opened.Add(filename);
+        }
+
+        using (var stream = System.IO.File.AppendText(filename))
+        {
+            stream.Write(s + "\n");
+            stream.Flush();
+        }
+    }
 }

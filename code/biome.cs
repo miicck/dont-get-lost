@@ -28,17 +28,47 @@ public abstract class biome
 
     protected abstract void generate_grid();
 
+    public string filename() { return world.save_folder() + "/biome_" + x + "_" + z; }
+
     public biome(int x, int z)
     {
         this.x = x;
         this.z = z;
         grid = new point[SIZE, SIZE];
-        generate_grid();
+        if (!load())
+            generate_grid();
     }
 
     public void destroy()
     {
+        // Save the chunk to file
+        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Append))
+            for (int i = 0; i < SIZE; ++i)
+                for (int j = 0; j < SIZE; ++j)
+                    foreach (float f in grid[i, j].serialize())
+                        stream.Write(System.BitConverter.GetBytes(f), 0, sizeof(float));
+        utils.log("Saved biome " + x + ", " + z, "io");
+    }
 
+    bool load()
+    {
+        // Read the chunk from file
+        if (!System.IO.File.Exists(filename())) return false;
+        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Open, System.IO.FileAccess.Read))
+            for (int i = 0; i < SIZE; ++i)
+                for (int j = 0; j < SIZE; ++j)
+                {
+                    float[] floats = new float[point.FLOATS_PER_POINT];
+                    for (int m = 0; m < point.FLOATS_PER_POINT; ++m)
+                    {
+                        byte[] bytes = new byte[sizeof(float)];
+                        stream.Read(bytes, 0, bytes.Length);
+                        floats[m] = System.BitConverter.ToSingle(bytes, 0);
+                    }
+                    grid[i, j] = new point(floats);
+                }
+        utils.log("Loaded biome " + x + ", " + z, "io");
+        return true;
     }
 
     // A particular point in the biome has these
@@ -49,6 +79,25 @@ public abstract class biome
         public float altitude = 0;
         public float fertility = 1.0f;
         public Color terrain_color = new Color(0.4f, 0.6f, 0.2f, 0);
+
+        public const int FLOATS_PER_POINT = 5;
+
+        public float[] serialize()
+        {
+            return new float[] { altitude, fertility, terrain_color.r, terrain_color.g, terrain_color.b };
+        }
+
+        public point() { }
+
+        public point(float[] floats)
+        {
+            altitude = floats[0];
+            fertility = floats[1];
+            terrain_color.r = floats[2];
+            terrain_color.g = floats[3];
+            terrain_color.b = floats[4];
+            terrain_color.a = 0;
+        }
 
         public static point average(List<point> pts, List<float> wts)
         {

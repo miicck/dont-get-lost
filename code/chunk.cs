@@ -14,15 +14,8 @@ public class chunk
     Terrain terrain;
 
     // Coordinate transforms
-    int grid_to_world_x(int i)
-    {
-        return x * SIZE + i - SIZE / 2;
-    }
-
-    int grid_to_world_z(int j)
-    {
-        return z * SIZE + j - SIZE / 2;
-    }
+    int grid_to_world_x(int i) { return x * SIZE + i - SIZE / 2; }
+    int grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
 
     // Set the chunk neighbours, for smooth transitions
     public void update_neighbours(chunk north, chunk east, chunk south, chunk west)

@@ -13,7 +13,7 @@ public class player : MonoBehaviour
     public const float GROUND_TEST_DIST = 0.15f;
     public const int MAX_MOVE_PROJ_REMOVE = 4;
 
-    new Camera camera;
+    Camera camera;
     GameObject obscurer;
 
     public void update_render_range()
@@ -128,7 +128,7 @@ public class player : MonoBehaviour
         player.obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
         player.obscurer.transform.SetParent(player.camera.transform);
         player.obscurer.transform.localPosition = Vector3.zero;
-        
+
         player.update_render_range();
 
         return player;

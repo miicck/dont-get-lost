@@ -5,6 +5,30 @@ using UnityEngine;
 // The in-game world
 public static class world
 {
+    // The name this world is (to be) saved as
+    public static string name = "world";
+
+    // The folder to save the world in
+    public static string save_folder()
+    {
+        // First, ensure the folder exists 
+        string folder = "/home/mick/programming/unity/dont_get_lost/worlds/" + name;
+        System.IO.Directory.CreateDirectory(folder);
+        return folder;
+    }
+
+    // Destroy the world!
+    public static void destroy()
+    {
+        foreach (var c in chunk_grid)
+            if (c != null)
+                c.destroy();
+
+        foreach (var b in biome_grid)
+            if (b != null)
+                b.destroy();
+    }
+
     // World-scale geograpical constants
     public const int SEA_LEVEL = 16;
     public const float MAX_ALTITUDE = 128f;
