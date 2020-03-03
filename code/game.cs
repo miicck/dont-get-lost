@@ -7,6 +7,7 @@ public class game : MonoBehaviour
     public static player player { get; private set; }
 
     public bool regenerate = false;
+    public string biome_override = "";
 
     // How far the player can see
     private static float _render_range = 100f;
@@ -24,10 +25,11 @@ public class game : MonoBehaviour
 
     void Start()
     {
-        // Delete the world if we're running from the editor
-        // so we regenerate every time
-        if (regenerate)
-            System.IO.Directory.Delete(world.save_folder(), true);
+        // Delete the world if we want to regenerate
+        if (regenerate) System.IO.Directory.Delete(world.save_folder(), true);
+
+        // Set the biome override
+        biome.biome_override = biome_override;
 
         // Create the ui
         canvas.create();

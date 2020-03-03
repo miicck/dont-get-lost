@@ -269,9 +269,26 @@ public static class world
         return procmath.maps.smooth_max_cos((n - thresh) / (1 - thresh));
     }
 
+    // Will have the x and z amounts stored
+    static float[,] xamts;
+    static float[,] zamts;
+    static void gen_amts()
+    {
+        xamts = new float[biome.SIZE, biome.SIZE];
+        zamts = new float[biome.SIZE, biome.SIZE];
+        for (int i = 0; i < biome.SIZE; ++i)
+            for (int j = 0; j < biome.SIZE; ++j)
+            {
+                float xf = 2 * (i / (float)biome.SIZE - 0.5f);
+                float zf = 2 * (j / (float)biome.SIZE - 0.5f);
+                xamts[i, j] = blend_amount(Mathf.Abs(xf), Mathf.Abs(zf));
+                zamts[i, j] = blend_amount(Mathf.Abs(zf), Mathf.Abs(xf));
+            }
+    }
+
     // Blend biomes together to get the average of b2t at x, z in world coords.
     public delegate T biome_to_t<T>(biome b, int x, int z);
-    public delegate T combine_func<T>(List<T> ts, List<float> ws);
+    public delegate T combine_func<T>(T[] ts, float[] ws);
     public static T biome_mix<T>(int x, int z, biome_to_t<T> b2t, combine_func<T> combiner)
     {
         // Biome coordinates
@@ -282,46 +299,51 @@ public static class world
         int gx = biome_x_to_grid(bx);
         int gz = biome_z_to_grid(bz);
 
-        // Fractional coordinate within biome in [-1,1]
-        float xf = 2 * (x - biome_to_world_centre(bx)) / biome.SIZE;
-        float zf = 2 * (z - biome_to_world_centre(bz)) / biome.SIZE;
-        int dx = utils.sign(xf);
-        int dz = utils.sign(zf);
-        float xamt = blend_amount(Mathf.Abs(xf), Mathf.Abs(zf));
-        float zamt = blend_amount(Mathf.Abs(zf), Mathf.Abs(xf));
+        int i = x - bx * biome.SIZE + biome.SIZE / 2;
+        int j = z - bz * biome.SIZE + biome.SIZE / 2;
+        int dx = (i < biome.SIZE / 2) ? -1 : 1;
+        int dz = (j < biome.SIZE / 2) ? -1 : 1;
+        if (xamts == null) gen_amts();
+        float xamt = xamts[i, j];
+        float zamt = zamts[i, j];
+
         float damt = Mathf.Min(xamt, zamt);
 
         // Blend in the centre biome with weight 1
         if (biome_grid[gx, gz] == null)
             biome_grid[gx, gz] = biome.generate(bx, bz);
-        var to_av = new List<T>() { b2t(biome_grid[gx, gz], x, z) };
-        var weights = new List<float>() { 1.0f };
+
+        // Can mix up to 4 biomes
+        var to_av = new T[4];
+        var weights = new float[4];
+        to_av[0] = b2t(biome_grid[gx, gz], x, z);
+        weights[0] = 1;
 
         // Blend in the nearest east/west biome with weight xamt
-        if (xamt > 1e-4f)
+        if (xamt > 0.01f)
         {
             if (biome_grid[gx + dx, gz] == null)
                 biome_grid[gx + dx, gz] = biome.generate(bx + dx, bz);
-            to_av.Add(b2t(biome_grid[gx + dx, gz], x, z));
-            weights.Add(xamt);
+            to_av[1] = b2t(biome_grid[gx + dx, gz], x, z);
+            weights[1] = xamt;
         }
 
         // Blend in the nearest north/south biome with weight zamt
-        if (zamt > 1e-4)
+        if (zamt > 0.01f)
         {
             if (biome_grid[gx, gz + dz] == null)
                 biome_grid[gx, gz + dz] = biome.generate(bx, bz + dz);
-            to_av.Add(b2t(biome_grid[gx, gz + dz], x, z));
-            weights.Add(zamt);
+            to_av[2] = b2t(biome_grid[gx, gz + dz], x, z);
+            weights[2] = zamt;
         }
 
         // Blend in the nearest diagonal biome with weight damt
-        if (damt > 1e-4)
+        if (damt > 0.01f)
         {
             if (biome_grid[gx + dx, gz + dz] == null)
                 biome_grid[gx + dx, gz + dz] = biome.generate(bx + dx, bz + dz);
-            to_av.Add(b2t(biome_grid[gx + dx, gz + dz], x, z));
-            weights.Add(damt);
+            to_av[3] = b2t(biome_grid[gx + dx, gz + dz], x, z);
+            weights[3] = damt;
         }
 
         return combiner(to_av, weights);
@@ -331,6 +353,27 @@ public static class world
     public static biome.point point(int x, int z)
     {
         return biome_mix(x, z, (b, xw, zw) => b.get_point(xw, zw), biome.point.average);
+    }
+
+    // Suggest an object to generate at x, z by weighting
+    // biome object suggestions
+    public static string suggest_object(int x, int z)
+    {
+        return biome_mix(x, z, (b, xw, zw) => b.suggest_object(xw, zw), (ss, ws) =>
+        {
+            float total_weight = 0;
+            foreach (var f in ws) total_weight += f;
+
+            float rand = Random.Range(0, total_weight);
+            total_weight = 0;
+            for (int i = 0; i < ss.Length; ++i)
+            {
+                total_weight += ws[i];
+                if (total_weight > rand)
+                    return ss[i];
+            }
+            return null;
+        });
     }
 
     public static void draw_gizmos(Vector3 centre)

@@ -43,6 +43,7 @@ public static class canvas
     public static void update()
     {
         debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
+        debug_info.text += "Render range: " + game.render_range + "\n";
         debug_info.text += location_info();
     }
 }

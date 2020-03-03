@@ -27,6 +27,7 @@ public abstract class biome
     protected float grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
 
     protected abstract void generate_grid();
+    public virtual string suggest_object(int x, int z) { return null; }
 
     public string filename() { return world.save_folder() + "/biome_" + x + "_" + z; }
 
@@ -122,7 +123,7 @@ public abstract class biome
         }
 
         // Computea a weighted average of a list of points
-        public static point average(List<point> pts, List<float> wts)
+        public static point average(point[] pts, float[] wts)
         {
             point ret = new point
             {
@@ -132,7 +133,7 @@ public abstract class biome
 
             float total_weight = 0;
             foreach (var f in wts) total_weight += f;
-            for (int i = 0; i < wts.Count; ++i)
+            for (int i = 0; i < wts.Length; ++i)
             {
                 float w = wts[i] / total_weight;
                 var p = pts[i];
@@ -182,13 +183,11 @@ public abstract class biome
     // random number in [0,1] for each
     static List<ConstructorInfo> biome_constructors = null;
     static List<float> biome_offsets = null;
+    public static string biome_override = "";
 
     // Generate the biome at the given biome coordinates
     public static biome generate(int xb, int zb)
     {
-        if (xb == 0 && zb == 0)
-            return new mountains(0, 0);
-
         if (biome_constructors == null)
         {
             // Find the biome types
@@ -212,6 +211,14 @@ public abstract class biome
                 // Offset each biome by a ranbdom amount
                 // so generates differently each time
                 biome_offsets.Add(Random.Range(0, 1f));
+
+                if (t.Name == biome_override)
+                {
+                    // Enforce the biome override
+                    biome_constructors = new List<ConstructorInfo> { c };
+                    biome_offsets = new List<float> { 0 };
+                    break;
+                }
             }
         }
 
@@ -248,6 +255,11 @@ public class grass_islands : biome
 
     public grass_islands(int x, int z) : base(x, z) { }
 
+    public override string suggest_object(int x, int z)
+    {
+        return "tree1";
+    }
+
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
@@ -258,6 +270,7 @@ public class grass_islands : biome
                 float zf = grid_to_world_z(j);
                 p.altitude = ISLAND_SIZE *
                     Mathf.PerlinNoise(xf / ISLAND_SIZE, zf / ISLAND_SIZE);
+                p.terrain_color = colors.grass;
                 grid[i, j] = p;
             }
     }
