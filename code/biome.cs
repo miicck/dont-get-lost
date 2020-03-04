@@ -27,7 +27,6 @@ public abstract class biome
     protected float grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
 
     protected abstract void generate_grid();
-    public virtual string suggest_object(int x, int z) { return null; }
 
     public string filename() { return world.save_folder() + "/biome_" + x + "_" + z; }
 
@@ -47,16 +46,10 @@ public abstract class biome
 
     public void destroy()
     {
-        // Save the chunk to file
+        // Save the biome to file
         var sw = System.Diagnostics.Stopwatch.StartNew();
         using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Create))
         {
-            // Write the length of a point to the file
-            var bytes_00 = grid[0, 0].serialize();
-            int length = bytes_00.Length;
-            var length_bytes = System.BitConverter.GetBytes(length);
-            stream.Write(length_bytes, 0, length_bytes.Length);
-
             // Write the points to the file
             for (int i = 0; i < SIZE; ++i)
                 for (int j = 0; j < SIZE; ++j)
@@ -64,41 +57,155 @@ public abstract class biome
                     var bytes = grid[i, j].serialize();
                     stream.Write(bytes, 0, bytes.Length);
                 }
+
+            // Write all the world objects to the file
+            for (int i = 0; i < SIZE; ++i)
+                for (int j = 0; j < SIZE; ++j)
+                {
+                    // No world object here
+                    if (grid[i, j].world_object_gen == null)
+                        continue;
+
+                    // Store the i, j coordinates of this world_object_generator
+                    stream.Write(System.BitConverter.GetBytes(i), 0, sizeof(int));
+                    stream.Write(System.BitConverter.GetBytes(j), 0, sizeof(int));
+
+                    var wos = grid[i, j].world_object_gen;
+
+                    // World object still hasn't loaded => simply save it again
+                    if (wos.to_load != null)
+                    {
+                        stream.Write(wos.to_load, 0, wos.to_load.Length);
+                    }
+
+                    else if (wos.generated)
+                    {
+                        // World object has been generated, serialize it
+                        var bytes = wos.generated.serialize();
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+
+                    else if (wos.to_generate != null)
+                    {
+                        // World object is scheduled for generation
+                        // serialize the "generation required" version
+                        var bytes = wos.to_generate.serialize_generate_required();
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+
+                    else Debug.LogError("Don't know how to save this world object status!");
+                }
         }
         utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
 
     bool load()
     {
-        // Read the chunk from file
+        // Read the biome from file
         var sw = System.Diagnostics.Stopwatch.StartNew();
         if (!System.IO.File.Exists(filename())) return false;
         using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Open, System.IO.FileAccess.Read))
         {
-            // Read the length of a point from the start of the file
-            byte[] legnth_bytes = new byte[sizeof(int)];
-            stream.Read(legnth_bytes, 0, legnth_bytes.Length);
-            int length = System.BitConverter.ToInt32(legnth_bytes, 0);
-
-            byte[] bytes = new byte[length];
+            // Read the points from the file
+            byte[] pt_bytes = new byte[new point().serialize().Length];
             for (int i = 0; i < SIZE; ++i)
                 for (int j = 0; j < SIZE; ++j)
                 {
-                    stream.Read(bytes, 0, bytes.Length);
-                    grid[i, j] = new point(bytes);
+                    stream.Read(pt_bytes, 0, pt_bytes.Length);
+                    grid[i, j] = new point(pt_bytes);
                 }
+
+            // Read the world objects from the file
+            byte[] int_bytes = new byte[sizeof(int) * 2];
+            while (true)
+            {
+                // Load the position
+                if (stream.Read(int_bytes, 0, int_bytes.Length) == 0) break;
+                int i = System.BitConverter.ToInt32(int_bytes, 0);
+                int j = System.BitConverter.ToInt32(int_bytes, sizeof(int));
+
+                // Load the world object
+                byte[] wo_bytes = new byte[world_object.serialize_length()];
+                if (stream.Read(wo_bytes, 0, wo_bytes.Length) == 0) break;
+
+                if (world_object.generation_required(wo_bytes))
+                {
+                    // This object was saved before generation, schedule generation
+                    int id = System.BitConverter.ToInt32(wo_bytes, 0);
+                    grid[i, j].world_object_gen = new world_object_generator(id);
+                }
+                else
+                    // Load as normal
+                    grid[i, j].world_object_gen = new world_object_generator(wo_bytes);
+            }
         }
         utils.log("Loaded biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
         return true;
     }
 
+    // Represetnts a world object in a biome
+    public class world_object_generator
+    {
+        public world_object gen_or_load()
+        {
+            // Already generated
+            if (generated != null)
+            {
+                // May have been already generated, but moved to
+                // the inactive pile (if the chunk it was in was destroyed)
+                if (!generated.gameObject.activeInHierarchy)
+                    generated.gameObject.SetActive(true);
+
+                return generated;
+            }
+
+            // Needs to be loaded from bytes
+            if (to_load != null)
+            {
+                generated = world_object.deserialize(to_load);
+                to_load = null;
+                return generated;
+            }
+
+            // Needs to be generated from prefab
+            generated = to_generate.inst();
+            to_generate = null;
+            generated.on_generation();
+            return generated;
+        }
+
+        // A world_object_generator can only be created 
+        // with a prefab that needs generating, or a
+        // byte array that needs loading.
+        public world_object_generator(string name)
+        {
+            to_generate = world_object.look_up(name);
+            if (to_generate == null)
+                Debug.LogError("Tried to create a world object generator with a null world object!");
+        }
+
+        public world_object_generator(int id)   
+        {
+            to_generate = world_object.look_up(id);
+            if (to_generate == null)
+                Debug.LogError("Tried to create a world object generator with a null world object!");
+        }
+
+        public world_object_generator(byte[] bytes) { to_load = bytes; }
+
+        public world_object to_generate { get; private set; }
+        public world_object generated { get; private set; }
+        public byte[] to_load { get; private set; }
+    }
+
     // A particular point in the biome has these
     // properties. They are either loaded from disk,
     // or generated.
-    public struct point
+    public class point
     {
         public float altitude;
         public Color terrain_color;
+        public world_object_generator world_object_gen;
 
         // Serialise a point into bytes
         public byte[] serialize()
@@ -107,12 +214,16 @@ public abstract class biome
             {
                 altitude, terrain_color.r, terrain_color.g, terrain_color.b
             };
-            byte[] bytes = new byte[sizeof(float) * floats.Length];
-            System.Buffer.BlockCopy(floats, 0, bytes, 0, bytes.Length);
+
+            int float_bytes = sizeof(float) * floats.Length;
+            byte[] bytes = new byte[float_bytes];
+            System.Buffer.BlockCopy(floats, 0, bytes, 0, float_bytes);
             return bytes;
         }
 
-        // Construct a point from it's serialized floats
+        public point() { }
+
+        // Construct a point from it's serialization
         public point(byte[] bytes)
         {
             altitude = System.BitConverter.ToSingle(bytes, 0);
@@ -133,15 +244,29 @@ public abstract class biome
 
             float total_weight = 0;
             foreach (var f in wts) total_weight += f;
+
+            int max_i = 0;
+            float max_w = 0;
             for (int i = 0; i < wts.Length; ++i)
             {
                 float w = wts[i] / total_weight;
                 var p = pts[i];
+                if (p == null) continue;
+
                 ret.altitude += p.altitude * w;
                 ret.terrain_color.r += p.terrain_color.r * w;
                 ret.terrain_color.g += p.terrain_color.g * w;
                 ret.terrain_color.b += p.terrain_color.b * w;
+
+                if (wts[i] > max_w)
+                {
+                    max_w = wts[i];
+                    max_i = i;
+                }
             }
+
+            if (pts[max_i] != null)
+                ret.world_object_gen = pts[max_i].world_object_gen;
 
             return ret;
         }
@@ -159,6 +284,11 @@ public abstract class biome
                 float s = 1 - procmath.maps.linear_turn_on(altitude, SAND_START, SAND_END);
                 terrain_color = Color.Lerp(terrain_color, colors.sand, s);
             }
+        }
+
+        public string info()
+        {
+            return "Altitude: " + altitude + " Terrain color: " + terrain_color;
         }
     }
 
@@ -255,22 +385,22 @@ public class grass_islands : biome
 
     public grass_islands(int x, int z) : base(x, z) { }
 
-    public override string suggest_object(int x, int z)
-    {
-        return "tree1";
-    }
-
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                point p = new point();
+                var p = new point();
                 float xf = grid_to_world_x(i);
                 float zf = grid_to_world_z(j);
+
                 p.altitude = ISLAND_SIZE *
                     Mathf.PerlinNoise(xf / ISLAND_SIZE, zf / ISLAND_SIZE);
                 p.terrain_color = colors.grass;
+
+                if (Random.Range(0, 100) == 0)
+                    p.world_object_gen = new world_object_generator("tree");
+
                 grid[i, j] = p;
             }
     }
@@ -333,9 +463,9 @@ public class mountains : biome
                 point p = new point
                 {
                     altitude = alt[i, j],
-
                     terrain_color = colors.grass
                 };
+
                 if (p.altitude > SNOW_START)
                 {
                     float s = procmath.maps.linear_turn_on(p.altitude, SNOW_START, SNOW_END);

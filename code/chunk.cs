@@ -93,7 +93,7 @@ public class chunk
         return points_i >= TERRAIN_RES &&
                alphamaps_i >= TERRAIN_RES &&
                heights_i >= TERRAIN_RES &&
-               object_generation_attempts_remaining <= 0;
+               objects_i >= SIZE;
     }
 
     int points_i = 0;
@@ -108,9 +108,8 @@ public class chunk
             // Get the point descibing this part of the world
             int x_world = grid_to_world_x(i);
             int z_world = grid_to_world_z(j);
-            var point = world.point(x_world, z_world);
-            points[i, j] = point;
-            point.apply_global_rules();
+            points[i, j] = world.point(x_world, z_world);
+            points[i, j].apply_global_rules();
         }
 
         ++points_i;
@@ -192,39 +191,49 @@ public class chunk
         return false;
     }
 
-    int object_generation_attempts_remaining = TERRAIN_RES * TERRAIN_RES / 100;
+    int objects_i = 0;
     bool continue_gen_objects()
     {
+        if (objects_i >= SIZE) return true;
+
         // Generate objects
-        if (object_generation_attempts_remaining <= 0)
-            return true;
-        --object_generation_attempts_remaining;
+        int i = objects_i;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var point = points[i, j];
 
-        int i = Random.Range(0, TERRAIN_RES);
-        int j = Random.Range(0, TERRAIN_RES);
+            // Check if there is a world object at this point
+            if (point.world_object_gen == null) continue;
 
-        int x_world = grid_to_world_x(i);
-        int z_world = grid_to_world_z(j);
-        var point = points[i, j];
+            // Get some coodinate information
+            int x_world = grid_to_world_x(i);
+            int z_world = grid_to_world_z(j);
+            float xf = i / (float)TERRAIN_RES;
+            float zf = j / (float)TERRAIN_RES;
+            Vector3 terrain_normal = terrain.terrainData.GetInterpolatedNormal(xf, zf);
 
-        // Get a suggested object from the map 
-        var suggested_object = world.suggest_object(x_world, z_world);
-        if (suggested_object == null) return false;
+            // Need to generate from prefab
+            if (point.world_object_gen.to_generate != null)
+            {
+                // Check if we can generate the object here
+                if (!point.world_object_gen.to_generate.can_place(point, terrain_normal))
+                {
+                    // We can't, unschedule generation
+                    point.world_object_gen = null;
+                    continue;
+                }
+            }
 
-        // Check the world object can be placed here
-        var wo = world_object.look_up(suggested_object);
+            // Generate (or load) the world object
+            var wo = point.world_object_gen.gen_or_load();
 
-        float xf = i / (float)TERRAIN_RES;
-        float zf = j / (float)TERRAIN_RES;
-        Vector3 terrain_normal = terrain.terrainData.GetInterpolatedNormal(xf, zf);
-        if (!wo.can_place(point, terrain_normal)) return false;
+            // Place the world object
+            wo.transform.SetParent(transform);
+            wo.transform.position = new Vector3(x_world, point.altitude, z_world);
+            wo.on_placement(terrain_normal);
+        }
 
-        // Place the world object
-        wo = wo.inst();
-        wo.transform.SetParent(transform);
-        wo.transform.position = new Vector3(x_world, point.altitude, z_world);
-        wo.on_placement(terrain_normal);
-
+        ++objects_i;
         return false;
     }
 
@@ -244,10 +253,38 @@ public class chunk
         }
     }
 
+    // Sleeping world objects are those who's chunks have been
+    // destroyed but might be reloaded in the near future.
+    // Only if a biome is destroyed will the world objects in it
+    // be saved to disk/destroyed.
+    static Transform _sleeping_world_objects;
+    static Transform sleeping_world_objects
+    {
+        get
+        {
+            if (_sleeping_world_objects == null)
+                _sleeping_world_objects =
+                    new GameObject("sleeping_world_objects").transform;
+            return _sleeping_world_objects;
+        }
+    }
+
     public void destroy()
     {
         // Finish generation
         while (!continue_generation()) { }
+
+        // Detatch and disable world objects
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                if (points[i, j].world_object_gen == null)
+                    continue;
+
+                var wo = points[i, j].world_object_gen.generated;
+                wo.transform.SetParent(sleeping_world_objects);
+                wo.gameObject.SetActive(false);
+            }
 
         // Destroy the object
         Object.Destroy(transform.gameObject);

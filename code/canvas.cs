@@ -37,7 +37,11 @@ public static class canvas
 
     static string location_info()
     {
-        return "No location info";
+        int xworld = (int)game.player.transform.position.x;
+        int zworld = (int)game.player.transform.position.z;
+        string ret = "Biome mix: " + world.biome_mix_info(xworld, zworld) + "\n";
+        ret += "Point info: " + world.point(xworld, zworld).info();
+        return ret;
     }
 
     public static void update()
