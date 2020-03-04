@@ -479,7 +479,7 @@ public class mountains : biome
 
                 if (p.altitude < ROCK_START &&
                     p.altitude > world.SEA_LEVEL)
-                    if (Random.Range(0, 10) == 0)
+                    if (Random.Range(0, 40) == 0)
                         p.world_object_gen = new world_object_generator("pine_tree");
 
                 if (p.altitude > ROCK_END &&

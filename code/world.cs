@@ -148,28 +148,27 @@ public static class world
         restore_grids();
     }
 
+    // Check if the chunk at x, z is within render range
+    // (essentially testing if the render range circle 
+    //  intersects the chunk square)
     public static bool chunk_in_range(int x, int z, Vector3 centre)
     {
-        var corner_dxs = new float[] { -0.5f, -0.5f, 0.5f, 0.5f };
-        var corner_dzs = new float[] { -0.5f, 0.5f, 0.5f, -0.5f };
+        float xc = chunk_to_world_centre(x);
+        float zc = chunk_to_world_centre(z);
 
-        // Find the nearest corner to the centre
-        float min_dis = float.MaxValue;
-        for (int n = 0; n < 4; ++n)
-        {
-            float xc = ((float)x + corner_dxs[n]) * chunk.SIZE;
-            float zc = ((float)z + corner_dzs[n]) * chunk.SIZE;
+        float dx = Mathf.Abs(xc - centre.x);
+        float dz = Mathf.Abs(zc - centre.z);
 
-            float dx = xc - centre.x;
-            float dz = zc - centre.z;
+        if (dx > chunk.SIZE / 2 + game.render_range) return false;
+        if (dz > chunk.SIZE / 2 + game.render_range) return false;
 
-            float dis = dx * dx + dz * dz;
-            if (dis < min_dis)
-                min_dis = dis;
-        }
+        if (dx < chunk.SIZE / 2) return true;
+        if (dz < chunk.SIZE / 2) return true;
 
-        // Check if that corner is within render range
-        return Mathf.Sqrt(min_dis) <= game.render_range;
+        float corner_distance_sq = (dx - chunk.SIZE / 2) * (dx - chunk.SIZE / 2) +
+                                   (dz - chunk.SIZE / 2) * (dz - chunk.SIZE / 2);
+
+        return corner_distance_sq < game.render_range * game.render_range;
     }
 
     public static void update_grid(Vector3 centre)

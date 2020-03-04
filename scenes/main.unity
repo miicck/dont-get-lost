@@ -121,75 +121,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &387802540
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_RootOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234644, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5031541107484234647, guid: e317d6e0245edc340a2d90129283be90,
-        type: 3}
-      propertyPath: m_Name
-      value: 3_pine_tree
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: e317d6e0245edc340a2d90129283be90, type: 3}
 --- !u!1 &1376402693
 GameObject:
   m_ObjectHideFlags: 0
@@ -234,4 +165,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regenerate: 1
-  biome_override: mountains
+  biome_override: 

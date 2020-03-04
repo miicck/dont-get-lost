@@ -13,13 +13,24 @@ public class player : MonoBehaviour
     public const float GROUND_TEST_DIST = 0.15f;
     public const int MAX_MOVE_PROJ_REMOVE = 4;
 
+    public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
+    public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
+    public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
+    public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
+
     new Camera camera;
     GameObject obscurer;
+    GameObject map_obscurer;
 
     public void update_render_range()
     {
         obscurer.transform.localScale = Vector3.one * game.render_range;
-        camera.farClipPlane = game.render_range;
+        map_obscurer.transform.localScale = Vector3.one * game.render_range;
+        if (!map_open)
+        {
+            camera.farClipPlane = game.render_range;
+            QualitySettings.shadowDistance = camera.farClipPlane;
+        }
     }
 
     // The position of the upper sphere of the player
@@ -83,10 +94,31 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        // Toggle the map view
+        if (Input.GetKeyDown(KeyCode.M))
+            map_open = !map_open;
+
+        if (map_open)
+        {
+            // Zoom the map
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0) camera.orthographicSize /= 1.2f;
+            else if (scroll < 0) camera.orthographicSize *= 1.2f;
+            if (camera.orthographicSize > 2 * game.render_range)
+                camera.orthographicSize = 2 * game.render_range;
+
+            // Pan the map
+            float dx = Input.GetAxis("Mouse X");
+            float dy = Input.GetAxis("Mouse Y");
+            camera.transform.position += new Vector3(dx, 0, dy);
+
+            return; // If map is open, don't move the player
+        }
+
         // Gravity/Jumping
         if (!grounded) yvel -= 9.81f * Time.deltaTime;
         else if (yvel < 0) yvel = 0;
-        else if (Input.GetKeyDown(KeyCode.Space)) yvel += JUMP_VEL;
+        else if (Input.GetKeyDown(KeyCode.Space)) yvel = JUMP_VEL;
 
         tryMove(yvel * Vector3.up * Time.deltaTime);
 
@@ -109,6 +141,46 @@ public class player : MonoBehaviour
         camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
     }
 
+    Quaternion saved_camera_rotation;
+    public bool map_open
+    {
+        get { return camera.transform.parent == null; }
+        set
+        {
+            if (value)
+            {
+                saved_camera_rotation = camera.transform.localRotation;
+
+                obscurer.SetActive(false);
+                map_obscurer.SetActive(true);
+
+                Vector3 obsc_pos = transform.position;
+                obsc_pos.y = MAP_OBSCURER_ALT;
+                map_obscurer.transform.position = obsc_pos;                
+
+                camera.orthographic = true;
+                camera.transform.SetParent(null);
+                Vector3 pos = camera.transform.position;
+
+                pos.y = MAP_CAMERA_ALT;
+                camera.farClipPlane = MAP_CAMERA_CLIP;
+                QualitySettings.shadowDistance = MAP_SHADOW_DISTANCE;
+
+                camera.transform.position = pos;
+                camera.transform.forward = Vector3.down;
+            }
+            else
+            {
+                obscurer.SetActive(true);
+                map_obscurer.SetActive(false);
+                camera.orthographic = false;
+                camera.transform.SetParent(transform);
+                camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
+                camera.transform.localRotation = saved_camera_rotation;
+            }
+        }
+    }
+
     // Create and return a player
     public static player create()
     {
@@ -116,8 +188,6 @@ public class player : MonoBehaviour
 
         // Create the player camera 
         player.camera = new GameObject("camera").AddComponent<Camera>();
-        player.camera.transform.SetParent(player.transform);
-        player.camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
         player.camera.clearFlags = CameraClearFlags.SolidColor;
 
         // Move the player above the first map chunk so they
@@ -125,16 +195,23 @@ public class player : MonoBehaviour
         player.transform.position = Vector3.up * world.MAX_ALTITUDE;
 
         // Enforce the render limit with a sky-color object
-        player.obscurer = Instantiate(Resources.Load<GameObject>("misc/obscurer"));
+        player.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
         player.obscurer.transform.SetParent(player.transform);
         player.obscurer.transform.localPosition = Vector3.zero;
         var sky_color = player.obscurer.GetComponentInChildren<Renderer>().material.color;
 
+        player.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
+        player.map_obscurer.transform.SetParent(player.transform);
+
         // Make the sky the same color as the obscuring object
-        RenderSettings.skybox = null;    
+        RenderSettings.skybox = null;
         player.camera.backgroundColor = sky_color;
 
+        // Initialize the render range
         player.update_render_range();
+
+        // Start with the map closed
+        player.map_open = false;
 
         return player;
     }
