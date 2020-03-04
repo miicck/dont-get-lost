@@ -184,7 +184,7 @@ public abstract class biome
                 Debug.LogError("Tried to create a world object generator with a null world object!");
         }
 
-        public world_object_generator(int id)   
+        public world_object_generator(int id)
         {
             to_generate = world_object.look_up(id);
             if (to_generate == null)
@@ -476,6 +476,16 @@ public class mountains : biome
                     float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
                     p.terrain_color = Color.Lerp(colors.grass, colors.rock, r);
                 }
+
+                if (p.altitude < ROCK_START &&
+                    p.altitude > world.SEA_LEVEL)
+                    if (Random.Range(0, 10) == 0)
+                        p.world_object_gen = new world_object_generator("pine_tree");
+
+                if (p.altitude > ROCK_END &&
+                    p.altitude < SNOW_START)
+                    if (Random.Range(0, 100) == 0)
+                        p.world_object_gen = new world_object_generator("rock");
 
                 grid[i, j] = p;
             }

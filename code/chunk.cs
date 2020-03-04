@@ -78,13 +78,39 @@ public class chunk
 
     // Continue generation, bit by bit
     // returns true when generation is complete
+    delegate bool gen_func();
+    gen_func[] gen_todo;
+    int gen_stage = 0;
+    System.Diagnostics.Stopwatch gen_sw;
+
     bool continue_generation()
     {
-        if (continue_set_points())
-            if (continue_set_alphamaps())
-                if (continue_apply_heights())
-                    if (continue_gen_objects())
-                        return true;
+        if (gen_todo == null)
+        {
+            // Create the generation stages
+            gen_todo = new gen_func[]
+            {
+                continue_set_points,
+                continue_set_alphamaps,
+                continue_apply_heights,
+                continue_gen_objects
+            };
+            gen_sw = System.Diagnostics.Stopwatch.StartNew();
+        }
+
+        // Generation complete
+        if (gen_stage >= gen_todo.Length)
+            return true;
+
+        // Continue this generation stage
+        if (gen_todo[gen_stage]())
+        {
+            utils.log("Chunk " + x + "_" + z + " generation stage: " + gen_stage +
+                      " took " + gen_sw.ElapsedMilliseconds + " ms", "chunk_generation");
+            // Advance generation stage
+            gen_stage++;
+        }
+
         return false;
     }
 
@@ -175,19 +201,17 @@ public class chunk
         if (heights_i >= TERRAIN_RES) return true;
 
         // Map world onto chunk
-        int i = heights_i;
         for (int j = 0; j < TERRAIN_RES; ++j)
             // Heightmap (note it is the transpose for some reason)
-            heights[j, i] = points[i, j].altitude / world.MAX_ALTITUDE;
+            heights[j, heights_i] = points[heights_i, j].altitude / world.MAX_ALTITUDE;
+        ++heights_i;
 
-        if (heights_i == TERRAIN_RES - 1)
+        if (heights_i >= TERRAIN_RES)
         {
             // Apply the heigtmap
             terrain.terrainData.SetHeights(0, 0, heights);
             heights = null;
         }
-
-        ++heights_i;
         return false;
     }
 
@@ -240,16 +264,27 @@ public class chunk
     class gradual_chunk_generator : MonoBehaviour
     {
         public chunk chunk;
+        static int steps_per_frame = 1;
 
         private void Update()
         {
+            // Do more generation steps if the framerate is
+            // acceptably high
+            int framerate = (int)(1 / Time.deltaTime);
+            if (framerate < 60) --steps_per_frame;
+            else ++steps_per_frame;
+
+            // Generation must always progress
+            if (steps_per_frame < 1) steps_per_frame = 1;
+
             // Generate every frame until
             // we need not generate any more
-            if (chunk.continue_generation())
-            {
-                Destroy(this.gameObject);
-                return;
-            }
+            for (int step = 0; step < steps_per_frame; ++step)
+                if (chunk.continue_generation())
+                {
+                    Destroy(gameObject);
+                    return;
+                }
         }
     }
 
