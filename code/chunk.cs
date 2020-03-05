@@ -249,12 +249,11 @@ public class chunk
             }
 
             // Generate (or load) the world object
-            var wo = point.world_object_gen.gen_or_load();
+            var wo = point.world_object_gen.gen_or_load(terrain_normal, point);
 
             // Place the world object
             wo.transform.SetParent(transform);
             wo.transform.position = new Vector3(x_world, point.altitude, z_world);
-            wo.on_placement(terrain_normal);
         }
 
         ++objects_i;

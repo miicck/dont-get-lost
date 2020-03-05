@@ -105,7 +105,7 @@ GameObject:
   - component: {fileID: 4890586545916550}
   - component: {fileID: 114450906102351358}
   m_Layer: 0
-  m_Name: tree1
+  m_Name: 1_tree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
-  random_y_rotation: 1
+  y_rotation_mode: 1
   min_scale: 1
   max_scale: 3
   min_altitude: 17

@@ -96,6 +96,7 @@ public abstract class biome
                     else Debug.LogError("Don't know how to save this world object status!");
                 }
         }
+        grid = null;
         utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
 
@@ -146,7 +147,9 @@ public abstract class biome
     // Represetnts a world object in a biome
     public class world_object_generator
     {
-        public world_object gen_or_load()
+        public float additional_scale_factor = 1.0f;
+
+        public world_object gen_or_load(Vector3 terrain_normal, biome.point point)
         {
             // Already generated
             if (generated != null)
@@ -163,6 +166,7 @@ public abstract class biome
             if (to_load != null)
             {
                 generated = world_object.deserialize(to_load);
+                generated.on_load(terrain_normal, point);
                 to_load = null;
                 return generated;
             }
@@ -170,7 +174,8 @@ public abstract class biome
             // Needs to be generated from prefab
             generated = to_generate.inst();
             to_generate = null;
-            generated.on_generation();
+            generated.on_generation(terrain_normal, point);
+            generated.transform.localScale *= additional_scale_factor;
             return generated;
         }
 
@@ -312,7 +317,6 @@ public abstract class biome
     // Constructors for all biome types and a corresponding
     // random number in [0,1] for each
     static List<ConstructorInfo> biome_constructors = null;
-    static List<float> biome_offsets = null;
     public static string biome_override = "";
 
     // Generate the biome at the given biome coordinates
@@ -322,7 +326,6 @@ public abstract class biome
         {
             // Find the biome types
             biome_constructors = new List<ConstructorInfo>();
-            biome_offsets = new List<float>();
             var asem = Assembly.GetAssembly(typeof(biome));
             var types = asem.GetTypes();
 
@@ -338,68 +341,51 @@ public abstract class biome
                 });
                 biome_constructors.Add(c);
 
-                // Offset each biome by a ranbdom amount
-                // so generates differently each time
-                biome_offsets.Add(Random.Range(0, 1f));
-
                 if (t.Name == biome_override)
                 {
                     // Enforce the biome override
                     biome_constructors = new List<ConstructorInfo> { c };
-                    biome_offsets = new List<float> { 0 };
                     break;
                 }
             }
         }
 
-        // Map chunk coordinates onto real-world coordinates
-        // so perlin noise is generated in real world units
-        float x = (xb - 0.5f) * SIZE;
-        float z = (zb - 0.5f) * SIZE;
-
-        // Sample perlin noise amounts for each biome and generate
-        // the biome with the maximum value
-        float max_perl = float.MinValue;
-        int max_index = 0;
-        for (int i = 0; i < biome_constructors.Count; ++i)
-        {
-            float r = biome_offsets[i];
-            float p = Mathf.PerlinNoise(x / SIZE + r, z / SIZE - r);
-            if (p > max_perl)
-            {
-                max_perl = p;
-                max_index = i;
-            }
-        }
-
-        // Invoke the chosen biome constructor
-        return (biome)biome_constructors[max_index].Invoke(
-            new object[] { xb, zb }
-        );
+        // Return a random biome
+        int i = Random.Range(0, biome_constructors.Count);
+        return (biome)biome_constructors[i].Invoke(new object[] { xb, zb });
     }
 }
 
 public class mangroves : biome
 {
     public const float ISLAND_SIZE = 27.2f;
+    public const float MANGROVE_START_ALT = world.SEA_LEVEL - 3;
+    public const float MANGROVE_DECAY_ALT = 3f;
+    public const float MANGROVE_PROB = 0.2f;
 
     public mangroves(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
+        float xrand = Random.Range(0, 1f);
+        float zrand = Random.Range(0, 1f);
+
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
                 var p = new point();
-                float xf = grid_to_world_x(i);
-                float zf = grid_to_world_z(j);
 
-                p.altitude = ISLAND_SIZE *
-                    Mathf.PerlinNoise(xf / ISLAND_SIZE, zf / ISLAND_SIZE);
+                p.altitude = ISLAND_SIZE * Mathf.PerlinNoise(
+                    xrand + i / ISLAND_SIZE, zrand + j / ISLAND_SIZE);
                 p.terrain_color = colors.grass;
 
-                if (Random.Range(0, 100) == 0)
-                    p.world_object_gen = new world_object_generator("tree");
+                float man_amt = 0;
+                if (p.altitude > MANGROVE_START_ALT)
+                    man_amt = Mathf.Exp(
+                        -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
+
+                if (Random.Range(0, 1f) < man_amt * MANGROVE_PROB)
+                    p.world_object_gen = new world_object_generator("mangroves");
 
                 grid[i, j] = p;
             }
@@ -421,13 +407,12 @@ public class ocean : biome
         float[,] alt = new float[SIZE, SIZE];
 
         // Start with some perlin noise
+        float xrand = Random.Range(0, 1f);
+        float zrand = Random.Range(0, 1f);
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
-            {
-                float xf = grid_to_world_x(i);
-                float zf = grid_to_world_z(j);
-                alt[i, j] += world.SEA_LEVEL * Mathf.PerlinNoise(xf / 16f, zf / 16f) / 2f;
-            }
+                alt[i, j] += 0.5f * world.SEA_LEVEL * Mathf.PerlinNoise(
+                    xrand + x / 16f, zrand + z / 16f);
 
         // Add a bunch of guassians to create desert islands
         // (also reduce the amount of perlin noise far from the islands
@@ -519,10 +504,42 @@ public class mountains : biome
                     if (Random.Range(0, 40) == 0)
                         p.world_object_gen = new world_object_generator("pine_tree");
 
-                if (p.altitude > ROCK_END &&
-                    p.altitude < SNOW_START)
-                    if (Random.Range(0, 100) == 0)
-                        p.world_object_gen = new world_object_generator("rock");
+                grid[i, j] = p;
+            }
+    }
+}
+
+public class terraced_hills : biome
+{
+    public const float HILL_HEIGHT = 50f;
+    public const float HILL_SIZE = 64f;
+
+    public terraced_hills(int x, int z) : base(x, z) { }
+
+    protected override void generate_grid()
+    {
+        float xrand = Random.Range(0, 1f);
+        float zrand = Random.Range(0, 1f);
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                point p = new point
+                {
+                    altitude = HILL_HEIGHT * Mathf.PerlinNoise(
+                        xrand + i / HILL_SIZE, zrand + j / HILL_SIZE),
+                    terrain_color = colors.grass
+                };
+
+                if (p.altitude < HILL_HEIGHT / 2)
+                {
+                    if ((i % 25 == 0) && (j % 25 == 0))
+                    {
+                        p.world_object_gen = new world_object_generator("flat_outcrop");
+                        p.world_object_gen.additional_scale_factor = 4f;
+                    }
+                }
+                else if (Random.Range(0, 200) == 0)
+                    p.world_object_gen = new world_object_generator("tree");
 
                 grid[i, j] = p;
             }

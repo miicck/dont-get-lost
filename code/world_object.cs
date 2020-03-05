@@ -5,13 +5,22 @@ using UnityEngine;
 public class world_object : MonoBehaviour
 {
     // Variables specifying how this world object is placed
-    public bool align_with_terrain_normal = false;
-    public bool random_y_rotation = true;
+    public float align_with_terrain_normal = 0f;
+    public Y_ROTATION_MODE y_rotation_mode;
     public float min_scale = 0.5f;
     public float max_scale = 2.0f;
     public float min_altitude = world.SEA_LEVEL;
     public float max_altitude = world.MAX_ALTITUDE;
     public float max_terrain_angle = 90f;
+    public bool inherit_terrain_color = false;
+
+    // The way that y rotation is chosen for this object
+    public enum Y_ROTATION_MODE
+    {
+        NONE,
+        RANDOM,
+        ALLIGN_Z_DOWNHILL
+    }
 
     // Get my id as as it appears in the world_object library
     public int id()
@@ -172,14 +181,45 @@ public class world_object : MonoBehaviour
         return true;
     }
 
-    public void on_placement(Vector3 terrain_normal)
+    void carry_out_terrain_alignment(Vector3 terrain_normal, biome.point point)
     {
-        if (align_with_terrain_normal) transform.up = terrain_normal;
+        if (align_with_terrain_normal > 0)
+        {
+            transform.up = align_with_terrain_normal * terrain_normal +
+                      (1 - align_with_terrain_normal) * Vector3.up;
+        }
+
+        if (y_rotation_mode == Y_ROTATION_MODE.ALLIGN_Z_DOWNHILL)
+        {
+            Vector3 downhill = terrain_normal;
+            downhill.y = 0;
+            downhill -= align_with_terrain_normal * Vector3.Project(downhill, terrain_normal);
+            transform.forward = downhill;
+        }
+
+        if (inherit_terrain_color)
+            foreach (var m in GetComponentsInChildren<MeshRenderer>())
+                m.material.color = point.terrain_color;
     }
 
-    public void on_generation()
+    public void on_generation(Vector3 terrain_normal, biome.point point)
     {
+        // Allign to terrain if required
+        carry_out_terrain_alignment(terrain_normal, point);
+
+        // Generate the scale
         transform.localScale = Vector3.one * Random.Range(min_scale, max_scale);
-        if (random_y_rotation) transform.Rotate(0, Random.Range(0, 360f), 0);
+
+        // Generate random y rotation
+        if (y_rotation_mode == Y_ROTATION_MODE.RANDOM)
+            transform.Rotate(0, Random.Range(0, 360f), 0);
+    }
+
+    public void on_load(Vector3 terrain_normal, biome.point point)
+    {
+        // Allign to terrain if required
+        carry_out_terrain_alignment(terrain_normal, point);
+
+        // Scale and rotation are loaded already
     }
 }

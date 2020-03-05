@@ -10,8 +10,8 @@ public class game : MonoBehaviour
     public string biome_override = "";
 
     // How far the player can see
-    private static float _render_range = 100f;
-    private static float render_range_target = 100f;
+    private static float _render_range = chunk.SIZE;
+    private static float render_range_target = chunk.SIZE;
     public static float render_range
     {
         get { return _render_range; }
@@ -42,6 +42,15 @@ public class game : MonoBehaviour
         sun.transform.position = Vector3.zero;
         sun.transform.LookAt(new Vector3(1, -2, 1));
         sun.type = LightType.Directional;
+
+        // Create a second directional light source (with no shadows)
+        // to highlight details of objects that are in the shadow of 
+        // the sun.
+        var aux_sun = sun.inst();
+        aux_sun.transform.SetParent(sun.transform);
+        aux_sun.intensity = 0.1f;
+        sun.intensity = 1 - aux_sun.intensity;
+
         sun.shadows = LightShadows.Soft;
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }

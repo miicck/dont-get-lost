@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 739517036598670233}
   - component: {fileID: 7206306108845276798}
   m_Layer: 0
-  m_Name: rocks1
+  m_Name: 2_rock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1
-  random_y_rotation: 1
+  y_rotation_mode: 1
   min_scale: 2
   max_scale: 7
   min_altitude: 16
