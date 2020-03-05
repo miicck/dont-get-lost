@@ -379,11 +379,11 @@ public abstract class biome
     }
 }
 
-public class grass_islands : biome
+public class mangroves : biome
 {
     public const float ISLAND_SIZE = 27.2f;
 
-    public grass_islands(int x, int z) : base(x, z) { }
+    public mangroves(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
@@ -408,17 +408,54 @@ public class grass_islands : biome
 
 public class ocean : biome
 {
+    const int MAX_ISLAND_ALT = 8; // The maximum altitude of an island above sea level
+    const int ISLAND_PERIOD = 32; // The range over which an island extends on the seabed
+    const int MIN_ISLANDS = 1;    // Min number of islands
+    const int MAX_ISLANDS = 3;    // Max number of islands
+
     public ocean(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
+        // Generate the altitude
+        float[,] alt = new float[SIZE, SIZE];
+
+        // Start with some perlin noise
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                float xf = grid_to_world_x(i);
+                float zf = grid_to_world_z(j);
+                alt[i, j] += world.SEA_LEVEL * Mathf.PerlinNoise(xf / 16f, zf / 16f) / 2f;
+            }
+
+        // Add a bunch of guassians to create desert islands
+        // (also reduce the amount of perlin noise far from the islands
+        //  to create a smooth seabed)
+        int islands = Random.Range(MIN_ISLANDS, MAX_ISLANDS);
+        for (int n = 0; n < islands; ++n)
+            procmath.float_2D_tools.apply_guassian(ref alt,
+                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
+                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
+                ISLAND_PERIOD, (f, g) =>
+                    f * (0.5f + 0.5f * g) + // Reduced perlin noise
+                    g * (world.SEA_LEVEL / 2f + MAX_ISLAND_ALT) // Added guassian
+                );
+
+        // Generate the point grid
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
                 point p = new point
                 {
-                    terrain_color = colors.sand
+                    terrain_color = colors.sand,
+                    altitude = alt[i, j]
                 };
+
+                if (p.altitude > world.SEA_LEVEL)
+                    if (Random.Range(0, 100) == 0)
+                        p.world_object_gen = new world_object_generator("palm_tree");
+
                 grid[i, j] = p;
             }
     }

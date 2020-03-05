@@ -9,6 +9,7 @@ public class player : MonoBehaviour
     public const float WIDTH = 0.45f;
     public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
     public const float SPEED = 10f;
+    public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float GROUND_TEST_DIST = 0.15f;
     public const int MAX_MOVE_PROJ_REMOVE = 4;
@@ -111,8 +112,14 @@ public class player : MonoBehaviour
             float dx = Input.GetAxis("Mouse X");
             float dy = Input.GetAxis("Mouse Y");
             camera.transform.position += new Vector3(dx, 0, dy);
-
-            return; // If map is open, don't move the player
+        }
+        else
+        {
+            // Rotate the view using the mouse
+            // Note that horizontal moves rotate the player
+            // vertical moves rotate the camera
+            transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
+            camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
         }
 
         // Gravity/Jumping
@@ -127,18 +134,14 @@ public class player : MonoBehaviour
         float fb = 0;
 
         if (Input.GetKey(KeyCode.W)) fb += 1.0f;
-        if (Input.GetKey(KeyCode.A)) lr -= 1.0f;
         if (Input.GetKey(KeyCode.S)) fb -= 1.0f;
+        if (Input.GetKey(KeyCode.A)) lr -= 1.0f;
         if (Input.GetKey(KeyCode.D)) lr += 1.0f;
 
-        Vector3 move = transform.right * lr + transform.forward * fb;
+        Vector3 move = transform.forward * fb;
+        if (map_open) transform.Rotate(0, lr * Time.deltaTime * ROTATION_SPEED, 0);
+        else move += transform.right * lr; // Strafing 
         tryMove(move * Time.deltaTime * SPEED);
-
-        // Rotate the view using the mouse
-        // Note that horizontal moves rotate the player
-        // vertical moves rotate the camera
-        transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
-        camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
     }
 
     Quaternion saved_camera_rotation;
@@ -156,7 +159,7 @@ public class player : MonoBehaviour
 
                 Vector3 obsc_pos = transform.position;
                 obsc_pos.y = MAP_OBSCURER_ALT;
-                map_obscurer.transform.position = obsc_pos;                
+                map_obscurer.transform.position = obsc_pos;
 
                 camera.orthographic = true;
                 camera.transform.SetParent(null);

@@ -246,5 +246,21 @@ public static class procmath
             add_smoothed_pyramid(ref arr, x, z, width, height,
                 (f) => f, smoothing_amt, rotation);
         }
+
+        // Apply the given apply_func to the array, where
+        // f is the floating point value and g is the value
+        // of a guassian centred at x, z with the given width.
+        public delegate float apply_func(float f, float g);
+        public static void apply_guassian(ref float[,] arr,
+            int x, int z, int width, apply_func func)
+        {
+            for (int i = 0; i < arr.GetLength(0); ++i)
+                for (int j = 0; j < arr.GetLength(1); ++j)
+                {
+                    float r2 = (i - x) * (i - x) + (j - z) * (j - z);
+                    r2 /= (float)(width * width);
+                    arr[i, j] = func(arr[i,j], Mathf.Exp(-r2 / 2));
+                }
+        }
     }
 }
