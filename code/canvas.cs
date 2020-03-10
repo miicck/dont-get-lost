@@ -8,6 +8,22 @@ public static class canvas
 {
     static Canvas canv;
     static Text debug_info;
+    static Image crosshairs;
+    public static Transform transform { get { return canv.transform; } }
+
+    public static string cursor
+    {
+        get
+        {
+            if (crosshairs.sprite == null) return null;
+            return crosshairs.sprite.name;
+        }
+        set
+        {
+            if (cursor == value) return;
+            crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
+        }
+    }
 
     public static void create()
     {
@@ -33,6 +49,18 @@ public static class canvas
         dirt.localPosition += new Vector3(5f, -5f, 0f);
         debug_info.text = "Debug info";
         debug_info.color = Color.black;
+
+        // Create the crosshairs
+        crosshairs = new GameObject("corsshairs").AddComponent<Image>();
+        crosshairs.transform.SetParent(canv.transform);
+        crosshairs.color = new Color(1, 1, 1, 0.5f);
+        var crt = crosshairs.GetComponent<RectTransform>();
+        crt.sizeDelta = new Vector2(64, 64);
+        crt.anchorMin = new Vector2(0.5f, 0.5f);
+        crt.anchorMax = new Vector2(0.5f, 0.5f);
+        crt.anchoredPosition = Vector2.zero;
+        cursor = "default_cursor";
+
     }
 
     static string location_info()
@@ -49,5 +77,69 @@ public static class canvas
         debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
         debug_info.text += "Render range: " + game.render_range + "\n";
         debug_info.text += location_info();
+
+        // See if a harvestable object is under the cursor
+        Vector3 harvest_point;
+        var to_harvest = utils.raycast_for<harvestable>(
+            new Ray(player.camera.transform.position,
+                    player.camera.transform.forward),
+                    out harvest_point, game.INTERACTION_RANGE);
+
+        if (to_harvest != null)
+        {
+            cursor = to_harvest.cursor;
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector3 spawn_point = (harvest_point +
+                    player.camera.transform.position) / 2;
+                item.spawn(to_harvest.item, spawn_point);
+            }
+        }
+        else cursor = "default_cursor";
+    }
+}
+
+public class popup_message : MonoBehaviour
+{
+    // The scroll speed of a popup message
+    // (in units of the screen height)
+    public const float SCREEN_SPEED = 0.05f;
+
+    new RectTransform transform;
+    Text text;
+    float start_time;
+
+    public static popup_message create(string message)
+    {
+        var m = new GameObject("message").AddComponent<popup_message>();
+        m.text = m.gameObject.AddComponent<Text>();
+
+        m.transform = m.GetComponent<RectTransform>();
+        m.transform.SetParent(canvas.transform);
+        m.transform.anchorMin = new Vector2(0.5f, 0.25f);
+        m.transform.anchorMax = new Vector2(0.5f, 0.25f);
+        m.transform.anchoredPosition = Vector2.zero;
+
+        m.text.font = Resources.Load<Font>("fonts/monospace");
+        m.text.text = message;
+        m.text.alignment = TextAnchor.MiddleCenter;
+        m.text.fontSize = 32;
+        m.start_time = Time.realtimeSinceStartup;
+
+        return m;
+    }
+
+    private void Update()
+    {
+        transform.position +=
+            Vector3.up * Screen.height *
+            SCREEN_SPEED * Time.deltaTime;
+
+        float time = Time.realtimeSinceStartup - start_time;
+
+        text.color = new Color(1, 1, 1, 1 - time);
+
+        if (time > 1)
+            Destroy(this.gameObject);
     }
 }

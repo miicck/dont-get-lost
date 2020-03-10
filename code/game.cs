@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class game : MonoBehaviour
 {
+    public const float INTERACTION_RANGE = 3f;
+
     public static player player { get; private set; }
 
     public bool regenerate = false;

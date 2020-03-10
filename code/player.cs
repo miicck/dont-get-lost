@@ -21,7 +21,13 @@ public class player : MonoBehaviour
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
     public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
 
-    new Camera camera;
+    public static new Camera camera { get; private set; }
+
+    public static Vector3 item_attraction_point
+    {
+        get { return camera.transform.position + Vector3.down; }
+    }
+
     GameObject obscurer;
     GameObject map_obscurer;
 
@@ -149,8 +155,6 @@ public class player : MonoBehaviour
         else if (yvel < 0) yvel = 0;
         else if (Input.GetKeyDown(KeyCode.Space)) yvel = JUMP_VEL;
 
-        tryMove(yvel * Vector3.up * Time.deltaTime);
-
         // Move in the x-z plane using WASD
         float lr = 0;
         float fb = 0;
@@ -161,13 +165,21 @@ public class player : MonoBehaviour
         if (Input.GetKey(KeyCode.D)) lr += 1.0f;
 
         Vector3 move = transform.forward * fb;
+        float speed = SPEED;
+
+        // Fly on shift
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            move = camera.transform.forward * fb;
+            speed *= 10;
+            yvel = 0;
+        }
+
         if (map_open) transform.Rotate(0, lr * Time.deltaTime * ROTATION_SPEED, 0);
         else move += transform.right * lr; // Strafing 
 
-        float speed = SPEED;
-        if (Input.GetKey(KeyCode.LeftShift))
-            speed *= 10;
         tryMove(move * Time.deltaTime * speed);
+        tryMove(yvel * Vector3.up * Time.deltaTime);
     }
 
     Quaternion saved_camera_rotation;
