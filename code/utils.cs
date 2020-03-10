@@ -53,4 +53,22 @@ public static class utils
             stream.Flush();
         }
     }
+
+    // Raycast for the given type of object
+    public static T raycast_for<T>(Ray ray, out Vector3 point, float max_distance = float.MaxValue)
+        where T : MonoBehaviour
+    {
+        var hits = Physics.RaycastAll(ray, max_distance);
+        foreach (var h in hits)
+        {
+            var t = h.collider.gameObject.GetComponent<T>();
+            if (t != null)
+            {
+                point = h.point;
+                return t;
+            }
+        }
+        point = Vector3.zero;
+        return null;
+    }
 }

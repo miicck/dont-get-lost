@@ -1,5 +1,18 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &9007046657075047978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2058538172288240748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cursor: default_interact_cursor
 --- !u!1 &6387041220222361472
 GameObject:
   m_ObjectHideFlags: 0
@@ -89,6 +102,7 @@ MonoBehaviour:
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
+  inherit_terrain_color: 0
 --- !u!1001 &296042175911197578
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -858,6 +872,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 12bd0f7d7f598824fa403cacc334e475, type: 3}
+--- !u!1 &2058538172288240748 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 12bd0f7d7f598824fa403cacc334e475,
+    type: 3}
+  m_PrefabInstance: {fileID: 8048082728276317541}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3083343240527904383 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 12bd0f7d7f598824fa403cacc334e475,

@@ -51,6 +51,20 @@ MonoBehaviour:
   min_altitude: 15
   max_altitude: 128
   max_terrain_angle: 90
+  inherit_terrain_color: 0
+--- !u!114 &288790261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4757864956336484600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cursor: default_interact_cursor
 --- !u!1001 &41173892686035445
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -148,6 +162,12 @@ PrefabInstance:
 --- !u!4 &5037544057875436271 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: bb5c8d1842cb5ce49a336261abfb555b,
+    type: 3}
+  m_PrefabInstance: {fileID: 41173892686035445}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4757864956336484600 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4425609515867240179, guid: bb5c8d1842cb5ce49a336261abfb555b,
     type: 3}
   m_PrefabInstance: {fileID: 41173892686035445}
   m_PrefabAsset: {fileID: 0}
