@@ -39,6 +39,18 @@ public static class procmath
             if (x > end) return 1;
             return (x - start) / (end - start);
         }
+
+        // Map x to a smoothed version of the floor function
+        public static float smoothed_floor(float x, float smoothing)
+        {
+            float xf = Mathf.Floor(x);
+            float diff = x - xf;
+            float add = 0;
+            if (diff > smoothing)
+                add = (diff - smoothing) / (1 - smoothing);
+            add = end_smoothed_linear(add, 0.25f);
+            return xf + add;
+        }
     }
 
     // Tools for manipulating 2D arrays of floats
@@ -259,8 +271,22 @@ public static class procmath
                 {
                     float r2 = (i - x) * (i - x) + (j - z) * (j - z);
                     r2 /= (float)(width * width);
-                    arr[i, j] = func(arr[i,j], Mathf.Exp(-r2 / 2));
+                    arr[i, j] = func(arr[i, j], Mathf.Exp(-r2 / 2));
                 }
+        }
+
+        // Return the gradients of the given array, evaluated using 
+        // finite-differences
+        public static Vector2[,] get_gradients(float[,] arr)
+        {
+            var grad = new Vector2[arr.GetLength(0), arr.GetLength(1)];
+            for (int i = 1; i < arr.GetLength(0) - 1; ++i)
+                for (int j = 1; j < arr.GetLength(1) - 1; ++j)
+                {
+                    grad[i, j].x = (arr[i + 1, j] - arr[i - 1, j]) / 2f;
+                    grad[i, j].y = (arr[i, j + 1] - arr[i, j - 1]) / 2f;
+                }
+            return grad;
         }
     }
 }

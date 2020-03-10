@@ -339,7 +339,6 @@ public abstract class biome
                 var c = t.GetConstructor(new System.Type[]{
                     typeof(int), typeof(int)
                 });
-                biome_constructors.Add(c);
 
                 if (t.Name == biome_override)
                 {
@@ -347,12 +346,33 @@ public abstract class biome
                     biome_constructors = new List<ConstructorInfo> { c };
                     break;
                 }
+
+                // Get biome info, if it exists
+                var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
+                if (bi != null)
+                {
+                    if (!bi.enabled)
+                        continue; // Skip allowing this biome
+                }
+
+                biome_constructors.Add(c);
             }
         }
 
         // Return a random biome
         int i = Random.Range(0, biome_constructors.Count);
         return (biome)biome_constructors[i].Invoke(new object[] { xb, zb });
+    }
+}
+
+// Attribute info for biomes
+public class biome_info : System.Attribute
+{
+    public bool enabled { get; private set; }
+
+    public biome_info(bool enabled)
+    {
+        this.enabled = enabled;
     }
 }
 
@@ -542,6 +562,60 @@ public class terraced_hills : biome
                     p.world_object_gen = new world_object_generator("tree");
 
                 grid[i, j] = p;
+            }
+    }
+}
+
+[biome_info(enabled: false)]
+public class cliffs : biome
+{
+    public cliffs(int x, int z) : base(x, z) { }
+
+    public const float CLIFF_HEIGHT = 10f;
+    public const float CLIFF_PERIOD = 32f;
+
+    public const float HILL_HEIGHT = 52f;
+    public const float HILL_PERIOD = 64f;
+
+    protected override void generate_grid()
+    {
+        // Generate the altitudes
+        float xrand = Random.Range(0, 1f);
+        float zrand = Random.Range(0, 1f);
+        float[,] alt = new float[SIZE, SIZE];
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Work out how much cliff there is
+                float cliffness = Mathf.PerlinNoise(
+                    xrand + i / CLIFF_PERIOD, zrand + j / CLIFF_PERIOD);
+                if (cliffness > 0.5f) cliffness = 1;
+                else cliffness *= 2;
+
+                // Work out the smooth altitude
+                float asmooth = HILL_HEIGHT * Mathf.PerlinNoise(
+                    xrand + i / HILL_PERIOD, zrand + j / HILL_PERIOD);
+
+                // Work out the cliffy altitdue
+                float acliff = CLIFF_HEIGHT *
+                    procmath.maps.smoothed_floor(asmooth / CLIFF_HEIGHT, 0.75f);
+
+                // Mix them
+                alt[i, j] = asmooth * (1 - cliffness) + acliff * cliffness;
+            }
+
+        var grad = procmath.float_2D_tools.get_gradients(alt);
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                float dirt_amt = grad[i, j].magnitude;
+                dirt_amt = procmath.maps.linear_turn_on(dirt_amt, 0.2f, 0.5f);
+
+                grid[i, j] = new point()
+                {
+                    altitude = alt[i, j],
+                    terrain_color = Color.Lerp(colors.grass, colors.dirt, dirt_amt)
+                };
             }
     }
 }

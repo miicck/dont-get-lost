@@ -132,17 +132,8 @@ public class player : MonoBehaviour
 
         if (map_open)
         {
-            // Zoom the map
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0) camera.orthographicSize /= 1.2f;
-            else if (scroll < 0) camera.orthographicSize *= 1.2f;
-            if (camera.orthographicSize > 2 * game.render_range)
-                camera.orthographicSize = 2 * game.render_range;
-
-            // Pan the map
-            float dx = Input.GetAxis("Mouse X");
-            float dy = Input.GetAxis("Mouse Y");
-            camera.transform.position += new Vector3(dx, 0, dy);
+            // Set the map to the correct size
+            camera.orthographicSize = game.render_range;
         }
         else
         {
@@ -182,7 +173,7 @@ public class player : MonoBehaviour
     Quaternion saved_camera_rotation;
     public bool map_open
     {
-        get { return camera.transform.parent == null; }
+        get { return camera.orthographic; }
         set
         {
             if (value)
@@ -197,15 +188,12 @@ public class player : MonoBehaviour
                 map_obscurer.transform.position = obsc_pos;
 
                 camera.orthographic = true;
-                camera.transform.SetParent(null);
-                Vector3 pos = camera.transform.position;
+                camera.orthographicSize = game.render_range;
+                camera.transform.localPosition = Vector3.up * (MAP_CAMERA_ALT - transform.position.y);
+                camera.transform.localRotation = Quaternion.Euler(90, 0, 0);
 
-                pos.y = MAP_CAMERA_ALT;
                 camera.farClipPlane = MAP_CAMERA_CLIP;
                 QualitySettings.shadowDistance = MAP_SHADOW_DISTANCE;
-
-                camera.transform.position = pos;
-                camera.transform.forward = Vector3.down;
             }
             else
             {
