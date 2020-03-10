@@ -167,10 +167,11 @@ public class player : MonoBehaviour
         Vector3 move = transform.forward * fb;
         float speed = SPEED;
 
-        // Fly on shift
+        // Go really fast on shift
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            move = camera.transform.forward * fb;
+            if (!map_open) // Fly in 3d view
+                move = camera.transform.forward * fb;
             speed *= 10;
             yvel = 0;
         }
