@@ -4,16 +4,26 @@ using UnityEngine;
 
 public class game : MonoBehaviour
 {
-    public const float INTERACTION_RANGE = 3f;
-
     public static player player { get; private set; }
 
     public bool regenerate = false;
     public string biome_override = "";
 
+    // The target render range, which the actual render range will lerp to
+    private static float _render_range_target = chunk.SIZE;
+    public static float render_range_target
+    {
+        get { return _render_range_target; }
+        set
+        {
+            if (value < chunk.SIZE) value = chunk.SIZE;
+            _render_range_target = value;
+        }
+
+    }
+
     // How far the player can see
     private static float _render_range = chunk.SIZE;
-    private static float render_range_target = chunk.SIZE;
     public static float render_range
     {
         get { return _render_range; }

@@ -2,6 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class inventory
+{
+    Dictionary<string, int> contents
+        = new Dictionary<string, int>();
+
+    public bool add_item(string item_name)
+    {
+        if (contents.ContainsKey(item_name)) contents[item_name] += 1;
+        else contents[item_name] = 1;
+        return true;
+    }
+
+    public string get_info()
+    {
+        string info = "Inventory:";
+        foreach (var kv in contents)
+            info += "\n    " + kv.Value + " " + kv.Key;
+        return info;
+    }
+
+    public int get_count(string item)
+    {
+        int count = 0;
+        if (contents.TryGetValue(item, out count)) { }
+        return count;
+    }
+}
+
 public class player : MonoBehaviour
 {
     // Dimensions of a player
@@ -14,14 +42,16 @@ public class player : MonoBehaviour
     public const float GROUND_TEST_DIST = 0.15f;
     public const float TERRAIN_SINK_ALLOW = 0.2f;
     public const float TERRAIN_SINK_RESET_DIST = GROUND_TEST_DIST;
-    public const int MAX_MOVE_PROJ_REMOVE = 4;
-
+    public const float INTERACTION_RANGE = 3f;
+    public const float ITEM_ANCHOR_SEARCH_RANGE = 5f;
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
     public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
+    public const int MAX_MOVE_PROJ_REMOVE = 4;
 
     public static new Camera camera { get; private set; }
+    public static inventory inventory { get; private set; }
 
     public static Vector3 item_attraction_point
     {
@@ -129,6 +159,39 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        var manipulation_performed = ITEM_MANIPULATION.NONE;
+        if (item_carrying != null)
+        {
+            // We have an item
+            // Set the cursor to the carrying symbol
+            canvas.cursor = cursors.GRAB_CLOSED;
+
+            // Manipulate the item, recording the manipulation performed
+            manipulation_performed = manipulate_item();
+
+            // Drop the item if not left clicking
+            if (!Input.GetMouseButton(0))
+                item_carrying = null;
+        }
+
+        // Not carrying an item, try to pick one up
+        else
+        {
+            // Try to pick up an item
+            attempt_pickup_item();
+
+            // If nothing picked up, we can harvest stuff
+            if (item_carrying == null)
+                harvest_stuff();
+        }
+
+        // Carry out movement logic if we are not rotating a weld
+        if (manipulation_performed != ITEM_MANIPULATION.ROTATING_WELD)
+            move();
+    }
+
+    void move()
+    {
         // Toggle the map view
         if (Input.GetKeyDown(KeyCode.M))
             map_open = !map_open;
@@ -138,7 +201,10 @@ public class player : MonoBehaviour
 
         if (map_open)
         {
-            // Set the map to the correct size
+            // Zoom the map
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0) game.render_range_target /= 1.2f;
+            else if (scroll < 0) game.render_range_target *= 1.2f;
             camera.orthographicSize = game.render_range;
         }
         else
@@ -183,6 +249,179 @@ public class player : MonoBehaviour
         tryMove(yvel * Vector3.up * Time.deltaTime);
     }
 
+    public Ray camera_ray()
+    {
+        return new Ray(player.camera.transform.position,
+                    player.camera.transform.forward);
+    }
+
+    float item_hold_distance = 3;
+    public Vector3 item_grab_point()
+    {
+        return camera.transform.position +
+            item_hold_distance * camera.transform.forward;
+    }
+
+    item _item_carrying;
+    public item item_carrying
+    {
+        get { return _item_carrying; }
+        private set
+        {
+            if (value == _item_carrying)
+                return;
+
+            if (_item_carrying != null)
+            {
+                _item_carrying.rigidbody.useGravity = true;
+                _item_carrying.transform.SetParent(null);
+            }
+
+            if (value != null)
+            {
+                value.rigidbody.useGravity = false;
+                value.transform.SetParent(camera.transform);
+            }
+
+            _item_carrying = value;
+        }
+    }
+
+    enum ITEM_MANIPULATION
+    {
+        NONE,
+        CARRYING,
+        WELDING,
+        ROTATING_WELD,
+    }
+
+    ITEM_MANIPULATION manipulate_item()
+    {
+        // Right mouse button down => "weld" mode
+        if (Input.GetMouseButton(1))
+        {
+            // Rotate the weld with left shift
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                // Rotate weld => rotate the current anchor
+                item_carrying.rotate_anchor(camera.transform.right,
+                    Input.GetAxis("Mouse Y"));
+                item_carrying.rotate_anchor(camera.transform.up,
+                    -Input.GetAxis("Mouse X"));
+
+                // Snap rotation to 45 degree increments
+                if (Input.GetKey(KeyCode.S))
+                    item_carrying.snap_anchor_rotation();
+
+                return ITEM_MANIPULATION.ROTATING_WELD;
+            }
+
+            // Select the weld point
+            // Find the nearest surface to weld the item to
+            RaycastHit closest_hit = new RaycastHit();
+            float min_dis = float.MaxValue;
+            foreach (var h in Physics.RaycastAll(camera_ray(), ITEM_ANCHOR_SEARCH_RANGE))
+            {
+                if (h.transform.IsChildOf(item_carrying.transform))
+                    continue;
+
+                float dis = (h.point - camera.transform.position).magnitude;
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    closest_hit = h;
+                }
+            }
+
+            if (min_dis < float.MaxValue)
+            {
+                // Anchor the item at the given hit point
+                item_carrying.anchor_at(
+                    closest_hit.point, closest_hit.normal);
+            }
+            return ITEM_MANIPULATION.WELDING;
+        }
+
+        // Right button not down => "carry" mode
+
+        // Attract item towards grab point (dampen oscillations)
+        Vector3 dx = item_grab_point() - item_carrying.pivot.position;
+        Vector3 v = item_carrying.rigidbody.velocity;
+        item_carrying.rigidbody.AddForce(20 * dx - 4 * v);
+
+        // Move grab point backwards or forwards with scrollwheel
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll > 0) item_hold_distance *= 1.2f;
+        else if (scroll < 0) item_hold_distance /= 1.2f;
+
+        return ITEM_MANIPULATION.CARRYING;
+    }
+
+    void attempt_pickup_item()
+    {
+        // Already have an item
+        if (item_carrying != null)
+            return;
+
+        // Find the nearest interactable item under the cursor
+        float min_dis = float.MaxValue;
+        item item_under_cursor = null;
+        RaycastHit item_hit = new RaycastHit();
+        foreach (var h in Physics.RaycastAll(camera_ray(), INTERACTION_RANGE))
+        {
+            var hi = h.transform.GetComponentInParent<item>();
+            if (hi == null) continue;
+
+            float dis = (h.point - camera.transform.position).magnitude;
+            if (dis < min_dis)
+            {
+                min_dis = dis;
+                item_under_cursor = hi;
+                item_hit = h;
+            }
+        }
+
+        // No item under cursor
+        if (item_under_cursor == null)
+        {
+            canvas.cursor = cursors.DEFAULT;
+            return;
+        }
+
+        canvas.cursor = cursors.DEFAULT_INTERACTION;
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Pick up the item
+            item_hold_distance = (camera.transform.position - item_hit.point).magnitude;
+            item_carrying = item_under_cursor;
+
+            // Set the anchor to where we clicked the object and
+            // ensure the object is unwelded
+            item_carrying.set_pivot(item_hit.point, item_hit.normal);
+            item_carrying.rigidbody.isKinematic = false;
+        }
+    }
+
+    void harvest_stuff()
+    {
+        // Not dealing with items, see if a harvestable
+        // object is under the cursor
+        Vector3 harvest_point;
+        var to_harvest = utils.raycast_for<harvestable>(
+            camera_ray(), out harvest_point, INTERACTION_RANGE);
+
+        if (to_harvest == null)
+            return;
+
+        canvas.cursor = to_harvest.cursor;
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 spawn_point = (harvest_point +
+                camera.transform.position) / 2;
+            item.spawn(to_harvest.item, spawn_point);
+        }
+    }
+
     Quaternion saved_camera_rotation;
     public bool map_open
     {
@@ -224,6 +463,7 @@ public class player : MonoBehaviour
     public static player create()
     {
         var player = new GameObject("player").AddComponent<player>();
+        player.inventory = new inventory();
 
         // Create the player camera 
         player.camera = new GameObject("camera").AddComponent<Camera>();

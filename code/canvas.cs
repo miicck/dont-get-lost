@@ -4,6 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+public static class cursors
+{
+    public const string DEFAULT = "default_cursor";
+    public const string DEFAULT_INTERACTION = "default_interact_cursor";
+    public const string GRAB_OPEN = "default_interact_cursor";
+    public const string GRAB_CLOSED = "grab_closed_cursor";
+}
+
 public static class canvas
 {
     static Canvas canv;
@@ -76,26 +84,8 @@ public static class canvas
     {
         debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
         debug_info.text += "Render range: " + game.render_range + "\n";
-        debug_info.text += location_info();
-
-        // See if a harvestable object is under the cursor
-        Vector3 harvest_point;
-        var to_harvest = utils.raycast_for<harvestable>(
-            new Ray(player.camera.transform.position,
-                    player.camera.transform.forward),
-                    out harvest_point, game.INTERACTION_RANGE);
-
-        if (to_harvest != null)
-        {
-            cursor = to_harvest.cursor;
-            if (Input.GetMouseButtonDown(0))
-            {
-                Vector3 spawn_point = (harvest_point +
-                    player.camera.transform.position) / 2;
-                item.spawn(to_harvest.item, spawn_point);
-            }
-        }
-        else cursor = "default_cursor";
+        debug_info.text += location_info() + "\n";
+        debug_info.text += player.inventory.get_info() + "\n";
     }
 }
 
@@ -123,6 +113,8 @@ public class popup_message : MonoBehaviour
         m.text.font = Resources.Load<Font>("fonts/monospace");
         m.text.text = message;
         m.text.alignment = TextAnchor.MiddleCenter;
+        m.text.verticalOverflow = VerticalWrapMode.Overflow;
+        m.text.horizontalOverflow = HorizontalWrapMode.Overflow;
         m.text.fontSize = 32;
         m.start_time = Time.realtimeSinceStartup;
 

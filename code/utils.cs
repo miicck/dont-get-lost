@@ -61,7 +61,7 @@ public static class utils
         var hits = Physics.RaycastAll(ray, max_distance);
         foreach (var h in hits)
         {
-            var t = h.collider.gameObject.GetComponent<T>();
+            var t = h.collider.gameObject.GetComponentInParent<T>();
             if (t != null)
             {
                 point = h.point;
