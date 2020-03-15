@@ -37,6 +37,7 @@ public class player : MonoBehaviour
     public const float WIDTH = 0.45f;
     public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
     public const float SPEED = 10f;
+    public const float ACCELERATION_TIME = 0.2f;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float GROUND_TEST_DIST = 0.15f;
@@ -97,38 +98,12 @@ public class player : MonoBehaviour
         }
     }
 
-    float yvel = 0;
-
     void OnDrawGizmos()
     {
         if (grounded) Gizmos.color = Color.green;
         else Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(upperSpherePosition, WIDTH / 2);
         Gizmos.DrawWireSphere(lowerSpherePosition, WIDTH / 2);
-    }
-
-    void tryMove(Vector3 move, int attempts = 1)
-    {
-        // Max attempts = The number of projections that 
-        // cause collisions which can be removed from "move"
-        // before the whole move is rejected.
-        if (attempts > MAX_MOVE_PROJ_REMOVE) return;
-
-        // Check if this move will cause a collision
-        RaycastHit hit;
-        if (Physics.CapsuleCast(
-            lowerSpherePosition, upperSpherePosition,
-            WIDTH / 2, move.normalized, out hit, move.magnitude))
-        {
-            // Remove the offending projection of 
-            // the proposed move and try again
-            move -= 1.01f * Vector3.Project(move, hit.normal);
-            tryMove(move, attempts + 1);
-            return;
-        }
-
-        // Make the move
-        transform.position += move;
     }
 
     // Force the player to stay slightly above the terrain
@@ -190,6 +165,8 @@ public class player : MonoBehaviour
             move();
     }
 
+    Vector3 velocity;
+
     void move()
     {
         // Toggle the map view
@@ -217,36 +194,68 @@ public class player : MonoBehaviour
         }
 
         // Gravity/Jumping
-        if (!grounded) yvel -= 9.81f * Time.deltaTime;
-        else if (yvel < 0) yvel = 0;
-        else if (Input.GetKeyDown(KeyCode.Space)) yvel = JUMP_VEL;
+        if (!grounded) velocity.y -= 9.81f * Time.deltaTime;
+        else if (velocity.y < 0) velocity.y = 0;
+        else if (Input.GetKeyDown(KeyCode.Space)) velocity.y = JUMP_VEL;
 
         // Move in the x-z plane using WASD
-        float lr = 0;
-        float fb = 0;
+        float dv = Time.deltaTime * SPEED / ACCELERATION_TIME;
+        if (Input.GetKey(KeyCode.W)) velocity.z += dv;
+        else if (Input.GetKey(KeyCode.S)) velocity.z -= dv;
+        else velocity.z = 0;
 
-        if (Input.GetKey(KeyCode.W)) fb += 1.0f;
-        if (Input.GetKey(KeyCode.S)) fb -= 1.0f;
-        if (Input.GetKey(KeyCode.A)) lr -= 1.0f;
-        if (Input.GetKey(KeyCode.D)) lr += 1.0f;
+        if (Input.GetKey(KeyCode.A)) velocity.x -= dv;
+        else if (Input.GetKey(KeyCode.D)) velocity.x += dv;
+        else velocity.x = 0;
 
-        Vector3 move = transform.forward * fb;
-        float speed = SPEED;
+        velocity.x = Mathf.Clamp(velocity.x, -SPEED, SPEED);
+        velocity.z = Mathf.Clamp(velocity.z, -SPEED, SPEED);
 
-        // Go really fast on shift
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (map_open)
         {
-            if (!map_open) // Fly in 3d view
-                move = camera.transform.forward * fb;
-            speed *= 10;
-            yvel = 0;
+            // If the map is open, don't strafe, rotate.
+            transform.Rotate(0, velocity.x * Time.deltaTime * ROTATION_SPEED, 0);
+            velocity.x = 0;
         }
 
-        if (map_open) transform.Rotate(0, lr * Time.deltaTime * ROTATION_SPEED, 0);
-        else move += transform.right * lr; // Strafing 
+        tryMove();
+    }
 
-        tryMove(move * Time.deltaTime * speed);
-        tryMove(yvel * Vector3.up * Time.deltaTime);
+    void tryMove(int attempts = 1)
+    {
+        // Max attempts = The number of projections that 
+        // cause collisions which can be removed from "move"
+        // before the whole move is rejected.
+        if (attempts > MAX_MOVE_PROJ_REMOVE) return;
+
+        Vector3 move = (velocity.x * transform.right +
+                        velocity.z * transform.forward +
+                        velocity.y * Vector3.up) * Time.deltaTime;
+
+        // Check if this move will cause a collision
+        RaycastHit hit;
+        if (Physics.CapsuleCast(
+            lowerSpherePosition, upperSpherePosition,
+            WIDTH / 2, move.normalized, out hit, move.magnitude))
+        {
+            // Remove the offending projection of 
+            // the proposed move (from both the move
+            // and the local velocity) and try again
+            Vector3 offending_proj = Vector3.Project(move, hit.normal);
+            offending_proj.y = 0;
+            move -= offending_proj;
+
+            velocity.x = Vector3.Dot(move, transform.right);
+            velocity.z = Vector3.Dot(move, transform.forward);
+            velocity.y = move.y;
+            velocity /= Time.deltaTime;
+
+            tryMove(attempts + 1);
+            return;
+        }
+
+        // Make the move
+        transform.position += move;
     }
 
     public Ray camera_ray()
