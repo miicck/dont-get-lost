@@ -54,21 +54,35 @@ public static class utils
         }
     }
 
-    // Raycast for the given type of object
-    public static T raycast_for<T>(Ray ray, out Vector3 point, float max_distance = float.MaxValue)
+    // Raycast for the nearest object of the given type
+    public delegate bool accept_func<T>(T t);
+    public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
+        float max_distance = float.MaxValue, accept_func<T> accept = null)
         where T : MonoBehaviour
     {
-        var hits = Physics.RaycastAll(ray, max_distance);
-        foreach (var h in hits)
+        float min_dis = float.MaxValue;
+        hit = new RaycastHit();
+        T ret = default;
+
+        foreach (var h in Physics.RaycastAll(ray, max_distance))
         {
             var t = h.collider.gameObject.GetComponentInParent<T>();
             if (t != null)
             {
-                point = h.point;
-                return t;
+                if (accept != null)
+                    if (!accept(t))
+                        continue;
+
+                float dis = (ray.origin - h.point).sqrMagnitude;
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    hit = h;
+                    ret = t;
+                }
             }
         }
-        point = Vector3.zero;
-        return null;
+
+        return ret;
     }
 }

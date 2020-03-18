@@ -65,6 +65,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cursor: default_interact_cursor
+  item: plank
 --- !u!1001 &41173892686035445
 PrefabInstance:
   m_ObjectHideFlags: 0

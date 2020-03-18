@@ -2,32 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class inventory
+// An object that the player can interact with
+public class interactable : MonoBehaviour
 {
-    Dictionary<string, int> contents
-        = new Dictionary<string, int>();
-
-    public bool add_item(string item_name)
-    {
-        if (contents.ContainsKey(item_name)) contents[item_name] += 1;
-        else contents[item_name] = 1;
-        return true;
-    }
-
-    public string get_info()
-    {
-        string info = "Inventory:";
-        foreach (var kv in contents)
-            info += "\n    " + kv.Value + " " + kv.Key;
-        return info;
-    }
-
-    public int get_count(string item)
-    {
-        int count = 0;
-        if (contents.TryGetValue(item, out count)) { }
-        return count;
-    }
+    public virtual string cursor() { return cursors.DEFAULT_INTERACTION; }
+    public virtual void player_interact() { }
+    public virtual void on_start_interaction(RaycastHit point_hit) { }
+    public virtual void on_end_interaction() { }
+    protected void stop_interaction() { player.current.interacting_with = null; }
 }
 
 public class player : MonoBehaviour
@@ -44,30 +26,30 @@ public class player : MonoBehaviour
     public const float TERRAIN_SINK_ALLOW = 0.2f;
     public const float TERRAIN_SINK_RESET_DIST = GROUND_TEST_DIST;
     public const float INTERACTION_RANGE = 3f;
-    public const float ITEM_ANCHOR_SEARCH_RANGE = 5f;
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
     public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
     public const int MAX_MOVE_PROJ_REMOVE = 4;
 
-    public static new Camera camera { get; private set; }
-    public static inventory inventory { get; private set; }
+    public static player current;
 
-    public static Vector3 item_attraction_point
-    {
-        get { return camera.transform.position + Vector3.down; }
-    }
+    public new Camera camera { get; private set; }
 
     GameObject obscurer;
     GameObject map_obscurer;
 
+    // Called when the render range changes
     public void update_render_range()
     {
+        // Set the obscurer size to the render range
         obscurer.transform.localScale = Vector3.one * game.render_range;
         map_obscurer.transform.localScale = Vector3.one * game.render_range;
+
         if (!map_open)
         {
+            // If in 3D mode, set the camera clipping plane range to
+            // the same as render_range
             camera.farClipPlane = game.render_range;
             QualitySettings.shadowDistance = camera.farClipPlane;
         }
@@ -134,38 +116,69 @@ public class player : MonoBehaviour
 
     void Update()
     {
-        var manipulation_performed = ITEM_MANIPULATION.NONE;
-        if (item_carrying != null)
-        {
-            // We have an item
-            // Set the cursor to the carrying symbol
-            canvas.cursor = cursors.GRAB_CLOSED;
-
-            // Manipulate the item, recording the manipulation performed
-            manipulation_performed = manipulate_item();
-
-            // Drop the item if not left clicking
-            if (!Input.GetMouseButton(0))
-                item_carrying = null;
-        }
-
-        // Not carrying an item, try to pick one up
-        else
-        {
-            // Try to pick up an item
-            attempt_pickup_item();
-
-            // If nothing picked up, we can harvest stuff
-            if (item_carrying == null)
-                harvest_stuff();
-        }
-
-        // Carry out movement logic if we are not rotating a weld
-        if (manipulation_performed != ITEM_MANIPULATION.ROTATING_WELD)
-            move();
+        interact();
+        move();
     }
 
-    Vector3 velocity;
+    // The object we are currently interacting with
+    RaycastHit last_interaction_hit;
+    interactable _interacting_with;
+    public interactable interacting_with
+    {
+        get { return _interacting_with; }
+        set
+        {
+            if (_interacting_with != null)
+                _interacting_with.on_end_interaction();
+
+            _interacting_with = value;
+
+            if (value != null)
+                value.on_start_interaction(last_interaction_hit);
+        }
+    }
+
+    void interact()
+    {
+        // Interact with the current object
+        if (interacting_with != null)
+        {
+            canvas.cursor = interacting_with.cursor();
+            interacting_with.player_interact();
+            return;
+        }
+
+        // See if an interactable object is under the cursor
+        var inter = utils.raycast_for_closest<interactable>(
+            camera_ray(), out last_interaction_hit, INTERACTION_RANGE);
+
+        if (inter == null)
+        {
+            canvas.cursor = cursors.DEFAULT;
+            return;
+        }
+        else canvas.cursor = cursors.DEFAULT_INTERACTION;
+
+        // Set the interactable and cursor,
+        // interact with the object
+        if (Input.GetMouseButtonDown(0))
+            interacting_with = inter;
+    }
+
+    // The players current velocity
+    // in player-local coordinates
+    Vector3 local_velocity;
+
+    // Global velocity from local velocty
+    public Vector3 velocity
+    {
+        get
+        {
+            return local_velocity.x * transform.right +
+                   local_velocity.z * transform.forward +
+                   local_velocity.y * Vector3.up;
+        }
+    }
 
     void move()
     {
@@ -194,28 +207,28 @@ public class player : MonoBehaviour
         }
 
         // Gravity/Jumping
-        if (!grounded) velocity.y -= 9.81f * Time.deltaTime;
-        else if (velocity.y < 0) velocity.y = 0;
-        else if (Input.GetKeyDown(KeyCode.Space)) velocity.y = JUMP_VEL;
+        if (!grounded) local_velocity.y -= 9.81f * Time.deltaTime;
+        else if (local_velocity.y < 0) local_velocity.y = 0;
+        else if (Input.GetKeyDown(KeyCode.Space)) local_velocity.y = JUMP_VEL;
 
         // Move in the x-z plane using WASD
         float dv = Time.deltaTime * SPEED / ACCELERATION_TIME;
-        if (Input.GetKey(KeyCode.W)) velocity.z += dv;
-        else if (Input.GetKey(KeyCode.S)) velocity.z -= dv;
-        else velocity.z = 0;
+        if (Input.GetKey(KeyCode.W)) local_velocity.z += dv;
+        else if (Input.GetKey(KeyCode.S)) local_velocity.z -= dv;
+        else local_velocity.z = 0;
 
-        if (Input.GetKey(KeyCode.A)) velocity.x -= dv;
-        else if (Input.GetKey(KeyCode.D)) velocity.x += dv;
-        else velocity.x = 0;
+        if (Input.GetKey(KeyCode.A)) local_velocity.x -= dv;
+        else if (Input.GetKey(KeyCode.D)) local_velocity.x += dv;
+        else local_velocity.x = 0;
 
-        velocity.x = Mathf.Clamp(velocity.x, -SPEED, SPEED);
-        velocity.z = Mathf.Clamp(velocity.z, -SPEED, SPEED);
+        local_velocity.x = Mathf.Clamp(local_velocity.x, -SPEED, SPEED);
+        local_velocity.z = Mathf.Clamp(local_velocity.z, -SPEED, SPEED);
 
         if (map_open)
         {
             // If the map is open, don't strafe, rotate.
-            transform.Rotate(0, velocity.x * Time.deltaTime * ROTATION_SPEED, 0);
-            velocity.x = 0;
+            transform.Rotate(0, local_velocity.x * Time.deltaTime * ROTATION_SPEED, 0);
+            local_velocity.x = 0;
         }
 
         tryMove();
@@ -228,9 +241,9 @@ public class player : MonoBehaviour
         // before the whole move is rejected.
         if (attempts > MAX_MOVE_PROJ_REMOVE) return;
 
-        Vector3 move = (velocity.x * transform.right +
-                        velocity.z * transform.forward +
-                        velocity.y * Vector3.up) * Time.deltaTime;
+        Vector3 move = (local_velocity.x * transform.right +
+                        local_velocity.z * transform.forward +
+                        local_velocity.y * Vector3.up) * Time.deltaTime;
 
         // Check if this move will cause a collision
         RaycastHit hit;
@@ -245,10 +258,10 @@ public class player : MonoBehaviour
             offending_proj.y = 0;
             move -= offending_proj;
 
-            velocity.x = Vector3.Dot(move, transform.right);
-            velocity.z = Vector3.Dot(move, transform.forward);
-            velocity.y = move.y;
-            velocity /= Time.deltaTime;
+            local_velocity.x = Vector3.Dot(move, transform.right);
+            local_velocity.z = Vector3.Dot(move, transform.forward);
+            local_velocity.y = move.y;
+            local_velocity /= Time.deltaTime;
 
             tryMove(attempts + 1);
             return;
@@ -258,210 +271,48 @@ public class player : MonoBehaviour
         transform.position += move;
     }
 
+    // Return a ray going through the centre of the screen
     public Ray camera_ray()
     {
-        return new Ray(player.camera.transform.position,
-                    player.camera.transform.forward);
+        return new Ray(camera.transform.position,
+                       camera.transform.forward);
     }
 
-    float item_hold_distance = 3;
-    public Vector3 item_grab_point()
-    {
-        return camera.transform.position +
-            item_hold_distance * camera.transform.forward;
-    }
-
-    item _item_carrying;
-    public item item_carrying
-    {
-        get { return _item_carrying; }
-        private set
-        {
-            if (value == _item_carrying)
-                return;
-
-            if (_item_carrying != null)
-            {
-                _item_carrying.rigidbody.useGravity = true;
-                _item_carrying.transform.SetParent(null);
-            }
-
-            if (value != null)
-            {
-                value.rigidbody.useGravity = false;
-                value.transform.SetParent(camera.transform);
-            }
-
-            _item_carrying = value;
-        }
-    }
-
-    enum ITEM_MANIPULATION
-    {
-        NONE,
-        CARRYING,
-        WELDING,
-        ROTATING_WELD,
-    }
-
-    ITEM_MANIPULATION manipulate_item()
-    {
-        // Right mouse button down => "weld" mode
-        if (Input.GetMouseButton(1))
-        {
-            // Rotate the weld with left shift
-            if (Input.GetKey(KeyCode.LeftShift))
-            {
-                // Rotate weld => rotate the current anchor
-                item_carrying.rotate_anchor(camera.transform.right,
-                    Input.GetAxis("Mouse Y"));
-                item_carrying.rotate_anchor(camera.transform.up,
-                    -Input.GetAxis("Mouse X"));
-
-                // Snap rotation to 45 degree increments
-                if (Input.GetKey(KeyCode.S))
-                    item_carrying.snap_anchor_rotation();
-
-                return ITEM_MANIPULATION.ROTATING_WELD;
-            }
-
-            // Select the weld point
-            // Find the nearest surface to weld the item to
-            RaycastHit closest_hit = new RaycastHit();
-            float min_dis = float.MaxValue;
-            foreach (var h in Physics.RaycastAll(camera_ray(), ITEM_ANCHOR_SEARCH_RANGE))
-            {
-                if (h.transform.IsChildOf(item_carrying.transform))
-                    continue;
-
-                float dis = (h.point - camera.transform.position).magnitude;
-                if (dis < min_dis)
-                {
-                    min_dis = dis;
-                    closest_hit = h;
-                }
-            }
-
-            if (min_dis < float.MaxValue)
-            {
-                // Anchor the item at the given hit point
-                item_carrying.anchor_at(
-                    closest_hit.point, closest_hit.normal);
-            }
-            return ITEM_MANIPULATION.WELDING;
-        }
-
-        // Right button not down => "carry" mode
-
-        // Attract item towards grab point (dampen oscillations)
-        Vector3 dx = item_grab_point() - item_carrying.pivot.position;
-        Vector3 v = item_carrying.rigidbody.velocity;
-        item_carrying.rigidbody.AddForce(20 * dx - 4 * v);
-
-        // Move grab point backwards or forwards with scrollwheel
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0) item_hold_distance *= 1.2f;
-        else if (scroll < 0) item_hold_distance /= 1.2f;
-
-        return ITEM_MANIPULATION.CARRYING;
-    }
-
-    void attempt_pickup_item()
-    {
-        // Already have an item
-        if (item_carrying != null)
-            return;
-
-        // Find the nearest interactable item under the cursor
-        float min_dis = float.MaxValue;
-        item item_under_cursor = null;
-        RaycastHit item_hit = new RaycastHit();
-        foreach (var h in Physics.RaycastAll(camera_ray(), INTERACTION_RANGE))
-        {
-            var hi = h.transform.GetComponentInParent<item>();
-            if (hi == null) continue;
-
-            float dis = (h.point - camera.transform.position).magnitude;
-            if (dis < min_dis)
-            {
-                min_dis = dis;
-                item_under_cursor = hi;
-                item_hit = h;
-            }
-        }
-
-        // No item under cursor
-        if (item_under_cursor == null)
-        {
-            canvas.cursor = cursors.DEFAULT;
-            return;
-        }
-
-        canvas.cursor = cursors.DEFAULT_INTERACTION;
-        if (Input.GetMouseButtonDown(0))
-        {
-            // Pick up the item
-            item_hold_distance = (camera.transform.position - item_hit.point).magnitude;
-            item_carrying = item_under_cursor;
-
-            // Set the anchor to where we clicked the object and
-            // ensure the object is unwelded
-            item_carrying.set_pivot(item_hit.point, item_hit.normal);
-            item_carrying.rigidbody.isKinematic = false;
-        }
-    }
-
-    void harvest_stuff()
-    {
-        // Not dealing with items, see if a harvestable
-        // object is under the cursor
-        Vector3 harvest_point;
-        var to_harvest = utils.raycast_for<harvestable>(
-            camera_ray(), out harvest_point, INTERACTION_RANGE);
-
-        if (to_harvest == null)
-            return;
-
-        canvas.cursor = to_harvest.cursor;
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 spawn_point = (harvest_point +
-                camera.transform.position) / 2;
-            item.spawn(to_harvest.item, spawn_point);
-        }
-    }
-
+    // Saved rotation to restore when we return to the 3D view
     Quaternion saved_camera_rotation;
+
+    // True if in map view
     public bool map_open
     {
         get { return camera.orthographic; }
         set
         {
+            // Use the appropriate obscurer for
+            // the map or 3D views
+            map_obscurer.SetActive(value);
+            obscurer.SetActive(!value);
+
+            // Set the camera orthograpic if in 
+            // map view, otherwise perspective
+            camera.orthographic = value;
+
             if (value)
             {
+                // Save camera rotation to restore later
                 saved_camera_rotation = camera.transform.localRotation;
 
-                obscurer.SetActive(false);
-                map_obscurer.SetActive(true);
-
-                Vector3 obsc_pos = transform.position;
-                obsc_pos.y = MAP_OBSCURER_ALT;
-                map_obscurer.transform.position = obsc_pos;
-
-                camera.orthographic = true;
+                // Setup the camera in map mode/position   
                 camera.orthographicSize = game.render_range;
                 camera.transform.localPosition = Vector3.up * (MAP_CAMERA_ALT - transform.position.y);
                 camera.transform.localRotation = Quaternion.Euler(90, 0, 0);
-
                 camera.farClipPlane = MAP_CAMERA_CLIP;
+
+                // Render shadows further in map view
                 QualitySettings.shadowDistance = MAP_SHADOW_DISTANCE;
             }
             else
             {
-                obscurer.SetActive(true);
-                map_obscurer.SetActive(false);
-                camera.orthographic = false;
-                camera.transform.SetParent(transform);
+                // Restore 3D camera view
                 camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
                 camera.transform.localRotation = saved_camera_rotation;
             }
@@ -472,11 +323,11 @@ public class player : MonoBehaviour
     public static player create()
     {
         var player = new GameObject("player").AddComponent<player>();
-        player.inventory = new inventory();
 
         // Create the player camera 
         player.camera = new GameObject("camera").AddComponent<Camera>();
         player.camera.clearFlags = CameraClearFlags.SolidColor;
+        player.camera.transform.SetParent(player.transform);
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
@@ -490,6 +341,9 @@ public class player : MonoBehaviour
 
         player.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
         player.map_obscurer.transform.SetParent(player.transform);
+        Vector3 map_obsc_pos = player.transform.position;
+        map_obsc_pos.y = MAP_OBSCURER_ALT;
+        player.map_obscurer.transform.position = map_obsc_pos;
 
         // Make the sky the same color as the obscuring object
         RenderSettings.skybox = null;
@@ -501,6 +355,7 @@ public class player : MonoBehaviour
         // Start with the map closed
         player.map_open = false;
 
+        current = player;
         return player;
     }
 }

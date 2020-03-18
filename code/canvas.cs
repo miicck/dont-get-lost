@@ -85,7 +85,6 @@ public static class canvas
         debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
         debug_info.text += "Render range: " + game.render_range + "\n";
         debug_info.text += location_info() + "\n";
-        debug_info.text += player.inventory.get_info() + "\n";
     }
 }
 
