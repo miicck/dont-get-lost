@@ -58,7 +58,7 @@ public static class utils
     public delegate bool accept_func<T>(T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
         float max_distance = float.MaxValue, accept_func<T> accept = null)
-        where T : MonoBehaviour
+        where T : Component
     {
         float min_dis = float.MaxValue;
         hit = new RaycastHit();
@@ -83,6 +83,24 @@ public static class utils
             }
         }
 
+        return ret;
+    }
+
+    // Find the object in to_search that minimizes the given function
+    public delegate float float_func<T>(T t);
+    public static T find_to_min<T>(IEnumerable<T> to_search, float_func<T> objective)
+    {
+        T ret = default;
+        float min = float.MaxValue;
+        foreach (var t in to_search)
+        {
+            float val = objective(t);
+            if (val < min)
+            {
+                min = val;
+                ret = t;
+            }
+        }
         return ret;
     }
 }

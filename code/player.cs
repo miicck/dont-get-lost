@@ -5,8 +5,16 @@ using UnityEngine;
 // An object that the player can interact with
 public class interactable : MonoBehaviour
 {
+    [System.Flags]
+    public enum FLAGS
+    {
+        NONE = 0,
+        DISALLOWS_MOVEMENT = 2,
+        DISALLOWS_ROTATION = 4,
+    };
+
     public virtual string cursor() { return cursors.DEFAULT_INTERACTION; }
-    public virtual void player_interact() { }
+    public virtual FLAGS player_interact() { return FLAGS.NONE; }
     public virtual void on_start_interaction(RaycastHit point_hit) { }
     public virtual void on_end_interaction() { }
     protected void stop_interaction() { player.current.interacting_with = null; }
@@ -116,8 +124,13 @@ public class player : MonoBehaviour
 
     void Update()
     {
-        interact();
-        move();
+        var inter_flags = interact();
+
+        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
+            move();
+
+        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
+            mouse_look();
     }
 
     // The object we are currently interacting with
@@ -138,14 +151,13 @@ public class player : MonoBehaviour
         }
     }
 
-    void interact()
+    interactable.FLAGS interact()
     {
         // Interact with the current object
         if (interacting_with != null)
         {
             canvas.cursor = interacting_with.cursor();
-            interacting_with.player_interact();
-            return;
+            return interacting_with.player_interact();
         }
 
         // See if an interactable object is under the cursor
@@ -155,7 +167,7 @@ public class player : MonoBehaviour
         if (inter == null)
         {
             canvas.cursor = cursors.DEFAULT;
-            return;
+            return interactable.FLAGS.NONE;
         }
         else canvas.cursor = cursors.DEFAULT_INTERACTION;
 
@@ -163,6 +175,8 @@ public class player : MonoBehaviour
         // interact with the object
         if (Input.GetMouseButtonDown(0))
             interacting_with = inter;
+
+        return interactable.FLAGS.NONE;
     }
 
     // The players current velocity
@@ -178,6 +192,25 @@ public class player : MonoBehaviour
                    local_velocity.z * transform.forward +
                    local_velocity.y * Vector3.up;
         }
+    }
+
+    void mouse_look()
+    {
+        if (map_open)
+        {
+            // Rotate the player with A/D
+            float xr = 0;
+            if (Input.GetKey(KeyCode.A)) xr = -1f;
+            else if (Input.GetKey(KeyCode.D)) xr = 1.0f;
+            transform.Rotate(0, xr * Time.deltaTime * ROTATION_SPEED, 0);
+            return;
+        }
+
+        // Rotate the view using the mouse
+        // Note that horizontal moves rotate the player
+        // vertical moves rotate the camera
+        transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
+        camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
     }
 
     void move()
@@ -197,14 +230,6 @@ public class player : MonoBehaviour
             else if (scroll < 0) game.render_range_target *= 1.2f;
             camera.orthographicSize = game.render_range;
         }
-        else
-        {
-            // Rotate the view using the mouse
-            // Note that horizontal moves rotate the player
-            // vertical moves rotate the camera
-            transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
-            camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
-        }
 
         // Gravity/Jumping
         if (!grounded) local_velocity.y -= 9.81f * Time.deltaTime;
@@ -217,19 +242,14 @@ public class player : MonoBehaviour
         else if (Input.GetKey(KeyCode.S)) local_velocity.z -= dv;
         else local_velocity.z = 0;
 
-        if (Input.GetKey(KeyCode.A)) local_velocity.x -= dv;
+        // If the map isn't open, use A and D to strafe
+        if (map_open) local_velocity.x = 0;
+        else if (Input.GetKey(KeyCode.A)) local_velocity.x -= dv;
         else if (Input.GetKey(KeyCode.D)) local_velocity.x += dv;
         else local_velocity.x = 0;
 
         local_velocity.x = Mathf.Clamp(local_velocity.x, -SPEED, SPEED);
         local_velocity.z = Mathf.Clamp(local_velocity.z, -SPEED, SPEED);
-
-        if (map_open)
-        {
-            // If the map is open, don't strafe, rotate.
-            transform.Rotate(0, local_velocity.x * Time.deltaTime * ROTATION_SPEED, 0);
-            local_velocity.x = 0;
-        }
 
         tryMove();
     }

@@ -17,6 +17,7 @@ public static class canvas
     static Canvas canv;
     static Text debug_info;
     static Image crosshairs;
+    static Image direction_indicator;
     public static Transform transform { get { return canv.transform; } }
 
     public static string cursor
@@ -69,6 +70,15 @@ public static class canvas
         crt.anchoredPosition = Vector2.zero;
         cursor = "default_cursor";
 
+        // Create the direction indicator
+        direction_indicator = new GameObject("direction_indicator").AddComponent<Image>();
+        direction_indicator.transform.SetParent(canv.transform);
+        var drt = direction_indicator.GetComponent<RectTransform>();
+        drt.sizeDelta = new Vector2(64, 64);
+        drt.anchorMin = new Vector2(0.5f, 0.5f);
+        drt.anchorMax = new Vector2(0.5f, 0.5f);
+        drt.anchoredPosition = Vector2.zero;
+        direction_indicator.sprite = Resources.Load<Sprite>("sprites/direction_indicator");
     }
 
     static string location_info()
@@ -85,6 +95,14 @@ public static class canvas
         debug_info.text = "FPS: " + (1 / Time.deltaTime) + "\n";
         debug_info.text += "Render range: " + game.render_range + "\n";
         debug_info.text += location_info() + "\n";
+    }
+
+    public static void set_direction_indicator(Vector2 direction)
+    {
+        direction_indicator.transform.localRotation =
+            Quaternion.LookRotation(Vector3.forward, direction);
+        direction_indicator.transform.localScale = new Vector3(
+            1, direction.magnitude, 1);
     }
 }
 
