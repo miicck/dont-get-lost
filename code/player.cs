@@ -30,8 +30,8 @@ public class player : MonoBehaviour
     public const float ACCELERATION_TIME = 0.2f;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
-    public const float GROUND_TEST_DIST = 0.15f;
-    public const float TERRAIN_SINK_ALLOW = 0.2f;
+    public const float GROUND_TEST_DIST = 0.05f;
+    public const float TERRAIN_SINK_ALLOW = GROUND_TEST_DIST/5f;
     public const float TERRAIN_SINK_RESET_DIST = GROUND_TEST_DIST;
     public const float INTERACTION_RANGE = 3f;
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
@@ -268,7 +268,7 @@ public class player : MonoBehaviour
         // Check if this move will cause a collision
         RaycastHit hit;
         if (Physics.CapsuleCast(
-            lowerSpherePosition, upperSpherePosition,
+            upperSpherePosition, lowerSpherePosition,
             WIDTH / 2, move.normalized, out hit, move.magnitude))
         {
             // Remove the offending projection of 

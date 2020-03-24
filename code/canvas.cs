@@ -79,6 +79,7 @@ public static class canvas
         drt.anchorMax = new Vector2(0.5f, 0.5f);
         drt.anchoredPosition = Vector2.zero;
         direction_indicator.sprite = Resources.Load<Sprite>("sprites/direction_indicator");
+        set_direction_indicator(Vector2.zero);
     }
 
     static string location_info()
