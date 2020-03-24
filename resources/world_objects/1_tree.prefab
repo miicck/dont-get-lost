@@ -253,7 +253,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cursor: default_interact_cursor
+  custom_cursor: 
+  product: plank
 --- !u!1 &1850662618263200
 GameObject:
   m_ObjectHideFlags: 0

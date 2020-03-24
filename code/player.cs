@@ -22,109 +22,52 @@ public class interactable : MonoBehaviour
 
 public class player : MonoBehaviour
 {
-    // Dimensions of a player
+    //###########//
+    // CONSTANTS //
+    //###########//
+
     public const float HEIGHT = 1.8f;
     public const float WIDTH = 0.45f;
     public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
+
     public const float SPEED = 10f;
     public const float ACCELERATION_TIME = 0.2f;
+    public const float ACCELERATION = SPEED / ACCELERATION_TIME;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
+    public const int MAX_MOVE_PROJ_REMOVE = 4;
+
     public const float GROUND_TEST_DIST = 0.05f;
-    public const float TERRAIN_SINK_ALLOW = GROUND_TEST_DIST/5f;
+    public const float TERRAIN_SINK_ALLOW = GROUND_TEST_DIST / 5f;
     public const float TERRAIN_SINK_RESET_DIST = GROUND_TEST_DIST;
+
     public const float INTERACTION_RANGE = 3f;
+
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
     public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
-    public const int MAX_MOVE_PROJ_REMOVE = 4;
 
-    public static player current;
-
-    public new Camera camera { get; private set; }
-
-    GameObject obscurer;
-    GameObject map_obscurer;
-
-    // Called when the render range changes
-    public void update_render_range()
-    {
-        // Set the obscurer size to the render range
-        obscurer.transform.localScale = Vector3.one * game.render_range;
-        map_obscurer.transform.localScale = Vector3.one * game.render_range;
-
-        if (!map_open)
-        {
-            // If in 3D mode, set the camera clipping plane range to
-            // the same as render_range
-            camera.farClipPlane = game.render_range;
-            QualitySettings.shadowDistance = camera.farClipPlane;
-        }
-    }
-
-    // The position of the upper sphere of the player
-    // (used for capsule-based collision)
-    public Vector3 upperSpherePosition
-    {
-        get { return transform.position + Vector3.up * (HEIGHT - WIDTH / 2); }
-    }
-
-    // The position of the lower sphere of the player
-    // (used for capsule-based collision)
-    public Vector3 lowerSpherePosition
-    {
-        get { return transform.position + Vector3.up * WIDTH / 2; }
-    }
-
-    // Returns true if the player is on the ground
-    bool grounded
-    {
-        get
-        {
-            return Physics.CapsuleCast(
-                lowerSpherePosition, upperSpherePosition,
-                WIDTH / 2, Vector3.down, GROUND_TEST_DIST);
-        }
-    }
-
-    void OnDrawGizmos()
-    {
-        if (grounded) Gizmos.color = Color.green;
-        else Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(upperSpherePosition, WIDTH / 2);
-        Gizmos.DrawWireSphere(lowerSpherePosition, WIDTH / 2);
-    }
-
-    // Force the player to stay slightly above the terrain
-    void stay_above_terrain()
-    {
-        if (transform.position.y < 0)
-        {
-            Vector3 pos = transform.position;
-            pos.y = 0;
-            transform.position = pos;
-        }
-
-        var hits = Physics.RaycastAll(
-            transform.position + Vector3.up * world.MAX_ALTITUDE,
-            Vector3.down, world.MAX_ALTITUDE + TERRAIN_SINK_ALLOW);
-        foreach (var hit in hits)
-            if (hit.collider != null)
-            {
-                var terr = hit.collider.gameObject.GetComponent<Terrain>();
-                if (terr != null)
-                {
-                    Vector3 pos = transform.position;
-                    pos.y = hit.point.y + TERRAIN_SINK_RESET_DIST;
-                    transform.position = pos;
-                }
-            }
-    }
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     void Update()
     {
         var inter_flags = interact();
+
+        // Toggle the map view
+        if (Input.GetKeyDown(KeyCode.M))
+            map_open = !map_open;
+
+        if (map_open)
+        {
+            // Zoom the map
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0) game.render_range_target /= 1.2f;
+            else if (scroll < 0) game.render_range_target *= 1.2f;
+            camera.orthographicSize = game.render_range;
+        }
 
         if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
             move();
@@ -132,6 +75,10 @@ public class player : MonoBehaviour
         if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
             mouse_look();
     }
+
+    //##################//
+    // ITEM INTERACTION //
+    //##################//
 
     // The object we are currently interacting with
     RaycastHit last_interaction_hit;
@@ -179,9 +126,16 @@ public class player : MonoBehaviour
         return interactable.FLAGS.NONE;
     }
 
+    //###########//
+    //  MOVEMENT //
+    //###########//
+
     // The players current velocity
     // in player-local coordinates
     Vector3 local_velocity;
+
+    // The rigidbody controlling player physics
+    new Rigidbody rigidbody;
 
     // Global velocity from local velocty
     public Vector3 velocity
@@ -191,6 +145,76 @@ public class player : MonoBehaviour
             return local_velocity.x * transform.right +
                    local_velocity.z * transform.forward +
                    local_velocity.y * Vector3.up;
+        }
+    }
+
+    // Returns true if the player is on the ground
+    bool grounded
+    {
+        get
+        {
+            return Physics.CapsuleCast(
+                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + WIDTH/2f),
+                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + HEIGHT - WIDTH/2f),
+                WIDTH / 2, Vector3.down, GROUND_TEST_DIST);
+        }
+    }
+
+    void move()
+    {
+        Vector3 velocity = rigidbody.velocity;
+
+        if (Input.GetKeyDown(KeyCode.Space))
+            if (grounded)
+                velocity.y += JUMP_VEL;
+
+        // Accelerate in forward/backward direction on W/S
+        // if neither is pressed, set forward/backward velocity to 0
+        if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.W)) velocity += transform.forward * ACCELERATION * Time.deltaTime;
+        else velocity -= Vector3.Project(velocity, transform.forward);
+
+        // Accelerate in left/right direction on A/D
+        // if neither is pressed, set left/right velocity to 0
+        if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+        else velocity -= Vector3.Project(velocity, camera.transform.right);
+
+        // Ensure speed in xz plane is not > SPEED
+        float xz_mag = Mathf.Sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        if (xz_mag > SPEED)
+        {
+            velocity.x *= SPEED / xz_mag;
+            velocity.z *= SPEED / xz_mag;
+        }
+
+        // Apply the modified velocity
+        rigidbody.velocity = velocity;
+    }
+
+
+    //#####################//
+    // VIEW/CAMERA CONTROL //
+    //#####################//
+
+    // Objects used to obscure player view
+    public new Camera camera { get; private set; }
+    GameObject obscurer;
+    GameObject map_obscurer;
+
+    // Called when the render range changes
+    public void update_render_range()
+    {
+        // Set the obscurer size to the render range
+        obscurer.transform.localScale = Vector3.one * game.render_range;
+        map_obscurer.transform.localScale = Vector3.one * game.render_range;
+
+        if (!map_open)
+        {
+            // If in 3D mode, set the camera clipping plane range to
+            // the same as render_range
+            camera.farClipPlane = game.render_range;
+            QualitySettings.shadowDistance = camera.farClipPlane;
         }
     }
 
@@ -211,91 +235,6 @@ public class player : MonoBehaviour
         // vertical moves rotate the camera
         transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
         camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
-    }
-
-    void move()
-    {
-        // Toggle the map view
-        if (Input.GetKeyDown(KeyCode.M))
-            map_open = !map_open;
-
-        // Don't go below the terrain
-        stay_above_terrain();
-
-        if (map_open)
-        {
-            // Zoom the map
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0) game.render_range_target /= 1.2f;
-            else if (scroll < 0) game.render_range_target *= 1.2f;
-            camera.orthographicSize = game.render_range;
-        }
-
-        // Gravity/Jumping
-        if (!grounded) local_velocity.y -= 9.81f * Time.deltaTime;
-        else if (local_velocity.y < 0) local_velocity.y = 0;
-        else if (Input.GetKeyDown(KeyCode.Space)) local_velocity.y = JUMP_VEL;
-
-        // Move in the x-z plane using WASD
-        float dv = Time.deltaTime * SPEED / ACCELERATION_TIME;
-        if (Input.GetKey(KeyCode.W)) local_velocity.z += dv;
-        else if (Input.GetKey(KeyCode.S)) local_velocity.z -= dv;
-        else local_velocity.z = 0;
-
-        // If the map isn't open, use A and D to strafe
-        if (map_open) local_velocity.x = 0;
-        else if (Input.GetKey(KeyCode.A)) local_velocity.x -= dv;
-        else if (Input.GetKey(KeyCode.D)) local_velocity.x += dv;
-        else local_velocity.x = 0;
-
-        local_velocity.x = Mathf.Clamp(local_velocity.x, -SPEED, SPEED);
-        local_velocity.z = Mathf.Clamp(local_velocity.z, -SPEED, SPEED);
-
-        tryMove();
-    }
-
-    void tryMove(int attempts = 1)
-    {
-        // Max attempts = The number of projections that 
-        // cause collisions which can be removed from "move"
-        // before the whole move is rejected.
-        if (attempts > MAX_MOVE_PROJ_REMOVE) return;
-
-        Vector3 move = (local_velocity.x * transform.right +
-                        local_velocity.z * transform.forward +
-                        local_velocity.y * Vector3.up) * Time.deltaTime;
-
-        // Check if this move will cause a collision
-        RaycastHit hit;
-        if (Physics.CapsuleCast(
-            upperSpherePosition, lowerSpherePosition,
-            WIDTH / 2, move.normalized, out hit, move.magnitude))
-        {
-            // Remove the offending projection of 
-            // the proposed move (from both the move
-            // and the local velocity) and try again
-            Vector3 offending_proj = Vector3.Project(move, hit.normal);
-            offending_proj.y = 0;
-            move -= offending_proj;
-
-            local_velocity.x = Vector3.Dot(move, transform.right);
-            local_velocity.z = Vector3.Dot(move, transform.forward);
-            local_velocity.y = move.y;
-            local_velocity /= Time.deltaTime;
-
-            tryMove(attempts + 1);
-            return;
-        }
-
-        // Make the move
-        transform.position += move;
-    }
-
-    // Return a ray going through the centre of the screen
-    public Ray camera_ray()
-    {
-        return new Ray(camera.transform.position,
-                       camera.transform.forward);
     }
 
     // Saved rotation to restore when we return to the 3D view
@@ -339,6 +278,20 @@ public class player : MonoBehaviour
         }
     }
 
+    // Return a ray going through the centre of the screen
+    public Ray camera_ray()
+    {
+        return new Ray(camera.transform.position,
+                       camera.transform.forward);
+    }
+
+    //################//
+    // STATIC METHODS //
+    //################//
+
+    // The current player
+    public static player current;
+
     // Create and return a player
     public static player create()
     {
@@ -348,6 +301,7 @@ public class player : MonoBehaviour
         player.camera = new GameObject("camera").AddComponent<Camera>();
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.transform.SetParent(player.transform);
+        player.camera.transform.localPosition = new Vector3(0, EYE_HEIGHT, 0);
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
@@ -374,6 +328,16 @@ public class player : MonoBehaviour
 
         // Start with the map closed
         player.map_open = false;
+
+        // Create the player collider
+        var cc = player.gameObject.AddComponent<CapsuleCollider>();
+        cc.radius = WIDTH / 2f;
+        cc.height = HEIGHT;
+        cc.center = new Vector3(0, HEIGHT / 2, 0);
+
+        // Create the player rigidbody
+        player.rigidbody = player.gameObject.AddComponent<Rigidbody>();
+        player.rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
 
         current = player;
         return player;
