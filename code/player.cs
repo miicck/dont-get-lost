@@ -69,11 +69,13 @@ public class player : MonoBehaviour
             camera.orthographicSize = game.render_range;
         }
 
-        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
-            move();
+        if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
+            rigidbody.velocity = Vector3.zero;
+        else move();
 
-        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
-            mouse_look();
+        if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
+            rigidbody.angularVelocity = Vector3.zero;
+        else mouse_look();
     }
 
     //##################//
@@ -154,8 +156,8 @@ public class player : MonoBehaviour
         get
         {
             return Physics.CapsuleCast(
-                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + WIDTH/2f),
-                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + HEIGHT - WIDTH/2f),
+                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + WIDTH / 2f),
+                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + HEIGHT - WIDTH / 2f),
                 WIDTH / 2, Vector3.down, GROUND_TEST_DIST);
         }
     }

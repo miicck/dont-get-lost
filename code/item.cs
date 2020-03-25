@@ -4,11 +4,18 @@ using UnityEngine;
 
 public class item : interactable
 {
+    //###########//
+    // CONSTANTS //
+    //###########//
+
     const float CARRY_RESTORE_FORCE = 10f;
     public const float WELD_RANGE = 5f;
 
-    // Component access
-    new public Rigidbody rigidbody { get; private set; }
+    //#########//
+    // WELDING //
+    //#########//
+
+    // Points that welds snap to
     snap_point[] snap_points { get { return GetComponentsInChildren<snap_point>(); } }
 
     // A weld represents the fixture of an item via a pivot
@@ -44,61 +51,55 @@ public class item : interactable
             this.pivot = pivot;
             this.weld_location = weld_location;
             this.weld_rotation = weld_rotation;
-
-            // Allign the pivot to be antiparrallel to the weld rotation
-            Vector3 weld_up = weld_rotation * Vector3.up;
-            Vector3 weld_forward = weld_rotation * Vector3.forward;
-            set_pivot_rotation(Quaternion.LookRotation(weld_forward, -weld_up));
+            snap_pivot_rotation();
         }
 
         // The primary axes in the weld-rotated coordinate system
         Vector3[] weld_axes()
         {
-            return new Vector3[]
+            // Axes relative to weld axis
+            Vector3[] axes = new Vector3[]
             {
-                weld_rotation * new Vector3(1,0,0),
-                weld_rotation * new Vector3(0,1,0),
-                weld_rotation * new Vector3(0,0,1),
-                weld_rotation * new Vector3(-1,0,0),
-                weld_rotation * new Vector3(0,-1,0),
-                weld_rotation * new Vector3(0,0,-1)
+                new Vector3( 1,0,0), new Vector3(0, 1,0), new Vector3(0,0, 1),
+                new Vector3(-1,0,0), new Vector3(0,-1,0), new Vector3(0,0,-1)
             };
+
+            // Rotate by the weld rotation/normalize to
+            // obtain global rotation weld-axes
+            for (int i = 0; i < axes.Length; ++i)
+                axes[i] = weld_rotation * axes[i];
+
+            return axes;
         }
 
         // The rotation axes to snap the pivot up-direction to
         Vector3[] snap_axes()
         {
+            // Axes relative to weld axis
             Vector3[] axes = new Vector3[]
             {
-                new Vector3(1,0,0),
-                new Vector3(0,1,0),
-                new Vector3(0,0,1),
-
-                new Vector3(-1,0,0),
-                new Vector3(0,-1,0),
-                new Vector3(0,0,-1),
-
-                new Vector3(0,1,1),
-                new Vector3(1,0,1),
-                new Vector3(1,1,0),
-
-                new Vector3(0,-1,1),
-                new Vector3(-1,0,1),
-                new Vector3(-1,1,0),
-
-                new Vector3(0,1,-1),
-                new Vector3(1,0,-1),
-                new Vector3(1,-1,0),
-
-                new Vector3(0,-1,-1),
-                new Vector3(-1,0,-1),
-                new Vector3(-1,-1,0),
+                new Vector3( 1, 0, 0), new Vector3( 0, 1, 0), new Vector3( 0, 0, 1),
+                new Vector3(-1, 0, 0), new Vector3( 0,-1, 0), new Vector3( 0, 0,-1),
+                new Vector3( 0, 1, 1), new Vector3( 1, 0, 1), new Vector3( 1, 1, 0),
+                new Vector3( 0,-1, 1), new Vector3(-1, 0, 1), new Vector3(-1, 1, 0),
+                new Vector3( 0, 1,-1), new Vector3( 1, 0,-1), new Vector3( 1,-1, 0),
+                new Vector3( 0,-1,-1), new Vector3(-1, 0,-1), new Vector3(-1,-1, 0),
             };
 
+            // Rotate by the weld rotation/normalize to
+            // obtain global rotation snap-axes
             for (int i = 0; i < axes.Length; ++i)
                 axes[i] = weld_rotation * axes[i].normalized;
 
             return axes;
+        }
+
+        void snap_pivot_rotation()
+        {
+            // Set the pivot to point along the closest axes to it's current up/forward
+            Vector3 up_axis = utils.find_to_min(snap_axes(), (a) => -Vector3.Dot(a, pivot.transform.up));
+            Vector3 fw_axis = utils.find_to_min(snap_axes(), (a) => -Vector3.Dot(a, pivot.transform.forward));
+            set_pivot_rotation(Quaternion.LookRotation(fw_axis, up_axis));
         }
 
         // Rotate the pivot with the keyboard keys
@@ -108,24 +109,15 @@ public class item : interactable
             Vector3 fd = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.forward));
             Vector3 ud = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.up));
 
-            if (Input.GetKeyDown(KeyCode.D))
-                to_weld.transform.RotateAround(pivot.transform.position, fd, -60);
-            if (Input.GetKeyDown(KeyCode.A))
-                to_weld.transform.RotateAround(pivot.transform.position, fd, 60);
-            if (Input.GetKeyDown(KeyCode.S))
-                to_weld.transform.RotateAround(pivot.transform.position, rd, -60);
-            if (Input.GetKeyDown(KeyCode.W))
-                to_weld.transform.RotateAround(pivot.transform.position, rd, 60);
-            if (Input.GetKeyDown(KeyCode.Q))
-                to_weld.transform.RotateAround(pivot.transform.position, ud, -60);
-            if (Input.GetKeyDown(KeyCode.E))
-                to_weld.transform.RotateAround(pivot.transform.position, ud, 60);
+            if (Input.GetKeyDown(KeyCode.D)) to_weld.transform.RotateAround(pivot.transform.position, -fd, 50);
+            else if (Input.GetKeyDown(KeyCode.A)) to_weld.transform.RotateAround(pivot.transform.position, fd, 50);
+            else if (Input.GetKeyDown(KeyCode.S)) to_weld.transform.RotateAround(pivot.transform.position, -rd, 50);
+            else if (Input.GetKeyDown(KeyCode.W)) to_weld.transform.RotateAround(pivot.transform.position, rd, 50);
+            else if (Input.GetKeyDown(KeyCode.Q)) to_weld.transform.RotateAround(pivot.transform.position, -ud, 50);
+            else if (Input.GetKeyDown(KeyCode.E)) to_weld.transform.RotateAround(pivot.transform.position, ud, 50);
+            else return;
 
-            Vector3 axis = utils.find_to_min(snap_axes(), (a) =>
-            {
-                return -Vector3.Dot(a, pivot.transform.up);
-            });
-            set_pivot_rotation(Quaternion.LookRotation(pivot.transform.right, axis));
+            snap_pivot_rotation();
         }
 
         public void rotate(float x, float y)
@@ -142,13 +134,13 @@ public class item : interactable
 
             // Find the axis most alligned with the mouse movement 
             // (ignoring component in forward direction)
-            Vector3 axis = utils.find_to_min(snap_axes(), (a) =>
+            Vector3 up_axis = utils.find_to_min(snap_axes(), (a) =>
             {
                 a -= Vector3.Project(a, player.current.camera.transform.forward);
                 return Vector3.Dot(mouse_dir.normalized, a.normalized);
             });
 
-            set_pivot_rotation(Quaternion.LookRotation(pivot.transform.right, axis));
+            set_pivot_rotation(Quaternion.LookRotation(pivot.transform.forward, up_axis));
         }
 
         public void draw_gizmos()
@@ -164,7 +156,7 @@ public class item : interactable
 
             Gizmos.color = Color.cyan;
             foreach (var a in snap_axes())
-                Gizmos.DrawLine(weld_location, weld_location + a);
+                Gizmos.DrawLine(weld_location, weld_location + a / 2);
         }
     }
 
@@ -256,6 +248,14 @@ public class item : interactable
             Quaternion.identity);
     }
 
+    //#####################//
+    // PLAYER INTERACTIONS //
+    //#####################//
+
+    new public Rigidbody rigidbody { get; private set; }
+    Transform carry_pivot;
+    float carry_distance;
+
     public override FLAGS player_interact()
     {
         // Drop item
@@ -265,7 +265,20 @@ public class item : interactable
             return FLAGS.NONE;
         }
 
-        if (weld != null)
+        if (weld == null) // Item is not welded
+        {
+            // Snap item to carrying point
+            Vector3 carry_point = player.current.camera.transform.position +
+                 carry_distance * player.current.camera.transform.forward;
+            transform.position += carry_point - carry_pivot.position;
+
+            // Move item towards/away on scroll
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0) carry_distance *= 1.2f;
+            else if (scroll < 0) carry_distance /= 1.2f;
+            if (carry_distance > WELD_RANGE) carry_distance = WELD_RANGE;
+        }
+        else // Item is welded
         {
             // Unweld on right click
             if (Input.GetMouseButtonDown(1))
@@ -300,24 +313,8 @@ public class item : interactable
             }
         }
 
-        Vector3 carry_point = player.current.camera.transform.position +
-            carry_distance * player.current.camera.transform.forward;
-
-        Vector3 dx = carry_pivot.position - carry_point;
-        Vector3 v = rigidbody.velocity;
-
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0) carry_distance *= 1.2f;
-        else if (scroll < 0) carry_distance /= 1.2f;
-        carry_distance = Mathf.Clamp(carry_distance, 1.0f, player.INTERACTION_RANGE);
-
-        rigidbody.AddForce(-CARRY_RESTORE_FORCE * (dx + v));
-
         return FLAGS.NONE;
     }
-
-    Transform carry_pivot;
-    float carry_distance;
 
     public override void on_start_interaction(RaycastHit point_hit)
     {
@@ -328,34 +325,39 @@ public class item : interactable
 
         transform.SetParent(player.current.camera.transform);
         weld = null;
-        rigidbody.useGravity = false;
-        rigidbody.angularDrag *= 200f;
+        rigidbody.isKinematic = true;
+        rigidbody.detectCollisions = false;
         carry_distance = 2f;
     }
 
     public override void on_end_interaction()
     {
         transform.SetParent(null);
-        rigidbody.useGravity = true;
-        rigidbody.angularDrag /= 200f;
+        if (weld == null)
+            rigidbody.isKinematic = false;
+        rigidbody.detectCollisions = true;
+
         Destroy(carry_pivot.gameObject);
         canvas.set_direction_indicator(Vector2.zero);
     }
 
-    // Return a cursor that looks like grabbing if we are carrying an item
     public override string cursor()
     {
         return cursors.GRAB_CLOSED;
     }
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     private void OnDrawGizmos()
     {
         if (weld != null) weld.draw_gizmos();
     }
 
-    //----------------//
-    //  STATIC STUFF  //
-    //----------------//
+    //##############//
+    // STATIC STUFF //
+    //##############//
 
     public static item spawn(string name, Vector3 position)
     {

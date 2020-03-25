@@ -254,7 +254,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   custom_cursor: 
-  product: plank
+  product: planks
 --- !u!1 &1850662618263200
 GameObject:
   m_ObjectHideFlags: 0

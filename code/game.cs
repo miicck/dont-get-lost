@@ -65,6 +65,9 @@ public class game : MonoBehaviour
 
         sun.shadows = LightShadows.Soft;
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
+
+        if (Application.isEditor)
+            QualitySettings.vSyncCount = 0;
     }
 
     void Update()
