@@ -194,7 +194,6 @@ public class player : MonoBehaviour
         rigidbody.velocity = velocity;
     }
 
-
     //#####################//
     // VIEW/CAMERA CONTROL //
     //#####################//

@@ -102,6 +102,9 @@ public class game : MonoBehaviour
 
     void OnApplicationQuit()
     {
+        // End any player interactions
+        player.current.interacting_with = null;
+
         // Save the world
         world.destroy();
     }

@@ -10,9 +10,10 @@ public class chunk
     public int x { get; private set; }
     public int z { get; private set; }
 
-    Transform transform;
+    public Transform transform { get; private set; }
     Terrain terrain;
     biome.point[,] points = new biome.point[TERRAIN_RES, TERRAIN_RES];
+    item[] items { get { return transform.GetComponentsInChildren<item>(); } }
 
     // Coordinate transforms
     int grid_to_world_x(int i) { return x * SIZE + i - SIZE / 2; }
@@ -35,6 +36,18 @@ public class chunk
         );
     }
 
+    // The transform containing all of the chunks
+    static Transform _chunk_container;
+    static Transform chunk_container
+    {
+        get
+        {
+            if (_chunk_container == null)
+                _chunk_container = new GameObject("chunks").transform;
+            return _chunk_container;
+        }
+    }
+
     public chunk(int x, int z)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -45,6 +58,7 @@ public class chunk
 
         // Create the transform representing this chunk
         transform = new GameObject("chunk_" + x + "_" + z).transform;
+        transform.SetParent(chunk_container);
         transform.position = new Vector3(x - 0.5f, 0, z - 0.5f) * SIZE;
 
         // Create the water level
@@ -281,25 +295,44 @@ public class chunk
             for (int step = 0; step < steps_per_frame; ++step)
                 if (chunk.continue_generation())
                 {
+                    // Generation complete, destroy
+                    // this generator
                     Destroy(gameObject);
                     return;
                 }
         }
     }
 
-    // Sleeping world objects are those who's chunks have been
+    // Sleeping objects are those who's chunks have been
     // destroyed but might be reloaded in the near future.
-    // Only if a biome is destroyed will the world objects in it
+    // Only if a biome is destroyed will the objects in it
     // be saved to disk/destroyed.
-    static Transform _sleeping_world_objects;
-    static Transform sleeping_world_objects
+    static Transform _all_sleeping_objects;
+    Transform _sleeping_objects;
+    Transform sleeping_objects
     {
         get
         {
-            if (_sleeping_world_objects == null)
-                _sleeping_world_objects =
-                    new GameObject("sleeping_world_objects").transform;
-            return _sleeping_world_objects;
+            // Top level transform contains the sleeping
+            // objects for all chunks
+            if (_all_sleeping_objects == null)
+                _all_sleeping_objects =
+                    new GameObject("sleeping_objects").transform;
+
+            // Create (or find) the transform containing sleeping
+            // objects from this chunk
+            if (_sleeping_objects == null)
+            {
+                string so_name = "chunk_" + x + "_" + z;
+                _sleeping_objects = _all_sleeping_objects.Find(so_name);
+                if (_sleeping_objects == null)
+                {
+                    _sleeping_objects = new GameObject(so_name).transform;
+                    _sleeping_objects.transform.SetParent(_all_sleeping_objects);
+                }
+            }
+
+            return _sleeping_objects;
         }
     }
 
@@ -316,7 +349,7 @@ public class chunk
                     continue;
 
                 var wo = points[i, j].world_object_gen.generated;
-                wo.transform.SetParent(sleeping_world_objects);
+                wo.transform.SetParent(sleeping_objects);
                 wo.gameObject.SetActive(false);
             }
 

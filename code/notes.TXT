@@ -1,0 +1,3 @@
+Eventual multiplayer?
+	- No need to serialize world over network; use a seeded generator
+	- Items only thing that needs serializing

@@ -318,12 +318,16 @@ public class item : interactable
 
     public override void on_start_interaction(RaycastHit point_hit)
     {
+        // Create the pivot point that we clicked the item at
         carry_pivot = new GameObject("pivot").transform;
         carry_pivot.SetParent(transform);
         carry_pivot.transform.position = point_hit.point;
         carry_pivot.rotation = player.current.camera.transform.rotation;
 
+        // Item is under player ownership
         transform.SetParent(player.current.camera.transform);
+
+        // Setup item in carry mode
         weld = null;
         rigidbody.isKinematic = true;
         rigidbody.detectCollisions = false;
@@ -332,11 +336,12 @@ public class item : interactable
 
     public override void on_end_interaction()
     {
-        transform.SetParent(null);
-        if (weld == null)
-            rigidbody.isKinematic = false;
-        rigidbody.detectCollisions = true;
+        // Return the item to chunk-ownership  
+        transform.SetParent(world.chunk_at(transform.position).transform);
 
+        // Setup item in world mode
+        if (weld == null) rigidbody.isKinematic = false;
+        rigidbody.detectCollisions = true;
         Destroy(carry_pivot.gameObject);
         canvas.set_direction_indicator(Vector2.zero);
     }
@@ -361,11 +366,47 @@ public class item : interactable
 
     public static item spawn(string name, Vector3 position)
     {
-        var i = Resources.Load<item>("items/" + name).inst();
+        var i = load_from_name(name).inst();
         i.transform.position = position;
         i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
         i.rigidbody.velocity = Random.onUnitSphere;
         i.transform.Rotate(0, Random.Range(0, 360f), 0);
+        i.transform.SetParent(world.chunk_at(i.transform.position).transform);
         return i;
+    }
+
+    // Lookup tables for items by name or id
+    static Dictionary<string, item> item_by_name;
+    static Dictionary<int, item> item_by_id;
+    static Dictionary<string, int> id_by_name;
+    static Dictionary<int, string> name_by_id;
+
+    // Load the above lookup tables
+    static void load_item_libraries()
+    {
+        item_by_name = new Dictionary<string, item>();
+        item_by_id = new Dictionary<int, item>();
+        id_by_name = new Dictionary<string, int>();
+        name_by_id = new Dictionary<int, string>();
+
+        foreach (var i in Resources.LoadAll<item>("items/"))
+        {
+            int us_index = i.name.IndexOf("_");
+            int id = int.Parse(i.name.Substring(0, us_index));
+            string name = i.name.Substring(us_index + 1);
+
+            item_by_name[name] = i;
+            item_by_id[id] = i;
+            id_by_name[name] = id;
+            name_by_id[id] = name;
+        }
+    }
+
+    // Load an item by name
+    public static item load_from_name(string name)
+    {
+        if (item_by_name == null)
+            load_item_libraries();
+        return item_by_name[name];
     }
 }

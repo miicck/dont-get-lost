@@ -38,6 +38,20 @@ public static class world
     static int chunk_grid_x_centre = 0;
     static int chunk_grid_z_centre = 0;
 
+    // Return the chunk containing the given world_position
+    public static chunk chunk_at(Vector3 world_position)
+    {
+        int gx = chunk_x_to_grid(world_to_chunk(world_position.x));
+        if (gx >= chunk_grid.GetLength(0)) return null;
+        if (gx < 0) return null;
+
+        int gz = chunk_z_to_grid(world_to_chunk(world_position.z));
+        if (gz >= chunk_grid.GetLength(1)) return null;
+        if (gz < 0) return null;
+
+        return chunk_grid[gx, gz];
+    }
+
     // Check if i,j are in range for the chunk_grid array
     static bool in_chunk_grid_range(int i, int j)
     {
