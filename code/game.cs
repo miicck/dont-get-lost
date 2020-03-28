@@ -7,6 +7,7 @@ public class game : MonoBehaviour
     public static player player { get; private set; }
 
     public int world_seed = 6969;
+    public bool random_seed = false;
     public string biome_override = "";
 
     // The target render range, which the actual render range will lerp to
@@ -37,6 +38,7 @@ public class game : MonoBehaviour
 
     void Start()
     {
+        if (random_seed) world_seed = Random.Range(0, int.MaxValue);
         world.seed = world_seed;
 
         // Set the biome override
