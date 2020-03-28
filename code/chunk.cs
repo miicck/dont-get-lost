@@ -4,14 +4,13 @@ using UnityEngine;
 
 public class chunk : MonoBehaviour
 {
+    // The size of the chunk in meters, also
+    // defines the resolution of the terrain
     public const int SIZE = 64;
-    public const int TERRAIN_RES = SIZE + 1;
 
+    // The chunk coordinates
     public int x { get; private set; }
     public int z { get; private set; }
-    public Terrain terrain { get; private set; }
-
-    item[] items { get { return transform.GetComponentsInChildren<item>(); } }
 
     // My parent biome
     biome _biome;
@@ -25,85 +24,9 @@ public class chunk : MonoBehaviour
         }
     }
 
-    // The biome points, saved post blending
-    biome.point[,] blended_points = new biome.point[TERRAIN_RES, TERRAIN_RES];
-
-    // Get the chunk coords at a given location
-    public static int[] coords(Vector3 location)
-    {
-        return new int[]
-        {
-            Mathf.FloorToInt(location.x / SIZE),
-            Mathf.FloorToInt(location.z / SIZE)
-        };
-    }
-    public Vector3 centre { get { return transform.position + new Vector3(1, 0, 1) * SIZE / 2; } }
-
-
-    public static chunk at(Vector3 location)
-    {
-        var c = coords(location);
-        return GameObject.Find("chunk_" + c[0] + "_" + c[1]).GetComponent<chunk>();
-    }
-
-    // Create a chunk with chunk coordinates x, z
-    public static chunk create(int x, int z)
-    {
-        // Save my chunk-coordinates for
-        // later use in generation
-        var c = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
-        c.x = x;
-        c.z = z;
-
-        // Setup the transform of the chunk
-        c.transform.position = new Vector3(x, 0, z) * SIZE;
-
-        return c;
-    }
-
-    // Highlight the chunk if enabled
-    private void OnDrawGizmos()
-    {
-        var color = Color.cyan;
-        if (!enabled) color = Color.black;
-        color.a = 0.1f;
-        Gizmos.color = color;
-
-        Gizmos.DrawWireCube(
-            transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
-            new Vector3(SIZE, 0.01f, SIZE));
-    }
-
-    // Is this chunk enabled in the world?
-    new public bool enabled
-    {
-        get
-        {
-            // If I have been destroyed, I'm definately not enabled
-            if (this == null) return false;
-
-            // If I have enabled children, I'm active
-            return transform.childCount > 0 && 
-                   transform.GetChild(0).gameObject.activeInHierarchy;
-        }
-
-        private set
-        {
-            // If enabled, ensure generation has begun
-            if (value && terrain == null)
-                begin_generation();
-
-            // Disable, or enable all children
-            foreach (Transform t in transform)
-                t.gameObject.SetActive(value);
-        }
-    }
-
-    private void Update()
-    {
-        // Enabled if the player is in range
-        enabled = in_range();
-    }
+    //##################//
+    // COORDINATE TOOLS //
+    //##################//
 
     // Check if this chunk is within render range
     // (essentially testing if the render range circle 
@@ -123,6 +46,102 @@ public class chunk : MonoBehaviour
         return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
     }
 
+    // Get the chunk coords at a given location
+    public static int[] coords(Vector3 location)
+    {
+        return new int[]
+        {
+            Mathf.FloorToInt(location.x / SIZE),
+            Mathf.FloorToInt(location.z / SIZE)
+        };
+    }
+
+    // Returns the chunk at the given location
+    public static chunk at(Vector3 location)
+    {
+        var c = coords(location);
+        return GameObject.Find("chunk_" + c[0] + "_" + c[1])?.GetComponent<chunk>();
+    }
+
+    // Is this chunk enabled in the world?
+    new public bool enabled
+    {
+        get
+        {
+            // If I have been destroyed, I'm definately not enabled
+            if (this == null) return false;
+
+            // If I have enabled children, I'm active
+            return transform.childCount > 0 && 
+                   transform.GetChild(0).gameObject.activeInHierarchy;
+        }
+
+        private set
+        {
+            // If enabled, ensure generation has begun
+            if (value && !generation_begun)
+                begin_generation();
+
+            // Disable, or enable all children
+            foreach (Transform t in transform)
+                t.gameObject.SetActive(value);
+        }
+    }
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
+
+    private void Update()
+    {
+        // Enabled if the player is in range
+        enabled = in_range();
+    }
+
+    // Highlight the chunk if enabled
+    private void OnDrawGizmos()
+    {
+        var color = Color.cyan;
+        if (!enabled) color = Color.black;
+        color.a = 0.1f;
+        Gizmos.color = color;
+
+        Gizmos.DrawWireCube(
+            transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
+            new Vector3(SIZE, 0.01f, SIZE));
+    }
+
+    //##################//
+    // CHUNK GENERATION //
+    //##################//
+
+    // The resolution of the terrain is set so that 
+    // each terrain square is one square meter
+    public const int TERRAIN_RES = SIZE + 1;
+    public Terrain terrain { get; private set; }
+
+    // The biome points, saved post blending
+    biome.point[,] blended_points = new biome.point[TERRAIN_RES, TERRAIN_RES];
+
+    // Create a chunk with chunk coordinates x, z
+    public static chunk create(int x, int z)
+    {
+        // Save my chunk-coordinates for
+        // later use in generation
+        var c = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
+        c.x = x;
+        c.z = z;
+
+        // Setup the transform of the chunk
+        c.transform.position = new Vector3(x, 0, z) * SIZE;
+
+        return c;
+    }
+
+    // Returns true if generation of the chunk has begun
+    bool generation_begun { get { return terrain != null; } }
+
+    // Trigger the generation of this chunk
     void begin_generation()
     {
         // Create the water level
@@ -188,14 +207,6 @@ public class chunk : MonoBehaviour
         }
 
         return false;
-    }
-
-    bool generation_complete()
-    {
-        return points_i >= TERRAIN_RES &&
-               alphamaps_i >= TERRAIN_RES &&
-               heights_i >= TERRAIN_RES &&
-               objects_i >= SIZE;
     }
 
     int points_i = 0;
@@ -325,11 +336,15 @@ public class chunk : MonoBehaviour
         return false;
     }
 
+    // Called when the chunk has finished generating
     void on_generation_complete()
     {
         biome.update_chunk_neighbours();
     }
 
+    // This component is attached to a chunk that is
+    // being generated and is responsible for spreading
+    // the load of generation across multiple frames
     class gradual_chunk_generator : MonoBehaviour
     {
         public chunk chunk;

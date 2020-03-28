@@ -8,6 +8,18 @@ using UnityEngine;
 // scales, such as the terrain.
 public abstract class biome : MonoBehaviour
 {
+    // The biome coordinates
+    public int x { get; private set; }
+    public int z { get; private set; }
+
+    // The grid of points defining the biome
+    protected point[,] grid = new point[SIZE, SIZE];
+    protected abstract void generate_grid();
+
+    //#####################//
+    // NEIGHBOURING BIOMES //
+    //#####################//
+
     // My neighbouring biomes, if they don't exist already
     // we will generate them.
     biome[,] _neihbours = new biome[3, 3];
@@ -31,6 +43,49 @@ public abstract class biome : MonoBehaviour
 
         return _neihbours[i, j];
     }
+
+    //##################//
+    // COORDINATE TOOLS //
+    //##################//
+
+    // Get the biome coords at a given location
+    public static int[] coords(Vector3 location)
+    {
+        return new int[]
+        {
+            Mathf.FloorToInt(location.x / SIZE),
+            Mathf.FloorToInt(location.z / SIZE)
+        };
+    }
+
+    // Check if the biome at x, z is within render range
+    // (essentially testing if the render range circle 
+    //  intersects the biome square)
+    static bool in_range(int x, int z)
+    {
+        Vector2 player_xz = new Vector2(
+            player.current.transform.position.x,
+            player.current.transform.position.z
+        );
+
+        Vector2 this_xz = new Vector2(
+            SIZE * (x + 0.5f),
+            SIZE * (z + 0.5f)
+        );
+
+        return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
+    }
+
+    //#########################//
+    // CHUNK GRID MANIPULATION //
+    //#########################//
+
+    // The size of a biome in chunks per side
+    public const int CHUNKS_PER_SIDE = 4;
+    public const int SIZE = CHUNKS_PER_SIDE * chunk.SIZE;
+
+    // The grid of chunks within the biome
+    chunk[,] chunk_grid = new chunk[CHUNKS_PER_SIDE, CHUNKS_PER_SIDE];
 
     // Extend the chunk grid indicies to include neighbouring biomes
     chunk extended_chunk_grid(int i, int j, bool generate_if_needed = true)
@@ -70,6 +125,21 @@ public abstract class biome : MonoBehaviour
                     );
                 }
     }
+
+    // Returns true if this biome contains a chunk which
+    // is active (i.e within render range)
+    public bool contains_enabled_chunk()
+    {
+        for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
+            for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
+                if (chunk_grid[i, j].enabled)
+                    return true;
+        return false;
+    }
+
+    //################//
+    // BIOME BLENDING //
+    //################//
 
     void get_blend_amounts(
         Vector3 position, // The point at which to evaluate the blend amounts 
@@ -146,9 +216,6 @@ public abstract class biome : MonoBehaviour
         return point.average(points, weights);
     }
 
-    // The grid of points defining the biome
-    protected point[,] grid = new point[SIZE, SIZE];
-
     // Get a particular point in the biome grid in world
     // coordinates. Clamps the biome point values
     // outside the range of the biome.
@@ -161,51 +228,20 @@ public abstract class biome : MonoBehaviour
         return grid[i, j];
     }
 
-    // The size of a biome in chunks per side
-    public const int CHUNKS_PER_SIDE = 4;
-    public const int SIZE = CHUNKS_PER_SIDE * chunk.SIZE;
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
-    // The grid of chunks within the biome
-    chunk[,] chunk_grid = new chunk[CHUNKS_PER_SIDE, CHUNKS_PER_SIDE];
-
-    // Returns true if this biome contains a chunk which
-    // is active (i.e within render range)
-    public bool contains_enabled_chunk()
+    private void Update()
     {
-        for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
-            for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
-                if (chunk_grid[i, j].enabled)
-                    return true;
-        return false;
-    }
+        // Load neighbours if they are in range
+        for (int dx = -1; dx < 2; ++dx)
+            for (int dz = -1; dz < 2; ++dz)
+                if (in_range(x + dx, z + dz))
+                    get_neighbour(dx, dz, true);
 
-    // Get the biome coords at a given location
-    public static int[] coords(Vector3 location)
-    {
-        return new int[]
-        {
-            Mathf.FloorToInt(location.x / SIZE),
-            Mathf.FloorToInt(location.z / SIZE)
-        };
-    }
-
-    public Vector3 centre { get { return transform.position + new Vector3(1, 0, 1) * SIZE / 2; } }
-
-    public chunk chunk_at(Vector3 world_position)
-    {
-        // Transform world position into biome local position
-        int xib = (int)(world_position.x - x * SIZE);
-        if (xib < 0) return null;
-        if (xib >= SIZE) return null;
-
-        int zib = (int)(world_position.z - z * SIZE);
-        if (zib < 0) return null;
-        if (zib >= SIZE) return null;
-
-        // Get the chunk at that coordinate
-        int cx = xib / chunk.SIZE;
-        int cz = zib / chunk.SIZE;
-        return chunk_grid[cx, cz];
+        // Offload to disk if possible
+        if (no_longer_needed()) offload_to_disk();
     }
 
     private void OnDrawGizmos()
@@ -216,15 +252,11 @@ public abstract class biome : MonoBehaviour
             new Vector3(SIZE, 0.01f, SIZE));
     }
 
-    public int x { get; private set; }
-    public int z { get; private set; }
+    //##############################//
+    // BIOME LOADING AND GENERATION //
+    //##############################//
 
-    // Coordinate transforms 
-    protected float grid_to_world_x(int i) { return (x - 0.5f) * SIZE + i; }
-    protected float grid_to_world_z(int j) { return (z - 0.5f) * SIZE + j; }
-
-    protected abstract void generate_grid();
-
+    // The filename where this biome is saved to/loaded from
     public static string filename(int x, int z) { return world.save_folder() + "/biome_" + x + "_" + z; }
 
     // Loads a biome if possible, otherwise generates one
@@ -238,8 +270,8 @@ public abstract class biome : MonoBehaviour
         }
 
         // Select a random biome
-        int i = Random.Range(0, biome_creators.Count);
-        var generated = (biome)biome_creators[i].Invoke(null, new object[] { x, z });
+        int i = Random.Range(0, generated_biomes.Count);
+        var generated = (biome)generated_biomes[i].Invoke(null, new object[] { x, z });
 
         // Generate the biome
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -250,24 +282,27 @@ public abstract class biome : MonoBehaviour
         return generated;
     }
 
-    // Creation methods for all enabled biome types
+    // If this is set to the name of a biome class, 
+    // we only generate that biome type
     public static string biome_override = "";
-    static List<MethodInfo> _biome_creators;
-    static List<MethodInfo> biome_creators
+
+    // Creation methods for all generated biome types
+    static List<MethodInfo> _generated_biomes;
+    static List<MethodInfo> generated_biomes
     {
         get
         {
-            if (_biome_creators == null)
+            if (_generated_biomes == null)
             {
                 // Find the biome types
-                _biome_creators = new List<MethodInfo>();
-                var asem = Assembly.GetAssembly(typeof(biome));
+                _generated_biomes = new List<MethodInfo>();
+                var asem = Assembly.GetAssembly(typeof(generated_biome));
                 var types = asem.GetTypes();
 
                 foreach (var t in types)
                 {
                     // Check if this type is a valid biome
-                    if (!t.IsSubclassOf(typeof(biome))) continue;
+                    if (!t.IsSubclassOf(typeof(generated_biome))) continue;
                     if (t.IsAbstract) continue;
 
                     // Get the create method
@@ -277,7 +312,7 @@ public abstract class biome : MonoBehaviour
                     if (t.Name == biome_override)
                     {
                         // Enforce the biome override
-                        _biome_creators = new List<MethodInfo> { create_method };
+                        _generated_biomes = new List<MethodInfo> { create_method };
                         break;
                     }
 
@@ -289,10 +324,10 @@ public abstract class biome : MonoBehaviour
                             continue; // Skip allowing this biome
                     }
 
-                    _biome_creators.Add(create_method);
+                    _generated_biomes.Add(create_method);
                 }
             }
-            return _biome_creators;
+            return _generated_biomes;
         }
     }
 
@@ -320,20 +355,12 @@ public abstract class biome : MonoBehaviour
         return b;
     }
 
-    private void Update()
-    {
-        // Load neighbours if they are in range
-        for (int dx = -1; dx < 2; ++dx)
-            for (int dz = -1; dz < 2; ++dz)
-                if (in_range(x + dx, z + dz))
-                    get_neighbour(dx, dz, true);
-
-        // Offload to disk if possible
-        if (can_offload()) offload_to_disk();
-    }
+    //##############//
+    // BIOME SAVING //
+    //##############//
 
     // Check if this biome is no longer required in-game
-    bool can_offload()
+    bool no_longer_needed()
     {
         // If biome is in range, it's definately needed
         if (in_range(x, z)) return false;
@@ -347,24 +374,6 @@ public abstract class biome : MonoBehaviour
 
         // Definately not needed
         return true;
-    }
-
-    // Check if this biome is within render range
-    // (essentially testing if the render range circle 
-    //  intersects the biome square)
-    static bool in_range(int x, int z)
-    {
-        Vector2 player_xz = new Vector2(
-            player.current.transform.position.x,
-            player.current.transform.position.z
-        );
-
-        Vector2 this_xz = new Vector2(
-            SIZE * (x + 0.5f),
-            SIZE * (z + 0.5f)
-        );
-
-        return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
     }
 
     public void offload_to_disk()
@@ -426,7 +435,7 @@ public abstract class biome : MonoBehaviour
         utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
 
-    bool load()
+    protected virtual bool load()
     {
         // Read the biome from file
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -470,64 +479,9 @@ public abstract class biome : MonoBehaviour
         return true;
     }
 
-    // Represetnts a world object in a biome
-    public class world_object_generator
-    {
-        public float additional_scale_factor = 1.0f;
-
-        public world_object gen_or_load(Vector3 terrain_normal, point point)
-        {
-            // Already generated
-            if (generated != null)
-            {
-                // May have been already generated, but moved to
-                // the inactive pile (if the chunk it was in was destroyed)
-                if (!generated.gameObject.activeInHierarchy)
-                    generated.gameObject.SetActive(true);
-
-                return generated;
-            }
-
-            // Needs to be loaded from bytes
-            if (to_load != null)
-            {
-                generated = world_object.deserialize(to_load);
-                generated.on_load(terrain_normal, point);
-                to_load = null;
-                return generated;
-            }
-
-            // Needs to be generated from prefab
-            generated = to_generate.inst();
-            to_generate = null;
-            generated.on_generation(terrain_normal, point);
-            generated.transform.localScale *= additional_scale_factor;
-            return generated;
-        }
-
-        // A world_object_generator can only be created 
-        // with a prefab that needs generating, or a
-        // byte array that needs loading.
-        public world_object_generator(string name)
-        {
-            to_generate = world_object.look_up(name);
-            if (to_generate == null)
-                Debug.LogError("Tried to create a world object generator with a null world object!");
-        }
-
-        public world_object_generator(int id)
-        {
-            to_generate = world_object.look_up(id);
-            if (to_generate == null)
-                Debug.LogError("Tried to create a world object generator with a null world object!");
-        }
-
-        public world_object_generator(byte[] bytes) { to_load = bytes; }
-
-        public world_object to_generate { get; private set; }
-        public world_object generated { get; private set; }
-        public byte[] to_load { get; private set; }
-    }
+    //#############//
+    // BIOME.POINT //
+    //#############//
 
     // A particular point in the biome has these
     // properties. They are either loaded from disk,
@@ -622,6 +576,69 @@ public abstract class biome : MonoBehaviour
             return "Altitude: " + altitude + " Terrain color: " + terrain_color;
         }
     }
+
+    //##############################//
+    // BIOME.WORLD_OBJECT_GENERATOR //
+    //##############################//
+
+    // Represetnts a world object in a biome
+    public class world_object_generator
+    {
+        public float additional_scale_factor = 1.0f;
+
+        public world_object gen_or_load(Vector3 terrain_normal, point point)
+        {
+            // Already generated
+            if (generated != null)
+            {
+                // May have been already generated, but moved to
+                // the inactive pile (if the chunk it was in was destroyed)
+                if (!generated.gameObject.activeInHierarchy)
+                    generated.gameObject.SetActive(true);
+
+                return generated;
+            }
+
+            // Needs to be loaded from bytes
+            if (to_load != null)
+            {
+                generated = world_object.deserialize(to_load);
+                generated.on_load(terrain_normal, point);
+                to_load = null;
+                return generated;
+            }
+
+            // Needs to be generated from prefab
+            generated = to_generate.inst();
+            to_generate = null;
+            generated.on_generation(terrain_normal, point);
+            generated.transform.localScale *= additional_scale_factor;
+            return generated;
+        }
+
+        // A world_object_generator can only be created 
+        // with a prefab that needs generating, or a
+        // byte array that needs loading.
+        public world_object_generator(string name)
+        {
+            to_generate = world_object.look_up(name);
+            if (to_generate == null)
+                Debug.LogError("Tried to create a world object generator with a null world object!");
+        }
+
+        public world_object_generator(int id)
+        {
+            to_generate = world_object.look_up(id);
+            if (to_generate == null)
+                Debug.LogError("Tried to create a world object generator with a null world object!");
+        }
+
+        public world_object_generator(byte[] bytes) { to_load = bytes; }
+
+        public world_object to_generate { get; private set; }
+        public world_object generated { get; private set; }
+        public byte[] to_load { get; private set; }
+    }
 }
 
 // Attribute info for biomes
@@ -629,251 +646,17 @@ public class biome_info : System.Attribute
 {
     public bool generation_enabled { get; private set; }
 
-    public biome_info(bool generation_enabled)
+    public biome_info(bool generation_enabled = true)
     {
         this.generation_enabled = generation_enabled;
     }
 }
 
-[biome_info(false)]
+// The type a biome will have if it is loaded from disk
 public class loaded_biome : biome
 {
     protected override void generate_grid()
     {
-        throw new System.Exception("Loaded biomes should not call generate()!");
-    }
-}
-
-public class mangroves : biome
-{
-    public const float ISLAND_SIZE = 27.2f;
-    public const float MANGROVE_START_ALT = world.SEA_LEVEL - 3;
-    public const float MANGROVE_DECAY_ALT = 3f;
-    public const float MANGROVE_PROB = 0.2f;
-
-    protected override void generate_grid()
-    {
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
-
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-
-                p.altitude = ISLAND_SIZE * Mathf.PerlinNoise(
-                    xrand + i / ISLAND_SIZE, zrand + j / ISLAND_SIZE);
-                p.terrain_color = colors.grass;
-
-                float man_amt = 0;
-                if (p.altitude > MANGROVE_START_ALT)
-                    man_amt = Mathf.Exp(
-                        -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
-
-                if (Random.Range(0, 1f) < man_amt * MANGROVE_PROB)
-                    p.world_object_gen = new world_object_generator("mangroves");
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-public class ocean : biome
-{
-    const int MAX_ISLAND_ALT = 8; // The maximum altitude of an island above sea level
-    const int ISLAND_PERIOD = 32; // The range over which an island extends on the seabed
-    const int MIN_ISLANDS = 1;    // Min number of islands
-    const int MAX_ISLANDS = 3;    // Max number of islands
-
-    protected override void generate_grid()
-    {
-        // Generate the altitude
-        float[,] alt = new float[SIZE, SIZE];
-
-        // Start with some perlin noise
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-                alt[i, j] += 0.5f * world.SEA_LEVEL * Mathf.PerlinNoise(
-                    xrand + x / 16f, zrand + z / 16f);
-
-        // Add a bunch of guassians to create desert islands
-        // (also reduce the amount of perlin noise far from the islands
-        //  to create a smooth seabed)
-        int islands = Random.Range(MIN_ISLANDS, MAX_ISLANDS);
-        for (int n = 0; n < islands; ++n)
-            procmath.float_2D_tools.apply_guassian(ref alt,
-                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
-                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
-                ISLAND_PERIOD, (f, g) =>
-                    f * (0.5f + 0.5f * g) + // Reduced perlin noise
-                    g * (world.SEA_LEVEL / 2f + MAX_ISLAND_ALT) // Added guassian
-                );
-
-        // Generate the point grid
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                point p = new point
-                {
-                    terrain_color = colors.sand,
-                    altitude = alt[i, j]
-                };
-
-                if (p.altitude > world.SEA_LEVEL)
-                    if (Random.Range(0, 100) == 0)
-                        p.world_object_gen = new world_object_generator("palm_tree");
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-public class mountains : biome
-{
-    const int MIN_MOUNTAIN_WIDTH = 64;
-    const int MAX_MOUNTAIN_WIDTH = 128;
-    const float MAX_MOUNTAIN_HEIGHT = 128f;
-    const float MIN_MOUNTAIN_HEIGHT = 0f;
-    const float SNOW_START = 80f;
-    const float SNOW_END = 100f;
-    const float ROCK_START = 50f;
-    const float ROCK_END = 70f;
-    const float MOUNTAIN_DENSITY = 0.0008f;
-
-    protected override void generate_grid()
-    {
-        var alt = new float[SIZE, SIZE];
-
-        const int MOUNTAIN_COUNT = (int)(MOUNTAIN_DENSITY * SIZE * SIZE);
-        for (int n = 0; n < MOUNTAIN_COUNT; ++n)
-        {
-            int xm = Random.Range(0, SIZE);
-            int zm = Random.Range(0, SIZE);
-            int width = Random.Range(MIN_MOUNTAIN_WIDTH, MAX_MOUNTAIN_WIDTH);
-            float rot = Random.Range(0, 360f);
-            procmath.float_2D_tools.add_pyramid(ref alt, xm, zm, width, 1, rot);
-        }
-
-        procmath.float_2D_tools.rescale(ref alt, MIN_MOUNTAIN_HEIGHT, MAX_MOUNTAIN_HEIGHT);
-
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                float xf = grid_to_world_x(i);
-                float zf = grid_to_world_z(j);
-
-                point p = new point
-                {
-                    altitude = alt[i, j],
-                    terrain_color = colors.grass
-                };
-
-                if (p.altitude > SNOW_START)
-                {
-                    float s = procmath.maps.linear_turn_on(p.altitude, SNOW_START, SNOW_END);
-                    p.terrain_color = Color.Lerp(colors.rock, colors.snow, s);
-                }
-                else if (p.altitude > ROCK_START)
-                {
-                    float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
-                    p.terrain_color = Color.Lerp(colors.grass, colors.rock, r);
-                }
-
-                if (p.altitude < ROCK_START &&
-                    p.altitude > world.SEA_LEVEL)
-                    if (Random.Range(0, 40) == 0)
-                        p.world_object_gen = new world_object_generator("pine_tree");
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-public class terraced_hills : biome
-{
-    public const float HILL_HEIGHT = 50f;
-    public const float HILL_SIZE = 64f;
-
-    protected override void generate_grid()
-    {
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                point p = new point
-                {
-                    altitude = HILL_HEIGHT * Mathf.PerlinNoise(
-                        xrand + i / HILL_SIZE, zrand + j / HILL_SIZE),
-                    terrain_color = colors.grass
-                };
-
-                if (p.altitude < HILL_HEIGHT / 2)
-                {
-                    if ((i % 25 == 0) && (j % 25 == 0))
-                    {
-                        p.world_object_gen = new world_object_generator("flat_outcrop");
-                        p.world_object_gen.additional_scale_factor = 4f;
-                    }
-                }
-                else if (Random.Range(0, 200) == 0)
-                    p.world_object_gen = new world_object_generator("tree");
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class cliffs : biome
-{
-    public const float CLIFF_HEIGHT = 10f;
-    public const float CLIFF_PERIOD = 32f;
-
-    public const float HILL_HEIGHT = 52f;
-    public const float HILL_PERIOD = 64f;
-
-    protected override void generate_grid()
-    {
-        // Generate the altitudes
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
-        float[,] alt = new float[SIZE, SIZE];
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                // Work out how much cliff there is
-                float cliffness = Mathf.PerlinNoise(
-                    xrand + i / CLIFF_PERIOD, zrand + j / CLIFF_PERIOD);
-                if (cliffness > 0.5f) cliffness = 1;
-                else cliffness *= 2;
-
-                // Work out the smooth altitude
-                float asmooth = HILL_HEIGHT * Mathf.PerlinNoise(
-                    xrand + i / HILL_PERIOD, zrand + j / HILL_PERIOD);
-
-                // Work out the cliffy altitdue
-                float acliff = CLIFF_HEIGHT *
-                    procmath.maps.smoothed_floor(asmooth / CLIFF_HEIGHT, 0.75f);
-
-                // Mix them
-                alt[i, j] = asmooth * (1 - cliffness) + acliff * cliffness;
-            }
-
-        var grad = procmath.float_2D_tools.get_gradients(alt);
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                float dirt_amt = grad[i, j].magnitude;
-                dirt_amt = procmath.maps.linear_turn_on(dirt_amt, 0.2f, 0.5f);
-
-                grid[i, j] = new point()
-                {
-                    altitude = alt[i, j],
-                    terrain_color = Color.Lerp(colors.grass, colors.dirt, dirt_amt)
-                };
-            }
+        throw new System.Exception("Loaded biomes should not call generate_grid()!");
     }
 }

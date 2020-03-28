@@ -49,6 +49,7 @@ public class game : MonoBehaviour
         // Create the player
         player = player.create();
 
+        // Create the biome at the players location
         var biome_coords = biome.coords(player.transform.position);
         biome.load_or_generate(biome_coords[0], biome_coords[1]);
 
