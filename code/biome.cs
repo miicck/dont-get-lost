@@ -11,37 +11,139 @@ public abstract class biome : MonoBehaviour
     // My neighbouring biomes, if they don't exist already
     // we will generate them.
     biome[,] _neihbours = new biome[3, 3];
-    biome get_neighbour(int dx, int dz)
+    biome get_neighbour(int dx, int dz, bool generate_if_needed = true)
     {
         if (dx == 0 && dz == 0) return this;
         int i = dx + 1;
         int j = dz + 1;
         if (_neihbours[i, j] == null)
         {
+            // This catches the case where the neighbouring
+            // biome has been destroyed, but not set to null proper
+            _neihbours[i, j] = null;
+
             // Attempt to find already existing biome, otherwise generate one
             var go = GameObject.Find("biome_" + (x + dx) + "_" + (z + dz));
-            if (go == null) _neihbours[i, j] = generate(x + dx, z + dz);
-            else _neihbours[i, j] = go.GetComponent<biome>();
+            if (go != null) _neihbours[i, j] = go.GetComponent<biome>();
+            else if (generate_if_needed)
+                _neihbours[i, j] = generate(x + dx, z + dz);
         }
+
         return _neihbours[i, j];
+    }
+
+    // Extend the chunk grid indicies to include neighbouring biomes
+    chunk extended_chunk_grid(int i, int j, bool generate_if_needed = true)
+    {
+        // Convert i, j to i, j coordinates in the (dx, dz)^th neighbour
+        int dx = 0;
+        if (i >= CHUNKS_PER_SIDE) { dx = 1; i -= CHUNKS_PER_SIDE; }
+        else if (i < 0) { dx = -1; i += CHUNKS_PER_SIDE; }
+
+        int dz = 0;
+        if (j >= CHUNKS_PER_SIDE) { dz = 1; j -= CHUNKS_PER_SIDE; }
+        else if (j < 0) { dz = -1; j += CHUNKS_PER_SIDE; }
+
+        var b = get_neighbour(dx, dz, generate_if_needed);
+        if (b == null) return null;
+        return b.chunk_grid[i, j];
+    }
+
+    // Update the chunk neighbours in this biome, including
+    // neighbours from neighbouring biomes (if they exist)
+    public void update_chunk_neighbours(bool also_neighboring_biomes = true)
+    {
+        if (also_neighboring_biomes)
+            for (int dx = -1; dx < 2; ++dx)
+                for (int dz = -1; dz < 2; ++dz)
+                    get_neighbour(dx, dz, false)?.update_chunk_neighbours(false);
+
+        else
+            for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
+                for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
+                {
+                    chunk_grid[i, j]?.terrain?.SetNeighbors(
+                        extended_chunk_grid(i - 1, j, false)?.terrain,
+                        extended_chunk_grid(i, j + 1, false)?.terrain,
+                        extended_chunk_grid(i + 1, j, false)?.terrain,
+                        extended_chunk_grid(i, j - 1, false)?.terrain
+                    );
+                }
+    }
+
+    void get_blend_amounts(
+        Vector3 position, // The point at which to evaluate the blend amounts 
+        out float xamt,   // Abs(xamt) = amount to blend, Sign(xamt) = x direction to blend
+        out float zamt    // Abs(zamt) = amount to blend, Sign(zamt) = z direction to blend
+        )
+    {
+        // Set the blend distance to slightly less than
+        // a chunk so we only need blend the outermost chunks
+        // in a biome
+        const int BLEND_DISTANCE = chunk.SIZE - 1;
+
+        int i = Mathf.FloorToInt(position.x) - x * SIZE;
+        int j = Mathf.FloorToInt(position.z) - z * SIZE;
+
+        xamt = zamt = 0;
+
+        // Create a linearly increasing blend at the edge of the biome
+        if (i <= BLEND_DISTANCE) xamt = i / (float)BLEND_DISTANCE - 1f;
+        else if (i >= SIZE - 1 - BLEND_DISTANCE) xamt = 1f - (SIZE - 1 - i) / (float)BLEND_DISTANCE;
+
+        if (j <= BLEND_DISTANCE) zamt = j / (float)BLEND_DISTANCE - 1f;
+        else if (j >= SIZE - 1 - BLEND_DISTANCE) zamt = 1f - (SIZE - 1 - j) / (float)BLEND_DISTANCE;
+
+        // Smooth the linear blend out so it has zero gradient at the very edge of the biome
+        if (xamt > 0) xamt = procmath.maps.smooth_max_cos(xamt);
+        else if (xamt < 0) xamt = -procmath.maps.smooth_max_cos(-xamt);
+
+        if (zamt > 0) zamt = procmath.maps.smooth_max_cos(zamt);
+        else if (zamt < 0) zamt = -procmath.maps.smooth_max_cos(-zamt);
     }
 
     public point blended_point(Vector3 world_position)
     {
-        Vector3 disp = world_position - centre;
-        float ns = Mathf.Clamp(2 * disp.z / SIZE, -1f, 1f); // North/south amount
-        float ew = Mathf.Clamp(2 * disp.x / SIZE, -1f, 1f); // East/west amount
+        // Get the x and z amounts to blend
+        float xamt, zamt;
+        get_blend_amounts(world_position, out xamt, out zamt);
 
-        var points = new List<point> { clamped_grid(world_position) };
-        var weights = new List<float> { 1.0f };
+        // We blend at most 4 points:
+        //   one from this biome (guaranteed)
+        //   one from the neighbour in the +/- x direction
+        //   one from the neighbour in the +/- z direction
+        //   one from the diaonal neighbour between the above two
+        var points = new point[4];
+        var weights = new float[4];
 
-        if (ns > 0.9f)
+        points[0] = clamped_grid(world_position);
+        weights[0] = 1.0f;
+
+        // Blend in the neihbour in the +/- x direction
+        float abs_x = Mathf.Abs(xamt);
+        if (abs_x > 0)
         {
-            points.Add(get_neighbour(0, 1).clamped_grid(world_position));
-            weights.Add((ns - 0.9f) / 0.1f);
+            points[1] = get_neighbour(xamt > 0 ? 1 : -1, 0).clamped_grid(world_position);
+            weights[1] = abs_x;
         }
 
-        return point.average(points.ToArray(), weights.ToArray());
+        // Blend in the neihbour in the +/- z direction
+        float abs_z = Mathf.Abs(zamt);
+        if (abs_z > 0)
+        {
+            points[2] = get_neighbour(0, zamt > 0 ? 1 : -1).clamped_grid(world_position);
+            weights[2] = abs_z;
+        }
+
+        // Blend the neihbour in the diagonal direction
+        float damt = Mathf.Min(abs_x, abs_z);
+        if (damt > 0)
+        {
+            points[3] = get_neighbour(xamt > 0 ? 1 : -1, zamt > 0 ? 1 : -1).clamped_grid(world_position);
+            weights[3] = damt;
+        }
+
+        return point.average(points, weights);
     }
 
     // The grid of points defining the biome
@@ -52,10 +154,8 @@ public abstract class biome : MonoBehaviour
     // outside the range of the biome.
     point clamped_grid(Vector3 world_position)
     {
-        int i = (int)world_position.x;
-        int j = (int)world_position.z;
-        i -= SIZE * x;
-        j -= SIZE * z;
+        int i = Mathf.FloorToInt(world_position.x) - SIZE * x;
+        int j = Mathf.FloorToInt(world_position.z) - SIZE * z;
         i = Mathf.Clamp(i, 0, SIZE - 1);
         j = Mathf.Clamp(j, 0, SIZE - 1);
         return grid[i, j];
@@ -70,11 +170,11 @@ public abstract class biome : MonoBehaviour
 
     // Returns true if this biome contains a chunk which
     // is active (i.e within render range)
-    public bool contains_active_chunk()
+    public bool contains_enabled_chunk()
     {
         for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
             for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
-                if (chunk_grid[i, j].gameObject.activeInHierarchy)
+                if (chunk_grid[i, j].enabled)
                     return true;
         return false;
     }
@@ -111,7 +211,7 @@ public abstract class biome : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(Vector3.down +
+        Gizmos.DrawWireCube(
             transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
             new Vector3(SIZE, 0.01f, SIZE));
     }
@@ -159,7 +259,54 @@ public abstract class biome : MonoBehaviour
         return b;
     }
 
-    public void destroy()
+    private void Update()
+    {
+        // Load neighbours if they are in range
+        for (int dx = -1; dx < 2; ++dx)
+            for (int dz = -1; dz < 2; ++dz)
+                if (in_range(x + dx, z + dz))
+                    get_neighbour(dx, dz, true);
+        
+        // Offload to disk if possible
+        if (can_offload()) offload_to_disk();
+    }
+
+    // Check if this biome is no longer required in-game
+    bool can_offload()
+    {
+        // If biome is in range, it's definately needed
+        if (in_range(x, z)) return false;
+
+        // If there is an enabled chunk in an adjacent
+        // biome, we could still be needed for biome blending
+        for (int dx = -1; dx < 2; ++dx)
+            for (int dz = -1; dz < 2; ++dz)
+                if (get_neighbour(dx, dz, false)?.contains_enabled_chunk() ?? false)
+                    return false;
+
+        // Definately not needed
+        return true;
+    }
+
+    // Check if this biome is within render range
+    // (essentially testing if the render range circle 
+    //  intersects the biome square)
+    static bool in_range(int x, int z)
+    {
+        Vector2 player_xz = new Vector2(
+            player.current.transform.position.x,
+            player.current.transform.position.z
+        );
+
+        Vector2 this_xz = new Vector2(
+            SIZE * (x + 0.5f),
+            SIZE * (z + 0.5f)
+        );
+
+        return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
+    }
+
+    public void offload_to_disk()
     {
         // Save the biome to file
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -211,6 +358,9 @@ public abstract class biome : MonoBehaviour
                     else Debug.LogError("Don't know how to save this world object status!");
                 }
         }
+
+        // Remove this biome from the world
+        Destroy(gameObject);
 
         utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
@@ -264,7 +414,7 @@ public abstract class biome : MonoBehaviour
     {
         public float additional_scale_factor = 1.0f;
 
-        public world_object gen_or_load(Vector3 terrain_normal, biome.point point)
+        public world_object gen_or_load(Vector3 terrain_normal, point point)
         {
             // Already generated
             if (generated != null)

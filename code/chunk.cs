@@ -9,8 +9,8 @@ public class chunk : MonoBehaviour
 
     public int x { get; private set; }
     public int z { get; private set; }
+    public Terrain terrain { get; private set; }
 
-    Terrain terrain;
     item[] items { get { return transform.GetComponentsInChildren<item>(); } }
 
     // My parent biome
@@ -64,18 +64,29 @@ public class chunk : MonoBehaviour
     // Highlight the chunk if enabled
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.cyan;
-        if (!enabled) Gizmos.color = Color.black;
+        var color = Color.cyan;
+        if (!enabled) color = Color.black;
+        color.a = 0.1f;
+        Gizmos.color = color;
+
         Gizmos.DrawWireCube(
             transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
             new Vector3(SIZE, 0.01f, SIZE));
     }
 
     // Is this chunk enabled in the world?
-    bool _enabled = false;
     new public bool enabled
     {
-        get { return _enabled; }
+        get
+        {
+            // If I have been destroyed, I'm definately not enabled
+            if (this == null) return false;
+
+            // If I have enabled children, I'm active
+            return transform.childCount > 0 && 
+                   transform.GetChild(0).gameObject.activeInHierarchy;
+        }
+
         private set
         {
             // If enabled, ensure generation has begun
@@ -85,36 +96,31 @@ public class chunk : MonoBehaviour
             // Disable, or enable all children
             foreach (Transform t in transform)
                 t.gameObject.SetActive(value);
-
-            _enabled = value;
         }
     }
 
     private void Update()
     {
         // Enabled if the player is in range
-        enabled = in_range(player.current.transform.position);
+        enabled = in_range();
     }
 
-    // Check if this chunk is within render range of the
-    // given centre point
+    // Check if this chunk is within render range
     // (essentially testing if the render range circle 
     //  intersects the chunk square)
-    bool in_range(Vector3 centre)
+    bool in_range()
     {
-        float dx = Mathf.Abs(SIZE * (x + 0.5f) - centre.x);
-        float dz = Mathf.Abs(SIZE * (z + 0.5f) - centre.z);
+        Vector2 player_xz = new Vector2(
+            player.current.transform.position.x,
+            player.current.transform.position.z
+        );
 
-        if (dx > SIZE / 2 + game.render_range) return false;
-        if (dz > SIZE / 2 + game.render_range) return false;
+        Vector2 this_xz = new Vector2(
+            SIZE * (x + 0.5f),
+            SIZE * (z + 0.5f)
+        );
 
-        if (dx < SIZE / 2) return true;
-        if (dz < SIZE / 2) return true;
-
-        float corner_distance_sq = (dx - SIZE / 2) * (dx - SIZE / 2) +
-                                   (dz - SIZE / 2) * (dz - SIZE / 2);
-
-        return corner_distance_sq < game.render_range * game.render_range;
+        return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
     }
 
     void begin_generation()
@@ -144,23 +150,6 @@ public class chunk : MonoBehaviour
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
         generator.transform.SetParent(transform);
         generator.chunk = this;
-    }
-
-    // Set the chunk neighbours, for smooth transitions
-    public void update_neighbours(chunk north, chunk east, chunk south, chunk west)
-    {
-        if (!generation_complete()) return;
-        if (north != null && !north.generation_complete()) return;
-        if (east != null && !east.generation_complete()) return;
-        if (south != null && !south.generation_complete()) return;
-        if (west != null && !west.generation_complete()) return;
-
-        terrain.SetNeighbors(
-            west == null ? null : west.terrain,
-            north == null ? null : north.terrain,
-            east == null ? null : east.terrain,
-            south == null ? null : south.terrain
-        );
     }
 
     // Continue generation, bit by bit
@@ -336,6 +325,11 @@ public class chunk : MonoBehaviour
         return false;
     }
 
+    void on_generation_complete()
+    {
+        biome.update_chunk_neighbours();
+    }
+
     class gradual_chunk_generator : MonoBehaviour
     {
         public chunk chunk;
@@ -357,65 +351,13 @@ public class chunk : MonoBehaviour
             for (int step = 0; step < steps_per_frame; ++step)
                 if (chunk.continue_generation())
                 {
-                    // Generation complete, destroy
-                    // this generator
+                    // Generation complete
+                    chunk.on_generation_complete();
+
+                    // Destroy this generator
                     Destroy(gameObject);
                     return;
                 }
         }
-    }
-
-    // Sleeping objects are those who's chunks have been
-    // destroyed but might be reloaded in the near future.
-    // Only if a biome is destroyed will the objects in it
-    // be saved to disk/destroyed.
-    static Transform _all_sleeping_objects;
-    Transform _sleeping_objects;
-    Transform sleeping_objects
-    {
-        get
-        {
-            // Top level transform contains the sleeping
-            // objects for all chunks
-            if (_all_sleeping_objects == null)
-                _all_sleeping_objects =
-                    new GameObject("sleeping_objects").transform;
-
-            // Create (or find) the transform containing sleeping
-            // objects from this chunk
-            if (_sleeping_objects == null)
-            {
-                string so_name = "chunk_" + x + "_" + z;
-                _sleeping_objects = _all_sleeping_objects.Find(so_name);
-                if (_sleeping_objects == null)
-                {
-                    _sleeping_objects = new GameObject(so_name).transform;
-                    _sleeping_objects.transform.SetParent(_all_sleeping_objects);
-                }
-            }
-
-            return _sleeping_objects;
-        }
-    }
-
-    public void destroy()
-    {
-        // Finish generation
-        while (!continue_generation()) { }
-
-        // Detatch and disable world objects
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                if (blended_points[i, j].world_object_gen == null)
-                    continue;
-
-                var wo = blended_points[i, j].world_object_gen.generated;
-                wo.transform.SetParent(sleeping_objects);
-                wo.gameObject.SetActive(false);
-            }
-
-        // Destroy the object
-        Object.Destroy(transform.gameObject);
     }
 }

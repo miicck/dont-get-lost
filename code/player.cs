@@ -78,6 +78,12 @@ public class player : MonoBehaviour
         else mouse_look();
     }
 
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, game.render_range);
+    }
+
     //##################//
     // ITEM INTERACTION //
     //##################//
@@ -173,6 +179,12 @@ public class player : MonoBehaviour
         {
             velocity.x *= SPEED / xz_mag;
             velocity.z *= SPEED / xz_mag;
+        }
+
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            velocity.x *= 10;
+            velocity.z *= 10;
         }
 
         // Apply the modified velocity

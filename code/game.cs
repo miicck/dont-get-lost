@@ -50,7 +50,7 @@ public class game : MonoBehaviour
         player = player.create();
 
         var biome_coords = biome.coords(player.transform.position);
-        biome.create<mangroves>(biome_coords[0], biome_coords[1]);
+        biome.create<ocean>(biome_coords[0], biome_coords[1]);
 
         // Create the sky!
         create_sky();

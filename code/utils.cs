@@ -103,4 +103,24 @@ public static class utils
         }
         return ret;
     }
+
+    // Check if the given circle intersects the given square
+    public static bool circle_intersects_square(
+        Vector2 circle_centre, float radius,
+        Vector2 square_centre, float sq_width, float sq_height)
+    {
+        float dx = Mathf.Abs(circle_centre.x - square_centre.x);
+        float dy = Mathf.Abs(circle_centre.y - square_centre.y);
+
+        if (dx > sq_width / 2 + radius) return false;
+        if (dy > sq_height / 2 + radius) return false;
+
+        if (dx < sq_width / 2) return true;
+        if (dy < sq_height / 2) return true;
+
+        float corner_distance_sq = (dx - sq_width / 2) * (dx - sq_width / 2) +
+                                   (dy - sq_height / 2) * (dy - sq_height / 2);
+
+        return corner_distance_sq < radius * radius;
+    }
 }

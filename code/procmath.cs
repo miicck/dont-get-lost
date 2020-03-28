@@ -12,16 +12,16 @@ public static class procmath
         // Smoothly increases from 0 at x = thresh to 1 at x = 1
         public static float smooth_max_cos(float x, float thresh = 0f)
         {
-            if (x < thresh) return 0;
-            if (x > 1) return 1;
+            if (x <= thresh) return 0;
+            if (x >= 1) return 1;
             return 1 - Mathf.Cos((x - thresh) * Mathf.PI / (2 * (1.0f - thresh)));
         }
 
         // Maps x to a linear curve, smoothed towards x = 0 and x = 1
         public static float end_smoothed_linear(float x, float smooth_range)
         {
-            if (x < 0) return 0;
-            if (x > 1) return 1.0f;
+            if (x <= 0) return 0;
+            if (x >= 1) return 1.0f;
 
             float d = smooth_range;
             float scale = 1f / (1 - d);
