@@ -165,4 +165,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regenerate: 1
-  biome_override: ocean
+  biome_override: 

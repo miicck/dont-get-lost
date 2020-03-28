@@ -26,7 +26,7 @@ public abstract class biome : MonoBehaviour
             var go = GameObject.Find("biome_" + (x + dx) + "_" + (z + dz));
             if (go != null) _neihbours[i, j] = go.GetComponent<biome>();
             else if (generate_if_needed)
-                _neihbours[i, j] = generate(x + dx, z + dz);
+                _neihbours[i, j] = load_or_generate(x + dx, z + dz);
         }
 
         return _neihbours[i, j];
@@ -225,9 +225,79 @@ public abstract class biome : MonoBehaviour
 
     protected abstract void generate_grid();
 
-    public string filename() { return world.save_folder() + "/biome_" + x + "_" + z; }
+    public static string filename(int x, int z) { return world.save_folder() + "/biome_" + x + "_" + z; }
 
-    public static T create<T>(int x, int z) where T : biome
+    // Loads a biome if possible, otherwise generates one
+    public static biome load_or_generate(int x, int z)
+    {
+        if (System.IO.File.Exists(filename(x, z)))
+        {
+            var loaded = create<loaded_biome>(x, z);
+            loaded.load();
+            return loaded;
+        }
+
+        // Select a random biome
+        int i = Random.Range(0, biome_creators.Count);
+        var generated = (biome)biome_creators[i].Invoke(null, new object[] { x, z });
+
+        // Generate the biome
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        generated.generate_grid();
+        utils.log("Generated biome " + x + ", " + z +
+                  " (" + generated.GetType().Name + ") in " +
+                  sw.ElapsedMilliseconds + " ms", "generation");
+        return generated;
+    }
+
+    // Creation methods for all enabled biome types
+    public static string biome_override = "";
+    static List<MethodInfo> _biome_creators;
+    static List<MethodInfo> biome_creators
+    {
+        get
+        {
+            if (_biome_creators == null)
+            {
+                // Find the biome types
+                _biome_creators = new List<MethodInfo>();
+                var asem = Assembly.GetAssembly(typeof(biome));
+                var types = asem.GetTypes();
+
+                foreach (var t in types)
+                {
+                    // Check if this type is a valid biome
+                    if (!t.IsSubclassOf(typeof(biome))) continue;
+                    if (t.IsAbstract) continue;
+
+                    // Get the create method
+                    var method = typeof(biome).GetMethod("create", BindingFlags.NonPublic | BindingFlags.Static);
+                    var create_method = method.MakeGenericMethod(t);
+
+                    if (t.Name == biome_override)
+                    {
+                        // Enforce the biome override
+                        _biome_creators = new List<MethodInfo> { create_method };
+                        break;
+                    }
+
+                    // Get biome info, if it exists
+                    var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
+                    if (bi != null)
+                    {
+                        if (!bi.generation_enabled)
+                            continue; // Skip allowing this biome
+                    }
+
+                    _biome_creators.Add(create_method);
+                }
+            }
+            return _biome_creators;
+        }
+    }
+
+    // Create a blank biome of the given type, ready for generation or loading
+    static T create<T>(int x, int z) where T : biome
     {
         var b = new GameObject("biome_" + x + "_" + z).AddComponent<T>();
         b.transform.position = new Vector3(x, 0, z) * SIZE;
@@ -247,15 +317,6 @@ public abstract class biome : MonoBehaviour
                 b.chunk_grid[i, j].transform.SetParent(b.transform);
             }
 
-        // Attempt to load the biome
-        if (b.load()) return b;
-
-        // Generate the biome
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        b.generate_grid();
-        utils.log("Generated biome " + x + ", " + z +
-                  " (" + b.GetType().Name + ") in " +
-                  sw.ElapsedMilliseconds + " ms", "generation");
         return b;
     }
 
@@ -266,7 +327,7 @@ public abstract class biome : MonoBehaviour
             for (int dz = -1; dz < 2; ++dz)
                 if (in_range(x + dx, z + dz))
                     get_neighbour(dx, dz, true);
-        
+
         // Offload to disk if possible
         if (can_offload()) offload_to_disk();
     }
@@ -310,7 +371,7 @@ public abstract class biome : MonoBehaviour
     {
         // Save the biome to file
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Create))
+        using (var stream = new System.IO.FileStream(filename(x, z), System.IO.FileMode.Create))
         {
             // Write the points to the file
             for (int i = 0; i < SIZE; ++i)
@@ -369,8 +430,8 @@ public abstract class biome : MonoBehaviour
     {
         // Read the biome from file
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        if (!System.IO.File.Exists(filename())) return false;
-        using (var stream = new System.IO.FileStream(filename(), System.IO.FileMode.Open, System.IO.FileAccess.Read))
+        if (!System.IO.File.Exists(filename(x, z))) return false;
+        using (var stream = new System.IO.FileStream(filename(x, z), System.IO.FileMode.Open, System.IO.FileAccess.Read))
         {
             // Read the points from the file
             byte[] pt_bytes = new byte[new point().serialize().Length];
@@ -561,65 +622,25 @@ public abstract class biome : MonoBehaviour
             return "Altitude: " + altitude + " Terrain color: " + terrain_color;
         }
     }
-
-    // Constructors for all biome types and a corresponding
-    // random number in [0,1] for each
-    static List<MethodInfo> biome_creators = null;
-    public static string biome_override = "";
-
-    // Generate the biome at the given biome coordinates
-    static biome generate(int xb, int zb)
-    {
-        if (biome_creators == null)
-        {
-            // Find the biome types
-            biome_creators = new List<MethodInfo>();
-            var asem = Assembly.GetAssembly(typeof(biome));
-            var types = asem.GetTypes();
-
-            foreach (var t in types)
-            {
-                // Check if this type is a valid biome
-                if (!t.IsSubclassOf(typeof(biome))) continue;
-                if (t.IsAbstract) continue;
-
-                // Get the create method
-                var method = typeof(biome).GetMethod("create");
-                var create_method = method.MakeGenericMethod(t);
-
-                if (t.Name == biome_override)
-                {
-                    // Enforce the biome override
-                    biome_creators = new List<MethodInfo> { create_method };
-                    break;
-                }
-
-                // Get biome info, if it exists
-                var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
-                if (bi != null)
-                {
-                    if (!bi.enabled)
-                        continue; // Skip allowing this biome
-                }
-
-                biome_creators.Add(create_method);
-            }
-        }
-
-        // Return a random biome
-        int i = Random.Range(0, biome_creators.Count);
-        return (biome)biome_creators[i].Invoke(null, new object[] { xb, zb });
-    }
 }
 
 // Attribute info for biomes
 public class biome_info : System.Attribute
 {
-    public bool enabled { get; private set; }
+    public bool generation_enabled { get; private set; }
 
-    public biome_info(bool enabled)
+    public biome_info(bool generation_enabled)
     {
-        this.enabled = enabled;
+        this.generation_enabled = generation_enabled;
+    }
+}
+
+[biome_info(false)]
+public class loaded_biome : biome
+{
+    protected override void generate_grid()
+    {
+        throw new System.Exception("Loaded biomes should not call generate()!");
     }
 }
 
@@ -805,7 +826,7 @@ public class terraced_hills : biome
     }
 }
 
-[biome_info(enabled: false)]
+[biome_info(generation_enabled: false)]
 public class cliffs : biome
 {
     public const float CLIFF_HEIGHT = 10f;

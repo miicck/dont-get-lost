@@ -50,7 +50,7 @@ public class game : MonoBehaviour
         player = player.create();
 
         var biome_coords = biome.coords(player.transform.position);
-        biome.create<ocean>(biome_coords[0], biome_coords[1]);
+        biome.load_or_generate(biome_coords[0], biome_coords[1]);
 
         // Create the sky!
         create_sky();
@@ -110,5 +110,9 @@ public class game : MonoBehaviour
     {
         // End any player interactions
         player.current.interacting_with = null;
+
+        // Offload all the biomes
+        foreach (var b in FindObjectsOfType<biome>())
+            b.offload_to_disk();
     }
 }
