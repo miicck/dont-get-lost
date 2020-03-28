@@ -12,6 +12,9 @@ public abstract class biome : MonoBehaviour
     public int x { get; private set; }
     public int z { get; private set; }
 
+    // The random number generator specific to this biome
+    public System.Random random { get; private set; }
+
     // The grid of points defining the biome
     protected point[,] grid = new point[SIZE, SIZE];
     protected abstract void generate_grid();
@@ -38,7 +41,7 @@ public abstract class biome : MonoBehaviour
             var go = GameObject.Find("biome_" + (x + dx) + "_" + (z + dz));
             if (go != null) _neihbours[i, j] = go.GetComponent<biome>();
             else if (generate_if_needed)
-                _neihbours[i, j] = load_or_generate(x + dx, z + dz);
+                _neihbours[i, j] = generate(x + dx, z + dz);
         }
 
         return _neihbours[i, j];
@@ -240,8 +243,8 @@ public abstract class biome : MonoBehaviour
                 if (in_range(x + dx, z + dz))
                     get_neighbour(dx, dz, true);
 
-        // Offload to disk if possible
-        if (no_longer_needed()) offload_to_disk();
+        // Destroy biomes that are no longer needed
+        if (no_longer_needed()) Destroy(gameObject);
     }
 
     private void OnDrawGizmos()
@@ -252,34 +255,20 @@ public abstract class biome : MonoBehaviour
             new Vector3(SIZE, 0.01f, SIZE));
     }
 
-    //##############################//
-    // BIOME LOADING AND GENERATION //
-    //##############################//
+    //##################//
+    // BIOME GENERATION //
+    //##################//
 
-    // The filename where this biome is saved to/loaded from
-    public static string filename(int x, int z) { return world.save_folder() + "/biome_" + x + "_" + z; }
-
-    // Loads a biome if possible, otherwise generates one
-    public static biome load_or_generate(int x, int z)
+    // Generates the biome at x, z
+    public static biome generate(int x, int z)
     {
-        if (System.IO.File.Exists(filename(x, z)))
-        {
-            var loaded = create<loaded_biome>(x, z);
-            loaded.load();
-            return loaded;
-        }
+        // Create the biome random number generator, seeded 
+        // by the biome x, z coords and the world seed
+        System.Random rand = procmath.multiseed_random(x, z, world.seed);
 
-        // Select a random biome
-        int i = Random.Range(0, generated_biomes.Count);
-        var generated = (biome)generated_biomes[i].Invoke(null, new object[] { x, z });
-
-        // Generate the biome
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        generated.generate_grid();
-        utils.log("Generated biome " + x + ", " + z +
-                  " (" + generated.GetType().Name + ") in " +
-                  sw.ElapsedMilliseconds + " ms", "generation");
-        return generated;
+        // Use the above random number generator to pick which biome to generate
+        int i = rand.Next() % generated_biomes.Count;
+        return (biome)generated_biomes[i].Invoke(null, new object[] { x, z, rand });
     }
 
     // If this is set to the name of a biome class, 
@@ -296,17 +285,17 @@ public abstract class biome : MonoBehaviour
             {
                 // Find the biome types
                 _generated_biomes = new List<MethodInfo>();
-                var asem = Assembly.GetAssembly(typeof(generated_biome));
+                var asem = Assembly.GetAssembly(typeof(biome));
                 var types = asem.GetTypes();
 
                 foreach (var t in types)
                 {
                     // Check if this type is a valid biome
-                    if (!t.IsSubclassOf(typeof(generated_biome))) continue;
+                    if (!t.IsSubclassOf(typeof(biome))) continue;
                     if (t.IsAbstract) continue;
 
                     // Get the create method
-                    var method = typeof(biome).GetMethod("create", BindingFlags.NonPublic | BindingFlags.Static);
+                    var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
                     var create_method = method.MakeGenericMethod(t);
 
                     if (t.Name == biome_override)
@@ -331,12 +320,13 @@ public abstract class biome : MonoBehaviour
         }
     }
 
-    // Create a blank biome of the given type, ready for generation or loading
-    static T create<T>(int x, int z) where T : biome
+    // Create a biome of the given type
+    static T generate<T>(int x, int z, System.Random random) where T : biome
     {
         var b = new GameObject("biome_" + x + "_" + z).AddComponent<T>();
         b.transform.position = new Vector3(x, 0, z) * SIZE;
 
+        b.random = random;
         b.x = x;
         b.z = z;
 
@@ -352,12 +342,18 @@ public abstract class biome : MonoBehaviour
                 b.chunk_grid[i, j].transform.SetParent(b.transform);
             }
 
+        // Generate the biome
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        b.generate_grid();
+        utils.log("Generated biome " + x + ", " + z +
+                  " (" + b.GetType().Name + ") in " +
+                  sw.ElapsedMilliseconds + " ms", "generation");
         return b;
     }
 
-    //##############//
-    // BIOME SAVING //
-    //##############//
+    //################//
+    // BIOME DISPOSAL //
+    //################//
 
     // Check if this biome is no longer required in-game
     bool no_longer_needed()
@@ -376,147 +372,16 @@ public abstract class biome : MonoBehaviour
         return true;
     }
 
-    public void offload_to_disk()
-    {
-        // Save the biome to file
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        using (var stream = new System.IO.FileStream(filename(x, z), System.IO.FileMode.Create))
-        {
-            // Write the points to the file
-            for (int i = 0; i < SIZE; ++i)
-                for (int j = 0; j < SIZE; ++j)
-                {
-                    var bytes = grid[i, j].serialize();
-                    stream.Write(bytes, 0, bytes.Length);
-                }
-
-            // Write all the world objects to the file
-            for (int i = 0; i < SIZE; ++i)
-                for (int j = 0; j < SIZE; ++j)
-                {
-                    // No world object here
-                    if (grid[i, j].world_object_gen == null)
-                        continue;
-
-                    // Store the i, j coordinates of this world_object_generator
-                    stream.Write(System.BitConverter.GetBytes(i), 0, sizeof(int));
-                    stream.Write(System.BitConverter.GetBytes(j), 0, sizeof(int));
-
-                    var wos = grid[i, j].world_object_gen;
-
-                    // World object still hasn't loaded => simply save it again
-                    if (wos.to_load != null)
-                    {
-                        stream.Write(wos.to_load, 0, wos.to_load.Length);
-                    }
-
-                    else if (wos.generated)
-                    {
-                        // World object has been generated, serialize it
-                        var bytes = wos.generated.serialize();
-                        stream.Write(bytes, 0, bytes.Length);
-                    }
-
-                    else if (wos.to_generate != null)
-                    {
-                        // World object is scheduled for generation
-                        // serialize the "generation required" version
-                        var bytes = wos.to_generate.serialize_generate_required();
-                        stream.Write(bytes, 0, bytes.Length);
-                    }
-
-                    else Debug.LogError("Don't know how to save this world object status!");
-                }
-        }
-
-        // Remove this biome from the world
-        Destroy(gameObject);
-
-        utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
-    }
-
-    protected virtual bool load()
-    {
-        // Read the biome from file
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        if (!System.IO.File.Exists(filename(x, z))) return false;
-        using (var stream = new System.IO.FileStream(filename(x, z), System.IO.FileMode.Open, System.IO.FileAccess.Read))
-        {
-            // Read the points from the file
-            byte[] pt_bytes = new byte[new point().serialize().Length];
-            for (int i = 0; i < SIZE; ++i)
-                for (int j = 0; j < SIZE; ++j)
-                {
-                    stream.Read(pt_bytes, 0, pt_bytes.Length);
-                    grid[i, j] = new point(pt_bytes);
-                }
-
-            // Read the world objects from the file
-            byte[] int_bytes = new byte[sizeof(int) * 2];
-            while (true)
-            {
-                // Load the position
-                if (stream.Read(int_bytes, 0, int_bytes.Length) == 0) break;
-                int i = System.BitConverter.ToInt32(int_bytes, 0);
-                int j = System.BitConverter.ToInt32(int_bytes, sizeof(int));
-
-                // Load the world object
-                byte[] wo_bytes = new byte[world_object.serialize_length()];
-                if (stream.Read(wo_bytes, 0, wo_bytes.Length) == 0) break;
-
-                if (world_object.generation_required(wo_bytes))
-                {
-                    // This object was saved before generation, schedule generation
-                    int id = System.BitConverter.ToInt32(wo_bytes, 0);
-                    grid[i, j].world_object_gen = new world_object_generator(id);
-                }
-                else
-                    // Load as normal
-                    grid[i, j].world_object_gen = new world_object_generator(wo_bytes);
-            }
-        }
-        utils.log("Loaded biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
-        return true;
-    }
-
     //#############//
     // BIOME.POINT //
     //#############//
 
-    // A particular point in the biome has these
-    // properties. They are either loaded from disk,
-    // or generated.
+    // Describes a particular point in the biome
     public class point
     {
         public float altitude;
         public Color terrain_color;
-        public world_object_generator world_object_gen;
-
-        // Serialise a point into bytes
-        public byte[] serialize()
-        {
-            float[] floats = new float[]
-            {
-                altitude, terrain_color.r, terrain_color.g, terrain_color.b
-            };
-
-            int float_bytes = sizeof(float) * floats.Length;
-            byte[] bytes = new byte[float_bytes];
-            System.Buffer.BlockCopy(floats, 0, bytes, 0, float_bytes);
-            return bytes;
-        }
-
-        public point() { }
-
-        // Construct a point from it's serialization
-        public point(byte[] bytes)
-        {
-            altitude = System.BitConverter.ToSingle(bytes, 0);
-            terrain_color.r = System.BitConverter.ToSingle(bytes, sizeof(float));
-            terrain_color.g = System.BitConverter.ToSingle(bytes, 2 * sizeof(float));
-            terrain_color.b = System.BitConverter.ToSingle(bytes, 3 * sizeof(float));
-            terrain_color.a = 0;
-        }
+        public world_object object_to_generate;
 
         // Computea a weighted average of a list of points
         public static point average(point[] pts, float[] wts)
@@ -551,7 +416,7 @@ public abstract class biome : MonoBehaviour
             }
 
             if (pts[max_i] != null)
-                ret.world_object_gen = pts[max_i].world_object_gen;
+                ret.object_to_generate = pts[max_i].object_to_generate;
 
             return ret;
         }
@@ -576,69 +441,6 @@ public abstract class biome : MonoBehaviour
             return "Altitude: " + altitude + " Terrain color: " + terrain_color;
         }
     }
-
-    //##############################//
-    // BIOME.WORLD_OBJECT_GENERATOR //
-    //##############################//
-
-    // Represetnts a world object in a biome
-    public class world_object_generator
-    {
-        public float additional_scale_factor = 1.0f;
-
-        public world_object gen_or_load(Vector3 terrain_normal, point point)
-        {
-            // Already generated
-            if (generated != null)
-            {
-                // May have been already generated, but moved to
-                // the inactive pile (if the chunk it was in was destroyed)
-                if (!generated.gameObject.activeInHierarchy)
-                    generated.gameObject.SetActive(true);
-
-                return generated;
-            }
-
-            // Needs to be loaded from bytes
-            if (to_load != null)
-            {
-                generated = world_object.deserialize(to_load);
-                generated.on_load(terrain_normal, point);
-                to_load = null;
-                return generated;
-            }
-
-            // Needs to be generated from prefab
-            generated = to_generate.inst();
-            to_generate = null;
-            generated.on_generation(terrain_normal, point);
-            generated.transform.localScale *= additional_scale_factor;
-            return generated;
-        }
-
-        // A world_object_generator can only be created 
-        // with a prefab that needs generating, or a
-        // byte array that needs loading.
-        public world_object_generator(string name)
-        {
-            to_generate = world_object.look_up(name);
-            if (to_generate == null)
-                Debug.LogError("Tried to create a world object generator with a null world object!");
-        }
-
-        public world_object_generator(int id)
-        {
-            to_generate = world_object.look_up(id);
-            if (to_generate == null)
-                Debug.LogError("Tried to create a world object generator with a null world object!");
-        }
-
-        public world_object_generator(byte[] bytes) { to_load = bytes; }
-
-        public world_object to_generate { get; private set; }
-        public world_object generated { get; private set; }
-        public byte[] to_load { get; private set; }
-    }
 }
 
 // Attribute info for biomes
@@ -649,14 +451,5 @@ public class biome_info : System.Attribute
     public biome_info(bool generation_enabled = true)
     {
         this.generation_enabled = generation_enabled;
-    }
-}
-
-// The type a biome will have if it is loaded from disk
-public class loaded_biome : biome
-{
-    protected override void generate_grid()
-    {
-        throw new System.Exception("Loaded biomes should not call generate_grid()!");
     }
 }

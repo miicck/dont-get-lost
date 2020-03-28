@@ -305,31 +305,21 @@ public class chunk : MonoBehaviour
             var point = blended_points[i, j];
 
             // Check if there is a world object at this point
-            if (point.world_object_gen == null) continue;
+            if (point.object_to_generate == null) continue;
 
             // Get the terrain normals
             float xf = i / (float)TERRAIN_RES;
             float zf = j / (float)TERRAIN_RES;
             Vector3 terrain_normal = terrain.terrainData.GetInterpolatedNormal(xf, zf);
 
-            // Need to generate from prefab
-            if (point.world_object_gen.to_generate != null)
+            if (point.object_to_generate.can_place(point, terrain_normal))
             {
-                // Check if we can generate the object here
-                if (!point.world_object_gen.to_generate.can_place(point, terrain_normal))
-                {
-                    // We can't, unschedule generation
-                    point.world_object_gen = null;
-                    continue;
-                }
+                // Place the world object
+                var wo = point.object_to_generate.inst();
+                wo.transform.SetParent(transform);
+                wo.transform.localPosition = new Vector3(i, point.altitude, j);
+                wo.on_placement(terrain_normal, point, biome);
             }
-
-            // Generate (or load) the world object
-            var wo = point.world_object_gen.gen_or_load(terrain_normal, point);
-
-            // Place the world object
-            wo.transform.SetParent(transform);
-            wo.transform.localPosition = new Vector3(i, point.altitude, j);
         }
 
         ++objects_i;

@@ -2,15 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class generated_biome : biome
-{
-    protected override bool load()
-    {
-        throw new System.Exception("Generated bioms should not call load()!");
-    }
-}
-
-public class mangroves : generated_biome
+public class mangroves : biome
 {
     public const float ISLAND_SIZE = 27.2f;
     public const float MANGROVE_START_ALT = world.SEA_LEVEL - 3;
@@ -19,8 +11,8 @@ public class mangroves : generated_biome
 
     protected override void generate_grid()
     {
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
+        float xrand = random.range(0, 1f);
+        float zrand = random.range(0, 1f);
 
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
@@ -36,15 +28,15 @@ public class mangroves : generated_biome
                     man_amt = Mathf.Exp(
                         -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
 
-                if (Random.Range(0, 1f) < man_amt * MANGROVE_PROB)
-                    p.world_object_gen = new world_object_generator("mangroves");
+                if (random.range(0, 1f) < man_amt * MANGROVE_PROB)
+                    p.object_to_generate = world_object.load("mangroves");
 
                 grid[i, j] = p;
             }
     }
 }
 
-public class ocean : generated_biome
+public class ocean : biome
 {
     const int MAX_ISLAND_ALT = 8; // The maximum altitude of an island above sea level
     const int ISLAND_PERIOD = 32; // The range over which an island extends on the seabed
@@ -57,8 +49,8 @@ public class ocean : generated_biome
         float[,] alt = new float[SIZE, SIZE];
 
         // Start with some perlin noise
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
+        float xrand = random.range(0, 1f);
+        float zrand = random.range(0, 1f);
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
                 alt[i, j] += 0.5f * world.SEA_LEVEL * Mathf.PerlinNoise(
@@ -67,11 +59,11 @@ public class ocean : generated_biome
         // Add a bunch of guassians to create desert islands
         // (also reduce the amount of perlin noise far from the islands
         //  to create a smooth seabed)
-        int islands = Random.Range(MIN_ISLANDS, MAX_ISLANDS);
+        int islands = random.range(MIN_ISLANDS, MAX_ISLANDS);
         for (int n = 0; n < islands; ++n)
             procmath.float_2D_tools.apply_guassian(ref alt,
-                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
-                Random.Range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
+                random.range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
+                random.range(ISLAND_PERIOD, SIZE - ISLAND_PERIOD),
                 ISLAND_PERIOD, (f, g) =>
                     f * (0.5f + 0.5f * g) + // Reduced perlin noise
                     g * (world.SEA_LEVEL / 2f + MAX_ISLAND_ALT) // Added guassian
@@ -88,15 +80,15 @@ public class ocean : generated_biome
                 };
 
                 if (p.altitude > world.SEA_LEVEL)
-                    if (Random.Range(0, 100) == 0)
-                        p.world_object_gen = new world_object_generator("palm_tree");
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("palm_tree");
 
                 grid[i, j] = p;
             }
     }
 }
 
-public class mountains : generated_biome
+public class mountains : biome
 {
     const int MIN_MOUNTAIN_WIDTH = 64;
     const int MAX_MOUNTAIN_WIDTH = 128;
@@ -115,10 +107,10 @@ public class mountains : generated_biome
         const int MOUNTAIN_COUNT = (int)(MOUNTAIN_DENSITY * SIZE * SIZE);
         for (int n = 0; n < MOUNTAIN_COUNT; ++n)
         {
-            int xm = Random.Range(0, SIZE);
-            int zm = Random.Range(0, SIZE);
-            int width = Random.Range(MIN_MOUNTAIN_WIDTH, MAX_MOUNTAIN_WIDTH);
-            float rot = Random.Range(0, 360f);
+            int xm = random.Next() % SIZE;
+            int zm = random.Next() % SIZE;
+            int width = random.range(MIN_MOUNTAIN_WIDTH, MAX_MOUNTAIN_WIDTH);
+            float rot = random.range(0, 360f);
             procmath.float_2D_tools.add_pyramid(ref alt, xm, zm, width, 1, rot);
         }
 
@@ -146,23 +138,23 @@ public class mountains : generated_biome
 
                 if (p.altitude < ROCK_START &&
                     p.altitude > world.SEA_LEVEL)
-                    if (Random.Range(0, 40) == 0)
-                        p.world_object_gen = new world_object_generator("pine_tree");
+                    if (random.range(0, 40) == 0)
+                        p.object_to_generate = world_object.load("pine_tree");
 
                 grid[i, j] = p;
             }
     }
 }
 
-public class terraced_hills : generated_biome
+public class terraced_hills : biome
 {
     public const float HILL_HEIGHT = 50f;
     public const float HILL_SIZE = 64f;
 
     protected override void generate_grid()
     {
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
+        float xrand = random.range(0, 1f);
+        float zrand = random.range(0, 1f);
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
@@ -176,13 +168,10 @@ public class terraced_hills : generated_biome
                 if (p.altitude < HILL_HEIGHT / 2)
                 {
                     if ((i % 25 == 0) && (j % 25 == 0))
-                    {
-                        p.world_object_gen = new world_object_generator("flat_outcrop");
-                        p.world_object_gen.additional_scale_factor = 4f;
-                    }
+                        p.object_to_generate = world_object.load("flat_outcrop_large");
                 }
-                else if (Random.Range(0, 200) == 0)
-                    p.world_object_gen = new world_object_generator("tree");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("tree");
 
                 grid[i, j] = p;
             }
@@ -190,7 +179,7 @@ public class terraced_hills : generated_biome
 }
 
 [biome_info(generation_enabled: false)]
-public class cliffs : generated_biome
+public class cliffs : biome
 {
     public const float CLIFF_HEIGHT = 10f;
     public const float CLIFF_PERIOD = 32f;
@@ -201,8 +190,8 @@ public class cliffs : generated_biome
     protected override void generate_grid()
     {
         // Generate the altitudes
-        float xrand = Random.Range(0, 1f);
-        float zrand = Random.Range(0, 1f);
+        float xrand = random.range(0, 1f);
+        float zrand = random.range(0, 1f);
         float[,] alt = new float[SIZE, SIZE];
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)

@@ -164,5 +164,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05316f8189d2e479582302c74c75a780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  regenerate: 0
+  world_seed: 6969
   biome_override: 

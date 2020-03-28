@@ -6,6 +6,37 @@ using UnityEngine;
 // that are useful for procedural generation
 public static class procmath
 {
+    // Returns a random number generator, seeded by multiple ints
+    public static System.Random multiseed_random(params int[] seeds)
+    {
+        // Create a series of random number generators, each taking
+        // one of the successive input seeds as the seed
+        System.Random[] rands = new System.Random[seeds.Length];
+        for (int i = 0; i < seeds.Length; ++i)
+            rands[i] = new System.Random(seeds[i]);
+
+        // Use the above random number generators to create a 
+        // new pseudorandom seed
+        int seed = 0;
+        for (int i = 0; i < seeds.Length; ++i)
+            seed += rands[i].Next() / seeds.Length;
+
+        // Create the final random number generator
+        return new System.Random(seed);
+    }
+
+    // Extend system.random to generate floating point ranges
+    public static float range(this System.Random gen, float min, float max)
+    {
+        return (float)(gen.NextDouble() * (max - min)) + min;
+    }
+
+    // Extend system.random to generate integer ranges
+    public static int range(this System.Random gen, int min, int max)
+    {
+        return min + gen.Next() % (max - min);
+    }
+
     // Maps for a single floating point value
     public static class maps
     {
@@ -58,15 +89,6 @@ public static class procmath
     {
         // Remap a float to another float
         public delegate float remap(float f);
-
-        // Generate a random normally-distributed number 
-        // with mean 0, std dev = 1, using a box-muller tranform
-        public static float random_normal()
-        {
-            float u1 = Random.Range(0, 1f);
-            float u2 = Random.Range(0, 1f);
-            return Mathf.Sqrt(-2 * Mathf.Log(u1)) * Mathf.Cos(2 * Mathf.PI * u2);
-        }
 
         // Check if x, z is in range for a 2d array
         public static bool in_range(ref float[,] arr, int x, int z)

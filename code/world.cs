@@ -5,6 +5,9 @@ using UnityEngine;
 // The in-game world
 public static class world
 {
+    // The seed for the world generator
+    public static int seed = 6969;
+
     // The name this world is (to be) saved as
     public static string name = "world";
 

@@ -6,7 +6,7 @@ public class game : MonoBehaviour
 {
     public static player player { get; private set; }
 
-    public bool regenerate = false;
+    public int world_seed = 6969;
     public string biome_override = "";
 
     // The target render range, which the actual render range will lerp to
@@ -37,8 +37,7 @@ public class game : MonoBehaviour
 
     void Start()
     {
-        // Delete the world if we want to regenerate
-        if (regenerate) System.IO.Directory.Delete(world.save_folder(), true);
+        world.seed = world_seed;
 
         // Set the biome override
         biome.biome_override = biome_override;
@@ -51,7 +50,7 @@ public class game : MonoBehaviour
 
         // Create the biome at the players location
         var biome_coords = biome.coords(player.transform.position);
-        biome.load_or_generate(biome_coords[0], biome_coords[1]);
+        biome.generate(biome_coords[0], biome_coords[1]);
 
         // Create the sky!
         create_sky();
@@ -111,9 +110,5 @@ public class game : MonoBehaviour
     {
         // End any player interactions
         player.current.interacting_with = null;
-
-        // Offload all the biomes
-        foreach (var b in FindObjectsOfType<biome>())
-            b.offload_to_disk();
     }
 }
