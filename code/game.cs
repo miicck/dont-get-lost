@@ -49,6 +49,18 @@ public class game : MonoBehaviour
         // Create the player
         player = player.create();
 
+        var biome_coords = biome.coords(player.transform.position);
+        biome.create<mangroves>(biome_coords[0], biome_coords[1]);
+
+        // Create the sky!
+        create_sky();
+
+        if (Application.isEditor)
+            QualitySettings.vSyncCount = 0;
+    }
+
+    void create_sky()
+    {
         // Create the sun
         var sun = new GameObject("sun").AddComponent<Light>();
         sun.transform.position = Vector3.zero;
@@ -62,18 +74,12 @@ public class game : MonoBehaviour
         aux_sun.transform.SetParent(sun.transform);
         aux_sun.intensity = 0.1f;
         sun.intensity = 1 - aux_sun.intensity;
-
         sun.shadows = LightShadows.Soft;
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
-
-        if (Application.isEditor)
-            QualitySettings.vSyncCount = 0;
     }
 
     void Update()
     {
-        world.update_grid(player.transform.position);
-
         if (Input.GetKeyDown(KeyCode.Equals))
             render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus))
@@ -104,14 +110,5 @@ public class game : MonoBehaviour
     {
         // End any player interactions
         player.current.interacting_with = null;
-
-        // Save the world
-        world.destroy();
-    }
-
-    void OnDrawGizmos()
-    {
-        if (player != null)
-            world.draw_gizmos(player.transform.position);
     }
 }

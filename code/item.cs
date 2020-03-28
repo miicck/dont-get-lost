@@ -337,7 +337,7 @@ public class item : interactable
     public override void on_end_interaction()
     {
         // Return the item to chunk-ownership  
-        transform.SetParent(world.chunk_at(transform.position).transform);
+        transform.SetParent(chunk.at(transform.position).transform);
 
         // Setup item in world mode
         if (weld == null) rigidbody.isKinematic = false;
@@ -371,7 +371,7 @@ public class item : interactable
         i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
         i.rigidbody.velocity = Random.onUnitSphere;
         i.transform.Rotate(0, Random.Range(0, 360f), 0);
-        i.transform.SetParent(world.chunk_at(i.transform.position).transform);
+        i.transform.SetParent(chunk.at(i.transform.position).transform);
         return i;
     }
 

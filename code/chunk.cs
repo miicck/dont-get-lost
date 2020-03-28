@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class chunk
+public class chunk : MonoBehaviour
 {
     public const int SIZE = 64;
     public const int TERRAIN_RES = SIZE + 1;
@@ -10,57 +10,115 @@ public class chunk
     public int x { get; private set; }
     public int z { get; private set; }
 
-    public Transform transform { get; private set; }
     Terrain terrain;
-    biome.point[,] points = new biome.point[TERRAIN_RES, TERRAIN_RES];
     item[] items { get { return transform.GetComponentsInChildren<item>(); } }
 
-    // Coordinate transforms
-    int grid_to_world_x(int i) { return x * SIZE + i - SIZE / 2; }
-    int grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
-
-    // Set the chunk neighbours, for smooth transitions
-    public void update_neighbours(chunk north, chunk east, chunk south, chunk west)
-    {
-        if (!generation_complete()) return;
-        if (north != null && !north.generation_complete()) return;
-        if (east != null && !east.generation_complete()) return;
-        if (south != null && !south.generation_complete()) return;
-        if (west != null && !west.generation_complete()) return;
-
-        terrain.SetNeighbors(
-            west == null ? null : west.terrain,
-            north == null ? null : north.terrain,
-            east == null ? null : east.terrain,
-            south == null ? null : south.terrain
-        );
-    }
-
-    // The transform containing all of the chunks
-    static Transform _chunk_container;
-    static Transform chunk_container
+    // My parent biome
+    biome _biome;
+    biome biome
     {
         get
         {
-            if (_chunk_container == null)
-                _chunk_container = new GameObject("chunks").transform;
-            return _chunk_container;
+            if (_biome == null)
+                _biome = GetComponentInParent<biome>();
+            return _biome;
         }
     }
 
-    public chunk(int x, int z)
+    // The biome points, saved post blending
+    biome.point[,] blended_points = new biome.point[TERRAIN_RES, TERRAIN_RES];
+
+    // Get the chunk coords at a given location
+    public static int[] coords(Vector3 location)
     {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        return new int[]
+        {
+            Mathf.FloorToInt(location.x / SIZE),
+            Mathf.FloorToInt(location.z / SIZE)
+        };
+    }
+    public Vector3 centre { get { return transform.position + new Vector3(1, 0, 1) * SIZE / 2; } }
 
-        // Save my chunk-coordinates
-        this.x = x;
-        this.z = z;
 
-        // Create the transform representing this chunk
-        transform = new GameObject("chunk_" + x + "_" + z).transform;
-        transform.SetParent(chunk_container);
-        transform.position = new Vector3(x - 0.5f, 0, z - 0.5f) * SIZE;
+    public static chunk at(Vector3 location)
+    {
+        var c = coords(location);
+        return GameObject.Find("chunk_" + c[0] + "_" + c[1]).GetComponent<chunk>();
+    }
 
+    // Create a chunk with chunk coordinates x, z
+    public static chunk create(int x, int z)
+    {
+        // Save my chunk-coordinates for
+        // later use in generation
+        var c = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
+        c.x = x;
+        c.z = z;
+
+        // Setup the transform of the chunk
+        c.transform.position = new Vector3(x, 0, z) * SIZE;
+
+        return c;
+    }
+
+    // Highlight the chunk if enabled
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        if (!enabled) Gizmos.color = Color.black;
+        Gizmos.DrawWireCube(
+            transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
+            new Vector3(SIZE, 0.01f, SIZE));
+    }
+
+    // Is this chunk enabled in the world?
+    bool _enabled = false;
+    new public bool enabled
+    {
+        get { return _enabled; }
+        private set
+        {
+            // If enabled, ensure generation has begun
+            if (value && terrain == null)
+                begin_generation();
+
+            // Disable, or enable all children
+            foreach (Transform t in transform)
+                t.gameObject.SetActive(value);
+
+            _enabled = value;
+        }
+    }
+
+    private void Update()
+    {
+        // Enabled if the player is in range
+        enabled = in_range(player.current.transform.position);
+    }
+
+    // Check if this chunk is within render range of the
+    // given centre point
+    // (essentially testing if the render range circle 
+    //  intersects the chunk square)
+    bool in_range(Vector3 centre)
+    {
+        float dx = Mathf.Abs(SIZE * (x + 0.5f) - centre.x);
+        float dz = Mathf.Abs(SIZE * (z + 0.5f) - centre.z);
+
+        if (dx > SIZE / 2 + game.render_range) return false;
+        if (dz > SIZE / 2 + game.render_range) return false;
+
+        if (dx < SIZE / 2) return true;
+        if (dz < SIZE / 2) return true;
+
+        float corner_distance_sq = (dx - SIZE / 2) * (dx - SIZE / 2) +
+                                   (dz - SIZE / 2) * (dz - SIZE / 2);
+
+        return corner_distance_sq < game.render_range * game.render_range;
+    }
+
+    void begin_generation()
+    {
         // Create the water level
         var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
         water.transform.SetParent(transform);
@@ -86,8 +144,23 @@ public class chunk
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
         generator.transform.SetParent(transform);
         generator.chunk = this;
+    }
 
-        utils.log("Chunk " + x + ", " + z + " created in " + sw.ElapsedMilliseconds + " ms", "generation");
+    // Set the chunk neighbours, for smooth transitions
+    public void update_neighbours(chunk north, chunk east, chunk south, chunk west)
+    {
+        if (!generation_complete()) return;
+        if (north != null && !north.generation_complete()) return;
+        if (east != null && !east.generation_complete()) return;
+        if (south != null && !south.generation_complete()) return;
+        if (west != null && !west.generation_complete()) return;
+
+        terrain.SetNeighbors(
+            west == null ? null : west.terrain,
+            north == null ? null : north.terrain,
+            east == null ? null : east.terrain,
+            south == null ? null : south.terrain
+        );
     }
 
     // Continue generation, bit by bit
@@ -145,11 +218,10 @@ public class chunk
         int i = points_i;
         for (int j = 0; j < TERRAIN_RES; ++j)
         {
-            // Get the point descibing this part of the world
-            int x_world = grid_to_world_x(i);
-            int z_world = grid_to_world_z(j);
-            points[i, j] = world.point(x_world, z_world);
-            points[i, j].apply_global_rules();
+            // Get the blended point descibing this part of the world
+            Vector3 world_pos = new Vector3(i, 0, j) + transform.position;
+            blended_points[i, j] = biome.blended_point(world_pos);
+            blended_points[i, j].apply_global_rules();
         }
 
         ++points_i;
@@ -168,7 +240,7 @@ public class chunk
         int i = alphamaps_i;
         for (int j = 0; j < TERRAIN_RES; ++j)
         {
-            pixels[j * TERRAIN_RES + i] = points[i, j].terrain_color;
+            pixels[j * TERRAIN_RES + i] = blended_points[i, j].terrain_color;
             alphamaps[i, j, 0] = 1.0f;
         }
 
@@ -177,23 +249,15 @@ public class chunk
             // Create the terrain texture
             SplatPrototype[] splats = new SplatPrototype[1];
             var tex = new Texture2D(TERRAIN_RES, TERRAIN_RES);
-
-#if         UNITY_2018_3_OR_NEWER // New terrain system
             tex.wrapMode = TextureWrapMode.Clamp;
+
+            // Create the terain layers
             var terrain_layers = new TerrainLayer[1];
             terrain_layers[0] = new TerrainLayer();
             terrain_layers[0].diffuseTexture = tex;
             terrain_layers[0].tileSize = new Vector2(1f, 1f) * SIZE;
             terrain.terrainData.terrainLayers = terrain_layers;
             terrain.materialTemplate = Resources.Load<Material>("materials/terrain");
-
-#           else // Old terrain system
-            tex.wrapMode = TextureWrapMode.Clamp;
-            splats[0] = new SplatPrototype();
-            splats[0].texture = tex;
-            splats[0].tileSize = new Vector2(1f, 1f) * SIZE;
-            terrain.terrainData.splatPrototypes = splats;
-#           endif
 
             // Apply the alphmaps
             tex.SetPixels(pixels);
@@ -217,7 +281,7 @@ public class chunk
         // Map world onto chunk
         for (int j = 0; j < TERRAIN_RES; ++j)
             // Heightmap (note it is the transpose for some reason)
-            heights[j, heights_i] = points[heights_i, j].altitude / world.MAX_ALTITUDE;
+            heights[j, heights_i] = blended_points[heights_i, j].altitude / world.MAX_ALTITUDE;
         ++heights_i;
 
         if (heights_i >= TERRAIN_RES)
@@ -238,14 +302,12 @@ public class chunk
         int i = objects_i;
         for (int j = 0; j < SIZE; ++j)
         {
-            var point = points[i, j];
+            var point = blended_points[i, j];
 
             // Check if there is a world object at this point
             if (point.world_object_gen == null) continue;
 
-            // Get some coodinate information
-            int x_world = grid_to_world_x(i);
-            int z_world = grid_to_world_z(j);
+            // Get the terrain normals
             float xf = i / (float)TERRAIN_RES;
             float zf = j / (float)TERRAIN_RES;
             Vector3 terrain_normal = terrain.terrainData.GetInterpolatedNormal(xf, zf);
@@ -267,7 +329,7 @@ public class chunk
 
             // Place the world object
             wo.transform.SetParent(transform);
-            wo.transform.position = new Vector3(x_world, point.altitude, z_world);
+            wo.transform.localPosition = new Vector3(i, point.altitude, j);
         }
 
         ++objects_i;
@@ -345,10 +407,10 @@ public class chunk
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                if (points[i, j].world_object_gen == null)
+                if (blended_points[i, j].world_object_gen == null)
                     continue;
 
-                var wo = points[i, j].world_object_gen.generated;
+                var wo = blended_points[i, j].world_object_gen.generated;
                 wo.transform.SetParent(sleeping_objects);
                 wo.gameObject.SetActive(false);
             }

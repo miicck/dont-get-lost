@@ -4,44 +4,159 @@ using System.Reflection;
 using UnityEngine;
 
 // A biome represents the largest singly-generated area of the map
-// and is used to define quantities that exist on the largest length
+// and is used to generate quantities that exist on the largest length
 // scales, such as the terrain.
-public abstract class biome
+public abstract class biome : MonoBehaviour
 {
-    // The size of a biome in meters, is
-    // also the resolution of the point array
-    // which defines the biome.
-    public const int SIZE = 256;
+    // My neighbouring biomes, if they don't exist already
+    // we will generate them.
+    biome[,] _neihbours = new biome[3, 3];
+    biome get_neighbour(int dx, int dz)
+    {
+        if (dx == 0 && dz == 0) return this;
+        int i = dx + 1;
+        int j = dz + 1;
+        if (_neihbours[i, j] == null)
+        {
+            // Attempt to find already existing biome, otherwise generate one
+            var go = GameObject.Find("biome_" + (x + dx) + "_" + (z + dz));
+            if (go == null) _neihbours[i, j] = generate(x + dx, z + dz);
+            else _neihbours[i, j] = go.GetComponent<biome>();
+        }
+        return _neihbours[i, j];
+    }
 
-    // The minimum and maximum fraction of the
-    // biome edge that is used for blending into
-    // adjacent biomes.
-    public const float MIN_BLEND_FRAC = 0.25f;
-    public const float MAX_BLEND_FRAC = 0.5f;
+    public point blended_point(Vector3 world_position)
+    {
+        Vector3 disp = world_position - centre;
+        float ns = Mathf.Clamp(2 * disp.z / SIZE, -1f, 1f); // North/south amount
+        float ew = Mathf.Clamp(2 * disp.x / SIZE, -1f, 1f); // East/west amount
+
+        var points = new List<point> { clamped_grid(world_position) };
+        var weights = new List<float> { 1.0f };
+
+        if (ns > 0.9f)
+        {
+            points.Add(get_neighbour(0, 1).clamped_grid(world_position));
+            weights.Add((ns - 0.9f) / 0.1f);
+        }
+
+        return point.average(points.ToArray(), weights.ToArray());
+    }
+
+    // The grid of points defining the biome
+    protected point[,] grid = new point[SIZE, SIZE];
+
+    // Get a particular point in the biome grid in world
+    // coordinates. Clamps the biome point values
+    // outside the range of the biome.
+    point clamped_grid(Vector3 world_position)
+    {
+        int i = (int)world_position.x;
+        int j = (int)world_position.z;
+        i -= SIZE * x;
+        j -= SIZE * z;
+        i = Mathf.Clamp(i, 0, SIZE - 1);
+        j = Mathf.Clamp(j, 0, SIZE - 1);
+        return grid[i, j];
+    }
+
+    // The size of a biome in chunks per side
+    public const int CHUNKS_PER_SIDE = 4;
+    public const int SIZE = CHUNKS_PER_SIDE * chunk.SIZE;
+
+    // The grid of chunks within the biome
+    chunk[,] chunk_grid = new chunk[CHUNKS_PER_SIDE, CHUNKS_PER_SIDE];
+
+    // Returns true if this biome contains a chunk which
+    // is active (i.e within render range)
+    public bool contains_active_chunk()
+    {
+        for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
+            for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
+                if (chunk_grid[i, j].gameObject.activeInHierarchy)
+                    return true;
+        return false;
+    }
+
+    // Get the biome coords at a given location
+    public static int[] coords(Vector3 location)
+    {
+        return new int[]
+        {
+            Mathf.FloorToInt(location.x / SIZE),
+            Mathf.FloorToInt(location.z / SIZE)
+        };
+    }
+
+    public Vector3 centre { get { return transform.position + new Vector3(1, 0, 1) * SIZE / 2; } }
+
+    public chunk chunk_at(Vector3 world_position)
+    {
+        // Transform world position into biome local position
+        int xib = (int)(world_position.x - x * SIZE);
+        if (xib < 0) return null;
+        if (xib >= SIZE) return null;
+
+        int zib = (int)(world_position.z - z * SIZE);
+        if (zib < 0) return null;
+        if (zib >= SIZE) return null;
+
+        // Get the chunk at that coordinate
+        int cx = xib / chunk.SIZE;
+        int cz = zib / chunk.SIZE;
+        return chunk_grid[cx, cz];
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(Vector3.down +
+            transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
+            new Vector3(SIZE, 0.01f, SIZE));
+    }
 
     public int x { get; private set; }
     public int z { get; private set; }
 
     // Coordinate transforms 
-    protected float grid_to_world_x(int i) { return x * SIZE + i - SIZE / 2; }
-    protected float grid_to_world_z(int j) { return z * SIZE + j - SIZE / 2; }
+    protected float grid_to_world_x(int i) { return (x - 0.5f) * SIZE + i; }
+    protected float grid_to_world_z(int j) { return (z - 0.5f) * SIZE + j; }
 
     protected abstract void generate_grid();
 
     public string filename() { return world.save_folder() + "/biome_" + x + "_" + z; }
 
-    public biome(int x, int z)
+    public static T create<T>(int x, int z) where T : biome
     {
-        this.x = x;
-        this.z = z;
-        grid = new point[SIZE, SIZE];
-        if (!load())
-        {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            generate_grid();
-            utils.log("Generated biome " + x + ", " + z + " (" + GetType().Name +
-                ") in " + sw.ElapsedMilliseconds + " ms", "generation");
-        }
+        var b = new GameObject("biome_" + x + "_" + z).AddComponent<T>();
+        b.transform.position = new Vector3(x, 0, z) * SIZE;
+
+        b.x = x;
+        b.z = z;
+
+        // Initialize the chunk grid
+        for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
+            for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
+            {
+                // Get the chunk coordinates from my
+                // coordinates and the chunk grid coordinates
+                int cx = x * CHUNKS_PER_SIDE + i;
+                int cz = z * CHUNKS_PER_SIDE + j;
+                b.chunk_grid[i, j] = chunk.create(cx, cz);
+                b.chunk_grid[i, j].transform.SetParent(b.transform);
+            }
+
+        // Attempt to load the biome
+        if (b.load()) return b;
+
+        // Generate the biome
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        b.generate_grid();
+        utils.log("Generated biome " + x + ", " + z +
+                  " (" + b.GetType().Name + ") in " +
+                  sw.ElapsedMilliseconds + " ms", "generation");
+        return b;
     }
 
     public void destroy()
@@ -96,7 +211,7 @@ public abstract class biome
                     else Debug.LogError("Don't know how to save this world object status!");
                 }
         }
-        grid = null;
+
         utils.log("Saved biome " + x + ", " + z + " in " + sw.ElapsedMilliseconds + " ms", "io");
     }
 
@@ -297,35 +412,18 @@ public abstract class biome
         }
     }
 
-    // The grid of points defining the biome
-    protected point[,] grid;
-
-    // Get a particular point in the biome in world
-    // coordinates. Clamps the biome point values
-    // outside the range of the biome.
-    public point get_point(int world_x, int world_z)
-    {
-        int biome_x = world_x - x * SIZE + SIZE / 2;
-        int biome_z = world_z - z * SIZE + SIZE / 2;
-        if (biome_x < 0) biome_x = 0;
-        if (biome_z < 0) biome_z = 0;
-        if (biome_x >= SIZE) biome_x = SIZE - 1;
-        if (biome_z >= SIZE) biome_z = SIZE - 1;
-        return grid[biome_x, biome_z];
-    }
-
     // Constructors for all biome types and a corresponding
     // random number in [0,1] for each
-    static List<ConstructorInfo> biome_constructors = null;
+    static List<MethodInfo> biome_creators = null;
     public static string biome_override = "";
 
     // Generate the biome at the given biome coordinates
-    public static biome generate(int xb, int zb)
+    static biome generate(int xb, int zb)
     {
-        if (biome_constructors == null)
+        if (biome_creators == null)
         {
             // Find the biome types
-            biome_constructors = new List<ConstructorInfo>();
+            biome_creators = new List<MethodInfo>();
             var asem = Assembly.GetAssembly(typeof(biome));
             var types = asem.GetTypes();
 
@@ -335,15 +433,14 @@ public abstract class biome
                 if (!t.IsSubclassOf(typeof(biome))) continue;
                 if (t.IsAbstract) continue;
 
-                // Compile the list of biome constructors
-                var c = t.GetConstructor(new System.Type[]{
-                    typeof(int), typeof(int)
-                });
+                // Get the create method
+                var method = typeof(biome).GetMethod("create");
+                var create_method = method.MakeGenericMethod(t);
 
                 if (t.Name == biome_override)
                 {
                     // Enforce the biome override
-                    biome_constructors = new List<ConstructorInfo> { c };
+                    biome_creators = new List<MethodInfo> { create_method };
                     break;
                 }
 
@@ -355,13 +452,13 @@ public abstract class biome
                         continue; // Skip allowing this biome
                 }
 
-                biome_constructors.Add(c);
+                biome_creators.Add(create_method);
             }
         }
 
         // Return a random biome
-        int i = Random.Range(0, biome_constructors.Count);
-        return (biome)biome_constructors[i].Invoke(new object[] { xb, zb });
+        int i = Random.Range(0, biome_creators.Count);
+        return (biome)biome_creators[i].Invoke(null, new object[] { xb, zb });
     }
 }
 
@@ -382,8 +479,6 @@ public class mangroves : biome
     public const float MANGROVE_START_ALT = world.SEA_LEVEL - 3;
     public const float MANGROVE_DECAY_ALT = 3f;
     public const float MANGROVE_PROB = 0.2f;
-
-    public mangroves(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
@@ -418,8 +513,6 @@ public class ocean : biome
     const int ISLAND_PERIOD = 32; // The range over which an island extends on the seabed
     const int MIN_ISLANDS = 1;    // Min number of islands
     const int MAX_ISLANDS = 3;    // Max number of islands
-
-    public ocean(int x, int z) : base(x, z) { }
 
     protected override void generate_grid()
     {
@@ -478,8 +571,6 @@ public class mountains : biome
     const float ROCK_END = 70f;
     const float MOUNTAIN_DENSITY = 0.0008f;
 
-    public mountains(int x, int z) : base(x, z) { }
-
     protected override void generate_grid()
     {
         var alt = new float[SIZE, SIZE];
@@ -534,8 +625,6 @@ public class terraced_hills : biome
     public const float HILL_HEIGHT = 50f;
     public const float HILL_SIZE = 64f;
 
-    public terraced_hills(int x, int z) : base(x, z) { }
-
     protected override void generate_grid()
     {
         float xrand = Random.Range(0, 1f);
@@ -569,8 +658,6 @@ public class terraced_hills : biome
 [biome_info(enabled: false)]
 public class cliffs : biome
 {
-    public cliffs(int x, int z) : base(x, z) { }
-
     public const float CLIFF_HEIGHT = 10f;
     public const float CLIFF_PERIOD = 32f;
 

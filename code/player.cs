@@ -132,23 +132,8 @@ public class player : MonoBehaviour
     //  MOVEMENT //
     //###########//
 
-    // The players current velocity
-    // in player-local coordinates
-    Vector3 local_velocity;
-
     // The rigidbody controlling player physics
     new Rigidbody rigidbody;
-
-    // Global velocity from local velocty
-    public Vector3 velocity
-    {
-        get
-        {
-            return local_velocity.x * transform.right +
-                   local_velocity.z * transform.forward +
-                   local_velocity.y * Vector3.up;
-        }
-    }
 
     // Returns true if the player is on the ground
     bool grounded
