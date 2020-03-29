@@ -13,6 +13,13 @@ public class game : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
+    public static void create_world(string name, int seed)
+    {
+        world.seed = seed;
+        world.name = name;
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
+
     // The target render range, which the actual render range will lerp to
     private static float _render_range_target = chunk.SIZE;
     public static float render_range_target

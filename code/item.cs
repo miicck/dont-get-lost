@@ -370,15 +370,15 @@ public class item : interactable
         const int FS = sizeof(float);
 
         // Floating point values to serialize
+        Vector3 euler = transform.rotation.eulerAngles;
         float[] floats = new float[]
         {
             transform.position.x,
             transform.position.y,
             transform.position.z,
-            transform.rotation.x,
-            transform.rotation.y,
-            transform.rotation.z,
-            transform.rotation.w
+            euler.x,
+            euler.y,
+            euler.z
         };
 
         // Integers to serialize
@@ -423,14 +423,14 @@ public class item : interactable
         position.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
 
         // Desearialize rotation
-        Quaternion rotation;
-        rotation.x = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3);
-        rotation.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4);
-        rotation.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
-        rotation.w = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 6);
+        Vector3 euler;
+        euler.x = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3);
+        euler.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4);
+        euler.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
+        Quaternion rot = Quaternion.Euler(euler);
 
         // Create the item
-        var i = create(id, position, rotation);
+        var i = create(id, position, rot);
         i.rigidbody.isKinematic = is_kinematic;
         return i;
     }

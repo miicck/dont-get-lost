@@ -40,6 +40,7 @@ public class world_menu : MonoBehaviour
         var new_world = template_button.inst();
         new_world.transform.SetParent(button_container);
         new_world.GetComponentInChildren<Text>().text = "New world";
+        new_world.onClick.AddListener(() => game.create_world("world", 6969));
 
         // Remove the templates
         Destroy(template_button.gameObject);

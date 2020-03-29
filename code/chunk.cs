@@ -332,6 +332,7 @@ public class chunk : MonoBehaviour
     void on_generation_complete()
     {
         biome.update_chunk_neighbours();
+        load_items();
     }
 
     // This component is attached to a chunk that is
@@ -401,6 +402,29 @@ public class chunk : MonoBehaviour
 
                 // Write the item bytes to file
                 fs.Write(ibytes, 0, ibytes.Length);
+            }
+        }
+    }
+
+    void load_items()
+    {
+        if (!System.IO.File.Exists(filename())) return;
+
+        using (var fs = new System.IO.FileStream(filename(),
+            System.IO.FileMode.Open, System.IO.FileAccess.Read))
+        {
+            // Read the size of an item in bytes
+            byte[] size_bytes = new byte[sizeof(int)];
+            fs.Read(size_bytes, 0, sizeof(int));
+            int item_size = System.BitConverter.ToInt32(size_bytes, 0);
+
+            int n = 0;
+            byte[] item_bytes = new byte[item_size];
+
+            while (fs.Read(item_bytes, 0, item_size) > 0)
+            {
+                item.deserailize(item_bytes);
+                n++;
             }
         }
     }
