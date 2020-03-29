@@ -116,6 +116,7 @@ public class game : MonoBehaviour
     {
         // End any player interactions
         player.current.interacting_with = null;
+        player.current.save();
 
         // Save the world seed
         System.IO.File.WriteAllText(world.save_folder() + "/seed", "" + world.seed);

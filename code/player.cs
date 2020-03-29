@@ -48,6 +48,51 @@ public class player : MonoBehaviour
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
     public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
 
+    //###############//
+    // SERIALIZATION //
+    //###############//
+
+    public void save()
+    {
+        var floats = new float[]
+        {
+            transform.position.x,
+            transform.position.y,
+            transform.position.z
+        };
+
+        using (var fs = new System.IO.FileStream(world.save_folder() + "/player",
+            System.IO.FileMode.Create, System.IO.FileAccess.Write))
+        {
+            for (int i = 0; i < floats.Length; ++i)
+            {
+                var float_bytes = System.BitConverter.GetBytes(floats[i]);
+                fs.Write(float_bytes, 0, float_bytes.Length);
+            }
+        }
+    }
+
+    void load()
+    {
+        if (!System.IO.File.Exists(world.save_folder() + "/player")) return;
+
+        var floats = new float[3];
+
+        using (var fs = new System.IO.FileStream(world.save_folder() + "/player",
+            System.IO.FileMode.Open, System.IO.FileAccess.Read))
+        {
+            byte[] float_bytes = new byte[sizeof(float)];
+            for (int i = 0; i < floats.Length; ++i)
+            {
+                fs.Read(float_bytes, 0, float_bytes.Length);
+                floats[i] = System.BitConverter.ToSingle(float_bytes, 0);
+            }
+        }
+
+        Vector3 pos = new Vector3(floats[0], floats[1], floats[2]);
+        transform.position = pos;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -336,6 +381,9 @@ public class player : MonoBehaviour
         // Create the player rigidbody
         player.rigidbody = player.gameObject.AddComponent<Rigidbody>();
         player.rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+
+        // Load the player state
+        player.load();
 
         current = player;
         return player;
