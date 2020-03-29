@@ -166,4 +166,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   world_seed: 6969
   random_seed: 1
+  regenerate: 0
   biome_override: 

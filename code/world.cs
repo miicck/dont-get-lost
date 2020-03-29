@@ -15,9 +15,15 @@ public static class world
     public static string save_folder()
     {
         // First, ensure the folder exists 
-        string folder = Application.persistentDataPath + "/worlds/" + name;
+        string folder = worlds_folder() + name;
         System.IO.Directory.CreateDirectory(folder);
         return folder;
+    }
+
+    // The folder where all the worlds are stored
+    public static string worlds_folder()
+    {
+        return Application.persistentDataPath + "/worlds/";
     }
 
     // World-scale geograpical constants

@@ -243,8 +243,12 @@ public abstract class biome : MonoBehaviour
                 if (in_range(x + dx, z + dz))
                     get_neighbour(dx, dz, true);
 
-        // Destroy biomes that are no longer needed
-        if (no_longer_needed()) Destroy(gameObject);
+        // Save/destroy biomes that are no longer needed
+        if (no_longer_needed())
+        {
+            save();
+            Destroy(gameObject);
+        }
     }
 
     private void OnDrawGizmos()
@@ -253,6 +257,11 @@ public abstract class biome : MonoBehaviour
         Gizmos.DrawWireCube(
             transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
             new Vector3(SIZE, 0.01f, SIZE));
+    }
+
+    private void OnApplicationQuit()
+    {
+        save();
     }
 
     //##################//
@@ -370,6 +379,14 @@ public abstract class biome : MonoBehaviour
 
         // Definately not needed
         return true;
+    }
+
+    // Save the objects in this biome. The biome itself does not need 
+    // saving, it can be regenerated from the world seed.
+    void save()
+    {
+        foreach (var c in GetComponentsInChildren<chunk>())
+            c.save();
     }
 
     //#############//

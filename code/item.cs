@@ -360,34 +360,112 @@ public class item : interactable
         if (weld != null) weld.draw_gizmos();
     }
 
+    //###############//
+    // SERIALIZATION //
+    //###############//
+
+    public byte[] serialize()
+    {
+        const int IS = sizeof(int);
+        const int FS = sizeof(float);
+
+        // Floating point values to serialize
+        float[] floats = new float[]
+        {
+            transform.position.x,
+            transform.position.y,
+            transform.position.z,
+            transform.rotation.x,
+            transform.rotation.y,
+            transform.rotation.z,
+            transform.rotation.w
+        };
+
+        // Integers to serialize
+        int[] ints = new int[]
+        {
+            int.Parse(name.Substring(0, name.IndexOf("_"))),
+            rigidbody.isKinematic ? 1 : 0,
+        };
+
+        // Serialize into byte array
+        int length = floats.Length * FS + ints.Length * IS;
+        var bytes = new byte[length];
+
+        for (int i = 0; i < ints.Length; ++i)
+        {
+            var ib = System.BitConverter.GetBytes(ints[i]);
+            System.Buffer.BlockCopy(ib, 0, bytes, i * IS, IS);
+        }
+
+        for (int i = 0; i < floats.Length; ++i)
+        {
+            var fb = System.BitConverter.GetBytes(floats[i]);
+            System.Buffer.BlockCopy(fb, 0, bytes, ints.Length * IS + i * FS, FS);
+        }
+
+        return bytes;
+    }
+
+    public static item deserailize(byte[] bytes)
+    {
+        const int IS = sizeof(int);
+        const int FS = sizeof(float);
+
+        // Deserailize id
+        int id = System.BitConverter.ToInt32(bytes, 0);
+        bool is_kinematic = System.BitConverter.ToInt32(bytes, IS) != 0;
+
+        // Deserailzie position
+        Vector3 position;
+        position.x = System.BitConverter.ToSingle(bytes, IS * 2);
+        position.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS);
+        position.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
+
+        // Desearialize rotation
+        Quaternion rotation;
+        rotation.x = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3);
+        rotation.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4);
+        rotation.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
+        rotation.w = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 6);
+
+        // Create the item
+        var i = create(id, position, rotation);
+        i.rigidbody.isKinematic = is_kinematic;
+        return i;
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//
 
     public static item spawn(string name, Vector3 position)
     {
-        var i = load_from_name(name).inst();
-        i.transform.position = position;
-        i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
+        var rot = Quaternion.Euler(0, Random.Range(0, 360f), 0);
+        var i = create(id_from_name(name), position, rot);
         i.rigidbody.velocity = Random.onUnitSphere;
-        i.transform.Rotate(0, Random.Range(0, 360f), 0);
+        return i;
+    }
+
+    static item create(int id, Vector3 position, Quaternion rotation)
+    {
+        var i = load_from_id(id).inst();
+        i.transform.position = position;
+        i.transform.rotation = rotation;
+        i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
         i.transform.SetParent(chunk.at(i.transform.position).transform);
         return i;
     }
 
     // Lookup tables for items by name or id
-    static Dictionary<string, item> item_by_name;
     static Dictionary<int, item> item_by_id;
     static Dictionary<string, int> id_by_name;
-    static Dictionary<int, string> name_by_id;
 
     // Load the above lookup tables
     static void load_item_libraries()
     {
-        item_by_name = new Dictionary<string, item>();
         item_by_id = new Dictionary<int, item>();
         id_by_name = new Dictionary<string, int>();
-        name_by_id = new Dictionary<int, string>();
 
         foreach (var i in Resources.LoadAll<item>("items/"))
         {
@@ -395,18 +473,24 @@ public class item : interactable
             int id = int.Parse(i.name.Substring(0, us_index));
             string name = i.name.Substring(us_index + 1);
 
-            item_by_name[name] = i;
             item_by_id[id] = i;
             id_by_name[name] = id;
-            name_by_id[id] = name;
         }
     }
 
-    // Load an item by name
-    public static item load_from_name(string name)
+    // Load an item by id
+    public static item load_from_id(int id)
     {
-        if (item_by_name == null)
+        if (item_by_id == null)
             load_item_libraries();
-        return item_by_name[name];
+        return item_by_id[id];
+    }
+
+    // Get an item id from an item name
+    public static int id_from_name(string name)
+    {
+        if (id_by_name == null)
+            load_item_libraries();
+        return id_by_name[name];
     }
 }

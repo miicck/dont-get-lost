@@ -6,9 +6,12 @@ public class game : MonoBehaviour
 {
     public static player player { get; private set; }
 
-    public int world_seed = 6969;
-    public bool random_seed = false;
-    public string biome_override = "";
+    public static void load_world(string path)
+    {
+        world.seed = int.Parse(System.IO.File.ReadAllText(path + "/seed"));
+        world.name = path.Split('/')[path.Split('/').Length - 1];
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
 
     // The target render range, which the actual render range will lerp to
     private static float _render_range_target = chunk.SIZE;
@@ -38,12 +41,6 @@ public class game : MonoBehaviour
 
     void Start()
     {
-        if (random_seed) world_seed = Random.Range(0, int.MaxValue);
-        world.seed = world_seed;
-
-        // Set the biome override
-        biome.biome_override = biome_override;
-
         // Create the ui
         canvas.create();
 
@@ -112,5 +109,8 @@ public class game : MonoBehaviour
     {
         // End any player interactions
         player.current.interacting_with = null;
+
+        // Save the world seed
+        System.IO.File.WriteAllText(world.save_folder() + "/seed", "" + world.seed);
     }
 }

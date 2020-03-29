@@ -72,7 +72,7 @@ public class chunk : MonoBehaviour
             if (this == null) return false;
 
             // If I have enabled children, I'm active
-            return transform.childCount > 0 && 
+            return transform.childCount > 0 &&
                    transform.GetChild(0).gameObject.activeInHierarchy;
         }
 
@@ -164,6 +164,7 @@ public class chunk : MonoBehaviour
         tc.terrainData = td;
         terrain.terrainData.heightmapResolution = TERRAIN_RES;
         terrain.terrainData.size = new Vector3(SIZE, world.MAX_ALTITUDE, SIZE);
+        terrain.enabled = false;
 
         // Start the gradual chunk generator
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
@@ -289,6 +290,7 @@ public class chunk : MonoBehaviour
             // Apply the heigtmap
             terrain.terrainData.SetHeights(0, 0, heights);
             heights = null;
+            terrain.enabled = true;
         }
         return false;
     }
@@ -363,6 +365,43 @@ public class chunk : MonoBehaviour
                     Destroy(gameObject);
                     return;
                 }
+        }
+    }
+
+    public string filename()
+    {
+        return world.save_folder() + "/chunk_" + x + "_" + z;
+    }
+
+    public void save()
+    {
+        var items = GetComponentsInChildren<item>();
+        if (items.Length == 0) return; // No point saving chunks with no items
+
+        utils.log("Saving " + items.Length + " items in chunk " + filename(), "io");
+
+        using (var fs = new System.IO.FileStream(filename(),
+               System.IO.FileMode.Create, System.IO.FileAccess.Write))
+        {
+            // Write the size of an item to the file
+            bool written_size = false;
+
+            // Write all the item bytes to the save file
+            foreach (var i in items)
+            {
+                // Get the bytes describing this item
+                var ibytes = i.serialize();
+
+                if (!written_size)
+                {
+                    // First sizeof(int) bytes tell us the number of bytes per item
+                    fs.Write(System.BitConverter.GetBytes(ibytes.Length), 0, sizeof(int));
+                    written_size = true;
+                }
+
+                // Write the item bytes to file
+                fs.Write(ibytes, 0, ibytes.Length);
+            }
         }
     }
 }
