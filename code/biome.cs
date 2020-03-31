@@ -245,10 +245,7 @@ public abstract class biome : MonoBehaviour
 
         // Save/destroy biomes that are no longer needed
         if (no_longer_needed())
-        {
-            save();
             Destroy(gameObject);
-        }
     }
 
     private void OnDrawGizmos()
@@ -257,11 +254,6 @@ public abstract class biome : MonoBehaviour
         Gizmos.DrawWireCube(
             transform.position + new Vector3(1, 0, 1) * SIZE / 2f,
             new Vector3(SIZE, 0.01f, SIZE));
-    }
-
-    private void OnApplicationQuit()
-    {
-        save();
     }
 
     //##################//
@@ -305,12 +297,12 @@ public abstract class biome : MonoBehaviour
 
                     // Get the create method
                     var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
-                    var create_method = method.MakeGenericMethod(t);
+                    var generate_method = method.MakeGenericMethod(t);
 
                     if (t.Name == biome_override)
                     {
                         // Enforce the biome override
-                        _generated_biomes = new List<MethodInfo> { create_method };
+                        _generated_biomes = new List<MethodInfo> { generate_method };
                         break;
                     }
 
@@ -322,7 +314,7 @@ public abstract class biome : MonoBehaviour
                             continue; // Skip allowing this biome
                     }
 
-                    _generated_biomes.Add(create_method);
+                    _generated_biomes.Add(generate_method);
                 }
             }
             return _generated_biomes;
@@ -347,7 +339,7 @@ public abstract class biome : MonoBehaviour
                 // coordinates and the chunk grid coordinates
                 int cx = x * CHUNKS_PER_SIDE + i;
                 int cz = z * CHUNKS_PER_SIDE + j;
-                b.chunk_grid[i, j] = chunk.create(cx, cz);
+                b.chunk_grid[i, j] = chunk.create(cx, cz, b.random.Next());
                 b.chunk_grid[i, j].transform.SetParent(b.transform);
             }
 
@@ -379,14 +371,6 @@ public abstract class biome : MonoBehaviour
 
         // Definately not needed
         return true;
-    }
-
-    // Save the objects in this biome. The biome itself does not need 
-    // saving, it can be regenerated from the world seed.
-    void save()
-    {
-        foreach (var c in GetComponentsInChildren<chunk>())
-            c.save();
     }
 
     //#############//

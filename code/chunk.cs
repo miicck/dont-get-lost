@@ -82,6 +82,10 @@ public class chunk : MonoBehaviour
             if (value && !generation_begun)
                 begin_generation();
 
+            // If disabling, save the chunk
+            if (!value)
+                save();
+
             // Disable, or enable all children
             foreach (Transform t in transform)
                 t.gameObject.SetActive(value);
@@ -111,6 +115,11 @@ public class chunk : MonoBehaviour
             new Vector3(SIZE, 0.01f, SIZE));
     }
 
+    private void OnDestroy()
+    {
+        save();
+    }
+
     //##################//
     // CHUNK GENERATION //
     //##################//
@@ -119,18 +128,20 @@ public class chunk : MonoBehaviour
     // each terrain square is one square meter
     public const int TERRAIN_RES = SIZE + 1;
     public Terrain terrain { get; private set; }
+    public System.Random random { get; private set; }
 
     // The biome points, saved post blending
     biome.point[,] blended_points = new biome.point[TERRAIN_RES, TERRAIN_RES];
 
     // Create a chunk with chunk coordinates x, z
-    public static chunk create(int x, int z)
+    public static chunk create(int x, int z, int seed)
     {
         // Save my chunk-coordinates for
         // later use in generation
         var c = new GameObject("chunk_" + x + "_" + z).AddComponent<chunk>();
         c.x = x;
         c.z = z;
+        c.random = new System.Random(seed);
 
         // Setup the transform of the chunk
         c.transform.position = new Vector3(x, 0, z) * SIZE;
@@ -320,7 +331,7 @@ public class chunk : MonoBehaviour
                 var wo = point.object_to_generate.inst();
                 wo.transform.SetParent(transform);
                 wo.transform.localPosition = new Vector3(i, point.altitude, j);
-                wo.on_placement(terrain_normal, point, biome);
+                wo.on_placement(terrain_normal, point, this);
             }
         }
 
@@ -376,7 +387,7 @@ public class chunk : MonoBehaviour
 
     public void save()
     {
-        var items = GetComponentsInChildren<item>();
+        var items = GetComponentsInChildren<item>(true);
         if (items.Length == 0) return; // No point saving chunks with no items
 
         utils.log("Saving " + items.Length + " items in chunk " + filename(), "io");

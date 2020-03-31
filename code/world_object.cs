@@ -51,17 +51,17 @@ public class world_object : MonoBehaviour
                 m.material.color = point.terrain_color;
     }
 
-    public void on_placement(Vector3 terrain_normal, biome.point point, biome biome)
+    public void on_placement(Vector3 terrain_normal, biome.point point, chunk chunk)
     {
         // Allign to terrain if required
         carry_out_terrain_alignment(terrain_normal, point);
 
         // Generate the scale
-        transform.localScale = Vector3.one * biome.random.range(min_scale, max_scale);
+        transform.localScale = Vector3.one * chunk.random.range(min_scale, max_scale);
 
         // Generate random y rotation
         if (y_rotation_mode == Y_ROTATION_MODE.RANDOM)
-            transform.Rotate(0, biome.random.range(0, 360), 0);
+            transform.Rotate(0, chunk.random.range(0, 360), 0);
     }
 
     static Dictionary<string, world_object> _library;

@@ -30,7 +30,6 @@ public class game : MonoBehaviour
             if (value < chunk.SIZE) value = chunk.SIZE;
             _render_range_target = value;
         }
-
     }
 
     // How far the player can see
