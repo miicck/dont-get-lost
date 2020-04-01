@@ -128,6 +128,11 @@ public class chunk : MonoBehaviour
     // each terrain square is one square meter
     public const int TERRAIN_RES = SIZE + 1;
     public Terrain terrain { get; private set; }
+
+    // The chunk needs a seperate random number generator from the
+    // biome, because chunks within a biome can be generated in any
+    // order (based on the route the player takes). This would mess up
+    // the determinism of the pseudorandom number generation.
     public System.Random random { get; private set; }
 
     // The biome points, saved post blending

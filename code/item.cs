@@ -376,9 +376,10 @@ public class item : interactable
             transform.position.x,
             transform.position.y,
             transform.position.z,
-            euler.x,
-            euler.y,
-            euler.z
+            transform.rotation.x,
+            transform.rotation.y,
+            transform.rotation.z,
+            transform.rotation.w
         };
 
         // Integers to serialize
@@ -423,11 +424,12 @@ public class item : interactable
         position.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
 
         // Desearialize rotation
-        Vector3 euler;
-        euler.x = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3);
-        euler.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4);
-        euler.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
-        Quaternion rot = Quaternion.Euler(euler);
+        Quaternion rot = new Quaternion(
+            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3),
+            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4),
+            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 5),
+            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 6)
+            );
 
         // Create the item
         var i = create(id, position, rot);
