@@ -12,7 +12,9 @@ public class world_object : MonoBehaviour
     public float min_altitude = world.SEA_LEVEL;
     public float max_altitude = world.MAX_ALTITUDE;
     public float max_terrain_angle = 90f;
+    public float min_terrain_angle = 0f;
     public bool inherit_terrain_color = false;
+    public Renderer randomize_color_on;
 
     // The way that y rotation is chosen for this object
     public enum Y_ROTATION_MODE
@@ -26,7 +28,9 @@ public class world_object : MonoBehaviour
     {
         if (p.altitude > max_altitude) return false;
         if (p.altitude < min_altitude) return false;
-        if (Vector3.Angle(terrain_normal, Vector3.up) > max_terrain_angle) return false;
+        float angle = Vector3.Angle(terrain_normal, Vector3.up);
+        if (angle > max_terrain_angle) return false;
+        if (angle < min_terrain_angle) return false;
         return true;
     }
 
@@ -53,6 +57,16 @@ public class world_object : MonoBehaviour
 
     public void on_placement(Vector3 terrain_normal, biome.point point, chunk chunk)
     {
+        if (randomize_color_on != null)
+        {
+            Color rand_col = new Color(
+                chunk.random.range(0,1f),
+                chunk.random.range(0,1f),
+                chunk.random.range(0,1f)
+                );
+            randomize_color_on.material.color = rand_col;
+        }
+
         // Allign to terrain if required
         carry_out_terrain_alignment(terrain_normal, point);
 

@@ -46,7 +46,6 @@ public class player : MonoBehaviour
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
-    public const float MAP_OBSCURER_ALT = world.MAX_ALTITUDE * 1.5f;
 
     //###############//
     // SERIALIZATION //
@@ -121,6 +120,22 @@ public class player : MonoBehaviour
         if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
             rigidbody.angularVelocity = Vector3.zero;
         else mouse_look();
+
+        // Float (i.e in water)
+        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
+        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
+        if (amt_submerged > 0)
+        {
+            // Bouyancy (sink if shift is held)
+            if (!Input.GetKey(KeyCode.LeftShift))
+                rigidbody.AddForce(Vector3.up * amt_submerged * rigidbody.mass * 10);
+
+            // Drag
+            rigidbody.AddForce(-rigidbody.velocity * amt_submerged * rigidbody.mass);
+
+        }
+
+        underwater_screen.SetActive(transform.position.y + EYE_HEIGHT < world.SEA_LEVEL && !map_open);
     }
 
     private void OnDrawGizmos()
@@ -244,6 +259,7 @@ public class player : MonoBehaviour
     public new Camera camera { get; private set; }
     GameObject obscurer;
     GameObject map_obscurer;
+    GameObject underwater_screen;
 
     // Called when the render range changes
     public void update_render_range()
@@ -345,10 +361,20 @@ public class player : MonoBehaviour
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.transform.SetParent(player.transform);
         player.camera.transform.localPosition = new Vector3(0, EYE_HEIGHT, 0);
+        player.camera.nearClipPlane = 0.1f;
+
+        // Create a short range light with no shadows to light up detail
+        // on nearby objects to the player
+        var point_light = new GameObject("point_light").AddComponent<Light>();
+        point_light.type = LightType.Point;
+        point_light.range = item.WELD_RANGE;
+        point_light.transform.SetParent(player.camera.transform);
+        point_light.transform.localPosition = Vector3.zero;
+        point_light.intensity = 0.5f;
 
         // Move the player above the first map chunk so they
         // dont fall off of the map
-        player.transform.position = new Vector3(0, world.SEA_LEVEL + 1, 0);
+        player.transform.position = new Vector3(0, world.MAX_ALTITUDE, 0);
 
         // Enforce the render limit with a sky-color object
         player.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
@@ -357,10 +383,14 @@ public class player : MonoBehaviour
         var sky_color = player.obscurer.GetComponentInChildren<Renderer>().material.color;
 
         player.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-        player.map_obscurer.transform.SetParent(player.transform);
-        Vector3 map_obsc_pos = player.transform.position;
-        map_obsc_pos.y = MAP_OBSCURER_ALT;
-        player.map_obscurer.transform.position = map_obsc_pos;
+        player.map_obscurer.transform.SetParent(player.camera.transform);
+        player.map_obscurer.transform.localPosition = Vector3.forward;
+        player.map_obscurer.transform.up = -player.camera.transform.forward;
+
+        player.underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
+        player.underwater_screen.transform.SetParent(player.camera.transform);
+        player.underwater_screen.transform.localPosition = Vector3.forward * player.camera.nearClipPlane * 1.1f;
+        player.underwater_screen.transform.forward = player.camera.transform.forward;
 
         // Make the sky the same color as the obscuring object
         RenderSettings.skybox = null;
@@ -381,6 +411,7 @@ public class player : MonoBehaviour
         // Create the player rigidbody
         player.rigidbody = player.gameObject.AddComponent<Rigidbody>();
         player.rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+        player.rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
         // Load the player state
         player.load();

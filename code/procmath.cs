@@ -84,6 +84,33 @@ public static class procmath
         }
     }
 
+    // Pick a choice from the given array, with a Gaussian probability with the given width
+    // centred at a fractional position p along the array.
+    public static T sliding_scale<T>(float p, T[] choices, System.Random random, float width = 0.25f)
+    {
+        // Generate the probabilities (normalization doesn't matter)
+        float[] probs = new float[choices.Length];
+        float total = 0;
+        for (int i = 0; i < probs.Length; ++i)
+        {
+            float di = probs.Length * p - i;
+            probs[i] = Mathf.Exp(-di * di / (2 * width * width));
+            total += probs[i];
+        }
+
+        // Choose with those probabilities
+        float rand = random.range(0f, total);
+        total = 0;
+        for (int i = 0; i < probs.Length; ++i)
+        {
+            total += probs[i];
+            if (total > rand)
+                return choices[i];
+        }
+
+        throw new System.Exception("Shouldn't be able to get here!");
+    }
+
     // Tools for manipulating 2D arrays of floats
     public static class float_2D_tools
     {
@@ -256,8 +283,8 @@ public static class procmath
                     int aj = z + j;
                     if (!in_range(ref arr, ai, aj)) continue;
 
-                    float i_frac = (float)i / (float)(width / 2);
-                    float j_frac = (float)j / (float)(width / 2);
+                    float i_frac = i / (float)(width / 2);
+                    float j_frac = j / (float)(width / 2);
 
                     float i_rot = Mathf.Abs(cos * i_frac - sin * j_frac);
                     float j_rot = Mathf.Abs(sin * i_frac + cos * j_frac);
@@ -269,6 +296,34 @@ public static class procmath
                     if (h < 0) h = 0;
 
                     arr[ai, aj] += height_map(h) * height;
+                }
+        }
+
+        // Add a sand-dune like object
+        public static void add_sand_dune(ref float[,] arr,
+            int x, int z, int footprint, float height)
+        {
+            for (int i = -footprint / 2; i <= footprint / 2; ++i)
+                for (int j = -footprint / 2; j <= footprint / 2; ++j)
+                {
+                    int ai = x + i;
+                    int aj = z + j;
+                    if (!in_range(ref arr, ai, aj)) continue;
+
+                    float i_frac = i / (float)(footprint / 4);
+                    if (i_frac < -1f) continue;
+                    if (i_frac > 1f) continue;
+                    float j_frac = (1f + j / (float)(footprint / 2)) / 2f;
+
+                    float h = (1f + Mathf.Cos(i_frac * Mathf.PI)) / 2f;
+                    float cusp = 0.01f + 0.1f * h;
+
+                    float amp = 0f;
+                    if (j_frac < cusp) amp = maps.end_smoothed_linear(j_frac / cusp, 0.1f);
+                    else amp = maps.end_smoothed_linear((1 - j_frac) / (1 - cusp), 0.1f);
+                    h *= amp * amp;
+
+                    arr[ai, aj] += h * height;
                 }
         }
 

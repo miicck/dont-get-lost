@@ -272,10 +272,6 @@ public abstract class biome : MonoBehaviour
         return (biome)generated_biomes[i].Invoke(null, new object[] { x, z, rand });
     }
 
-    // If this is set to the name of a biome class, 
-    // we only generate that biome type
-    public static string biome_override = "";
-
     // Creation methods for all generated biome types
     static List<MethodInfo> _generated_biomes;
     static List<MethodInfo> generated_biomes
@@ -299,7 +295,9 @@ public abstract class biome : MonoBehaviour
                     var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
                     var generate_method = method.MakeGenericMethod(t);
 
-                    if (t.Name == biome_override)
+                    // If the world is named after a biome, only generate that biome
+                    // (useful for testing)
+                    if (t.Name == world.name)
                     {
                         // Enforce the biome override
                         _generated_biomes = new List<MethodInfo> { generate_method };
@@ -380,6 +378,9 @@ public abstract class biome : MonoBehaviour
     // Describes a particular point in the biome
     public class point
     {
+        public const float BEACH_START = world.SEA_LEVEL + 1f;
+        public const float BEACH_END = world.SEA_LEVEL + 2f;
+
         public float altitude;
         public Color terrain_color;
         public world_object object_to_generate;
@@ -425,15 +426,12 @@ public abstract class biome : MonoBehaviour
         public void apply_global_rules()
         {
             // Enforce beach color
-            const float SAND_START = world.SEA_LEVEL + 1f;
-            const float SAND_END = world.SEA_LEVEL + 2f;
-
-            if (altitude < SAND_START)
-                terrain_color = colors.sand;
-            else if (altitude < SAND_END)
+            if (altitude < BEACH_START)
+                terrain_color = terrain_colors.sand;
+            else if (altitude < BEACH_END)
             {
-                float s = 1 - procmath.maps.linear_turn_on(altitude, SAND_START, SAND_END);
-                terrain_color = Color.Lerp(terrain_color, colors.sand, s);
+                float s = 1 - procmath.maps.linear_turn_on(altitude, BEACH_START, BEACH_END);
+                terrain_color = Color.Lerp(terrain_color, terrain_colors.sand, s);
             }
         }
 
