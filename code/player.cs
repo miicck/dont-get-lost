@@ -28,18 +28,15 @@ public class player : MonoBehaviour
 
     public const float HEIGHT = 1.8f;
     public const float WIDTH = 0.45f;
-    public const float EYE_HEIGHT = HEIGHT - WIDTH / 2;
+    public const float GRAVITY = 10f;
+    public const float BOUYANCY = 5f;
+    public const float WATER_DRAG = 1.5f;
 
     public const float SPEED = 10f;
     public const float ACCELERATION_TIME = 0.2f;
     public const float ACCELERATION = SPEED / ACCELERATION_TIME;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
-    public const int MAX_MOVE_PROJ_REMOVE = 4;
-
-    public const float GROUND_TEST_DIST = 0.05f;
-    public const float TERRAIN_SINK_ALLOW = GROUND_TEST_DIST / 5f;
-    public const float TERRAIN_SINK_RESET_DIST = GROUND_TEST_DIST;
 
     public const float INTERACTION_RANGE = 3f;
 
@@ -114,28 +111,26 @@ public class player : MonoBehaviour
         }
 
         if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
-            rigidbody.velocity = Vector3.zero;
+            velocity = Vector3.zero;
         else move();
 
-        if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
-            rigidbody.angularVelocity = Vector3.zero;
-        else mouse_look();
+        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
+            mouse_look();
 
-        // Float (i.e in water)
+        // Float in water
         float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
         if (amt_submerged > 0)
         {
             // Bouyancy (sink if shift is held)
             if (!Input.GetKey(KeyCode.LeftShift))
-                rigidbody.AddForce(Vector3.up * amt_submerged * rigidbody.mass * 10);
+                velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
             // Drag
-            rigidbody.AddForce(-rigidbody.velocity * amt_submerged * rigidbody.mass);
-
+            velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
         }
 
-        underwater_screen.SetActive(transform.position.y + EYE_HEIGHT < world.SEA_LEVEL && !map_open);
+        underwater_screen.SetActive(camera.transform.position.y < world.SEA_LEVEL && !map_open);
     }
 
     private void OnDrawGizmos()
@@ -198,57 +193,54 @@ public class player : MonoBehaviour
     //  MOVEMENT //
     //###########//
 
-    // The rigidbody controlling player physics
-    new Rigidbody rigidbody;
-
-    // Returns true if the player is on the ground
-    bool grounded
-    {
-        get
-        {
-            return Physics.CapsuleCast(
-                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + WIDTH / 2f),
-                transform.position + Vector3.up * (GROUND_TEST_DIST / 2f + HEIGHT - WIDTH / 2f),
-                WIDTH / 2, Vector3.down, GROUND_TEST_DIST);
-        }
-    }
+    CharacterController controller;
+    Vector3 velocity = Vector3.zero;
 
     void move()
     {
-        Vector3 velocity = rigidbody.velocity;
-
-        if (Input.GetKeyDown(KeyCode.Space))
-            if (grounded)
+        if (controller.isGrounded)
+        {
+            if (velocity.y < 0) velocity.y = 0;
+            if (Input.GetKeyDown(KeyCode.Space))
                 velocity.y += JUMP_VEL;
+        }
+        else velocity.y -= GRAVITY * Time.deltaTime;
 
-        // Accelerate in forward/backward direction on W/S
-        // if neither is pressed, set forward/backward velocity to 0
-        if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
-        else if (Input.GetKey(KeyCode.W)) velocity += transform.forward * ACCELERATION * Time.deltaTime;
+        if (Input.GetKey(KeyCode.W)) velocity += transform.forward * ACCELERATION * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
-        // Accelerate in left/right direction on A/D
-        // if neither is pressed, set left/right velocity to 0
-        if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
-        else if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, camera.transform.right);
 
-        // Ensure speed in xz plane is not > SPEED
-        float xz_mag = Mathf.Sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        if (xz_mag > SPEED)
+        float xz = new Vector3(velocity.x, 0, velocity.z).magnitude;
+        if (xz > SPEED)
         {
-            velocity.x *= SPEED / xz_mag;
-            velocity.z *= SPEED / xz_mag;
+            velocity.x *= SPEED / xz;
+            velocity.z *= SPEED / xz;
         }
 
+        Vector3 move = velocity * Time.deltaTime;
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            velocity.x *= 10;
-            velocity.z *= 10;
+            move.x *= 10f;
+            move.z *= 10f;
         }
 
-        // Apply the modified velocity
-        rigidbody.velocity = velocity;
+        controller.Move(move);
+
+        stay_above_terrain();
+    }
+
+    void stay_above_terrain()
+    {
+        Vector3 pos = transform.position;
+        if (pos.y > 0) return;
+        pos.y = world.MAX_ALTITUDE;
+        RaycastHit hit;
+        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out hit);
+        transform.position = hit.point;
     }
 
     //#####################//
@@ -331,7 +323,7 @@ public class player : MonoBehaviour
             else
             {
                 // Restore 3D camera view
-                camera.transform.localPosition = Vector3.up * EYE_HEIGHT;
+                camera.transform.localPosition = Vector3.up * (controller.height - controller.radius);
                 camera.transform.localRotation = saved_camera_rotation;
             }
         }
@@ -355,12 +347,16 @@ public class player : MonoBehaviour
     public static player create()
     {
         var player = new GameObject("player").AddComponent<player>();
+        player.controller = player.gameObject.AddComponent<CharacterController>();
+        player.controller.height = HEIGHT;
+        player.controller.radius = WIDTH / 2;
+        player.controller.center = new Vector3(0, player.controller.height / 2f, 0);
 
         // Create the player camera 
         player.camera = new GameObject("camera").AddComponent<Camera>();
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.transform.SetParent(player.transform);
-        player.camera.transform.localPosition = new Vector3(0, EYE_HEIGHT, 0);
+        player.camera.transform.localPosition = new Vector3(0, player.controller.height - player.controller.radius, 0);
         player.camera.nearClipPlane = 0.1f;
 
         // Create a short range light with no shadows to light up detail
@@ -371,10 +367,6 @@ public class player : MonoBehaviour
         point_light.transform.SetParent(player.camera.transform);
         point_light.transform.localPosition = Vector3.zero;
         point_light.intensity = 0.5f;
-
-        // Move the player above the first map chunk so they
-        // dont fall off of the map
-        player.transform.position = new Vector3(0, world.MAX_ALTITUDE, 0);
 
         // Enforce the render limit with a sky-color object
         player.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
@@ -401,17 +393,6 @@ public class player : MonoBehaviour
 
         // Start with the map closed
         player.map_open = false;
-
-        // Create the player collider
-        var cc = player.gameObject.AddComponent<CapsuleCollider>();
-        cc.radius = WIDTH / 2f;
-        cc.height = HEIGHT;
-        cc.center = new Vector3(0, HEIGHT / 2, 0);
-
-        // Create the player rigidbody
-        player.rigidbody = player.gameObject.AddComponent<Rigidbody>();
-        player.rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-        player.rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
         // Load the player state
         player.load();
