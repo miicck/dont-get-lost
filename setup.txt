@@ -1,0 +1,12 @@
+Project setup
+
+Github repo for Assets directory:
+cd project/folder
+git clone https://github.com/miicck/dont-get-lost
+rm -r Assets
+mv dont-get-lost Assets
+
+
+Project setup:
+add scenes main, world_menu to file/build settings
+use window/package manager to install "post processing" v2.3.0 or later
