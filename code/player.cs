@@ -200,9 +200,8 @@ public class player : MonoBehaviour
     {
         if (controller.isGrounded)
         {
-            if (velocity.y < 0) velocity.y = 0;
             if (Input.GetKeyDown(KeyCode.Space))
-                velocity.y += JUMP_VEL;
+                velocity.y = JUMP_VEL;
         }
         else velocity.y -= GRAVITY * Time.deltaTime;
 
@@ -229,18 +228,17 @@ public class player : MonoBehaviour
         }
 
         controller.Move(move);
-
         stay_above_terrain();
     }
 
     void stay_above_terrain()
     {
         Vector3 pos = transform.position;
-        if (pos.y > 0) return;
         pos.y = world.MAX_ALTITUDE;
         RaycastHit hit;
         var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out hit);
-        transform.position = hit.point;
+        if (hit.point.y > transform.position.y)
+            transform.position = hit.point;
     }
 
     //#####################//
@@ -323,7 +321,7 @@ public class player : MonoBehaviour
             else
             {
                 // Restore 3D camera view
-                camera.transform.localPosition = Vector3.up * (controller.height - controller.radius);
+                camera.transform.localPosition = Vector3.up * (HEIGHT - WIDTH/2f);
                 camera.transform.localRotation = saved_camera_rotation;
             }
         }
@@ -347,16 +345,12 @@ public class player : MonoBehaviour
     public static player create()
     {
         var player = new GameObject("player").AddComponent<player>();
-        player.controller = player.gameObject.AddComponent<CharacterController>();
-        player.controller.height = HEIGHT;
-        player.controller.radius = WIDTH / 2;
-        player.controller.center = new Vector3(0, player.controller.height / 2f, 0);
 
         // Create the player camera 
         player.camera = new GameObject("camera").AddComponent<Camera>();
         player.camera.clearFlags = CameraClearFlags.SolidColor;
         player.camera.transform.SetParent(player.transform);
-        player.camera.transform.localPosition = new Vector3(0, player.controller.height - player.controller.radius, 0);
+        player.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH/2f, 0);
         player.camera.nearClipPlane = 0.1f;
 
         // Create a short range light with no shadows to light up detail
@@ -396,6 +390,13 @@ public class player : MonoBehaviour
 
         // Load the player state
         player.load();
+         
+        // Create the player controller
+        player.controller = player.gameObject.AddComponent<CharacterController>();
+        player.controller.height = HEIGHT;
+        player.controller.radius = WIDTH / 2;
+        player.controller.center = new Vector3(0, player.controller.height / 2f, 0);
+        player.controller.skinWidth = player.controller.radius / 10f;
 
         current = player;
         return player;

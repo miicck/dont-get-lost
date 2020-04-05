@@ -9,6 +9,7 @@ public class world_object : MonoBehaviour
     public Y_ROTATION_MODE y_rotation_mode;
     public float min_scale = 0.5f;
     public float max_scale = 2.0f;
+    public bool seperate_xz_scale = false;
     public float min_altitude = world.SEA_LEVEL;
     public float max_altitude = world.MAX_ALTITUDE;
     public float max_terrain_angle = 90f;
@@ -71,7 +72,12 @@ public class world_object : MonoBehaviour
         carry_out_terrain_alignment(terrain_normal, point);
 
         // Generate the scale
-        transform.localScale = Vector3.one * chunk.random.range(min_scale, max_scale);
+        Vector3 local_scale = Vector3.one * chunk.random.range(min_scale, max_scale);
+
+        if (seperate_xz_scale)
+            local_scale.y = chunk.random.range(min_scale, max_scale);
+
+        transform.localScale = local_scale;
 
         // Generate random y rotation
         if (y_rotation_mode == Y_ROTATION_MODE.RANDOM)

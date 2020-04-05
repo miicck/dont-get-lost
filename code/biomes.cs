@@ -83,12 +83,13 @@ public class desert : biome
         world_object[] small_rocks = new world_object[]{
             world_object.load("desert_rocks_1"),
             world_object.load("desert_rocks_2"),
+            world_object.load("desert_rocks_3"),
         };
 
         // Large rocks to generate, in order of size
         world_object[] large_rocks = new world_object[]{
-            world_object.load("desert_rocks_3"),
             world_object.load("desert_rocks_4"),
+            world_object.load("desert_rocks_5"),
         };
 
         for (int i = 0; i < SIZE; ++i)
@@ -110,17 +111,20 @@ public class desert : biome
                 }
 
                 // IF mediumly rocky, generate small rocks on a well-spaced grid
-                else if (rockyness > SMALL_ROCKS_START && i % 8 == 0 && j % 8 == 0)
+                else if (rockyness < LARGE_ROCKS_START && i % 8 == 0 && j % 8 == 0)
                 {
                     float scale = (rockyness - SMALL_ROCKS_START) / (1.0f - SMALL_ROCKS_START);
                     p.object_to_generate = procmath.sliding_scale(scale, small_rocks, random);
                 }
 
                 // If very rocky, generate large rocks on a well-spaced grid
-                else if (rockyness > LARGE_ROCKS_START && i % 20 == 0 && j % 20 == 0)
+                else if (i % 10 == 0 && j % 10 == 0)
                 {
-                    float scale = (rockyness - LARGE_ROCKS_START) / (1.0f - LARGE_ROCKS_START);
-                    p.object_to_generate = procmath.sliding_scale(scale, large_rocks, random);
+                    if (random.range(0, 4) == 0)
+                    {
+                        float scale = (rockyness - LARGE_ROCKS_START) / (1.0f - LARGE_ROCKS_START);
+                        p.object_to_generate = procmath.sliding_scale(scale, large_rocks, random);
+                    }
                 }
 
                 grid[i, j] = p;
@@ -245,6 +249,50 @@ public class mountains : biome
                         p.object_to_generate = world_object.load("mossy_log");
                 }
 
+                grid[i, j] = p;
+            }
+    }
+}
+
+public class flat_forest : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new biome.point();
+                p.altitude = point.BEACH_END;
+                p.terrain_color = terrain_colors.grass;
+                if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("tree");
+                else if (random.range(0, 40) == 0)
+                    p.object_to_generate = world_object.load("flowers");
+                else if (random.range(0, 150) == 0)
+                    p.object_to_generate = world_object.load("mossy_log");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("bush");
+                grid[i, j] = p;
+            }
+    }
+}
+
+[biome_info(generation_enabled: false)]
+public class cubes : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                p.altitude = 32f * Mathf.PerlinNoise(i / 64f, j / 64f);
+                p.terrain_color = terrain_colors.grass;
+
+                if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("rock_pillar");
+                else if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("pentagon");
                 grid[i, j] = p;
             }
     }
