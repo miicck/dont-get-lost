@@ -344,61 +344,63 @@ public class player : MonoBehaviour
     // Create and return a player
     public static player create()
     {
-        var player = new GameObject("player").AddComponent<player>();
+        var p = new GameObject("player").AddComponent<player>();
 
         // Create the player camera 
-        player.camera = new GameObject("camera").AddComponent<Camera>();
-        player.camera.clearFlags = CameraClearFlags.SolidColor;
-        player.camera.transform.SetParent(player.transform);
-        player.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH/2f, 0);
-        player.camera.nearClipPlane = 0.1f;
+        p.camera = FindObjectOfType<Camera>();
+        p.camera.clearFlags = CameraClearFlags.SolidColor;
+        p.camera.transform.SetParent(p.transform);
+        p.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH/2f, 0);
+        p.camera.nearClipPlane = 0.1f;
+        //p.camera.gameObject.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
+
 
         // Create a short range light with no shadows to light up detail
         // on nearby objects to the player
         var point_light = new GameObject("point_light").AddComponent<Light>();
         point_light.type = LightType.Point;
         point_light.range = item.WELD_RANGE;
-        point_light.transform.SetParent(player.camera.transform);
+        point_light.transform.SetParent(p.camera.transform);
         point_light.transform.localPosition = Vector3.zero;
         point_light.intensity = 0.5f;
 
         // Enforce the render limit with a sky-color object
-        player.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
-        player.obscurer.transform.SetParent(player.transform);
-        player.obscurer.transform.localPosition = Vector3.zero;
-        var sky_color = player.obscurer.GetComponentInChildren<Renderer>().material.color;
+        p.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
+        p.obscurer.transform.SetParent(p.transform);
+        p.obscurer.transform.localPosition = Vector3.zero;
+        var sky_color = p.obscurer.GetComponentInChildren<Renderer>().material.color;
 
-        player.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-        player.map_obscurer.transform.SetParent(player.camera.transform);
-        player.map_obscurer.transform.localPosition = Vector3.forward;
-        player.map_obscurer.transform.up = -player.camera.transform.forward;
+        p.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
+        p.map_obscurer.transform.SetParent(p.camera.transform);
+        p.map_obscurer.transform.localPosition = Vector3.forward;
+        p.map_obscurer.transform.up = -p.camera.transform.forward;
 
-        player.underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
-        player.underwater_screen.transform.SetParent(player.camera.transform);
-        player.underwater_screen.transform.localPosition = Vector3.forward * player.camera.nearClipPlane * 1.1f;
-        player.underwater_screen.transform.forward = player.camera.transform.forward;
+        p.underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
+        p.underwater_screen.transform.SetParent(p.camera.transform);
+        p.underwater_screen.transform.localPosition = Vector3.forward * p.camera.nearClipPlane * 1.1f;
+        p.underwater_screen.transform.forward = p.camera.transform.forward;
 
         // Make the sky the same color as the obscuring object
         RenderSettings.skybox = null;
-        player.camera.backgroundColor = sky_color;
+        p.camera.backgroundColor = sky_color;
 
         // Initialize the render range
-        player.update_render_range();
+        p.update_render_range();
 
         // Start with the map closed
-        player.map_open = false;
+        p.map_open = false;
 
         // Load the player state
-        player.load();
+        p.load();
          
         // Create the player controller
-        player.controller = player.gameObject.AddComponent<CharacterController>();
-        player.controller.height = HEIGHT;
-        player.controller.radius = WIDTH / 2;
-        player.controller.center = new Vector3(0, player.controller.height / 2f, 0);
-        player.controller.skinWidth = player.controller.radius / 10f;
+        p.controller = p.gameObject.AddComponent<CharacterController>();
+        p.controller.height = HEIGHT;
+        p.controller.radius = WIDTH / 2;
+        p.controller.center = new Vector3(0, p.controller.height / 2f, 0);
+        p.controller.skinWidth = p.controller.radius / 10f;
 
-        current = player;
-        return player;
+        current = p;
+        return p;
     }
 }
