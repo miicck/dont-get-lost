@@ -8,5 +8,5 @@ mv dont-get-lost Assets
 
 
 Project setup:
-add scenes main, world_menu to file/build settings
+add scenes: main, world_menu to file/build settings
 use window/package manager to install "post processing" v2.3.0 or later
