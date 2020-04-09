@@ -8,202 +8,200 @@ public class leg : MonoBehaviour
     public Transform foot;       // The foot, with pivot set at the ankle
     public Transform shin;       // The shin, with pivot set at the knee
     public Transform thigh;      // The thigh, with pivot set at the hip
-    public leg lead_by;          // The leg that this leg should be lead by (to keep the legs out of phase)
+    public leg following;        // The leg I am following, and should be out of phase with
 
-    // Should the knees bend backward
+    // Bird knees?
     public bool knees_bend_backward = false;
 
-    Vector3 grounding_next;      // Point which the foot next makes contact with the ground 
-    Vector3 grounding_last;      // Point which the foot last made contact with the ground
-    Vector3 step_point;          // Current point along the line from the previous grounding to next grounding
-    Vector3 position_last;       // The last position of leg.transform (used to calculate transform_velocity)
-    Vector3 transform_velocity;  // The current velocity of leg.transform
+    Transform step_centre;       // The location/rotation of the foot on Start()
+    float thigh_length;          // The distance between hip and knee
+    float shin_length;           // The distance between knee and ankle
+    float strafe_length;         // The step distance when strafing
 
-    float thigh_length;          // The length of the thigh (calculated in start())
-    float shin_length;           // The length of the shin (calculated in start())
+    // The progress through the current step
+    // [0,1] => Foot on ground, going backward
+    // [1,2] => Foot in air, going forward
+    float progress;
 
-    // The length of a step
+    Vector3 position_last;       // The position of step_centre, last frame
+    Vector3 velocity;            // The velocity of step_centre, this frame
+    Vector3 ground_normal;       // The last recorded ground normal 
+
+    const float MIN_FOOT_SPEED = 0.2f;
+    const float MIN_STEP_SIZE = 0.01f;
+    const float MAG_EPSILON = 10e-4f;
+
+    // The length of a step, from step_back to step_front
     float step_length
     {
         get
         {
-            const float MIN_STEP = 0.01f;
-            const float MAX_STEP = 1f;
-            float scale = (thigh_length + shin_length);
-            return Mathf.Clamp(Mathf.Sqrt(transform_velocity.magnitude), MIN_STEP, MAX_STEP) * scale;
+            // Step length is weighted by the direction we're moving
+            float forward_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
+            float right_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
+            float up_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
+
+            // Normal step length = leg length
+            float normal_length = thigh_length + shin_length;
+
+            // Jump is shorter, so legs flail around belivably when jumping
+            float jump_length = shin_length + thigh_length / 2f;
+
+            // Return weighted length
+            float ret = normal_length * forward_amt +
+                        strafe_length * right_amt +
+                        jump_length * up_amt;
+
+            if (ret < MIN_STEP_SIZE) ret = MIN_STEP_SIZE;
+            return ret;
         }
     }
 
-    // The direction of the next step
+    // The direction we're stepping in
     Vector3 step_direction
     {
         get
         {
-            // Alligned with transform_velocity if possible, else just transform.forward
-            if (transform_velocity.magnitude > 1e-5f) return transform_velocity.normalized;
-            return transform.forward;
+            // Same as the velocity, default to forward
+            if (velocity.magnitude > MAG_EPSILON) return velocity.normalized;
+            return step_centre.forward;
         }
     }
 
-    // A direction perpendicular to the step
-    // (assumes step_direction is not parallel/antiparallel to Vector3.up)
-    Vector3 step_tangent
+    // The front of the step
+    Vector3 step_front
     {
-        get
-        {
-            return Vector3.Cross(step_direction, Vector3.up);
-        }
+        get { return step_centre.position + step_direction * step_length / 2f; }
     }
 
-    // The centre of the current step
-    Vector3 stride_centre { get { return transform.position; } }
-
-    Vector3 test_centre
+    // The back of the step
+    Vector3 step_back
     {
-        get
-        {
-            // We look for the next grounding point 1.5f step lengths ahead. This is
-            // it exactly far ahead enough so that by the time the feet catch up and hit the point, 
-            // they will be 0.5f step lengths in front (exactly as they should be).
-            return stride_centre + step_direction * step_length * 1.5f;
-        }
+        get { return step_centre.position - step_direction * step_length / 2f; }
     }
 
-    // The two points between which to raycast for solid ground
-    Vector3[] test_start_end
+    // Find the grounding nearest the given test point
+    Vector3 grounding_point(Vector3 test_point)
     {
-        get
-        {
-            Vector3 test_dir = -Vector3.Cross(step_tangent, step_direction);
-
-            return new Vector3[]
+        Vector3 test_start = test_point + (shin_length + thigh_length / 2f) * Vector3.up;
+        Vector3 test_end = test_point - (shin_length / 2f) * Vector3.up;
+        Vector3 delta = test_end - test_start;
+        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
+            if (!h.transform.IsChildOf(character.transform))
             {
-                test_centre + test_dir,
-                test_centre - test_dir
-            };
-        }
+                ground_normal = h.normal;
+                return h.point;
+            }
+
+        ground_normal = Vector3.up;
+        return test_point;
     }
 
-    void new_grounding(Vector3 new_grounding)
+    // Move the foot towards a target point, ensuring
+    // it doesn't move too quickly
+    void move_foot_towards(Vector3 pos)
     {
-        // Don't set gronding point too far up
-        float max_y = shin_length + thigh_length / 2f;
-        if ((new_grounding - stride_centre).y > max_y)
-            new_grounding.y = stride_centre.y + max_y;
-
-        grounding_last = grounding_next;
-        grounding_next = new_grounding;
-    }
-
-    // Update the grounding point to the next grounding point (i.e start taking a step)
-    void generate_next_grounding()
-    {
-        var test = test_start_end;
-        Vector3 delta = test[1] - test[0];
-
-        // Look for solid ground between test[0] and test[1]
-        foreach (var h in Physics.RaycastAll(test[0], delta.normalized, delta.magnitude))
-        {
-            if (h.collider.transform.IsChildOf(character))
-                continue;
-
-            new_grounding(h.point);
-            return;
-        }
-
-        // None found, just set to midway
-        new_grounding((test[0] + test[1]) / 2f);
+        float max_foot_speed = MIN_FOOT_SPEED + velocity.magnitude;
+        Vector3 delta = pos - foot.transform.position;
+        if (delta.magnitude > max_foot_speed * Time.deltaTime)
+            delta = max_foot_speed * Time.deltaTime * delta.normalized;
+        foot.transform.position += delta;
     }
 
     private void Start()
     {
-        // Calculate thigh/shin lengths
+        // Record the foot centre position/orientation
+        step_centre = new GameObject("foot_initial").transform;
+        step_centre.SetParent(transform);
+        step_centre.position = foot.transform.position;
+        step_centre.rotation = foot.transform.rotation;
+
+        // Record the thigh/shin lengths
         thigh_length = (thigh.transform.position - shin.transform.position).magnitude;
         shin_length = (shin.transform.position - foot.transform.position).magnitude;
 
-        // Initialize step control points
-        grounding_next = stride_centre;
-        step_point = grounding_next;
-        position_last = transform.position;
-    }
-
-    bool need_new_grounding()
-    {
-        // If the next grounding point is > 0.5 steps behind, this 
-        // step has finished and we need a new grounding point
-        Vector3 delta = grounding_next - stride_centre;
-        if (Vector3.Dot(delta, step_direction) < -0.5f * step_length) return true;
-
-        // If the next grounding point is > 0.5 steps in the perpendicular direction
-        // the grounding point is out of sensible range and needs an update
-        if (Mathf.Abs(Vector3.Dot(delta, step_tangent)) > 0.5f * step_length) return true;
-
-        // This grounding is OK for now
-        return false;
+        // Initialize strafe step size
+        strafe_length = shin_length;
     }
 
     private void Update()
     {
-        // Store the velocity of the transform
-        transform_velocity = (transform.position - position_last) / Time.deltaTime;
-        position_last = transform.position;
+        // Work out kinematics
+        Vector3 delta = step_centre.transform.position - position_last;
+        position_last = step_centre.transform.position;
+        velocity = delta / Time.deltaTime;
 
-        // Work out how fast the foot is allowed to move
-        float max_foot_speed = transform_velocity.magnitude * 2f;
-        if (max_foot_speed < 10e-4f) max_foot_speed = 10e-4f;
+        // Increment progress in step_direction
+        progress += Vector3.Dot(delta, step_direction) / step_length;
+        progress -= Mathf.Floor(progress / 2f) * 2f; // Progress loops in [0,2]
 
-        // Ensure I am out of phase with my paired leg
-        if (lead_by != null)
+        if (velocity.magnitude < MAG_EPSILON)
         {
-            float ahead_amt = Vector3.Dot(grounding_next - lead_by.grounding_next, step_direction) / step_length;
-
-            if (Mathf.Abs(ahead_amt) < 0.9f)
-            {
-                // Legs too close to in phase
-                if (ahead_amt > 0)
-                    grounding_next += step_direction * step_length * (1f - ahead_amt);
-                else
-                    grounding_next -= step_direction * step_length * (1f + ahead_amt);
-            }
+            // Not really moving, reset foot position
+            move_foot_towards(grounding_point(step_centre.position));
+            solve_leg_positions();
+            solve_leg_orientation_and_scale();
+            return;
         }
 
-        // Generate new grounding point if needed
-        if (need_new_grounding())
-            generate_next_grounding();
+        if (following != null)
+        {
+            // Ensure I am out of phase with the leg I am following
+            progress = following.progress - 1f;
 
-        // Move the step_point along the line towards the grounding
-        Vector3 disp = grounding_next - step_point;
-        Vector3 move = disp;
-        if (move.magnitude > max_foot_speed * Time.deltaTime)
-            move = move.normalized * max_foot_speed * Time.deltaTime;
-        step_point += move;
+            // Set the strafe length to be sensible, given the leg I'm following
+            strafe_length = (following.step_centre.position - step_centre.position).magnitude;
+            following.strafe_length = strafe_length;
+        }
 
-        // Work out how far through a step we are and set the foot raise amount accordingly.
-        float step_progress = (step_point - grounding_last).magnitude / (grounding_next - grounding_last).magnitude;
-        float raise_amt = Mathf.Max(0, Mathf.Sin(Mathf.PI * step_progress));
+        if (progress < 1f)
+        {
+            // Foot moving backward on ground
+            Vector3 line_point = step_front * (1 - progress) + step_back * progress;
+            move_foot_towards(grounding_point(line_point));
+        }
+        else
+        {
+            // Foot moving forward above the ground
+            float fw_prog = progress - 1f;
+            Vector3 line_point = step_front * fw_prog + step_back * (1 - fw_prog);
+            float amt_above_ground = Mathf.Sin(fw_prog * Mathf.PI) * shin_length / 2f;
+            move_foot_towards(grounding_point(line_point) + amt_above_ground * Vector3.up);
+        }
 
-        // The foot is only raised if it is moving relative to the ground.
-        raise_amt *= (move.magnitude / Time.deltaTime) / max_foot_speed;
-
-        // Set the foot position the apropriate amount above step_point
-        set_foot_position(step_point + Vector3.up * raise_amt * shin_length / 2f);
-
-        // Work out the thigh/shin positions
-        //shin.transform.position = (thigh.transform.position + foot.transform.position) / 2f;
-        solve_leg();
+        solve_leg_positions();
+        solve_leg_orientation_and_scale();
     }
 
-    void set_foot_position(Vector3 pos)
+    void solve_leg_orientation_and_scale()
     {
-        Vector3 hip_disp = pos - thigh.transform.position;
-        float max_leg_length = 1.25f * (thigh_length + shin_length);
-        if (hip_disp.magnitude > max_leg_length)
-            hip_disp = hip_disp.normalized * max_leg_length;
+        // Unity uses a left-handed coordinate system for some reason
+        // so cross products are left-hand-rule rather than right-hand-rule
+        Vector3 knee_to_hip = thigh.transform.position - shin.transform.position;
+        Vector3 hip_normal = -Vector3.Cross(knee_to_hip, step_centre.right);
+        thigh.transform.rotation = Quaternion.LookRotation(hip_normal, knee_to_hip);
+        thigh.transform.localScale = new Vector3(1, knee_to_hip.magnitude / thigh_length, 1);
 
-        foot.transform.position = thigh.transform.position + hip_disp;
+        Vector3 foot_to_knee = shin.transform.position - foot.transform.position;
+        Vector3 shin_normal = -Vector3.Cross(foot_to_knee, step_centre.right);
+        shin.transform.rotation = Quaternion.LookRotation(shin_normal, foot_to_knee);
+        shin.transform.localScale = new Vector3(1, foot_to_knee.magnitude / shin_length, 1);
+
+        if (progress > 1f) // On backswing => foot fixed to shin rotation
+            foot.transform.rotation = shin.transform.rotation;
+        else // On ground => foot fixed to ground
+        {
+            Vector3 foot_up = ground_normal - Vector3.Project(ground_normal, step_centre.right);
+            if (foot_up.magnitude > MAG_EPSILON)
+            {
+                Vector3 foot_forward = -Vector3.Cross(foot_up, step_centre.right);
+                foot.transform.rotation = Quaternion.LookRotation(foot_forward, foot_up);
+            }
+            else foot.transform.rotation = step_centre.rotation;
+        }
     }
 
-    void solve_leg()
+    void solve_leg_positions()
     {
         // Work out the position of the thigh and shin, given the current foot position
         // according to the following diagram.
@@ -225,6 +223,7 @@ public class leg : MonoBehaviour
         Vector3 dvec = foot.transform.position - thigh.transform.position;
         float d = dvec.magnitude;
 
+        // Asymptotically approach streight leg
         if (d > a + b)
         {
             // Foot is further than the maximum extent of the leg, create a streight leg
@@ -252,15 +251,11 @@ public class leg : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        // Draw the grounding points
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(grounding_last, 0.05f);
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(grounding_next, 0.05f);
-
-        // Draw the raycast test line
-        var test = test_start_end;
-        Gizmos.DrawLine(test[0], test[1]);
+        if (step_centre != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(step_front, step_back);
+        }
 
         // Draw the thigh
         if (thigh != null && shin != null)
@@ -283,16 +278,4 @@ public class leg : MonoBehaviour
             Gizmos.DrawLine(foot.transform.position, foot.transform.position + foot.transform.forward / 4f);
         }
     }
-
-#if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(leg))]
-    class leg_editor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            var l = (leg)target;
-            base.OnInspectorGUI();
-        }
-    }
-#endif
 }

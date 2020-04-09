@@ -17,21 +17,19 @@ public class simple_character_control : MonoBehaviour
 
     void Update()
     {
-        float local_speed = speed;
-        if (Input.GetKey(KeyCode.LeftShift)) local_speed *= 5f;
-        if (Input.GetKey(KeyCode.LeftControl)) local_speed /= 5f;
-
         Vector3 move = Vector3.zero;
 
-        if (Input.GetKey(KeyCode.W)) move += transform.forward * local_speed * Time.deltaTime;
-        if (Input.GetKey(KeyCode.S)) move -= transform.forward * local_speed * Time.deltaTime;
-        if (Input.GetKey(KeyCode.D)) move += transform.right * local_speed * Time.deltaTime;
-        if (Input.GetKey(KeyCode.A)) move -= transform.right * local_speed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.W)) move += transform.forward * speed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.S)) move -= transform.forward * speed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.D)) move += transform.right * speed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.A)) move -= transform.right * speed * Time.deltaTime;
 
         if (!controller.isGrounded) yvel -= 10 * Time.deltaTime; // Gravity
         else if (Input.GetKeyDown(KeyCode.Space)) yvel = 10f; // Jump
         move += Vector3.up * yvel * Time.deltaTime;
 
+        if (Input.GetKey(KeyCode.LeftShift)) move *= 5f;
+        if (Input.GetKey(KeyCode.LeftControl)) move /= 5f;
         controller.Move(move);
 
         if (Input.GetKey(KeyCode.Q)) transform.Rotate(0, -Time.deltaTime * angular_speed, 0);
