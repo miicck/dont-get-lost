@@ -77,8 +77,6 @@ public class procedural_navmesh : MonoBehaviour
 
     [SerializeField]
     public bool always_draw_gizmos = false;  // True if gizmos should be drawn even if the object isn't selected
-    [SerializeField]
-    public bool pause_update = false;        // False if updates should updates take place
 
     // A particular point on the navagation mesh, optimized for use
     // with HashSets etc.
@@ -137,6 +135,7 @@ public class procedural_navmesh : MonoBehaviour
             };
 
             mesh.grid[x, y, z] = p;
+            mesh.open_points.Add(p);
             return p;
         }
 
@@ -176,6 +175,9 @@ public class procedural_navmesh : MonoBehaviour
                 _neighbours.Add(p);
                 p._neighbours.Add(this);
             }
+
+            mesh.open_points.Remove(this);
+            mesh.points.Add(this);
         }
 
         public void destroy()
@@ -199,6 +201,16 @@ public class procedural_navmesh : MonoBehaviour
             foreach (var n in neighbours())
                 Gizmos.DrawLine(grounding, n.grounding);
         }
+
+        public float heuristic(point other)
+        {
+            // Manhattan heuristic
+            return Mathf.Abs(this.x - other.x) +
+                   Mathf.Abs(this.y - other.y) +
+                   Mathf.Abs(this.z - other.z);
+        }
+
+        public override string ToString() { return "(" + x + ", " + y + ", " + z + ")"; }
     }
 
     // The grid of points (we need to maintain a grid so that we can look up
@@ -249,12 +261,91 @@ public class procedural_navmesh : MonoBehaviour
         }
     }
 
+    point search_for_point(Vector3 v)
+    {
+        point p = null;
+        int[] c = grid_point(v);
+
+        // First, search downward for point
+        for (int y = c[1]; y >= 0; --y)
+        {
+            p = point.load_or_create(c[0], y, c[2], this);
+            if (p != null) return p;
+        }
+
+        // Then, search upward
+        for (int y = c[1] + 1; y < size; ++y)
+        {
+            p = point.load_or_create(c[0], y, c[2], this);
+            if (p != null) return p;
+        }
+
+        // Then search all already loaded points (if there are any)
+        // for the nearest
+        if (points.Count > 0)
+            return utils.find_to_min(points, (pt) => (pt.grounding - v).magnitude);
+
+        // TODO: potentially perform exaustive search?
+        return null;
+    }
+
+    public List<Vector3> path(Vector3 start, Vector3 goal)
+    {
+        point start_p = search_for_point(start);
+        point goal_p = search_for_point(goal);
+        if (start_p == null || goal_p == null) return null;
+        return path(start_p, goal_p);
+    }
+
+    List<Vector3> path(point start, point goal)
+    {
+        var open = new HashSet<point> { start };
+        var came_from = new Dictionary<point, point>();
+        var gscore = new Dictionary<point, float>();
+        var fscore = new Dictionary<point, float>();
+
+        gscore[start] = 0;
+        fscore[start] = start.heuristic(goal);
+
+        while (open.Count > 0)
+        {
+            var current = utils.find_to_min(open, (p) => fscore[p]);
+            if (current.Equals(goal))
+            {
+                List<Vector3> ret = new List<Vector3> { current.grounding };
+                while (came_from.ContainsKey(current))
+                {
+                    current = came_from[current];
+                    ret.Add(current.grounding);
+                }
+                ret.Reverse();
+                return ret;
+            }
+
+            open.Remove(current);
+
+            current.recalculate_neighbours();
+            foreach (var n in current.neighbours())
+            {
+                float tgs = gscore[current] + 1f;
+                float gsn;
+                if (!gscore.TryGetValue(n, out gsn)) gsn = float.PositiveInfinity;
+                if (tgs < gsn)
+                {
+                    came_from[n] = current;
+                    gscore[n] = tgs;
+                    fscore[n] = tgs + n.heuristic(goal);
+                    open.Add(n);
+                }
+            }
+        }
+
+        return null;
+    }
+
     void Update()
     {
-        // Update paused, don't do anything
-        if (pause_update) return;
-
-        // Run iterations_per_frame mesh updates
+        // Run iterations_per_frame mesh expansions
         for (int iter = 0; iter < iterations_per_frame; ++iter)
         {
             // There are no open points left to expand
@@ -268,15 +359,9 @@ public class procedural_navmesh : MonoBehaviour
                 break;
             }
 
-            // Recalculate neighbours, add new neighbours to the open set
+            // Recalculate neighbours, adding new neighbours 
+            // to the open set.
             current.recalculate_neighbours();
-            foreach (var n in current.neighbours())
-                if (!points.Contains(n))
-                    open_points.Add(n);
-
-            // Close this point
-            open_points.Remove(current);
-            points.Add(current);
         }
     }
 
@@ -373,7 +458,6 @@ public class procedural_navmesh : MonoBehaviour
             nm.ground_clearance = UnityEditor.EditorGUILayout.FloatField("Ground clearance", nm.ground_clearance);
             nm.max_incline_angle = UnityEditor.EditorGUILayout.FloatField("Max incline angle", nm.max_incline_angle);
             nm.iterations_per_frame = UnityEditor.EditorGUILayout.IntField("Iterations per frame", nm.iterations_per_frame);
-            nm.pause_update = UnityEditor.EditorGUILayout.Toggle("Pause updates", nm.pause_update);
             nm.always_draw_gizmos = UnityEditor.EditorGUILayout.Toggle("Always draw gizmos", nm.always_draw_gizmos);
         }
     }
