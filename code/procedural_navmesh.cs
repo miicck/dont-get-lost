@@ -4,20 +4,96 @@ using UnityEngine;
 
 public class procedural_navmesh : MonoBehaviour
 {
-    public int size = 32;
-    public float resolution = 1f;
-    public float ground_clearance = 0.25f;
-    public float max_incline_angle = 60f;
-    public int iterations_per_frame = 64;
-    public bool always_draw_gizmos = false;
-    public bool pause_update = false;
+    // Size of the navagation mesh grid
+    [SerializeField]
+    int _size = 32;
+    public int size
+    {
+        get { return _size; }
+        set
+        {
+            // Set some sensible minimum/maximum values for size
+            _size = value;
+            if (_size < 1) _size = 1;
+            if (_size > 512) _size = 512;
+        }
+    }
 
+    // The size of a single mesh point
+    [SerializeField]
+    float _resolution = 1f;
+    public float resolution
+    {
+        get { return _resolution; }
+        set
+        {
+            // Make sure other things that depend on
+            // resolution stay in sensible ranges 
+            _resolution = value;
+            ground_clearance = ground_clearance;
+        }
+    }
+
+    // Approximate height of small objects/bumps that can be walked over
+    [SerializeField]
+    float _ground_clearance = 0.5f;
+    public float ground_clearance
+    {
+        get { return _ground_clearance; }
+        set
+        {
+            _ground_clearance = value;
+            if (_ground_clearance < 0) _ground_clearance = 0;
+            if (_ground_clearance >= resolution) _ground_clearance = resolution;
+        }
+    }
+
+    // The maximum incline that can be scaled (in degrees)
+    [SerializeField]
+    float _max_incline_angle = 45f;
+    public float max_incline_angle
+    {
+        get { return _max_incline_angle; }
+        set
+        {
+            _max_incline_angle = value;
+            if (_max_incline_angle < 0) _max_incline_angle = 0;
+            if (_max_incline_angle > 90) _max_incline_angle = 90;
+        }
+    }
+
+    // The number of navmesh updates per frame (for spreading load across frames)
+    [SerializeField]
+    int _iterations_per_frame = 64;
+    public int iterations_per_frame
+    {
+        get { return _iterations_per_frame; }
+        set
+        {
+            _iterations_per_frame = value;
+            if (_iterations_per_frame < 0) _iterations_per_frame = 0;
+        }
+    }
+
+    [SerializeField]
+    public bool always_draw_gizmos = false;  // True if gizmos should be drawn even if the object isn't selected
+    [SerializeField]
+    public bool pause_update = false;        // False if updates should updates take place
+
+    // A particular point on the navagation mesh, optimized for use
+    // with HashSets etc.
     class point
     {
-        int x; int y; int z;
+        // Navagation mesh to which this point belongs
         procedural_navmesh mesh;
+
+        // Coordinates of this point in the mesh grid
+        int x; int y; int z;
+
+        // The grounding point on walkable geometry
         public Vector3 grounding { get; private set; }
 
+        // Equality method for HashSets etc.
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
@@ -26,11 +102,14 @@ public class procedural_navmesh : MonoBehaviour
             return x == p.x && y == p.y && z == p.z;
         }
 
+        // Hash code for HashSets etc.
         public override int GetHashCode()
         {
             return x + y * mesh.size + z * mesh.size * mesh.size;
         }
 
+        // Either load the point from the navagation mesh, or (attempt to) 
+        // create the point on the navagation mesh.
         public static point load_or_create(
             int x, int y, int z, procedural_navmesh mesh)
         {
@@ -61,6 +140,7 @@ public class procedural_navmesh : MonoBehaviour
             return p;
         }
 
+        // Returns true if I can access the neibhour at the grid point xn, yn, zn
         bool can_access_neighbour(int xn, int yn, int zn)
         {
             var a = mesh.grid_point(x, y, z) + Vector3.up * mesh.ground_clearance;
@@ -69,8 +149,8 @@ public class procedural_navmesh : MonoBehaviour
             return !Physics.Raycast(a, b - a, (b - a).magnitude);
         }
 
+        // My neighbours
         HashSet<point> _neighbours = new HashSet<point>();
-
         public HashSet<point> neighbours() { return _neighbours; }
 
         public void recalculate_neighbours()
@@ -85,20 +165,17 @@ public class procedural_navmesh : MonoBehaviour
                 int yn = y + utils.neighbouring_dys_3d[n];
                 int zn = z + utils.neighbouring_dzs_3d[n];
 
+                // Neighbour not accessable from this point, skip
                 if (!can_access_neighbour(xn, yn, zn)) continue;
 
+                // Attempt to load or create the neighbour
                 var p = point.load_or_create(xn, yn, zn, mesh);
                 if (p == null) continue;
 
+                // Ensure two-way linkage
                 _neighbours.Add(p);
                 p._neighbours.Add(this);
             }
-        }
-
-        public void draw_gizmos()
-        {
-            foreach (var n in neighbours())
-                Gizmos.DrawLine(grounding, n.grounding);
         }
 
         public void destroy()
@@ -107,7 +184,7 @@ public class procedural_navmesh : MonoBehaviour
             foreach (var n in neighbours())
             {
                 n._neighbours.Remove(this);
-                mesh.open_points.Add(n); // Re-open neighbours
+                mesh.open_points.Add(n); // Re-open neighbours for search
             }
 
             // Remove me from the mesh entirely
@@ -116,24 +193,29 @@ public class procedural_navmesh : MonoBehaviour
             mesh.grid[x, y, z] = null;
             _neighbours.Clear();
         }
-    }
-    point[,,] grid;
-    HashSet<point> points;
-    HashSet<point> open_points;
 
-    Vector3 grid_origin
-    {
-        get
+        public void draw_gizmos()
         {
-            return transform.position - Vector3.one * resolution * size / 2f;
+            foreach (var n in neighbours())
+                Gizmos.DrawLine(grounding, n.grounding);
         }
     }
 
-    Vector3 grid_point(int x, int y, int z)
-    {
-        return grid_origin + new Vector3(resolution * x, resolution * y, resolution * z);
-    }
+    // The grid of points (we need to maintain a grid so that we can look up
+    // points that already exist quickly). To save memory, this could potentially 
+    // be removed by instead using points.TryGetValue and open_points.TryGetValue, 
+    // whenever that is supported by the .net version used in unity.
+    point[,,] grid;
+    HashSet<point> points = new HashSet<point>();      // The points that loaded and up-to-date
+    HashSet<point> open_points = new HashSet<point>(); // The points that are loaded but need updating
 
+    // The position of the 0,0,0 point
+    Vector3 grid_origin { get { return transform.position - Vector3.one * resolution * size / 2f; } }
+
+    // The position of the x,y,z point on the grid
+    Vector3 grid_point(int x, int y, int z) { return grid_origin + new Vector3(resolution * x, resolution * y, resolution * z); }
+
+    // Inverse of the above (clamps the result to the grid)
     int[] grid_point(Vector3 world_position)
     {
         Vector3 delta = world_position - grid_origin;
@@ -144,9 +226,13 @@ public class procedural_navmesh : MonoBehaviour
         return ret;
     }
 
+    // Called when an obstacle within the navmesh moves
     public void on_obstacle_move(procedural_navmesh_obstacle obstacle,
                                  Vector3 old_pos, Vector3 new_pos)
     {
+        // Find all the points near to the obstacle at either the
+        // old_pos or the new_pos, and remove them. Hanging neighbours
+        // will automatically be sceduled for re-evaluation.
         foreach (Vector3 c in new Vector3[] { old_pos, new_pos })
         {
             int[] min = grid_point(c - obstacle.bounds.extents - Vector3.one * resolution * 2);
@@ -165,11 +251,16 @@ public class procedural_navmesh : MonoBehaviour
 
     void Update()
     {
+        // Update paused, don't do anything
         if (pause_update) return;
+
+        // Run iterations_per_frame mesh updates
         for (int iter = 0; iter < iterations_per_frame; ++iter)
         {
-            if (open_points == null || open_points.Count == 0) break;
+            // There are no open points left to expand
+            if (open_points.Count == 0) break;
 
+            // Just get the first point that needs updating
             point current = null;
             foreach (var op in open_points)
             {
@@ -177,64 +268,94 @@ public class procedural_navmesh : MonoBehaviour
                 break;
             }
 
+            // Recalculate neighbours, add new neighbours to the open set
             current.recalculate_neighbours();
             foreach (var n in current.neighbours())
                 if (!points.Contains(n))
                     open_points.Add(n);
 
+            // Close this point
             open_points.Remove(current);
             points.Add(current);
         }
     }
 
+    // Trigger a full regeneration of the navmesh
     void regenerate()
     {
         grid = new point[size, size, size];
+        open_points.Clear();
+        points.Clear();
 
-        var start = point.load_or_create(size / 2, size / 2, size / 2, this);
-        if (start == null) return;
-
-        open_points = new HashSet<point> { start };
-        points = new HashSet<point> { };
-    }
-
-    public static List<procedural_navmesh> meshes = new List<procedural_navmesh>();
-
-    public Bounds bounds
-    {
-        get
+        // Seed the navmesh around the centre point, by raycasting from the top to
+        // the bottom. Note that this will generate the navmesh on the tallest piece
+        // of geometry at the centre. To generate around another piece of geometry,
+        // use try_seed_point.
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position + Vector3.up * size * resolution / 2f,
+                        -Vector3.up, out hit, size * resolution))
         {
-            return new Bounds(transform.position, Vector3.one * size * resolution);
+            for (int n = 0; n < utils.neighbouring_dxs_3d.Length; ++n)
+                try_seed_point(hit.point + resolution * new Vector3(
+                    utils.neighbouring_dxs_3d[n],
+                    utils.neighbouring_dys_3d[n],
+                    utils.neighbouring_dzs_3d[n]
+                ));
         }
     }
 
+    // Discover an open set point near v
+    public void try_seed_point(Vector3 v)
+    {
+        if (grid == null) return;
+        var c = grid_point(v);
+        var p = point.load_or_create(c[0], c[1], c[2], this);
+        if (p != null) open_points.Add(p);
+    }
+
+    // All navigation meshes currently Start()'ed
+    public static List<procedural_navmesh> meshes = new List<procedural_navmesh>();
+
     void Start()
     {
-        meshes.Add(this);
         regenerate();
+        meshes.Add(this); // Keep track of navmeshes
     }
+
+    void OnDestroy()
+    {
+        meshes.Remove(this); // Keep track of navmeshes
+    }
+
+    // The bounding box of this navmesh
+    public Bounds bounds { get { return new Bounds(transform.position, Vector3.one * size * resolution); } }
 
     void OnDrawGizmos()
     {
+        // Draw gizmos even when not selected if always_draw_gizmos is true
         if (always_draw_gizmos)
             OnDrawGizmosSelected();
     }
 
     void OnDrawGizmosSelected()
     {
+        // Draw the bounding box of the navmesh
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(bounds.center, bounds.size);
 
+        // Draw closed points in blue
         if (points == null) return;
         Gizmos.color = Color.blue;
         foreach (var p in points)
             p.draw_gizmos();
 
+        // Draw open points in cyan
         Gizmos.color = Color.cyan;
         foreach (var p in open_points)
             p.draw_gizmos();
     }
 
+    // Custom inspector
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(procedural_navmesh))]
     class proc_nav_editor : UnityEditor.Editor
@@ -242,9 +363,18 @@ public class procedural_navmesh : MonoBehaviour
         public override void OnInspectorGUI()
         {
             var nm = (procedural_navmesh)target;
-            var regen = UnityEditor.EditorGUILayout.Toggle("regenerate", false);
+            
+            // Add a little button to trigger regeneration
+            var regen = UnityEditor.EditorGUILayout.Toggle("Trigger regeneration", false);
             if (regen) nm.regenerate();
-            base.OnInspectorGUI();
+
+            nm.size = UnityEditor.EditorGUILayout.IntField("Size", nm.size);
+            nm.resolution = UnityEditor.EditorGUILayout.FloatField("Resolution", nm.resolution);
+            nm.ground_clearance = UnityEditor.EditorGUILayout.FloatField("Ground clearance", nm.ground_clearance);
+            nm.max_incline_angle = UnityEditor.EditorGUILayout.FloatField("Max incline angle", nm.max_incline_angle);
+            nm.iterations_per_frame = UnityEditor.EditorGUILayout.IntField("Iterations per frame", nm.iterations_per_frame);
+            nm.pause_update = UnityEditor.EditorGUILayout.Toggle("Pause updates", nm.pause_update);
+            nm.always_draw_gizmos = UnityEditor.EditorGUILayout.Toggle("Always draw gizmos", nm.always_draw_gizmos);
         }
     }
 #endif
