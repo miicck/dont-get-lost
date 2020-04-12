@@ -123,4 +123,13 @@ public static class utils
 
         return corner_distance_sq < radius * radius;
     }
+
+    public static readonly int[] neighbouring_dxs_3d = new int[]
+    { 1,1,1,0,0,0,-1,-1,-1,1,1,1,0,0,-1,-1,-1,1,1,1,0,0,0,-1,-1,-1};
+
+    public static readonly int[] neighbouring_dys_3d = new int[]
+    { 1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+
+    public static readonly int[] neighbouring_dzs_3d = new int[]
+    { 1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1};
 }
