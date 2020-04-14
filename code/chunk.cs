@@ -8,9 +8,6 @@ public class chunk : MonoBehaviour
     // defines the resolution of the terrain
     public const int SIZE = 64;
 
-    // The navigation mesh of this chunk
-    procedural_navmesh navmesh;
-
     // The chunk coordinates
     public int x { get; private set; }
     public int z { get; private set; }
@@ -26,6 +23,10 @@ public class chunk : MonoBehaviour
             return _biome;
         }
     }
+
+    // Keep a quick lookup for chunks
+    static Dictionary<int, Dictionary<int, chunk>> _generated_chunks =
+        new Dictionary<int, Dictionary<int, chunk>>();
 
     //##################//
     // COORDINATE TOOLS //
@@ -59,10 +60,50 @@ public class chunk : MonoBehaviour
         };
     }
 
+    // Find a fully-generated chunk with coodinates x, z (if it exists)
+    public static chunk find_generated(int x, int z)
+    {
+        Dictionary<int, chunk> inner;
+        if (!_generated_chunks.TryGetValue(x, out inner)) return null;
+
+        chunk ret;
+        if (!inner.TryGetValue(z, out ret)) return null;
+        return ret;
+    }
+
+    // Record a fully generated chunk
+    static void add_generated_chunk(chunk c)
+    {
+        Dictionary<int, chunk> inner;
+        if (!_generated_chunks.TryGetValue(c.x, out inner))
+        {
+            inner = new Dictionary<int, chunk>();
+            _generated_chunks[c.x] = inner;
+        }
+
+        inner[c.z] = c;
+    }
+    
+    // Un-record a fully generated chunk
+    static void remove_generated_chunk(chunk c)
+    {
+        // Remove the chunk, and the x dictionary if this was
+        // the last stored chunk at this x coordinate.
+        Dictionary<int, chunk> inner;
+        if (!_generated_chunks.TryGetValue(c.x, out inner)) return;
+
+        inner.Remove(c.z);
+        if (inner.Count == 0)
+            _generated_chunks.Remove(c.x);
+    }
+
     // Returns the chunk at the given location
     public static chunk at(Vector3 location)
     {
         var c = coords(location);
+        var gc = find_generated(c[0], c[1]);
+        if (gc != null) return gc;
+        Debug.Log("chunk.at fallback triggered.");
         return GameObject.Find("chunk_" + c[0] + "_" + c[1])?.GetComponent<chunk>();
     }
 
@@ -124,6 +165,7 @@ public class chunk : MonoBehaviour
 
     private void OnDestroy()
     {
+        remove_generated_chunk(this);
         save();
     }
 
@@ -363,6 +405,7 @@ public class chunk : MonoBehaviour
     void on_generation_complete()
     {
         // Create the navigation mesh
+        /*
         navmesh = new GameObject("navmesh").AddComponent<procedural_navmesh>();
         navmesh.transform.SetParent(transform);
         navmesh.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f) * chunk.SIZE;
@@ -371,6 +414,21 @@ public class chunk : MonoBehaviour
         navmesh.iterations_per_frame = 0;
         navmesh.ground_clearance = 0.5f;
         navmesh.max_incline_angle = 45f;
+        */
+
+        add_generated_chunk(this);
+
+        // Load all the characters
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var point = blended_points[i, j];
+                if (point.character_to_generate != null)
+                {
+                    var c = point.character_to_generate.inst();
+                    c.transform.position = transform.position + new Vector3(i, point.altitude, j);
+                }
+            }
 
         biome.update_chunk_neighbours();
         load_items();

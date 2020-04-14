@@ -103,20 +103,32 @@ public class path
         }
     }
 
-    point grid_point(Vector3 v)
+    point find_grid_point(Vector3 v)
     {
         // Convert a vector to a point
         Vector3 delta = v - origin;
-        int x = Mathf.RoundToInt(delta.x / resolution);
-        int y = Mathf.RoundToInt(delta.y / resolution);
-        int z = Mathf.RoundToInt(delta.z / resolution);
-        return point.create(x, y, z, this);
+        int x0 = Mathf.RoundToInt(delta.x / resolution);
+        int y0 = Mathf.RoundToInt(delta.y / resolution);
+        int z0 = Mathf.RoundToInt(delta.z / resolution);
+
+        point ret = null;
+        utils.search_outward(x0, y0, z0, size, (x, y, z) =>
+        {
+            ret = point.create(x, y, z, this);
+            return ret != null;
+        });
+
+        return ret;
     }
 
     List<Vector3> calculated_path;
     HashSet<point> open;
     HashSet<point> closed;
     point goal;
+
+    public bool complete { get { return calculated_path != null; } }
+    public int length { get { return calculated_path == null ? 0 : calculated_path.Count; } }
+    public Vector3 this[int i] { get { return calculated_path[i]; } }
 
     public path(Vector3 start, Vector3 end, float ground_clearance = 0.5f, float resolution = 0.5f)
     {
@@ -128,14 +140,22 @@ public class path
         Vector3 max = utils.max(start, end);
         Vector3 delta = max - min;
         size = (int)(2f * Mathf.Max(delta.x, delta.y, delta.z) / resolution);
-        if (size * size * size > int.MaxValue) return;
+        if (size * size * size > int.MaxValue)
+        {
+            calculated_path = new List<Vector3>();
+            return;
+        }
         origin = utils.round((start + end) / 2f - Vector3.one * size * resolution / 2f);
 
         // Initialize pathfinding
-        var start_p = grid_point(start);
-        goal = grid_point(end);
+        var start_p = find_grid_point(start);
+        goal = find_grid_point(end);
 
-        if (start_p == null || goal == null) return;
+        if (start_p == null || goal == null)
+        {
+            calculated_path = new List<Vector3>();
+            return;
+        }
 
         open = new HashSet<point> { start_p };
         closed = new HashSet<point> { };
@@ -145,8 +165,10 @@ public class path
 
     public void run_pathfinding(int iterations)
     {
+        if (complete) return;
+
         int iter = 0;
-        while (open != null && open.Count > 0)
+        while (open.Count > 0)
         {
             if (++iter > iterations) break;
             var current = utils.find_to_min(open, (p) => p.fscore);
@@ -180,6 +202,9 @@ public class path
                 }
             }
         }
+
+        if (open.Count == 0)
+            calculated_path = new List<Vector3>();
     }
 
     public void draw_gizmos()

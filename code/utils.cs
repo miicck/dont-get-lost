@@ -171,4 +171,24 @@ public static class utils
             Mathf.Round(v.z)
         );
     }
+
+    public delegate bool search_func(int x, int y, int z);
+    public static void search_outward(int x0, int y0, int z0, int max_range, search_func sf)
+    {
+        // Loop over magnitues m and xm, ym, zm 
+        // such that xm+ym+zm = m and m <= max_range
+        for (int m = 0; m <= max_range; ++m)
+            for (int xm = 0; xm <= m; ++xm)
+                for (int ym = 0; ym <= m - xm; ++ym)
+                {
+                    int zm = m - ym - xm;
+
+                    // Search all combinations of x, y and z signs
+                    for (int xs = -1; xs < 2; xs += 2)
+                        for (int ys = -1; ys < 2; ys += 2)
+                            for (int zs = -1; zs < 2; zs += 2)
+                                if (sf(x0 + xm * xs, y0 + ym * ys, z0 + zm * zs))
+                                    return;
+                }
+    }
 }

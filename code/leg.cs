@@ -18,10 +18,18 @@ public class leg : MonoBehaviour
     float shin_length;           // The distance between knee and ankle
     float strafe_length;         // The step distance when strafing
 
+    // The initial scales of leg parts
+    Vector3 init_foot_scale;
+    Vector3 init_thigh_scale;
+    Vector3 init_shin_scale;
+
     // The progress through the current step
     // [0,1] => Foot on ground, going backward
     // [1,2] => Foot in air, going forward
-    float progress;
+    public float progress { get; private set; }
+
+    // The amount a body should bob up and down because of this leg
+    public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f); } }
 
     Vector3 position_last;       // The position of step_centre, last frame
     Vector3 velocity;            // The velocity of step_centre, this frame
@@ -122,6 +130,11 @@ public class leg : MonoBehaviour
 
         // Initialize strafe step size
         strafe_length = shin_length;
+
+        // Save initial scales
+        init_foot_scale = foot.transform.localScale;
+        init_shin_scale = shin.transform.localScale;
+        init_thigh_scale = thigh.transform.localScale;
     }
 
     private void Update()
@@ -132,7 +145,19 @@ public class leg : MonoBehaviour
         velocity = delta / Time.deltaTime;
 
         // Increment progress in step_direction
-        progress += Vector3.Dot(delta, step_direction) / step_length;
+        if (following == null)
+        {
+            progress += Vector3.Dot(delta, step_direction) / step_length;
+        }
+        else
+        {
+            // Ensure I am out of phase with the leg I am following
+            progress = following.progress - 1f;
+
+            // Set the strafe length to be sensible, given the leg I'm following
+            strafe_length = (following.step_centre.position - step_centre.position).magnitude;
+            following.strafe_length = strafe_length;
+        }
         progress -= Mathf.Floor(progress / 2f) * 2f; // Progress loops in [0,2]
 
         if (velocity.magnitude < MAG_EPSILON)
@@ -142,16 +167,6 @@ public class leg : MonoBehaviour
             solve_leg_positions();
             solve_leg_orientation_and_scale();
             return;
-        }
-
-        if (following != null)
-        {
-            // Ensure I am out of phase with the leg I am following
-            progress = following.progress - 1f;
-
-            // Set the strafe length to be sensible, given the leg I'm following
-            strafe_length = (following.step_centre.position - step_centre.position).magnitude;
-            following.strafe_length = strafe_length;
         }
 
         if (progress < 1f)
@@ -180,12 +195,18 @@ public class leg : MonoBehaviour
         Vector3 knee_to_hip = thigh.transform.position - shin.transform.position;
         Vector3 hip_normal = -Vector3.Cross(knee_to_hip, step_centre.right);
         thigh.transform.rotation = Quaternion.LookRotation(hip_normal, knee_to_hip);
-        thigh.transform.localScale = new Vector3(1, knee_to_hip.magnitude / thigh_length, 1);
+        thigh.transform.localScale = new Vector3(
+            init_thigh_scale.x,
+            init_thigh_scale.y * knee_to_hip.magnitude / thigh_length,
+            init_thigh_scale.z);
 
         Vector3 foot_to_knee = shin.transform.position - foot.transform.position;
         Vector3 shin_normal = -Vector3.Cross(foot_to_knee, step_centre.right);
         shin.transform.rotation = Quaternion.LookRotation(shin_normal, foot_to_knee);
-        shin.transform.localScale = new Vector3(1, foot_to_knee.magnitude / shin_length, 1);
+        shin.transform.localScale = new Vector3(
+            init_shin_scale.x,
+            init_shin_scale.y * foot_to_knee.magnitude / shin_length,
+            init_shin_scale.z);
 
         if (progress > 1f) // On backswing => foot fixed to shin rotation
             foot.transform.rotation = shin.transform.rotation;
@@ -241,6 +262,7 @@ public class leg : MonoBehaviour
         d1 = Mathf.Sqrt(d1);
 
         if (knees_bend_backward) lambda = -lambda;
+        if (float.IsNaN(lambda)) return;
 
         // Setup the bent leg accordingly
         shin.transform.position =
@@ -249,7 +271,7 @@ public class leg : MonoBehaviour
             lambda * Vector3.Cross(transform.right, dvec.normalized);
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (step_centre != null)
         {

@@ -8,13 +8,12 @@ public class spawn_on_start : MonoBehaviour
     public int count;
     public float time_betwen_spawns = 0;
 
-    int count_spawned = 0;
     void spawn()
     {
-        ++count_spawned;
+        --count;
         to_spawn.inst().transform.position = transform.position;
 
-        if (count_spawned > count)
+        if (count <= 0)
             CancelInvoke();
     }
 

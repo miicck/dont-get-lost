@@ -75,10 +75,13 @@ public class game : MonoBehaviour
         // Create a second directional light source (with no shadows)
         // to highlight details of objects that are in the shadow of 
         // the sun.
+        /*
         var aux_sun = sun.inst();
         aux_sun.transform.SetParent(sun.transform);
         aux_sun.intensity = 0.1f;
-        sun.intensity = 1 - aux_sun.intensity;
+        */
+
+        sun.intensity = 1f;
         sun.shadows = LightShadows.Soft;
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }

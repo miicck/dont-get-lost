@@ -384,6 +384,7 @@ public abstract class biome : MonoBehaviour
         public float altitude;
         public Color terrain_color;
         public world_object object_to_generate;
+        public character character_to_generate;
 
         // Computea a weighted average of a list of points
         public static point average(point[] pts, float[] wts)
@@ -418,7 +419,10 @@ public abstract class biome : MonoBehaviour
             }
 
             if (pts[max_i] != null)
+            {
                 ret.object_to_generate = pts[max_i].object_to_generate;
+                ret.character_to_generate = pts[max_i].character_to_generate;
+            }
 
             return ret;
         }
