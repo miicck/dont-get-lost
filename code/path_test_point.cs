@@ -2,28 +2,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class path_test_point : MonoBehaviour
 {
     public path_test_point next;
+
     Vector3 last_calculated_position;
     Vector3 last_calculated_end;
+
     path path = null;
 
-    void calculate()
+    void recalculate()
     {
-        if (next == null) return;
+        last_calculated_end = next.transform.position;
+        last_calculated_position = transform.position;
         path = new path(transform.position, next.transform.position);
     }
 
     void Update()
     {
-        calculate();
+        if (next == null) return;
+
+        if ((next.transform.position - last_calculated_end).magnitude > 0.1f ||
+            (transform.position - last_calculated_position).magnitude > 0.1f)
+            recalculate();
+
+        path?.run_pathfinding(4);
     }
 
     void OnDrawGizmos()
     {
-        path?.draw_waypoint_gizmos(transform.position);
         path?.draw_gizmos();
     }
 }

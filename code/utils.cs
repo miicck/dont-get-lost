@@ -132,4 +132,43 @@ public static class utils
 
     public static readonly int[] neighbouring_dzs_3d = new int[]
     { 1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1};
+
+    public static Vector3 min(params Vector3[] vs)
+    {
+        float min_x = float.PositiveInfinity;
+        float min_y = float.PositiveInfinity;
+        float min_z = float.PositiveInfinity;
+        for (int i = 0; i < vs.Length; ++i)
+        {
+            var v = vs[i];
+            if (v.x < min_x) min_x = v.x;
+            if (v.y < min_y) min_y = v.y;
+            if (v.z < min_z) min_z = v.z;
+        }
+        return new Vector3(min_x, min_y, min_z);
+    }
+
+    public static Vector3 max(params Vector3[] vs)
+    {
+        float max_x = float.NegativeInfinity;
+        float max_y = float.NegativeInfinity;
+        float max_z = float.NegativeInfinity;
+        for (int i = 0; i < vs.Length; ++i)
+        {
+            var v = vs[i];
+            if (v.x > max_x) max_x = v.x;
+            if (v.y > max_y) max_y = v.y;
+            if (v.z > max_z) max_z = v.z;
+        }
+        return new Vector3(max_x, max_y, max_z);
+    }
+
+    public static Vector3 round(Vector3 v)
+    {
+        return new Vector3(
+            Mathf.Round(v.x),
+            Mathf.Round(v.y),
+            Mathf.Round(v.z)
+        );
+    }
 }

@@ -8,6 +8,9 @@ public class chunk : MonoBehaviour
     // defines the resolution of the terrain
     public const int SIZE = 64;
 
+    // The navigation mesh of this chunk
+    procedural_navmesh navmesh;
+
     // The chunk coordinates
     public int x { get; private set; }
     public int z { get; private set; }
@@ -359,6 +362,16 @@ public class chunk : MonoBehaviour
     // Called when the chunk has finished generating
     void on_generation_complete()
     {
+        // Create the navigation mesh
+        navmesh = new GameObject("navmesh").AddComponent<procedural_navmesh>();
+        navmesh.transform.SetParent(transform);
+        navmesh.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f) * chunk.SIZE;
+        navmesh.size = chunk.SIZE;
+        navmesh.resolution = 1.0f;
+        navmesh.iterations_per_frame = 0;
+        navmesh.ground_clearance = 0.5f;
+        navmesh.max_incline_angle = 45f;
+
         biome.update_chunk_neighbours();
         load_items();
     }

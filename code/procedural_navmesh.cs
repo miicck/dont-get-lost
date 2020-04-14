@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿#define DEBUG
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -75,6 +76,19 @@ public class procedural_navmesh : MonoBehaviour
         }
     }
 
+    // Return a neighbouring navmesh if there is one
+    procedural_navmesh neighbour(int dx, int dz)
+    {
+        Vector3 n_centre = transform.position +
+                           new Vector3(dx, 0, dz) * size * resolution;
+
+        foreach (var m in meshes)
+            if ((m.transform.position - n_centre).magnitude < size * resolution / 4)
+                return m;
+
+        return null;
+    }
+
     [SerializeField]
     public bool always_draw_gizmos = false;  // True if gizmos should be drawn even if the object isn't selected
 
@@ -91,13 +105,12 @@ public class procedural_navmesh : MonoBehaviour
         // The grounding point on walkable geometry
         public Vector3 grounding { get; private set; }
 
-        // Equality method for HashSets etc.
+        // Just use default equality, each x,y,z point
+        // within a mesh should be uniquely created because
+        // they can only be made by the load_or_create method
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            if (!(obj is point)) return false;
-            point p = (point)obj;
-            return x == p.x && y == p.y && z == p.z;
+            return base.Equals(obj);
         }
 
         // Hash code for HashSets etc.
@@ -134,10 +147,17 @@ public class procedural_navmesh : MonoBehaviour
                 grounding = hit.point
             };
 
+            if (mesh.grid[x, y, z] != null)
+                Debug.LogError("Tried to overwrite mesh grid!");
             mesh.grid[x, y, z] = p;
             mesh.open_points.Add(p);
             return p;
         }
+
+        // Constructor is private, only allow creation via
+        // load_or_create so we don't create two points with
+        // the same x,y,z values.
+        private point() { }
 
         // Returns true if I can access the neibhour at the grid point xn, yn, zn
         bool can_access_neighbour(int xn, int yn, int zn)
@@ -152,7 +172,7 @@ public class procedural_navmesh : MonoBehaviour
         HashSet<point> _neighbours = new HashSet<point>();
         public HashSet<point> neighbours() { return _neighbours; }
 
-        public void recalculate_neighbours()
+        public void expand()
         {
             // Clear previous neighbours
             foreach (var n in _neighbours) n._neighbours.Remove(this);
@@ -199,7 +219,10 @@ public class procedural_navmesh : MonoBehaviour
         public void draw_gizmos()
         {
             foreach (var n in neighbours())
-                Gizmos.DrawLine(grounding, n.grounding);
+            {
+                Vector3 delta = n.grounding - grounding;
+                Gizmos.DrawLine(grounding, grounding + delta / 2f);
+            }
         }
 
         public float heuristic(point other)
@@ -222,7 +245,7 @@ public class procedural_navmesh : MonoBehaviour
     HashSet<point> open_points = new HashSet<point>(); // The points that are loaded but need updating
 
     // The position of the 0,0,0 point
-    Vector3 grid_origin { get { return transform.position - Vector3.one * resolution * size / 2f; } }
+    Vector3 grid_origin { get { return transform.position - Vector3.one * resolution * (size - 1f) / 2f; } }
 
     // The position of the x,y,z point on the grid
     Vector3 grid_point(int x, int y, int z) { return grid_origin + new Vector3(resolution * x, resolution * y, resolution * z); }
@@ -289,16 +312,20 @@ public class procedural_navmesh : MonoBehaviour
         return null;
     }
 
-    public List<Vector3> path(Vector3 start, Vector3 goal)
+    public static List<Vector3> path(Vector3 start_vec, Vector3 goal_vec)
     {
-        point start_p = search_for_point(start);
-        point goal_p = search_for_point(goal);
-        if (start_p == null || goal_p == null) return null;
-        return path(start_p, goal_p);
-    }
+        var start_mesh = utils.find_to_min(meshes,
+            (m) => (m.bounds.center - start_vec).magnitude);
 
-    List<Vector3> path(point start, point goal)
-    {
+        var goal_mesh = utils.find_to_min(meshes,
+            (m) => (m.bounds.center - goal_vec).magnitude);
+
+        if (start_mesh != goal_mesh)
+            return null;
+
+        var start = start_mesh.search_for_point(start_vec);
+        var goal = goal_mesh.search_for_point(goal_vec);
+
         var open = new HashSet<point> { start };
         var came_from = new Dictionary<point, point>();
         var gscore = new Dictionary<point, float>();
@@ -324,7 +351,7 @@ public class procedural_navmesh : MonoBehaviour
 
             open.Remove(current);
 
-            current.recalculate_neighbours();
+            current.expand();
             foreach (var n in current.neighbours())
             {
                 float tgs = gscore[current] + 1f;
@@ -361,7 +388,7 @@ public class procedural_navmesh : MonoBehaviour
 
             // Recalculate neighbours, adding new neighbours 
             // to the open set.
-            current.recalculate_neighbours();
+            current.expand();
         }
     }
 
@@ -375,7 +402,7 @@ public class procedural_navmesh : MonoBehaviour
         // Seed the navmesh around the centre point, by raycasting from the top to
         // the bottom. Note that this will generate the navmesh on the tallest piece
         // of geometry at the centre. To generate around another piece of geometry,
-        // use try_seed_point.
+        // use try_seed_point, or simply try to path somehere.
         RaycastHit hit;
         if (Physics.Raycast(transform.position + Vector3.up * size * resolution / 2f,
                         -Vector3.up, out hit, size * resolution))
@@ -401,8 +428,16 @@ public class procedural_navmesh : MonoBehaviour
     // All navigation meshes currently Start()'ed
     public static List<procedural_navmesh> meshes = new List<procedural_navmesh>();
 
+    int navmesh_id = 0;
+    static int navmesh_last_id = 0;
     void Start()
     {
+        // Navmesh id rolls over so point.gethashcode 
+        // doesnt overflow
+        navmesh_id = navmesh_last_id;
+        navmesh_last_id = (navmesh_last_id + 1) %
+            (int.MaxValue / (size * size * size) - 1);
+
         regenerate();
         meshes.Add(this); // Keep track of navmeshes
     }
@@ -411,6 +446,11 @@ public class procedural_navmesh : MonoBehaviour
     {
         meshes.Remove(this); // Keep track of navmeshes
     }
+
+    // Allow speedy hashing, also needed for the mesh_point_pair 
+    // type to have a decent hash function
+    public override bool Equals(object obj) { return base.Equals(obj); }
+    public override int GetHashCode() { return navmesh_id; }
 
     // The bounding box of this navmesh
     public Bounds bounds { get { return new Bounds(transform.position, Vector3.one * size * resolution); } }

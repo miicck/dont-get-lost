@@ -6,7 +6,6 @@ public class navmesh_test_point : MonoBehaviour
 {
     public bool gen_path = false;
     public navmesh_test_point next;
-    procedural_navmesh mesh;
     List<Vector3> path;
 
     void Update()
@@ -16,14 +15,7 @@ public class navmesh_test_point : MonoBehaviour
 
         if (next == null) return;
 
-        if (mesh == null)
-        {
-            mesh = utils.find_to_min(procedural_navmesh.meshes,
-                (m) => (m.bounds.center - transform.position).magnitude);
-            if (mesh == null) return;
-        }
-
-        path = mesh.path(transform.position, next.transform.position);
+        path = procedural_navmesh.path(transform.position, next.transform.position);
     }
 
     void OnDrawGizmos()
