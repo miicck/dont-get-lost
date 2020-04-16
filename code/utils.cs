@@ -194,6 +194,9 @@ public static class utils
 
     public static string int_to_quantity_string(int i)
     {
+        // Return a runescape-style quantity
+        // 2,300 -> 2.3K
+        // 2,300,000 -> 2.3M
         if (i < 1000) return "" + i;
         if (i < 1000000)
         {

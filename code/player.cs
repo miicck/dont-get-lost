@@ -2,30 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// An object that the player can interact with
-public class interactable : MonoBehaviour
-{
-    [System.Flags]
-    public enum FLAGS
-    {
-        NONE = 0,
-        DISALLOWS_MOVEMENT = 2,
-        DISALLOWS_ROTATION = 4,
-    };
-
-    public enum INTERACT_TYPE
-    {
-        LEFT_CLICK,
-        RIGHT_CLICK
-    };
-
-    public virtual string cursor() { return cursors.DEFAULT_INTERACTION; }
-    public virtual FLAGS player_interact() { return FLAGS.NONE; }
-    public virtual void on_start_interaction(RaycastHit point_hit, item interact_with, INTERACT_TYPE type) { }
-    public virtual void on_end_interaction() { }
-    protected void stop_interaction() { player.current.interacting_with = null; }
-}
-
 public class player : MonoBehaviour
 {
     //###########//
@@ -43,6 +19,7 @@ public class player : MonoBehaviour
     public const float ACCELERATION = SPEED / ACCELERATION_TIME;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
+    public const float THROW_VELOCITY = 6f;
 
     public const float INTERACTION_RANGE = 3f;
 
@@ -103,28 +80,40 @@ public class player : MonoBehaviour
     {
         // Toggle inventory on E
         if (Input.GetKeyDown(KeyCode.E))
+        {
             inventory_open = !inventory_open;
-        Cursor.visible = inventory_open;
-        Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
-        if (inventory_open) return;
+            crosshairs.enabled = !inventory_open;
+            Cursor.visible = inventory_open;
+            Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
+        }
 
         // Throw equiped on T
         if (Input.GetKeyDown(KeyCode.T))
-        {
-            var eq = equipped_item;
-            if (eq != null)
+            if (equipped_item != null)
             {
                 inventory.remove(equipped_item, 1);
-                item.spawn(eq, camera.transform.position + camera.transform.forward);
-                equipped_item = equipped_item; // Attempt to re-equip
+                var spawned = item.spawn(equipped_item, _equipped.transform.position, _equipped.transform.rotation);
+                spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
+                equipped_item = equipped_item; // Attempt to re-equip if there is another in my inventory
             }
+
+        // Left click
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (equipped_item != null) _equipped.use_left_click();
+            else left_click_with_hand();
         }
 
-        run_quickbar_shortcuts();
+        // Right click
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (equipped_item != null) _equipped.use_right_click();
+            else right_click_with_hand();
+        }
 
-        var inter_flags = interact();
+        if (!map_open) run_quickbar_shortcuts();
 
-        // Toggle the map view
+        // Toggle the map view on M
         if (Input.GetKeyDown(KeyCode.M))
             map_open = !map_open;
 
@@ -137,49 +126,9 @@ public class player : MonoBehaviour
             camera.orthographicSize = game.render_range;
         }
 
-        if (inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_MOVEMENT))
-            velocity = Vector3.zero;
-        else move();
-
-        if (!inter_flags.HasFlag(interactable.FLAGS.DISALLOWS_ROTATION))
-            mouse_look();
-
-        // Float in water
-        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
-        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
-        if (amt_submerged > 0)
-        {
-            // Bouyancy (sink if shift is held)
-            if (!Input.GetKey(KeyCode.LeftShift))
-                velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
-
-            // Drag
-            velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
-        }
-
-        underwater_screen.SetActive(camera.transform.position.y < world.SEA_LEVEL && !map_open);
-
-        // Use my tool
-        if (interacting_with == null)
-        {
-            if (Input.GetMouseButtonDown(0))
-                swing_tool();
-
-            if (item_swing_progress < 1f)
-            {
-                item_swing_progress += Time.deltaTime / ITEM_SWING_TIME;
-
-                float fw_amt = -Mathf.Sin(item_swing_progress * Mathf.PI * 2f);
-                hand.transform.localPosition = init_hand_local_position +
-                    fw_amt * Vector3.forward * ITEM_SWING_DISTANCE -
-                    fw_amt * Vector3.up * ITEM_SWING_DISTANCE -
-                    fw_amt * Vector3.right * init_hand_local_position.x;
-
-                Vector3 up = camera.transform.up * (1 - fw_amt) + camera.transform.forward * fw_amt;
-                Vector3 fw = -Vector3.Cross(up, camera.transform.right);
-                hand.transform.rotation = Quaternion.LookRotation(fw, up);
-            }
-        }
+        move();
+        if (!map_open && !inventory_open) mouse_look();
+        float_in_water();
     }
 
     private void OnDrawGizmos()
@@ -214,18 +163,45 @@ public class player : MonoBehaviour
     // ITEM USE //
     //##########//
 
-    const float ITEM_SWING_TIME = 0.5f;
-    const float ITEM_SWING_DISTANCE = 0.25f;
-    float item_swing_progress = 1f;
-    Vector3 init_hand_local_position;
+    item _carrying;
+    item carrying
+    {
+        get { return _carrying; }
+        set
+        {
+            if (_carrying != null)
+                _carrying.stop_carry();
+            _carrying = value;
+        }
+    }
+
+    // Called on a left click when no item is equipped
+    void left_click_with_hand()
+    {
+        if (carrying != null) { carrying = null; return; }
+
+        RaycastHit hit;
+        item clicked = utils.raycast_for_closest<item>(camera_ray(), out hit, INTERACTION_RANGE);
+        if (clicked != null)
+            clicked.pick_up();
+    }
+
+    // Called on a right click when no item is equipped
+    void right_click_with_hand()
+    {
+        if (carrying != null) { carrying = null; return; }
+
+        RaycastHit hit;
+        item clicked = utils.raycast_for_closest<item>(camera_ray(), out hit, INTERACTION_RANGE);
+        if (clicked != null)
+        {
+            clicked.carry(hit);
+            carrying = clicked;
+        }
+    }
 
     // The hand which carries an item
     Transform hand { get; set; }
-
-    void swing_tool()
-    {
-        item_swing_progress = 0f;
-    }
 
     UnityEngine.UI.Image crosshairs;
     public string cursor
@@ -252,7 +228,9 @@ public class player : MonoBehaviour
             if (_equipped != null)
                 Destroy(_equipped.gameObject);
 
-            if (value != null)
+            if (value == null)
+                _equipped = null;
+            else
             {
                 // Ensure we actually have one of these in my inventory
                 bool have = false;
@@ -273,8 +251,11 @@ public class player : MonoBehaviour
                 else _equipped = null; // Don't have, equip null
             }
 
-            if (_equipped != null)
+            if (_equipped == null)
+                cursor = cursors.DEFAULT;
+            else
             {
+                cursor = _equipped.sprite.name;
                 _equipped.transform.SetParent(hand);
                 _equipped.transform.localPosition = Vector3.zero;
                 _equipped.transform.localRotation = Quaternion.identity;
@@ -306,62 +287,6 @@ public class player : MonoBehaviour
         else if (sw < 0) --last_quickbar_slot_accessed;
         last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
         if (sw != 0) equipped_item = quickbar_slot(last_quickbar_slot_accessed)?.item;
-    }
-
-    //##################//
-    // ITEM INTERACTION //
-    //##################//
-
-    // The object we are currently interacting with
-    RaycastHit last_interaction_hit;
-    interactable _interacting_with;
-    public interactable interacting_with
-    {
-        get { return _interacting_with; }
-        set
-        {
-            if (_interacting_with != null)
-                _interacting_with.on_end_interaction();
-
-            _interacting_with = value;
-
-            if (value != null)
-            {
-                if (Input.GetMouseButtonDown(0))
-                    value.on_start_interaction(last_interaction_hit, _equipped,
-                        interactable.INTERACT_TYPE.LEFT_CLICK);
-                else if (Input.GetMouseButtonDown(1))
-                    value.on_start_interaction(last_interaction_hit, _equipped,
-                        interactable.INTERACT_TYPE.RIGHT_CLICK);
-                else
-                    Debug.LogError("Unkown interaction type!");
-            }
-        }
-    }
-
-    interactable.FLAGS interact()
-    {
-        // Interact with the current object
-        if (interacting_with != null)
-        {
-            return interacting_with.player_interact();
-        }
-
-        // See if an interactable object is under the cursor
-        var inter = utils.raycast_for_closest<interactable>(
-            camera_ray(), out last_interaction_hit, INTERACTION_RANGE);
-
-        if (inter == null)
-        {
-            return interactable.FLAGS.NONE;
-        }
-
-        // Set the interactable and cursor,
-        // interact with the object
-        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
-            interacting_with = inter;
-
-        return interactable.FLAGS.NONE;
     }
 
     //###########//
@@ -404,6 +329,22 @@ public class player : MonoBehaviour
 
         controller.Move(move);
         stay_above_terrain();
+    }
+
+    void float_in_water()
+    {
+        underwater_screen.SetActive(camera.transform.position.y < world.SEA_LEVEL && !map_open);
+
+        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
+        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
+        if (amt_submerged <= 0) return;
+
+        // Bouyancy (sink if shift is held)
+        if (!Input.GetKey(KeyCode.LeftShift))
+            velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
+
+        // Drag
+        velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
     }
 
     void stay_above_terrain()
@@ -515,25 +456,12 @@ public class player : MonoBehaviour
 
     void on_create()
     {
-        // Create the player camera 
+        // Setup the player camera 
         camera = FindObjectOfType<Camera>();
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.transform.SetParent(transform);
         camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
         camera.nearClipPlane = 0.1f;
-        //camera.gameObject.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
-
-
-        // Create a short range light with no shadows to light up detail
-        // on nearby objects to the player
-        /*
-        var point_light = new GameObject("point_light").AddComponent<Light>();
-        point_light.type = LightType.Point;
-        point_light.range = item.WELD_RANGE;
-        point_light.transform.SetParent(camera.transform);
-        point_light.transform.localPosition = Vector3.zero;
-        point_light.intensity = 0.5f;
-        */
 
         // Enforce the render limit with a sky-color object
         obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
@@ -572,7 +500,6 @@ public class player : MonoBehaviour
              Screen.height * 0.1f
              ));
         hand.localPosition = r.direction * 0.75f;
-        init_hand_local_position = hand.localPosition;
 
         // Initialize the inventory to closed
         inventory = Resources.Load<inventory>("ui/player_inventory").inst();
@@ -581,6 +508,8 @@ public class player : MonoBehaviour
         inventory_open = false;
 
         inventory.add("axe", 1);
+        inventory.add("log", 1024);
+        inventory.add("planks", 1024);
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
@@ -593,7 +522,7 @@ public class player : MonoBehaviour
         crt.anchoredPosition = Vector2.zero;
         cursor = "default_cursor";
 
-                // Initialize the render range
+        // Initialize the render range
         update_render_range();
 
         // Start with the map closed

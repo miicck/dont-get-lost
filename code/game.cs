@@ -101,8 +101,7 @@ public class game : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        // End any player interactions
-        player.current.interacting_with = null;
+        // Save the player
         player.current.save();
 
         // Save the world seed
