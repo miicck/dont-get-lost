@@ -48,9 +48,6 @@ public class game : MonoBehaviour
 
     void Start()
     {
-        // Create the ui
-        canvas.create();
-
         // Create the player
         player = player.create();
 
@@ -72,16 +69,6 @@ public class game : MonoBehaviour
         sun.transform.position = Vector3.zero;
         sun.transform.LookAt(new Vector3(1, -2, 1));
         sun.type = LightType.Directional;
-
-        // Create a second directional light source (with no shadows)
-        // to highlight details of objects that are in the shadow of 
-        // the sun.
-        /*
-        var aux_sun = sun.inst();
-        aux_sun.transform.SetParent(sun.transform);
-        aux_sun.intensity = 0.1f;
-        */
-
         sun.intensity = 1f;
         sun.shadows = LightShadows.Soft;
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
@@ -110,9 +97,6 @@ public class game : MonoBehaviour
                 Cursor.visible = true;
             }
         }
-
-        // Update the ui
-        canvas.update();
     }
 
     void OnApplicationQuit()

@@ -112,7 +112,7 @@ public class item : interactable
         }
 
         // Rotate the pivot with the keyboard keys
-        void key_rotate()
+        public void key_rotate()
         {
             Vector3 rd = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.right));
             Vector3 fd = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.forward));
@@ -127,29 +127,6 @@ public class item : interactable
             else return;
 
             snap_pivot_rotation();
-        }
-
-        public void rotate(float x, float y)
-        {
-            key_rotate();
-
-            // The mouse movement in the plane of the camera view
-            Vector3 mouse_dir = player.current.camera.transform.right * x +
-                                player.current.camera.transform.up * y;
-
-            canvas.set_direction_indicator(new Vector2(x, y));
-
-            if (mouse_dir.magnitude < 5) return;
-
-            // Find the axis most alligned with the mouse movement 
-            // (ignoring component in forward direction)
-            Vector3 up_axis = utils.find_to_min(snap_axes(), (a) =>
-            {
-                a -= Vector3.Project(a, player.current.camera.transform.forward);
-                return Vector3.Dot(mouse_dir.normalized, a.normalized);
-            });
-
-            set_pivot_rotation(Quaternion.LookRotation(pivot.transform.forward, up_axis));
         }
 
         public void draw_gizmos()
@@ -295,8 +272,7 @@ public class item : interactable
                 weld = null;
             else
             {
-                weld.rotate(5 * Input.GetAxis("Mouse X"),
-                            5 * Input.GetAxis("Mouse Y"));
+                weld.key_rotate();
                 return FLAGS.DISALLOWS_ROTATION | FLAGS.DISALLOWS_MOVEMENT;
             }
         }
@@ -371,7 +347,6 @@ public class item : interactable
         if (weld == null) rigidbody.isKinematic = false;
         rigidbody.detectCollisions = true;
         if (carry_pivot != null) Destroy(carry_pivot.gameObject);
-        canvas.set_direction_indicator(Vector2.zero);
     }
 
     public override string cursor()

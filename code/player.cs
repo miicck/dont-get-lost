@@ -227,6 +227,21 @@ public class player : MonoBehaviour
         item_swing_progress = 0f;
     }
 
+    UnityEngine.UI.Image crosshairs;
+    public string cursor
+    {
+        get
+        {
+            if (crosshairs.sprite == null) return null;
+            return crosshairs.sprite.name;
+        }
+        set
+        {
+            if (cursor == value) return;
+            crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
+        }
+    }
+
     // The current equipped item
     item _equipped;
     public string equipped_item
@@ -275,6 +290,7 @@ public class player : MonoBehaviour
 
     void run_quickbar_shortcuts()
     {
+        // Select quickbar item using keyboard shortcut
         if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(quickbar_slot(0)?.item);
         else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(quickbar_slot(1)?.item);
         else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(quickbar_slot(2)?.item);
@@ -284,6 +300,7 @@ public class player : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(quickbar_slot(6)?.item);
         else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(quickbar_slot(7)?.item);
 
+        // Scroll through quickbar items
         float sw = Input.GetAxis("Mouse ScrollWheel");
         if (sw > 0) ++last_quickbar_slot_accessed;
         else if (sw < 0) --last_quickbar_slot_accessed;
@@ -327,7 +344,6 @@ public class player : MonoBehaviour
         // Interact with the current object
         if (interacting_with != null)
         {
-            canvas.cursor = interacting_with.cursor();
             return interacting_with.player_interact();
         }
 
@@ -337,10 +353,8 @@ public class player : MonoBehaviour
 
         if (inter == null)
         {
-            canvas.cursor = cursors.DEFAULT;
             return interactable.FLAGS.NONE;
         }
-        else canvas.cursor = cursors.DEFAULT_INTERACTION;
 
         // Set the interactable and cursor,
         // interact with the object
@@ -495,6 +509,100 @@ public class player : MonoBehaviour
                        camera.transform.forward);
     }
 
+    //#################//
+    // PLAYER CREATION //
+    //#################//
+
+    void on_create()
+    {
+        // Create the player camera 
+        camera = FindObjectOfType<Camera>();
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.transform.SetParent(transform);
+        camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
+        camera.nearClipPlane = 0.1f;
+        //camera.gameObject.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
+
+
+        // Create a short range light with no shadows to light up detail
+        // on nearby objects to the player
+        /*
+        var point_light = new GameObject("point_light").AddComponent<Light>();
+        point_light.type = LightType.Point;
+        point_light.range = item.WELD_RANGE;
+        point_light.transform.SetParent(camera.transform);
+        point_light.transform.localPosition = Vector3.zero;
+        point_light.intensity = 0.5f;
+        */
+
+        // Enforce the render limit with a sky-color object
+        obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
+        obscurer.transform.SetParent(transform);
+        obscurer.transform.localPosition = Vector3.zero;
+        var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
+
+        map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
+        map_obscurer.transform.SetParent(camera.transform);
+        map_obscurer.transform.localPosition = Vector3.forward;
+        map_obscurer.transform.up = -camera.transform.forward;
+
+        underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
+        underwater_screen.transform.SetParent(camera.transform);
+        underwater_screen.transform.localPosition = Vector3.forward * camera.nearClipPlane * 1.1f;
+        underwater_screen.transform.forward = camera.transform.forward;
+
+        // Make the sky the same color as the obscuring object
+        RenderSettings.skybox = null;
+        camera.backgroundColor = sky_color;
+
+        // Create the player controller
+        controller = gameObject.AddComponent<CharacterController>();
+        controller.height = HEIGHT;
+        controller.radius = WIDTH / 2;
+        controller.center = new Vector3(0, controller.height / 2f, 0);
+        controller.skinWidth = controller.radius / 10f;
+
+        // Set the hand location so it is one meter
+        // away from the camera, 80% of the way across 
+        // the screen and 10% of the way up the screen.
+        hand = new GameObject("hand").transform;
+        hand.SetParent(camera.transform);
+        var r = camera.ScreenPointToRay(new Vector3(
+             Screen.width * 0.8f,
+             Screen.height * 0.1f
+             ));
+        hand.localPosition = r.direction * 0.75f;
+        init_hand_local_position = hand.localPosition;
+
+        // Initialize the inventory to closed
+        inventory = Resources.Load<inventory>("ui/player_inventory").inst();
+        inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        inventory_open = false;
+
+        inventory.add("axe", 1);
+
+        // Create the crosshairs
+        crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
+        crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        crosshairs.color = new Color(1, 1, 1, 0.5f);
+        var crt = crosshairs.GetComponent<RectTransform>();
+        crt.sizeDelta = new Vector2(64, 64);
+        crt.anchorMin = new Vector2(0.5f, 0.5f);
+        crt.anchorMax = new Vector2(0.5f, 0.5f);
+        crt.anchoredPosition = Vector2.zero;
+        cursor = "default_cursor";
+
+                // Initialize the render range
+        update_render_range();
+
+        // Start with the map closed
+        map_open = false;
+
+        // Load the player state
+        load();
+    }
+
     //################//
     // STATIC METHODS //
     //################//
@@ -506,84 +614,63 @@ public class player : MonoBehaviour
     public static player create()
     {
         var p = new GameObject("player").AddComponent<player>();
-
-        // Create the player camera 
-        p.camera = FindObjectOfType<Camera>();
-        p.camera.clearFlags = CameraClearFlags.SolidColor;
-        p.camera.transform.SetParent(p.transform);
-        p.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
-        p.camera.nearClipPlane = 0.1f;
-        //p.camera.gameObject.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
-
-
-        // Create a short range light with no shadows to light up detail
-        // on nearby objects to the player
-        /*
-        var point_light = new GameObject("point_light").AddComponent<Light>();
-        point_light.type = LightType.Point;
-        point_light.range = item.WELD_RANGE;
-        point_light.transform.SetParent(p.camera.transform);
-        point_light.transform.localPosition = Vector3.zero;
-        point_light.intensity = 0.5f;
-        */
-
-        // Enforce the render limit with a sky-color object
-        p.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
-        p.obscurer.transform.SetParent(p.transform);
-        p.obscurer.transform.localPosition = Vector3.zero;
-        var sky_color = p.obscurer.GetComponentInChildren<Renderer>().material.color;
-
-        p.map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-        p.map_obscurer.transform.SetParent(p.camera.transform);
-        p.map_obscurer.transform.localPosition = Vector3.forward;
-        p.map_obscurer.transform.up = -p.camera.transform.forward;
-
-        p.underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
-        p.underwater_screen.transform.SetParent(p.camera.transform);
-        p.underwater_screen.transform.localPosition = Vector3.forward * p.camera.nearClipPlane * 1.1f;
-        p.underwater_screen.transform.forward = p.camera.transform.forward;
-
-        // Make the sky the same color as the obscuring object
-        RenderSettings.skybox = null;
-        p.camera.backgroundColor = sky_color;
-
-        // Initialize the render range
-        p.update_render_range();
-
-        // Start with the map closed
-        p.map_open = false;
-
-        // Load the player state
-        p.load();
-
-        // Create the player controller
-        p.controller = p.gameObject.AddComponent<CharacterController>();
-        p.controller.height = HEIGHT;
-        p.controller.radius = WIDTH / 2;
-        p.controller.center = new Vector3(0, p.controller.height / 2f, 0);
-        p.controller.skinWidth = p.controller.radius / 10f;
-
-        // Set the hand location so it is one meter
-        // away from the camera, 80% of the way across 
-        // the screen and 10% of the way up the screen.
-        p.hand = new GameObject("hand").transform;
-        p.hand.SetParent(p.camera.transform);
-        var r = p.camera.ScreenPointToRay(new Vector3(
-             Screen.width * 0.8f,
-             Screen.height * 0.1f
-             ));
-        p.hand.localPosition = r.direction * 0.75f;
-        p.init_hand_local_position = p.hand.localPosition;
-
-        // Initialize the inventory to closed
-        p.inventory = Resources.Load<inventory>("ui/player_inventory").inst();
-        p.inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
-        p.inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-        p.inventory_open = false;
-
-        p.inventory.add("axe", 1);
-
+        p.on_create();
         current = p;
         return p;
+    }
+}
+
+public static class cursors
+{
+    public const string DEFAULT = "default_cursor";
+    public const string DEFAULT_INTERACTION = "default_interact_cursor";
+    public const string GRAB_OPEN = "default_interact_cursor";
+    public const string GRAB_CLOSED = "grab_closed_cursor";
+}
+
+public class popup_message : MonoBehaviour
+{
+    // The scroll speed of a popup message
+    // (in units of the screen height)
+    public const float SCREEN_SPEED = 0.05f;
+
+    new RectTransform transform;
+    UnityEngine.UI.Text text;
+    float start_time;
+
+    public static popup_message create(string message)
+    {
+        var m = new GameObject("message").AddComponent<popup_message>();
+        m.text = m.gameObject.AddComponent<UnityEngine.UI.Text>();
+
+        m.transform = m.GetComponent<RectTransform>();
+        m.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        m.transform.anchorMin = new Vector2(0.5f, 0.25f);
+        m.transform.anchorMax = new Vector2(0.5f, 0.25f);
+        m.transform.anchoredPosition = Vector2.zero;
+
+        m.text.font = Resources.Load<Font>("fonts/monospace");
+        m.text.text = message;
+        m.text.alignment = TextAnchor.MiddleCenter;
+        m.text.verticalOverflow = VerticalWrapMode.Overflow;
+        m.text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        m.text.fontSize = 32;
+        m.start_time = Time.realtimeSinceStartup;
+
+        return m;
+    }
+
+    private void Update()
+    {
+        transform.position +=
+            Vector3.up * Screen.height *
+            SCREEN_SPEED * Time.deltaTime;
+
+        float time = Time.realtimeSinceStartup - start_time;
+
+        text.color = new Color(1, 1, 1, 1 - time);
+
+        if (time > 1)
+            Destroy(this.gameObject);
     }
 }

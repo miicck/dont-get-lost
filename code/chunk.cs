@@ -476,7 +476,13 @@ public class chunk : MonoBehaviour
     public void save()
     {
         var items = GetComponentsInChildren<item>(true);
-        if (items.Length == 0) return; // No point saving chunks with no items
+        if (items.Length == 0)
+        {
+            // No items to save, make sure there is no save file
+            if (System.IO.File.Exists(filename()))
+                System.IO.File.Delete(filename());
+            return;
+        }
 
         utils.log("Saving " + items.Length + " items in chunk " + filename(), "io");
 
