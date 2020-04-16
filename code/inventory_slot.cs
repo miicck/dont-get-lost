@@ -35,14 +35,15 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
 
 public class inventory_slot : MonoBehaviour
 {
-    item _item;
-    public item item
+    item _item = null;
+    public string item
     {
-        get { return _item; }
+        get => _item == null ? null : _item.name;
         set
         {
-            _item = value;
-            if (value == null)
+            _item = value == null ? null : global::item.load_from_name(value);
+
+            if (_item == null)
             {
                 item_image.sprite = Resources.Load<Sprite>("sprites/inventory_slot");
                 count_text.text = "";
@@ -56,10 +57,10 @@ public class inventory_slot : MonoBehaviour
         }
     }
 
-    int _count = 1;
+    int _count = 0;
     public int count
     {
-        get { return _count; }
+        get => _count;
         set
         {
             _count = value;
@@ -81,7 +82,8 @@ public class inventory_slot : MonoBehaviour
         var isb = button.gameObject.AddComponent<inventory_slot_button>();
         isb.slot = this;
 
-        item = item.load_from_id(item.id_from_name("log"));
-        count = 100;
+        // Ensure images etc are loaded correctly
+        count = count;
+        item = item;
     }
 }

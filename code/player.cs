@@ -13,9 +13,15 @@ public class interactable : MonoBehaviour
         DISALLOWS_ROTATION = 4,
     };
 
+    public enum INTERACT_TYPE
+    {
+        LEFT_CLICK,
+        RIGHT_CLICK
+    };
+
     public virtual string cursor() { return cursors.DEFAULT_INTERACTION; }
     public virtual FLAGS player_interact() { return FLAGS.NONE; }
-    public virtual void on_start_interaction(RaycastHit point_hit) { }
+    public virtual void on_start_interaction(RaycastHit point_hit, item interact_with, INTERACT_TYPE type) { }
     public virtual void on_end_interaction() { }
     protected void stop_interaction() { player.current.interacting_with = null; }
 }
@@ -102,6 +108,20 @@ public class player : MonoBehaviour
         Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
         if (inventory_open) return;
 
+        // Throw equiped on T
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            var eq = equipped_item;
+            if (eq != null)
+            {
+                inventory.remove(equipped_item, 1);
+                item.spawn(eq, camera.transform.position + camera.transform.forward);
+                equipped_item = equipped_item; // Attempt to re-equip
+            }
+        }
+
+        run_quickbar_shortcuts();
+
         var inter_flags = interact();
 
         // Toggle the map view
@@ -145,14 +165,14 @@ public class player : MonoBehaviour
             if (Input.GetMouseButtonDown(0))
                 swing_tool();
 
-            if (tool_swing_progress < 1f)
+            if (item_swing_progress < 1f)
             {
-                tool_swing_progress += Time.deltaTime / TOOL_SWING_TIME;
+                item_swing_progress += Time.deltaTime / ITEM_SWING_TIME;
 
-                float fw_amt = -Mathf.Sin(tool_swing_progress * Mathf.PI * 2f);
+                float fw_amt = -Mathf.Sin(item_swing_progress * Mathf.PI * 2f);
                 hand.transform.localPosition = init_hand_local_position +
-                    fw_amt * Vector3.forward * TOOL_SWING_DISTANGE -
-                    fw_amt * Vector3.up * TOOL_SWING_DISTANGE -
+                    fw_amt * Vector3.forward * ITEM_SWING_DISTANCE -
+                    fw_amt * Vector3.up * ITEM_SWING_DISTANCE -
                     fw_amt * Vector3.right * init_hand_local_position.x;
 
                 Vector3 up = camera.transform.up * (1 - fw_amt) + camera.transform.forward * fw_amt;
@@ -172,21 +192,9 @@ public class player : MonoBehaviour
     // INVENTORY //
     //###########//
 
-    inventory _inventory;
-    inventory inventory
-    {
-        get
-        {
-            if (_inventory == null)
-            {
-                _inventory = Resources.Load<inventory>("ui/player_inventory").inst();
-                _inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
-                _inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-                inventory_open = false;
-            }
-            return _inventory;
-        }
-    }
+    const int QUICKBAR_SLOTS_COUNT = 8;
+
+    public inventory inventory { get; private set; }
 
     bool inventory_open
     {
@@ -194,65 +202,93 @@ public class player : MonoBehaviour
         set { inventory.gameObject.SetActive(value); }
     }
 
-
+    int last_quickbar_slot_accessed = 0;
+    public inventory_slot quickbar_slot(int n)
+    {
+        if (n < 0 || n >= QUICKBAR_SLOTS_COUNT) return null;
+        last_quickbar_slot_accessed = n;
+        return inventory.slots[n];
+    }
 
     //##########//
-    // TOOL USE //
+    // ITEM USE //
     //##########//
 
-    const float TOOL_SWING_TIME = 0.5f;
-    const float TOOL_SWING_DISTANGE = 0.25f;
-    float tool_swing_progress = 1f;
+    const float ITEM_SWING_TIME = 0.5f;
+    const float ITEM_SWING_DISTANCE = 0.25f;
+    float item_swing_progress = 1f;
     Vector3 init_hand_local_position;
 
-    // The hand which carries a tool
-    Transform _hand;
-    Transform hand
-    {
-        get
-        {
-            if (_hand == null)
-            {
-                // Set the hand location so it is one meter
-                // away from the camera, 80% of the way across 
-                // the screen and 10% of the way up the screen.
-                _hand = new GameObject("hand").transform;
-                _hand.SetParent(camera.transform);
-                var r = camera.ScreenPointToRay(new Vector3(
-                     Screen.width * 0.8f,
-                     Screen.height * 0.1f
-                     ));
-                _hand.localPosition = r.direction * 0.75f;
-                init_hand_local_position = _hand.localPosition;
-            }
-            return _hand;
-        }
-    }
+    // The hand which carries an item
+    Transform hand { get; set; }
 
     void swing_tool()
     {
-        tool_swing_progress = 0f;
+        item_swing_progress = 0f;
     }
 
-    // The current equipped tool
-    tool _equipped;
-    public tool equipped
+    // The current equipped item
+    item _equipped;
+    public string equipped_item
     {
-        get { return _equipped; }
+        get { return _equipped == null ? null : _equipped.name; }
         private set
         {
             if (_equipped != null)
-            {
-                _equipped.transform.SetParent(null);
-            }
+                Destroy(_equipped.gameObject);
 
-            _equipped = value;
             if (value != null)
             {
-                value.transform.SetParent(hand);
-                value.transform.localPosition = Vector3.zero;
+                // Ensure we actually have one of these in my inventory
+                bool have = false;
+                foreach (var s in inventory.slots)
+                    if (s.item == value)
+                    {
+                        have = true;
+                        break;
+                    }
+
+                if (have)
+                {
+                    // Create an equipped-type copy of the item
+                    _equipped = item.load_from_name(value).inst();
+                    foreach (var c in _equipped.GetComponentsInChildren<Collider>())
+                        Destroy(c);
+                }
+                else _equipped = null; // Don't have, equip null
+            }
+
+            if (_equipped != null)
+            {
+                _equipped.transform.SetParent(hand);
+                _equipped.transform.localPosition = Vector3.zero;
+                _equipped.transform.localRotation = Quaternion.identity;
             }
         }
+    }
+
+    void toggle_equip(string item)
+    {
+        if (equipped_item == item) equipped_item = null;
+        else equipped_item = item;
+    }
+
+    void run_quickbar_shortcuts()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(quickbar_slot(0)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(quickbar_slot(1)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(quickbar_slot(2)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(quickbar_slot(3)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(quickbar_slot(4)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(quickbar_slot(5)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(quickbar_slot(6)?.item);
+        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(quickbar_slot(7)?.item);
+
+        float sw = Input.GetAxis("Mouse ScrollWheel");
+        if (sw > 0) ++last_quickbar_slot_accessed;
+        else if (sw < 0) --last_quickbar_slot_accessed;
+        last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
+        if (sw != 0) equipped_item = quickbar_slot(last_quickbar_slot_accessed)?.item;
     }
 
     //##################//
@@ -273,7 +309,16 @@ public class player : MonoBehaviour
             _interacting_with = value;
 
             if (value != null)
-                value.on_start_interaction(last_interaction_hit);
+            {
+                if (Input.GetMouseButtonDown(0))
+                    value.on_start_interaction(last_interaction_hit, _equipped,
+                        interactable.INTERACT_TYPE.LEFT_CLICK);
+                else if (Input.GetMouseButtonDown(1))
+                    value.on_start_interaction(last_interaction_hit, _equipped,
+                        interactable.INTERACT_TYPE.RIGHT_CLICK);
+                else
+                    Debug.LogError("Unkown interaction type!");
+            }
         }
     }
 
@@ -299,7 +344,7 @@ public class player : MonoBehaviour
 
         // Set the interactable and cursor,
         // interact with the object
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
             interacting_with = inter;
 
         return interactable.FLAGS.NONE;
@@ -518,7 +563,25 @@ public class player : MonoBehaviour
         p.controller.center = new Vector3(0, p.controller.height / 2f, 0);
         p.controller.skinWidth = p.controller.radius / 10f;
 
-        p.equipped = tool.loop_up("axe").inst();
+        // Set the hand location so it is one meter
+        // away from the camera, 80% of the way across 
+        // the screen and 10% of the way up the screen.
+        p.hand = new GameObject("hand").transform;
+        p.hand.SetParent(p.camera.transform);
+        var r = p.camera.ScreenPointToRay(new Vector3(
+             Screen.width * 0.8f,
+             Screen.height * 0.1f
+             ));
+        p.hand.localPosition = r.direction * 0.75f;
+        p.init_hand_local_position = p.hand.localPosition;
+
+        // Initialize the inventory to closed
+        p.inventory = Resources.Load<inventory>("ui/player_inventory").inst();
+        p.inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        p.inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        p.inventory_open = false;
+
+        p.inventory.add("axe", 1);
 
         current = p;
         return p;

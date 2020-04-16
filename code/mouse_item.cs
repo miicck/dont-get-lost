@@ -6,12 +6,12 @@ using UnityEngine.UI;
 public class mouse_item : MonoBehaviour
 {
     item _item;
-    public item item
+    public string item
     {
-        get { return _item; }
+        get { return _item.name; }
         set
         {
-            _item = value;
+            _item = value == null ? null : global::item.load_from_name(value);
             if (_item == null) Destroy(gameObject);
             else item_image.sprite = _item.sprite;
         }
@@ -31,7 +31,7 @@ public class mouse_item : MonoBehaviour
 
     public Text item_count_text;
     public Image item_image;
-    inventory_slot origin; 
+    inventory_slot origin;
 
     private void Update()
     {
@@ -48,12 +48,12 @@ public class mouse_item : MonoBehaviour
         transform.position = Input.mousePosition;
     }
 
-    public static mouse_item create(item i, int count, inventory_slot origin)
+    public static mouse_item create(string item, int count, inventory_slot origin)
     {
         var ret = Resources.Load<mouse_item>("ui/mouse_item").inst();
         ret.transform.SetParent(FindObjectOfType<Canvas>().transform);
         ret.origin = origin;
-        ret.item = i;
+        ret.item = item;
         ret.count = count;
         ret.transform.position = Input.mousePosition;
         return ret;

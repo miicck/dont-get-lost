@@ -12,12 +12,12 @@ public class harvestable : interactable
         return custom_cursor;
     }
 
-    public override void on_start_interaction(RaycastHit point_hit)
+    public override void on_start_interaction(
+        RaycastHit point_hit, item interact_with, INTERACT_TYPE type)
     {
-        // Immediately spawn the object, then stop the interaction
-        Vector3 spawn_point = player.current.camera.transform.position +
-                      player.current.camera.transform.forward;
-        item.spawn(product, spawn_point);
+        // Add the object to the player inventory, the stop the interaction
+        if (player.current.inventory.add(product, 1))
+            popup_message.create("Harvested " + product);
         stop_interaction();
     }
 

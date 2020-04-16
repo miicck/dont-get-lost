@@ -11,7 +11,14 @@ public class item : interactable
     const float CARRY_RESTORE_FORCE = 10f;
     public const float WELD_RANGE = 5f;
 
+    //###########//
+    // VARIABLES //
+    //###########//
+
     public Sprite sprite;
+
+    new public string name { get { return parse_id_name(base.name).Value; } }
+    public int id { get { return parse_id_name(base.name).Key; } }
 
     //#########//
     // WELDING //
@@ -261,7 +268,8 @@ public class item : interactable
     public override FLAGS player_interact()
     {
         // Drop item
-        if (Input.GetMouseButtonDown(0))
+        if (weld != null && Input.GetMouseButtonDown(1) ||
+            Input.GetMouseButtonDown(0))
         {
             stop_interaction();
             return FLAGS.NONE;
@@ -318,22 +326,40 @@ public class item : interactable
         return FLAGS.NONE;
     }
 
-    public override void on_start_interaction(RaycastHit point_hit)
+    public override void on_start_interaction(
+        RaycastHit point_hit, item interact_with, INTERACT_TYPE type)
     {
-        // Create the pivot point that we clicked the item at
-        carry_pivot = new GameObject("pivot").transform;
-        carry_pivot.SetParent(transform);
-        carry_pivot.transform.position = point_hit.point;
-        carry_pivot.rotation = player.current.camera.transform.rotation;
+        switch (type)
+        {
+            // Carry the item on right click
+            case INTERACT_TYPE.RIGHT_CLICK:
 
-        // Item is under player ownership
-        transform.SetParent(player.current.camera.transform);
+                // Create the pivot point that we clicked the item at
+                carry_pivot = new GameObject("pivot").transform;
+                carry_pivot.SetParent(transform);
+                carry_pivot.transform.position = point_hit.point;
+                carry_pivot.rotation = player.current.camera.transform.rotation;
 
-        // Setup item in carry mode
-        weld = null;
-        rigidbody.isKinematic = true;
-        rigidbody.detectCollisions = false;
-        carry_distance = 2f;
+                // Item is under player ownership
+                transform.SetParent(player.current.camera.transform);
+
+                // Setup item in carry mode
+                weld = null;
+                rigidbody.isKinematic = true;
+                rigidbody.detectCollisions = false;
+                carry_distance = 2f;
+                break;
+
+            // Default to just picking up the item
+            default:
+                if (player.current.inventory.add(name, 1))
+                {
+                    popup_message.create("+ 1 " + name);
+                    Destroy(this.gameObject);
+                }
+                stop_interaction();
+                return;
+        }
     }
 
     public override void on_end_interaction()
@@ -344,7 +370,7 @@ public class item : interactable
         // Setup item in world mode
         if (weld == null) rigidbody.isKinematic = false;
         rigidbody.detectCollisions = true;
-        Destroy(carry_pivot.gameObject);
+        if (carry_pivot != null) Destroy(carry_pivot.gameObject);
         canvas.set_direction_indicator(Vector2.zero);
     }
 
@@ -360,6 +386,16 @@ public class item : interactable
     private void OnDrawGizmos()
     {
         if (weld != null) weld.draw_gizmos();
+    }
+
+    private void Update()
+    {
+        // Fallen through the map, get rid of
+        if (transform.position.y < -10f)
+        {
+            rigidbody.velocity = Vector3.zero;
+            transform.position = player.current.camera.transform.position;
+        }
     }
 
     //###############//
@@ -387,7 +423,7 @@ public class item : interactable
         // Integers to serialize
         int[] ints = new int[]
         {
-            int.Parse(name.Substring(0, name.IndexOf("_"))),
+            id,
             rigidbody.isKinematic ? 1 : 0,
         };
 
@@ -440,8 +476,25 @@ public class item : interactable
     }
 
     //##############//
+    // CREATION ETC //
+    //##############//
+
+    public item spawn_copy(Vector3 position)
+    {
+        return spawn(name, position);
+    }
+
+    //##############//
     // STATIC STUFF //
     //##############//
+
+    static KeyValuePair<int, string> parse_id_name(string to_parse)
+    {
+        int us_index = to_parse.IndexOf("_");
+        int id = int.Parse(to_parse.Substring(0, us_index));
+        string name = to_parse.Substring(us_index + 1);
+        return new KeyValuePair<int, string>(id, name);
+    }
 
     public static item spawn(string name, Vector3 position)
     {
@@ -473,13 +526,15 @@ public class item : interactable
 
         foreach (var i in Resources.LoadAll<item>("items/"))
         {
-            int us_index = i.name.IndexOf("_");
-            int id = int.Parse(i.name.Substring(0, us_index));
-            string name = i.name.Substring(us_index + 1);
-
-            item_by_id[id] = i;
-            id_by_name[name] = id;
+            item_by_id[i.id] = i;
+            id_by_name[i.name] = i.id;
         }
+    }
+
+    // Load an item by name
+    public static item load_from_name(string name)
+    {
+        return load_from_id(id_from_name(name));
     }
 
     // Load an item by id

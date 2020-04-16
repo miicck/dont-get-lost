@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 5841013502393463211}
   - component: {fileID: 1797662999514456948}
   m_Layer: 0
-  m_Name: planks
+  m_Name: 2_planks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,6 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 903b1dc3e35740745b29ffa62f5abdb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sprite: {fileID: 21300000, guid: 7e814e8fef7057b47bf7ef744171891c, type: 3}
 --- !u!1 &6234869217568158658
 GameObject:
   m_ObjectHideFlags: 0
