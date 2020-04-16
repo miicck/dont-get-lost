@@ -437,6 +437,18 @@ public abstract class biome : MonoBehaviour
                 float s = 1 - procmath.maps.linear_turn_on(altitude, BEACH_START, BEACH_END);
                 terrain_color = Color.Lerp(terrain_color, terrain_colors.sand, s);
             }
+
+            // Don't allow characters that can't swim to spawn underwater
+            if (character_to_generate != null)
+                if (!character_to_generate.can_swim)
+                    if (altitude < world.SEA_LEVEL)
+                        character_to_generate = null;
+
+            // Don't allow characters that can't walk to spawn on dry land
+            if (character_to_generate != null)
+                if (!character_to_generate.can_walk)
+                    if (altitude > world.SEA_LEVEL)
+                        character_to_generate = null;
         }
 
         public string info()

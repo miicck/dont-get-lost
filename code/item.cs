@@ -11,6 +11,8 @@ public class item : interactable
     const float CARRY_RESTORE_FORCE = 10f;
     public const float WELD_RANGE = 5f;
 
+    public Sprite sprite;
+
     //#########//
     // WELDING //
     //#########//

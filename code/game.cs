@@ -39,6 +39,7 @@ public class game : MonoBehaviour
         get { return _render_range; }
         private set
         {
+            if (_render_range == value) return;
             if (value < chunk.SIZE) value = chunk.SIZE;
             _render_range = value;
             player.update_render_range();

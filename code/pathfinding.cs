@@ -34,6 +34,8 @@ public class path
 
             // Find grounding, return null if no grounding found
             Vector3 vec = p.origin + new Vector3(x, y, z) * p.resolution;
+            if (vec.y < p.min_altitude) return null;
+            if (vec.y > p.max_altitude) return null;
             RaycastHit hit;
             if (!Physics.Raycast(vec + Vector3.up * 0.5f * p.resolution,
                 -Vector3.up, out hit, p.resolution)) return null;
@@ -125,15 +127,21 @@ public class path
     HashSet<point> open;
     HashSet<point> closed;
     point goal;
+    float min_altitude;
+    float max_altitude;
 
     public bool complete { get { return calculated_path != null; } }
     public int length { get { return calculated_path == null ? 0 : calculated_path.Count; } }
     public Vector3 this[int i] { get { return calculated_path[i]; } }
 
-    public path(Vector3 start, Vector3 end, float ground_clearance = 0.5f, float resolution = 0.5f)
+    public path(Vector3 start, Vector3 end,
+        float ground_clearance = 0.5f, float resolution = 0.5f,
+        float min_altitude = 0, float max_altitude = float.PositiveInfinity)
     {
         this.ground_clearance = Mathf.Clamp(ground_clearance, 0, resolution);
         this.resolution = resolution;
+        this.min_altitude = min_altitude;
+        this.max_altitude = max_altitude;
 
         // Work out the size/origin of the coordinate system
         Vector3 min = utils.min(start, end);

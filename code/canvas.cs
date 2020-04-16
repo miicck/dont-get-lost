@@ -37,11 +37,14 @@ public static class canvas
     public static void create()
     {
         // Create the canvas element
+        /*
         canv = new GameObject("canvas").AddComponent<Canvas>();
         canv.renderMode = RenderMode.ScreenSpaceOverlay;
         canv.gameObject.AddComponent<CanvasScaler>();
         canv.gameObject.AddComponent<GraphicRaycaster>();
         canv.gameObject.AddComponent<EventSystem>();
+        */
+        canv = Object.FindObjectOfType<Canvas>();
 
         // Create the upper left debug info panel
         debug_info = new GameObject("debug_info").AddComponent<Text>();

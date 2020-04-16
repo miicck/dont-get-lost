@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 1620928046922828462}
   - component: {fileID: 4603933382635476871}
   m_Layer: 0
-  m_Name: log
+  m_Name: 1_log
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -133,6 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 903b1dc3e35740745b29ffa62f5abdb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sprite: {fileID: 21300000, guid: 72d5f2d08a5b79f49b6f1caa2f0b8e5d, type: 3}
 --- !u!1 &8597519401867688854
 GameObject:
   m_ObjectHideFlags: 0

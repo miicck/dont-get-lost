@@ -191,4 +191,16 @@ public static class utils
                                     return;
                 }
     }
+
+    public static string int_to_quantity_string(int i)
+    {
+        if (i < 1000) return "" + i;
+        if (i < 1000000)
+        {
+            float thsds = i / 1000f;
+            return "" + System.Math.Round(thsds, 2) + "K";
+        }
+        float mils = i / 1000000f;
+        return "" + System.Math.Round(mils, 2) + "M";
+    }
 }

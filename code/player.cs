@@ -95,6 +95,13 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        // Toggle inventory on E
+        if (Input.GetKeyDown(KeyCode.E))
+            inventory_open = !inventory_open;
+        Cursor.visible = inventory_open;
+        Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
+        if (inventory_open) return;
+
         var inter_flags = interact();
 
         // Toggle the map view
@@ -131,12 +138,121 @@ public class player : MonoBehaviour
         }
 
         underwater_screen.SetActive(camera.transform.position.y < world.SEA_LEVEL && !map_open);
+
+        // Use my tool
+        if (interacting_with == null)
+        {
+            if (Input.GetMouseButtonDown(0))
+                swing_tool();
+
+            if (tool_swing_progress < 1f)
+            {
+                tool_swing_progress += Time.deltaTime / TOOL_SWING_TIME;
+
+                float fw_amt = -Mathf.Sin(tool_swing_progress * Mathf.PI * 2f);
+                hand.transform.localPosition = init_hand_local_position +
+                    fw_amt * Vector3.forward * TOOL_SWING_DISTANGE -
+                    fw_amt * Vector3.up * TOOL_SWING_DISTANGE -
+                    fw_amt * Vector3.right * init_hand_local_position.x;
+
+                Vector3 up = camera.transform.up * (1 - fw_amt) + camera.transform.forward * fw_amt;
+                Vector3 fw = -Vector3.Cross(up, camera.transform.right);
+                hand.transform.rotation = Quaternion.LookRotation(fw, up);
+            }
+        }
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, game.render_range);
+    }
+
+    //###########//
+    // INVENTORY //
+    //###########//
+
+    inventory _inventory;
+    inventory inventory
+    {
+        get
+        {
+            if (_inventory == null)
+            {
+                _inventory = Resources.Load<inventory>("ui/player_inventory").inst();
+                _inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
+                _inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+                inventory_open = false;
+            }
+            return _inventory;
+        }
+    }
+
+    bool inventory_open
+    {
+        get { return inventory.gameObject.activeInHierarchy; }
+        set { inventory.gameObject.SetActive(value); }
+    }
+
+
+
+    //##########//
+    // TOOL USE //
+    //##########//
+
+    const float TOOL_SWING_TIME = 0.5f;
+    const float TOOL_SWING_DISTANGE = 0.25f;
+    float tool_swing_progress = 1f;
+    Vector3 init_hand_local_position;
+
+    // The hand which carries a tool
+    Transform _hand;
+    Transform hand
+    {
+        get
+        {
+            if (_hand == null)
+            {
+                // Set the hand location so it is one meter
+                // away from the camera, 80% of the way across 
+                // the screen and 10% of the way up the screen.
+                _hand = new GameObject("hand").transform;
+                _hand.SetParent(camera.transform);
+                var r = camera.ScreenPointToRay(new Vector3(
+                     Screen.width * 0.8f,
+                     Screen.height * 0.1f
+                     ));
+                _hand.localPosition = r.direction * 0.75f;
+                init_hand_local_position = _hand.localPosition;
+            }
+            return _hand;
+        }
+    }
+
+    void swing_tool()
+    {
+        tool_swing_progress = 0f;
+    }
+
+    // The current equipped tool
+    tool _equipped;
+    public tool equipped
+    {
+        get { return _equipped; }
+        private set
+        {
+            if (_equipped != null)
+            {
+                _equipped.transform.SetParent(null);
+            }
+
+            _equipped = value;
+            if (value != null)
+            {
+                value.transform.SetParent(hand);
+                value.transform.localPosition = Vector3.zero;
+            }
+        }
     }
 
     //##################//
@@ -255,7 +371,7 @@ public class player : MonoBehaviour
     public void update_render_range()
     {
         // Set the obscurer size to the render range
-        obscurer.transform.localScale = Vector3.one * game.render_range;
+        obscurer.transform.localScale = Vector3.one * game.render_range * 0.99f;
         map_obscurer.transform.localScale = Vector3.one * game.render_range;
 
         if (!map_open)
@@ -321,7 +437,7 @@ public class player : MonoBehaviour
             else
             {
                 // Restore 3D camera view
-                camera.transform.localPosition = Vector3.up * (HEIGHT - WIDTH/2f);
+                camera.transform.localPosition = Vector3.up * (HEIGHT - WIDTH / 2f);
                 camera.transform.localRotation = saved_camera_rotation;
             }
         }
@@ -350,19 +466,21 @@ public class player : MonoBehaviour
         p.camera = FindObjectOfType<Camera>();
         p.camera.clearFlags = CameraClearFlags.SolidColor;
         p.camera.transform.SetParent(p.transform);
-        p.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH/2f, 0);
+        p.camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
         p.camera.nearClipPlane = 0.1f;
         //p.camera.gameObject.AddComponent<UnityEngine.Rendering.PostProcessing.PostProcessLayer>();
 
 
         // Create a short range light with no shadows to light up detail
         // on nearby objects to the player
+        /*
         var point_light = new GameObject("point_light").AddComponent<Light>();
         point_light.type = LightType.Point;
         point_light.range = item.WELD_RANGE;
         point_light.transform.SetParent(p.camera.transform);
         point_light.transform.localPosition = Vector3.zero;
         point_light.intensity = 0.5f;
+        */
 
         // Enforce the render limit with a sky-color object
         p.obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
@@ -392,13 +510,15 @@ public class player : MonoBehaviour
 
         // Load the player state
         p.load();
-         
+
         // Create the player controller
         p.controller = p.gameObject.AddComponent<CharacterController>();
         p.controller.height = HEIGHT;
         p.controller.radius = WIDTH / 2;
         p.controller.center = new Vector3(0, p.controller.height / 2f, 0);
         p.controller.skinWidth = p.controller.radius / 10f;
+
+        p.equipped = tool.loop_up("axe").inst();
 
         current = p;
         return p;

@@ -12,6 +12,10 @@ public class character : MonoBehaviour
     public float walk_speed = 1f;
     public float run_speed = 4f;
 
+    // Can I walk on land, or swim in water
+    public bool can_walk = true;
+    public bool can_swim = false;
+
     // The current path the character is walking
     path _path;
     path path
@@ -20,6 +24,11 @@ public class character : MonoBehaviour
         set { _path = value; path_progress = 0; }
     }
     int path_progress = 0;
+
+    void get_path(Vector3 target)
+    {
+        path = new path(transform.position, target, min_altitude: can_swim ? 0 : world.SEA_LEVEL);
+    }
 
     // The last position that we checked which chunk we were in
     Vector3 last_chunk_check_position;
@@ -36,6 +45,36 @@ public class character : MonoBehaviour
         }
     }
 
+    void move_along_path(float speed)
+    {
+        if (!path.complete)
+        {
+            // Run pathfinding
+            path.run_pathfinding(1);
+            return;
+        }
+        else
+        {
+            if (path.length <= path_progress)
+            {
+                // Path complete, reset
+                path = null;
+                return;
+            }
+
+            // Work out how far to the next path point
+            Vector3 delta = path[path_progress] - transform.position;
+            if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
+            transform.position += delta.normalized * speed * Time.deltaTime;
+
+            // Look in the direction of travel
+            delta.y = 0;
+            if (delta.magnitude > 10e-4)
+                transform.forward = Vector3.Lerp(transform.forward,
+                    delta.normalized, speed * 5f * Time.deltaTime);
+        }
+    }
+
     // Just idly wonder around
     void idle_walk()
     {
@@ -44,37 +83,20 @@ public class character : MonoBehaviour
             // Search for a new walk target
             RaycastHit hit;
             if (Physics.Raycast(transform.position + Random.onUnitSphere * 5f, -Vector3.up, out hit, 10f))
-                path = new path(transform.position, hit.point);
+                get_path(hit.point);
         }
-        else
+        else move_along_path(walk_speed);
+    }
+
+    // Run from the given transform
+    void flee(Transform fleeing_from)
+    {
+        if (path == null)
         {
-            if (!path.complete)
-            {
-                // Run pathfinding
-                path.run_pathfinding(1);
-                return;
-            }
-            else
-            {
-                if (path.length <= path_progress)
-                {
-                    // Path complete, reset
-                    path = null;
-                    return;
-                }
-
-                // Work out how far to the next path point
-                Vector3 delta = path[path_progress] - transform.position;
-                if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
-                transform.position += delta.normalized * walk_speed * Time.deltaTime;
-
-                // Look in the direction of travel
-                delta.y = 0;
-                if (delta.magnitude > 10e-4)
-                    transform.forward = Vector3.Lerp(transform.forward,
-                        delta.normalized, walk_speed * 5f * Time.deltaTime);
-            }
+            Vector3 delta = transform.position - fleeing_from.position;
+            get_path(transform.position + delta.normalized * 5f);
         }
+        else move_along_path(run_speed);
     }
 
     void update_chunk(bool forced = false)
@@ -94,8 +116,10 @@ public class character : MonoBehaviour
 
     private void Update()
     {
-        // Just idly walk around for now
-        idle_walk();
+        if ((transform.position - player.current.transform.position).magnitude < 5f)
+            flee(player.current.transform);
+        else
+            idle_walk();
     }
 
     private void OnDrawGizmosSelected()
