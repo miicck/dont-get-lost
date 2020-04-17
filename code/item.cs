@@ -21,9 +21,17 @@ public class item : MonoBehaviour
     // PLAYER USE //
     //############//
 
+    // The possible results of using this item
+    public enum USE_RESULT
+    {
+        UNDERWAY,
+        COMPLETE,
+    }
+
     // Use the equipped version of this item
-    public virtual void use_left_click() { }
-    public virtual void use_right_click() { }
+    public virtual USE_RESULT on_use_start(player.USE_TYPE use_type) { return USE_RESULT.COMPLETE; }
+    public virtual USE_RESULT on_use_continue(player.USE_TYPE use_type) { return USE_RESULT.COMPLETE; }
+    public virtual void on_use_end(player.USE_TYPE use_type) { }
 
     public void carry(RaycastHit point_hit)
     {

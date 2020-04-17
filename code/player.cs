@@ -78,6 +78,28 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        if (current_item_use == USE_TYPE.NOT_USING)
+        {
+            // Start a new use type
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (equipped == null) left_click_with_hand();
+                else current_item_use = USE_TYPE.USING_LEFT_CLICK;
+            }
+            else if (Input.GetMouseButtonDown(1))
+            {
+                if (equipped == null) right_click_with_hand();
+                else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
+            }
+        }
+        else
+        {
+            // Continue item use
+            var res = equipped.on_use_continue(current_item_use);
+            if (res == item.USE_RESULT.COMPLETE) current_item_use = USE_TYPE.NOT_USING;
+            else return;
+        }
+
         // Toggle inventory on E
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -89,27 +111,13 @@ public class player : MonoBehaviour
 
         // Throw equiped on T
         if (Input.GetKeyDown(KeyCode.T))
-            if (equipped_item != null)
+            if (equipped != null)
             {
-                inventory.remove(equipped_item, 1);
-                var spawned = item.spawn(equipped_item, _equipped.transform.position, _equipped.transform.rotation);
+                inventory.remove(equipped.name, 1);
+                var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
                 spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                equipped_item = equipped_item; // Attempt to re-equip if there is another in my inventory
+                equip(equipped.name); // Attempt to re-equip from inventory
             }
-
-        // Left click
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (equipped_item != null) _equipped.use_left_click();
-            else left_click_with_hand();
-        }
-
-        // Right click
-        if (Input.GetMouseButtonDown(1))
-        {
-            if (equipped_item != null) _equipped.use_right_click();
-            else right_click_with_hand();
-        }
 
         if (!map_open) run_quickbar_shortcuts();
 
@@ -176,7 +184,7 @@ public class player : MonoBehaviour
     }
 
     // Called on a left click when no item is equipped
-    void left_click_with_hand()
+    public void left_click_with_hand()
     {
         if (carrying != null) { carrying = null; return; }
 
@@ -187,7 +195,7 @@ public class player : MonoBehaviour
     }
 
     // Called on a right click when no item is equipped
-    void right_click_with_hand()
+    public void right_click_with_hand()
     {
         if (carrying != null) { carrying = null; return; }
 
@@ -218,55 +226,108 @@ public class player : MonoBehaviour
         }
     }
 
+    // The ways that we can use an item
+    public enum USE_TYPE
+    {
+        NOT_USING,
+        USING_LEFT_CLICK,
+        USING_RIGHT_CLICK,
+    }
+
+    // Are we currently using the item, if so, how?
+    USE_TYPE _current_item_use;
+    USE_TYPE current_item_use
+    {
+        get { return _current_item_use; }
+        set
+        {
+            if (value == _current_item_use)
+                return; // No change
+
+            if (equipped == null)
+            {
+                // No item to use
+                _current_item_use = USE_TYPE.NOT_USING;
+                return;
+            }
+
+            if (_current_item_use == USE_TYPE.NOT_USING)
+            {
+                if (value != USE_TYPE.NOT_USING)
+                {
+                    // Item currently not in use and we want to
+                    // start using it, so start using it
+                    if (equipped.on_use_start(value) == item.USE_RESULT.COMPLETE)
+                        _current_item_use = USE_TYPE.NOT_USING; // Immediately completed
+                    else
+                        _current_item_use = value; // Needs continuing
+                }
+            }
+            else
+            {
+                if (value == USE_TYPE.NOT_USING)
+                {
+                    // Item currently in use and we want to stop
+                    // using it, so stop using it
+                    equipped.on_use_end(value);
+                    _current_item_use = value;
+                }
+            }
+        }
+    }
+
     // The current equipped item
     item _equipped;
-    public string equipped_item
+    public item equipped { get => _equipped; }
+
+    void equip(string item_name)
     {
-        get { return _equipped == null ? null : _equipped.name; }
-        private set
+        if (_equipped != null && _equipped.name == item_name)
+            return; // Already equipped
+
+        if (_equipped != null)
+            Destroy(_equipped.gameObject);
+
+        if (item_name == null)
         {
-            if (_equipped != null)
-                Destroy(_equipped.gameObject);
-
-            if (value == null)
-                _equipped = null;
-            else
-            {
-                // Ensure we actually have one of these in my inventory
-                bool have = false;
-                foreach (var s in inventory.slots)
-                    if (s.item == value)
-                    {
-                        have = true;
-                        break;
-                    }
-
-                if (have)
+            _equipped = null;
+        }
+        else
+        {
+            // Ensure we actually have one of these in my inventory
+            bool have = false;
+            foreach (var s in inventory.slots)
+                if (s.item == item_name)
                 {
-                    // Create an equipped-type copy of the item
-                    _equipped = item.load_from_name(value).inst();
-                    foreach (var c in _equipped.GetComponentsInChildren<Collider>())
-                        Destroy(c);
+                    have = true;
+                    break;
                 }
-                else _equipped = null; // Don't have, equip null
-            }
 
-            if (_equipped == null)
-                cursor = cursors.DEFAULT;
-            else
+            if (have)
             {
-                cursor = _equipped.sprite.name;
-                _equipped.transform.SetParent(hand);
-                _equipped.transform.localPosition = Vector3.zero;
-                _equipped.transform.localRotation = Quaternion.identity;
+                // Create an equipped-type copy of the item
+                _equipped = item.load_from_name(item_name).inst();
+                foreach (var c in _equipped.GetComponentsInChildren<Collider>())
+                    Destroy(c);
             }
+            else _equipped = null; // Don't have, equip null
+        }
+
+        if (_equipped == null)
+            cursor = cursors.DEFAULT;
+        else
+        {
+            cursor = _equipped.sprite.name;
+            _equipped.transform.SetParent(hand);
+            _equipped.transform.localPosition = Vector3.zero;
+            _equipped.transform.localRotation = Quaternion.identity;
         }
     }
 
     void toggle_equip(string item)
     {
-        if (equipped_item == item) equipped_item = null;
-        else equipped_item = item;
+        if (equipped?.name == item) equip(null);
+        else equip(item);
     }
 
     void run_quickbar_shortcuts()
@@ -286,7 +347,7 @@ public class player : MonoBehaviour
         if (sw > 0) ++last_quickbar_slot_accessed;
         else if (sw < 0) --last_quickbar_slot_accessed;
         last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
-        if (sw != 0) equipped_item = quickbar_slot(last_quickbar_slot_accessed)?.item;
+        if (sw != 0) equip(quickbar_slot(last_quickbar_slot_accessed)?.item);
     }
 
     //###########//

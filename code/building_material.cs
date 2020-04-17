@@ -203,7 +203,7 @@ public class building_material : item
         return ret;
     }
 
-    void spawn_from_inventory_and_fix_to(building_material other, RaycastHit hit)
+    building_material spawn_from_inventory_and_fix_to(building_material other, RaycastHit hit)
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
         snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
@@ -212,7 +212,7 @@ public class building_material : item
         if (snap_from == null || snap_to == null)
         {
             Destroy(spawned.gameObject);
-            return;
+            return null;
         }
 
         player.current.inventory.remove(name, 1);
@@ -221,9 +221,11 @@ public class building_material : item
             snap_from,
             snap_to.transform.position,
             Quaternion.identity);
+
+        return spawned;
     }
 
-    void spawn_from_inventory_and_fix_at(RaycastHit hit)
+    building_material spawn_from_inventory_and_fix_at(RaycastHit hit)
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
         snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
@@ -231,26 +233,70 @@ public class building_material : item
         if (snap_from == null)
         {
             Destroy(spawned.gameObject);
-            return;
+            return null;
         }
 
         spawned.weld = new weld_info(spawned,
             snap_from,
             hit.point,
             Quaternion.identity);
+
+        return spawned;
     }
 
-    public override void use_left_click()
+
+    building_material spawned;
+
+    public override USE_RESULT on_use_start(player.USE_TYPE use_type)
     {
+        if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
+        {
+            // Right click destroys items of the same kind
+            RaycastHit same_hit;
+            building_material found_same = utils.raycast_for_closest<building_material>(
+                player.current.camera_ray(), out same_hit, WELD_RANGE, (b) => b.name == name);
+            if (found_same != null)
+                Destroy(found_same.gameObject);
+            return USE_RESULT.COMPLETE;
+        }
+
+        // Only have a left click action
+        if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
+            return USE_RESULT.COMPLETE;
+
         RaycastHit hit;
         var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, WELD_RANGE);
         if (bm != null)
         {
-            spawn_from_inventory_and_fix_to(bm, hit);
-            return;
+            spawned = spawn_from_inventory_and_fix_to(bm, hit);
+            return USE_RESULT.UNDERWAY;
         }
 
         if (Physics.Raycast(player.current.camera_ray(), out hit, WELD_RANGE))
-            spawn_from_inventory_and_fix_at(hit);
+        {
+            spawned = spawn_from_inventory_and_fix_at(hit);
+            return USE_RESULT.UNDERWAY;
+        }
+
+        return USE_RESULT.COMPLETE;
     }
+
+    public override USE_RESULT on_use_continue(player.USE_TYPE use_type)
+    {
+        if (spawned == null || Input.GetMouseButtonDown(0))
+            return USE_RESULT.COMPLETE;
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            // Cancel build on right click
+            player.current.inventory.add(spawned.name, 1);
+            Destroy(spawned.gameObject);
+            return USE_RESULT.COMPLETE;
+        }
+
+        spawned.weld.key_rotate();
+        return USE_RESULT.UNDERWAY;
+    }
+
+    public override void on_use_end(player.USE_TYPE use_type) { spawned = null; }
 }
