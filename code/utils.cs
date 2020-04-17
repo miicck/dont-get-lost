@@ -91,7 +91,7 @@ public static class utils
     public static T find_to_min<T>(IEnumerable<T> to_search, float_func<T> objective)
     {
         T ret = default;
-        float min = float.MaxValue;
+        float min = float.PositiveInfinity;
         foreach (var t in to_search)
         {
             float val = objective(t);

@@ -8,8 +8,7 @@ public class building_material : item
     // CONSTANTS //
     //###########//
 
-    const float CARRY_RESTORE_FORCE = 10f;
-    public const float WELD_RANGE = 5f;
+    public const float BUILD_RANGE = 5f;
 
     //#########//
     // WELDING //
@@ -103,11 +102,14 @@ public class building_material : item
         }
 
         // Rotate the pivot with the keyboard keys
+        Vector3 rd;
+        Vector3 fd;
+        Vector3 ud;
         public void key_rotate()
         {
-            Vector3 rd = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.right));
-            Vector3 fd = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.forward));
-            Vector3 ud = utils.find_to_min(weld_axes(), (a) => -Vector3.Dot(a, player.current.camera.transform.up));
+            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
+            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
+            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
 
             if (Input.GetKeyDown(KeyCode.D)) to_weld.transform.RotateAround(pivot.transform.position, -fd, 50);
             else if (Input.GetKeyDown(KeyCode.A)) to_weld.transform.RotateAround(pivot.transform.position, fd, 50);
@@ -134,6 +136,13 @@ public class building_material : item
             Gizmos.color = Color.cyan;
             foreach (var a in snap_axes())
                 Gizmos.DrawLine(weld_location, weld_location + a / 2);
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(weld_location, weld_location + rd);
+
+            Gizmos.matrix = Matrix4x4.Rotate(weld_rotation);
+            Gizmos.DrawWireCube(weld_location, Vector3.one);
+            Gizmos.matrix = Matrix4x4.identity;    
         }
     }
 
@@ -155,6 +164,11 @@ public class building_material : item
         }
     }
 
+    private void OnDrawGizmosSelected()
+    {
+        weld?.draw_gizmos();
+    }
+
     //##########//
     // ITEM USE //
     //##########//
@@ -167,7 +181,7 @@ public class building_material : item
         // snap_point to the raycast hit
         RaycastHit hit;
         if (utils.raycast_for_closest<item>(
-            ray, out hit, WELD_RANGE,
+            ray, out hit, BUILD_RANGE,
             (t) => t == this))
         {
             // Find the nearest snap point to the hit
@@ -220,7 +234,7 @@ public class building_material : item
         spawned.weld = new weld_info(spawned,
             snap_from,
             snap_to.transform.position,
-            Quaternion.identity);
+            snap_to.transform.rotation);
 
         return spawned;
     }
@@ -244,7 +258,6 @@ public class building_material : item
         return spawned;
     }
 
-
     building_material spawned;
 
     public override USE_RESULT on_use_start(player.USE_TYPE use_type)
@@ -254,7 +267,7 @@ public class building_material : item
             // Right click destroys items of the same kind
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
-                player.current.camera_ray(), out same_hit, WELD_RANGE, (b) => b.name == name);
+                player.current.camera_ray(), out same_hit, BUILD_RANGE, (b) => b.name == name);
             if (found_same != null)
                 Destroy(found_same.gameObject);
             return USE_RESULT.COMPLETE;
@@ -265,14 +278,14 @@ public class building_material : item
             return USE_RESULT.COMPLETE;
 
         RaycastHit hit;
-        var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, WELD_RANGE);
+        var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, BUILD_RANGE);
         if (bm != null)
         {
             spawned = spawn_from_inventory_and_fix_to(bm, hit);
             return USE_RESULT.UNDERWAY;
         }
 
-        if (Physics.Raycast(player.current.camera_ray(), out hit, WELD_RANGE))
+        if (Physics.Raycast(player.current.camera_ray(), out hit, BUILD_RANGE))
         {
             spawned = spawn_from_inventory_and_fix_at(hit);
             return USE_RESULT.UNDERWAY;

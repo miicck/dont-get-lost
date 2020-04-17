@@ -48,6 +48,10 @@ public class game : MonoBehaviour
 
     void Start()
     {
+        // Start with invisible, locked cursor
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
         // Create the player
         player = player.create();
 
@@ -76,27 +80,9 @@ public class game : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Equals))
-            render_range_target += 10f;
-        if (Input.GetKeyDown(KeyCode.Minus))
-            render_range_target -= 10f;
-
+        if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
+        if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
-
-        // Toggle cursor visibility
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            if (Cursor.visible)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
     }
 
     void OnApplicationQuit()
