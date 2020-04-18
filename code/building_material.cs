@@ -266,6 +266,8 @@ public class building_material : item
             return null;
         }
 
+        player.current.inventory.remove(name, 1);
+
         spawned.weld = new weld_info(spawned,
             snap_from,
             hit.point,
@@ -276,7 +278,9 @@ public class building_material : item
 
     building_material spawned;
 
-    public override USE_RESULT on_use_start(player.USE_TYPE use_type)
+    public override bool allow_right_click_held_down() { return true; }
+
+    public override use_result on_use_start(player.USE_TYPE use_type)
     {
         if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
         {
@@ -287,12 +291,12 @@ public class building_material : item
             if (found_same != null)
                 if (player.current.inventory.add(name, 1))
                     Destroy(found_same.gameObject);
-            return USE_RESULT.COMPLETE;
+            return use_result.complete;
         }
 
         // Only have a left click action
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
-            return USE_RESULT.COMPLETE;
+            return use_result.complete;
 
         RaycastHit hit;
         var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, BUILD_RANGE);
@@ -301,14 +305,14 @@ public class building_material : item
         else if (Physics.Raycast(player.current.camera_ray(), out hit, BUILD_RANGE))
             spawned = spawn_from_inventory_and_fix_at(hit);
 
-        if (spawned != null)            return USE_RESULT.UNDERWAY;
-        return USE_RESULT.COMPLETE;
+        if (spawned != null) return use_result.underway_allows_none;
+        return use_result.complete;
     }
 
-    public override USE_RESULT on_use_continue(player.USE_TYPE use_type)
+    public override use_result on_use_continue(player.USE_TYPE use_type)
     {
         if (spawned == null || Input.GetMouseButtonDown(0))
-            return USE_RESULT.COMPLETE;
+            return use_result.complete;
 
         if (Input.GetMouseButtonDown(1))
         {
@@ -316,11 +320,11 @@ public class building_material : item
             player.current.inventory.add(spawned.name, 1);
             Destroy(spawned.gameObject);
             spawned = null;
-            return USE_RESULT.COMPLETE;
+            return use_result.complete;
         }
 
         spawned.weld.key_rotate();
-        return USE_RESULT.UNDERWAY;
+        return use_result.underway_allows_none;
     }
 
     public override void on_use_end(player.USE_TYPE use_type)

@@ -94,6 +94,9 @@ public class player : MonoBehaviour
             // Toggle the map view on M
             if (Input.GetKeyDown(KeyCode.M))
                 map_open = !map_open;
+
+            // Run the quickbar equip shortcuts
+            run_quickbar_shortcuts();
         }
 
         if (map_open)
@@ -106,17 +109,28 @@ public class player : MonoBehaviour
         }
 
         // Use items if the inventory/map aren't open
+        item.use_result use_result = item.use_result.complete;
         if (!inventory_open && !map_open)
         {
             if (current_item_use == USE_TYPE.NOT_USING)
             {
+                bool left_click = Input.GetMouseButtonDown(0) ||
+                    (equipped == null ? false :
+                     equipped.allow_left_click_held_down() &&
+                     Input.GetMouseButton(0));
+
+                bool right_click = Input.GetMouseButtonDown(1) ||
+                    (equipped == null ? false :
+                     equipped.allow_right_click_held_down() &&
+                     Input.GetMouseButton(1));
+
                 // Start a new use type
-                if (Input.GetMouseButtonDown(0))
+                if (left_click)
                 {
                     if (equipped == null) left_click_with_hand();
                     else current_item_use = USE_TYPE.USING_LEFT_CLICK;
                 }
-                else if (Input.GetMouseButtonDown(1))
+                else if (right_click)
                 {
                     if (equipped == null) right_click_with_hand();
                     else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
@@ -125,29 +139,29 @@ public class player : MonoBehaviour
             else
             {
                 // Continue item use
-                var res = equipped.on_use_continue(current_item_use);
-                if (res == item.USE_RESULT.COMPLETE) current_item_use = USE_TYPE.NOT_USING;
-                else return;
+                if (equipped == null) use_result = item.use_result.complete;
+                else use_result = equipped.on_use_continue(current_item_use);
+                if (!use_result.underway) current_item_use = USE_TYPE.NOT_USING;
             }
 
             // Throw equiped on T
-            if (Input.GetKeyDown(KeyCode.T))
-                if (equipped != null)
-                {
-                    inventory.remove(equipped.name, 1);
-                    var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
-                    spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                    equip(equipped.name); // Attempt to re-equip from inventory
-                }
-
-            // Run the quickbar equip shortcuts
-            run_quickbar_shortcuts();
+            if (use_result.allows_throw)
+                if (Input.GetKeyDown(KeyCode.T))
+                    if (equipped != null)
+                    {
+                        inventory.remove(equipped.name, 1);
+                        var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
+                        spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
+                        string re_eq_name = equipped.name;
+                        equip(null);
+                        equip(re_eq_name); // Attempt to re-equip from inventory
+                    }
 
             // Look around
-            mouse_look();
+            if (use_result.allows_look) mouse_look();
         }
 
-        move();
+        if (use_result.allows_move) move();
         float_in_water();
     }
 
@@ -221,7 +235,7 @@ public class player : MonoBehaviour
     }
 
     // The hand which carries an item
-    Transform hand { get; set; }
+    public Transform hand { get; private set; }
 
     UnityEngine.UI.Image crosshairs;
     public string cursor
@@ -269,10 +283,10 @@ public class player : MonoBehaviour
                 {
                     // Item currently not in use and we want to
                     // start using it, so start using it
-                    if (equipped.on_use_start(value) == item.USE_RESULT.COMPLETE)
-                        _current_item_use = USE_TYPE.NOT_USING; // Immediately completed
-                    else
+                    if (equipped.on_use_start(value).underway)
                         _current_item_use = value; // Needs continuing
+                    else
+                        _current_item_use = USE_TYPE.NOT_USING; // Immediately completed
                 }
             }
             else

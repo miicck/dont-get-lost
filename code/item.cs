@@ -21,17 +21,53 @@ public class item : MonoBehaviour
     // PLAYER USE //
     //############//
 
-    // The possible results of using this item
-    public enum USE_RESULT
+    public struct use_result
     {
-        UNDERWAY,
-        COMPLETE,
+        public bool underway;
+        public bool allows_look;
+        public bool allows_move;
+        public bool allows_throw;
+
+        public static use_result complete
+        {
+            get => new use_result()
+            {
+                underway = false,
+                allows_look = true,
+                allows_move = true,
+                allows_throw = true
+            };
+        }
+
+        public static use_result underway_allows_none
+        {
+            get => new use_result()
+            {
+                underway = true,
+                allows_look = false,
+                allows_move = false,
+                allows_throw = false
+            };
+        }
+
+        public static use_result underway_allows_all
+        {
+            get => new use_result()
+            {
+                underway = true,
+                allows_look = true,
+                allows_move = true,
+                allows_throw = true
+            };
+        }
     }
 
     // Use the equipped version of this item
-    public virtual USE_RESULT on_use_start(player.USE_TYPE use_type) { return USE_RESULT.COMPLETE; }
-    public virtual USE_RESULT on_use_continue(player.USE_TYPE use_type) { return USE_RESULT.COMPLETE; }
+    public virtual use_result on_use_start(player.USE_TYPE use_type) { return use_result.complete; }
+    public virtual use_result on_use_continue(player.USE_TYPE use_type) { return use_result.complete; }
     public virtual void on_use_end(player.USE_TYPE use_type) { }
+    public virtual bool allow_left_click_held_down() { return false; }
+    public virtual bool allow_right_click_held_down() { return false; }
 
     public void carry(RaycastHit point_hit)
     {
