@@ -68,8 +68,9 @@ public class player : MonoBehaviour
             }
         }
 
+        // Set the controller position so it doesn't snap us back to 0,0,0 immediately
         Vector3 pos = new Vector3(floats[0], floats[1], floats[2]);
-        transform.position = pos;
+        controller.transform.position = pos;
     }
 
     //#################//
@@ -78,52 +79,22 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        // Toggle menus only if not using an item
         if (current_item_use == USE_TYPE.NOT_USING)
         {
-            // Start a new use type
-            if (Input.GetMouseButtonDown(0))
+            // Toggle inventory on E
+            if (Input.GetKeyDown(KeyCode.E))
             {
-                if (equipped == null) left_click_with_hand();
-                else current_item_use = USE_TYPE.USING_LEFT_CLICK;
-            }
-            else if (Input.GetMouseButtonDown(1))
-            {
-                if (equipped == null) right_click_with_hand();
-                else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
-            }
-        }
-        else
-        {
-            // Continue item use
-            var res = equipped.on_use_continue(current_item_use);
-            if (res == item.USE_RESULT.COMPLETE) current_item_use = USE_TYPE.NOT_USING;
-            else return;
-        }
-
-        // Toggle inventory on E
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            inventory_open = !inventory_open;
-            crosshairs.enabled = !inventory_open;
-            Cursor.visible = inventory_open;
-            Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
-        }
-
-        // Throw equiped on T
-        if (Input.GetKeyDown(KeyCode.T))
-            if (equipped != null)
-            {
-                inventory.remove(equipped.name, 1);
-                var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
-                spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                equip(equipped.name); // Attempt to re-equip from inventory
+                inventory_open = !inventory_open;
+                crosshairs.enabled = !inventory_open;
+                Cursor.visible = inventory_open;
+                Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
             }
 
-        if (!map_open) run_quickbar_shortcuts();
-
-        // Toggle the map view on M
-        if (Input.GetKeyDown(KeyCode.M))
-            map_open = !map_open;
+            // Toggle the map view on M
+            if (Input.GetKeyDown(KeyCode.M))
+                map_open = !map_open;
+        }
 
         if (map_open)
         {
@@ -134,8 +105,49 @@ public class player : MonoBehaviour
             camera.orthographicSize = game.render_range;
         }
 
+        // Use items if the inventory/map aren't open
+        if (!inventory_open && !map_open)
+        {
+            if (current_item_use == USE_TYPE.NOT_USING)
+            {
+                // Start a new use type
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (equipped == null) left_click_with_hand();
+                    else current_item_use = USE_TYPE.USING_LEFT_CLICK;
+                }
+                else if (Input.GetMouseButtonDown(1))
+                {
+                    if (equipped == null) right_click_with_hand();
+                    else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
+                }
+            }
+            else
+            {
+                // Continue item use
+                var res = equipped.on_use_continue(current_item_use);
+                if (res == item.USE_RESULT.COMPLETE) current_item_use = USE_TYPE.NOT_USING;
+                else return;
+            }
+
+            // Throw equiped on T
+            if (Input.GetKeyDown(KeyCode.T))
+                if (equipped != null)
+                {
+                    inventory.remove(equipped.name, 1);
+                    var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
+                    spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
+                    equip(equipped.name); // Attempt to re-equip from inventory
+                }
+
+            // Run the quickbar equip shortcuts
+            run_quickbar_shortcuts();
+
+            // Look around
+            mouse_look();
+        }
+
         move();
-        if (!map_open && !inventory_open) mouse_look();
         float_in_water();
     }
 
@@ -394,7 +406,11 @@ public class player : MonoBehaviour
 
     void float_in_water()
     {
-        underwater_screen.SetActive(camera.transform.position.y < world.SEA_LEVEL && !map_open);
+        // We're underwater if the bottom of the screen is underwater
+        var ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, 0, 0));
+        float dis = camera.nearClipPlane / Vector3.Dot(ray.direction, -camera.transform.up);
+        float eff_eye_y = (ray.origin + ray.direction * dis).y;
+        underwater_screen.SetActive(eff_eye_y < world.SEA_LEVEL && !map_open);
 
         float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
@@ -535,9 +551,21 @@ public class player : MonoBehaviour
         map_obscurer.transform.localPosition = Vector3.forward;
         map_obscurer.transform.up = -camera.transform.forward;
 
+        // The distance to the underwater screen, just past the near clipping plane
+        float usd = camera.nearClipPlane * 1.1f;
+        Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
+        Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
+        Vector3 delta = tr_corner_point - bl_corner_point;
+
+        // Setup the underwater screen so it exactly covers the screen
         underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
         underwater_screen.transform.SetParent(camera.transform);
-        underwater_screen.transform.localPosition = Vector3.forward * camera.nearClipPlane * 1.1f;
+        underwater_screen.transform.localPosition = Vector3.forward * usd;
+        underwater_screen.transform.localScale = new Vector3(
+            Vector3.Dot(delta, camera.transform.right),
+            Vector3.Dot(delta, camera.transform.up),
+            1f
+        ) * 1.01f; // 1.01f factor to ensure that it covers the screen
         underwater_screen.transform.forward = camera.transform.forward;
 
         // Make the sky the same color as the obscuring object

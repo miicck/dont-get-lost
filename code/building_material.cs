@@ -107,9 +107,9 @@ public class building_material : item
         Vector3 ud;
         public void key_rotate()
         {
-            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
-            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
-            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
+            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.right));
+            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.forward));
+            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.up));
 
             if (Input.GetKeyDown(KeyCode.D)) to_weld.transform.RotateAround(pivot.transform.position, -fd, 50);
             else if (Input.GetKeyDown(KeyCode.A)) to_weld.transform.RotateAround(pivot.transform.position, fd, 50);
@@ -142,7 +142,7 @@ public class building_material : item
 
             Gizmos.matrix = Matrix4x4.Rotate(weld_rotation);
             Gizmos.DrawWireCube(weld_location, Vector3.one);
-            Gizmos.matrix = Matrix4x4.identity;    
+            Gizmos.matrix = Matrix4x4.identity;
         }
     }
 
@@ -217,9 +217,24 @@ public class building_material : item
         return ret;
     }
 
+    void make_placeholder()
+    {
+        // Create a transparent, non-colliding placeholder version of this object
+        rigidbody.detectCollisions = false;
+        Destroy(rigidbody);
+        foreach (var r in GetComponentsInChildren<Renderer>())
+            r.material = Resources.Load<Material>("materials/building_placeholder");
+        foreach (var c in GetComponentsInChildren<Collider>())
+        {
+            c.enabled = false;
+            Destroy(c);
+        }
+    }
+
     building_material spawn_from_inventory_and_fix_to(building_material other, RaycastHit hit)
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
+        spawned.make_placeholder();
         snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
         snap_point snap_to = other.closest_to_ray(player.current.camera_ray());
 
@@ -242,6 +257,7 @@ public class building_material : item
     building_material spawn_from_inventory_and_fix_at(RaycastHit hit)
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
+        spawned.make_placeholder();
         snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
 
         if (snap_from == null)
@@ -269,7 +285,8 @@ public class building_material : item
             building_material found_same = utils.raycast_for_closest<building_material>(
                 player.current.camera_ray(), out same_hit, BUILD_RANGE, (b) => b.name == name);
             if (found_same != null)
-                Destroy(found_same.gameObject);
+                if (player.current.inventory.add(name, 1))
+                    Destroy(found_same.gameObject);
             return USE_RESULT.COMPLETE;
         }
 
@@ -280,17 +297,11 @@ public class building_material : item
         RaycastHit hit;
         var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, BUILD_RANGE);
         if (bm != null)
-        {
             spawned = spawn_from_inventory_and_fix_to(bm, hit);
-            return USE_RESULT.UNDERWAY;
-        }
-
-        if (Physics.Raycast(player.current.camera_ray(), out hit, BUILD_RANGE))
-        {
+        else if (Physics.Raycast(player.current.camera_ray(), out hit, BUILD_RANGE))
             spawned = spawn_from_inventory_and_fix_at(hit);
-            return USE_RESULT.UNDERWAY;
-        }
 
+        if (spawned != null)            return USE_RESULT.UNDERWAY;
         return USE_RESULT.COMPLETE;
     }
 
@@ -304,6 +315,7 @@ public class building_material : item
             // Cancel build on right click
             player.current.inventory.add(spawned.name, 1);
             Destroy(spawned.gameObject);
+            spawned = null;
             return USE_RESULT.COMPLETE;
         }
 
@@ -311,5 +323,16 @@ public class building_material : item
         return USE_RESULT.UNDERWAY;
     }
 
-    public override void on_use_end(player.USE_TYPE use_type) { spawned = null; }
+    public override void on_use_end(player.USE_TYPE use_type)
+    {
+        if (spawned != null)
+        {
+            // Create a proper version of the spawned object
+            var created = spawn(spawned.name, spawned.transform.position, spawned.transform.rotation);
+            created.rigidbody.isKinematic = true;
+            Destroy(spawned.gameObject);
+        }
+
+        spawned = null;
+    }
 }
