@@ -98,10 +98,7 @@ public class item : MonoBehaviour
         // Attempt to pick up the item (put it in the player
         // inventory/destroy in-game representation)
         if (player.current.inventory.add(name, 1))
-        {
-            popup_message.create("+ 1 " + name);
             Destroy(this.gameObject);
-        }
     }
 
     //#################//

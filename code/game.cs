@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class game : MonoBehaviour
 {
+    public const float MIN_RENDER_RANGE = 0f;
+
     public static player player { get; private set; }
 
     public static void load_world(string path)
@@ -27,7 +29,7 @@ public class game : MonoBehaviour
         get { return _render_range_target; }
         set
         {
-            if (value < chunk.SIZE) value = chunk.SIZE;
+            if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
             _render_range_target = value;
         }
     }
@@ -40,7 +42,7 @@ public class game : MonoBehaviour
         private set
         {
             if (_render_range == value) return;
-            if (value < chunk.SIZE) value = chunk.SIZE;
+            if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
             _render_range = value;
             player.update_render_range();
         }

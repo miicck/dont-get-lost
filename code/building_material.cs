@@ -235,7 +235,7 @@ public class building_material : item
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
-        snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
+        snap_point snap_from = spawned.snap_points[0];
         snap_point snap_to = other.closest_to_ray(player.current.camera_ray());
 
         if (snap_from == null || snap_to == null)
@@ -258,7 +258,7 @@ public class building_material : item
     {
         var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
-        snap_point snap_from = spawned.closest_to_ray(player.current.camera_ray());
+        snap_point snap_from = spawned.snap_points[0];
 
         if (snap_from == null)
         {
@@ -277,13 +277,23 @@ public class building_material : item
     }
 
     building_material spawned;
+    static float last_time_placing_blueprint;
 
-    public override bool allow_right_click_held_down() { return true; }
+    public override bool allow_right_click_held_down()
+    {
+        return true;
+    }
 
     public override use_result on_use_start(player.USE_TYPE use_type)
     {
         if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
         {
+            // Stop cancelling a build with right-click from immediately 
+            // destroying the object we were welding to during the build.
+            const float WAIT_AFTER_BUILD = 0.25f;
+            if (Time.realtimeSinceStartup < last_time_placing_blueprint + WAIT_AFTER_BUILD)
+                return use_result.complete;
+
             // Right click destroys items of the same kind
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
@@ -324,6 +334,7 @@ public class building_material : item
         }
 
         spawned.weld.key_rotate();
+        last_time_placing_blueprint = Time.realtimeSinceStartup;
         return use_result.underway_allows_none;
     }
 
@@ -338,5 +349,6 @@ public class building_material : item
         }
 
         spawned = null;
+        player.current.re_equip();
     }
 }

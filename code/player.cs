@@ -8,7 +8,7 @@ public class player : MonoBehaviour
     // CONSTANTS //
     //###########//
 
-    public const float HEIGHT = 1.8f;
+    public const float HEIGHT = 1.5f;
     public const float WIDTH = 0.45f;
     public const float GRAVITY = 10f;
     public const float BOUYANCY = 5f;
@@ -70,7 +70,9 @@ public class player : MonoBehaviour
 
         // Set the controller position so it doesn't snap us back to 0,0,0 immediately
         Vector3 pos = new Vector3(floats[0], floats[1], floats[2]);
+        transform.position = pos;
         controller.transform.position = pos;
+        controller.enabled = true;
     }
 
     //#################//
@@ -79,8 +81,8 @@ public class player : MonoBehaviour
 
     void Update()
     {
-        // Toggle menus only if not using an item
-        if (current_item_use == USE_TYPE.NOT_USING)
+        // Toggle menus only if not using an item/the map isn't open
+        if (current_item_use == USE_TYPE.NOT_USING && !map_open)
         {
             // Toggle inventory on E
             if (Input.GetKeyDown(KeyCode.E))
@@ -91,13 +93,14 @@ public class player : MonoBehaviour
                 Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
             }
 
-            // Toggle the map view on M
-            if (Input.GetKeyDown(KeyCode.M))
-                map_open = !map_open;
-
             // Run the quickbar equip shortcuts
             run_quickbar_shortcuts();
         }
+
+        // Toggle the map view on M
+        if (current_item_use == USE_TYPE.NOT_USING)
+            if (Input.GetKeyDown(KeyCode.M))
+                map_open = !map_open;
 
         if (map_open)
         {
@@ -152,17 +155,18 @@ public class player : MonoBehaviour
                         inventory.remove(equipped.name, 1);
                         var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
                         spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                        string re_eq_name = equipped.name;
-                        equip(null);
-                        equip(re_eq_name); // Attempt to re-equip from inventory
+                        re_equip();
                     }
 
             // Look around
             if (use_result.allows_look) mouse_look();
         }
 
-        if (use_result.allows_move) move();
-        float_in_water();
+        if (use_result.allows_move)
+        {
+            move();
+            float_in_water();
+        }
     }
 
     private void OnDrawGizmos()
@@ -350,6 +354,19 @@ public class player : MonoBehaviour
         }
     }
 
+    public void re_equip()
+    {
+        // Re-equip the current item if we still have one in inventory
+        if (equipped == null) equip(null);
+        else
+        {
+            string re_eq_name = equipped.name;
+            Destroy(equipped.gameObject);
+            equip(null);
+            equip(re_eq_name);
+        }
+    }
+
     void toggle_equip(string item)
     {
         if (equipped?.name == item) equip(null);
@@ -396,9 +413,18 @@ public class player : MonoBehaviour
         else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
-        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
-        else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
-        else velocity -= Vector3.Project(velocity, camera.transform.right);
+        if (map_open)
+        {
+            if (Input.GetKey(KeyCode.D)) transform.Rotate(0, ROTATION_SPEED * Time.deltaTime, 0);
+            else if (Input.GetKey(KeyCode.A)) transform.Rotate(0, -ROTATION_SPEED * Time.deltaTime, 0);
+            else velocity -= Vector3.Project(velocity, camera.transform.right);
+        }
+        else
+        {
+            if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+            else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
+            else velocity -= Vector3.Project(velocity, camera.transform.right);
+        }
 
         float xz = new Vector3(velocity.x, 0, velocity.z).magnitude;
         if (xz > SPEED)
@@ -592,6 +618,7 @@ public class player : MonoBehaviour
         controller.radius = WIDTH / 2;
         controller.center = new Vector3(0, controller.height / 2f, 0);
         controller.skinWidth = controller.radius / 10f;
+        controller.enabled = false; // Start disabled, so it doesn't snap the player to 0,0,0
 
         // Set the hand location so it is one meter
         // away from the camera, 80% of the way across 
@@ -610,9 +637,8 @@ public class player : MonoBehaviour
         inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
         inventory_open = false;
 
+        // Player starts with an axe
         inventory.add("axe", 1);
-        inventory.add("log", 1024);
-        inventory.add("planks", 1024);
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
