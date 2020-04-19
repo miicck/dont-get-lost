@@ -206,4 +206,10 @@ public static class utils
         float mils = i / 1000000f;
         return "" + System.Math.Round(mils, 2) + "M";
     }
+
+    public static string capitalize(this string s)
+    {
+        if (s.Length == 0) return s;
+        return char.ToUpper(s[0]) + s.Substring(1);
+    }
 }

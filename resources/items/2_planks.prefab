@@ -135,6 +135,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: 7e814e8fef7057b47bf7ef744171891c, type: 3}
+--- !u!65 &2292200334867980753
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5605174482205182071}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.02, y: 0.02032197, z: 0.027977496}
+  m_Center: {x: 0, y: -0.0000035804705, z: -0.00016974243}
 --- !u!1 &6234869217568158658
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,8 +311,15 @@ PrefabInstance:
       propertyPath: m_Name
       value: planks
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -6860895033569716450, guid: 3a37dec033c0b9f4098115bc4c61b1e4, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 3a37dec033c0b9f4098115bc4c61b1e4, type: 3}
+--- !u!1 &5605174482205182071 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 3a37dec033c0b9f4098115bc4c61b1e4,
+    type: 3}
+  m_PrefabInstance: {fileID: 4533006512899215742}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8904405528604211812 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 3a37dec033c0b9f4098115bc4c61b1e4,

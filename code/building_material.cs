@@ -107,9 +107,9 @@ public class building_material : item
         Vector3 ud;
         public void key_rotate()
         {
-            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.right));
-            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.forward));
-            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.camera.transform.up));
+            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
+            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
+            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
 
             if (Input.GetKeyDown(KeyCode.D)) to_weld.transform.RotateAround(pivot.transform.position, -fd, 50);
             else if (Input.GetKeyDown(KeyCode.A)) to_weld.transform.RotateAround(pivot.transform.position, fd, 50);
@@ -271,7 +271,7 @@ public class building_material : item
         spawned.weld = new weld_info(spawned,
             snap_from,
             hit.point,
-            Quaternion.identity);
+            player.current.transform.rotation);
 
         return spawned;
     }

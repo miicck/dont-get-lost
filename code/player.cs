@@ -71,8 +71,6 @@ public class player : MonoBehaviour
         // Set the controller position so it doesn't snap us back to 0,0,0 immediately
         Vector3 pos = new Vector3(floats[0], floats[1], floats[2]);
         transform.position = pos;
-        controller.transform.position = pos;
-        controller.enabled = true;
     }
 
     //#################//
@@ -91,11 +89,21 @@ public class player : MonoBehaviour
                 crosshairs.enabled = !inventory_open;
                 Cursor.visible = inventory_open;
                 Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
-            }
 
-            // Run the quickbar equip shortcuts
-            run_quickbar_shortcuts();
+                // Find a workbench to interact with
+                if (inventory_open)
+                {
+                    RaycastHit hit;
+                    var wb = utils.raycast_for_closest<workbench>(camera_ray(), out hit, INTERACTION_RANGE);
+                    if (wb != null) current_workbench = wb.inventory;
+                }
+                else current_workbench = null;
+            }
         }
+
+        // Run the quickbar equip shortcuts
+        if (current_item_use == USE_TYPE.NOT_USING && !inventory_open && !map_open)
+            run_quickbar_shortcuts();
 
         // Toggle the map view on M
         if (current_item_use == USE_TYPE.NOT_USING)
@@ -182,6 +190,27 @@ public class player : MonoBehaviour
     const int QUICKBAR_SLOTS_COUNT = 8;
 
     public inventory inventory { get; private set; }
+
+    inventory _current_workbench;
+    inventory current_workbench
+    {
+        get => _current_workbench;
+        set
+        {
+            if (_current_workbench != null)
+                _current_workbench.gameObject.SetActive(false);
+
+            _current_workbench = value;
+            if (_current_workbench != null)
+            {
+                _current_workbench.gameObject.SetActive(true);
+                _current_workbench.GetComponent<crafting_input>().craft_to = inventory;
+                var rt = _current_workbench.GetComponent<RectTransform>();
+                rt.SetParent(inventory.ui_extend_left_point);
+                rt.anchoredPosition = Vector2.zero;
+            }
+        }
+    }
 
     bool inventory_open
     {
@@ -387,10 +416,24 @@ public class player : MonoBehaviour
 
         // Scroll through quickbar items
         float sw = Input.GetAxis("Mouse ScrollWheel");
-        if (sw > 0) ++last_quickbar_slot_accessed;
-        else if (sw < 0) --last_quickbar_slot_accessed;
-        last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
-        if (sw != 0) equip(quickbar_slot(last_quickbar_slot_accessed)?.item);
+
+        if (sw != 0)
+        {
+            for (int attempt = 0; attempt < QUICKBAR_SLOTS_COUNT; ++attempt)
+            {
+                if (sw > 0) ++last_quickbar_slot_accessed;
+                else if (sw < 0) --last_quickbar_slot_accessed;
+                if (last_quickbar_slot_accessed < 0) last_quickbar_slot_accessed = QUICKBAR_SLOTS_COUNT - 1;
+                last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
+
+                var itm = quickbar_slot(last_quickbar_slot_accessed)?.item;
+                if (itm != null)
+                {
+                    equip(itm);
+                    break;
+                }
+            }
+        }
     }
 
     //###########//
@@ -612,14 +655,6 @@ public class player : MonoBehaviour
         RenderSettings.skybox = null;
         camera.backgroundColor = sky_color;
 
-        // Create the player controller
-        controller = gameObject.AddComponent<CharacterController>();
-        controller.height = HEIGHT;
-        controller.radius = WIDTH / 2;
-        controller.center = new Vector3(0, controller.height / 2f, 0);
-        controller.skinWidth = controller.radius / 10f;
-        controller.enabled = false; // Start disabled, so it doesn't snap the player to 0,0,0
-
         // Set the hand location so it is one meter
         // away from the camera, 80% of the way across 
         // the screen and 10% of the way up the screen.
@@ -639,6 +674,7 @@ public class player : MonoBehaviour
 
         // Player starts with an axe
         inventory.add("axe", 1);
+        inventory.add("furnace", 1);
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
@@ -659,6 +695,16 @@ public class player : MonoBehaviour
 
         // Load the player state
         load();
+
+        // Add the player controller as the last thing, so we
+        // don't control the player until everything has loaded
+        // (stops the controller from snapping us back to 0,0,0)
+        controller = gameObject.AddComponent<CharacterController>();
+        controller.height = HEIGHT;
+        controller.radius = WIDTH / 2;
+        controller.center = new Vector3(0, controller.height / 2f, 0);
+        controller.skinWidth = controller.radius / 10f;
+        controller.slopeLimit = 60f;
     }
 
     //################//

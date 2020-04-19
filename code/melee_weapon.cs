@@ -5,6 +5,7 @@ using UnityEngine;
 public class melee_weapon : item
 {
     public float swing_time = 0.25f;
+    public float max_forward_in_up = 5f;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
 
@@ -46,7 +47,7 @@ public class melee_weapon : item
             player.current.transform.right
         );
 
-        Vector3 up = player.current.hand.up + player.current.hand.forward * sin;
+        Vector3 up = player.current.hand.up + max_forward_in_up * player.current.hand.forward * sin;
         Vector3 fw = -Vector3.Cross(up,
             player.current.hand.right +
             player.current.hand.forward * fw_amt / 2f);
@@ -60,6 +61,8 @@ public class melee_weapon : item
                     break;
                 }
 
+        if (swing_progress_at_impact > 0)
+            return use_result.underway_allows_none;
         return use_result.underway_allows_all;
     }
 

@@ -8,6 +8,7 @@ public class inventory : MonoBehaviour
     public inventory_slot[] slots { get { return GetComponentsInChildren<inventory_slot>(); } }
 
     public bool is_player_inventory = false;
+    public RectTransform ui_extend_left_point;
 
     public bool add(string item, int count)
     {
