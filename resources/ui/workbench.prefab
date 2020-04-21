@@ -860,6 +860,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_player_inventory: 0
+  ui_extend_left_point: {fileID: 0}
 --- !u!114 &6170414130500368767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -875,6 +876,7 @@ MonoBehaviour:
   options_go_here: {fileID: 2452831592792151156}
   craft_from: {fileID: 3332756938614654552}
   craft_to: {fileID: 0}
+  recipe_group: 0
 --- !u!1 &7261532067787573880
 GameObject:
   m_ObjectHideFlags: 0
