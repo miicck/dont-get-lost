@@ -4,53 +4,53 @@ using UnityEngine;
 
 public class networked_monobehaviour_test : MonoBehaviour
 {
-    class chunk : top_level_networked_monobehaviour
+    class section : network_section
     {
-        int x; int z;
+        int x;
 
         // Set the x and z coordinates
         protected override void on_create(object[] creation_args)
         {
             x = (int)creation_args[0];
-            z = (int)creation_args[1];
-            name = "chunk " + x + " " + z;
+            name = "section " + x;
         }
 
-        // A chunk is compared by it's x and z coordinates
+        // A section is compared by it's x coordinate
         protected override byte[] comparison_bytes()
         {
-            byte[] ret = new byte[sizeof(int) * 2];
-            var x_bytes = System.BitConverter.GetBytes(x);
-            var z_bytes = System.BitConverter.GetBytes(z);
-            System.Buffer.BlockCopy(x_bytes, 0, ret, 0, x_bytes.Length);
-            System.Buffer.BlockCopy(z_bytes, 0, ret, x_bytes.Length, z_bytes.Length);
-            return ret;
+            return System.BitConverter.GetBytes(x);
         }
     }
 
-    class item : networked_monobehaviour
+    class subsection : networked_monobehaviour
     {
 
     }
 
-    void Start()
+    public void start_server()
     {
         server.start(6969);
-        networked_monobehaviour.connect_to_server(server.ip.ToString(), server.port);
     }
 
-    int chunk_count = 0;
-    chunk last_chunk;
+    public void start_client()
+    {
+        networked_monobehaviour.connect_to_server(server.local_ip_address().ToString(), 6969);
+    }
 
-    void Update()
+    Dictionary<int, section> sections = new Dictionary<int, section>();
+    public void load_section(int x)
+    {
+        sections[x] = network_section.create<section>(x);
+    }
+
+    public void add_subsection(int section_x)
+    {
+        networked_monobehaviour.create<subsection>(sections[section_x]);
+    }
+
+    private void Update()
     {
         server.update();
         networked_monobehaviour.update();
-
-        if (Input.GetKeyDown(KeyCode.C))
-            last_chunk = top_level_networked_monobehaviour.create<chunk>(++chunk_count, 0);
-
-        if (Input.GetKeyDown(KeyCode.I))
-            networked_monobehaviour.create<item>(last_chunk);
     }
 }

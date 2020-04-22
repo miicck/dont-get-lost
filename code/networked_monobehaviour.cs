@@ -29,7 +29,19 @@ public abstract class networked_monobehaviour : MonoBehaviour
     protected static int last_local_id = 0;
 
     // Return the networked_monobehaviour parent
-    public networked_monobehaviour net_parent { get; protected set; }
+    networked_monobehaviour _net_parent;
+    public networked_monobehaviour net_parent
+    {
+        get => _net_parent;
+        private set
+        {
+            if (_net_parent != null)
+                throw new System.NotImplementedException("Tried to change a networked_monobehaviour's network parent!");
+
+            _net_parent = value ?? throw new System.Exception("Tried to parent a networked_monobehaviour to null!");
+            transform.SetParent(_net_parent.transform);
+        }
+    }
 
     // Create a networked_monobehaviour of the given type on a client.
     public static T create<T>(networked_monobehaviour parent, params object[] args)
@@ -39,13 +51,12 @@ public abstract class networked_monobehaviour : MonoBehaviour
             throw new System.Exception("Tried to create a child of an unregistered networked_monobehaviour!");
 
         var t = new GameObject().AddComponent<T>();
-        t.transform.SetParent(parent.transform);
         t.net_parent = parent;
 
         // Assign a unique negative id
         t.network_id = --last_local_id;
 
-        // Initialization
+        // Client-side initialization
         t.on_create(args);
 
         // This object is being newly added as a child 
@@ -56,6 +67,18 @@ public abstract class networked_monobehaviour : MonoBehaviour
         t.send_message(server.message_types.CREATE_NEW);
 
         return t;
+    }
+
+    // Create a networked_monobheaviour on a the client, based on
+    // instructions sent by the server
+    static void create_from_network(int type_id, int network_id, int parent_id,
+        byte[] buffer, int serialization_offset, int serialization_length)
+    {
+        System.Type type = get_networked_type_by_id(type_id);
+        var nm = (networked_monobehaviour)new GameObject().AddComponent(type);
+        nm.network_id = network_id;
+        nm.net_parent = networked_behaviours[parent_id];
+        nm.deserialize(buffer, serialization_offset, serialization_length);
     }
 
     protected virtual void send_message(byte message_type)
@@ -97,15 +120,16 @@ public abstract class networked_monobehaviour : MonoBehaviour
     // Called when the object is created
     protected virtual void on_create(object[] creation_args) { }
 
-    // Serialize this objects properties into bytes
-    // virtual, because it is a reasonable use case 
+    // Serialize this objects properties into bytes.
+    // Virtual, because it is a reasonable use case 
     // for a networked_monobehaviour to simply exist
     // and not contain any serialized infromation
-    // (for example as a top-level container).
+    // (a network_section, for example).
     protected virtual byte[] serialize() { return null; }
 
-    // Deserialize this objects properties from bytes
-    protected virtual void deserialize(byte[] bytes) { }
+    // Deserialize this objects properties from the given bytes
+    // starting at offset and continuing for count bytes.
+    protected virtual void deserialize(byte[] bytes, int offset, int count) { }
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(networked_monobehaviour), true)]
@@ -164,6 +188,8 @@ public abstract class networked_monobehaviour : MonoBehaviour
         return networked_types_by_id[id];
     }
 
+    public static bool connected { get { return tcp != null; } }
+
     // The TCP connection to the server
     static System.Net.Sockets.NetworkStream tcp;
     public static void connect_to_server(string host, int port)
@@ -177,9 +203,47 @@ public abstract class networked_monobehaviour : MonoBehaviour
     static void log(string message)
     {
         if (logfile == null)
-            logfile = new System.IO.StreamWriter(Application.persistentDataPath + "/client.log");
+        {
+            int n = 0;
+            string fn = Application.persistentDataPath + "/client.log";
+            while (System.IO.File.Exists(fn))
+                fn = Application.persistentDataPath + "/client_" + (++n) + ".log";
+            logfile = new System.IO.StreamWriter(fn);
+        }
         logfile.WriteLine(message);
         logfile.Flush();
+    }
+
+    static void deserialize_tree(network_section section,
+        int serialization_offset, int serialization_length)
+    {
+        bool first = true;
+        int offset = serialization_offset;
+        int end = serialization_offset + serialization_length;
+        while (offset < end)
+        {
+            int length = System.BitConverter.ToInt32(buffer, offset);
+            int id = System.BitConverter.ToInt32(buffer, offset + sizeof(int));
+            int parent_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 2);
+            int type_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 3);
+
+            if (first)
+            {
+                // The very first serialization reccived from the 
+                // server will is that of the section itself.
+                section.network_id = id;
+                section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
+                first = false;
+            }
+            else
+            {
+                // This is a decendant of the section and so 
+                // needs creating as well as deseriailizing.
+                create_from_network(type_id, id, parent_id, buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
+            }
+
+            offset += length;
+        }
     }
 
     static void process_reply(byte message_type, int network_id, int message_offset, int message_length)
@@ -191,24 +255,15 @@ public abstract class networked_monobehaviour : MonoBehaviour
 
         switch (message_type)
         {
-            case server.reply_types.TOP_LEVEL_DOESNT_EXIST:
-                nm.send_message(server.message_types.CREATE_NEW_TOP_LEVEL);
+            case server.reply_types.SECTION_DOESNT_EXIST:
+                nm.send_message(server.message_types.CREATE_NEW_SECTION);
                 break;
 
-            case server.reply_types.TOP_LEVEL_EXISTS:
-
-                // Parse the id found on the server
-                int id = System.BitConverter.ToInt32(buffer, message_offset);
-
-                // Parse the serialization found on the server
-                byte[] serialization = new byte[message_length - sizeof(int)];
-
-                // Apply the id and serialization
-                nm.network_id = id;
-                nm.deserialize(serialization);
+            case server.reply_types.SECTION_EXISTS:
+                deserialize_tree((network_section)nm, message_offset, message_length);
                 break;
 
-            case server.reply_types.TOP_LEVEL_CREATED:
+            case server.reply_types.SECTION_CREATED:
                 nm.network_id = System.BitConverter.ToInt32(buffer, message_offset);
                 break;
 
@@ -249,6 +304,8 @@ public abstract class networked_monobehaviour : MonoBehaviour
 
     public static void update()
     {
+        if (!connected) return;
+
         while (tcp.DataAvailable)
         {
             int bytes_read = tcp.Read(buffer, 0, buffer.Length);
@@ -263,26 +320,28 @@ public abstract class networked_monobehaviour : MonoBehaviour
     }
 }
 
-public abstract class top_level_networked_monobehaviour : networked_monobehaviour
+// All networked_monobehaviours should be children of a network_section. These sections
+// can be loaded from the server, along with their children, and are used to define which
+// parts of the world should be serialized to this client over the network.
+public abstract class network_section : networked_monobehaviour
 {
-    // Bytes used to compare top-level networked monobehaviours
+    // Bytes used to compare network_sections on the server, to check if this
+    // network section is already open on the server, or if it needs creating.
     protected abstract byte[] comparison_bytes();
 
     public static T create<T>(params object[] args)
-        where T : top_level_networked_monobehaviour
+        where T : network_section
     {
         var t = new GameObject().AddComponent<T>();
-        t.net_parent = null;
 
         // Assign a unique negative id
         t.network_id = --last_local_id;
 
-        // Carry out initialization
+        // Carry out client-side initialization
         t.on_create(args);
 
-        // This is a top-level object, which means it might already
-        // exist on the server; we need to check
-        t.send_message(server.message_types.CHECK_TOP_LEVEL, t.comparison_bytes());
+        // Ask the server to check if this network_section exists
+        t.send_message(server.message_types.CHECK_SECTION, t.comparison_bytes());
 
         return t;
     }
@@ -292,11 +351,11 @@ public abstract class top_level_networked_monobehaviour : networked_monobehaviou
         switch (message_type)
         {
             // Request the server make a new object of this type
-            case server.message_types.CREATE_NEW_TOP_LEVEL:
+            case server.message_types.CREATE_NEW_SECTION:
 
                 // Send the server the id of my parent and my serialization
                 var comp_bytes = comparison_bytes();
-                send_message(server.message_types.CREATE_NEW_TOP_LEVEL, utils.concat_buffers(
+                send_message(server.message_types.CREATE_NEW_SECTION, utils.concat_buffers(
                     System.BitConverter.GetBytes(get_networked_type_id(GetType())), // Type id
                     System.BitConverter.GetBytes(comp_bytes.Length),                // Length of comparison bytes
                     comparison_bytes(),                                             // Comparision bytes

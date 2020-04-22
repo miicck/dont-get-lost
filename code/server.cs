@@ -4,13 +4,26 @@ using UnityEngine;
 
 public static class server
 {
-    public static bool started { get; private set; }
+    public static bool started { get => tcp != null; }
     public static System.Net.IPAddress ip { get; private set; }
     public static int port { get; private set; }
 
     static System.Net.Sockets.TcpListener tcp;
 
     public static void start(int port)
+    {
+        var address = local_ip_address();
+
+        // Create and start the listener
+        tcp = new System.Net.Sockets.TcpListener(address, port);
+        server.ip = address;
+        server.port = port;
+        tcp.Start();
+
+        Debug.Log("Server started at " + address + ":" + port);
+    }
+
+    public static System.Net.IPAddress local_ip_address()
     {
         // Find the local ip address to listen on
         var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
@@ -25,14 +38,7 @@ public static class server
         if (address == null)
             throw new System.Exception("No network adapters found!");
 
-        // Create and start the listener
-        tcp = new System.Net.Sockets.TcpListener(address, port);
-        server.ip = address;
-        server.port = port;
-        tcp.Start();
-
-        Debug.Log("Server started at " + address + ":" + port);
-        started = true;
+        return address;
     }
 
     static System.IO.StreamWriter logfile;
@@ -51,24 +57,24 @@ public static class server
     static Dictionary<int, representation> representations
         = new Dictionary<int, representation>();
 
-    static Dictionary<int, top_level_representation> top_level_representations
-        = new Dictionary<int, top_level_representation>();
+    static Dictionary<int, section_representation> section_representations
+        = new Dictionary<int, section_representation>();
 
     static byte[] buffer = new byte[1024];
 
-    // Get a top level representation from the comparison bytes
+    // Get a section_representation from the comparison bytes
     // stored at the given location in the buffer
-    static top_level_representation find_in_top_level(int bytes_start, int length)
+    static section_representation find_section(int comp_bytes_start, int comp_bytes_length)
     {
-        foreach (var kv in top_level_representations)
+        foreach (var kv in section_representations)
         {
             var r = kv.Value;
-            if (r.comp_bytes.Length != length)
+            if (r.comp_bytes.Length != comp_bytes_length)
                 continue;
 
             bool same = true;
-            for (int i = 0; i < length; ++i)
-                if (r.comp_bytes[i] != buffer[bytes_start + i])
+            for (int i = 0; i < comp_bytes_length; ++i)
+                if (r.comp_bytes[i] != buffer[comp_bytes_start + i])
                 {
                     same = false;
                     break;
@@ -104,29 +110,26 @@ public static class server
 
         switch (message_type)
         {
-            case message_types.CHECK_TOP_LEVEL:
+            case message_types.CHECK_SECTION:
                 if (network_id >= 0)
-                    throw new System.Exception("Should not be checking top level for registered objects!");
+                    throw new System.Exception("Should not be checking for registered sections!");
 
-                top_level_representation found = find_in_top_level(message_offset, message_length);
+                section_representation found = find_section(message_offset, message_length);
                 if (found == null)
                 {
-                    // No top-level object found, let the client know it's
-                    // safe to go ahead and create one
-                    reply(client, reply_types.TOP_LEVEL_DOESNT_EXIST, network_id, new byte[] { });
+                    // No section found, let the client know it's safe to go ahead and create it
+                    reply(client, reply_types.SECTION_DOESNT_EXIST, network_id, new byte[] { });
                 }
                 else
                 {
-                    // This top-level object exists, send the client it's
-                    // serialization and id
-                    reply(client, reply_types.TOP_LEVEL_EXISTS, network_id, utils.concat_buffers(
-                        System.BitConverter.GetBytes(found.id),
-                        found.serialization
+                    // Section exists, send the client the neccassary information to reconstruct it
+                    reply(client, reply_types.SECTION_EXISTS, network_id, utils.concat_buffers(
+                        found.tree_serialization()
                     ));
                 }
                 break;
 
-            case message_types.CREATE_NEW_TOP_LEVEL:
+            case message_types.CREATE_NEW_SECTION:
 
                 if (network_id >= 0)
                     throw new System.Exception("Registered objects should not send CREATE_NEW messages!");
@@ -148,11 +151,11 @@ public static class server
                 System.Buffer.BlockCopy(buffer, message_offset + 2 * sizeof(int) + comp_bytes_length,
                     init_serialization, 0, init_serialization.Length);
 
-                // Create the top level representation
-                var tl_rep = top_level_representation.create(type, init_serialization, init_comp_bytes);
+                // Create the section representation
+                var tl_rep = section_representation.create(type, init_serialization, init_comp_bytes);
 
                 // Reply with the newly-created id
-                reply(client, reply_types.TOP_LEVEL_CREATED, network_id, utils.concat_buffers(
+                reply(client, reply_types.SECTION_CREATED, network_id, utils.concat_buffers(
                     System.BitConverter.GetBytes(tl_rep.id)
                 ));
 
@@ -172,7 +175,7 @@ public static class server
 
                 // Parse the initial serialization from the message payload
                 byte[] serialization = new byte[message_length - 2 * sizeof(int)];
-                System.Buffer.BlockCopy(buffer, message_length + 2 * sizeof(int), 
+                System.Buffer.BlockCopy(buffer, message_length + 2 * sizeof(int),
                     serialization, 0, serialization.Length);
 
                 // Create the representation of this networked object
@@ -219,6 +222,8 @@ public static class server
 
     public static void update()
     {
+        if (!started) return;
+
         // Check for pending connection requests
         while (tcp.Pending())
         {
@@ -260,12 +265,16 @@ public static class server
     {
         protected static int last_id = 0;
         public int id { get; protected set; }
+        public int parent_id { get; protected set; }
+        public int type_id { get; protected set; }
         public byte[] serialization { get; protected set; }
 
         public static representation create(System.Type type, int parent_id, byte[] initial_serialization)
         {
             var rep = new GameObject(type.Name).AddComponent<representation>();
             rep.id = ++last_id;
+            rep.parent_id = parent_id;
+            rep.type_id = networked_monobehaviour.get_networked_type_id(type);
             representations[rep.id] = rep;
             rep.serialization = initial_serialization;
             rep.transform.SetParent(representations[parent_id].transform);
@@ -288,48 +297,89 @@ public static class server
 
     }
 
-    // The server-side representation of a top_level_networked_monobehaviour
-    public class top_level_representation : representation
+    // The server-side representation of a network_section
+    public class section_representation : representation
     {
-        public static top_level_representation create(System.Type type, byte[] initial_serialization,
+        public static section_representation create(System.Type type, byte[] initial_serialization,
             byte[] initial_comp_bytes)
         {
-            var rep = new GameObject(type.Name).AddComponent<top_level_representation>();
+            var rep = new GameObject(type.Name).AddComponent<section_representation>();
             rep.id = ++last_id;
+            rep.type_id = networked_monobehaviour.get_networked_type_id(type);
             representations[rep.id] = rep;
-            top_level_representations[rep.id] = rep;
+            section_representations[rep.id] = rep;
             rep.serialization = initial_serialization;
             rep.comp_bytes = initial_comp_bytes;
             rep.transform.SetParent(server_representation);
-            log("Created top level representation " + rep.id);
+            log("Created section representation " + rep.id);
             return rep;
         }
 
         public byte[] comp_bytes { get; private set; }
+
+        // Get the serialization of this and all child objects, the
+        // serialization is guaranteed to be in order of depth. The
+        // first serialization is the section representation itself, then
+        // it's children and so on. This is so that, when we deserialize,
+        // the parent for each deserialized object will already have been
+        // deserialized and available to be assigned as the parent.
+        public byte[] tree_serialization()
+        {
+            List<byte> ser = new List<byte>();
+
+            List<representation> to_serialize = new List<representation> { this };
+
+            while (to_serialize.Count > 0)
+            {
+                List<representation> children = new List<representation>();
+
+                foreach (var r in to_serialize)
+                {
+                    // The serialization for this representation, with enough info
+                    // to completely reconstruct it client-side
+                    int length = sizeof(int) * 4 + r.serialization.Length;
+                    ser.AddRange(System.BitConverter.GetBytes(length));      // The length of the serialization
+                    ser.AddRange(System.BitConverter.GetBytes(r.id));        // id
+                    ser.AddRange(System.BitConverter.GetBytes(r.parent_id)); // parents id
+                    ser.AddRange(System.BitConverter.GetBytes(r.type_id));   // type id
+                    ser.AddRange(r.serialization);                           // type-specific serialization
+
+                    // Remember the children, they are next up for serialization
+                    foreach (Transform t in r.transform)
+                    {
+                        var c = t.GetComponent<representation>();
+                        if (c != null)
+                            children.Add(c);
+                    }
+                }
+
+                to_serialize = children;
+            }
+
+            return ser.ToArray();
+        }
     }
 
     // The types of messages sent to the server
     public static class message_types
     {
-        // Check if a top-level networked_monobehaviour exists
-        // if so, return it's unique id and serialization.
-        public const byte CHECK_TOP_LEVEL = 101;
+        // Request a check for section existance
+        public const byte CHECK_SECTION = 101;
 
-        // Create a new networked_monobehaviour on the server
-        // and return it's unique id.
+        // Request an id for a newly-created object
         public const byte CREATE_NEW = 102;
-        public const byte CREATE_NEW_TOP_LEVEL = 103;
+        public const byte CREATE_NEW_SECTION = 103;
     }
 
     // The types of reply from the server
     public static class reply_types
     {
-        // Replies to query for top level objects
-        public const byte TOP_LEVEL_EXISTS = 101;
-        public const byte TOP_LEVEL_DOESNT_EXIST = 102;
+        // Replies to query for section existance
+        public const byte SECTION_EXISTS = 101;
+        public const byte SECTION_DOESNT_EXIST = 102;
 
-        // Replies to confirm creation objects
-        public const byte TOP_LEVEL_CREATED = 103;
+        // Replies to confirm creation of objects
         public const byte CREATED = 104;
+        public const byte SECTION_CREATED = 103;
     }
 }
