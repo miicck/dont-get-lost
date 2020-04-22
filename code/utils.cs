@@ -212,22 +212,4 @@ public static class utils
         if (s.Length == 0) return s;
         return char.ToUpper(s[0]) + s.Substring(1);
     }
-
-    // Concatinate byte arrays
-    public static byte[] concat_buffers(params byte[][] buffers)
-    {
-        int tot_length = 0;
-        for (int i = 0; i < buffers.Length; ++i)
-            tot_length += buffers[i].Length;
-
-        int offset = 0;
-        byte[] ret = new byte[tot_length];
-        for (int i=0; i<buffers.Length; ++i)
-        {
-            System.Buffer.BlockCopy(buffers[i], 0, ret, offset, buffers[i].Length);
-            offset += buffers[i].Length;
-        }
-
-        return ret;
-    }
 }
