@@ -7,12 +7,27 @@ public class networked_monobehaviour_test : MonoBehaviour
     class section : networked.section
     {
         int x;
+        new Renderer renderer;
 
         // Set the x and z coordinates
-        protected override void on_create(object[] creation_args)
+        protected override void on_create()
         {
-            x = (int)creation_args[0];
             name = "section " + x;
+
+            transform.position = new Vector3(2 * x - 10, 0, 0);
+
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            q.transform.SetParent(transform);
+            q.transform.localPosition = new Vector3(0, 0, 0.1f);
+            q.transform.localScale = new Vector3(1, 10, 1);
+            renderer = q.GetComponent<Renderer>();
+            renderer.material = new Material(Shader.Find("Unlit/Color"));
+            renderer.material.color = Color.white;
+        }
+
+        public override void section_id_initialize(params object[] section_id_init_args)
+        {
+            x = (int)section_id_init_args[0];
         }
 
         // A section is identified by it's x coordinate
@@ -24,7 +39,57 @@ public class networked_monobehaviour_test : MonoBehaviour
 
     class subsection : networked
     {
+        new Renderer renderer;
 
+        protected override void on_create()
+        {
+            transform.localPosition = new Vector3(0, 5 - transform.parent.childCount, 0);
+            name = "subsection " + transform.parent.childCount;
+
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            q.transform.SetParent(transform);
+            q.transform.localPosition = Vector3.zero;
+
+            renderer = q.GetComponent<Renderer>();
+            renderer.material = new Material(Shader.Find("Unlit/Color"));
+            renderer.material.color = random_color();
+        }
+
+        protected override byte[] serialize()
+        {
+
+            // Serialize the color of this subsection
+            return concat_buffers(
+                System.BitConverter.GetBytes(renderer.material.color.r),
+                System.BitConverter.GetBytes(renderer.material.color.g),
+                System.BitConverter.GetBytes(renderer.material.color.b)
+            );
+        }
+
+        protected override void deserialize(byte[] bytes, int offset, int count)
+        {
+            // Deserialize the color of this subsection
+            renderer.material.color = new Color(
+                System.BitConverter.ToSingle(bytes, offset),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float)),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2),
+                renderer.material.color.a
+            );
+        }
+
+        Color random_color()
+        {
+            return new Color(
+                Random.Range(0, 1f),
+                Random.Range(0, 1f),
+                Random.Range(0, 1f)
+            );
+        }
+
+        public void randomize_color()
+        {
+            renderer.material.color = random_color();
+        }
     }
 
     public void start_server()
@@ -52,5 +117,13 @@ public class networked_monobehaviour_test : MonoBehaviour
     {
         networked.server.update();
         networked.client.update();
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            RaycastHit hit;
+            var ss = utils.raycast_for_closest<subsection>(
+                Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+            if (ss != null) ss.randomize_color();
+        }
     }
 }
