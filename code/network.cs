@@ -226,120 +226,6 @@ public abstract class networked : MonoBehaviour
 
 
 
-    //###########//
-    // UTILITIES //
-    //###########//
-
-
-
-    /// <summary>
-    /// The types of messages that can be sent from a client.
-    /// </summary>
-    public enum CLIENT_MSG : byte
-    {
-        // Request a check for section existance
-        CHECK_SECTION = 1, // Start numbering at 1, so erroneous 0's error out
-
-        // Request an id for a newly-created object
-        CREATE_NEW,
-        CREATE_NEW_SECTION,
-
-        // Send a serialization update
-        SERIALIZATION_UPDATE,
-    }
-
-    /// <summary>
-    /// The types of reply that can be sent from the server.
-    /// </summary>
-    public enum SERVER_MSG : byte
-    {
-        // Replies to query for section existance
-        SECTION_EXISTS = 1,  // Start numbering at 1, so erroneous 0's error out
-        SECTION_DOESNT_EXIST,
-
-        // Replies to confirm creation of objects
-        CREATION_SUCCESS,
-        SECTION_CREATION_SUCCESS,
-
-        // Messages to inform clients about the create of objects
-        NEW_CREATION,
-
-        // A serialization update needs to be applied
-        SERIALIZATION_UPDATE,
-    }
-
-    /// <summary>
-    /// Concatinate the given byte arrays into a single byte array.
-    /// </summary>
-    /// <param name="buffers">Arrays to concatinate.</param>
-    /// <returns></returns>
-    public static byte[] concat_buffers(params byte[][] buffers)
-    {
-        int tot_length = 0;
-        for (int i = 0; i < buffers.Length; ++i)
-            tot_length += buffers[i].Length;
-
-        int offset = 0;
-        byte[] ret = new byte[tot_length];
-        for (int i = 0; i < buffers.Length; ++i)
-        {
-            System.Buffer.BlockCopy(buffers[i], 0, ret, offset, buffers[i].Length);
-            offset += buffers[i].Length;
-        }
-
-        return ret;
-    }
-
-    static Dictionary<int, System.Type> networked_types_by_id;
-    static Dictionary<System.Type, int> networked_ids_by_type;
-
-    /// <summary>
-    /// Load the library of networked types, indexed by uniquely defined integers.
-    /// </summary>
-    static void load_type_ids()
-    {
-        networked_types_by_id = new Dictionary<int, System.Type>();
-        networked_ids_by_type = new Dictionary<System.Type, int>();
-
-        // Get all implementations of networked_object that exist in the assembely
-        List<System.Type> types = new List<System.Type>();
-        var asm = System.Reflection.Assembly.GetAssembly(typeof(networked));
-        foreach (var t in asm.GetTypes())
-            if (t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(networked)))
-                types.Add(t);
-
-        // Ensure types are in the same order across clients
-        types.Sort((t1, t2) => string.Compare(t1.FullName, t2.FullName, false));
-        for (int i = 0; i < types.Count; ++i)
-        {
-            networked_types_by_id[i] = types[i];
-            networked_ids_by_type[types[i]] = i;
-        }
-    }
-
-    /// <summary>
-    /// Get the unique id of a particular networked type.
-    /// </summary>
-    /// <param name="type">The type to retrieve the id of.</param>
-    /// <returns></returns>
-    public static int get_networked_type_id(System.Type type)
-    {
-        if (networked_ids_by_type == null) load_type_ids();
-        return networked_ids_by_type[type];
-    }
-
-    /// <summary>
-    /// Get a networked type by it's unique id.
-    /// </summary>
-    /// <param name="id">The id of the type to retrieve.</param>
-    /// <returns></returns>
-    public static System.Type get_networked_type_by_id(int id)
-    {
-        if (networked_types_by_id == null) load_type_ids();
-        return networked_types_by_id[id];
-    }
-
-
 
     //########//
     // CLIENT //
@@ -358,41 +244,22 @@ public abstract class networked : MonoBehaviour
         public static bool connected { get { return tcp != null; } }
 
         /// <summary>
+        /// The TCP data stream to/from the server.
+        /// </summary>
+        static NetworkStream stream;
+
+        /// <summary>
         /// The TCP connection to the server.
         /// </summary>
-        static System.Net.Sockets.NetworkStream tcp;
+        static TcpClient tcp;
 
         /// <summary>
         /// All of the networked monobehaviours on the client, indexed by network id
         /// </summary>
         static Dictionary<int, networked> networked_behaviours = new Dictionary<int, networked>();
 
-        /// <summary>
-        /// Called when a networked behaviour's id changes.
-        /// </summary>
-        /// <param name="nw">The behaviour whose id is changing.</param>
-        /// <param name="old_id">The id of this behaviour before the change.</param>
-        /// <param name="new_id">The id of this behaviour after the change.</param>
-        public static void on_update_id(networked nw, int old_id, int new_id)
-        {
-            // Update the networked behaviours dictionary
-            networked_behaviours.Remove(old_id);
-
-            if (networked_behaviours.ContainsKey(new_id))
-                throw new System.Exception("networked behaviour with this id already exists!");
-
-            networked_behaviours[new_id] = nw;
-        }
-
-        /// <summary>
-        /// Connect to a server at the given hostname and port.
-        /// </summary>
-        /// <param name="host">Hostname of server.</param>
-        /// <param name="port">Port to connect through.</param>
-        public static void connect_to_server(string host, int port)
-        {
-            tcp = new System.Net.Sockets.TcpClient(host, port).GetStream();
-        }
+        static traffic_monitor sent;
+        static traffic_monitor received;
 
         /// <summary>
         /// The buffer of bytes reccived from the server.
@@ -471,7 +338,11 @@ public abstract class networked : MonoBehaviour
             nm.network_id = network_id;
             nm.net_parent = networked_behaviours[parent_id];
             nm.on_create();
-            nm.deserialize(buffer, serialization_offset, serialization_length);
+            nm.last_serialized = new byte[serialization_length];
+            System.Buffer.BlockCopy(
+                buffer, serialization_offset,
+                nm.last_serialized, 0, serialization_length);
+            nm.deserialize(nm.last_serialized, 0, serialization_length);
         }
 
         /// <summary>
@@ -497,7 +368,8 @@ public abstract class networked : MonoBehaviour
             if (to_send.Length != tot_length)
                 throw new System.Exception("Check calculation of message length!");
 
-            tcp.Write(to_send, 0, to_send.Length);
+            sent.log_bytes(to_send.Length);
+            stream.Write(to_send, 0, to_send.Length);
         }
 
         /// <summary>
@@ -558,23 +430,25 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
-        /// Process a reply from the server which is about the networked object with
+        /// Process a message from the server that is about the networked object with
         /// the specified id.
         /// </summary>
-        /// <param name="reply_type">The type of reply.</param>
-        /// <param name="network_id">The id of the networked object to which the reply is directed.</param>
-        /// <param name="reply_offset">The location of the reply in the buffer.</param>
-        /// <param name="reply_length">The length of the reply in the buffer.</param>
-        static void process_reply(SERVER_MSG reply_type, int network_id, int reply_offset, int reply_length)
+        /// <param name="message_type">The type of message.</param>
+        /// <param name="network_id">The id of the networked object to which the message is directed.</param>
+        /// <param name="msg_offset">The location of the message in the buffer.</param>
+        /// <param name="msg_length">The length of the message in the buffer.</param>
+        static void process_message(SERVER_MSG message_type, int network_id, int msg_offset, int msg_length)
         {
-            switch (reply_type)
+            switch (message_type)
             {
                 case SERVER_MSG.SERIALIZATION_UPDATE:
-                    networked_behaviours[network_id].deserialize(buffer, reply_offset, reply_length);
+                    var nb = networked_behaviours[network_id];
+                    System.Buffer.BlockCopy(buffer, msg_offset, nb.last_serialized, 0, msg_length);
+                    nb.deserialize(nb.last_serialized, 0, msg_length);
                     break;
 
                 case SERVER_MSG.NEW_CREATION:
-                    deserialize_new_creation(network_id, reply_offset, reply_length);
+                    deserialize_new_creation(network_id, msg_offset, msg_length);
                     break;
 
                 case SERVER_MSG.SECTION_DOESNT_EXIST:
@@ -582,19 +456,19 @@ public abstract class networked : MonoBehaviour
                     break;
 
                 case SERVER_MSG.SECTION_EXISTS:
-                    deserialize_tree((section)networked_behaviours[network_id], reply_offset, reply_length);
+                    deserialize_tree((section)networked_behaviours[network_id], msg_offset, msg_length);
                     break;
 
                 case SERVER_MSG.SECTION_CREATION_SUCCESS:
-                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, reply_offset);
+                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, msg_offset);
                     break;
 
                 case SERVER_MSG.CREATION_SUCCESS:
-                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, reply_offset);
+                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, msg_offset);
                     break;
 
                 default:
-                    throw new System.Exception("Unkown reply type: " + reply_type);
+                    throw new System.Exception("Unkown message type: " + message_type);
             }
         }
 
@@ -607,18 +481,18 @@ public abstract class networked : MonoBehaviour
             int offset = 0;
             while (offset < count)
             {
-                // Get the length of this reply (including the message type and the length bytes)
+                // Get the length of this message (including the message type and the length bytes)
                 int message_length = System.BitConverter.ToInt32(buffer, offset);
 
                 // Get the messge type
-                SERVER_MSG reply_type = (SERVER_MSG)buffer[offset + sizeof(int)];
+                SERVER_MSG msg_type = (SERVER_MSG)buffer[offset + sizeof(int)];
 
                 // Get the network id
                 int network_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) + 1);
 
-                // Process just the reply part
+                // Process just the message part
                 int header_length = 2 * sizeof(int) + 1;
-                process_reply(reply_type, network_id,
+                process_message(msg_type, network_id,
                     offset + header_length, message_length - header_length);
 
                 // Shift to next message
@@ -629,6 +503,46 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
+        /// Connect to a server at the given hostname and port.
+        /// </summary>
+        /// <param name="host">Hostname of server.</param>
+        /// <param name="port">Port to connect through.</param>
+        public static void connect_to_server(string host, int port)
+        {
+
+            tcp = new TcpClient(host, port);
+            stream = tcp.GetStream();
+            sent = new traffic_monitor(Time.realtimeSinceStartup);
+            received = new traffic_monitor(Time.realtimeSinceStartup);
+        }
+
+        /// <summary>
+        /// Disconnect from the server (if connected).
+        /// </summary>
+        public static void disconnect()
+        {
+            tcp.Close();
+            tcp = null;
+        }
+
+        /// <summary>
+        /// Called when a networked behaviour's id changes.
+        /// </summary>
+        /// <param name="nw">The behaviour whose id is changing.</param>
+        /// <param name="old_id">The id of this behaviour before the change.</param>
+        /// <param name="new_id">The id of this behaviour after the change.</param>
+        public static void on_update_id(networked nw, int old_id, int new_id)
+        {
+            // Update the networked behaviours dictionary
+            networked_behaviours.Remove(old_id);
+
+            if (networked_behaviours.ContainsKey(new_id))
+                throw new System.Exception("networked behaviour with this id already exists!");
+
+            networked_behaviours[new_id] = nw;
+        }
+
+        /// <summary>
         /// Deal with replies from the server, and update networked
         /// objects correspondingly.
         /// </summary>
@@ -636,17 +550,30 @@ public abstract class networked : MonoBehaviour
         {
             if (!connected) return;
 
-            while (tcp.DataAvailable)
+            while (stream.DataAvailable)
             {
-                int bytes_read = tcp.Read(buffer, 0, buffer.Length);
+                int bytes_read = stream.Read(buffer, 0, buffer.Length);
                 if (bytes_read == buffer.Length)
                     throw new System.Exception("Buffer too small, please implement dynamic resizing!");
 
+                received.log_bytes(bytes_read);
                 process_buffer(bytes_read);
             }
 
             foreach (var kv in networked_behaviours)
                 kv.Value.update();
+
+            sent.log_time(Time.realtimeSinceStartup);
+            received.log_time(Time.realtimeSinceStartup);
+        }
+
+        public static string info()
+        {
+            if (!connected) return "Not connected.";
+            string inf = "Client connected\n";
+            inf += "Traffic:\n    " + sent.usage() + " up\n    " + received.usage() + " down\n";
+            inf += "Objects: " + networked_behaviours.Count;
+            return inf;
         }
     }
 
@@ -663,6 +590,19 @@ public abstract class networked : MonoBehaviour
     /// </summary>
     public static class server
     {
+        // A client connected to the server
+        class client
+        {
+            public TcpClient tcp { get; private set; }
+            public NetworkStream stream { get; private set; }
+
+            public client(TcpClient client)
+            {
+                tcp = client;
+                stream = client.GetStream();
+            }
+        }
+
         /// <summary>
         /// Returns true if the server has been started.
         /// </summary>
@@ -677,49 +617,12 @@ public abstract class networked : MonoBehaviour
         /// <summary>
         /// The tcp listener that the server is listening on.
         /// </summary>
-        static System.Net.Sockets.TcpListener tcp;
-
-        /// <summary>
-        /// Start a server on the local machine.
-        /// </summary>
-        /// <param name="port">The port to listen on.</param>
-        public static void start(int port)
-        {
-            var address = local_ip_address();
-
-            // Create and start the listener
-            tcp = new System.Net.Sockets.TcpListener(address, port);
-            server.port = port;
-            tcp.Start();
-        }
-
-        /// <summary>
-        /// Get the ip address of the local machine, as used by a server.
-        /// </summary>
-        /// <returns></returns>
-        public static System.Net.IPAddress local_ip_address()
-        {
-            // Find the local ip address to listen on
-            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
-            System.Net.IPAddress address = null;
-            foreach (var ip in host.AddressList)
-                if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                {
-                    address = ip;
-                    break;
-                }
-
-            if (address == null)
-                throw new System.Exception("No network adapters found!");
-
-            return address;
-        }
+        static TcpListener tcp;
 
         /// <summary>
         /// The clients currenlty connected to the server.
         /// </summary>
-        static HashSet<System.Net.Sockets.NetworkStream> clients =
-            new HashSet<System.Net.Sockets.NetworkStream>();
+        static HashSet<client> clients = new HashSet<client>();
 
         /// <summary>
         /// Server-side representations of networked objects.
@@ -737,6 +640,25 @@ public abstract class networked : MonoBehaviour
         /// Buffer containing messages from clients.
         /// </summary>
         static byte[] buffer = new byte[1024];
+
+        static traffic_monitor sent;
+        static traffic_monitor received;
+
+        /// <summary>
+        /// Called when a client has been found to have disconnected.
+        /// </summary>
+        /// <param name="c"></param>
+        static void on_disonnect(client c)
+        {
+            // Remove the client from all records
+            clients.Remove(c);
+            foreach (var kv in section_representations)
+                kv.Value.remove_client(c);
+
+            // Close the connection
+            c.stream.Close();
+            c.tcp.Close();
+        }
 
         /// <summary>
         /// Get a section_representation from the section id 
@@ -767,27 +689,35 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
-        /// Send a reply of the predefined type to the given client.
+        /// Send a message to the given client.
         /// </summary>
-        /// <param name="client">Client to send the reply to.</param>
-        /// <param name="reply_type">The type of reply to send.</param>
-        /// <param name="network_id">The network id of the object the reply is about.</param>
+        /// <param name="client">Client to send the message to.</param>
+        /// <param name="mgs_type">The type of message to send.</param>
+        /// <param name="network_id">The network id of the object the message is about.</param>
         /// <param name="payload">The payload to send.</param>
-        static void send_payload(System.Net.Sockets.NetworkStream client,
-            byte reply_type, int network_id, byte[] payload)
+        static void send_payload(client client,
+            byte mgs_type, int network_id, byte[] payload)
         {
-            int reply_length = sizeof(int) * 2 + 1 + payload.Length;
+            int msg_length = sizeof(int) * 2 + 1 + payload.Length;
             byte[] to_send = concat_buffers(
-                    System.BitConverter.GetBytes(reply_length), // Length of message
-                    new byte[] { reply_type },                  // Message type
+                    System.BitConverter.GetBytes(msg_length), // Length of message
+                    new byte[] { mgs_type },                  // Message type
                     System.BitConverter.GetBytes(network_id),   // Network id
                     payload                                     // Payload
             );
 
-            if (to_send.Length != reply_length)
+            if (to_send.Length != msg_length)
                 throw new System.Exception("Check calculation of message length!");
 
-            client.Write(to_send, 0, to_send.Length);
+            sent.log_bytes(to_send.Length);
+            try
+            {
+                client.stream.Write(to_send, 0, to_send.Length);
+            }
+            catch
+            {
+                on_disonnect(client);
+            }
         }
 
         /// <summary>
@@ -798,7 +728,7 @@ public abstract class networked : MonoBehaviour
         /// <param name="network_id">The id of the object the message is about.</param>
         /// <param name="message_offset">The location of the message in the buffer.</param>
         /// <param name="message_length">The length of the message in the buffer.</param>
-        static void process_message(System.Net.Sockets.NetworkStream client,
+        static void process_message(client client,
             CLIENT_MSG message_type, int network_id, int message_offset, int message_length)
         {
             switch (message_type)
@@ -896,7 +826,8 @@ public abstract class networked : MonoBehaviour
                         System.BitConverter.GetBytes(rep.id)
                     ));
 
-                    // Let other clients know that the object was created
+                    // Let other clients know that the object was created (they reccive the new id, as
+                    // these clients will create the corresponding object).
                     foreach (var c in rep.connected_clients())
                         if (c != client)
                             send_payload(c, (byte)SERVER_MSG.NEW_CREATION, rep.id, concat_buffers(
@@ -917,7 +848,7 @@ public abstract class networked : MonoBehaviour
         /// </summary>
         /// <param name="client">The client that sent the bytes.</param>
         /// <param name="count">The number of bytes to process.</param>
-        static void process_buffer(System.Net.Sockets.NetworkStream client, int count)
+        static void process_buffer(client client, int count)
         {
             // The offset is the start of the current message
             int offset = 0;
@@ -945,6 +876,46 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
+        /// Start a server on the local machine.
+        /// </summary>
+        /// <param name="port">The port to listen on.</param>
+        public static void start(int port)
+        {
+            if (started) return;
+            var address = local_ip_address();
+
+            // Create and start the listener
+            tcp = new TcpListener(address, port);
+            server.port = port;
+            tcp.Start();
+
+            sent = new traffic_monitor(Time.realtimeSinceStartup);
+            received = new traffic_monitor(Time.realtimeSinceStartup);
+        }
+
+        /// <summary>
+        /// Get the ip address of the local machine, as used by a server.
+        /// </summary>
+        /// <returns></returns>
+        public static System.Net.IPAddress local_ip_address()
+        {
+            // Find the local ip address to listen on
+            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+            System.Net.IPAddress address = null;
+            foreach (var ip in host.AddressList)
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    address = ip;
+                    break;
+                }
+
+            if (address == null)
+                throw new System.Exception("No network adapters found!");
+
+            return address;
+        }
+
+        /// <summary>
         /// Process messages from clients and send serialization updates.
         /// </summary>
         public static void update()
@@ -953,23 +924,37 @@ public abstract class networked : MonoBehaviour
 
             // Check for pending connection requests
             while (tcp.Pending())
-            {
-                System.Net.Sockets.TcpClient client = tcp.AcceptTcpClient();
-                clients.Add(client.GetStream());
-            }
+                clients.Add(new client(tcp.AcceptTcpClient()));
 
-            // Read stream updates
-            foreach (var c in clients)
+            // Read stream updates (enumerate over new list, so we can modify the connected clients)
+            foreach (var c in new List<client>(clients))
             {
-                while (c.DataAvailable)
+                if (!c.tcp.Connected) continue;
+                while (c.stream.DataAvailable)
                 {
-                    int bytes_read = c.Read(buffer, 0, buffer.Length);
+                    int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
                     if (bytes_read == buffer.Length)
                         throw new System.Exception("Buffer too small, please implement dynamic resizing!");
 
+                    received.log_bytes(bytes_read);
                     process_buffer(c, bytes_read);
                 }
             }
+
+            sent.log_time(Time.realtimeSinceStartup);
+            received.log_time(Time.realtimeSinceStartup);
+        }
+
+        public static string info()
+        {
+            if (!started) return "Not running.";
+
+            string inf = "Listening on " + tcp.LocalEndpoint + "\n";
+            inf += "Traffic:\n    " + sent.usage() + " up\n    " + received.usage() + " down\n";
+            inf += "Clients:" + clients.Count + "\n";
+            inf += "Objects: " + representations.Count +
+                   " (of which " + section_representations.Count + " are sections)";
+            return inf;
         }
 
 
@@ -998,7 +983,7 @@ public abstract class networked : MonoBehaviour
         /// <summary>
         /// The server-side representation of a networked object.
         /// </summary>
-        public class representation : MonoBehaviour
+        class representation : MonoBehaviour
         {
             /// <summary>
             /// The network id of the object this represents.
@@ -1025,7 +1010,7 @@ public abstract class networked : MonoBehaviour
             /// Returns the clients that have need updates about this representation.
             /// </summary>
             /// <returns></returns>
-            public virtual HashSet<System.Net.Sockets.NetworkStream> connected_clients()
+            public virtual List<client> connected_clients()
             {
                 // Recurse upwards to the section representation
                 // and then return it's clients.
@@ -1081,10 +1066,10 @@ public abstract class networked : MonoBehaviour
         /// <summary>
         /// The server-side representation of a network section.
         /// </summary>
-        public class section_representation : representation
+        class section_representation : representation
         {
             public static section_representation create(
-                System.Net.Sockets.NetworkStream client,
+                client client,
                 System.Type type,
                 byte[] initial_serialization,
                 byte[] section_id_bytes)
@@ -1096,7 +1081,7 @@ public abstract class networked : MonoBehaviour
                 rep.serialization = initial_serialization;
                 rep.section_id_bytes = section_id_bytes;
                 rep.transform.SetParent(server_representation);
-                rep.clients = new HashSet<System.Net.Sockets.NetworkStream>() { client };
+                rep.clients = new HashSet<client>() { client };
 
                 representations[rep.id] = rep;
                 section_representations[rep.id] = rep;
@@ -1107,20 +1092,33 @@ public abstract class networked : MonoBehaviour
             /// <summary>
             /// The clients that currently have access to this section.
             /// </summary>
-            HashSet<System.Net.Sockets.NetworkStream> clients;
+            HashSet<client> clients;
 
-            public override HashSet<NetworkStream> connected_clients()
+            /// <summary>
+            /// Return a copy of the list of connected clients.
+            /// </summary>
+            /// <returns></returns>
+            public override List<client> connected_clients()
             {
-                return clients;
+                return new List<client>(clients);
             }
 
             /// <summary>
             /// Register the fact that a client has access to this section.
             /// </summary>
             /// <param name="client">The client to register.</param>
-            public void add_client(System.Net.Sockets.NetworkStream client)
+            public void add_client(client client)
             {
                 clients.Add(client);
+            }
+
+            /// <summary>
+            /// Register the fact that a client no longer has access to this section.
+            /// </summary>
+            /// <param name="client">The client that lost access to this section.</param>
+            public void remove_client(client client)
+            {
+                clients.Remove(client);
             }
 
             /// <summary>
@@ -1173,5 +1171,171 @@ public abstract class networked : MonoBehaviour
                 return ser.ToArray();
             }
         }
+    }
+
+
+
+    //###########//
+    // UTILITIES //
+    //###########//
+
+
+
+    /// <summary>
+    /// The types of messages that can be sent from a client.
+    /// </summary>
+    public enum CLIENT_MSG : byte
+    {
+        // Request a check for section existance
+        CHECK_SECTION = 1, // Start numbering at 1, so erroneous 0's error out
+
+        // Request an id for a newly-created object
+        CREATE_NEW,
+        CREATE_NEW_SECTION,
+
+        // Send a serialization update
+        SERIALIZATION_UPDATE,
+    }
+
+    /// <summary>
+    /// The types of message that can be sent from the server.
+    /// </summary>
+    public enum SERVER_MSG : byte
+    {
+        // Replies to query for section existance
+        SECTION_EXISTS = 1,  // Start numbering at 1, so erroneous 0's error out
+        SECTION_DOESNT_EXIST,
+
+        // Replies to confirm creation of objects
+        CREATION_SUCCESS,
+        SECTION_CREATION_SUCCESS,
+
+        // Messages to inform clients about the create of objects
+        NEW_CREATION,
+
+        // A serialization update needs to be applied
+        SERIALIZATION_UPDATE,
+    }
+
+    /// <summary>
+    /// Class for monitoring network traffic
+    /// </summary>
+    class traffic_monitor
+    {
+        int bytes_since_last;
+        float time_last;
+        float rate;
+        float window_length;
+
+        /// <summary>
+        /// Create a traffic monitor.
+        /// </summary>
+        /// <param name="time">Time in seconds created.</param>
+        /// <param name="smoothing">Amount to smooth calculated rates.</param>
+        public traffic_monitor(float time, float window_length = 0.5f)
+        {
+            time_last = time;
+            this.window_length = window_length;
+        }
+
+        /// <summary>
+        /// Log a time interval, and calculate the rate
+        /// since the last time interval.
+        /// </summary>
+        /// <param name="time">The time to log.</param>
+        public void log_time(float time)
+        {
+            // Don't update rate unless sufficent time has passed
+            if (time - time_last < window_length) return;
+            rate = bytes_since_last / (time - time_last);
+            bytes_since_last = 0;
+            time_last = time;
+        }
+
+        /// <summary>
+        /// Get a string reporting the usage (e.g 124.3 KB/s)
+        /// </summary>
+        /// <returns></returns>
+        public string usage()
+        {
+            if (rate < 1e3f) return System.Math.Round(rate, 2) + " B/s";
+            if (rate < 1e6f) return System.Math.Round(rate / 1e3f, 2) + " KB/s";
+            if (rate < 1e9f) return System.Math.Round(rate / 1e6f, 2) + " MB/s";
+            if (rate < 1e12f) return System.Math.Round(rate / 1e9f, 2) + " GB/s";
+            return "A lot";
+        }
+
+        public void log_bytes(int bytes) { bytes_since_last += bytes; }
+    }
+
+    /// <summary>
+    /// Concatinate the given byte arrays into a single byte array.
+    /// </summary>
+    /// <param name="buffers">Arrays to concatinate.</param>
+    /// <returns></returns>
+    public static byte[] concat_buffers(params byte[][] buffers)
+    {
+        int tot_length = 0;
+        for (int i = 0; i < buffers.Length; ++i)
+            tot_length += buffers[i].Length;
+
+        int offset = 0;
+        byte[] ret = new byte[tot_length];
+        for (int i = 0; i < buffers.Length; ++i)
+        {
+            System.Buffer.BlockCopy(buffers[i], 0, ret, offset, buffers[i].Length);
+            offset += buffers[i].Length;
+        }
+
+        return ret;
+    }
+
+    static Dictionary<int, System.Type> networked_types_by_id;
+    static Dictionary<System.Type, int> networked_ids_by_type;
+
+    /// <summary>
+    /// Load the library of networked types, indexed by uniquely defined integers.
+    /// </summary>
+    static void load_type_ids()
+    {
+        networked_types_by_id = new Dictionary<int, System.Type>();
+        networked_ids_by_type = new Dictionary<System.Type, int>();
+
+        // Get all implementations of networked_object that exist in the assembely
+        List<System.Type> types = new List<System.Type>();
+        var asm = System.Reflection.Assembly.GetAssembly(typeof(networked));
+        foreach (var t in asm.GetTypes())
+            if (t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(networked)))
+                types.Add(t);
+
+        // Ensure types are in the same order across clients
+        types.Sort((t1, t2) => string.Compare(t1.FullName, t2.FullName, false));
+        for (int i = 0; i < types.Count; ++i)
+        {
+            networked_types_by_id[i] = types[i];
+            networked_ids_by_type[types[i]] = i;
+        }
+    }
+
+    /// <summary>
+    /// Get the unique id of a particular networked type.
+    /// </summary>
+    /// <param name="type">The type to retrieve the id of.</param>
+    /// <returns></returns>
+    public static int get_networked_type_id(System.Type type)
+    {
+        if (networked_ids_by_type == null) load_type_ids();
+        return networked_ids_by_type[type];
+    }
+
+    /// <summary>
+    /// Get a networked type by it's unique id.
+    /// </summary>
+    /// <param name="id">The id of the type to retrieve.</param>
+    /// <returns></returns>
+    public static System.Type get_networked_type_by_id(int id)
+    {
+        if (networked_types_by_id == null) load_type_ids();
+        return networked_types_by_id[id];
     }
 }

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class networked_monobehaviour_test : MonoBehaviour
 {
+    public UnityEngine.UI.Text server_info;
+    public UnityEngine.UI.Text client_info;
+    public float network_fps = 60f;
+
     class section : networked.section
     {
         int x;
@@ -14,7 +18,7 @@ public class networked_monobehaviour_test : MonoBehaviour
         {
             name = "section " + x;
 
-            transform.position = new Vector3(2 * x - 10, 0, 0);
+            transform.position = new Vector3(2 * x - 9.5f, 0, 0);
 
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
             q.transform.SetParent(transform);
@@ -57,9 +61,11 @@ public class networked_monobehaviour_test : MonoBehaviour
 
         protected override byte[] serialize()
         {
-
-            // Serialize the color of this subsection
+            // Serialize the position / color of this subsection
             return concat_buffers(
+                System.BitConverter.GetBytes(transform.position.x),
+                System.BitConverter.GetBytes(transform.position.y),
+                System.BitConverter.GetBytes(transform.position.z),
                 System.BitConverter.GetBytes(renderer.material.color.r),
                 System.BitConverter.GetBytes(renderer.material.color.g),
                 System.BitConverter.GetBytes(renderer.material.color.b)
@@ -68,11 +74,18 @@ public class networked_monobehaviour_test : MonoBehaviour
 
         protected override void deserialize(byte[] bytes, int offset, int count)
         {
+            // Deserialize the position of this subsection
+            transform.position = new Vector3(
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 0),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 1),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
+            );
+
             // Deserialize the color of this subsection
             renderer.material.color = new Color(
-                System.BitConverter.ToSingle(bytes, offset),
-                System.BitConverter.ToSingle(bytes, offset + sizeof(float)),
-                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 4),
+                System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 5),
                 renderer.material.color.a
             );
         }
@@ -90,6 +103,11 @@ public class networked_monobehaviour_test : MonoBehaviour
         {
             renderer.material.color = random_color();
         }
+    }
+
+    private void Start()
+    {
+        InvokeRepeating("network_update", 0f, 1f / network_fps);
     }
 
     public void start_server()
@@ -115,8 +133,8 @@ public class networked_monobehaviour_test : MonoBehaviour
 
     private void Update()
     {
-        networked.server.update();
-        networked.client.update();
+        server_info.text = networked.server.info();
+        client_info.text = networked.client.info();
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -125,5 +143,31 @@ public class networked_monobehaviour_test : MonoBehaviour
                 Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
             if (ss != null) ss.randomize_color();
         }
+
+        float fb = 0f;
+        if (Input.GetKey(KeyCode.W)) fb = 1f;
+        if (Input.GetKey(KeyCode.S)) fb = -1f;
+
+        if (fb != 0)
+        {
+            RaycastHit hit;
+            var ss = utils.raycast_for_closest<subsection>(
+                Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+            if (ss != null)
+            {
+                ss.transform.position += Vector3.up * Time.deltaTime * fb / 5f;
+            }
+        }
+    }
+
+    void network_update()
+    {
+        networked.server.update();
+        networked.client.update();
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (networked.client.connected) networked.client.disconnect();
     }
 }
