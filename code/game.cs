@@ -8,17 +8,49 @@ public class game : MonoBehaviour
 
     public static player player { get; private set; }
 
-    public static void load_world(string path)
+    public UnityEngine.UI.Text debug_text;
+
+    public static void load_and_host_world(string path)
     {
-        world.seed = int.Parse(System.IO.File.ReadAllText(path + "/seed"));
-        world.name = path.Split('/')[path.Split('/').Length - 1];
+        // Start the server + client
+        networked.server.start(6969);
+        networked.client.connect_to_server(
+            networked.server.local_ip_address().ToString(),
+            networked.server.port);
+
+        // Create the world object
+        DontDestroyOnLoad(networked.section.create<world>(
+            int.Parse(System.IO.File.ReadAllText(path + "/seed")),
+            path.Split('/')[path.Split('/').Length - 1]
+        ));
+
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
-    public static void create_world(string name, int seed)
+    public static void join_world()
     {
-        world.seed = seed;
-        world.name = name;
+        networked.client.connect_to_server(
+            networked.server.local_ip_address().ToString(),
+            6969);
+
+        // Create the world object
+        DontDestroyOnLoad(networked.section.create<world>(0, "unloaded!"));
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
+
+    public static void create_and_host_world(string name, int seed)
+    {
+        // Start the server
+        networked.server.start(6969);
+        networked.client.connect_to_server(
+            networked.server.local_ip_address().ToString(),
+            networked.server.port);
+
+        // Create the world object
+        DontDestroyOnLoad(networked.section.create<world>(
+            seed, name
+        ));
+
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
@@ -57,10 +89,6 @@ public class game : MonoBehaviour
         // Create the player
         player = player.create();
 
-        // Create the biome at the players location
-        var biome_coords = biome.coords(player.transform.position);
-        biome.generate(biome_coords[0], biome_coords[1]);
-
         // Create the sky!
         create_sky();
 
@@ -80,8 +108,38 @@ public class game : MonoBehaviour
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }
 
+    bool generator_started = false;
+    void start_generator()
+    {
+        // Create the biome at the players location
+        if (generator_started) throw new System.Exception("Tried to start generator more than once!");
+        generator_started = true;
+        var biome_coords = biome.coords(player.current.transform.position);
+        biome.generate(biome_coords[0], biome_coords[1]);
+    }
+
+
     void Update()
     {
+        if (!generator_started && world.loaded)
+            start_generator();
+
+        debug_text.text = "";
+
+        debug_text.text += "World: " + world.name + " (seed " + world.seed + ")\n";
+
+        if (networked.server.started)
+        {
+            networked.server.update();
+            debug_text.text += networked.server.info();
+        }
+
+        if (networked.client.connected)
+        {
+            networked.client.update();
+            debug_text.text += "\n" + networked.client.info();
+        }
+
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
@@ -94,5 +152,8 @@ public class game : MonoBehaviour
 
         // Save the world seed
         System.IO.File.WriteAllText(world.save_folder() + "/seed", "" + world.seed);
+
+        if (networked.client.connected) networked.client.disconnect();
+        if (networked.server.started) networked.server.stop();
     }
 }

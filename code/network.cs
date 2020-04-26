@@ -264,7 +264,7 @@ public abstract class networked : MonoBehaviour
         /// <summary>
         /// The buffer of bytes reccived from the server.
         /// </summary>
-        static byte[] buffer = new byte[1024];
+        static byte[] buffer;
 
         /// <summary>
         /// Deserialize an entire network section on the client.
@@ -369,6 +369,8 @@ public abstract class networked : MonoBehaviour
                 throw new System.Exception("Check calculation of message length!");
 
             sent.log_bytes(to_send.Length);
+            if (to_send.Length > tcp.SendBufferSize)
+                throw new System.Exception("Message too long!");
             stream.Write(to_send, 0, to_send.Length);
         }
 
@@ -509,9 +511,9 @@ public abstract class networked : MonoBehaviour
         /// <param name="port">Port to connect through.</param>
         public static void connect_to_server(string host, int port)
         {
-
             tcp = new TcpClient(host, port);
             stream = tcp.GetStream();
+            buffer = new byte[tcp.ReceiveBufferSize];
             sent = new traffic_monitor(Time.realtimeSinceStartup);
             received = new traffic_monitor(Time.realtimeSinceStartup);
         }
@@ -554,7 +556,7 @@ public abstract class networked : MonoBehaviour
             {
                 int bytes_read = stream.Read(buffer, 0, buffer.Length);
                 if (bytes_read == buffer.Length)
-                    throw new System.Exception("Buffer too small, please implement dynamic resizing!");
+                    throw new System.Exception("Buffer too small!");
 
                 received.log_bytes(bytes_read);
                 process_buffer(bytes_read);
@@ -639,7 +641,7 @@ public abstract class networked : MonoBehaviour
         /// <summary>
         /// Buffer containing messages from clients.
         /// </summary>
-        static byte[] buffer = new byte[1024];
+        static byte[] buffer;
 
         static traffic_monitor sent;
         static traffic_monitor received;
@@ -712,6 +714,8 @@ public abstract class networked : MonoBehaviour
             sent.log_bytes(to_send.Length);
             try
             {
+                if (to_send.Length > client.tcp.SendBufferSize)
+                    throw new System.Exception("Message too long!");
                 client.stream.Write(to_send, 0, to_send.Length);
             }
             catch
@@ -894,6 +898,15 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
+        /// Stop the server listening.
+        /// </summary>
+        public static void stop()
+        {
+            tcp.Stop();
+            tcp = null;
+        }
+
+        /// <summary>
         /// Get the ip address of the local machine, as used by a server.
         /// </summary>
         /// <returns></returns>
@@ -929,6 +942,9 @@ public abstract class networked : MonoBehaviour
             // Read stream updates (enumerate over new list, so we can modify the connected clients)
             foreach (var c in new List<client>(clients))
             {
+                if (buffer == null || buffer.Length < c.tcp.SendBufferSize)
+                    buffer = new byte[c.tcp.SendBufferSize];
+
                 if (!c.tcp.Connected) continue;
                 while (c.stream.DataAvailable)
                 {

@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 // Used to highlight an incorrect input
 public class error_highlighter : MonoBehaviour
 {
-    public static void highlight(Image image, float fade_duration=1.0f)
+    public static void highlight(Image image, float fade_duration = 1.0f)
     {
         var existing = image.gameObject.GetComponent<error_highlighter>();
         if (existing != null)
@@ -75,7 +75,7 @@ public class world_menu : MonoBehaviour
 
             var load_button = button.Find("load").GetComponent<Button>();
             load_button.GetComponentInChildren<Text>().text = splt[splt.Length - 1];
-            load_button.onClick.AddListener(() => game.load_world(wf));
+            load_button.onClick.AddListener(() => game.load_and_host_world(wf));
 
             var delete_button = button.Find("delete").GetComponent<Button>();
             delete_button.onClick.AddListener(() =>
@@ -113,16 +113,25 @@ public class world_menu : MonoBehaviour
             // Random seed if no seed specified
             // or directly parse seed from input
             // or hash seed from input
-            int seed = Random.Range(0, int.MaxValue);
+            int seed = Random.Range(1, int.MaxValue);
             string ws = world_seed_input.text.Trim();
             if (ws.Length > 0)
             {
-                if (!int.TryParse(ws, out seed))
+                if (!int.TryParse(ws, out seed) || seed == 0)
                     seed = get_hash(ws);
             }
 
-            game.create_world(name, seed);
+            game.create_and_host_world(name, seed);
         });
+
+        var join_header = template_header.inst();
+        join_header.text = "Create new world...";
+        join_header.transform.SetParent(button_container);
+
+        var join_button = template_button.inst();
+        join_button.transform.SetParent(button_container);
+        join_button.GetComponentInChildren<Text>().text = "Join";
+        join_button.onClick.AddListener(() => game.join_world());
 
         // Remove the templates
         Destroy(template_button.gameObject);
