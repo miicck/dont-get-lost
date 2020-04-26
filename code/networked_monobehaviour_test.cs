@@ -45,7 +45,7 @@ public class networked_monobehaviour_test : MonoBehaviour
     {
         new Renderer renderer;
 
-        protected override void on_create()
+        protected override void on_create(bool local)
         {
             transform.localPosition = new Vector3(0, 5 - transform.parent.childCount, 0);
             name = "subsection " + transform.parent.childCount;

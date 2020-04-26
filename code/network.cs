@@ -80,7 +80,7 @@ public abstract class networked : MonoBehaviour
         t.network_id = --last_local_id;
 
         // Client-side initialization
-        t.on_create();
+        t.on_create(true);
 
         // This object is being newly added as a child 
         // of a networked_monobehaviour, this implies it is new
@@ -133,13 +133,19 @@ public abstract class networked : MonoBehaviour
     /// This allows for initialization, so that the server reccives a suitably initialized object.
     /// </summary>
     /// <param name="creation_args"></param>
-    protected virtual void on_create() { }
+    protected virtual void on_create(bool local) { }
+
+    /// <summary>
+    /// Called the first time that this object is syncronised with the
+    /// version on the server (post syncronisation).
+    /// </summary>
+    protected virtual void on_first_sync() { }
 
     /// <summary> 
     /// Serialize object data into bytes.
     /// </summary>
     /// <returns></returns>
-    //Virtual, because it is a reasonable use case 
+    // Virtual, because it is a reasonable use case 
     // for a networked_monobehaviour to simply exist
     // and not contain any serialized infromation
     // (a network_section, for example).
@@ -193,6 +199,13 @@ public abstract class networked : MonoBehaviour
         public abstract byte[] section_id_bytes();
 
         public abstract void section_id_initialize(params object[] section_id_init_args);
+
+        /// <summary>
+        /// Called when a networked section is created, note that there is no
+        /// argument specifying if this was a local creation or not, because
+        /// sections cannot be local.
+        /// </summary>
+        protected virtual void on_create() { }
 
         /// <summary>
         /// Create a network section on the client. Messages will automatically
@@ -291,6 +304,7 @@ public abstract class networked : MonoBehaviour
                     // server will is that of the section itself.
                     section.network_id = id;
                     section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
+                    section.on_first_sync();
                     first = false;
                 }
                 else
@@ -337,12 +351,13 @@ public abstract class networked : MonoBehaviour
             nm.name = type.Name;
             nm.network_id = network_id;
             nm.net_parent = networked_behaviours[parent_id];
-            nm.on_create();
+            nm.on_create(false); // This is not a local object
             nm.last_serialized = new byte[serialization_length];
             System.Buffer.BlockCopy(
                 buffer, serialization_offset,
                 nm.last_serialized, 0, serialization_length);
             nm.deserialize(nm.last_serialized, 0, serialization_length);
+            nm.on_first_sync();
         }
 
         /// <summary>
@@ -410,6 +425,7 @@ public abstract class networked : MonoBehaviour
                         sec_id_bytes,                                      // Section id bytes
                         sec_serial ?? new byte[] { }                       // Serialization
                     ));
+
                     break;
 
                 // Create a new networked_monobehaviour on the server
@@ -424,6 +440,7 @@ public abstract class networked : MonoBehaviour
                         System.BitConverter.GetBytes(from.net_parent.network_id), // Parent id
                         serial ?? new byte[0]                                     // Serialization
                     ));
+
                     break;
 
                 default:
@@ -462,11 +479,15 @@ public abstract class networked : MonoBehaviour
                     break;
 
                 case SERVER_MSG.SECTION_CREATION_SUCCESS:
-                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    var section_created = networked_behaviours[network_id];
+                    section_created.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    section_created.on_first_sync(); // We've synced with the server for the first time
                     break;
 
                 case SERVER_MSG.CREATION_SUCCESS:
-                    networked_behaviours[network_id].network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    var object_created = networked_behaviours[network_id];
+                    object_created.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    object_created.on_first_sync(); // We've synced with the server for the first time
                     break;
 
                 default:

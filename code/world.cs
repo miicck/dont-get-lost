@@ -70,6 +70,16 @@ public class world : networked.section
         name = System.Text.Encoding.ASCII.GetString(name_bytes);
     }
 
+    protected override void on_first_sync()
+    {
+        // Create the player
+        player.create("mick");
+
+        // Create the first biome
+        var biome_coords = biome.coords(Vector3.zero);
+        biome.generate(biome_coords[0], biome_coords[1]);
+    }
+
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(world))]
     class editor : UnityEditor.Editor

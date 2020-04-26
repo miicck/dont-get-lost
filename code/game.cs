@@ -86,9 +86,6 @@ public class game : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        // Create the player
-        player = player.create();
-
         // Create the sky!
         create_sky();
 
@@ -108,22 +105,8 @@ public class game : MonoBehaviour
         RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }
 
-    bool generator_started = false;
-    void start_generator()
-    {
-        // Create the biome at the players location
-        if (generator_started) throw new System.Exception("Tried to start generator more than once!");
-        generator_started = true;
-        var biome_coords = biome.coords(player.current.transform.position);
-        biome.generate(biome_coords[0], biome_coords[1]);
-    }
-
-
     void Update()
     {
-        if (!generator_started && world.loaded)
-            start_generator();
-
         debug_text.text = "";
 
         debug_text.text += "World: " + world.name + " (seed " + world.seed + ")\n";

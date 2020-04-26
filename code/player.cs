@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : MonoBehaviour
+public class player : networked
 {
     //###########//
     // CONSTANTS //
@@ -79,6 +79,8 @@ public class player : MonoBehaviour
 
     void Update()
     {
+        if (!local) return;
+
         // Toggle menus only if not using an item/the map isn't open
         if (current_item_use == USE_TYPE.NOT_USING && !map_open)
         {
@@ -610,64 +612,137 @@ public class player : MonoBehaviour
                        camera.transform.forward);
     }
 
+    //############//
+    // NETWORKING //
+    //############//
+
+    protected override byte[] serialize()
+    {
+        // Serialize position
+        return concat_buffers(
+            System.BitConverter.GetBytes(transform.position.x),
+            System.BitConverter.GetBytes(transform.position.y),
+            System.BitConverter.GetBytes(transform.position.z)
+        );
+    }
+
+    protected override void deserialize(byte[] bytes, int offset, int count)
+    {
+        transform.position = new Vector3(
+            System.BitConverter.ToSingle(bytes, sizeof(float) * 0),
+            System.BitConverter.ToSingle(bytes, sizeof(float) * 1),
+            System.BitConverter.ToSingle(bytes, sizeof(float) * 2)
+        );
+    }
+
     //#################//
     // PLAYER CREATION //
     //#################//
 
-    void on_create()
+    bool local { get => current == this; }
+
+    protected override void on_create(bool local)
     {
-        // Setup the player camera 
-        camera = FindObjectOfType<Camera>();
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.transform.SetParent(transform);
-        camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
-        camera.nearClipPlane = 0.1f;
+        // Put me in the middle of the chunk
+        transform.localPosition = Vector3.zero;
 
-        // Enforce the render limit with a sky-color object
-        obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
-        obscurer.transform.SetParent(transform);
-        obscurer.transform.localPosition = Vector3.zero;
-        var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
+        if (local)
+        {
+            // This is the local player
+            current = this;
 
-        map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-        map_obscurer.transform.SetParent(camera.transform);
-        map_obscurer.transform.localPosition = Vector3.forward;
-        map_obscurer.transform.up = -camera.transform.forward;
+            // Setup the player camera
+            camera = FindObjectOfType<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.transform.SetParent(transform);
+            camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
+            camera.nearClipPlane = 0.1f;
 
-        // The distance to the underwater screen, just past the near clipping plane
-        float usd = camera.nearClipPlane * 1.1f;
-        Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
-        Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
-        Vector3 delta = tr_corner_point - bl_corner_point;
+            // Enforce the render limit with a sky-color object
+            obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
+            obscurer.transform.SetParent(transform);
+            obscurer.transform.localPosition = Vector3.zero;
+            var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
 
-        // Setup the underwater screen so it exactly covers the screen
-        underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
-        underwater_screen.transform.SetParent(camera.transform);
-        underwater_screen.transform.localPosition = Vector3.forward * usd;
-        underwater_screen.transform.localScale = new Vector3(
-            Vector3.Dot(delta, camera.transform.right),
-            Vector3.Dot(delta, camera.transform.up),
-            1f
-        ) * 1.01f; // 1.01f factor to ensure that it covers the screen
-        underwater_screen.transform.forward = camera.transform.forward;
+            map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
+            map_obscurer.transform.SetParent(camera.transform);
+            map_obscurer.transform.localPosition = Vector3.forward;
+            map_obscurer.transform.up = -camera.transform.forward;
 
-        // Make the sky the same color as the obscuring object
-        RenderSettings.skybox = null;
-        camera.backgroundColor = sky_color;
+            // The distance to the underwater screen, just past the near clipping plane
+            float usd = camera.nearClipPlane * 1.1f;
+            Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
+            Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
+            Vector3 delta = tr_corner_point - bl_corner_point;
 
-        // Set the hand location so it is one meter
-        // away from the camera, 80% of the way across 
-        // the screen and 10% of the way up the screen.
-        hand = new GameObject("hand").transform;
-        hand.SetParent(camera.transform);
-        var r = camera.ScreenPointToRay(new Vector3(
-             Screen.width * 0.8f,
-             Screen.height * 0.1f
-             ));
-        hand.localPosition = r.direction * 0.75f;
+            // Setup the underwater screen so it exactly covers the screen
+            underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
+            underwater_screen.transform.SetParent(camera.transform);
+            underwater_screen.transform.localPosition = Vector3.forward * usd;
+            underwater_screen.transform.localScale = new Vector3(
+                Vector3.Dot(delta, camera.transform.right),
+                Vector3.Dot(delta, camera.transform.up),
+                1f
+            ) * 1.01f; // 1.01f factor to ensure that it covers the screen
+            underwater_screen.transform.forward = camera.transform.forward;
+
+            // Make the sky the same color as the obscuring object
+            RenderSettings.skybox = null;
+            camera.backgroundColor = sky_color;
+
+            // Set the hand location so it is one meter
+            // away from the camera, 80% of the way across 
+            // the screen and 10% of the way up the screen.
+            hand = new GameObject("hand").transform;
+            hand.SetParent(camera.transform);
+            var r = camera.ScreenPointToRay(new Vector3(
+                 Screen.width * 0.8f,
+                 Screen.height * 0.1f
+                 ));
+            hand.localPosition = r.direction * 0.75f;
+
+            // Create the crosshairs
+            crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
+            crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
+            crosshairs.color = new Color(1, 1, 1, 0.5f);
+            var crt = crosshairs.GetComponent<RectTransform>();
+            crt.sizeDelta = new Vector2(64, 64);
+            crt.anchorMin = new Vector2(0.5f, 0.5f);
+            crt.anchorMax = new Vector2(0.5f, 0.5f);
+            crt.anchoredPosition = Vector2.zero;
+            cursor = "default_cursor";
+
+            // Initialize the render range
+            update_render_range();
+
+            // Start with the map closed
+            map_open = false;
+
+            // Load the player state
+            load();
+
+            // Add the player controller as the last thing, so we
+            // don't control the player until everything has loaded
+            // (stops the controller from snapping us back to 0,0,0)
+            controller = gameObject.AddComponent<CharacterController>();
+            controller.height = HEIGHT;
+            controller.radius = WIDTH / 2;
+            controller.center = new Vector3(0, controller.height / 2f, 0);
+            controller.skinWidth = controller.radius / 10f;
+            controller.slopeLimit = 60f;
+        }
+        else // Not local
+        {
+            // Create a capsule representing the non-local player, for now
+            var cap = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            cap.transform.SetParent(transform);
+            cap.transform.localScale = Vector3.one * HEIGHT / 2f;
+            cap.transform.localPosition = Vector3.up * HEIGHT / 2f;
+        }
 
         // Initialize the inventory to closed
         inventory = Resources.Load<inventory>("ui/player_inventory").inst();
+        inventory.name = "player inventory (" + name + ")";
         inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
         inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
         inventory_open = false;
@@ -675,36 +750,6 @@ public class player : MonoBehaviour
         // Player starts with an axe
         inventory.add("axe", 1);
         inventory.add("furnace", 1);
-
-        // Create the crosshairs
-        crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
-        crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
-        crosshairs.color = new Color(1, 1, 1, 0.5f);
-        var crt = crosshairs.GetComponent<RectTransform>();
-        crt.sizeDelta = new Vector2(64, 64);
-        crt.anchorMin = new Vector2(0.5f, 0.5f);
-        crt.anchorMax = new Vector2(0.5f, 0.5f);
-        crt.anchoredPosition = Vector2.zero;
-        cursor = "default_cursor";
-
-        // Initialize the render range
-        update_render_range();
-
-        // Start with the map closed
-        map_open = false;
-
-        // Load the player state
-        load();
-
-        // Add the player controller as the last thing, so we
-        // don't control the player until everything has loaded
-        // (stops the controller from snapping us back to 0,0,0)
-        controller = gameObject.AddComponent<CharacterController>();
-        controller.height = HEIGHT;
-        controller.radius = WIDTH / 2;
-        controller.center = new Vector3(0, controller.height / 2f, 0);
-        controller.skinWidth = controller.radius / 10f;
-        controller.slopeLimit = 60f;
     }
 
     //################//
@@ -715,11 +760,10 @@ public class player : MonoBehaviour
     public static player current;
 
     // Create and return a player
-    public static player create()
+    public static player create(string name)
     {
-        var p = new GameObject("player").AddComponent<player>();
-        p.on_create();
-        current = p;
+        var p = create<player>(FindObjectOfType<world>());
+        p.name = name;
         return p;
     }
 }
