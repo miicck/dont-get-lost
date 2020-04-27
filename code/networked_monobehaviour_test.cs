@@ -112,12 +112,12 @@ public class networked_monobehaviour_test : MonoBehaviour
 
     public void start_server()
     {
-        networked.server.start(6969);
+        networked.server.start(networked.server.DEFAULT_PORT);
     }
 
     public void start_client()
     {
-        networked.client.connect_to_server(networked.server.local_ip_address().ToString(), 6969);
+        networked.client.connect_to_server(networked.server.local_ip_address().ToString(), networked.server.DEFAULT_PORT);
     }
 
     Dictionary<int, section> sections = new Dictionary<int, section>();

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿//#define SIMULATE_PING
+using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
@@ -9,6 +10,10 @@ using UnityEngine;
 /// </summary>
 public abstract class networked : MonoBehaviour
 {
+#   if SIMULATE_PING
+    const int SIMULATED_PING = 200; // Simulated ping (ms)
+#   endif
+
     /// <summary>
     /// The unique id of this object on the network.
     /// Positive id's are network-wide unique, negative
@@ -26,6 +31,14 @@ public abstract class networked : MonoBehaviour
         }
     }
     int _network_id;
+
+    /// <summary>
+    /// Set to false to disable sending serializations from this object.
+    /// This is useful if we want a particular client to have full control
+    /// over the object (so serializations don't bounce back and forth between
+    /// two clients).
+    /// </summary>
+    protected bool send_network_updates = true;
 
     /// <summary>
     /// The last local (negative) network id assigned to
@@ -102,6 +115,9 @@ public abstract class networked : MonoBehaviour
     /// </summary>
     private void update()
     {
+        if (network_id < 0) return; // Don't send unregistered serialization updates
+        if (!send_network_updates) return; // Don't send serialization updates
+
         byte[] serial = serialize();
         if (serial == null) return; // No serialization to do
 
@@ -280,6 +296,72 @@ public abstract class networked : MonoBehaviour
         static byte[] buffer;
 
         /// <summary>
+        /// A message from the client to the server.
+        /// </summary>
+        class message
+        {
+            byte[] to_send;
+
+#           if SIMULATE_PING
+            float time_queued = 0;
+#           endif
+
+            public message(byte[] to_send)
+            {
+
+#               if SIMULATE_PING
+                time_queued = Time.realtimeSinceStartup;
+#               endif
+
+                this.to_send = to_send;
+                queue.Enqueue(this);
+            }
+
+            /// <summary>
+            /// The message queue.
+            /// </summary>
+            static Queue<message> queue = new Queue<message>();
+
+            /// <summary>
+            /// Send the messages in the queue.
+            /// </summary>
+            public static void send_queue()
+            {
+                byte[] send_buffer = new byte[tcp.SendBufferSize];
+
+                int offset = 0;
+                while (queue.Count > 0)
+                {
+
+#                   if SIMULATE_PING
+                    // Check that this message needs sending
+                    if (queue.Peek().time_queued > Time.realtimeSinceStartup - SIMULATED_PING / 1000f)
+                        break; // Messages from here on in the queue are too new
+#                   endif
+
+                    message msg = queue.Dequeue();
+                    if (msg.to_send.Length > send_buffer.Length)
+                        throw new System.Exception("Message is too long!");
+
+                    if (offset + msg.to_send.Length > send_buffer.Length)
+                    {
+                        // This message would overrun the send buffer, send
+                        // what we have already to free the buffer.
+                        tcp.GetStream().Write(send_buffer, 0, offset);
+                        send_buffer = new byte[tcp.SendBufferSize];
+                        offset = 0;
+                    }
+
+                    System.Buffer.BlockCopy(msg.to_send, 0, send_buffer, offset, msg.to_send.Length);
+                    offset += msg.to_send.Length; // Shift to next message
+                }
+
+                // Send the buffer
+                if (offset > 0) tcp.GetStream().Write(send_buffer, 0, offset);
+            }
+        }
+
+        /// <summary>
         /// Deserialize an entire network section on the client.
         /// </summary>
         /// <param name="section">The (already existing) section that is being deserialized.</param>
@@ -386,7 +468,8 @@ public abstract class networked : MonoBehaviour
             sent.log_bytes(to_send.Length);
             if (to_send.Length > tcp.SendBufferSize)
                 throw new System.Exception("Message too long!");
-            stream.Write(to_send, 0, to_send.Length);
+
+            new message(to_send);
         }
 
         /// <summary>
@@ -586,6 +669,9 @@ public abstract class networked : MonoBehaviour
             foreach (var kv in networked_behaviours)
                 kv.Value.update();
 
+            // Send queued messages
+            message.send_queue();
+
             sent.log_time(Time.realtimeSinceStartup);
             received.log_time(Time.realtimeSinceStartup);
         }
@@ -613,6 +699,8 @@ public abstract class networked : MonoBehaviour
     /// </summary>
     public static class server
     {
+        public const int DEFAULT_PORT = 6969;
+
         // A client connected to the server
         class client
         {
@@ -666,6 +754,97 @@ public abstract class networked : MonoBehaviour
 
         static traffic_monitor sent;
         static traffic_monitor received;
+
+        /// <summary>
+        /// A message from the server to a client.
+        /// </summary>
+        class message
+        {
+            byte[] to_send;
+
+#           if SIMULATE_PING
+            float time_queued;
+#           endif
+
+            public message(client recipient, byte[] to_send)
+            {
+                this.to_send = to_send;
+
+#               if SIMULATE_PING
+                time_queued = Time.realtimeSinceStartup;
+#               endif
+
+                // Queue the message to a client-specific queue
+                Queue<message> recipient_queue;
+                if (!queues.TryGetValue(recipient, out recipient_queue))
+                {
+                    recipient_queue = new Queue<message>();
+                    queues[recipient] = recipient_queue;
+                }
+                recipient_queue.Enqueue(this);
+            }
+
+            /// <summary>
+            /// The message queue.
+            /// </summary>
+            static Dictionary<client, Queue<message>> queues =
+                new Dictionary<client, Queue<message>>();
+
+            public static void send_queues()
+            {
+                List<client> disconnected_clients = new List<client>();
+
+                // Loop over message queues.
+                foreach (var kv in queues)
+                {
+                    var client = kv.Key;
+                    var queue = kv.Value;
+
+                    // Record clients that have disconnected, so
+                    // we can remove their message queues.
+                    if (!client.tcp.Connected)
+                    {
+                        disconnected_clients.Add(client);
+                        continue;
+                    }
+
+                    byte[] send_buffer = new byte[client.tcp.SendBufferSize];
+
+                    int offset = 0;
+                    while (queue.Count > 0)
+                    {
+
+#                       if SIMULATE_PING
+                        if (queue.Peek().time_queued > Time.realtimeSinceStartup - SIMULATED_PING / 1000f)
+                            break; // Messages from here on in the queue are too recent.
+#                       endif
+
+                        message msg = queue.Dequeue();
+                        if (msg.to_send.Length > client.tcp.SendBufferSize)
+                            throw new System.Exception("Message too large!");
+
+                        if (offset + msg.to_send.Length > send_buffer.Length)
+                        {
+                            // This message would overrun the send buffer, send
+                            // what we have already to free the buffer.
+                            client.tcp.GetStream().Write(send_buffer, 0, offset);
+                            send_buffer = new byte[client.tcp.SendBufferSize];
+                            offset = 0;
+                        }
+
+                        System.Buffer.BlockCopy(msg.to_send, 0, send_buffer, offset, msg.to_send.Length);
+                        offset += msg.to_send.Length; // Shift to next message
+                    }
+
+                    // Send the buffer
+                    if (offset > 0) client.tcp.GetStream().Write(send_buffer, 0, offset);
+                }
+
+                // Remove message queues for disconnected clients
+                foreach (var c in disconnected_clients)
+                    queues.Remove(c);
+            }
+        }
 
         /// <summary>
         /// Called when a client has been found to have disconnected.
@@ -737,7 +916,7 @@ public abstract class networked : MonoBehaviour
             {
                 if (to_send.Length > client.tcp.SendBufferSize)
                     throw new System.Exception("Message too long!");
-                client.stream.Write(to_send, 0, to_send.Length);
+                new message(client, to_send);
             }
             catch
             {
@@ -761,12 +940,12 @@ public abstract class networked : MonoBehaviour
                 // Update the serialization of the given networked objects representation
                 case CLIENT_MSG.SERIALIZATION_UPDATE:
 
-                    var rep = representations[network_id];
-                    System.Buffer.BlockCopy(buffer, message_offset, rep.serialization, 0, message_length);
+                    var target = representations[network_id];
+                    System.Buffer.BlockCopy(buffer, message_offset, target.serialization, 0, message_length);
 
-                    foreach (var c in rep.connected_clients())
+                    foreach (var c in target.connected_clients())
                         if (c != client)
-                            send_payload(c, (byte)SERVER_MSG.SERIALIZATION_UPDATE, network_id, rep.serialization);
+                            send_payload(c, (byte)SERVER_MSG.SERIALIZATION_UPDATE, network_id, target.serialization);
 
                     break;
 
@@ -843,7 +1022,7 @@ public abstract class networked : MonoBehaviour
                         serialization, 0, serialization.Length);
 
                     // Create the representation of this networked object
-                    rep = representation.create(type_id, parent_id, serialization);
+                    var rep = representation.create(type_id, parent_id, serialization);
 
                     // Reply with the newly-created id (still addressed to the old negative network_id,
                     // because the client has yet to reccive the new id).
@@ -963,10 +1142,11 @@ public abstract class networked : MonoBehaviour
             // Read stream updates (enumerate over new list, so we can modify the connected clients)
             foreach (var c in new List<client>(clients))
             {
+                if (!c.tcp.Connected) continue;
+
                 if (buffer == null || buffer.Length < c.tcp.SendBufferSize)
                     buffer = new byte[c.tcp.SendBufferSize];
 
-                if (!c.tcp.Connected) continue;
                 while (c.stream.DataAvailable)
                 {
                     int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
@@ -978,6 +1158,9 @@ public abstract class networked : MonoBehaviour
                 }
             }
 
+            // Send messages to the clients
+            message.send_queues();
+
             sent.log_time(Time.realtimeSinceStartup);
             received.log_time(Time.realtimeSinceStartup);
         }
@@ -987,6 +1170,9 @@ public abstract class networked : MonoBehaviour
             if (!started) return "Not running.";
 
             string inf = "Listening on " + tcp.LocalEndpoint + "\n";
+#           if SIMULATE_PING
+            inf += "Simulated ping: " + SIMULATED_PING + " ms\n";
+#           endif
             inf += "Traffic:\n    " + sent.usage() + " up\n    " + received.usage() + " down\n";
             inf += "Clients:" + clients.Count + "\n";
             inf += "Objects: " + representations.Count +

@@ -14,7 +14,7 @@ public class player : networked
     public const float BOUYANCY = 5f;
     public const float WATER_DRAG = 1.5f;
 
-    public const float SPEED = 10f;
+    public const float SPEED = 7f;
     public const float ACCELERATION_TIME = 0.2f;
     public const float ACCELERATION = SPEED / ACCELERATION_TIME;
     public const float ROTATION_SPEED = 90f;
@@ -618,20 +618,28 @@ public class player : networked
 
     protected override byte[] serialize()
     {
-        // Serialize position
+        // Serialize position + rotation
         return concat_buffers(
             System.BitConverter.GetBytes(transform.position.x),
             System.BitConverter.GetBytes(transform.position.y),
-            System.BitConverter.GetBytes(transform.position.z)
+            System.BitConverter.GetBytes(transform.position.z),
+            System.BitConverter.GetBytes(transform.forward.x),
+            System.BitConverter.GetBytes(transform.forward.z)
         );
     }
 
     protected override void deserialize(byte[] bytes, int offset, int count)
     {
+        // Deserialize position + rotation
         transform.position = new Vector3(
-            System.BitConverter.ToSingle(bytes, sizeof(float) * 0),
-            System.BitConverter.ToSingle(bytes, sizeof(float) * 1),
-            System.BitConverter.ToSingle(bytes, sizeof(float) * 2)
+            System.BitConverter.ToSingle(bytes, offset+sizeof(float) * 0),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 1),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
+        );
+
+        transform.forward = new Vector3(
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3), 0,
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 4)
         );
     }
 
@@ -733,11 +741,18 @@ public class player : networked
         }
         else // Not local
         {
-            // Create a capsule representing the non-local player, for now
-            var cap = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            cap.transform.SetParent(transform);
-            cap.transform.localScale = Vector3.one * HEIGHT / 2f;
-            cap.transform.localPosition = Vector3.up * HEIGHT / 2f;
+            // Don't send updates from non-local players
+            send_network_updates = false;
+
+            // Load the player body
+            var body = Resources.Load<GameObject>("misc/player_body").inst();
+            body.transform.SetParent(transform);
+            body.transform.localPosition = Vector3.zero;
+
+            var eye_level = body.transform.Find("eye_level");
+            float eye_y = (eye_level.transform.position - transform.position).y;
+            body.transform.localScale *= (HEIGHT - WIDTH / 2f) / eye_y;
+
         }
 
         // Initialize the inventory to closed

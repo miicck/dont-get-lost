@@ -53,6 +53,7 @@ public class world_menu : MonoBehaviour
     public Camera menu_camera;
     public InputField world_name_input;
     public InputField world_seed_input;
+    public InputField ip_input;
 
     private void Start()
     {
@@ -125,13 +126,16 @@ public class world_menu : MonoBehaviour
         });
 
         var join_header = template_header.inst();
-        join_header.text = "Create new world...";
+        join_header.text = "Join game over network...";
         join_header.transform.SetParent(button_container);
 
         var join_button = template_button.inst();
         join_button.transform.SetParent(button_container);
         join_button.GetComponentInChildren<Text>().text = "Join";
-        join_button.onClick.AddListener(() => game.join_world());
+        join_button.onClick.AddListener(() => game.join_world(ip_input.text));
+
+        ip_input.text = networked.server.local_ip_address() + ":" + networked.server.DEFAULT_PORT;
+        ip_input.transform.SetAsLastSibling();
 
         // Remove the templates
         Destroy(template_button.gameObject);

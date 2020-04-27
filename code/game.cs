@@ -13,7 +13,7 @@ public class game : MonoBehaviour
     public static void load_and_host_world(string path)
     {
         // Start the server + client
-        networked.server.start(6969);
+        networked.server.start(networked.server.DEFAULT_PORT);
         networked.client.connect_to_server(
             networked.server.local_ip_address().ToString(),
             networked.server.port);
@@ -27,21 +27,26 @@ public class game : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
-    public static void join_world()
+    public static bool join_world(string ip_port)
     {
-        networked.client.connect_to_server(
-            networked.server.local_ip_address().ToString(),
-            6969);
+        string ip = ip_port.Split(':')[0];
+        string port_str = ip_port.Split(':')[1];
+        int port;
+        if (!int.TryParse(port_str, out port))
+            return false;
+
+        networked.client.connect_to_server(ip, port);
 
         // Create the world object
         DontDestroyOnLoad(networked.section.create<world>(0, "unloaded!"));
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+        return true;
     }
 
     public static void create_and_host_world(string name, int seed)
     {
         // Start the server
-        networked.server.start(6969);
+        networked.server.start(networked.server.DEFAULT_PORT);
         networked.client.connect_to_server(
             networked.server.local_ip_address().ToString(),
             networked.server.port);
@@ -82,6 +87,12 @@ public class game : MonoBehaviour
 
     void Start()
     {
+        // Move the world (which was saved from the world_menu scene)
+        // to the current scene so it gets destroyed when the main scene does.
+        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(
+            FindObjectOfType<world>().gameObject,
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+
         // Start with invisible, locked cursor
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
@@ -110,17 +121,20 @@ public class game : MonoBehaviour
         debug_text.text = "";
 
         debug_text.text += "World: " + world.name + " (seed " + world.seed + ")\n";
+        debug_text.text += "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n";
 
         if (networked.server.started)
         {
             networked.server.update();
-            debug_text.text += networked.server.info();
+            debug_text.text += "Server info:\n";
+            debug_text.text += networked.server.info() + "\n";
         }
 
         if (networked.client.connected)
         {
             networked.client.update();
-            debug_text.text += "\n" + networked.client.info();
+            debug_text.text += "Client info:\n";
+            debug_text.text += networked.client.info() + "\n";
         }
 
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
