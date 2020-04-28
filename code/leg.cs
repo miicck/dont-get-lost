@@ -60,6 +60,8 @@ public class leg : MonoBehaviour
                         strafe_length * right_amt +
                         jump_length * up_amt;
 
+            ret *= 1f + Mathf.Min(Mathf.Sqrt(velocity.magnitude / (shin_length + thigh_length)), 0.5f);
+
             if (ret < MIN_STEP_SIZE) ret = MIN_STEP_SIZE;
             return ret;
         }

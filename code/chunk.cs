@@ -47,6 +47,12 @@ public class chunk : networked.section
         z = (int)section_id_init_args[1];
     }
 
+    public override void invert_id(byte[] id_bytes)
+    {
+        x = System.BitConverter.ToInt32(id_bytes, 0);
+        z = System.BitConverter.ToInt32(id_bytes, sizeof(int));
+    }
+
     //##################//
     // COORDINATE TOOLS //
     //##################//
@@ -149,10 +155,6 @@ public class chunk : networked.section
             if (value && !generation_begun)
                 begin_generation();
 
-            // If disabling, save the chunk
-            if (!value)
-                save();
-
             // Disable, or enable all children
             foreach (Transform t in transform)
                 t.gameObject.SetActive(value);
@@ -182,10 +184,9 @@ public class chunk : networked.section
             new Vector3(SIZE, 0.01f, SIZE));
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         remove_generated_chunk(this);
-        save();
     }
 
     //##################//
@@ -424,18 +425,6 @@ public class chunk : networked.section
     // Called when the chunk has finished generating
     void on_generation_complete()
     {
-        // Create the navigation mesh
-        /*
-        navmesh = new GameObject("navmesh").AddComponent<procedural_navmesh>();
-        navmesh.transform.SetParent(transform);
-        navmesh.transform.localPosition = new Vector3(0.5f, 0.5f, 0.5f) * chunk.SIZE;
-        navmesh.size = chunk.SIZE;
-        navmesh.resolution = 1.0f;
-        navmesh.iterations_per_frame = 0;
-        navmesh.ground_clearance = 0.5f;
-        navmesh.max_incline_angle = 45f;
-        */
-
         add_generated_chunk(this);
 
         // Load all the characters
@@ -451,7 +440,6 @@ public class chunk : networked.section
             }
 
         biome.update_chunk_neighbours();
-        load_items();
     }
 
     // This component is attached to a chunk that is
@@ -485,72 +473,6 @@ public class chunk : networked.section
                     Destroy(gameObject);
                     return;
                 }
-        }
-    }
-
-    public string filename()
-    {
-        return world.save_folder() + "/chunk_" + x + "_" + z;
-    }
-
-    public void save()
-    {
-        var items = GetComponentsInChildren<item>(true);
-        if (items.Length == 0)
-        {
-            // No items to save, make sure there is no save file
-            if (System.IO.File.Exists(filename()))
-                System.IO.File.Delete(filename());
-            return;
-        }
-
-        utils.log("Saving " + items.Length + " items in chunk " + filename(), "io");
-
-        using (var fs = new System.IO.FileStream(filename(),
-               System.IO.FileMode.Create, System.IO.FileAccess.Write))
-        {
-            // Write the size of an item to the file
-            bool written_size = false;
-
-            // Write all the item bytes to the save file
-            foreach (var i in items)
-            {
-                // Get the bytes describing this item
-                var ibytes = i.serialize();
-
-                if (!written_size)
-                {
-                    // First sizeof(int) bytes tell us the number of bytes per item
-                    fs.Write(System.BitConverter.GetBytes(ibytes.Length), 0, sizeof(int));
-                    written_size = true;
-                }
-
-                // Write the item bytes to file
-                fs.Write(ibytes, 0, ibytes.Length);
-            }
-        }
-    }
-
-    void load_items()
-    {
-        if (!System.IO.File.Exists(filename())) return;
-
-        using (var fs = new System.IO.FileStream(filename(),
-            System.IO.FileMode.Open, System.IO.FileAccess.Read))
-        {
-            // Read the size of an item in bytes
-            byte[] size_bytes = new byte[sizeof(int)];
-            fs.Read(size_bytes, 0, sizeof(int));
-            int item_size = System.BitConverter.ToInt32(size_bytes, 0);
-
-            int n = 0;
-            byte[] item_bytes = new byte[item_size];
-
-            while (fs.Read(item_bytes, 0, item_size) > 0)
-            {
-                item.deserailize(item_bytes);
-                n++;
-            }
         }
     }
 }

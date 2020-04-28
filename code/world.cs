@@ -9,29 +9,14 @@ public class world : networked.section
     public const int SEA_LEVEL = 16;
     public const float MAX_ALTITUDE = 128f;
 
-    // The seed for the world generator
-    public static int seed { get; private set; }
-
     // Returns true if the world details have been loaded from the server
     public static bool loaded { get => seed != 0; }
 
+    // The seed for the world generator
+    public static int seed;
+
     // The name this world is (to be) saved as
     public static string name = "world";
-
-    // The folder to save the world in
-    public static string save_folder()
-    {
-        // First, ensure the folder exists 
-        string folder = worlds_folder() + name;
-        System.IO.Directory.CreateDirectory(folder);
-        return folder;
-    }
-
-    // The folder where all the worlds are stored
-    public static string worlds_folder()
-    {
-        return Application.persistentDataPath + "/worlds/";
-    }
 
     public override byte[] section_id_bytes()
     {
@@ -39,12 +24,14 @@ public class world : networked.section
         return new byte[] { };
     }
 
+    public override void invert_id(byte[] id_bytes)
+    {
+        // Nothing needs doing. there is only one world
+    }
+
     public override void section_id_initialize(params object[] section_id_init_args)
     {
-        seed = (int)section_id_init_args[0];
-        name = (string)section_id_init_args[1];
-        if (server.started && seed == 0)
-            throw new System.Exception("Invalid seed!");
+        // No initialization neccassary
     }
 
     protected override byte[] serialize()
@@ -72,12 +59,11 @@ public class world : networked.section
 
     protected override void on_first_sync()
     {
-        // Create the player
-        player.create("mick");
+        if (seed == 0)
+            throw new System.Exception("Invalid seed!");
 
-        // Create the first biome
-        var biome_coords = biome.coords(Vector3.zero);
-        biome.generate(biome_coords[0], biome_coords[1]);
+        // Create the local player
+        create<player>(player.username, true);
     }
 
 #if UNITY_EDITOR

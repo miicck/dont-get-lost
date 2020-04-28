@@ -14,7 +14,7 @@ public class networked_monobehaviour_test : MonoBehaviour
         new Renderer renderer;
 
         // Set the x and z coordinates
-        protected override void on_create()
+        public override void on_create()
         {
             name = "section " + x;
 
@@ -38,6 +38,11 @@ public class networked_monobehaviour_test : MonoBehaviour
         public override byte[] section_id_bytes()
         {
             return System.BitConverter.GetBytes(x);
+        }
+
+        public override void invert_id(byte[] id_bytes)
+        {
+            x = System.BitConverter.ToInt32(id_bytes, 0);
         }
     }
 
@@ -112,7 +117,7 @@ public class networked_monobehaviour_test : MonoBehaviour
 
     public void start_server()
     {
-        networked.server.start(networked.server.DEFAULT_PORT);
+        networked.server.start(networked.server.DEFAULT_PORT, "test");
     }
 
     public void start_client()

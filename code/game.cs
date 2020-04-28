@@ -10,53 +10,33 @@ public class game : MonoBehaviour
 
     public UnityEngine.UI.Text debug_text;
 
-    public static void load_and_host_world(string path)
+    public static void load_and_host_world(string world_name, string username)
     {
-        // Start the server + client
-        networked.server.start(networked.server.DEFAULT_PORT);
-        networked.client.connect_to_server(
-            networked.server.local_ip_address().ToString(),
-            networked.server.port);
-
-        // Create the world object
-        DontDestroyOnLoad(networked.section.create<world>(
-            int.Parse(System.IO.File.ReadAllText(path + "/seed")),
-            path.Split('/')[path.Split('/').Length - 1]
-        ));
-
+        world.name = world_name;
+        player.username = username;
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
-    public static bool join_world(string ip_port)
+    public static void create_and_host_world(string world_name, int seed, string username)
     {
-        string ip = ip_port.Split(':')[0];
+        world.name = world_name;
+        world.seed = seed;
+        player.username = username;
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
+
+    static string ip_connecting = null;
+    static int port_connecting = 0;
+    public static bool join_world(string ip_port, string username)
+    {
+        player.username = username;
+        ip_connecting = ip_port.Split(':')[0];
         string port_str = ip_port.Split(':')[1];
-        int port;
-        if (!int.TryParse(port_str, out port))
+        if (!int.TryParse(port_str, out port_connecting))
             return false;
 
-        networked.client.connect_to_server(ip, port);
-
-        // Create the world object
-        DontDestroyOnLoad(networked.section.create<world>(0, "unloaded!"));
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
         return true;
-    }
-
-    public static void create_and_host_world(string name, int seed)
-    {
-        // Start the server
-        networked.server.start(networked.server.DEFAULT_PORT);
-        networked.client.connect_to_server(
-            networked.server.local_ip_address().ToString(),
-            networked.server.port);
-
-        // Create the world object
-        DontDestroyOnLoad(networked.section.create<world>(
-            seed, name
-        ));
-
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
     // The target render range, which the actual render range will lerp to
@@ -87,11 +67,25 @@ public class game : MonoBehaviour
 
     void Start()
     {
-        // Move the world (which was saved from the world_menu scene)
-        // to the current scene so it gets destroyed when the main scene does.
-        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(
-            FindObjectOfType<world>().gameObject,
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        if (ip_connecting == null)
+        {
+            // Not connecting, start a local server+client
+            networked.server.set_forced<player>();
+            networked.server.start(networked.server.DEFAULT_PORT, world.name);
+            networked.client.connect_to_server(
+                networked.server.local_ip_address().ToString(),
+                networked.server.port);
+        }
+        else
+        {
+            networked.client.connect_to_server(
+                ip_connecting,
+                port_connecting
+            );
+        }
+
+        // Create the world object (seed + name will be loaded by the server)
+        networked.section.create<world>();
 
         // Start with invisible, locked cursor
         Cursor.visible = false;
@@ -126,15 +120,21 @@ public class game : MonoBehaviour
         if (networked.server.started)
         {
             networked.server.update();
-            debug_text.text += "Server info:\n";
+            debug_text.text += "\nServer info:\n";
             debug_text.text += networked.server.info() + "\n";
         }
 
         if (networked.client.connected)
         {
             networked.client.update();
-            debug_text.text += "Client info:\n";
+            debug_text.text += "\nClient info:\n";
             debug_text.text += networked.client.info() + "\n";
+        }
+
+        if (player.current != null)
+        {
+            debug_text.text += "\nPlayer info:\n";
+            debug_text.text += player.current.info();
         }
 
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
@@ -144,12 +144,7 @@ public class game : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        // Save the player
-        player.current.save();
-
-        // Save the world seed
-        System.IO.File.WriteAllText(world.save_folder() + "/seed", "" + world.seed);
-
+        // Disconnect from the network
         if (networked.client.connected) networked.client.disconnect();
         if (networked.server.started) networked.server.stop();
     }

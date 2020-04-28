@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked
+public class player : networked.section
 {
     //###########//
     // CONSTANTS //
@@ -26,52 +26,6 @@ public class player : networked
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
-
-    //###############//
-    // SERIALIZATION //
-    //###############//
-
-    public void save()
-    {
-        var floats = new float[]
-        {
-            transform.position.x,
-            transform.position.y,
-            transform.position.z
-        };
-
-        using (var fs = new System.IO.FileStream(world.save_folder() + "/player",
-            System.IO.FileMode.Create, System.IO.FileAccess.Write))
-        {
-            for (int i = 0; i < floats.Length; ++i)
-            {
-                var float_bytes = System.BitConverter.GetBytes(floats[i]);
-                fs.Write(float_bytes, 0, float_bytes.Length);
-            }
-        }
-    }
-
-    void load()
-    {
-        if (!System.IO.File.Exists(world.save_folder() + "/player")) return;
-
-        var floats = new float[3];
-
-        using (var fs = new System.IO.FileStream(world.save_folder() + "/player",
-            System.IO.FileMode.Open, System.IO.FileAccess.Read))
-        {
-            byte[] float_bytes = new byte[sizeof(float)];
-            for (int i = 0; i < floats.Length; ++i)
-            {
-                fs.Read(float_bytes, 0, float_bytes.Length);
-                floats[i] = System.BitConverter.ToSingle(float_bytes, 0);
-            }
-        }
-
-        // Set the controller position so it doesn't snap us back to 0,0,0 immediately
-        Vector3 pos = new Vector3(floats[0], floats[1], floats[2]);
-        transform.position = pos;
-    }
 
     //#################//
     // UNITY CALLBACKS //
@@ -447,6 +401,8 @@ public class player : networked
 
     void move()
     {
+        if (controller == null) return; // Controller hasn't started yet
+
         if (controller.isGrounded)
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -643,22 +599,47 @@ public class player : networked
         );
     }
 
+    public override byte[] section_id_bytes()
+    {
+        // Players are identified by their name
+        return System.Text.Encoding.ASCII.GetBytes(name);
+    }
+
+    public override void section_id_initialize(params object[] section_id_init_args)
+    {
+        // Initialize the name of this player
+        name = (string)section_id_init_args[0];
+
+        // Second arguement is true if this is a local player
+        if ((bool)section_id_init_args[1]) current = this;
+    }
+
+    public override void invert_id(byte[] id_bytes)
+    {
+        // Get my name from my id bytes
+        name = System.Text.Encoding.ASCII.GetString(id_bytes);
+    }
+
+    public bool local { get => current == this; }
+
     //#################//
     // PLAYER CREATION //
     //#################//
 
-    bool local { get => current == this; }
-
-    protected override void on_create(bool local)
+    public override void on_create()
     {
-        // Put me in the middle of the chunk
-        transform.localPosition = Vector3.zero;
+        // Load the player body
+        var body = Resources.Load<GameObject>("misc/player_body").inst();
+        body.transform.SetParent(transform);
+        body.transform.localPosition = Vector3.zero;
+
+        // Scale the player body so the eyes are at the correct height
+        var eye_level = body.transform.Find("eye_level");
+        float eye_y = (eye_level.transform.position - transform.position).y;
+        body.transform.localScale *= (HEIGHT - WIDTH / 2f) / eye_y;
 
         if (local)
         {
-            // This is the local player
-            current = this;
-
             // Setup the player camera
             camera = FindObjectOfType<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -725,34 +706,11 @@ public class player : networked
 
             // Start with the map closed
             map_open = false;
-
-            // Load the player state
-            load();
-
-            // Add the player controller as the last thing, so we
-            // don't control the player until everything has loaded
-            // (stops the controller from snapping us back to 0,0,0)
-            controller = gameObject.AddComponent<CharacterController>();
-            controller.height = HEIGHT;
-            controller.radius = WIDTH / 2;
-            controller.center = new Vector3(0, controller.height / 2f, 0);
-            controller.skinWidth = controller.radius / 10f;
-            controller.slopeLimit = 60f;
         }
         else // Not local
         {
             // Don't send updates from non-local players
             send_network_updates = false;
-
-            // Load the player body
-            var body = Resources.Load<GameObject>("misc/player_body").inst();
-            body.transform.SetParent(transform);
-            body.transform.localPosition = Vector3.zero;
-
-            var eye_level = body.transform.Find("eye_level");
-            float eye_y = (eye_level.transform.position - transform.position).y;
-            body.transform.localScale *= (HEIGHT - WIDTH / 2f) / eye_y;
-
         }
 
         // Initialize the inventory to closed
@@ -767,20 +725,42 @@ public class player : networked
         inventory.add("furnace", 1);
     }
 
+    protected override void on_first_sync()
+    {
+        if (local)
+        {
+            // Add the player controller once everything has loaded
+            // (stops the controller from snapping us back to 0,0,0)
+            controller = gameObject.AddComponent<CharacterController>();
+            controller.height = HEIGHT;
+            controller.radius = WIDTH / 2;
+            controller.center = new Vector3(0, controller.height / 2f, 0);
+            controller.skinWidth = controller.radius / 10f;
+            controller.slopeLimit = 60f;
+
+            // Now that we know where the player is, we can start loading
+            // the map around the player.
+            var biome_coords = biome.coords(transform.position);
+            biome.generate(biome_coords[0], biome_coords[1]);
+        }
+    }
+
+    //###########//
+    // UTILITIES //
+    //###########//
+
+    public string info()
+    {
+        return "Position " + transform.position.x + ", " + transform.position.y + ", " + transform.position.z;
+    }
+
     //################//
     // STATIC METHODS //
     //################//
 
-    // The current player
+    // The current (local) player
     public static player current;
-
-    // Create and return a player
-    public static player create(string name)
-    {
-        var p = create<player>(FindObjectOfType<world>());
-        p.name = name;
-        return p;
-    }
+    public static string username;
 }
 
 public static class cursors

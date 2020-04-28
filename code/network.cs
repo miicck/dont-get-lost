@@ -1,4 +1,4 @@
-﻿//#define SIMULATE_PING
+﻿#define SIMULATE_PING
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -214,6 +214,8 @@ public abstract class networked : MonoBehaviour
         /// <returns></returns>
         public abstract byte[] section_id_bytes();
 
+        public abstract void invert_id(byte[] id_bytes);
+
         public abstract void section_id_initialize(params object[] section_id_init_args);
 
         /// <summary>
@@ -221,7 +223,7 @@ public abstract class networked : MonoBehaviour
         /// argument specifying if this was a local creation or not, because
         /// sections cannot be local.
         /// </summary>
-        protected virtual void on_create() { }
+        public virtual void on_create() { }
 
         /// <summary>
         /// Create a network section on the client. Messages will automatically
@@ -244,6 +246,8 @@ public abstract class networked : MonoBehaviour
 
             // Carry out client-side initialization
             t.section_id_initialize(section_id_init_args);
+
+            // Call on_create
             t.on_create();
 
             // Ask the server to check if this network_section exists
@@ -362,7 +366,9 @@ public abstract class networked : MonoBehaviour
         }
 
         /// <summary>
-        /// Deserialize an entire network section on the client.
+        /// Deserialize an entire network section on the client. This works simmilarly to
+        /// server.load_from_disk, except that it creates the objects for real, rather than
+        /// creating server representations of them.
         /// </summary>
         /// <param name="section">The (already existing) section that is being deserialized.</param>
         /// <param name="serialization_offset">The location of the section serialization in the buffer.</param>
@@ -373,6 +379,30 @@ public abstract class networked : MonoBehaviour
             bool first = true;
             int offset = serialization_offset;
             int end = serialization_offset + serialization_length;
+
+            // The first thing will be the id bytes for this section
+            int id_bytes_length = System.BitConverter.ToInt32(buffer, offset);
+            offset += sizeof(int);
+
+            byte[] id_bytes = new byte[id_bytes_length];
+            System.Buffer.BlockCopy(buffer, offset, id_bytes, 0, id_bytes.Length);
+
+            if (section != null)
+            {
+                // compare the id bytes to check that we've reccived serialization 
+                // from the corresponding section on the server (this should always be the case).
+                var id_bytes_compare = section.section_id_bytes();
+
+                if (id_bytes_compare.Length != id_bytes_length)
+                    throw new System.Exception("Tried to deserialize tree with mismatched id bytes!");
+
+                for (int i = 0; i < id_bytes_length; ++i)
+                    if (id_bytes[i] != id_bytes_compare[i])
+                        throw new System.Exception("Tried to deserialize tree with mismatched id bytes!");
+            }
+
+            offset += id_bytes_length;
+
             while (offset < end)
             {
                 int length = System.BitConverter.ToInt32(buffer, offset);
@@ -382,18 +412,57 @@ public abstract class networked : MonoBehaviour
 
                 if (first)
                 {
-                    // The very first serialization reccived from the 
-                    // server will is that of the section itself.
-                    section.network_id = id;
-                    section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
-                    section.on_first_sync();
+                    if (section == null)
+                    {
+                        // See if a section with this id already exists
+                        networked found;
+                        if (networked_behaviours.TryGetValue(id, out found))
+                        {
+                            section = (section)found;
+                            if (section.type_id != type_id)
+                                throw new System.Exception("Wrong section type found!");
+                            var id_found = section.section_id_bytes();
+                            if (id_found.Length != id_bytes.Length)
+                                throw new System.Exception("Wrong section id found!");
+                            for (int i = 0; i < id_bytes.Length; ++i)
+                                if (id_found[i] != id_bytes[i])
+                                    throw new System.Exception("Wrong section id found!");
+                        }
+                        else
+                        {
+                            // Create the top-level section
+                            create_section_from_network(type_id, id, id_bytes,
+                                offset + sizeof(int) * 4, length - sizeof(int) * 4);
+                        }
+                    }
+                    else
+                    {
+                        // The very first serialization reccived from the 
+                        // server will is that of the section itself.
+
+                        // Check if the section already exists
+                        networked found;
+                        if (networked_behaviours.TryGetValue(id, out found))
+                        {
+                            // Section already exists, keep the newer version
+                            section found_sec = (section)found;
+                            Destroy(found_sec.gameObject);
+                            networked_behaviours.Remove(id);
+                        }
+
+                        section.network_id = id;
+                        section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
+                        section.on_first_sync();                
+                    }
+
                     first = false;
                 }
                 else
                 {
                     // This is a decendant of the section and so 
                     // needs creating as well as deseriailizing.
-                    create_from_network(type_id, id, parent_id, offset + sizeof(int) * 4, length - sizeof(int) * 4);
+                    create_from_network(type_id, id, parent_id,
+                        offset + sizeof(int) * 4, length - sizeof(int) * 4);
                 }
 
                 offset += length;
@@ -440,6 +509,34 @@ public abstract class networked : MonoBehaviour
                 nm.last_serialized, 0, serialization_length);
             nm.deserialize(nm.last_serialized, 0, serialization_length);
             nm.on_first_sync();
+        }
+
+        /// <summary>
+        /// Create a networked section on the client, on instruction from the
+        /// server.
+        /// </summary>
+        /// <param name="type_id">The id of the network type to create.</param>
+        /// <param name="network_id">The network id of the object to be created.</param>
+        /// <param name="id_bytes">The value of the id bytes of this object on the server.</param>
+        /// <param name="serialization_offset">The location of the serialization in the buffer.</param>
+        /// <param name="serialization_length">The length of the serialization in the buffer.</param>
+        static void create_section_from_network(
+            int type_id, int network_id, byte[] id_bytes,
+            int serialization_offset, int serialization_length)
+        {
+            System.Type type = get_networked_type_by_id(type_id);
+            var sec = (section)new GameObject().AddComponent(type);
+            sec.name = type.Name;
+            sec.network_id = network_id;
+            sec.invert_id(id_bytes);
+            sec.on_create();
+            sec.last_serialized = new byte[serialization_length];
+            System.Buffer.BlockCopy(
+                buffer, serialization_offset,
+                sec.last_serialized, 0, serialization_length
+            );
+            sec.deserialize(sec.last_serialized, 0, serialization_length);
+            sec.on_first_sync();
         }
 
         /// <summary>
@@ -490,7 +587,10 @@ public abstract class networked : MonoBehaviour
                 // Ask the server if a section exists
                 case CLIENT_MSG.CHECK_SECTION:
                     var sec_from = (section)from;
-                    send_payload(sec_from, (byte)CLIENT_MSG.CHECK_SECTION, sec_from.section_id_bytes());
+                    send_payload(sec_from, (byte)CLIENT_MSG.CHECK_SECTION, concat_buffers(
+                        System.BitConverter.GetBytes(sec_from.type_id),
+                        sec_from.section_id_bytes()
+                    ));
                     break;
 
                 // Request the server make a new object of this type
@@ -526,6 +626,13 @@ public abstract class networked : MonoBehaviour
 
                     break;
 
+                // Let the server know we've forgotten about an object
+                case CLIENT_MSG.OBJECT_FORGOTTEN:
+
+                    // Send the server the id of the section to forget about
+                    send_payload(from, (byte)CLIENT_MSG.OBJECT_FORGOTTEN, new byte[0]);
+                    break;
+
                 default:
                     throw new System.Exception("Unkown send message type: " + message_type + "!");
             }
@@ -541,37 +648,53 @@ public abstract class networked : MonoBehaviour
         /// <param name="msg_length">The length of the message in the buffer.</param>
         static void process_message(SERVER_MSG message_type, int network_id, int msg_offset, int msg_length)
         {
+            // Messages that are not addressed to a network
+            // object that already exists.
+            switch (message_type)
+            {
+                case SERVER_MSG.NEW_CREATION:
+                    deserialize_new_creation(network_id, msg_offset, msg_length);
+                    return;
+
+                case SERVER_MSG.FORCED_SECTION:
+                    deserialize_tree(null, msg_offset, msg_length);
+                    return;
+            }
+
+            // Find the network object this message is addressed to
+            // (if it still exists)
+            networked recipient = null;
+            networked_behaviours.TryGetValue(network_id, out recipient);
+
             switch (message_type)
             {
                 case SERVER_MSG.SERIALIZATION_UPDATE:
-                    var nb = networked_behaviours[network_id];
-                    System.Buffer.BlockCopy(buffer, msg_offset, nb.last_serialized, 0, msg_length);
-                    nb.deserialize(nb.last_serialized, 0, msg_length);
-                    break;
-
-                case SERVER_MSG.NEW_CREATION:
-                    deserialize_new_creation(network_id, msg_offset, msg_length);
-                    break;
+                    if (recipient == null) return;
+                    System.Buffer.BlockCopy(buffer, msg_offset, recipient.last_serialized, 0, msg_length);
+                    recipient.deserialize(recipient.last_serialized, 0, msg_length);
+                    return;
 
                 case SERVER_MSG.SECTION_DOESNT_EXIST:
-                    send_message(networked_behaviours[network_id], CLIENT_MSG.CREATE_NEW_SECTION);
-                    break;
+                    if (recipient == null) return;
+                    send_message(recipient, CLIENT_MSG.CREATE_NEW_SECTION);
+                    return;
 
                 case SERVER_MSG.SECTION_EXISTS:
-                    deserialize_tree((section)networked_behaviours[network_id], msg_offset, msg_length);
-                    break;
+                    if (recipient == null) return;
+                    deserialize_tree((section)recipient, msg_offset, msg_length);
+                    return;
 
                 case SERVER_MSG.SECTION_CREATION_SUCCESS:
-                    var section_created = networked_behaviours[network_id];
-                    section_created.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
-                    section_created.on_first_sync(); // We've synced with the server for the first time
-                    break;
+                    if (recipient == null) return;
+                    recipient.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    recipient.on_first_sync(); // We've synced with the server for the first time
+                    return;
 
                 case SERVER_MSG.CREATION_SUCCESS:
-                    var object_created = networked_behaviours[network_id];
-                    object_created.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
-                    object_created.on_first_sync(); // We've synced with the server for the first time
-                    break;
+                    if (recipient == null) return;
+                    recipient.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
+                    recipient.on_first_sync(); // We've synced with the server for the first time
+                    return;
 
                 default:
                     throw new System.Exception("Unkown message type: " + message_type);
@@ -627,6 +750,7 @@ public abstract class networked : MonoBehaviour
         /// </summary>
         public static void disconnect()
         {
+            // No need to tell the server - it will work it out
             tcp.Close();
             tcp = null;
         }
@@ -643,7 +767,11 @@ public abstract class networked : MonoBehaviour
             networked_behaviours.Remove(old_id);
 
             if (networked_behaviours.ContainsKey(new_id))
+            {
+                Debug.Log(old_id + " -> " + new_id);
+                Debug.Log("Clashes with " + networked_behaviours[new_id].name);
                 throw new System.Exception("networked behaviour with this id already exists!");
+            }
 
             networked_behaviours[new_id] = nw;
         }
@@ -666,8 +794,27 @@ public abstract class networked : MonoBehaviour
                 process_buffer(bytes_read);
             }
 
+            List<int> destroyed = new List<int>();
             foreach (var kv in networked_behaviours)
-                kv.Value.update();
+            {
+                if (kv.Value == null)
+                {
+                    // This networked object has been destroyed
+                    // let the server know we've forgotten about it
+                    send_message(kv.Value, CLIENT_MSG.OBJECT_FORGOTTEN);
+                    destroyed.Add(kv.Key);
+                }
+                else
+                {
+                    if (kv.Value.network_id != kv.Key)
+                        throw new System.Exception("Network id mismatch!");
+                    kv.Value.update();
+                }
+            }
+
+            // Un-schedule updates about destroyed behaviours
+            foreach (var i in destroyed)
+                networked_behaviours.Remove(i);
 
             // Send queued messages
             message.send_queue();
@@ -755,6 +902,45 @@ public abstract class networked : MonoBehaviour
         static traffic_monitor sent;
         static traffic_monitor received;
 
+        public static string savename { get; private set; }
+
+        /// <summary>
+        /// Configure the server so objects of type T are forced
+        /// to exist on every client.
+        /// </summary>
+        /// <typeparam name="T">The type to set as forced.</typeparam>
+        public static void set_forced<T>() where T : section
+        {
+            forced_types.Add(get_networked_type_id(typeof(T)));
+        }
+        static HashSet<int> forced_types = new HashSet<int>();
+
+        /// <summary>
+        /// Get the directory where this game is saved.
+        /// Ensures the directory exists.
+        /// </summary>
+        /// <returns>Path to the save directory.</returns>
+        public static string save_directory()
+        {
+            var path = saves_directory() + "/" + savename;
+            if (!System.IO.Directory.Exists(path))
+                System.IO.Directory.CreateDirectory(path);
+            return path;
+        }
+
+        /// <summary>
+        /// Get the directory where savegames are stored, ensures
+        /// that the directory exists.
+        /// </summary>
+        /// <returns>Path to the saves directory.</returns>
+        public static string saves_directory()
+        {
+            var path = Application.persistentDataPath + "/saves";
+            if (!System.IO.Directory.Exists(path))
+                System.IO.Directory.CreateDirectory(path);
+            return path;
+        }
+
         /// <summary>
         /// A message from the server to a client.
         /// </summary>
@@ -790,23 +976,18 @@ public abstract class networked : MonoBehaviour
             static Dictionary<client, Queue<message>> queues =
                 new Dictionary<client, Queue<message>>();
 
+            public static void on_disconnect(client c)
+            {
+                queues.Remove(c);
+            }
+
             public static void send_queues()
             {
-                List<client> disconnected_clients = new List<client>();
-
                 // Loop over message queues.
-                foreach (var kv in queues)
+                foreach (var kv in new List<KeyValuePair<client, Queue<message>>>(queues))
                 {
                     var client = kv.Key;
                     var queue = kv.Value;
-
-                    // Record clients that have disconnected, so
-                    // we can remove their message queues.
-                    if (!client.tcp.Connected)
-                    {
-                        disconnected_clients.Add(client);
-                        continue;
-                    }
 
                     byte[] send_buffer = new byte[client.tcp.SendBufferSize];
 
@@ -827,7 +1008,14 @@ public abstract class networked : MonoBehaviour
                         {
                             // This message would overrun the send buffer, send
                             // what we have already to free the buffer.
-                            client.tcp.GetStream().Write(send_buffer, 0, offset);
+                            try
+                            {
+                                client.tcp.GetStream().Write(send_buffer, 0, offset);
+                            }
+                            catch
+                            {
+                                disconnect(client);
+                            }
                             send_buffer = new byte[client.tcp.SendBufferSize];
                             offset = 0;
                         }
@@ -837,12 +1025,18 @@ public abstract class networked : MonoBehaviour
                     }
 
                     // Send the buffer
-                    if (offset > 0) client.tcp.GetStream().Write(send_buffer, 0, offset);
+                    if (offset > 0)
+                    {
+                        try
+                        {
+                            client.tcp.GetStream().Write(send_buffer, 0, offset);
+                        }
+                        catch
+                        {
+                            disconnect(client);
+                        }
+                    }
                 }
-
-                // Remove message queues for disconnected clients
-                foreach (var c in disconnected_clients)
-                    queues.Remove(c);
             }
         }
 
@@ -850,12 +1044,16 @@ public abstract class networked : MonoBehaviour
         /// Called when a client has been found to have disconnected.
         /// </summary>
         /// <param name="c"></param>
-        static void on_disonnect(client c)
+        static void disconnect(client c)
         {
+            // Cancel all pending messages to the client
+            message.on_disconnect(c);
+
             // Remove the client from all records
             clients.Remove(c);
-            foreach (var kv in section_representations)
-                kv.Value.remove_client(c);
+            foreach (var sec in new List<section_representation>(
+                section_representations.Values))
+                sec.remove_client(c);
 
             // Close the connection
             c.stream.Close();
@@ -869,11 +1067,15 @@ public abstract class networked : MonoBehaviour
         /// <param name="sec_id_bytes_start">The location of the section id in the buffer.</param>
         /// <param name="sec_id_bytes_count">The legnth of the section id in the buffer.</param>
         /// <returns>The representation if found, otherwise null.</returns>
-        static section_representation find_section(int sec_id_bytes_start, int sec_id_bytes_count)
+        static section_representation find_section(int type_id, int sec_id_bytes_start, int sec_id_bytes_count)
         {
             foreach (var kv in section_representations)
             {
                 var r = kv.Value;
+
+                if (r.type_id != type_id)
+                    continue;
+
                 if (r.section_id_bytes.Length != sec_id_bytes_count)
                     continue;
 
@@ -904,24 +1106,17 @@ public abstract class networked : MonoBehaviour
             byte[] to_send = concat_buffers(
                     System.BitConverter.GetBytes(msg_length), // Length of message
                     new byte[] { mgs_type },                  // Message type
-                    System.BitConverter.GetBytes(network_id),   // Network id
-                    payload                                     // Payload
+                    System.BitConverter.GetBytes(network_id), // Network id
+                    payload                                   // Payload
             );
 
             if (to_send.Length != msg_length)
                 throw new System.Exception("Check calculation of message length!");
 
             sent.log_bytes(to_send.Length);
-            try
-            {
-                if (to_send.Length > client.tcp.SendBufferSize)
-                    throw new System.Exception("Message too long!");
-                new message(client, to_send);
-            }
-            catch
-            {
-                on_disonnect(client);
-            }
+            if (to_send.Length > client.tcp.SendBufferSize)
+                throw new System.Exception("Message too long!");
+            new message(client, to_send);
         }
 
         /// <summary>
@@ -954,7 +1149,9 @@ public abstract class networked : MonoBehaviour
                     if (network_id >= 0)
                         throw new System.Exception("Should not be checking for registered sections!");
 
-                    section_representation found = find_section(message_offset, message_length);
+                    int type_id = System.BitConverter.ToInt32(buffer, message_offset);
+                    section_representation found = find_section(type_id,
+                        message_offset + sizeof(int), message_length - sizeof(int));
                     if (found == null)
                     {
                         // No section found, let the client know it's safe to go ahead and create it
@@ -965,9 +1162,18 @@ public abstract class networked : MonoBehaviour
                         // Section exists, record the fact that this client can see the section
                         // and send the client the neccassary information to reconstruct it.
                         found.add_client(client);
-                        send_payload(client, (byte)SERVER_MSG.SECTION_EXISTS, network_id, concat_buffers(
-                            found.tree_serialization()
-                        ));
+                        send_payload(client, (byte)SERVER_MSG.SECTION_EXISTS,
+                                     network_id, found.tree_serialization());
+
+                        // If this is a forced type, ensure all clients get it
+                        if (forced_types.Contains(type_id))
+                            foreach (var c in clients)
+                            {
+                                if (c == client) continue; // Already sent to client
+                                found.add_client(c);
+                                send_payload(c, (byte)SERVER_MSG.FORCED_SECTION,
+                                     network_id, found.tree_serialization());
+                            }
                     }
                     break;
 
@@ -978,8 +1184,8 @@ public abstract class networked : MonoBehaviour
                         throw new System.Exception("Registered objects should not send CREATE_NEW messages!");
 
                     // Parse the type from the message payload
-                    System.Type type = get_networked_type_by_id(
-                        System.BitConverter.ToInt32(buffer, message_offset));
+                    type_id = System.BitConverter.ToInt32(buffer, message_offset);
+                    System.Type type = get_networked_type_by_id(type_id);
 
                     // The length of the section id bytes
                     int sec_id_bytes_length = System.BitConverter.ToInt32(buffer, message_offset + sizeof(int));
@@ -995,12 +1201,22 @@ public abstract class networked : MonoBehaviour
                         init_serialization, 0, init_serialization.Length);
 
                     // Create the section representation
-                    var tl_rep = section_representation.create(client, type, init_serialization, sec_id_bytes);
+                    var sec_rep = section_representation.create(client, type, init_serialization, sec_id_bytes);
 
                     // Reply with the newly-created id
                     send_payload(client, (byte)SERVER_MSG.SECTION_CREATION_SUCCESS, network_id, concat_buffers(
-                        System.BitConverter.GetBytes(tl_rep.id)
+                        System.BitConverter.GetBytes(sec_rep.id)
                     ));
+
+                    // If this is a forced type, ensure all clients get it
+                    if (forced_types.Contains(type_id))
+                        foreach (var c in clients)
+                        {
+                            if (c == client) continue; // Already sent to client
+                            sec_rep.add_client(c);
+                            send_payload(c, (byte)SERVER_MSG.FORCED_SECTION,
+                                 network_id, sec_rep.tree_serialization());
+                        }
 
                     break;
 
@@ -1011,7 +1227,7 @@ public abstract class networked : MonoBehaviour
                         throw new System.Exception("Registered objects should not send CREATE_NEW messages!");
 
                     // Parse the type id from the message payload
-                    int type_id = System.BitConverter.ToInt32(buffer, message_offset);
+                    type_id = System.BitConverter.ToInt32(buffer, message_offset);
 
                     // Parse the parent id from the message payload
                     int parent_id = System.BitConverter.ToInt32(buffer, message_offset + sizeof(int));
@@ -1039,6 +1255,16 @@ public abstract class networked : MonoBehaviour
                                 System.BitConverter.GetBytes(parent_id),
                                 serialization
                             ));
+
+                    break;
+
+                // The client has forgotten about a section
+                case CLIENT_MSG.OBJECT_FORGOTTEN:
+
+                    // Stop sending object serializations to clients that no longer
+                    // have the object
+                    if (section_representations.TryGetValue(network_id, out found))
+                        found.remove_client(client);
 
                     break;
 
@@ -1083,10 +1309,18 @@ public abstract class networked : MonoBehaviour
         /// Start a server on the local machine.
         /// </summary>
         /// <param name="port">The port to listen on.</param>
-        public static void start(int port)
+        /// <param name="save">The save location on disc.</param>
+        public static void start(int port, string save)
         {
             if (started) return;
             var address = local_ip_address();
+
+            // So we know what name to save the game under
+            savename = save;
+
+            // Load the previously saved sections
+            foreach (var f in System.IO.Directory.GetFiles(save_directory()))
+                section_representation.load_from_disk(f);
 
             // Create and start the listener
             tcp = new TcpListener(address, port);
@@ -1102,6 +1336,10 @@ public abstract class networked : MonoBehaviour
         /// </summary>
         public static void stop()
         {
+            // Disconnect all the clients
+            foreach (var c in new List<client>(clients))
+                disconnect(c);
+
             tcp.Stop();
             tcp = null;
         }
@@ -1137,7 +1375,19 @@ public abstract class networked : MonoBehaviour
 
             // Check for pending connection requests
             while (tcp.Pending())
-                clients.Add(new client(tcp.AcceptTcpClient()));
+            {
+                var client = new client(tcp.AcceptTcpClient());
+                clients.Add(client);
+
+                // Send the client all forced sections 
+                foreach (var sec in section_representations.Values)
+                    if (forced_types.Contains(sec.type_id))
+                    {
+                        sec.add_client(client);
+                        send_payload(client, (byte)SERVER_MSG.FORCED_SECTION, 
+                                     sec.id, sec.tree_serialization());
+                    }
+            }
 
             // Read stream updates (enumerate over new list, so we can modify the connected clients)
             foreach (var c in new List<client>(clients))
@@ -1304,12 +1554,67 @@ public abstract class networked : MonoBehaviour
                 rep.serialization = initial_serialization;
                 rep.section_id_bytes = section_id_bytes;
                 rep.transform.SetParent(server_representation);
-                rep.clients = new HashSet<client>() { client };
+                if (client != null) rep.clients = new HashSet<client>() { client };
+                else rep.clients = new HashSet<client> { };
 
                 representations[rep.id] = rep;
                 section_representations[rep.id] = rep;
 
                 return rep;
+            }
+
+            /// <summary>
+            /// Creates a section representation from the tree serialization stored
+            /// in the given file. This works simmilarly to client.deserialize_tree
+            /// except that it creates a section_reperesntation rather than a real
+            /// section.
+            /// </summary>
+            /// <param name="path">The path to the file containing the serialization.</param>
+            /// <returns></returns>
+            public static section_representation load_from_disk(string path)
+            {
+                byte[] buffer = System.IO.File.ReadAllBytes(path);
+
+                section_representation ret = null;
+                bool first = true;
+                int offset = 0;
+
+                // The first bytes will be the id bytes for this section
+                int id_bytes_length = System.BitConverter.ToInt32(buffer, offset);
+                offset += 4;
+                byte[] id_bytes = new byte[id_bytes_length];
+                System.Buffer.BlockCopy(buffer, offset, id_bytes, 0, id_bytes_length);
+                offset += id_bytes_length;
+
+                while (offset < buffer.Length)
+                {
+                    int length = System.BitConverter.ToInt32(buffer, offset);
+                    int id = System.BitConverter.ToInt32(buffer, offset + sizeof(int));
+                    int parent_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 2);
+                    int type_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 3);
+                    byte[] serialization = new byte[length - 4 * sizeof(int)];
+                    System.Buffer.BlockCopy(buffer, offset + sizeof(int) * 4, serialization, 0, serialization.Length);
+                    System.Type type = get_networked_type_by_id(type_id);
+
+                    if (id < 0)
+                        throw new System.Exception("Unregistered network object loaded!");
+
+                    if (first)
+                    {
+                        // The first serialization is the section we will be creating
+                        ret = create(null, type, serialization, id_bytes);
+                        first = false;
+                    }
+                    else
+                    {
+                        // All other serializations are regular representations
+                        create(type_id, parent_id, serialization);
+                    }
+
+                    offset += length; // Shift to next object
+                }
+
+                return ret;
             }
 
             /// <summary>
@@ -1342,6 +1647,24 @@ public abstract class networked : MonoBehaviour
             public void remove_client(client client)
             {
                 clients.Remove(client);
+
+                if (clients.Count == 0)
+                    offload_to_disk();
+            }
+
+            /// <summary>
+            /// Called when a section is no longer needed by any clients, saving
+            /// the section to disk.
+            /// </summary>
+            public void offload_to_disk()
+            {
+                // Remove me from the various lists
+                section_representations.Remove(id);
+                representations.Remove(id);
+                Destroy(gameObject);
+
+                // Save my serialization
+                System.IO.File.WriteAllBytes(save_directory() + "/section_" + id, tree_serialization());
             }
 
             /// <summary>
@@ -1361,6 +1684,12 @@ public abstract class networked : MonoBehaviour
             public byte[] tree_serialization()
             {
                 List<byte> ser = new List<byte>();
+
+                // First bytes are my id bytes (this is only actually needed
+                // when saving to disk, but is used as a check when sent to
+                // a client).
+                ser.AddRange(System.BitConverter.GetBytes(section_id_bytes.Length));
+                ser.AddRange(section_id_bytes);
 
                 List<representation> to_serialize = new List<representation> { this };
 
@@ -1418,6 +1747,10 @@ public abstract class networked : MonoBehaviour
 
         // Send a serialization update
         SERIALIZATION_UPDATE,
+
+        // Sent when a client destroys a section, so we know
+        // to stop sending serialization updates there
+        OBJECT_FORGOTTEN,
     }
 
     /// <summary>
@@ -1438,6 +1771,10 @@ public abstract class networked : MonoBehaviour
 
         // A serialization update needs to be applied
         SERIALIZATION_UPDATE,
+
+        // A section has been created on a client
+        // who's existance is forced upon other clients
+        FORCED_SECTION,
     }
 
     /// <summary>

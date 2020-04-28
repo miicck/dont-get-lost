@@ -54,11 +54,12 @@ public class world_menu : MonoBehaviour
     public InputField world_name_input;
     public InputField world_seed_input;
     public InputField ip_input;
+    public InputField username_input;
 
     private void Start()
     {
         // Find all the saved worlds
-        var world_folders = System.IO.Directory.GetDirectories(world.worlds_folder());
+        var world_folders = System.IO.Directory.GetDirectories(networked.server.saves_directory());
 
         var load_header = template_header.inst();
         load_header.text = "Load existing world...";
@@ -72,11 +73,18 @@ public class world_menu : MonoBehaviour
             var button = template_world_button.inst();
             button.transform.SetParent(button_container);
 
-            string[] splt = wf.Split('/');
+            string[] splt = wf.Split('/', '\\');
+            string name = splt[splt.Length - 1];
 
             var load_button = button.Find("load").GetComponent<Button>();
-            load_button.GetComponentInChildren<Text>().text = splt[splt.Length - 1];
-            load_button.onClick.AddListener(() => game.load_and_host_world(wf));
+            load_button.GetComponentInChildren<Text>().text = name;
+            load_button.onClick.AddListener(() =>
+            {
+                string username = username_input.text.Trim();
+                if (username.Length == 0)
+                    error_highlighter.highlight(username_input.GetComponent<Image>());
+                else game.load_and_host_world(name, username);
+            });
 
             var delete_button = button.Find("delete").GetComponent<Button>();
             delete_button.onClick.AddListener(() =>
@@ -103,8 +111,15 @@ public class world_menu : MonoBehaviour
         new_world.GetComponentInChildren<Text>().text = "New world";
         new_world.onClick.AddListener(() =>
         {
+            string username = username_input.text.Trim();
+            if (username.Length == 0)
+            {
+                error_highlighter.highlight(username_input.GetComponent<Image>());
+                return;
+            }
+
             string name = world_name_input.text.Trim();
-            string folder = world.worlds_folder() + "/" + name;
+            string folder = networked.server.saves_directory() + "/" + name;
             if (System.IO.Directory.Exists(folder))
             {
                 error_highlighter.highlight(world_name_input.GetComponent<Image>());
@@ -122,7 +137,7 @@ public class world_menu : MonoBehaviour
                     seed = get_hash(ws);
             }
 
-            game.create_and_host_world(name, seed);
+            game.create_and_host_world(name, seed, username);
         });
 
         var join_header = template_header.inst();
@@ -132,7 +147,14 @@ public class world_menu : MonoBehaviour
         var join_button = template_button.inst();
         join_button.transform.SetParent(button_container);
         join_button.GetComponentInChildren<Text>().text = "Join";
-        join_button.onClick.AddListener(() => game.join_world(ip_input.text));
+        join_button.onClick.AddListener(() =>
+        {
+            string username = username_input.text.Trim();
+            if (username.Length == 0)
+                error_highlighter.highlight(username_input.GetComponent<Image>());
+            else
+                game.join_world(ip_input.text, username);
+        });
 
         ip_input.text = networked.server.local_ip_address() + ":" + networked.server.DEFAULT_PORT;
         ip_input.transform.SetAsLastSibling();
