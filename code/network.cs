@@ -74,35 +74,58 @@ public abstract class networked : MonoBehaviour
     /// Create a networked object of the given type on the client side. This will
     /// automatically send the neccassary messages to also create the object on the server.
     /// </summary>
-    /// <typeparam name="T">Networked type to create.</typeparam>
     /// <param name="parent">Networked parent under which to create.</param>
-    /// <returns>A newly created network object of type T.</returns>
-    public static T create<T>(networked parent)
-        where T : networked
+    /// <param name="type">Type of networked object to create.</param>
+    /// <returns>A newly created network object of given type.</returns>
+    public static networked create(networked parent, System.Type type)
     {
         if (parent.network_id < 0)
             throw new System.Exception("Tried to create a child of an unregistered networked_monobehaviour!");
 
-        var t = new GameObject().AddComponent<T>();
+        var t = (networked)new GameObject().AddComponent(type);
         t.name = t.GetType().Name;
+        t.finish_create(parent);
+        return t;
+    }
 
+    /// <summary>
+    /// Generic overload of <see cref="create(networked, System.Type)"/>.
+    /// </summary>
+    public static networked create<T>(networked parent)
+        where T : networked
+    {
+        return create(parent, typeof(T));
+    }
+
+    /// <summary>
+    /// Overload of <see cref="create(networked, System.Type)"/> that starts by
+    /// copying another networked object.
+    /// </summary>
+    public static networked create(networked parent, networked to_copy)
+    {
+        var t = Instantiate(to_copy);
+        t.name = to_copy.name;
+        t.finish_create(parent);
+        return t;
+    }
+
+    void finish_create(networked parent)
+    {
         // Set the parent
-        t.net_parent = parent;
+        net_parent = parent;
 
         // Assign a unique negative id
-        t.network_id = --last_local_id;
+        network_id = --last_local_id;
 
         // Client-side initialization
-        t.on_create(true);
+        on_create(true);
 
         // This object is being newly added as a child 
         // of a networked_monobehaviour, this implies it is new
         // to both the client and the server (otherwise
         // it would have been created when it's parent
         // was created).
-        client.send_message(t, CLIENT_MSG.CREATE_NEW);
-
-        return t;
+        client.send_message(this, CLIENT_MSG.CREATE_NEW);
     }
 
     /// <summary>
@@ -452,7 +475,7 @@ public abstract class networked : MonoBehaviour
 
                         section.network_id = id;
                         section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
-                        section.on_first_sync();                
+                        section.on_first_sync();
                     }
 
                     first = false;
@@ -1384,7 +1407,7 @@ public abstract class networked : MonoBehaviour
                     if (forced_types.Contains(sec.type_id))
                     {
                         sec.add_client(client);
-                        send_payload(client, (byte)SERVER_MSG.FORCED_SECTION, 
+                        send_payload(client, (byte)SERVER_MSG.FORCED_SECTION,
                                      sec.id, sec.tree_serialization());
                     }
             }
@@ -1501,15 +1524,18 @@ public abstract class networked : MonoBehaviour
             /// <param name="parent_id">The parent id of the object to create.</param>
             /// <param name="initial_serialization">The initial serialization of the object.</param>
             /// <returns></returns>
-            public static representation create(int type_id, int parent_id, byte[] initial_serialization)
+            public static representation create(int type_id, int parent_id, byte[] initial_serialization,
+                int? network_id = null)
             {
                 // Create the representation
                 var type = get_networked_type_by_id(type_id);
                 var rep = new GameObject(type.Name).AddComponent<representation>();
-                rep.transform.SetParent(representations[parent_id].transform);
+                var reps = representations;
+                rep.transform.SetParent(reps[parent_id].transform);
 
                 // Save the information
-                rep.id = ++last_id;
+                if (network_id == null) rep.id = ++last_id;
+                else rep.id = (int)network_id;
                 rep.parent_id = parent_id;
                 rep.type_id = type_id;
                 representations[rep.id] = rep;
@@ -1545,11 +1571,14 @@ public abstract class networked : MonoBehaviour
                 client client,
                 System.Type type,
                 byte[] initial_serialization,
-                byte[] section_id_bytes)
+                byte[] section_id_bytes,
+                int? network_id = null)
             {
                 var rep = new GameObject(type.Name).AddComponent<section_representation>();
 
-                rep.id = ++last_id;
+                if (network_id == null) rep.id = ++last_id;
+                else rep.id = (int)network_id;
+
                 rep.type_id = get_networked_type_id(type);
                 rep.serialization = initial_serialization;
                 rep.section_id_bytes = section_id_bytes;
@@ -1602,13 +1631,13 @@ public abstract class networked : MonoBehaviour
                     if (first)
                     {
                         // The first serialization is the section we will be creating
-                        ret = create(null, type, serialization, id_bytes);
+                        ret = create(null, type, serialization, id_bytes, id);
                         first = false;
                     }
                     else
                     {
                         // All other serializations are regular representations
-                        create(type_id, parent_id, serialization);
+                        create(type_id, parent_id, serialization, id);
                     }
 
                     offset += length; // Shift to next object

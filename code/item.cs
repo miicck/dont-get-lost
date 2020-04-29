@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item : MonoBehaviour
+public class item : networked
 {
     //###########//
     // VARIABLES //
@@ -115,81 +115,37 @@ public class item : MonoBehaviour
         }
     }
 
-    //###############//
-    // SERIALIZATION //
-    //###############//
+    //############//
+    // NETWORKING //
+    //############//
 
-    public byte[] serialize()
+    protected override byte[] serialize()
     {
-        const int IS = sizeof(int);
-        const int FS = sizeof(float);
-
-        // Floating point values to serialize
-        Vector3 euler = transform.rotation.eulerAngles;
-        float[] floats = new float[]
-        {
-            transform.position.x,
-            transform.position.y,
-            transform.position.z,
-            transform.rotation.x,
-            transform.rotation.y,
-            transform.rotation.z,
-            transform.rotation.w
-        };
-
-        // Integers to serialize
-        int[] ints = new int[]
-        {
-            id,
-            rigidbody.isKinematic ? 1 : 0,
-        };
-
-        // Serialize into byte array
-        int length = floats.Length * FS + ints.Length * IS;
-        var bytes = new byte[length];
-
-        for (int i = 0; i < ints.Length; ++i)
-        {
-            var ib = System.BitConverter.GetBytes(ints[i]);
-            System.Buffer.BlockCopy(ib, 0, bytes, i * IS, IS);
-        }
-
-        for (int i = 0; i < floats.Length; ++i)
-        {
-            var fb = System.BitConverter.GetBytes(floats[i]);
-            System.Buffer.BlockCopy(fb, 0, bytes, ints.Length * IS + i * FS, FS);
-        }
-
-        return bytes;
+        return concat_buffers(
+            System.BitConverter.GetBytes(transform.position.x),
+            System.BitConverter.GetBytes(transform.position.y),
+            System.BitConverter.GetBytes(transform.position.z),
+            System.BitConverter.GetBytes(transform.rotation.x),
+            System.BitConverter.GetBytes(transform.rotation.y),
+            System.BitConverter.GetBytes(transform.rotation.z),
+            System.BitConverter.GetBytes(transform.rotation.w)
+        );
     }
 
-    public static item deserailize(byte[] bytes)
+    protected override void deserialize(byte[] bytes, int offset, int count)
     {
-        const int IS = sizeof(int);
-        const int FS = sizeof(float);
+        transform.position = new Vector3(
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*0),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*1),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*2)
+        );
 
-        // Deserailize id
-        int id = System.BitConverter.ToInt32(bytes, 0);
-        bool is_kinematic = System.BitConverter.ToInt32(bytes, IS) != 0;
-
-        // Deserailzie position
-        Vector3 position;
-        position.x = System.BitConverter.ToSingle(bytes, IS * 2);
-        position.y = System.BitConverter.ToSingle(bytes, IS * 2 + FS);
-        position.z = System.BitConverter.ToSingle(bytes, IS * 2 + FS * 2);
-
-        // Desearialize rotation
-        Quaternion rot = new Quaternion(
-            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 3),
-            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 4),
-            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 5),
-            System.BitConverter.ToSingle(bytes, IS * 2 + FS * 6)
-            );
-
-        // Create the item
-        var i = create(id, position, rot);
-        i.rigidbody.isKinematic = is_kinematic;
-        return i;
+        transform.rotation = new Quaternion(
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 4),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 5),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 6)
+        );
     }
 
     //##############//
@@ -212,11 +168,13 @@ public class item : MonoBehaviour
 
     static item create(int id, Vector3 position, Quaternion rotation)
     {
-        var i = load_from_id(id).inst();
+        // Create a networked version of the  
+        chunk parent = chunk.at(position);
+        var i = (item)create(parent, load_from_id(id));
+
         i.transform.position = position;
         i.transform.rotation = rotation;
         i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
-        i.transform.SetParent(chunk.at(i.transform.position).transform);
         return i;
     }
 
