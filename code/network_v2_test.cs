@@ -34,4 +34,10 @@ public class network_v2_test : MonoBehaviour
         server.update();
         client.update();
     }
+
+    private void OnApplicationQuit()
+    {
+        client.disconnect();
+        server.stop();
+    }
 }
