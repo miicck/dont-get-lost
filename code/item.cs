@@ -135,9 +135,9 @@ public class item : networked
     protected override void deserialize(byte[] bytes, int offset, int count)
     {
         transform.position = new Vector3(
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*0),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*1),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float)*2)
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 0),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 1),
+            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
         );
 
         transform.rotation = new Quaternion(
@@ -171,7 +171,6 @@ public class item : networked
         // Create a networked version of the  
         chunk parent = chunk.at(position);
         var i = (item)create(parent, load_from_id(id));
-
         i.transform.position = position;
         i.transform.rotation = rotation;
         i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
