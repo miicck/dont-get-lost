@@ -8,7 +8,6 @@ using System.Net.Sockets;
  * TODO
  * - Logout player on client disconnect
  * - Ensure creating networked objects as children works
- * 
  */
 
 public class networked_v2 : MonoBehaviour
@@ -335,6 +334,14 @@ public static class client
                     System.BitConverter.GetBytes(parent_id),
                     System.BitConverter.GetBytes(local_id)
                 ));
+            },
+
+            [MESSAGE.DISCONNECT] = (args) =>
+            {
+                if (args.Length != 0)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                send(MESSAGE.DISCONNECT, new byte[] { });
             }
         };
 
@@ -345,6 +352,7 @@ public static class client
     public static void disconnect()
     {
         if (tcp == null) return;
+        message_senders[MESSAGE.DISCONNECT]();
         tcp.GetStream().Close();
         tcp.Close();
     }
@@ -385,6 +393,7 @@ public static class client
         LOGIN = 1,        // Client has logged in
         POSITION_UPDATE,  // Object position needs updating
         CREATE,           // Create an object on the server
+        DISCONNECT,       // Disconnect this client
     }
 
     delegate void message_sender(params object[] args);
@@ -444,41 +453,62 @@ public static class server
             render_range = 5f;
         }
 
-        public void login(string username, byte[] password, representation player)
+        public void login(string username, byte[] password)
         {
+            // Create the player
+            var player = representation.create(null, player_prefab_local,
+                player_prefab_remote, player_spawn);
+
             this.username = username;
             this.password = password;
             this.player = player;
+
+            load(player, true, false);
+        }
+
+        public void disconnect()
+        {
+            connected_clients.Remove(this);
+            stream.Close();
+            tcp.Close();
+        }
+
+        /// <summary> The representations loaded as objects on this client. </summary>
+        HashSet<representation> loaded = new HashSet<representation>();
+
+        /// <summary> Load an object corresponding to the given representation 
+        /// on this client. </summary>
+        public void load(representation rep, bool local, bool already_created = false)
+        {
+            if (!already_created)
+            {
+                if (local) message_senders[MESSAGE.CREATE_LOCAL](this, rep.serialize());
+                else message_senders[MESSAGE.CREATE_REMOTE](this, rep.serialize());
+            }
+            loaded.Add(rep);
+        }
+
+        /// <summary>  Unload the object corresponding to the given 
+        /// representation on this client. </summary>
+        public void unload(representation rep)
+        {
+            if (!loaded.Contains(rep))
+                throw new System.Exception("Tried to unload object which was not on the client!");
+            loaded.Remove(rep);
+            message_senders[MESSAGE.UNLOAD](this, rep.network_id);
+        }
+
+
+        /// <summary> Returns true if the given representation is loaded on this client. </summary>
+        public bool has_loaded(representation rep)
+        {
+            return loaded.Contains(rep);
         }
     }
 
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
     {
-        // The clients that the object this represents are loaded on
-        HashSet<client> loaded_on = new HashSet<client>();
-
-        /// <summary> Load this object on a client, either as a local or remote object. </summary>
-        public void load_on(client client, bool local, bool already_created = false)
-        {
-            if (!already_created)
-            {
-                if (local) message_senders[MESSAGE.CREATE_LOCAL](client, serialize());
-                else message_senders[MESSAGE.CREATE_REMOTE](client, serialize());
-            }
-            loaded_on.Add(client);
-        }
-
-        /// <summary> Unload the representation on the given client. </summary>
-        public void unload_on(client client)
-        {
-            loaded_on.Remove(client);
-            message_senders[MESSAGE.UNLOAD](client, network_id);
-        }
-
-        /// <summary> Returns true if this representation is loaded on the given client. </summary>
-        public bool loaded(client client) { return loaded_on.Contains(client); }
-
         /// <summary> My network id. Automatically updates the 
         /// representations[network_id] dictionary. </summary>
         public int network_id
@@ -517,12 +547,10 @@ public static class server
         {
             transform.position = new_position;
 
-            // Send updated position to all the other clients
-            foreach (var c in loaded_on)
-            {
-                if (c == from) continue;
-                message_senders[MESSAGE.POSITION_UPDATE](c, this);
-            }
+            // Send position updates to all clients that have this object
+            foreach (var c in connected_clients)
+                if (c.has_loaded(this))
+                    message_senders[MESSAGE.POSITION_UPDATE](c, this);
         }
 
         public byte[] serialize()
@@ -597,15 +625,8 @@ public static class server
                     if (c.username == uname)
                         throw new System.NotImplementedException();
 
-                // Create the player
-                var player = representation.create(null, player_prefab_local,
-                    player_prefab_remote, player_spawn);
-
                 // Login
-                client.login(uname, pword, player);
-
-                // Load the player as a local on the client
-                player.load_on(client, true);
+                client.login(uname, pword);
             },
 
             [global::client.MESSAGE.POSITION_UPDATE] = (client, bytes, offset, length) =>
@@ -651,8 +672,13 @@ public static class server
                 representation parent = parent_id > 0 ? representations[parent_id] : null;
                 var rep = representation.create(parent, local_prefab, remote_prefab, pos);
 
-                rep.load_on(client, true, true);
+                client.load(rep, true, true);
                 message_senders[MESSAGE.CREATION_SUCCESS](client, local_id, rep.network_id);
+            },
+
+            [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
+            {
+                client.disconnect();
             }
         };
 
@@ -743,10 +769,10 @@ public static class server
             connected_clients.Add(new client(tcp.AcceptTcpClient()));
 
         // Recive messages from clients
-        foreach (var c in connected_clients)
+        foreach (var c in new List<client>(connected_clients))
         {
             byte[] buffer = new byte[c.tcp.ReceiveBufferSize];
-            while (c.stream.DataAvailable)
+            while (c.stream.CanRead && c.stream.DataAvailable)
             {
                 int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
                 int offset = 0;
@@ -780,17 +806,17 @@ public static class server
                     continue; // Client hasn't logged in yet
 
                 float distance = (rep.transform.position - c.player.transform.position).magnitude;
-                if (rep.loaded(c))
+                if (c.has_loaded(rep))
                 {
                     // Unload from clients that are too far away
                     if (distance > c.render_range)
-                        rep.unload_on(c);
+                        c.unload(rep);
                 }
                 else
                 {
                     // Load on clients that are within range
                     if (distance < c.render_range)
-                        rep.load_on(c, false);
+                        c.load(rep, false);
                 }
             }
         }
