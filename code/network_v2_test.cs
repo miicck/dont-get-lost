@@ -6,6 +6,7 @@ public class network_v2_test : MonoBehaviour
 {
     public UnityEngine.UI.Button server_start_button;
     public UnityEngine.UI.Button client_start_button;
+    public UnityEngine.UI.Text debug_info;
 
     void Start()
     {
@@ -20,7 +21,7 @@ public class network_v2_test : MonoBehaviour
 
         client_start_button.onClick.AddListener(() =>
         {
-            string username = Application.isEditor ? "mick (editor)" : "mick (build)";
+            string username = "User " + Random.Range(0, int.MaxValue);
 
             client.connect(
                 network_utils.local_ip_address().ToString(),
@@ -33,6 +34,8 @@ public class network_v2_test : MonoBehaviour
     {
         server.update();
         client.update();
+
+        debug_info.text = server.info() + "\n\n" + client.info();
     }
 
     private void OnApplicationQuit()

@@ -153,6 +153,11 @@ public class networked_v2 : MonoBehaviour
             objects.Remove(id);
     }
 
+    public static string objects_info()
+    {
+        return objects.Count + " objects.";
+    }
+
 #if UNITY_EDITOR
 
     // The custom editor for networked types
@@ -175,6 +180,9 @@ public static class client
     static int last_local_id = 0;
 
     static TcpClient tcp;
+
+    static network_utils.traffic_monitor traffic_up;
+    static network_utils.traffic_monitor traffic_down;
 
     public static networked_v2 create(Vector3 position,
         string local_prefab, string remote_prefab = null,
@@ -280,6 +288,9 @@ public static class client
         // Connect the TCP client + initialize buffers
         tcp = new TcpClient(host, port);
 
+        traffic_up = new network_utils.traffic_monitor();
+        traffic_down = new network_utils.traffic_monitor();
+
         // Setup message parsers
         message_parsers = new Dictionary<server.MESSAGE, message_parser>
         {
@@ -332,6 +343,7 @@ public static class client
             if (to_send.Length > tcp.SendBufferSize)
                 throw new System.Exception("Message too large!");
 
+            traffic_up.log_bytes(to_send.Length);
             tcp.GetStream().Write(to_send, 0, to_send.Length);
         }
 
@@ -444,6 +456,7 @@ public static class client
         {
             byte[] buffer = new byte[tcp.ReceiveBufferSize];
             int bytes_read = stream.Read(buffer, 0, buffer.Length);
+            traffic_down.log_bytes(bytes_read);
 
             int offset = 0;
             while (offset < bytes_read)
@@ -463,6 +476,17 @@ public static class client
         }
 
         networked_v2.network_updates();
+    }
+
+    public static string info()
+    {
+        if (tcp == null) return "Client not connected.";
+        return "Client connected\n" +
+                networked_v2.objects_info() + "\n" +
+               "Traffic:\n" +
+               "    " + traffic_up.usage() + " up\n" +
+               "    " + traffic_down.usage() + " down";
+               
     }
 
     public enum MESSAGE : byte
@@ -510,6 +534,10 @@ public static class server
         }
     }
 
+    // Traffic monitors
+    static network_utils.traffic_monitor traffic_down;
+    static network_utils.traffic_monitor traffic_up;
+
     /// <summary> A client connected to the server. </summary>
     class client
     {
@@ -555,6 +583,12 @@ public static class server
         /// <summary> The representations loaded as objects on this client. </summary>
         HashSet<representation> loaded = new HashSet<representation>();
 
+        /// <summary> Returns true if the given representation is loaded on this client. </summary>
+        public bool has_loaded(representation rep)
+        {
+            return loaded.Contains(rep);
+        }
+
         /// <summary> Load an object corresponding to the given representation 
         /// on this client. </summary>
         public void load(representation rep, bool local, bool already_created = false)
@@ -594,18 +628,14 @@ public static class server
             // (the client will automatically unload it's children also)
             message_senders[MESSAGE.UNLOAD](this, rep.network_id);
         }
-
-
-        /// <summary> Returns true if the given representation is loaded on this client. </summary>
-        public bool has_loaded(representation rep)
-        {
-            return loaded.Contains(rep);
-        }
     }
 
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
     {
+        // Needed for proximity tests
+        public float radius { get; private set; }
+
         /// <summary> My network id. Automatically updates the 
         /// representations[network_id] dictionary. </summary>
         public int network_id
@@ -622,11 +652,7 @@ public static class server
         }
         int _network_id;
 
-        // Needed for proximity tests
-        public float radius { get; private set; }
-
-        // The prefab to create on new clients
-        // and the user that first created me
+        // The prefab to create on new local clients
         public string local_prefab
         {
             get => _local_prefab;
@@ -638,18 +664,22 @@ public static class server
         }
         string _local_prefab;
 
+        // The prefab to create on new remote clients
         public string remote_prefab { get; private set; }
 
+        // Recive a local position update from the given client
         public void position_update(Vector3 new_local_position, client from)
         {
             transform.localPosition = new_local_position;
 
-            // Send position updates to all clients that have this object
+            // Send position updates to all other clients that have this object
             foreach (var c in connected_clients)
-                if (c.has_loaded(this))
+                if (c != from && c.has_loaded(this))
                     message_senders[MESSAGE.POSITION_UPDATE](c, this);
         }
 
+        /// <summary> Serialize this representation into a form that can 
+        /// be sent over the network, or saved to disk. </summary>
         public byte[] serialize()
         {
             byte[] local_prefab_bytes = System.Text.Encoding.ASCII.GetBytes(local_prefab);
@@ -675,7 +705,8 @@ public static class server
             );
         }
 
-        static int last_network_id_assigned = 0;
+        /// <summary>  Create a network representation. This does not load the
+        /// representation on any clients, or send creation messages. </summary>
         public static representation create(
             representation parent, Vector3 local_position,
             string local_prefab, string remote_prefab)
@@ -692,6 +723,7 @@ public static class server
 
             return rep;
         }
+        static int last_network_id_assigned = 0;
 
 #       if UNITY_EDITOR
 
@@ -726,6 +758,9 @@ public static class server
 
         tcp = new TcpListener(network_utils.local_ip_address(), port);
         tcp.Start();
+
+        traffic_up = new network_utils.traffic_monitor();
+        traffic_down = new network_utils.traffic_monitor();
 
         // Setup the message senders
         message_parsers = new Dictionary<global::client.MESSAGE, message_parser>
@@ -836,6 +871,7 @@ public static class server
             if (to_send.Length > client.tcp.SendBufferSize)
                 throw new System.Exception("Message too large!");
 
+            traffic_up.log_bytes(to_send.Length);
             client.stream.Write(to_send, 0, to_send.Length);
         }
 
@@ -918,6 +954,7 @@ public static class server
             {
                 int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
                 int offset = 0;
+                traffic_down.log_bytes(bytes_read);
 
                 while (offset < bytes_read)
                 {
@@ -962,6 +999,17 @@ public static class server
                 }
             }
         }
+    }
+
+    public static string info()
+    {
+        if (tcp == null) return "Server not started.";
+        return "Server listening on " + tcp.LocalEndpoint + "\n" +
+               connected_clients.Count + " clients connected\n" +
+               representations.Count + " representations\n" +
+               "Traffic:\n" +
+               "    " + traffic_up.usage() + " up\n" +
+               "    " + traffic_down.usage() + " down";
     }
 
     public enum MESSAGE : byte
@@ -1070,4 +1118,41 @@ public static class network_utils
         }
     }
     public delegate void do_func<T>(T t);
+
+    /// <summary> Class for monitoring network traffic </summary>
+    public class traffic_monitor
+    {
+        int bytes_since_last;
+        float time_last;
+        float rate;
+        float window_length;
+
+        /// <summary> Create a traffic monitor. </summary>
+        public traffic_monitor(float window_length = 0.5f)
+        {
+            time_last = Time.realtimeSinceStartup;
+            this.window_length = window_length;
+        }
+
+        /// <summary> Get a string reporting the usage (e.g 124.3 KB/s) </summary>
+        public string usage()
+        {
+            // Update rate if sufficent time has passed
+            float time = Time.realtimeSinceStartup;
+            if (time - time_last > window_length)
+            {
+                rate = bytes_since_last / (time - time_last);
+                bytes_since_last = 0;
+                time_last = time;
+            }
+
+            if (rate < 1e3f) return System.Math.Round(rate, 2) + " B/s";
+            if (rate < 1e6f) return System.Math.Round(rate / 1e3f, 2) + " KB/s";
+            if (rate < 1e9f) return System.Math.Round(rate / 1e6f, 2) + " MB/s";
+            if (rate < 1e12f) return System.Math.Round(rate / 1e9f, 2) + " GB/s";
+            return "A lot";
+        }
+
+        public void log_bytes(int bytes) { bytes_since_last += bytes; }
+    }
 }
