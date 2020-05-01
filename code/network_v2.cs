@@ -7,7 +7,10 @@ using System.Net.Sockets;
  * 
  * TODO
  * - Logout player on client disconnect
- * - Ensure creating networked objects as children works
+ * - Deserialization of children when parent is deserialized
+ * - I don't like the already_created option in client.load, especially
+ *   when creating children. Perhaps we don't allow the client to already
+ *   create the object? Needs thinking about.
  */
 
 public class networked_v2 : MonoBehaviour
@@ -45,22 +48,26 @@ public class networked_v2 : MonoBehaviour
     }
 
     /// <summary> Recive a position update from the server. </summary>
-    public void recive_position_update(Vector3 position)
+    public void recive_position_update(Vector3 new_local_position)
     {
-        target_position = position;
+        if (transform.parent == null) target_position = new_local_position;
+        else target_position = transform.parent.localToWorldMatrix * new_local_position;
     }
     Vector3 target_position;
 
     /// <summary> Run networking updates (called every frame by client). </summary>
     public void network_update()
     {
-        // Send position updates
-        if (position_update_required)
-            client.send_position_update(this);
+        if (transform.parent == null)
+        {
+            // Send position updates
+            if (position_update_required)
+                client.send_position_update(this);
 
-        Vector3 delta = target_position - transform.position;
-        if (delta.magnitude > position_resolution())
-            transform.position = Vector3.Lerp(transform.position, target_position, Time.deltaTime * lerp_amount());
+            Vector3 delta = target_position - transform.position;
+            if (delta.magnitude > position_resolution())
+                transform.position = Vector3.Lerp(transform.position, target_position, Time.deltaTime * lerp_amount());
+        }
     }
 
     public static networked_v2 look_up(string path)
@@ -100,8 +107,17 @@ public class networked_v2 : MonoBehaviour
     /// remains on the server + potentially on other clients. </summary>
     public void forget()
     {
+        // Already been destroyed (this happens when a DELETE
+        // message comes back as an UNLOAD to the client that sent it)
+        if (this == null) return;
+
         Destroy(gameObject);
-        objects.Remove(network_id);
+    }
+
+    public void delete()
+    {
+        client.on_delete(this);
+        Destroy(gameObject);
     }
 
     //################//
@@ -117,13 +133,41 @@ public class networked_v2 : MonoBehaviour
     public static void network_updates()
     {
         // Update network objects
+        List<int> null_ids = new List<int>();
         foreach (var kv in objects)
         {
             int id = kv.Key;
             var nw = kv.Value;
+
+            if (nw == null)
+            {
+                // This object has been destroyed
+                null_ids.Add(id);
+                continue;
+            }
+
             nw.network_update();
         }
+
+        foreach (var id in null_ids)
+            objects.Remove(id);
     }
+
+#if UNITY_EDITOR
+
+    // The custom editor for networked types
+    [UnityEditor.CustomEditor(typeof(networked_v2), true)]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var nw = (networked_v2)target;
+            UnityEditor.EditorGUILayout.IntField("Network ID", nw.network_id);
+        }
+    }
+
+#endif
 }
 
 public static class client
@@ -166,7 +210,8 @@ public static class client
         if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
 
         // Request creation on the server
-        message_senders[MESSAGE.CREATE](local_prefab, remote_prefab, position, parent_id, created.network_id);
+        message_senders[MESSAGE.CREATE](local_prefab, remote_prefab,
+            created.transform.localPosition, parent_id, created.network_id);
 
         return created;
     }
@@ -177,13 +222,22 @@ public static class client
         message_senders[MESSAGE.POSITION_UPDATE](nw);
     }
 
+    /// <summary> Called when an object is deleted on this client, sends the server that info. </summary>
+    public static void on_delete(networked_v2 deleted)
+    {
+        message_senders[MESSAGE.DELETE](deleted.network_id);
+    }
+
     /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
     static void create_from_network(byte[] buffer, int offset, int length, bool local)
     {
         int network_id = System.BitConverter.ToInt32(buffer, offset);
         offset += sizeof(int);
 
-        Vector3 position = network_utils.to_vector3(buffer, offset);
+        int parent_id = System.BitConverter.ToInt32(buffer, offset);
+        offset += sizeof(int);
+
+        Vector3 local_position = network_utils.to_vector3(buffer, offset);
         offset += sizeof(float) * 3;
 
         byte local_prefab_length = buffer[offset];
@@ -202,8 +256,20 @@ public static class client
         string name = nw.name;
         nw = Object.Instantiate(nw);
 
+        networked_v2 parent = parent_id > 0 ? networked_v2.find_by_id(parent_id) : null;
+
+        if (parent == null)
+        {
+            nw.networked_position = local_position;
+        }
+        else
+        {
+            nw.transform.SetParent(parent.transform);
+            nw.transform.localPosition = local_position;
+            nw.networked_position = nw.transform.position;
+        }
+
         nw.name = name;
-        nw.networked_position = position;
         nw.on_position_up_to_date();
         nw.network_id = network_id;
     }
@@ -229,10 +295,10 @@ public static class client
                 int id = System.BitConverter.ToInt32(buffer, offset);
                 offset += sizeof(int);
 
-                Vector3 position = network_utils.to_vector3(buffer, offset);
+                Vector3 local_position = network_utils.to_vector3(buffer, offset);
                 offset += sizeof(float) * 3;
 
-                networked_v2.find_by_id(id).recive_position_update(position);
+                networked_v2.find_by_id(id).recive_position_update(local_position);
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
@@ -300,9 +366,9 @@ public static class client
                 // Send the id + position to the server
                 send(MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
                         System.BitConverter.GetBytes(nw.network_id),
-                        System.BitConverter.GetBytes(nw.transform.position.x),
-                        System.BitConverter.GetBytes(nw.transform.position.y),
-                        System.BitConverter.GetBytes(nw.transform.position.z)
+                        System.BitConverter.GetBytes(nw.transform.localPosition.x),
+                        System.BitConverter.GetBytes(nw.transform.localPosition.y),
+                        System.BitConverter.GetBytes(nw.transform.localPosition.z)
                     ));
 
                 nw.on_position_up_to_date();
@@ -315,7 +381,7 @@ public static class client
 
                 string local_prefab = (string)args[0];
                 string remote_prefab = (string)args[1];
-                Vector3 position = (Vector3)args[2];
+                Vector3 local_position = (Vector3)args[2];
                 int parent_id = (int)args[3];
                 int local_id = (int)args[4];
 
@@ -328,12 +394,24 @@ public static class client
                     local_pre_bytes,
                     new byte[] { (byte)remote_pre_bytes.Length },
                     remote_pre_bytes,
-                    System.BitConverter.GetBytes(position.x),
-                    System.BitConverter.GetBytes(position.y),
-                    System.BitConverter.GetBytes(position.z),
+                    System.BitConverter.GetBytes(local_position.x),
+                    System.BitConverter.GetBytes(local_position.y),
+                    System.BitConverter.GetBytes(local_position.z),
                     System.BitConverter.GetBytes(parent_id),
                     System.BitConverter.GetBytes(local_id)
                 ));
+            },
+
+            [MESSAGE.DELETE] = (args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                if (network_id < 0)
+                    throw new System.Exception("Tried to delete an unregistered object!");
+
+                send(MESSAGE.DELETE, System.BitConverter.GetBytes(network_id));
             },
 
             [MESSAGE.DISCONNECT] = (args) =>
@@ -393,6 +471,7 @@ public static class client
         LOGIN = 1,        // Client has logged in
         POSITION_UPDATE,  // Object position needs updating
         CREATE,           // Create an object on the server
+        DELETE,           // Delete an object from the server
         DISCONNECT,       // Disconnect this client
     }
 
@@ -456,8 +535,8 @@ public static class server
         public void login(string username, byte[] password)
         {
             // Create the player
-            var player = representation.create(null, player_prefab_local,
-                player_prefab_remote, player_spawn);
+            var player = representation.create(null, player_spawn,
+                player_prefab_local, player_prefab_remote);
 
             this.username = username;
             this.password = password;
@@ -480,21 +559,39 @@ public static class server
         /// on this client. </summary>
         public void load(representation rep, bool local, bool already_created = false)
         {
-            if (!already_created)
+            // Load rep and all it's children
+            network_utils.top_down(rep, (loading) =>
             {
-                if (local) message_senders[MESSAGE.CREATE_LOCAL](this, rep.serialize());
-                else message_senders[MESSAGE.CREATE_REMOTE](this, rep.serialize());
-            }
-            loaded.Add(rep);
+                if (!already_created)
+                {
+                    MESSAGE m = local ? MESSAGE.CREATE_LOCAL : MESSAGE.CREATE_REMOTE;
+                    message_senders[m](this, loading.serialize());
+                }
+
+                // Add this object to the loaded set
+                loaded.Add(loading);
+            });
         }
 
         /// <summary>  Unload the object corresponding to the given 
         /// representation on this client. </summary>
         public void unload(representation rep)
         {
-            if (!loaded.Contains(rep))
-                throw new System.Exception("Tried to unload object which was not on the client!");
-            loaded.Remove(rep);
+            // Unload rep and all of it's children
+            network_utils.top_down(rep, (unloading) =>
+            {
+                if (!loaded.Contains(unloading))
+                {
+                    string err = "Client " + username + " tried to unload an object (" + unloading.name +
+                                 " id = " + unloading.network_id + ") which was not loaded!";
+                    throw new System.Exception(err);
+                }
+
+                loaded.Remove(unloading);
+            });
+
+            // Let the client know that rep has been unloaded
+            // (the client will automatically unload it's children also)
             message_senders[MESSAGE.UNLOAD](this, rep.network_id);
         }
 
@@ -543,9 +640,9 @@ public static class server
 
         public string remote_prefab { get; private set; }
 
-        public void position_update(Vector3 new_position, client from)
+        public void position_update(Vector3 new_local_position, client from)
         {
-            transform.position = new_position;
+            transform.localPosition = new_local_position;
 
             // Send position updates to all clients that have this object
             foreach (var c in connected_clients)
@@ -558,11 +655,19 @@ public static class server
             byte[] local_prefab_bytes = System.Text.Encoding.ASCII.GetBytes(local_prefab);
             byte[] remote_prefab_bytes = System.Text.Encoding.ASCII.GetBytes(remote_prefab);
 
+            // Parent_id = 0 if I am not a child of another networked_v2
+            representation parent = transform.parent.GetComponent<representation>();
+            int parent_id = parent == null ? 0 : parent.network_id;
+
+            if (parent_id < 0)
+                throw new System.Exception("Tried to set unregistered parent!");
+
             return network_utils.concat_buffers(
                 System.BitConverter.GetBytes(network_id),
-                System.BitConverter.GetBytes(transform.position.x),
-                System.BitConverter.GetBytes(transform.position.y),
-                System.BitConverter.GetBytes(transform.position.z),
+                System.BitConverter.GetBytes(parent_id),
+                System.BitConverter.GetBytes(transform.localPosition.x),
+                System.BitConverter.GetBytes(transform.localPosition.y),
+                System.BitConverter.GetBytes(transform.localPosition.z),
                 new byte[] { (byte)local_prefab_bytes.Length },
                 local_prefab_bytes,
                 new byte[] { (byte)remote_prefab_bytes.Length },
@@ -572,22 +677,38 @@ public static class server
 
         static int last_network_id_assigned = 0;
         public static representation create(
-            representation parent,
-            string local_prefab, string remote_prefab,
-            Vector3 position)
+            representation parent, Vector3 local_position,
+            string local_prefab, string remote_prefab)
         {
             representation rep = new GameObject(local_prefab).AddComponent<representation>();
-
-            rep.local_prefab = local_prefab;
-            rep.remote_prefab = remote_prefab;
-            rep.transform.position = position;
-            rep.network_id = ++last_network_id_assigned;
 
             if (parent == null) rep.transform.SetParent(server.transform);
             else rep.transform.SetParent(parent.transform);
 
+            rep.local_prefab = local_prefab;
+            rep.remote_prefab = remote_prefab;
+            rep.transform.localPosition = local_position;
+            rep.network_id = ++last_network_id_assigned; // Network id's start at 1
+
             return rep;
         }
+
+#       if UNITY_EDITOR
+
+        // The custom editor for server representations
+        [UnityEditor.CustomEditor(typeof(representation), true)]
+        class editor : UnityEditor.Editor
+        {
+            public override void OnInspectorGUI()
+            {
+                base.OnInspectorGUI();
+                var rep = (representation)target;
+                UnityEditor.EditorGUILayout.IntField("Network ID", rep.network_id);
+            }
+        }
+
+#       endif
+
     }
 
     /// <summary> Representations on the server, keyed by network id. </summary>
@@ -634,16 +755,10 @@ public static class server
                 int id = System.BitConverter.ToInt32(bytes, offset);
                 offset += sizeof(int);
 
-                float x = System.BitConverter.ToSingle(bytes, offset);
-                offset += sizeof(float);
+                Vector3 local_pos = network_utils.to_vector3(bytes, offset);
+                offset += sizeof(float) * 3;
 
-                float y = System.BitConverter.ToSingle(bytes, offset);
-                offset += sizeof(float);
-
-                float z = System.BitConverter.ToSingle(bytes, offset);
-                offset += sizeof(float);
-
-                representations[id].position_update(new Vector3(x, y, z), client);
+                representations[id].position_update(local_pos, client);
             },
 
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
@@ -660,7 +775,7 @@ public static class server
                 string remote_prefab = System.Text.Encoding.ASCII.GetString(bytes, offset, str_length);
                 offset += str_length;
 
-                Vector3 pos = network_utils.to_vector3(bytes, offset);
+                Vector3 local_pos = network_utils.to_vector3(bytes, offset);
                 offset += sizeof(float) * 3;
 
                 int parent_id = System.BitConverter.ToInt32(bytes, offset);
@@ -670,10 +785,37 @@ public static class server
                 offset += sizeof(int);
 
                 representation parent = parent_id > 0 ? representations[parent_id] : null;
-                var rep = representation.create(parent, local_prefab, remote_prefab, pos);
+                var rep = representation.create(parent, local_pos, local_prefab, remote_prefab);
 
                 client.load(rep, true, true);
+
+                // If this is a child, load it on all other
+                // clients that have the parent.
+                if (parent != null)
+                    foreach (var c in connected_clients)
+                        if (c != client)
+                            if (c.has_loaded(parent))
+                                c.load(rep, false);
+
                 message_senders[MESSAGE.CREATION_SUCCESS](client, local_id, rep.network_id);
+            },
+
+            [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
+            {
+                // Find the representation being deleted
+                int network_id = System.BitConverter.ToInt32(bytes, offset);
+                var deleting = representations[network_id];
+
+                // Unload the object with the above network_id 
+                // from all clients + the server (children will
+                // also be unloaded by the client).
+                foreach (var c in connected_clients)
+                    if (c.has_loaded(deleting))
+                        c.unload(deleting);
+
+                // Remove/destroy the representation + all children
+                network_utils.top_down(deleting, (rep) => representations.Remove(rep.network_id));
+                Object.Destroy(deleting.gameObject);
             },
 
             [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
@@ -733,9 +875,9 @@ public static class server
 
                 send(client, MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
                     System.BitConverter.GetBytes(rep.network_id),
-                    System.BitConverter.GetBytes(rep.transform.position.x),
-                    System.BitConverter.GetBytes(rep.transform.position.y),
-                    System.BitConverter.GetBytes(rep.transform.position.z)
+                    System.BitConverter.GetBytes(rep.transform.localPosition.x),
+                    System.BitConverter.GetBytes(rep.transform.localPosition.y),
+                    System.BitConverter.GetBytes(rep.transform.localPosition.z)
                 ));
             },
 
@@ -906,4 +1048,26 @@ public static class network_utils
             System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3)
         );
     }
+
+    /// <summary> Apply the function <paramref name="f"/> to 
+    /// <paramref name="parent"/>, and all T in it's children. 
+    /// Guaranteed to carry out in top-down order. </summary>
+    public static void top_down<T>(T parent, do_func<T> f)
+        where T : MonoBehaviour
+    {
+        Queue<Transform> to_do = new Queue<Transform>();
+        to_do.Enqueue(parent.transform);
+
+        while (to_do.Count > 0)
+        {
+            var doing_to = to_do.Dequeue();
+
+            foreach (Transform t in doing_to)
+                to_do.Enqueue(t);
+
+            var found = doing_to.GetComponent<T>();
+            if (found != null) f(found);
+        }
+    }
+    public delegate void do_func<T>(T t);
 }

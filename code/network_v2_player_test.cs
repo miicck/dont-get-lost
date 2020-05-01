@@ -5,6 +5,9 @@ using UnityEngine;
 public class network_v2_player_test : networked_v2
 {
     public bool local;
+
+    networked_v2 equipped;
+
     private void Update()
     {
         if (local)
@@ -16,6 +19,17 @@ public class network_v2_player_test : networked_v2
 
             if (Input.GetKeyDown(KeyCode.Space))
                 client.create(transform.position, "network_v2_test/bomb");
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (equipped == null)
+                    equipped = client.create(transform.position, "network_v2_test/sword", parent: this);
+                else
+                {
+                    equipped.delete();
+                    equipped = null;
+                }
+            }
         }
         else
         {
