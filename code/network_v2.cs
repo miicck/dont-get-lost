@@ -103,15 +103,15 @@ public class networked_v2 : MonoBehaviour
     /// remains on the server + potentially on other clients. </summary>
     public void forget()
     {
+        network_utils.top_down(this, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
-        objects.Remove(network_id);
     }
 
     public void delete()
     {
         client.on_delete(this);
+        network_utils.top_down(this, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
-        objects.Remove(network_id);
     }
 
     //################//
@@ -168,6 +168,14 @@ public class networked_v2 : MonoBehaviour
 #endif
 }
 
+
+
+//########//
+// CLIENT //
+//########//
+
+
+
 public static class client
 {
     static int last_local_id = 0;
@@ -217,6 +225,7 @@ public static class client
         return created;
     }
 
+    /// <summary> A message waiting to be sent. </summary>
     struct pending_message
     {
         public byte[] bytes;
@@ -225,6 +234,40 @@ public static class client
 
     /// <summary> Messages to be sent to the server. </summary>
     static Queue<pending_message> message_queue = new Queue<pending_message>();
+
+    /// <summary> Send all of the messages currently queued. </summary>
+    static void send_queued_messages()
+    {
+        // The buffer used to send messages
+        byte[] send_buffer = new byte[tcp.SendBufferSize];
+        int offset = 0;
+        var stream = tcp.GetStream();
+
+        // Send the message queue
+        while (message_queue.Count > 0)
+        {
+            var msg = message_queue.Dequeue();
+
+            if (msg.bytes.Length > tcp.SendBufferSize)
+                throw new System.Exception("Message too large!");
+
+            if (offset + msg.bytes.Length > send_buffer.Length)
+            {
+                // Message would overrun buffer, send the
+                // buffer and obtain a new one
+                stream.Write(send_buffer, 0, offset);
+                send_buffer = new byte[tcp.SendBufferSize];
+                offset = 0;
+            }
+
+            // Copy the message into the send buffer
+            System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+            offset += msg.bytes.Length; // Move to next message
+        }
+
+        // Send the buffer
+        if (offset > 0) stream.Write(send_buffer, 0, offset);
+    }
 
     /// <summary> Send a position update for the given networked object. </summary>
     public static void send_position_update(networked_v2 nw)
@@ -250,17 +293,11 @@ public static class client
         Vector3 local_position = network_utils.to_vector3(buffer, offset);
         offset += sizeof(float) * 3;
 
-        byte local_prefab_length = buffer[offset];
-        offset += 1;
+        string local_prefab;
+        offset += network_utils.decode_string(buffer, offset, out local_prefab);
 
-        string local_prefab = System.Text.Encoding.ASCII.GetString(buffer, offset, local_prefab_length);
-        offset += local_prefab_length;
-
-        byte remote_prefab_length = buffer[offset];
-        offset += 1;
-
-        string remote_prefab = System.Text.Encoding.ASCII.GetString(buffer, offset, remote_prefab_length);
-        offset += remote_prefab_length;
+        string remote_prefab;
+        offset += network_utils.decode_string(buffer, offset, out remote_prefab);
 
         var nw = networked_v2.look_up(local ? local_prefab : remote_prefab);
         string name = nw.name;
@@ -357,17 +394,15 @@ public static class client
                 if (args.Length != 2)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                // Send a login message
-                byte[] uname = System.Text.Encoding.ASCII.GetBytes((string)args[0]);
-                byte[] pword = System.Text.Encoding.ASCII.GetBytes((string)args[1]);
+                string uname = (string)args[0];
+                string pword = (string)args[1];
 
                 var hasher = System.Security.Cryptography.SHA256.Create();
-                pword = hasher.ComputeHash(pword);
+                var hashed = hasher.ComputeHash(System.Text.Encoding.ASCII.GetBytes(pword));
 
                 // Send the username + hashed password to the server
                 send(MESSAGE.LOGIN, network_utils.concat_buffers(
-                    new byte[] { (byte)uname.Length },
-                    uname, pword));
+                    network_utils.encode_string(uname), hashed));
             },
 
             [MESSAGE.POSITION_UPDATE] = (args) =>
@@ -399,15 +434,9 @@ public static class client
                 int parent_id = (int)args[3];
                 int local_id = (int)args[4];
 
-                // Send local + remote prefab encoded as ASCII
-                byte[] local_pre_bytes = System.Text.Encoding.ASCII.GetBytes(local_prefab);
-                byte[] remote_pre_bytes = System.Text.Encoding.ASCII.GetBytes(remote_prefab);
-
                 send(MESSAGE.CREATE, network_utils.concat_buffers(
-                    new byte[] { (byte)local_pre_bytes.Length },
-                    local_pre_bytes,
-                    new byte[] { (byte)remote_pre_bytes.Length },
-                    remote_pre_bytes,
+                    network_utils.encode_string(local_prefab),
+                    network_utils.encode_string(remote_prefab),
                     System.BitConverter.GetBytes(local_position.x),
                     System.BitConverter.GetBytes(local_position.y),
                     System.BitConverter.GetBytes(local_position.z),
@@ -444,7 +473,13 @@ public static class client
     public static void disconnect()
     {
         if (tcp == null) return;
+
+        // Send a disconnect message, and any
+        // queued messages
         message_senders[MESSAGE.DISCONNECT]();
+        send_queued_messages();
+
+        // Close the stream
         tcp.GetStream().Close();
         tcp.Close();
     }
@@ -484,34 +519,8 @@ public static class client
         // Run networked object updates
         networked_v2.network_updates();
 
-        // The buffer used to send messages
-        byte[] send_buffer = new byte[tcp.SendBufferSize];
-        offset = 0;
-
-        // Send the message queue
-        while (message_queue.Count > 0)
-        {
-            var msg = message_queue.Dequeue();
-
-            if (msg.bytes.Length > tcp.SendBufferSize)
-                throw new System.Exception("Message too large!");
-
-            if (offset + msg.bytes.Length > send_buffer.Length)
-            {
-                // Message would overrun buffer, send the
-                // buffer and obtain a new one
-                stream.Write(send_buffer, 0, offset);
-                send_buffer = new byte[tcp.SendBufferSize];
-                offset = 0;
-            }
-
-            // Copy the message into the send buffer
-            System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
-            offset += msg.bytes.Length; // Move to next message
-        }
-
-        // Send the buffer
-        if (offset > 0) stream.Write(send_buffer, 0, offset);
+        // Send messages
+        send_queued_messages();
     }
 
     public static string info()
@@ -541,6 +550,14 @@ public static class client
     delegate void message_parser(byte[] message, int offset, int length);
     static Dictionary<server.MESSAGE, message_parser> message_parsers;
 }
+
+
+
+//########//
+// SERVER //
+//########//
+
+
 
 public static class server
 {
@@ -662,7 +679,7 @@ public static class server
 
         /// <summary>  Unload the object corresponding to the given 
         /// representation on this client. </summary>
-        public void unload(representation rep, bool already_removed=false)
+        public void unload(representation rep, bool already_removed = false)
         {
             // Unload rep and all of it's children
             network_utils.top_down(rep, (unloading) =>
@@ -736,9 +753,6 @@ public static class server
         /// be sent over the network, or saved to disk. </summary>
         public byte[] serialize()
         {
-            byte[] local_prefab_bytes = System.Text.Encoding.ASCII.GetBytes(local_prefab);
-            byte[] remote_prefab_bytes = System.Text.Encoding.ASCII.GetBytes(remote_prefab);
-
             // Parent_id = 0 if I am not a child of another networked_v2
             representation parent = transform.parent.GetComponent<representation>();
             int parent_id = parent == null ? 0 : parent.network_id;
@@ -752,10 +766,8 @@ public static class server
                 System.BitConverter.GetBytes(transform.localPosition.x),
                 System.BitConverter.GetBytes(transform.localPosition.y),
                 System.BitConverter.GetBytes(transform.localPosition.z),
-                new byte[] { (byte)local_prefab_bytes.Length },
-                local_prefab_bytes,
-                new byte[] { (byte)remote_prefab_bytes.Length },
-                remote_prefab_bytes
+                network_utils.encode_string(local_prefab),
+                network_utils.encode_string(remote_prefab)
             );
         }
 
@@ -817,10 +829,8 @@ public static class server
         {
             [global::client.MESSAGE.LOGIN] = (client, bytes, offset, length) =>
             {
-                byte uname_length = bytes[offset];
-                offset += 1;
-
-                string uname = System.Text.Encoding.ASCII.GetString(bytes, offset, uname_length);
+                string uname;
+                int uname_length = network_utils.decode_string(bytes, offset, out uname);
                 offset += uname_length;
 
                 byte[] pword = new byte[length - uname_length - 1];
@@ -848,17 +858,11 @@ public static class server
 
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
             {
-                byte str_length = bytes[offset];
-                offset += 1;
+                string local_prefab;
+                offset += network_utils.decode_string(bytes, offset, out local_prefab);
 
-                string local_prefab = System.Text.Encoding.ASCII.GetString(bytes, offset, str_length);
-                offset += str_length;
-
-                str_length = bytes[offset];
-                offset += 1;
-
-                string remote_prefab = System.Text.Encoding.ASCII.GetString(bytes, offset, str_length);
-                offset += str_length;
+                string remote_prefab;
+                offset += network_utils.decode_string(bytes, offset, out remote_prefab);
 
                 Vector3 local_pos = network_utils.to_vector3(bytes, offset);
                 offset += sizeof(float) * 3;
@@ -1060,6 +1064,7 @@ public static class server
         }
 
         // Send the messages from the queue
+        var disconnected_during_write = new List<client>();
         foreach (var kv in message_queues)
         {
             var client = kv.Key;
@@ -1080,7 +1085,14 @@ public static class server
                 {
                     // Message would overrun buffer, send the buffer
                     // and create a new one
-                    client.stream.Write(send_buffer, 0, offset);
+                    try
+                    {
+                        client.stream.Write(send_buffer, 0, offset);
+                    }
+                    catch
+                    {
+                        disconnected_during_write.Add(client);
+                    }
                     send_buffer = new byte[client.tcp.SendBufferSize];
                     offset = 0;
                 }
@@ -1091,8 +1103,23 @@ public static class server
             }
 
             // Send the buffer
-            if (offset > 0) client.stream.Write(send_buffer, 0, offset);
+            if (offset > 0)
+            {
+                try
+                {
+                    client.stream.Write(send_buffer, 0, offset);
+                }
+                catch
+                {
+                    disconnected_during_write.Add(client);
+                }
+            }
         }
+
+        // Properly disconnect clients that were found
+        // to have disconnected during message writing
+        foreach (var d in disconnected_during_write)
+            d.disconnect();
     }
 
     public static string info()
@@ -1248,5 +1275,27 @@ public static class network_utils
         }
 
         public void log_bytes(int bytes) { bytes_since_last += bytes; }
+    }
+
+    /// <summary> Encode a string ready to be sent over the network (including it's length). </summary>
+    public static byte[] encode_string(string str)
+    {
+        byte[] ascii = System.Text.Encoding.ASCII.GetBytes(str);
+        if (ascii.Length > byte.MaxValue)
+            throw new System.Exception("String too long to encode!");
+        return concat_buffers(
+            new byte[] { (byte)ascii.Length },
+            ascii
+        );
+    }
+
+    /// <summary>
+    /// Decode a string encoded with <see cref="encode_string(string)"/>. Returns
+    /// the number of bytes used in the encoding.
+    public static int decode_string(byte[] buffer, int offset, out string str)
+    {
+        int length = buffer[offset];
+        str = System.Text.Encoding.ASCII.GetString(buffer, offset + 1, length);
+        return 1 + length;
     }
 }
