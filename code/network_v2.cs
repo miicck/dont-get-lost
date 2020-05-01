@@ -7,10 +7,6 @@ using System.Net.Sockets;
  * 
  * TODO
  * - Logout player on client disconnect
- * - Deserialization of children when parent is deserialized
- * - I don't like the already_created option in client.load, especially
- *   when creating children. Perhaps we don't allow the client to already
- *   create the object? Needs thinking about.
  */
 
 public class networked_v2 : MonoBehaviour
@@ -107,17 +103,15 @@ public class networked_v2 : MonoBehaviour
     /// remains on the server + potentially on other clients. </summary>
     public void forget()
     {
-        // Already been destroyed (this happens when a DELETE
-        // message comes back as an UNLOAD to the client that sent it)
-        if (this == null) return;
-
         Destroy(gameObject);
+        objects.Remove(network_id);
     }
 
     public void delete()
     {
         client.on_delete(this);
         Destroy(gameObject);
+        objects.Remove(network_id);
     }
 
     //################//
@@ -133,7 +127,6 @@ public class networked_v2 : MonoBehaviour
     public static void network_updates()
     {
         // Update network objects
-        List<int> null_ids = new List<int>();
         foreach (var kv in objects)
         {
             int id = kv.Key;
@@ -141,16 +134,16 @@ public class networked_v2 : MonoBehaviour
 
             if (nw == null)
             {
-                // This object has been destroyed
-                null_ids.Add(id);
-                continue;
+                // The networked object was destroyed, but not removed from
+                // the dictionary, throw an error.
+                string err = "Netowrk object not destroyed correctly. " +
+                             "You should not call Destroy() on a networked object. " +
+                             "Use networked.forget() or networked.delete() instead.";
+                throw new System.Exception(err);
             }
 
             nw.network_update();
         }
-
-        foreach (var id in null_ids)
-            objects.Remove(id);
     }
 
     public static string objects_info()
@@ -223,6 +216,15 @@ public static class client
 
         return created;
     }
+
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float time_sent;
+    }
+
+    /// <summary> Messages to be sent to the server. </summary>
+    static Queue<pending_message> message_queue = new Queue<pending_message>();
 
     /// <summary> Send a position update for the given networked object. </summary>
     public static void send_position_update(networked_v2 nw)
@@ -340,11 +342,11 @@ public static class client
                 payload
             );
 
-            if (to_send.Length > tcp.SendBufferSize)
-                throw new System.Exception("Message too large!");
-
-            traffic_up.log_bytes(to_send.Length);
-            tcp.GetStream().Write(to_send, 0, to_send.Length);
+            message_queue.Enqueue(new pending_message
+            {
+                bytes = to_send,
+                time_sent = Time.realtimeSinceStartup
+            });
         }
 
         // Setup message senders
@@ -451,14 +453,18 @@ public static class client
     {
         if (tcp == null) return;
 
+        // Get the tcp stream
         var stream = tcp.GetStream();
+        int offset = 0;
+
+        // Read messages to the client
         while (stream.DataAvailable)
         {
             byte[] buffer = new byte[tcp.ReceiveBufferSize];
             int bytes_read = stream.Read(buffer, 0, buffer.Length);
             traffic_down.log_bytes(bytes_read);
 
-            int offset = 0;
+            offset = 0;
             while (offset < bytes_read)
             {
                 // Parse payload length
@@ -475,7 +481,37 @@ public static class client
             }
         }
 
+        // Run networked object updates
         networked_v2.network_updates();
+
+        // The buffer used to send messages
+        byte[] send_buffer = new byte[tcp.SendBufferSize];
+        offset = 0;
+
+        // Send the message queue
+        while (message_queue.Count > 0)
+        {
+            var msg = message_queue.Dequeue();
+
+            if (msg.bytes.Length > tcp.SendBufferSize)
+                throw new System.Exception("Message too large!");
+
+            if (offset + msg.bytes.Length > send_buffer.Length)
+            {
+                // Message would overrun buffer, send the
+                // buffer and obtain a new one
+                stream.Write(send_buffer, 0, offset);
+                send_buffer = new byte[tcp.SendBufferSize];
+                offset = 0;
+            }
+
+            // Copy the message into the send buffer
+            System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+            offset += msg.bytes.Length; // Move to next message
+        }
+
+        // Send the buffer
+        if (offset > 0) stream.Write(send_buffer, 0, offset);
     }
 
     public static string info()
@@ -486,7 +522,7 @@ public static class client
                "Traffic:\n" +
                "    " + traffic_up.usage() + " up\n" +
                "    " + traffic_down.usage() + " down";
-               
+
     }
 
     public enum MESSAGE : byte
@@ -534,6 +570,19 @@ public static class server
         }
     }
 
+    /// <summary> Representations on the server, keyed by network id. </summary>
+    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
+
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float send_time;
+    }
+
+    /// <summary> Messages that are yet to be sent. </summary>
+    static Dictionary<client, Queue<pending_message>> message_queues =
+        new Dictionary<client, Queue<pending_message>>();
+
     // Traffic monitors
     static network_utils.traffic_monitor traffic_down;
     static network_utils.traffic_monitor traffic_up;
@@ -576,6 +625,7 @@ public static class server
         public void disconnect()
         {
             connected_clients.Remove(this);
+            message_queues.Remove(this);
             stream.Close();
             tcp.Close();
         }
@@ -596,6 +646,9 @@ public static class server
             // Load rep and all it's children
             network_utils.top_down(rep, (loading) =>
             {
+                if (already_created && loading != rep)
+                    throw new System.Exception("A representation with children should not be already_created!");
+
                 if (!already_created)
                 {
                     MESSAGE m = local ? MESSAGE.CREATE_LOCAL : MESSAGE.CREATE_REMOTE;
@@ -609,7 +662,7 @@ public static class server
 
         /// <summary>  Unload the object corresponding to the given 
         /// representation on this client. </summary>
-        public void unload(representation rep)
+        public void unload(representation rep, bool already_removed=false)
         {
             // Unload rep and all of it's children
             network_utils.top_down(rep, (unloading) =>
@@ -626,7 +679,8 @@ public static class server
 
             // Let the client know that rep has been unloaded
             // (the client will automatically unload it's children also)
-            message_senders[MESSAGE.UNLOAD](this, rep.network_id);
+            if (!already_removed)
+                message_senders[MESSAGE.UNLOAD](this, rep.network_id);
         }
     }
 
@@ -743,10 +797,6 @@ public static class server
 
     }
 
-    /// <summary> Representations on the server, keyed by network id. </summary>
-    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
-
-
     /// <summary> Start a server listening on the given port on the local machine. </summary>
     public static void start(
         int port, float grid_size, string savename,
@@ -846,7 +896,7 @@ public static class server
                 // also be unloaded by the client).
                 foreach (var c in connected_clients)
                     if (c.has_loaded(deleting))
-                        c.unload(deleting);
+                        c.unload(deleting, c == client);
 
                 // Remove/destroy the representation + all children
                 network_utils.top_down(deleting, (rep) => representations.Remove(rep.network_id));
@@ -868,11 +918,20 @@ public static class server
                 payload
             );
 
-            if (to_send.Length > client.tcp.SendBufferSize)
-                throw new System.Exception("Message too large!");
+            // Queue the message, creating the queue for this
+            // client if it doesn't already exist
+            Queue<pending_message> queue;
+            if (!message_queues.TryGetValue(client, out queue))
+            {
+                queue = new Queue<pending_message>();
+                message_queues[client] = queue;
+            }
 
-            traffic_up.log_bytes(to_send.Length);
-            client.stream.Write(to_send, 0, to_send.Length);
+            queue.Enqueue(new pending_message
+            {
+                bytes = to_send,
+                send_time = Time.realtimeSinceStartup
+            });
         }
 
         // Setup the message senders
@@ -998,6 +1057,41 @@ public static class server
                         c.load(rep, false);
                 }
             }
+        }
+
+        // Send the messages from the queue
+        foreach (var kv in message_queues)
+        {
+            var client = kv.Key;
+            var queue = kv.Value;
+
+            // The buffer to concatinate messages into
+            byte[] send_buffer = new byte[client.tcp.SendBufferSize];
+            int offset = 0;
+
+            while (queue.Count > 0)
+            {
+                var msg = queue.Dequeue();
+
+                if (msg.bytes.Length > send_buffer.Length)
+                    throw new System.Exception("Message too large!");
+
+                if (offset + msg.bytes.Length > send_buffer.Length)
+                {
+                    // Message would overrun buffer, send the buffer
+                    // and create a new one
+                    client.stream.Write(send_buffer, 0, offset);
+                    send_buffer = new byte[client.tcp.SendBufferSize];
+                    offset = 0;
+                }
+
+                // Copy the message into the send buffer
+                System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+                offset += msg.bytes.Length; // Move to next message
+            }
+
+            // Send the buffer
+            if (offset > 0) client.stream.Write(send_buffer, 0, offset);
         }
     }
 
