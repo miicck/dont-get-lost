@@ -8,6 +8,7 @@ using System.Net.Sockets;
  * 
  * TODO
  * - Logout player on client disconnect
+ * - User-defined data (serialization)
  * - Serialize to disk
  * - Lerping is messy
  */
@@ -112,6 +113,14 @@ public class networked_v2 : MonoBehaviour
 
     public void delete()
     {
+        if (network_id < 0)
+        {
+            // If unregistered, try again until
+            // registered.
+            Invoke("delete", 0.1f);
+            return;
+        }
+
         client.on_delete(this);
         network_utils.top_down(this, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
@@ -613,14 +622,19 @@ public static class server
         public TcpClient tcp { get; private set; }
         public NetworkStream stream { get; private set; }
 
-        // Needed for proximity tests
-        public float render_range { get; private set; }
-
         public client(TcpClient tcp)
         {
             this.tcp = tcp;
             stream = tcp.GetStream();
-            render_range = 5f;
+        }
+
+        /// <summary> Returns true if the client can see the provided representation. </summary>
+        public bool can_see(representation rep)
+        {
+            if (player == null)
+                return false;
+
+            return (rep.transform.position - player.transform.position).magnitude < 5f;
         }
 
         public void login(string username, byte[] password)
@@ -987,6 +1001,7 @@ public static class server
     {
         if (tcp == null) return;
 
+        // Connect new clients
         while (tcp.Pending())
             connected_clients.Add(new client(tcp.AcceptTcpClient()));
 
@@ -1024,20 +1039,16 @@ public static class server
 
             foreach (var c in connected_clients)
             {
-                if (c.player == null)
-                    continue; // Client hasn't logged in yet
-
-                float distance = (rep.transform.position - c.player.transform.position).magnitude;
                 if (c.has_loaded(rep))
                 {
                     // Unload from clients that are too far away
-                    if (distance > c.render_range)
+                    if (!c.can_see(rep))
                         c.unload(rep);
                 }
                 else
                 {
                     // Load on clients that are within range
-                    if (distance < c.render_range)
+                    if (c.can_see(rep))
                         c.load(rep, false);
                 }
             }
