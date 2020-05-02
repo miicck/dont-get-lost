@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿#define SIMULATE_PING // Define to simulate ping between server/client
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Net.Sockets;
@@ -8,6 +9,7 @@ using System.Net.Sockets;
  * TODO
  * - Logout player on client disconnect
  * - Serialize to disk
+ * - Lerping is messy
  */
 
 public class networked_v2 : MonoBehaviour
@@ -247,6 +249,12 @@ public static class client
         // Send the message queue
         while (message_queue.Count > 0)
         {
+
+#           if SIMULATE_PING
+            if (message_queue.Peek().time_sent > Time.realtimeSinceStartup - network_utils.SIMULATED_PING / 1000f)
+                break; // Messages from here on are too new to be sent
+#           endif
+
             var msg = message_queue.Dequeue();
 
             if (msg.bytes.Length > tcp.SendBufferSize)
@@ -513,7 +521,10 @@ public static class client
     {
         if (tcp == null) return "Client not connected.";
         return "Client connected\n" +
-                networked_v2.objects_info() + "\n" +
+               networked_v2.objects_info() + "\n" +
+#              if SIMULATE_PING
+               "Simulated ping: " + network_utils.SIMULATED_PING + " ms\n" +
+#              endif
                "Traffic:\n" +
                "    " + traffic_up.usage() + " up\n" +
                "    " + traffic_down.usage() + " down";
@@ -1045,6 +1056,11 @@ public static class server
 
             while (queue.Count > 0)
             {
+#               if SIMULATE_PING
+                if (queue.Peek().send_time > Time.realtimeSinceStartup - network_utils.SIMULATED_PING / 1000f)
+                    break; // Messages from here on are too new, don't send them.
+#               endif
+
                 var msg = queue.Dequeue();
 
                 if (msg.bytes.Length > send_buffer.Length)
@@ -1097,6 +1113,9 @@ public static class server
     {
         if (tcp == null) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
+#              if SIMULATE_PING
+               "Simulated ping: " + network_utils.SIMULATED_PING + " ms\n" +
+#              endif
                connected_clients.Count + " clients connected\n" +
                representations.Count + " representations\n" +
                "Traffic:\n" +
@@ -1122,6 +1141,10 @@ public static class server
 
 public static class network_utils
 {
+#   if SIMULATE_PING
+    public const int SIMULATED_PING = 100; // Simulated ping in ms
+#   endif
+
     /// <summary> Concatinate the given byte arrays into a single byte array. </summary>
     public static byte[] concat_buffers(params byte[][] buffers)
     {
