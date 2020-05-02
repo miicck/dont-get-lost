@@ -7,6 +7,7 @@ using System.Net.Sockets;
  * 
  * TODO
  * - Logout player on client disconnect
+ * - Serialize to disk
  */
 
 public class networked_v2 : MonoBehaviour
@@ -255,6 +256,7 @@ public static class client
             {
                 // Message would overrun buffer, send the
                 // buffer and obtain a new one
+                traffic_up.log_bytes(offset);
                 stream.Write(send_buffer, 0, offset);
                 send_buffer = new byte[tcp.SendBufferSize];
                 offset = 0;
@@ -266,7 +268,11 @@ public static class client
         }
 
         // Send the buffer
-        if (offset > 0) stream.Write(send_buffer, 0, offset);
+        if (offset > 0)
+        {
+            traffic_up.log_bytes(offset);
+            stream.Write(send_buffer, 0, offset);
+        }
     }
 
     /// <summary> Send a position update for the given networked object. </summary>
@@ -284,20 +290,11 @@ public static class client
     /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
     static void create_from_network(byte[] buffer, int offset, int length, bool local)
     {
-        int network_id = System.BitConverter.ToInt32(buffer, offset);
-        offset += sizeof(int);
-
-        int parent_id = System.BitConverter.ToInt32(buffer, offset);
-        offset += sizeof(int);
-
-        Vector3 local_position = network_utils.to_vector3(buffer, offset);
-        offset += sizeof(float) * 3;
-
-        string local_prefab;
-        offset += network_utils.decode_string(buffer, offset, out local_prefab);
-
-        string remote_prefab;
-        offset += network_utils.decode_string(buffer, offset, out remote_prefab);
+        int network_id = network_utils.decode_int(buffer, ref offset);
+        int parent_id = network_utils.decode_int(buffer, ref offset);
+        Vector3 local_position = network_utils.decode_vector3(buffer, ref offset);
+        string local_prefab = network_utils.decode_string(buffer, ref offset);
+        string remote_prefab = network_utils.decode_string(buffer, ref offset);
 
         var nw = networked_v2.look_up(local ? local_prefab : remote_prefab);
         string name = nw.name;
@@ -342,29 +339,23 @@ public static class client
             [server.MESSAGE.POSITION_UPDATE] = (buffer, offset, length) =>
             {
                 // Update the position of a network object
-                int id = System.BitConverter.ToInt32(buffer, offset);
-                offset += sizeof(int);
-
-                Vector3 local_position = network_utils.to_vector3(buffer, offset);
-                offset += sizeof(float) * 3;
-
+                int id = network_utils.decode_int(buffer, ref offset);
+                Vector3 local_position = network_utils.decode_vector3(buffer, ref offset);
                 networked_v2.find_by_id(id).recive_position_update(local_position);
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
             {
                 // Remove the object from the client
-                int id = System.BitConverter.ToInt32(buffer, offset);
+                int id = network_utils.decode_int(buffer, ref offset);
                 networked_v2.find_by_id(id).forget();
             },
 
             [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>
             {
                 // Update the local id to a network-wide one
-                int local_id = System.BitConverter.ToInt32(buffer, offset);
-                offset += sizeof(int);
-
-                int network_id = System.BitConverter.ToInt32(buffer, offset);
+                int local_id = network_utils.decode_int(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
                 networked_v2.find_by_id(local_id).network_id = network_id;
             }
         };
@@ -374,7 +365,7 @@ public static class client
         {
             // Message is of form [length, type, payload]
             byte[] to_send = network_utils.concat_buffers(
-                System.BitConverter.GetBytes(payload.Length),
+                network_utils.encode_int(payload.Length),
                 new byte[] { (byte)msg_type },
                 payload
             );
@@ -414,10 +405,8 @@ public static class client
 
                 // Send the id + position to the server
                 send(MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
-                        System.BitConverter.GetBytes(nw.network_id),
-                        System.BitConverter.GetBytes(nw.transform.localPosition.x),
-                        System.BitConverter.GetBytes(nw.transform.localPosition.y),
-                        System.BitConverter.GetBytes(nw.transform.localPosition.z)
+                        network_utils.encode_int(nw.network_id),
+                        network_utils.encode_vector3(nw.transform.localPosition)
                     ));
 
                 nw.on_position_up_to_date();
@@ -437,11 +426,9 @@ public static class client
                 send(MESSAGE.CREATE, network_utils.concat_buffers(
                     network_utils.encode_string(local_prefab),
                     network_utils.encode_string(remote_prefab),
-                    System.BitConverter.GetBytes(local_position.x),
-                    System.BitConverter.GetBytes(local_position.y),
-                    System.BitConverter.GetBytes(local_position.z),
-                    System.BitConverter.GetBytes(parent_id),
-                    System.BitConverter.GetBytes(local_id)
+                    network_utils.encode_vector3(local_position),
+                    network_utils.encode_int(parent_id),
+                    network_utils.encode_int(local_id)
                 ));
             },
 
@@ -454,7 +441,7 @@ public static class client
                 if (network_id < 0)
                     throw new System.Exception("Tried to delete an unregistered object!");
 
-                send(MESSAGE.DELETE, System.BitConverter.GetBytes(network_id));
+                send(MESSAGE.DELETE, network_utils.encode_int(network_id));
             },
 
             [MESSAGE.DISCONNECT] = (args) =>
@@ -503,8 +490,7 @@ public static class client
             while (offset < bytes_read)
             {
                 // Parse payload length
-                int payload_length = System.BitConverter.ToInt32(buffer, offset);
-                offset += sizeof(int);
+                int payload_length = network_utils.decode_int(buffer, ref offset);
 
                 // Parse message type
                 var msg_type = (server.MESSAGE)buffer[offset];
@@ -761,11 +747,9 @@ public static class server
                 throw new System.Exception("Tried to set unregistered parent!");
 
             return network_utils.concat_buffers(
-                System.BitConverter.GetBytes(network_id),
-                System.BitConverter.GetBytes(parent_id),
-                System.BitConverter.GetBytes(transform.localPosition.x),
-                System.BitConverter.GetBytes(transform.localPosition.y),
-                System.BitConverter.GetBytes(transform.localPosition.z),
+                network_utils.encode_int(network_id),
+                network_utils.encode_int(parent_id),
+                network_utils.encode_vector3(transform.localPosition),
                 network_utils.encode_string(local_prefab),
                 network_utils.encode_string(remote_prefab)
             );
@@ -829,11 +813,10 @@ public static class server
         {
             [global::client.MESSAGE.LOGIN] = (client, bytes, offset, length) =>
             {
-                string uname;
-                int uname_length = network_utils.decode_string(bytes, offset, out uname);
-                offset += uname_length;
+                int init_offset = offset;
+                string uname = network_utils.decode_string(bytes, ref offset);
 
-                byte[] pword = new byte[length - uname_length - 1];
+                byte[] pword = new byte[length - (offset - init_offset)];
                 System.Buffer.BlockCopy(bytes, offset, pword, 0, pword.Length);
 
                 // Check if this username is in use
@@ -847,31 +830,18 @@ public static class server
 
             [global::client.MESSAGE.POSITION_UPDATE] = (client, bytes, offset, length) =>
             {
-                int id = System.BitConverter.ToInt32(bytes, offset);
-                offset += sizeof(int);
-
-                Vector3 local_pos = network_utils.to_vector3(bytes, offset);
-                offset += sizeof(float) * 3;
-
+                int id = network_utils.decode_int(bytes, ref offset);
+                Vector3 local_pos = network_utils.decode_vector3(bytes, ref offset);
                 representations[id].position_update(local_pos, client);
             },
 
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
             {
-                string local_prefab;
-                offset += network_utils.decode_string(bytes, offset, out local_prefab);
-
-                string remote_prefab;
-                offset += network_utils.decode_string(bytes, offset, out remote_prefab);
-
-                Vector3 local_pos = network_utils.to_vector3(bytes, offset);
-                offset += sizeof(float) * 3;
-
-                int parent_id = System.BitConverter.ToInt32(bytes, offset);
-                offset += sizeof(int);
-
-                int local_id = System.BitConverter.ToInt32(bytes, offset);
-                offset += sizeof(int);
+                string local_prefab = network_utils.decode_string(bytes, ref offset);
+                string remote_prefab = network_utils.decode_string(bytes, ref offset);
+                Vector3 local_pos = network_utils.decode_vector3(bytes, ref offset);
+                int parent_id = network_utils.decode_int(bytes, ref offset);
+                int local_id = network_utils.decode_int(bytes, ref offset);
 
                 representation parent = parent_id > 0 ? representations[parent_id] : null;
                 var rep = representation.create(parent, local_pos, local_prefab, remote_prefab);
@@ -892,7 +862,7 @@ public static class server
             [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
             {
                 // Find the representation being deleted
-                int network_id = System.BitConverter.ToInt32(bytes, offset);
+                int network_id = network_utils.decode_int(bytes, ref offset);
                 var deleting = representations[network_id];
 
                 // Unload the object with the above network_id 
@@ -917,7 +887,7 @@ public static class server
         void send(client client, MESSAGE msg_type, byte[] payload)
         {
             byte[] to_send = network_utils.concat_buffers(
-                System.BitConverter.GetBytes(payload.Length),
+                network_utils.encode_int(payload.Length),
                 new byte[] { (byte)msg_type },
                 payload
             );
@@ -962,7 +932,9 @@ public static class server
                 if (args.Length != 1)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                send(client, MESSAGE.UNLOAD, System.BitConverter.GetBytes((int)args[0]));
+                int network_id = (int)args[0];
+
+                send(client, MESSAGE.UNLOAD, network_utils.encode_int(network_id));
             },
 
             [MESSAGE.POSITION_UPDATE] = (client, args) =>
@@ -973,10 +945,8 @@ public static class server
                 var rep = (representation)args[0];
 
                 send(client, MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
-                    System.BitConverter.GetBytes(rep.network_id),
-                    System.BitConverter.GetBytes(rep.transform.localPosition.x),
-                    System.BitConverter.GetBytes(rep.transform.localPosition.y),
-                    System.BitConverter.GetBytes(rep.transform.localPosition.z)
+                    network_utils.encode_int(rep.network_id),
+                    network_utils.encode_vector3(rep.transform.localPosition)
                 ));
             },
 
@@ -989,8 +959,8 @@ public static class server
                 int network_id = (int)args[1];
 
                 send(client, MESSAGE.CREATION_SUCCESS, network_utils.concat_buffers(
-                    System.BitConverter.GetBytes(local_id),
-                    System.BitConverter.GetBytes(network_id)
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(network_id)
                 ));
             }
         };
@@ -1022,8 +992,7 @@ public static class server
                 while (offset < bytes_read)
                 {
                     // Parse message length
-                    int payload_length = System.BitConverter.ToInt32(buffer, offset);
-                    offset += sizeof(int);
+                    int payload_length = network_utils.decode_int(buffer, ref offset);
 
                     // Parse message type
                     var msg_type = (global::client.MESSAGE)buffer[offset];
@@ -1087,6 +1056,7 @@ public static class server
                     // and create a new one
                     try
                     {
+                        traffic_up.log_bytes(offset);
                         client.stream.Write(send_buffer, 0, offset);
                     }
                     catch
@@ -1107,6 +1077,7 @@ public static class server
             {
                 try
                 {
+                    traffic_up.log_bytes(offset);
                     client.stream.Write(send_buffer, 0, offset);
                 }
                 catch
@@ -1199,25 +1170,6 @@ public static class network_utils
         return address;
     }
 
-    public static Vector3 to_vector3(byte[] bytes, int offset)
-    {
-        return new Vector3(
-            System.BitConverter.ToSingle(bytes, offset),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float)),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
-        );
-    }
-
-    public static Quaternion to_quaternion(byte[] bytes, int offset)
-    {
-        return new Quaternion(
-            System.BitConverter.ToSingle(bytes, offset),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float)),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3)
-        );
-    }
-
     /// <summary> Apply the function <paramref name="f"/> to 
     /// <paramref name="parent"/>, and all T in it's children. 
     /// Guaranteed to carry out in top-down order. </summary>
@@ -1289,13 +1241,51 @@ public static class network_utils
         );
     }
 
-    /// <summary>
-    /// Decode a string encoded with <see cref="encode_string(string)"/>. Returns
-    /// the number of bytes used in the encoding.
-    public static int decode_string(byte[] buffer, int offset, out string str)
+    /// <summary> Decode a string encoded using <see cref="encode_string(string)"/>.
+    /// <paramref name="offset"/> will be incremented by the number of bytes decoded. </summary>
+    public static string decode_string(byte[] buffer, ref int offset)
     {
         int length = buffer[offset];
-        str = System.Text.Encoding.ASCII.GetString(buffer, offset + 1, length);
-        return 1 + length;
+        string str = System.Text.Encoding.ASCII.GetString(buffer, offset + 1, length);
+        offset += length + 1;
+        return str;
+    }
+
+    /// <summary> Encode a vector3 ready to be sent over the network. </summary>
+    public static byte[] encode_vector3(Vector3 v)
+    {
+        return concat_buffers(
+            System.BitConverter.GetBytes(v.x),
+            System.BitConverter.GetBytes(v.y),
+            System.BitConverter.GetBytes(v.z)
+        );
+    }
+
+    /// <summary> Decode a vector3 encoded using <see cref="encode_vector3(Vector3)"/>. 
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static Vector3 decode_vector3(byte[] buffer, ref int offset)
+    {
+        var vec = new Vector3(
+            System.BitConverter.ToSingle(buffer, offset),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float)),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 2)
+        );
+        offset += 3 * sizeof(float);
+        return vec;
+    }
+
+    /// <summary> Encode an int ready to be sent over the network. </summary>
+    public static byte[] encode_int(int i)
+    {
+        return System.BitConverter.GetBytes(i);
+    }
+
+    /// <summary> Decode an integer that was encoded using <see cref="encode_int(int)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static int decode_int(byte[] buffer, ref int offset)
+    {
+        int i = System.BitConverter.ToInt32(buffer, offset);
+        offset += sizeof(int);
+        return i;
     }
 }
