@@ -27,6 +27,17 @@ public class networked_v2 : MonoBehaviour
     /// <summary> How fast I lerp my position. </summary>
     public virtual float lerp_amount() { return 5f; }
 
+    /// <summary> All of the variables I contain that
+    /// are serialized over the network. </summary>
+    List<networked_variable> networked_variables;
+
+    /// <summary> Called when the networked variable with the given index
+    /// recives an updated serialization. </summary>
+    public void variable_update(int index, byte[] serialization)
+    {
+        networked_variables[index].deserialize(serialization);
+    }
+
     public Vector3 networked_position
     {
         get => transform.position;
@@ -68,17 +79,8 @@ public class networked_v2 : MonoBehaviour
         }
     }
 
-    public static networked_v2 look_up(string path)
-    {
-        var found = Resources.Load<networked_v2>(path);
-        if (found == null) throw new System.Exception("Could not find the prefab " + path);
-        return found;
-    }
-
     private void OnDrawGizmos()
     {
-        //Gizmos.matrix = transform.parent == null ? Matrix4x4.identity : 
-        //     transform.parent.localToWorldMatrix;
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(last_sent_local_position, position_resolution());
         Gizmos.color = Color.red;
@@ -99,6 +101,18 @@ public class networked_v2 : MonoBehaviour
 
             objects[value] = this;
             _network_id = value;
+
+            // Load networked_variables from networked_fields
+            if (networked_variables == null)
+            {
+                networked_variables = new List<networked_variable>();
+                foreach (var f in networked_fields[GetType()])
+                    networked_variables.Add((networked_variable)f.GetValue(this));
+            }
+
+            // Update my fields with the new id
+            for (int i = 0; i < networked_variables.Count; ++i)
+                networked_variables[i].update_identification(_network_id, i);
         }
     }
     int _network_id;
@@ -111,12 +125,12 @@ public class networked_v2 : MonoBehaviour
         Destroy(gameObject);
     }
 
+    /// <summary> Remove a networked object from the server and all clients. </summary>
     public void delete()
     {
         if (network_id < 0)
         {
-            // If unregistered, try again until
-            // registered.
+            // If unregistered, try again until registered.
             Invoke("delete", 0.1f);
             return;
         }
@@ -129,6 +143,52 @@ public class networked_v2 : MonoBehaviour
     //################//
     // STATIC METHODS //
     //################//
+
+    /// <summary> Look up a networked prefab from the prefab path. </summary>
+    public static networked_v2 look_up(string path)
+    {
+        var found = Resources.Load<networked_v2>(path);
+        if (found == null) throw new System.Exception("Could not find the prefab " + path);
+        return found;
+    }
+
+    /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
+    static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
+
+    /// <summary> Load the <see cref="networked_fields"/> dictionary. </summary>
+    public static void load_networked_fields()
+    {
+        networked_fields = new Dictionary<System.Type, List<System.Reflection.FieldInfo>>();
+
+        // Loop over all networked implementations
+        foreach (var type in typeof(networked_v2).Assembly.GetTypes())
+        {
+            if (type.IsAbstract) continue;
+            if (!type.IsSubclassOf(typeof(networked_v2))) continue;
+
+            var fields = new List<System.Reflection.FieldInfo>();
+
+            // Find all networked_variables in this type (or it's base types)
+            for (var t = type; t != typeof(networked_v2).BaseType; t = t.BaseType)
+            {
+                foreach (var f in t.GetFields(
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic))
+                {
+                    var ft = f.FieldType;
+                    if (ft.IsAbstract) continue;
+                    if (!ft.IsSubclassOf(typeof(networked_variable))) continue;
+                    fields.Add(f);
+                }
+            }
+
+            // Sort fields alphabetically, so the order 
+            // is the same on every client.
+            fields.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
+            networked_fields[type] = fields;
+        }
+    }
 
     /// <summary> The objects on this client, keyed by their network id. </summary>
     static Dictionary<int, networked_v2> objects = new Dictionary<int, networked_v2>();
@@ -198,8 +258,69 @@ public class networked_player : networked_v2
     float _render_range = server.INIT_RENDER_RANGE;
 }
 
+/// <summary> A value serialized over the network. </summary>
+public abstract class networked_variable
+{
+    /// <summary> Serialize my value into a form suitable
+    /// for sending over the network </summary>
+    public abstract byte[] serialization();
 
+    /// <summary> Reconstruct my value from the result of
+    /// <see cref="serialization"/>. </summary>
+    public abstract void deserialize(byte[] serialization);
 
+    /// <summary> Called when a variable update
+    /// needs to be sent to the server. </summary>
+    protected void send_update()
+    {
+        client.send_variable_update(network_id, index, serialization());
+    }
+
+    /// <summary> The network id of the object I belong to. </summary>
+    int network_id;
+
+    /// <summary> My index in the network_variables collection
+    /// of the object I belong to. </summary>
+    int index;
+
+    /// <summary> Called whenever the variables needed 
+    /// to direct updates to me change. </summary>
+    public void update_identification(int network_id, int index)
+    {
+        this.network_id = network_id;
+        this.index = index;
+    }
+
+    /// <summary> A simple networked floating point number. </summary>
+    public class net_float : networked_variable
+    {
+        float _value;
+        public float value
+        {
+            get => _value;
+            set
+            {
+                _value = value;
+                on_change(_value);
+                send_update();
+            }
+        }
+
+        public override byte[] serialization()
+        {
+            return System.BitConverter.GetBytes(value);
+        }
+
+        public override void deserialize(byte[] serialization)
+        {
+            _value = System.BitConverter.ToSingle(serialization, 0);
+            on_change(_value);
+        }
+
+        public delegate void change_func(float new_value);
+        public change_func on_change;
+    }
+}
 
 //########//
 // CLIENT //
@@ -305,6 +426,13 @@ public static class client
         }
     }
 
+    /// <summary> Send the updated serialization of the variable with the 
+    /// given index, belonging to the networked object with the given network id. </summary>
+    public static void send_variable_update(int network_id, int index, byte[] serialization)
+    {
+        message_senders[MESSAGE.VARIABLE_UPDATE](network_id, index, serialization);
+    }
+
     /// <summary> Called when the render range of a player changes. </summary>
     public static void on_render_range_change(networked_player player)
     {
@@ -357,6 +485,9 @@ public static class client
     /// <summary> Connect the client to a server. </summary>
     public static void connect(string host, int port, string username, string password)
     {
+        // Load networked type info
+        networked_v2.load_networked_fields();
+
         // Connect the TCP client + initialize buffers
         tcp = new TcpClient(host, port);
 
@@ -378,6 +509,18 @@ public static class client
                 int id = network_utils.decode_int(buffer, ref offset);
                 Vector3 local_position = network_utils.decode_vector3(buffer, ref offset);
                 networked_v2.find_by_id(id).recive_position_update(local_position);
+            },
+
+            [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
+            {
+                // Forward the variable update to the correct object
+                int start = offset;
+                int id = network_utils.decode_int(buffer, ref offset);
+                int index = network_utils.decode_int(buffer, ref offset);
+                int serial_length = length - (offset - start);
+                byte[] serialization = new byte[serial_length];
+                System.Buffer.BlockCopy(buffer, offset, serialization, 0, serial_length);
+                networked_v2.find_by_id(id).variable_update(index, serialization);
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
@@ -499,6 +642,22 @@ public static class client
                 send(MESSAGE.RENDER_RANGE_UPDATE, network_utils.concat_buffers(
                     network_utils.encode_float(nw.render_range)
                 ));
+            },
+
+            [MESSAGE.VARIABLE_UPDATE] = (args) =>
+            {
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                int index = (int)args[1];
+                byte[] serialization = (byte[])args[2];
+
+                send(MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(index),
+                    serialization
+                ));
             }
         };
 
@@ -579,6 +738,7 @@ public static class client
         DELETE,              // Delete an object from the server
         POSITION_UPDATE,     // Object position needs updating
         RENDER_RANGE_UPDATE, // Client render range has changed
+        VARIABLE_UPDATE,     // A networked_variable has changed
     }
 
     delegate void message_sender(params object[] args);
@@ -753,6 +913,22 @@ public static class server
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
     {
+        /// <summary> Called when the serialization 
+        /// of a networked_variable changes. </summary>
+        public void on_network_variable_change(
+            client sender, int index, byte[] new_serialization)
+        {
+            serializations[index] = new_serialization;
+
+            foreach (var c in connected_clients)
+                if ((c != sender) && c.has_loaded(this))
+                    message_senders[MESSAGE.VARIABLE_UPDATE](c, network_id, index, new_serialization);
+        }
+
+        /// <summary> The serialized values of networked_variables 
+        /// beloning to this object. </summary>
+        Dictionary<int, byte[]> serializations = new Dictionary<int, byte[]>();
+
         // Needed for proximity tests
         public float radius { get; private set; }
 
@@ -996,6 +1172,19 @@ public static class server
                 representations[id].position_update(local_pos, client);
             },
 
+            [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
+            {
+                // Forward the updated variable serialization to the correct
+                // representation
+                int start = offset;
+                int id = network_utils.decode_int(bytes, ref offset);
+                int index = network_utils.decode_int(bytes, ref offset);
+                int serial_length = length - (offset - start);
+                byte[] serialization = new byte[serial_length];
+                System.Buffer.BlockCopy(bytes, offset, serialization, 0, serial_length);
+                representations[id].on_network_variable_change(client, index, serialization);
+            },
+
             [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
             {
                 client.render_range = network_utils.decode_float(bytes, ref offset);
@@ -1108,6 +1297,22 @@ public static class server
                 send(client, MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
                     network_utils.encode_int(rep.network_id),
                     network_utils.encode_vector3(rep.transform.localPosition)
+                ));
+            },
+
+            [MESSAGE.VARIABLE_UPDATE] = (client, args) =>
+            {
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var id = (int)args[0];
+                var index = (int)args[1];
+                var serialization = (byte[])args[2];
+
+                send(client, MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(id),
+                    network_utils.encode_int(index),
+                    serialization
                 ));
             },
 
@@ -1264,6 +1469,7 @@ public static class server
         UNLOAD,            // Unload an object on a client
         POSITION_UPDATE,   // Send a position update to a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
+        VARIABLE_UPDATE,   // Send a networked_variable update to a client
     }
 
     delegate void message_parser(client c, byte[] bytes, int offset, int length);
@@ -1463,5 +1669,30 @@ public static class network_utils
         float f = System.BitConverter.ToSingle(buffer, offset);
         offset += sizeof(float);
         return f;
+    }
+
+    /// <summary> Encodes a quaternion ready to be sent over the network. </summary>
+    public static byte[] encode_quaternion(Quaternion q)
+    {
+        return concat_buffers(
+            System.BitConverter.GetBytes(q.x),
+            System.BitConverter.GetBytes(q.y),
+            System.BitConverter.GetBytes(q.z),
+            System.BitConverter.GetBytes(q.w)
+        );
+    }
+
+    /// <summary> Decode a quaternion encoded using <see cref="encode_quaternion(Quaternion)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static Quaternion decode_quaternion(byte[] buffer, ref int offset)
+    {
+        Quaternion q = new Quaternion(
+            System.BitConverter.ToSingle(buffer, offset),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float)),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 2),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 3)
+        );
+        offset += sizeof(float) * 4;
+        return q;
     }
 }
