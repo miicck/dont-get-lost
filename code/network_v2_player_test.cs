@@ -13,6 +13,11 @@ public class network_v2_player_test : networked_player
         render_range = 5f;
     }
 
+    public override bool sends_position_updates()
+    {
+        return local;
+    }
+
     private void Update()
     {
         if (local)
@@ -21,10 +26,16 @@ public class network_v2_player_test : networked_player
             if (sw > 0) render_range *= 1.2f;
             else if (sw < 0) render_range /= 1.2f;
 
-            if (Input.GetKey(KeyCode.W)) networked_position += Vector3.forward * Time.deltaTime;
-            if (Input.GetKey(KeyCode.S)) networked_position -= Vector3.forward * Time.deltaTime;
-            if (Input.GetKey(KeyCode.D)) networked_position += Vector3.right * Time.deltaTime;
-            if (Input.GetKey(KeyCode.A)) networked_position -= Vector3.right * Time.deltaTime;
+            Vector3 move = Vector3.zero;
+
+            if (Input.GetKey(KeyCode.W)) move += Vector3.forward * Time.deltaTime;
+            if (Input.GetKey(KeyCode.S)) move -= Vector3.forward * Time.deltaTime;
+            if (Input.GetKey(KeyCode.D)) move += Vector3.right * Time.deltaTime;
+            if (Input.GetKey(KeyCode.A)) move -= Vector3.right * Time.deltaTime;
+
+            if (Input.GetKey(KeyCode.LeftShift))
+                move *= 10f;
+            networked_position += move;
 
             if (Input.GetKeyDown(KeyCode.Space))
                 client.create(transform.position, "network_v2_test/bomb");

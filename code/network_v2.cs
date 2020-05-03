@@ -1,5 +1,4 @@
-﻿#define SIMULATE_PING // Define to simulate ping between server/client
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Net.Sockets;
@@ -7,12 +6,8 @@ using System.Net.Sockets;
 /*
  * 
  * TODO
- * - Logout player on client disconnect
  * - User-defined data (serialization)
  * - Serialize to disk
- * - Need always-loaded objects (for e.g world seed + player chat etc, see also below)
- * - Should we generalize the loading decision, which means we might not need
- *   to sync the positions of all objects + makes lerping a client-side choice?
  *  
  */
 
@@ -24,6 +19,10 @@ public class networked_v2 : MonoBehaviour
 
     /// <summary> How far I move before sending updated positions to the server. </summary>
     public virtual float position_resolution() { return 0.1f; }
+
+    /// <summary> Returns false if position updates should not be sent (should only
+    /// be set false for objects that can NEVER be moved on a client). </summary>
+    public virtual bool sends_position_updates() { return true; }
 
     /// <summary> How fast I lerp my position. </summary>
     public virtual float lerp_amount() { return 5f; }
@@ -60,7 +59,7 @@ public class networked_v2 : MonoBehaviour
             Vector3 delta = target_local_position - transform.localPosition;
             if (delta.magnitude > position_resolution())
                 transform.localPosition = Vector3.Lerp(transform.localPosition, target_local_position, Time.deltaTime * lerp_amount());
-            else
+            else if (sends_position_updates())
             {
                 delta = last_sent_local_position - transform.localPosition;
                 if (delta.magnitude > position_resolution())
@@ -278,12 +277,6 @@ public static class client
         // Send the message queue
         while (message_queue.Count > 0)
         {
-
-#           if SIMULATE_PING
-            if (message_queue.Peek().time_sent > Time.realtimeSinceStartup - network_utils.SIMULATED_PING / 1000f)
-                break; // Messages from here on are too new to be sent
-#           endif
-
             var msg = message_queue.Dequeue();
 
             if (msg.bytes.Length > tcp.SendBufferSize)
@@ -521,6 +514,7 @@ public static class client
         // queued messages
         message_senders[MESSAGE.DISCONNECT]();
         send_queued_messages();
+        tcp.LingerState = new LingerOption(true, 2);
 
         // Close the stream
         tcp.GetStream().Close();
@@ -570,9 +564,6 @@ public static class client
         if (tcp == null) return "Client not connected.";
         return "Client connected\n" +
                networked_v2.objects_info() + "\n" +
-#              if SIMULATE_PING
-               "Simulated ping: " + network_utils.SIMULATED_PING + " ms\n" +
-#              endif
                "Traffic:\n" +
                "    " + traffic_up.usage() + " up\n" +
                "    " + traffic_down.usage() + " down";
@@ -607,51 +598,6 @@ public static class client
 
 public static class server
 {
-    public const float INIT_RENDER_RANGE = 0f;
-
-    /// <summary> The size of the grid that networked objects are binned into. </summary>
-    static float grid_size;
-
-    /// <summary> The TCP listener the server is listening with. </summary>
-    static TcpListener tcp;
-
-    // Information about how to create new players
-    static string player_prefab_local;
-    static string player_prefab_remote;
-    static Vector3 player_spawn;
-
-    /// <summary> The clients currently connected to the server </summary>
-    static HashSet<client> connected_clients = new HashSet<client>();
-
-    /// <summary> The transform representing the server. </summary>
-    static Transform _transform;
-    static Transform transform
-    {
-        get
-        {
-            if (_transform == null)
-                _transform = new GameObject("server").transform;
-            return _transform;
-        }
-    }
-
-    /// <summary> Representations on the server, keyed by network id. </summary>
-    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
-
-    struct pending_message
-    {
-        public byte[] bytes;
-        public float send_time;
-    }
-
-    /// <summary> Messages that are yet to be sent. </summary>
-    static Dictionary<client, Queue<pending_message>> message_queues =
-        new Dictionary<client, Queue<pending_message>>();
-
-    // Traffic monitors
-    static network_utils.traffic_monitor traffic_down;
-    static network_utils.traffic_monitor traffic_up;
-
     /// <summary> A client connected to the server. </summary>
     class client
     {
@@ -672,25 +618,25 @@ public static class server
             stream = tcp.GetStream();
         }
 
-        /// <summary> Returns true if the client should load the provided representation. </summary>
-        public bool should_load(representation rep)
-        {
-            if (player == null)
-                return false;
-
-            return (rep.transform.position - player.transform.position).magnitude <
-                rep.radius + render_range;
-        }
-
         public void login(string username, byte[] password)
         {
-            // Create the player
-            var player = representation.create(null, player_spawn,
-                player_prefab_local, player_prefab_remote);
+            // Attempt to load the player
+            representation player = null;
+            if (!player_representations.TryGetValue(username, out player))
+            {
+                // Load failed - create the player
+                player = representation.create(
+                    null, player_spawn,
+                    player_prefab_local, player_prefab_remote);
+
+                player_representations[username] = player;
+            }
 
             this.username = username;
             this.password = password;
             this.player = player;
+
+            player.transform.SetParent(active_representations);
 
             load(player, true, false);
         }
@@ -701,10 +647,51 @@ public static class server
             message_queues.Remove(this);
             stream.Close();
             tcp.Close();
+
+            // Unload the player (also remove it from representations
+            // so that it doens't just get re-loaded based on proximity)
+            foreach (var c in connected_clients)
+                if (c.has_loaded(player))
+                    c.unload(player);
+
+            player.transform.SetParent(inactive_representations);
         }
 
         /// <summary> The representations loaded as objects on this client. </summary>
         HashSet<representation> loaded = new HashSet<representation>();
+
+        /// <summary> Returns true if the client should load the provided representation. </summary>
+        bool should_load(representation rep)
+        {
+            if (player == null)
+                return false;
+
+            return (rep.transform.position - player.transform.position).magnitude <
+                rep.radius + render_range;
+        }
+
+        public void update_loaded()
+        {
+            // Loop over active representations
+            foreach (Transform t in active_representations)
+            {
+                var rep = t.GetComponent<representation>();
+                if (rep == null) continue;
+
+                if (has_loaded(rep))
+                {
+                    // Unload from clients that are too far away
+                    if (!should_load(rep))
+                        unload(rep);
+                }
+                else
+                {
+                    // Load on clients that are within range
+                    if (should_load(rep))
+                        load(rep, false);
+                }
+            }
+        }
 
         /// <summary> Returns true if the given representation is loaded on this client. </summary>
         public bool has_loaded(representation rep)
@@ -756,6 +743,12 @@ public static class server
                 message_senders[MESSAGE.UNLOAD](this, rep.network_id);
         }
     }
+
+
+    //################//
+    // REPRESENTATION //
+    //################//
+
 
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
@@ -833,7 +826,7 @@ public static class server
         {
             representation rep = new GameObject(local_prefab).AddComponent<representation>();
 
-            if (parent == null) rep.transform.SetParent(server.transform);
+            if (parent == null) rep.transform.SetParent(active_representations);
             else rep.transform.SetParent(parent.transform);
 
             rep.local_prefab = local_prefab;
@@ -863,9 +856,99 @@ public static class server
 
     }
 
+
+    //##############//
+    // SERVER LOGIC //
+    //##############//
+
+    // STATE VARIABLES //
+
+    /// <summary> The render range for clients starts at this value. </summary>
+    public const float INIT_RENDER_RANGE = 0f;
+
+    /// <summary> The TCP listener the server is listening with. </summary>
+    static TcpListener tcp;
+
+    // Information about how to create new players
+    static string player_prefab_local;
+    static string player_prefab_remote;
+    static Vector3 player_spawn;
+
+    /// <summary> The clients currently connected to the server </summary>
+    static HashSet<client> connected_clients = new HashSet<client>();
+
+    /// <summary> Representations on the server, keyed by network id. </summary>
+    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
+
+    /// <summary> Player representations on the server, keyed by username. </summary>
+    static Dictionary<string, representation> player_representations = new Dictionary<string, representation>();
+
+    /// <summary> The transform representing the server. </summary>
+    static Transform transform
+    {
+        get
+        {
+            if (_transform == null)
+                _transform = new GameObject("server").transform;
+            return _transform;
+        }
+    }
+    static Transform _transform;
+
+    /// <summary> Transform containing active representations (those which are
+    /// considered for existance on clients) </summary>
+    static Transform active_representations
+    {
+        get
+        {
+            if (_active_representations == null)
+            {
+                _active_representations = new GameObject("active").transform;
+                _active_representations.SetParent(transform);
+            }
+            return _active_representations;
+        }
+    }
+    static Transform _active_representations;
+
+    /// <summary> Representations that are not considered for existance
+    /// on clients, but need to be remembered
+    /// (such as logged out players) </summary>
+    static Transform inactive_representations
+    {
+        get
+        {
+            if (_inactive_representations == null)
+            {
+                _inactive_representations = new GameObject("inactive").transform;
+                _inactive_representations.SetParent(transform);
+            }
+            return _inactive_representations;
+        }
+    }
+    static Transform _inactive_representations;
+
+    /// <summary> A server message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float send_time;
+    }
+
+    /// <summary> Messages that are yet to be sent. </summary>
+    static Dictionary<client, Queue<pending_message>> message_queues =
+        new Dictionary<client, Queue<pending_message>>();
+
+    // Traffic monitors
+    static network_utils.traffic_monitor traffic_down;
+    static network_utils.traffic_monitor traffic_up;
+
+    // END STATE VARIABLES //
+
+
     /// <summary> Start a server listening on the given port on the local machine. </summary>
     public static void start(
-        int port, float grid_size, string savename,
+        int port, string savename,
         string player_prefab_local, string player_prefab_remote,
         Vector3 player_spawn)
     {
@@ -1084,28 +1167,9 @@ public static class server
             }
         }
 
-        // Loop over top-level representations
-        foreach (Transform t in transform)
-        {
-            var rep = t.GetComponent<representation>();
-            if (rep == null) continue;
-
-            foreach (var c in connected_clients)
-            {
-                if (c.has_loaded(rep))
-                {
-                    // Unload from clients that are too far away
-                    if (!c.should_load(rep))
-                        c.unload(rep);
-                }
-                else
-                {
-                    // Load on clients that are within range
-                    if (c.should_load(rep))
-                        c.load(rep, false);
-                }
-            }
-        }
+        // Update the objects which are loaded on the clients
+        foreach (var c in connected_clients)
+            c.update_loaded();
 
         // Send the messages from the queue
         var disconnected_during_write = new List<client>();
@@ -1120,11 +1184,6 @@ public static class server
 
             while (queue.Count > 0)
             {
-#               if SIMULATE_PING
-                if (queue.Peek().send_time > Time.realtimeSinceStartup - network_utils.SIMULATED_PING / 1000f)
-                    break; // Messages from here on are too new, don't send them.
-#               endif
-
                 var msg = queue.Dequeue();
 
                 if (msg.bytes.Length > send_buffer.Length)
@@ -1191,9 +1250,6 @@ public static class server
     {
         if (tcp == null) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
-#              if SIMULATE_PING
-               "Simulated ping: " + network_utils.SIMULATED_PING + " ms\n" +
-#              endif
                connected_clients.Count + " clients connected\n" +
                representations.Count + " representations\n" +
                "Traffic:\n" +
@@ -1203,11 +1259,11 @@ public static class server
 
     public enum MESSAGE : byte
     {
-        CREATE_LOCAL = 1, // Create a local network object on a client
-        CREATE_REMOTE,    // Create a remote network object on a client
-        UNLOAD,           // Unload an object on a client
-        POSITION_UPDATE,  // Send a position update to a client
-        CREATION_SUCCESS, // Send when a creation requested by a client was successful
+        CREATE_LOCAL = 1,  // Create a local network object on a client
+        CREATE_REMOTE,     // Create a remote network object on a client
+        UNLOAD,            // Unload an object on a client
+        POSITION_UPDATE,   // Send a position update to a client
+        CREATION_SUCCESS,  // Send when a creation requested by a client was successful
     }
 
     delegate void message_parser(client c, byte[] bytes, int offset, int length);
@@ -1217,12 +1273,16 @@ public static class server
     static Dictionary<MESSAGE, message_sender> message_senders;
 }
 
+
+
+//###############//
+// NETWORK UTILS //
+//###############//
+
+
+
 public static class network_utils
 {
-#   if SIMULATE_PING
-    public const int SIMULATED_PING = 100; // Simulated ping in ms
-#   endif
-
     /// <summary> Concatinate the given byte arrays into a single byte array. </summary>
     public static byte[] concat_buffers(params byte[][] buffers)
     {
