@@ -10,12 +10,16 @@ using System.Net.Sockets;
  * - Logout player on client disconnect
  * - User-defined data (serialization)
  * - Serialize to disk
- * - Lerping is messy
+ * - Need always-loaded objects (for e.g world seed + player chat etc, see also below)
+ * - Should we generalize the loading decision, which means we might not need
+ *   to sync the positions of all objects + makes lerping a client-side choice?
+ *  
  */
 
 public class networked_v2 : MonoBehaviour
 {
-    /// <summary> My width as far as the server is concerned for determining if I can be seen. </summary>
+    /// <summary> My radius as far as the server is concerned 
+    /// for determining if I can be seen. </summary>
     public virtual float network_radius() { return 1f; }
 
     /// <summary> How far I move before sending updated positions to the server. </summary>
@@ -29,44 +33,39 @@ public class networked_v2 : MonoBehaviour
         get => transform.position;
         set
         {
-            if ((last_sent_position - value).magnitude > position_resolution())
-                position_update_required = true;
-
-            target_position = value;
             transform.position = value;
+            target_local_position = transform.localPosition;
         }
     }
 
-    /// <summary> Check if we need to send a position to the server. </summary>
-    public bool position_update_required { get; private set; }
-    Vector3 last_sent_position;
+    Vector3 last_sent_local_position;
 
     public void on_position_up_to_date()
     {
-        last_sent_position = transform.position;
-        position_update_required = false;
+        last_sent_local_position = transform.localPosition;
     }
 
     /// <summary> Recive a position update from the server. </summary>
     public void recive_position_update(Vector3 new_local_position)
     {
-        if (transform.parent == null) target_position = new_local_position;
-        else target_position = transform.parent.localToWorldMatrix * new_local_position;
+        target_local_position = new_local_position;
     }
-    Vector3 target_position;
+    Vector3 target_local_position;
 
     /// <summary> Run networking updates (called every frame by client). </summary>
-    public void network_update()
+    public virtual void network_update()
     {
         if (transform.parent == null)
         {
-            // Send position updates
-            if (position_update_required)
-                client.send_position_update(this);
-
-            Vector3 delta = target_position - transform.position;
+            Vector3 delta = target_local_position - transform.localPosition;
             if (delta.magnitude > position_resolution())
-                transform.position = Vector3.Lerp(transform.position, target_position, Time.deltaTime * lerp_amount());
+                transform.localPosition = Vector3.Lerp(transform.localPosition, target_local_position, Time.deltaTime * lerp_amount());
+            else
+            {
+                delta = last_sent_local_position - transform.localPosition;
+                if (delta.magnitude > position_resolution())
+                    client.send_position_update(this);
+            }
         }
     }
 
@@ -79,10 +78,12 @@ public class networked_v2 : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        //Gizmos.matrix = transform.parent == null ? Matrix4x4.identity : 
+        //     transform.parent.localToWorldMatrix;
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(last_sent_position, position_resolution());
+        Gizmos.DrawWireSphere(last_sent_local_position, position_resolution());
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(target_position, position_resolution());
+        Gizmos.DrawWireSphere(target_local_position, position_resolution());
     }
 
     /// <summary> My unique id on the network. Negative values are unique only on this
@@ -179,6 +180,25 @@ public class networked_v2 : MonoBehaviour
 
 #endif
 }
+
+public class networked_player : networked_v2
+{
+    /// <summary> How far can the player see other networked objects? </summary>
+    public float render_range
+    {
+        get => _render_range;
+        set
+        {
+            if (_render_range == value)
+                return; // No change
+
+            _render_range = value;
+            client.on_render_range_change(this);
+        }
+    }
+    float _render_range = server.INIT_RENDER_RANGE;
+}
+
 
 
 
@@ -290,6 +310,12 @@ public static class client
             traffic_up.log_bytes(offset);
             stream.Write(send_buffer, 0, offset);
         }
+    }
+
+    /// <summary> Called when the render range of a player changes. </summary>
+    public static void on_render_range_change(networked_player player)
+    {
+        message_senders[MESSAGE.RENDER_RANGE_UPDATE](player);
     }
 
     /// <summary> Send a position update for the given networked object. </summary>
@@ -413,20 +439,12 @@ public static class client
                     network_utils.encode_string(uname), hashed));
             },
 
-            [MESSAGE.POSITION_UPDATE] = (args) =>
+            [MESSAGE.DISCONNECT] = (args) =>
             {
-                if (args.Length != 1)
+                if (args.Length != 0)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                var nw = (networked_v2)args[0];
-
-                // Send the id + position to the server
-                send(MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
-                        network_utils.encode_int(nw.network_id),
-                        network_utils.encode_vector3(nw.transform.localPosition)
-                    ));
-
-                nw.on_position_up_to_date();
+                send(MESSAGE.DISCONNECT, new byte[] { });
             },
 
             [MESSAGE.CREATE] = (args) =>
@@ -461,12 +479,33 @@ public static class client
                 send(MESSAGE.DELETE, network_utils.encode_int(network_id));
             },
 
-            [MESSAGE.DISCONNECT] = (args) =>
+            [MESSAGE.POSITION_UPDATE] = (args) =>
             {
-                if (args.Length != 0)
+                if (args.Length != 1)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                send(MESSAGE.DISCONNECT, new byte[] { });
+                var nw = (networked_v2)args[0];
+
+                // Send the id + position to the server
+                send(MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(nw.network_id),
+                    network_utils.encode_vector3(nw.transform.localPosition)
+                ));
+
+                nw.on_position_up_to_date();
+            },
+
+            [MESSAGE.RENDER_RANGE_UPDATE] = (args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var nw = (networked_player)args[0];
+
+                // Send the new render range
+                send(MESSAGE.RENDER_RANGE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_float(nw.render_range)
+                ));
             }
         };
 
@@ -543,11 +582,12 @@ public static class client
     public enum MESSAGE : byte
     {
         // Numbering starts at 1 so erroneous 0's are caught
-        LOGIN = 1,        // Client has logged in
-        POSITION_UPDATE,  // Object position needs updating
-        CREATE,           // Create an object on the server
-        DELETE,           // Delete an object from the server
-        DISCONNECT,       // Disconnect this client
+        LOGIN = 1,           // Client has logged in
+        DISCONNECT,          // Disconnect this client
+        CREATE,              // Create an object on the server
+        DELETE,              // Delete an object from the server
+        POSITION_UPDATE,     // Object position needs updating
+        RENDER_RANGE_UPDATE, // Client render range has changed
     }
 
     delegate void message_sender(params object[] args);
@@ -567,6 +607,8 @@ public static class client
 
 public static class server
 {
+    public const float INIT_RENDER_RANGE = 0f;
+
     /// <summary> The size of the grid that networked objects are binned into. </summary>
     static float grid_size;
 
@@ -622,19 +664,22 @@ public static class server
         public TcpClient tcp { get; private set; }
         public NetworkStream stream { get; private set; }
 
+        public float render_range = INIT_RENDER_RANGE;
+
         public client(TcpClient tcp)
         {
             this.tcp = tcp;
             stream = tcp.GetStream();
         }
 
-        /// <summary> Returns true if the client can see the provided representation. </summary>
-        public bool can_see(representation rep)
+        /// <summary> Returns true if the client should load the provided representation. </summary>
+        public bool should_load(representation rep)
         {
             if (player == null)
                 return false;
 
-            return (rep.transform.position - player.transform.position).magnitude < 5f;
+            return (rep.transform.position - player.transform.position).magnitude <
+                rep.radius + render_range;
         }
 
         public void login(string username, byte[] password)
@@ -827,6 +872,9 @@ public static class server
         server.player_prefab_local = player_prefab_local;
         server.player_prefab_remote = player_prefab_remote;
 
+        if (!networked_v2.look_up(player_prefab_local).GetType().IsSubclassOf(typeof(networked_player)))
+            throw new System.Exception("Local player object must be a networked_player!");
+
         tcp = new TcpListener(network_utils.local_ip_address(), port);
         tcp.Start();
 
@@ -853,11 +901,21 @@ public static class server
                 client.login(uname, pword);
             },
 
+            [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
+            {
+                client.disconnect();
+            },
+
             [global::client.MESSAGE.POSITION_UPDATE] = (client, bytes, offset, length) =>
             {
                 int id = network_utils.decode_int(bytes, ref offset);
                 Vector3 local_pos = network_utils.decode_vector3(bytes, ref offset);
                 representations[id].position_update(local_pos, client);
+            },
+
+            [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
+            {
+                client.render_range = network_utils.decode_float(bytes, ref offset);
             },
 
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
@@ -900,11 +958,6 @@ public static class server
                 // Remove/destroy the representation + all children
                 network_utils.top_down(deleting, (rep) => representations.Remove(rep.network_id));
                 Object.Destroy(deleting.gameObject);
-            },
-
-            [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
-            {
-                client.disconnect();
             }
         };
 
@@ -1042,13 +1095,13 @@ public static class server
                 if (c.has_loaded(rep))
                 {
                     // Unload from clients that are too far away
-                    if (!c.can_see(rep))
+                    if (!c.should_load(rep))
                         c.unload(rep);
                 }
                 else
                 {
                     // Load on clients that are within range
-                    if (c.can_see(rep))
+                    if (c.should_load(rep))
                         c.load(rep, false);
                 }
             }
@@ -1118,6 +1171,20 @@ public static class server
         // to have disconnected during message writing
         foreach (var d in disconnected_during_write)
             d.disconnect();
+    }
+
+    public static void draw_gizmos()
+    {
+        foreach (var c in connected_clients)
+        {
+            if (c.player == null)
+                continue;
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(c.player.transform.position, c.player.radius);
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(c.player.transform.position, c.render_range);
+        }
     }
 
     public static string info()
@@ -1321,5 +1388,20 @@ public static class network_utils
         int i = System.BitConverter.ToInt32(buffer, offset);
         offset += sizeof(int);
         return i;
+    }
+
+    /// <summary> Encode a float ready to be sent over the network. </summary>
+    public static byte[] encode_float(float f)
+    {
+        return System.BitConverter.GetBytes(f);
+    }
+
+    /// <summary> Decode a float encoded with <see cref="encode_float(float)"/>.
+    /// Increments offset by the number of bytes decoded. </summary>
+    public static float decode_float(byte[] buffer, ref int offset)
+    {
+        float f = System.BitConverter.ToSingle(buffer, offset);
+        offset += sizeof(float);
+        return f;
     }
 }

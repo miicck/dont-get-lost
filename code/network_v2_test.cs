@@ -43,4 +43,9 @@ public class network_v2_test : MonoBehaviour
         client.disconnect();
         server.stop();
     }
+
+    private void OnDrawGizmos()
+    {
+        server.draw_gizmos();
+    }
 }
