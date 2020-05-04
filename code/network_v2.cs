@@ -21,20 +21,77 @@ public class networked_v2 : MonoBehaviour
     public virtual float position_resolution() { return 0.1f; }
 
     /// <summary> How fast I lerp my position. </summary>
-    public virtual float lerp_amount() { return 5f; }
+    public virtual float position_lerp_speed() { return 5f; }
 
     /// <summary> Called when network variables should be initialized. </summary>
     public virtual void on_init_network_variables() { }
 
+    /// <summary> Local == true iff this was created by this client. </summary>
+    protected bool local { get; private set; }
+    public void on_create(bool local) { this.local = local; }
+
+    /// <summary> Called just before we enumerate the network variables of this object. </summary>
+    void init_network_variables()
+    {
+        x_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        y_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        z_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        if (local)
+        {
+            x_local.on_change = (x) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = x;
+                transform.localPosition = local_pos;
+            };
+
+            y_local.on_change = (y) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = y;
+                transform.localPosition = local_pos;
+            };
+
+            z_local.on_change = (z) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = z;
+                transform.localPosition = local_pos;
+            };
+        }
+
+        on_init_network_variables();
+    }
+
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
-    networked_variable.net_float x_local = new networked_variable.net_float();
+    networked_variable.net_float x_local;
 
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Y)]
-    networked_variable.net_float y_local = new networked_variable.net_float();
+    networked_variable.net_float y_local;
 
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Z)]
-    networked_variable.net_float z_local = new networked_variable.net_float();
+    networked_variable.net_float z_local;
+
+    /// <summary> Called every time client.update is called. </summary>
+    public void network_update()
+    {
+        if (!local)
+        {
+            // LERP my position
+            transform.localPosition = new Vector3(
+                x_local.lerped_value,
+                y_local.lerped_value,
+                z_local.lerped_value
+            );
+        }
+    }
 
     /// <summary> My position as stored by the network. </summary>
     public Vector3 networked_position
@@ -57,33 +114,10 @@ public class networked_v2 : MonoBehaviour
         {
             if (_networked_variables == null)
             {
-                // Initialize network variables
-                x_local.on_change = (x) =>
-                {
-                    Vector3 local_pos = transform.localPosition;
-                    local_pos.x = x;
-                    transform.localPosition = local_pos;
-                };
-
-                y_local.on_change = (y) =>
-                {
-                    Vector3 local_pos = transform.localPosition;
-                    local_pos.y = y;
-                    transform.localPosition = local_pos;
-                };
-
-                z_local.on_change = (z) =>
-                {
-                    Vector3 local_pos = transform.localPosition;
-                    local_pos.z = z;
-                    transform.localPosition = local_pos;
-                };
-
+                init_network_variables();
                 _networked_variables = new List<networked_variable>();
                 foreach (var f in networked_fields[GetType()])
-                    _networked_variables.Add((networked_variable)f.GetValue(this));
-
-                on_init_network_variables();
+                    _networked_variables.Add((networked_variable)f.GetValue(this));          
             }
             return _networked_variables;
         }
@@ -240,6 +274,13 @@ public class networked_v2 : MonoBehaviour
     /// <summary> Return the object with the given network id. </summary>
     public static networked_v2 find_by_id(int id) { return objects[id]; }
 
+    /// <summary> Called every time client.update is called. </summary>
+    public static void network_updates()
+    {
+        foreach (var kv in objects)
+            kv.Value.network_update();
+    }
+
     public static string objects_info()
     {
         return objects.Count + " objects.";
@@ -333,7 +374,7 @@ public abstract class networked_variable
     /// <summary> A simple networked floating point number. </summary>
     public class net_float : networked_variable
     {
-        float _value;
+        /// <summary> The most up-to-date value we have. </summary>
         public float value
         {
             get => _value;
@@ -344,8 +385,37 @@ public abstract class networked_variable
 
                 _value = value;
                 on_change?.Invoke(_value);
-                send_update();
+
+                // Only send network updates if we've
+                // moved by more than the resolution
+                if (Mathf.Abs(_last_sent - _value) > resolution)
+                {
+                    _last_sent = _value;
+                    send_update();
+                }
             }
+        }
+        float _value;
+        float _last_sent;
+
+        /// <summary> A smoothed value. </summary>
+        public float lerped_value
+        {
+            get
+            {
+                _lerp_value = Mathf.Lerp(_lerp_value, _value, Time.deltaTime * lerp_speed);
+                return _lerp_value;
+            }
+        }
+        float _lerp_value;
+
+        float lerp_speed;
+        float resolution;
+
+        public net_float(float lerp_speed = 5f, float resolution=0f)
+        {
+            this.lerp_speed = lerp_speed;
+            this.resolution = resolution;
         }
 
         public override byte[] serialization()
@@ -396,6 +466,9 @@ public static class client
         created = Object.Instantiate(created);
         created.name = name;
 
+        // Assign a (negative) unique local id
+        created.network_id = --last_local_id;
+
         // Parent if requested
         if (parent != null)
             created.transform.SetParent(parent.transform);
@@ -405,13 +478,13 @@ public static class client
         created.networked_position = position;
         created.transform.rotation = rotation;
 
-        // Assign a (negative) unique local id
-        created.network_id = --last_local_id;
-
         // Get the id of my parent
         int parent_id = 0;
         if (parent != null) parent_id = parent.network_id;
         if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
+
+        // I'm local
+        created.on_create(true);
 
         // Request creation on the server
         message_senders[MESSAGE.CREATE](created.network_id, parent_id,
@@ -453,6 +526,8 @@ public static class client
             offset += nv_length;
             index += 1;
         }
+
+        nw.on_create(local);
     }
 
     /// <summary> A message waiting to be sent. </summary>
@@ -725,6 +800,9 @@ public static class client
                 offset += payload_length;
             }
         }
+
+        // Run network_update for each object
+        networked_v2.network_updates();
 
         // Send messages
         send_queued_messages();
@@ -1026,7 +1104,7 @@ public static class server
             };
 
             // Serialize all saved network variables
-            for (int i=0; i<serializations.Count; ++i)
+            for (int i = 0; i < serializations.Count; ++i)
             {
                 var serial = serializations[i];
                 to_send.Add(network_utils.encode_int(serial.Length));
