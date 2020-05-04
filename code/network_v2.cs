@@ -6,9 +6,7 @@ using System.Net.Sockets;
 /*
  * 
  * TODO
- * - User-defined data (serialization)
  * - Serialize to disk
- * - Convert position to networked_variable?
  */
 
 public class networked_v2 : MonoBehaviour
