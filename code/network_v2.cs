@@ -8,7 +8,7 @@ using System.Net.Sockets;
  * TODO
  * - User-defined data (serialization)
  * - Serialize to disk
- *  
+ * - Convert position to networked_variable?
  */
 
 public class networked_v2 : MonoBehaviour
@@ -20,71 +20,89 @@ public class networked_v2 : MonoBehaviour
     /// <summary> How far I move before sending updated positions to the server. </summary>
     public virtual float position_resolution() { return 0.1f; }
 
-    /// <summary> Returns false if position updates should not be sent (should only
-    /// be set false for objects that can NEVER be moved on a client). </summary>
-    public virtual bool sends_position_updates() { return true; }
-
     /// <summary> How fast I lerp my position. </summary>
     public virtual float lerp_amount() { return 5f; }
 
-    /// <summary> All of the variables I contain that
-    /// are serialized over the network. </summary>
-    List<networked_variable> networked_variables;
+    // Networked position (used by the engine to determine visibility)
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
+    networked_variable.net_float x_local = new networked_variable.net_float();
 
-    /// <summary> Called when the networked variable with the given index
-    /// recives an updated serialization. </summary>
-    public void variable_update(int index, byte[] serialization)
-    {
-        networked_variables[index].deserialize(serialization);
-    }
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Y)]
+    networked_variable.net_float y_local = new networked_variable.net_float();
 
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Z)]
+    networked_variable.net_float z_local = new networked_variable.net_float();
+
+    /// <summary> My position as stored by the network. </summary>
     public Vector3 networked_position
     {
-        get => transform.position;
+        get => new Vector3(x_local.value, y_local.value, z_local.value);
         set
         {
             transform.position = value;
-            target_local_position = transform.localPosition;
+            x_local.value = transform.localPosition.x;
+            y_local.value = transform.localPosition.y;
+            z_local.value = transform.localPosition.z;
         }
     }
 
-    Vector3 last_sent_local_position;
-
-    public void on_position_up_to_date()
+    /// <summary> All of the variables I contain that
+    /// are serialized over the network. </summary>
+    List<networked_variable> networked_variables
     {
-        last_sent_local_position = transform.localPosition;
-    }
-
-    /// <summary> Recive a position update from the server. </summary>
-    public void recive_position_update(Vector3 new_local_position)
-    {
-        target_local_position = new_local_position;
-    }
-    Vector3 target_local_position;
-
-    /// <summary> Run networking updates (called every frame by client). </summary>
-    public virtual void network_update()
-    {
-        if (transform.parent == null)
+        get
         {
-            Vector3 delta = target_local_position - transform.localPosition;
-            if (delta.magnitude > position_resolution())
-                transform.localPosition = Vector3.Lerp(transform.localPosition, target_local_position, Time.deltaTime * lerp_amount());
-            else if (sends_position_updates())
+            if (_networked_variables == null)
             {
-                delta = last_sent_local_position - transform.localPosition;
-                if (delta.magnitude > position_resolution())
-                    client.send_position_update(this);
+                // Initialize network variables
+                x_local.on_change = (x) =>
+                {
+                    Vector3 local_pos = transform.localPosition;
+                    local_pos.x = x;
+                    transform.localPosition = local_pos;
+                };
+
+                y_local.on_change = (y) =>
+                {
+                    Vector3 local_pos = transform.localPosition;
+                    local_pos.y = y;
+                    transform.localPosition = local_pos;
+                };
+
+                z_local.on_change = (z) =>
+                {
+                    Vector3 local_pos = transform.localPosition;
+                    local_pos.z = z;
+                    transform.localPosition = local_pos;
+                };
+
+                _networked_variables = new List<networked_variable>();
+                foreach (var f in networked_fields[GetType()])
+                    _networked_variables.Add((networked_variable)f.GetValue(this));
             }
+            return _networked_variables;
         }
     }
+    List<networked_variable> _networked_variables;
 
-    private void OnDrawGizmos()
+    /// <summary> Serailize all of my network variables into a single byte array. </summary>
+    public byte[] serialize_networked_variables()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(last_sent_local_position, position_resolution());
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(target_local_position, position_resolution());
+        List<byte> serial = new List<byte>();
+        for (int i = 0; i < networked_variables.Count; ++i)
+        {
+            var nv_btyes = networked_variables[i].serialization();
+            serial.AddRange(network_utils.encode_int(nv_btyes.Length));
+            serial.AddRange(nv_btyes);
+        }
+        return serial.ToArray();
+    }
+
+    /// <summary> Called when the networked variable with the given index
+    /// recives an updated serialization. </summary>
+    public void variable_update(int index, byte[] buffer, int offset, int length)
+    {
+        networked_variables[index].deserialize(buffer, offset, length);
     }
 
     /// <summary> My unique id on the network. Negative values are unique only on this
@@ -102,15 +120,7 @@ public class networked_v2 : MonoBehaviour
             objects[value] = this;
             _network_id = value;
 
-            // Load networked_variables from networked_fields
-            if (networked_variables == null)
-            {
-                networked_variables = new List<networked_variable>();
-                foreach (var f in networked_fields[GetType()])
-                    networked_variables.Add((networked_variable)f.GetValue(this));
-            }
-
-            // Update my fields with the new id
+            // Update my networked_variables with the new id
             for (int i = 0; i < networked_variables.Count; ++i)
                 networked_variables[i].update_identification(_network_id, i);
         }
@@ -167,6 +177,8 @@ public class networked_v2 : MonoBehaviour
             if (!type.IsSubclassOf(typeof(networked_v2))) continue;
 
             var fields = new List<System.Reflection.FieldInfo>();
+            int special_fields_count = System.Enum.GetNames(typeof(engine_networked_variable.TYPE)).Length;
+            var special_fields = new System.Reflection.FieldInfo[special_fields_count];
 
             // Find all networked_variables in this type (or it's base types)
             for (var t = type; t != typeof(networked_v2).BaseType; t = t.BaseType)
@@ -179,13 +191,40 @@ public class networked_v2 : MonoBehaviour
                     var ft = f.FieldType;
                     if (ft.IsAbstract) continue;
                     if (!ft.IsSubclassOf(typeof(networked_variable))) continue;
+
+                    // Find special fields that are used by the engine
+                    var attrs = f.GetCustomAttributes(typeof(engine_networked_variable), true);
+                    if (attrs.Length != 0)
+                    {
+                        if (attrs.Length > 1)
+                        {
+                            string err = "More than one " + typeof(engine_networked_variable) +
+                                         " found on a field!";
+                            throw new System.Exception(err);
+                        }
+
+                        var atr = (engine_networked_variable)attrs[0];
+                        special_fields[(int)atr.type] = f;
+                        continue;
+                    }
+
                     fields.Add(f);
                 }
             }
 
+            // Check we've got all of the special fields
+            for (int i = 0; i < special_fields.Length; ++i)
+                if (special_fields[i] == null)
+                    throw new System.Exception("Engine field not found for type" + type + "!");
+
             // Sort fields alphabetically, so the order 
             // is the same on every client.
             fields.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
+
+            // Add the special fields at the start, so we
+            // know how to access them in the engine.
+            fields.InsertRange(0, special_fields);
+
             networked_fields[type] = fields;
         }
     }
@@ -195,28 +234,6 @@ public class networked_v2 : MonoBehaviour
 
     /// <summary> Return the object with the given network id. </summary>
     public static networked_v2 find_by_id(int id) { return objects[id]; }
-
-    public static void network_updates()
-    {
-        // Update network objects
-        foreach (var kv in objects)
-        {
-            int id = kv.Key;
-            var nw = kv.Value;
-
-            if (nw == null)
-            {
-                // The networked object was destroyed, but not removed from
-                // the dictionary, throw an error.
-                string err = "Netowrk object not destroyed correctly. " +
-                             "You should not call Destroy() on a networked object. " +
-                             "Use networked.forget() or networked.delete() instead.";
-                throw new System.Exception(err);
-            }
-
-            nw.network_update();
-        }
-    }
 
     public static string objects_info()
     {
@@ -258,6 +275,21 @@ public class networked_player : networked_v2
     float _render_range = server.INIT_RENDER_RANGE;
 }
 
+/// <summary> Tag a networked variable with a predefined type, because 
+/// it has a special meaning to the network engine. </summary>
+public class engine_networked_variable : System.Attribute
+{
+    public enum TYPE : int
+    {
+        POSITION_X,
+        POSITION_Y,
+        POSITION_Z,
+    }
+
+    public TYPE type;
+    public engine_networked_variable(TYPE type) { this.type = type; }
+}
+
 /// <summary> A value serialized over the network. </summary>
 public abstract class networked_variable
 {
@@ -267,12 +299,14 @@ public abstract class networked_variable
 
     /// <summary> Reconstruct my value from the result of
     /// <see cref="serialization"/>. </summary>
-    public abstract void deserialize(byte[] serialization);
+    public abstract void deserialize(byte[] buffer, int offset, int length);
 
     /// <summary> Called when a variable update
     /// needs to be sent to the server. </summary>
     protected void send_update()
     {
+        if (network_id <= 0)
+            return; // I've not yet got a network id
         client.send_variable_update(network_id, index, serialization());
     }
 
@@ -300,8 +334,11 @@ public abstract class networked_variable
             get => _value;
             set
             {
+                if (_value == value)
+                    return; // No change
+
                 _value = value;
-                on_change(_value);
+                on_change?.Invoke(_value);
                 send_update();
             }
         }
@@ -311,16 +348,18 @@ public abstract class networked_variable
             return System.BitConverter.GetBytes(value);
         }
 
-        public override void deserialize(byte[] serialization)
+        public override void deserialize(byte[] buffer, int offset, int length)
         {
-            _value = System.BitConverter.ToSingle(serialization, 0);
-            on_change(_value);
+            _value = System.BitConverter.ToSingle(buffer, offset);
+            on_change?.Invoke(_value);
         }
 
         public delegate void change_func(float new_value);
         public change_func on_change;
     }
 }
+
+
 
 //########//
 // CLIENT //
@@ -352,15 +391,14 @@ public static class client
         created = Object.Instantiate(created);
         created.name = name;
 
+        // Parent if requested
+        if (parent != null)
+            created.transform.SetParent(parent.transform);
+
         // Create the object with the desired position + rotation
         if (rotation.Equals(default)) rotation = Quaternion.identity;
         created.networked_position = position;
         created.transform.rotation = rotation;
-        created.on_position_up_to_date();
-
-        // Parent if requested
-        if (parent != null)
-            created.transform.SetParent(parent.transform);
 
         // Assign a (negative) unique local id
         created.network_id = --last_local_id;
@@ -371,10 +409,45 @@ public static class client
         if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
 
         // Request creation on the server
-        message_senders[MESSAGE.CREATE](local_prefab, remote_prefab,
-            created.transform.localPosition, parent_id, created.network_id);
+        message_senders[MESSAGE.CREATE](created.network_id, parent_id,
+            local_prefab, remote_prefab, created.serialize_networked_variables());
 
         return created;
+    }
+
+    /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
+    static void create_from_network(byte[] buffer, int offset, int length, bool local)
+    {
+        // Record where the end of the serialization is
+        int end = offset + length;
+
+        // Deserialize info needed to reproduce the object
+        int network_id = network_utils.decode_int(buffer, ref offset);
+        int parent_id = network_utils.decode_int(buffer, ref offset);
+        string local_prefab = network_utils.decode_string(buffer, ref offset);
+        string remote_prefab = network_utils.decode_string(buffer, ref offset);
+
+        // Create the reproduction
+        var nw = networked_v2.look_up(local ? local_prefab : remote_prefab);
+        string name = nw.name;
+        nw = Object.Instantiate(nw);
+        nw.transform.SetParent(parent_id > 0 ? networked_v2.find_by_id(parent_id).transform : null);
+        nw.name = name;
+        nw.network_id = network_id;
+
+        // Local rotation is intialized to the identity. If rotation
+        // is variable, the user should implement that.
+        nw.transform.localRotation = Quaternion.identity;
+
+        // The rest is network variables that need deserializing
+        int index = 0;
+        while (offset < end)
+        {
+            int nv_length = network_utils.decode_int(buffer, ref offset);
+            nw.variable_update(index, buffer, offset, nv_length);
+            offset += nv_length;
+            index += 1;
+        }
     }
 
     /// <summary> A message waiting to be sent. </summary>
@@ -439,47 +512,10 @@ public static class client
         message_senders[MESSAGE.RENDER_RANGE_UPDATE](player);
     }
 
-    /// <summary> Send a position update for the given networked object. </summary>
-    public static void send_position_update(networked_v2 nw)
-    {
-        message_senders[MESSAGE.POSITION_UPDATE](nw);
-    }
-
     /// <summary> Called when an object is deleted on this client, sends the server that info. </summary>
     public static void on_delete(networked_v2 deleted)
     {
         message_senders[MESSAGE.DELETE](deleted.network_id);
-    }
-
-    /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
-    static void create_from_network(byte[] buffer, int offset, int length, bool local)
-    {
-        int network_id = network_utils.decode_int(buffer, ref offset);
-        int parent_id = network_utils.decode_int(buffer, ref offset);
-        Vector3 local_position = network_utils.decode_vector3(buffer, ref offset);
-        string local_prefab = network_utils.decode_string(buffer, ref offset);
-        string remote_prefab = network_utils.decode_string(buffer, ref offset);
-
-        var nw = networked_v2.look_up(local ? local_prefab : remote_prefab);
-        string name = nw.name;
-        nw = Object.Instantiate(nw);
-
-        networked_v2 parent = parent_id > 0 ? networked_v2.find_by_id(parent_id) : null;
-
-        if (parent == null)
-        {
-            nw.networked_position = local_position;
-        }
-        else
-        {
-            nw.transform.SetParent(parent.transform);
-            nw.transform.localPosition = local_position;
-            nw.networked_position = nw.transform.position;
-        }
-
-        nw.name = name;
-        nw.on_position_up_to_date();
-        nw.network_id = network_id;
     }
 
     /// <summary> Connect the client to a server. </summary>
@@ -503,24 +539,13 @@ public static class client
             [server.MESSAGE.CREATE_REMOTE] = (buffer, offset, length) =>
                 create_from_network(buffer, offset, length, false),
 
-            [server.MESSAGE.POSITION_UPDATE] = (buffer, offset, length) =>
-            {
-                // Update the position of a network object
-                int id = network_utils.decode_int(buffer, ref offset);
-                Vector3 local_position = network_utils.decode_vector3(buffer, ref offset);
-                networked_v2.find_by_id(id).recive_position_update(local_position);
-            },
-
             [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
             {
                 // Forward the variable update to the correct object
                 int start = offset;
                 int id = network_utils.decode_int(buffer, ref offset);
                 int index = network_utils.decode_int(buffer, ref offset);
-                int serial_length = length - (offset - start);
-                byte[] serialization = new byte[serial_length];
-                System.Buffer.BlockCopy(buffer, offset, serialization, 0, serial_length);
-                networked_v2.find_by_id(id).variable_update(index, serialization);
+                networked_v2.find_by_id(id).variable_update(index, buffer, offset, length - (offset - start));
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
@@ -588,19 +613,20 @@ public static class client
                 if (args.Length != 5)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                string local_prefab = (string)args[0];
-                string remote_prefab = (string)args[1];
-                Vector3 local_position = (Vector3)args[2];
-                int parent_id = (int)args[3];
-                int local_id = (int)args[4];
+                int local_id = (int)args[0];
+                int parent_id = (int)args[1];
+                string local_prefab = (string)args[2];
+                string remote_prefab = (string)args[3];
+                byte[] variable_serializations = (byte[])args[4];
 
                 send(MESSAGE.CREATE, network_utils.concat_buffers(
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(parent_id),
                     network_utils.encode_string(local_prefab),
                     network_utils.encode_string(remote_prefab),
-                    network_utils.encode_vector3(local_position),
-                    network_utils.encode_int(parent_id),
-                    network_utils.encode_int(local_id)
+                    variable_serializations
                 ));
+
             },
 
             [MESSAGE.DELETE] = (args) =>
@@ -613,22 +639,6 @@ public static class client
                     throw new System.Exception("Tried to delete an unregistered object!");
 
                 send(MESSAGE.DELETE, network_utils.encode_int(network_id));
-            },
-
-            [MESSAGE.POSITION_UPDATE] = (args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                var nw = (networked_v2)args[0];
-
-                // Send the id + position to the server
-                send(MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_int(nw.network_id),
-                    network_utils.encode_vector3(nw.transform.localPosition)
-                ));
-
-                nw.on_position_up_to_date();
             },
 
             [MESSAGE.RENDER_RANGE_UPDATE] = (args) =>
@@ -711,9 +721,6 @@ public static class client
             }
         }
 
-        // Run networked object updates
-        networked_v2.network_updates();
-
         // Send messages
         send_queued_messages();
     }
@@ -736,7 +743,6 @@ public static class client
         DISCONNECT,          // Disconnect this client
         CREATE,              // Create an object on the server
         DELETE,              // Delete an object from the server
-        POSITION_UPDATE,     // Object position needs updating
         RENDER_RANGE_UPDATE, // Client render range has changed
         VARIABLE_UPDATE,     // A networked_variable has changed
     }
@@ -785,9 +791,19 @@ public static class server
             if (!player_representations.TryGetValue(username, out player))
             {
                 // Load failed - create the player
-                player = representation.create(
-                    null, player_spawn,
-                    player_prefab_local, player_prefab_remote);
+                // Mimic a client.MESSAGE.CREATE
+                byte[] new_player = network_utils.concat_buffers(
+                    network_utils.encode_int(-1), // Local id
+                    network_utils.encode_int(0),  // Parent id = none
+                    network_utils.encode_string(player_prefab_local),
+                    network_utils.encode_string(player_prefab_remote),
+                    networked_v2.look_up(player_prefab_local).serialize_networked_variables()
+                );
+
+                int local_id;
+                player = representation.create(new_player, 0, new_player.Length, out local_id);
+                if (local_id != -1)
+                    throw new System.Exception("Local id from spoofed player buffer was read incorrecly!");
 
                 player_representations[username] = player;
             }
@@ -913,24 +929,42 @@ public static class server
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
     {
+        /// <summary> The serialized values of networked_variables 
+        /// beloning to this object. </summary>
+        Dictionary<int, byte[]> serializations = new Dictionary<int, byte[]>();
+
         /// <summary> Called when the serialization 
         /// of a networked_variable changes. </summary>
         public void on_network_variable_change(
             client sender, int index, byte[] new_serialization)
         {
+            // Store the serialization
             serializations[index] = new_serialization;
+
+            // Deal with special networked_variables
+            if (index == (int)engine_networked_variable.TYPE.POSITION_X)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = System.BitConverter.ToSingle(new_serialization, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (index == (int)engine_networked_variable.TYPE.POSITION_Y)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = System.BitConverter.ToSingle(new_serialization, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (index == (int)engine_networked_variable.TYPE.POSITION_Z)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = System.BitConverter.ToSingle(new_serialization, 0);
+                transform.localPosition = local_pos;
+            }
 
             foreach (var c in connected_clients)
                 if ((c != sender) && c.has_loaded(this))
                     message_senders[MESSAGE.VARIABLE_UPDATE](c, network_id, index, new_serialization);
         }
-
-        /// <summary> The serialized values of networked_variables 
-        /// beloning to this object. </summary>
-        Dictionary<int, byte[]> serializations = new Dictionary<int, byte[]>();
-
-        // Needed for proximity tests
-        public float radius { get; private set; }
 
         /// <summary> My network id. Automatically updates the 
         /// representations[network_id] dictionary. </summary>
@@ -963,16 +997,8 @@ public static class server
         // The prefab to create on new remote clients
         public string remote_prefab { get; private set; }
 
-        // Recive a local position update from the given client
-        public void position_update(Vector3 new_local_position, client from)
-        {
-            transform.localPosition = new_local_position;
-
-            // Send position updates to all other clients that have this object
-            foreach (var c in connected_clients)
-                if (c != from && c.has_loaded(this))
-                    message_senders[MESSAGE.POSITION_UPDATE](c, this);
-        }
+        // Needed for proximity tests
+        public float radius { get; private set; }
 
         /// <summary> Serialize this representation into a form that can 
         /// be sent over the network, or saved to disk. </summary>
@@ -985,30 +1011,69 @@ public static class server
             if (parent_id < 0)
                 throw new System.Exception("Tried to set unregistered parent!");
 
-            return network_utils.concat_buffers(
+            // Serialize the basic info needed to reproduce the object
+            List<byte[]> to_send = new List<byte[]>
+            {
                 network_utils.encode_int(network_id),
                 network_utils.encode_int(parent_id),
-                network_utils.encode_vector3(transform.localPosition),
                 network_utils.encode_string(local_prefab),
                 network_utils.encode_string(remote_prefab)
-            );
+            };
+
+            // Serialize all saved network variables
+            foreach (var kv in serializations)
+            {
+                to_send.Add(network_utils.encode_int(kv.Value.Length));
+                to_send.Add(kv.Value);
+            }
+
+            return network_utils.concat_buffers(to_send.ToArray());
         }
 
         /// <summary>  Create a network representation. This does not load the
         /// representation on any clients, or send creation messages. </summary>
-        public static representation create(
-            representation parent, Vector3 local_position,
-            string local_prefab, string remote_prefab)
+        public static representation create(byte[] buffer, int offset, int length, out int local_id)
         {
-            representation rep = new GameObject(local_prefab).AddComponent<representation>();
+            // Remember where the the end of the serialization is
+            int end = offset + length;
 
-            if (parent == null) rep.transform.SetParent(active_representations);
-            else rep.transform.SetParent(parent.transform);
+            // Deserialize the basic info needed to reproduce the object
+            int network_id = network_utils.decode_int(buffer, ref offset);
+            int parent_id = network_utils.decode_int(buffer, ref offset);
+            string local_prefab = network_utils.decode_string(buffer, ref offset);
+            string remote_prefab = network_utils.decode_string(buffer, ref offset);
+
+            // Create the representation
+            representation rep = new GameObject(local_prefab).AddComponent<representation>();
+            if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
+            else rep.transform.SetParent(active_representations);
 
             rep.local_prefab = local_prefab;
             rep.remote_prefab = remote_prefab;
-            rep.transform.localPosition = local_position;
-            rep.network_id = ++last_network_id_assigned; // Network id's start at 1
+            if (network_id < 0)
+            {
+                // This was a local id, assign a unique network id
+                rep.network_id = ++last_network_id_assigned; // Network id's start at 1
+                local_id = network_id;
+            }
+            else
+            {
+                // Restore the given network id
+                rep.network_id = network_id;
+                local_id = 0;
+            }
+
+            // Everything else is networked variables to deserialize
+            int index = 0;
+            while (offset < end)
+            {
+                byte[] serial = new byte[network_utils.decode_int(buffer, ref offset)];
+                System.Buffer.BlockCopy(buffer, offset, serial, 0, serial.Length);
+                offset += serial.Length;
+
+                rep.serializations[index] = serial;
+                index += 1;
+            }
 
             return rep;
         }
@@ -1048,7 +1113,6 @@ public static class server
     // Information about how to create new players
     static string player_prefab_local;
     static string player_prefab_remote;
-    static Vector3 player_spawn;
 
     /// <summary> The clients currently connected to the server </summary>
     static HashSet<client> connected_clients = new HashSet<client>();
@@ -1165,17 +1229,9 @@ public static class server
                 client.disconnect();
             },
 
-            [global::client.MESSAGE.POSITION_UPDATE] = (client, bytes, offset, length) =>
-            {
-                int id = network_utils.decode_int(bytes, ref offset);
-                Vector3 local_pos = network_utils.decode_vector3(bytes, ref offset);
-                representations[id].position_update(local_pos, client);
-            },
-
             [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
             {
-                // Forward the updated variable serialization to the correct
-                // representation
+                // Forward the updated variable serialization to the correct representation
                 int start = offset;
                 int id = network_utils.decode_int(bytes, ref offset);
                 int index = network_utils.decode_int(bytes, ref offset);
@@ -1192,19 +1248,15 @@ public static class server
 
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
             {
-                string local_prefab = network_utils.decode_string(bytes, ref offset);
-                string remote_prefab = network_utils.decode_string(bytes, ref offset);
-                Vector3 local_pos = network_utils.decode_vector3(bytes, ref offset);
-                int parent_id = network_utils.decode_int(bytes, ref offset);
-                int local_id = network_utils.decode_int(bytes, ref offset);
-
-                representation parent = parent_id > 0 ? representations[parent_id] : null;
-                var rep = representation.create(parent, local_pos, local_prefab, remote_prefab);
+                // Create the representation from the info sent from the client
+                int local_id;
+                var rep = representation.create(bytes, offset, length, out local_id);
 
                 client.load(rep, true, true);
 
                 // If this is a child, load it on all other
                 // clients that have the parent.
+                var parent = rep.transform.parent.GetComponent<representation>();
                 if (parent != null)
                     foreach (var c in connected_clients)
                         if (c != client)
@@ -1285,19 +1337,6 @@ public static class server
                 int network_id = (int)args[0];
 
                 send(client, MESSAGE.UNLOAD, network_utils.encode_int(network_id));
-            },
-
-            [MESSAGE.POSITION_UPDATE] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                var rep = (representation)args[0];
-
-                send(client, MESSAGE.POSITION_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_int(rep.network_id),
-                    network_utils.encode_vector3(rep.transform.localPosition)
-                ));
             },
 
             [MESSAGE.VARIABLE_UPDATE] = (client, args) =>
@@ -1467,7 +1506,6 @@ public static class server
         CREATE_LOCAL = 1,  // Create a local network object on a client
         CREATE_REMOTE,     // Create a remote network object on a client
         UNLOAD,            // Unload an object on a client
-        POSITION_UPDATE,   // Send a position update to a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
     }

@@ -9,6 +9,7 @@ public class network_v2_player_test : networked_player
     networked_v2 equipped;
 
     networked_variable.net_float red_level = new networked_variable.net_float();
+    networked_variable.net_float yrot = new networked_variable.net_float();
 
     private void Start()
     {
@@ -19,12 +20,13 @@ public class network_v2_player_test : networked_player
             col.r = r;
             rend.material.color = col;
         };
-        render_range = 5f;
-    }
 
-    public override bool sends_position_updates()
-    {
-        return local;
+        yrot.on_change = (y) =>
+        {
+            transform.rotation = Quaternion.Euler(0, y, 0);
+        };
+
+        render_range = 5f;
     }
 
     private void Update()
@@ -56,8 +58,8 @@ public class network_v2_player_test : networked_player
                     client.create(transform.position, "network_v2_test/bomb");
             }
 
-            if (Input.GetKey(KeyCode.D)) transform.Rotate(0, Time.deltaTime * 100, 0);
-            if (Input.GetKey(KeyCode.A)) transform.Rotate(0, -Time.deltaTime * 100, 0);
+            if (Input.GetKey(KeyCode.D)) yrot.value += Time.deltaTime * 100;
+            if (Input.GetKey(KeyCode.A)) yrot.value -= Time.deltaTime * 100;
 
             if (Input.GetKeyDown(KeyCode.E))
             {
