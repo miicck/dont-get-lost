@@ -11,7 +11,7 @@ public class network_v2_player_test : networked_player
     networked_variable.net_float red_level = new networked_variable.net_float();
     networked_variable.net_float yrot = new networked_variable.net_float();
 
-    private void Start()
+    public override void on_init_network_variables()
     {
         red_level.on_change = (r) =>
         {

@@ -23,6 +23,9 @@ public class networked_v2 : MonoBehaviour
     /// <summary> How fast I lerp my position. </summary>
     public virtual float lerp_amount() { return 5f; }
 
+    /// <summary> Called when network variables should be initialized. </summary>
+    public virtual void on_init_network_variables() { }
+
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
     networked_variable.net_float x_local = new networked_variable.net_float();
@@ -79,6 +82,8 @@ public class networked_v2 : MonoBehaviour
                 _networked_variables = new List<networked_variable>();
                 foreach (var f in networked_fields[GetType()])
                     _networked_variables.Add((networked_variable)f.GetValue(this));
+
+                on_init_network_variables();
             }
             return _networked_variables;
         }
@@ -931,7 +936,7 @@ public static class server
     {
         /// <summary> The serialized values of networked_variables 
         /// beloning to this object. </summary>
-        Dictionary<int, byte[]> serializations = new Dictionary<int, byte[]>();
+        List<byte[]> serializations;
 
         /// <summary> Called when the serialization 
         /// of a networked_variable changes. </summary>
@@ -1021,10 +1026,11 @@ public static class server
             };
 
             // Serialize all saved network variables
-            foreach (var kv in serializations)
+            for (int i=0; i<serializations.Count; ++i)
             {
-                to_send.Add(network_utils.encode_int(kv.Value.Length));
-                to_send.Add(kv.Value);
+                var serial = serializations[i];
+                to_send.Add(network_utils.encode_int(serial.Length));
+                to_send.Add(serial);
             }
 
             return network_utils.concat_buffers(to_send.ToArray());
@@ -1064,15 +1070,14 @@ public static class server
             }
 
             // Everything else is networked variables to deserialize
-            int index = 0;
+            rep.serializations = new List<byte[]>();
             while (offset < end)
             {
                 byte[] serial = new byte[network_utils.decode_int(buffer, ref offset)];
                 System.Buffer.BlockCopy(buffer, offset, serial, 0, serial.Length);
                 offset += serial.Length;
 
-                rep.serializations[index] = serial;
-                index += 1;
+                rep.serializations.Add(serial);
             }
 
             return rep;
