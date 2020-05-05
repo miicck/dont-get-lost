@@ -6,7 +6,7 @@ using System.Net.Sockets;
 /*
  * 
  * TODO
- * - Serialize to disk
+ * - Ensure dedicated server works (i.e start server without client)
  */
 
 public class networked_v2 : MonoBehaviour
@@ -26,10 +26,16 @@ public class networked_v2 : MonoBehaviour
 
     /// <summary> Local == true iff this was created by this client. </summary>
     protected bool local { get; private set; }
-    public void on_create(bool local) { this.local = local; }
+    public void on_create(bool local)
+    {
+        this.local = local;
+
+        foreach (var n in networked_variables)
+            n.on_create();
+    }
 
     /// <summary> Called just before we enumerate the network variables of this object. </summary>
-    void init_network_variables()
+    public void init_network_variables()
     {
         x_local = new networked_variable.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
@@ -65,7 +71,15 @@ public class networked_v2 : MonoBehaviour
         }
 
         on_init_network_variables();
+
+        networked_variables = new List<networked_variable>();
+        foreach (var f in networked_fields[GetType()])
+            networked_variables.Add((networked_variable)f.GetValue(this));
     }
+
+    /// <summary> All of the variables I contain that
+    /// are serialized over the network. </summary>
+    List<networked_variable> networked_variables;
 
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
@@ -80,6 +94,17 @@ public class networked_v2 : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
+        // Send queued variable updates
+        for(int i=0; i<networked_variables.Count; ++i)
+        {
+            var nv = networked_variables[i];
+            if (nv.queued_serial != null)
+            {
+                client.send_variable_update(network_id, i, nv.queued_serial);
+                nv.queued_serial = null;
+            }
+        }
+
         if (!local)
         {
             // LERP my position
@@ -103,24 +128,6 @@ public class networked_v2 : MonoBehaviour
             z_local.value = transform.localPosition.z;
         }
     }
-
-    /// <summary> All of the variables I contain that
-    /// are serialized over the network. </summary>
-    List<networked_variable> networked_variables
-    {
-        get
-        {
-            if (_networked_variables == null)
-            {
-                init_network_variables();
-                _networked_variables = new List<networked_variable>();
-                foreach (var f in networked_fields[GetType()])
-                    _networked_variables.Add((networked_variable)f.GetValue(this));          
-            }
-            return _networked_variables;
-        }
-    }
-    List<networked_variable> _networked_variables;
 
     /// <summary> Serailize all of my network variables into a single byte array. </summary>
     public byte[] serialize_networked_variables()
@@ -156,10 +163,6 @@ public class networked_v2 : MonoBehaviour
 
             objects[value] = this;
             _network_id = value;
-
-            // Update my networked_variables with the new id
-            for (int i = 0; i < networked_variables.Count; ++i)
-                networked_variables[i].update_identification(_network_id, i);
         }
     }
     int _network_id;
@@ -168,7 +171,7 @@ public class networked_v2 : MonoBehaviour
     /// remains on the server + potentially on other clients. </summary>
     public void forget()
     {
-        network_utils.top_down(this, (nw) => objects.Remove(nw.network_id));
+        network_utils.top_down<networked_v2>(transform, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
     }
 
@@ -183,7 +186,7 @@ public class networked_v2 : MonoBehaviour
         }
 
         client.on_delete(this);
-        network_utils.top_down(this, (nw) => objects.Remove(nw.network_id));
+        network_utils.top_down<networked_v2>(transform, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
     }
 
@@ -345,29 +348,16 @@ public abstract class networked_variable
     /// <see cref="serialization"/>. </summary>
     public abstract void deserialize(byte[] buffer, int offset, int length);
 
+    /// <summary> Called when the object we belong to has been created. </summary>
+    public virtual void on_create() { }
+
     /// <summary> Called when a variable update
     /// needs to be sent to the server. </summary>
     protected void send_update()
     {
-        if (network_id <= 0)
-            return; // I've not yet got a network id
-        client.send_variable_update(network_id, index, serialization());
+        queued_serial = serialization();
     }
-
-    /// <summary> The network id of the object I belong to. </summary>
-    int network_id;
-
-    /// <summary> My index in the network_variables collection
-    /// of the object I belong to. </summary>
-    int index;
-
-    /// <summary> Called whenever the variables needed 
-    /// to direct updates to me change. </summary>
-    public void update_identification(int network_id, int index)
-    {
-        this.network_id = network_id;
-        this.index = index;
-    }
+    public byte[] queued_serial;
 
     /// <summary> A simple networked floating point number. </summary>
     public class net_float : networked_variable
@@ -407,10 +397,16 @@ public abstract class networked_variable
         }
         float _lerp_value;
 
+        public override void on_create()
+        {
+            // Start lerp value at initial value
+            _lerp_value = _value;
+        }
+
         float lerp_speed;
         float resolution;
 
-        public net_float(float lerp_speed = 5f, float resolution=0f)
+        public net_float(float lerp_speed = 5f, float resolution = 0f)
         {
             this.lerp_speed = lerp_speed;
             this.resolution = resolution;
@@ -466,6 +462,7 @@ public static class client
 
         // Assign a (negative) unique local id
         created.network_id = --last_local_id;
+        created.init_network_variables();
 
         // Parent if requested
         if (parent != null)
@@ -510,6 +507,7 @@ public static class client
         nw.transform.SetParent(parent_id > 0 ? networked_v2.find_by_id(parent_id).transform : null);
         nw.name = name;
         nw.network_id = network_id;
+        nw.init_network_variables();
 
         // Local rotation is intialized to the identity. If rotation
         // is variable, the user should implement that.
@@ -961,7 +959,7 @@ public static class server
         public void load(representation rep, bool local, bool already_created = false)
         {
             // Load rep and all it's children
-            network_utils.top_down(rep, (loading) =>
+            network_utils.top_down<representation>(rep.transform, (loading) =>
             {
                 if (already_created && loading != rep)
                     throw new System.Exception("A representation with children should not be already_created!");
@@ -982,7 +980,7 @@ public static class server
         public void unload(representation rep, bool already_removed = false)
         {
             // Unload rep and all of it's children
-            network_utils.top_down(rep, (unloading) =>
+            network_utils.top_down<representation>(rep.transform, (unloading) =>
             {
                 if (!loaded.Contains(unloading))
                 {
@@ -1012,7 +1010,34 @@ public static class server
     {
         /// <summary> The serialized values of networked_variables 
         /// beloning to this object. </summary>
-        List<byte[]> serializations;
+        List<byte[]> serializations = new List<byte[]>();
+
+        void set_serialization(int i, byte[] serial)
+        {
+            // Deal with special networked_variables
+            if (i == (int)engine_networked_variable.TYPE.POSITION_X)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (i == (int)engine_networked_variable.TYPE.POSITION_Y)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (i == (int)engine_networked_variable.TYPE.POSITION_Z)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
+            }
+
+            if (serializations.Count > i) serializations[i] = serial;
+            else if (serializations.Count == i) serializations.Add(serial);
+            else throw new System.Exception("Tried to skip a serial!");
+        }
 
         /// <summary> Called when the serialization 
         /// of a networked_variable changes. </summary>
@@ -1020,27 +1045,7 @@ public static class server
             client sender, int index, byte[] new_serialization)
         {
             // Store the serialization
-            serializations[index] = new_serialization;
-
-            // Deal with special networked_variables
-            if (index == (int)engine_networked_variable.TYPE.POSITION_X)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.x = System.BitConverter.ToSingle(new_serialization, 0);
-                transform.localPosition = local_pos;
-            }
-            else if (index == (int)engine_networked_variable.TYPE.POSITION_Y)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.y = System.BitConverter.ToSingle(new_serialization, 0);
-                transform.localPosition = local_pos;
-            }
-            else if (index == (int)engine_networked_variable.TYPE.POSITION_Z)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.z = System.BitConverter.ToSingle(new_serialization, 0);
-                transform.localPosition = local_pos;
-            }
+            set_serialization(index, new_serialization);
 
             foreach (var c in connected_clients)
                 if ((c != sender) && c.has_loaded(this))
@@ -1142,18 +1147,20 @@ public static class server
             {
                 // Restore the given network id
                 rep.network_id = network_id;
+                if (network_id > last_network_id_assigned)
+                    last_network_id_assigned = network_id;
                 local_id = 0;
             }
 
             // Everything else is networked variables to deserialize
-            rep.serializations = new List<byte[]>();
+            int index = 0;
             while (offset < end)
             {
                 byte[] serial = new byte[network_utils.decode_int(buffer, ref offset)];
                 System.Buffer.BlockCopy(buffer, offset, serial, 0, serial.Length);
                 offset += serial.Length;
-
-                rep.serializations.Add(serial);
+                rep.set_serialization(index, serial);
+                ++index;
             }
 
             return rep;
@@ -1190,6 +1197,19 @@ public static class server
 
     /// <summary> The TCP listener the server is listening with. </summary>
     static TcpListener tcp;
+
+    /// <summary> The name that this session is saved under. </summary>
+    static string savename;
+
+    /// <summary> The directory that this session is saved in. </summary>
+    static string save_dir()
+    {
+        // Ensure the saves/ directory exists
+        string saves_dir = Application.persistentDataPath + "/saves";
+        if (!System.IO.Directory.Exists(saves_dir))
+            System.IO.Directory.CreateDirectory(saves_dir);
+        return saves_dir + "/" + savename;
+    }
 
     // Information about how to create new players
     static string player_prefab_local;
@@ -1282,6 +1302,10 @@ public static class server
         tcp = new TcpListener(network_utils.local_ip_address(), port);
         tcp.Start();
 
+        server.savename = savename;
+        if (System.IO.Directory.Exists(save_dir()))
+            load();
+
         traffic_up = new network_utils.traffic_monitor();
         traffic_down = new network_utils.traffic_monitor();
 
@@ -1361,7 +1385,8 @@ public static class server
                         c.unload(deleting, c == client);
 
                 // Remove/destroy the representation + all children
-                network_utils.top_down(deleting, (rep) => representations.Remove(rep.network_id));
+                network_utils.top_down<representation>(deleting.transform,
+                    (rep) => representations.Remove(rep.network_id));
                 Object.Destroy(deleting.gameObject);
             }
         };
@@ -1452,10 +1477,96 @@ public static class server
         };
     }
 
+    static void load()
+    {
+        // Find all the files to load, in alphabetical order
+        List<string> files = new List<string>(System.IO.Directory.GetFiles(save_dir()));
+        for (int i = 0; i < files.Count; ++i)
+            files[i] = System.IO.Path.GetFileName(files[i]);
+
+        // Ensure files are loaded in correct order
+        files.Sort((f1, f2) =>
+        {
+            int i1 = int.Parse(f1.Split('_')[0]);
+            int i2 = int.Parse(f2.Split('_')[0]);
+            return i1.CompareTo(i2);
+        });
+
+        foreach (var f in files)
+        {
+            // Get the filename + bytes
+            byte[] bytes = System.IO.File.ReadAllBytes(save_dir() + "/" + f);
+            var tags = f.Split('_');
+
+            int local_id;
+            var rep = representation.create(bytes, 0, bytes.Length, out local_id);
+
+            if (tags[1] == "player")
+            {
+                // This representation was a player; start inactive +
+                // record the username.
+                rep.transform.SetParent(inactive_representations);
+                player_representations[tags[2]] = rep;
+            }
+            else if (tags[1] == "inrep")
+            {
+                // This was a top-level inactive representation, move it there
+                if (rep.transform.parent == active_representations)
+                    rep.transform.SetParent(inactive_representations);
+            }
+            else if (tags[1] == "rep")
+            {
+                // Active representations need no more work
+            }
+            else throw new System.Exception("Could not load " + f);
+        }
+    }
+
+    static void save()
+    {
+        // Ensure the directory is blank
+        if (System.IO.Directory.Exists(save_dir()))
+            System.IO.Directory.Delete(save_dir(), true);
+        System.IO.Directory.CreateDirectory(save_dir());
+
+        // Remember which network_id's have been saved
+        HashSet<int> saved = new HashSet<int>();
+
+        // Save the reprentations in top-down order
+        int order = 0;
+
+        // Save the players first
+        foreach (var kv in player_representations)
+        {
+            string fname = save_dir() + "/" + (++order) + "_player_" + kv.Key;
+            System.IO.File.WriteAllBytes(fname, kv.Value.serialize());
+            saved.Add(kv.Value.network_id);
+        }
+
+        // Then save active representations
+        network_utils.top_down<representation>(active_representations, (rep) =>
+        {
+            if (saved.Contains(rep.network_id)) return;
+            string fname = save_dir() + "/" + (++order) + "_rep";
+            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            saved.Add(rep.network_id);
+        });
+
+        // Then save inactive representations
+        network_utils.top_down<representation>(inactive_representations, (rep) =>
+        {
+            if (saved.Contains(rep.network_id)) return;
+            string fname = save_dir() + "/" + (++order) + "_inrep";
+            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            saved.Add(rep.network_id);
+        });
+    }
+
     public static void stop()
     {
         if (tcp == null) return;
         tcp.Stop();
+        save();
     }
 
     public static void update()
@@ -1659,11 +1770,11 @@ public static class network_utils
     /// <summary> Apply the function <paramref name="f"/> to 
     /// <paramref name="parent"/>, and all T in it's children. 
     /// Guaranteed to carry out in top-down order. </summary>
-    public static void top_down<T>(T parent, do_func<T> f)
+    public static void top_down<T>(Transform parent, do_func<T> f)
         where T : MonoBehaviour
     {
         Queue<Transform> to_do = new Queue<Transform>();
-        to_do.Enqueue(parent.transform);
+        to_do.Enqueue(parent);
 
         while (to_do.Count > 0)
         {

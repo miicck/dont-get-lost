@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class network_v2_player_test : networked_player
 {
-    networked_v2 equipped;
+    networked_v2 equipped
+    {
+        get { return GetComponentInChildren<network_v2_test_sword>(); }
+    }
 
     networked_variable.net_float red_level;
     networked_variable.net_float yrot;
@@ -61,13 +64,10 @@ public class network_v2_player_test : networked_player
             if (Input.GetKeyDown(KeyCode.E))
             {
                 if (equipped == null)
-                    equipped = client.create(transform.position, "network_v2_test/sword",
+                    client.create(transform.position, "network_v2_test/sword",
                         parent: this, rotation: transform.rotation);
                 else
-                {
                     equipped.delete();
-                    equipped = null;
-                }
             }
         }
         else
