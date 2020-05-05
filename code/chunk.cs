@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class chunk : networked.section
+public class chunk : MonoBehaviour
 {
     // The size of the chunk in meters, also
     // defines the resolution of the terrain
@@ -27,31 +27,6 @@ public class chunk : networked.section
     // Keep a quick lookup for chunks
     static Dictionary<int, Dictionary<int, chunk>> _generated_chunks =
         new Dictionary<int, Dictionary<int, chunk>>();
-
-    //############//
-    // NETWORKING //
-    //############//
-
-    public override byte[] section_id_bytes()
-    {
-        // Chunk is identified by it x and z coordinates
-        return concat_buffers(
-            System.BitConverter.GetBytes(x),
-            System.BitConverter.GetBytes(z)
-        );
-    }
-
-    public override void section_id_initialize(params object[] section_id_init_args)
-    {
-        x = (int)section_id_init_args[0];
-        z = (int)section_id_init_args[1];
-    }
-
-    public override void invert_id(byte[] id_bytes)
-    {
-        x = System.BitConverter.ToInt32(id_bytes, 0);
-        z = System.BitConverter.ToInt32(id_bytes, sizeof(int));
-    }
 
     //##################//
     // COORDINATE TOOLS //
@@ -212,8 +187,7 @@ public class chunk : networked.section
     {
         // Save my chunk-coordinates for
         // later use in generation
-        var c = create<chunk>(x, z);
-        c.name = "chunk " + x + " " + z;
+        var c = new GameObject("chunk " + x + " " + z).AddComponent<chunk>();
         c.x = x;
         c.z = z;
         c.random = new System.Random(seed);

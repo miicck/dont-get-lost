@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class network_v2_test_sword : networked_v2
+public class network_v2_test_sword : networked
 {
 
 }

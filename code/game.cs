@@ -6,22 +6,24 @@ public class game : MonoBehaviour
 {
     public const float MIN_RENDER_RANGE = 0f;
 
-    public static player player { get; private set; }
-
     public UnityEngine.UI.Text debug_text;
 
+    static string world_loading;
     public static void load_and_host_world(string world_name, string username)
     {
-        world.name = world_name;
+        world_loading = world_name;
         player.username = username;
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
+    static bool creating_world = false;
+    static int seed_creating = 0;
     public static void create_and_host_world(string world_name, int seed, string username)
     {
-        world.name = world_name;
-        world.seed = seed;
+        world_loading = world_name;
+        seed_creating = seed;
         player.username = username;
+        creating_world = true;
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
     }
 
@@ -61,7 +63,7 @@ public class game : MonoBehaviour
             if (_render_range == value) return;
             if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
             _render_range = value;
-            player.update_render_range();
+            player.current.update_render_range();
         }
     }
 
@@ -70,22 +72,23 @@ public class game : MonoBehaviour
         if (ip_connecting == null)
         {
             // Not connecting, start a local server+client
-            networked.server.set_forced<player>();
-            networked.server.start(networked.server.DEFAULT_PORT, world.name);
-            networked.client.connect_to_server(
-                networked.server.local_ip_address().ToString(),
-                networked.server.port);
+            server.start(server.DEFAULT_PORT, world_loading,
+                "misc/player_local", "misc/player_remote");
+
+            client.connect(network_utils.local_ip_address().ToString(),
+                server.DEFAULT_PORT, player.username, "password");
+
+            // Create the world object
+            if (creating_world)
+            {
+                client.create(Vector3.zero, "misc/world");
+                world.seed = seed_creating;
+            }
         }
         else
         {
-            networked.client.connect_to_server(
-                ip_connecting,
-                port_connecting
-            );
+            client.connect(ip_connecting, port_connecting, player.username, "password");
         }
-
-        // Create the world object (seed + name will be loaded by the server)
-        networked.section.create<world>();
 
         // Start with invisible, locked cursor
         Cursor.visible = false;
@@ -117,19 +120,11 @@ public class game : MonoBehaviour
         debug_text.text += "World: " + world.name + " (seed " + world.seed + ")\n";
         debug_text.text += "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n";
 
-        if (networked.server.started)
-        {
-            networked.server.update();
-            debug_text.text += "\nServer info:\n";
-            debug_text.text += networked.server.info() + "\n";
-        }
+        server.update();
+        debug_text.text += server.info() + "\n";
 
-        if (networked.client.connected)
-        {
-            networked.client.update();
-            debug_text.text += "\nClient info:\n";
-            debug_text.text += networked.client.info() + "\n";
-        }
+        client.update();
+        debug_text.text += client.info() + "\n";
 
         if (player.current != null)
         {
@@ -145,7 +140,7 @@ public class game : MonoBehaviour
     void OnApplicationQuit()
     {
         // Disconnect from the network
-        if (networked.client.connected) networked.client.disconnect();
-        if (networked.server.started) networked.server.stop();
+        client.disconnect();
+        server.stop();
     }
 }

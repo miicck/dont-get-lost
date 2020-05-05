@@ -59,7 +59,7 @@ public class world_menu : MonoBehaviour
     private void Start()
     {
         // Find all the saved worlds
-        var world_folders = System.IO.Directory.GetDirectories(networked.server.saves_directory());
+        var world_folders = System.IO.Directory.GetDirectories(server.saves_dir());
 
         var load_header = template_header.inst();
         load_header.text = "Load existing world...";
@@ -119,7 +119,7 @@ public class world_menu : MonoBehaviour
             }
 
             string name = world_name_input.text.Trim();
-            string folder = networked.server.saves_directory() + "/" + name;
+            string folder = server.saves_dir() + "/" + name;
             if (System.IO.Directory.Exists(folder))
             {
                 error_highlighter.highlight(world_name_input.GetComponent<Image>());
@@ -156,7 +156,7 @@ public class world_menu : MonoBehaviour
                 game.join_world(ip_input.text, username);
         });
 
-        ip_input.text = networked.server.local_ip_address() + ":" + networked.server.DEFAULT_PORT;
+        ip_input.text = network_utils.local_ip_address() + ":" + server.DEFAULT_PORT;
         ip_input.transform.SetAsLastSibling();
 
         // Remove the templates

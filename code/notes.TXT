@@ -1,6 +1,0 @@
-procmath.float2d tools mainly used with biome grids, perphas they
-should just operate directly on biome grids?
-
-Eventual multiplayer?
-	- No need to serialize world over network
-	- Items only thing that needs serializing

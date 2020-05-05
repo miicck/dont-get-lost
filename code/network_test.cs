@@ -16,8 +16,7 @@ public class network_v2_test : MonoBehaviour
             server.start(
                 6969, "save",
                 "network_v2_test/local_player",
-                "network_v2_test/remote_player",
-                Vector3.zero);
+                "network_v2_test/remote_player");
         });
 
         client_start_button.onClick.AddListener(() =>

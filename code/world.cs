@@ -3,68 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // The in-game world
-public class world : networked.section
+public class world : networked
 {
     // World-scale geograpical constants
     public const int SEA_LEVEL = 16;
     public const float MAX_ALTITUDE = 128f;
 
-    // Returns true if the world details have been loaded from the server
-    public static bool loaded { get => seed != 0; }
+    networked_variable.net_int networked_seed;
+
+    public override float network_radius()
+    {
+        // The world is always loaded
+        return float.PositiveInfinity;
+    }
+
+    public override void on_init_network_variables()
+    {
+        networked_seed = new networked_variable.net_int(seed);
+        static_world = this;
+    }
+
+    static world static_world;
 
     // The seed for the world generator
-    public static int seed;
+    public static int seed
+    {
+        get => static_world.networked_seed.value;
+        set => static_world.networked_seed.value = value;
+    }
 
     // The name this world is (to be) saved as
-    public static string name = "world";
-
-    public override byte[] section_id_bytes()
-    {
-        // There is only one world section, and it is always the same
-        return new byte[] { };
-    }
-
-    public override void invert_id(byte[] id_bytes)
-    {
-        // Nothing needs doing. there is only one world
-    }
-
-    public override void section_id_initialize(params object[] section_id_init_args)
-    {
-        // No initialization neccassary
-    }
-
-    protected override byte[] serialize()
-    {
-        // Serialize the seed, and name
-        byte[] name_bytes = System.Text.Encoding.ASCII.GetBytes(name);
-        return concat_buffers(
-            System.BitConverter.GetBytes(seed),
-            System.BitConverter.GetBytes(name_bytes.Length),
-            name_bytes
-        );
-    }
-
-    protected override void deserialize(byte[] bytes, int offset, int count)
-    {
-        // Deserialize the seed and string bytes length 
-        seed = System.BitConverter.ToInt32(bytes, offset);
-        int string_length = System.BitConverter.ToInt32(bytes, offset + sizeof(int));
-
-        // Copy the name bytes to a temporary array, and deserialize the name
-        byte[] name_bytes = new byte[string_length];
-        System.Buffer.BlockCopy(bytes, offset + sizeof(int) * 2, name_bytes, 0, string_length);
-        name = System.Text.Encoding.ASCII.GetString(name_bytes);
-    }
-
-    protected override void on_first_sync()
-    {
-        if (seed == 0)
-            throw new System.Exception("Invalid seed!");
-
-        // Create the local player
-        create<player>(player.username, true);
-    }
+    public static string name;
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(world))]
@@ -74,8 +43,8 @@ public class world : networked.section
         {
             base.OnInspectorGUI();
             world w = (world)target;
-            UnityEditor.EditorGUILayout.IntField("Seed", seed);
-            UnityEditor.EditorGUILayout.TextField("Name", name);
+            UnityEditor.EditorGUILayout.IntField("static seed", seed);
+            UnityEditor.EditorGUILayout.IntField("network seed", w.networked_seed.value);
         }
     }
 #endif

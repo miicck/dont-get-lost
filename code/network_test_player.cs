@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class network_v2_player_test : networked_player
 {
-    networked_v2 equipped
+    networked equipped
     {
         get { return GetComponentInChildren<network_v2_test_sword>(); }
     }

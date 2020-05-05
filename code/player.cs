@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked.section
+public class player : networked_player
 {
     //###########//
     // CONSTANTS //
@@ -443,6 +443,8 @@ public class player : networked.section
 
         controller.Move(move);
         stay_above_terrain();
+
+        networked_position = transform.position;
     }
 
     void float_in_water()
@@ -488,6 +490,9 @@ public class player : networked.section
     // Called when the render range changes
     public void update_render_range()
     {
+        // Let the network know
+        render_range = game.render_range;
+
         // Set the obscurer size to the render range
         obscurer.transform.localScale = Vector3.one * game.render_range * 0.99f;
         map_obscurer.transform.localScale = Vector3.one * game.render_range;
@@ -567,60 +572,6 @@ public class player : networked.section
         return new Ray(camera.transform.position,
                        camera.transform.forward);
     }
-
-    //############//
-    // NETWORKING //
-    //############//
-
-    protected override byte[] serialize()
-    {
-        // Serialize position + rotation
-        return concat_buffers(
-            System.BitConverter.GetBytes(transform.position.x),
-            System.BitConverter.GetBytes(transform.position.y),
-            System.BitConverter.GetBytes(transform.position.z),
-            System.BitConverter.GetBytes(transform.forward.x),
-            System.BitConverter.GetBytes(transform.forward.z)
-        );
-    }
-
-    protected override void deserialize(byte[] bytes, int offset, int count)
-    {
-        // Deserialize position + rotation
-        transform.position = new Vector3(
-            System.BitConverter.ToSingle(bytes, offset+sizeof(float) * 0),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 1),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
-        );
-
-        transform.forward = new Vector3(
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3), 0,
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 4)
-        );
-    }
-
-    public override byte[] section_id_bytes()
-    {
-        // Players are identified by their name
-        return System.Text.Encoding.ASCII.GetBytes(name);
-    }
-
-    public override void section_id_initialize(params object[] section_id_init_args)
-    {
-        // Initialize the name of this player
-        name = (string)section_id_init_args[0];
-
-        // Second arguement is true if this is a local player
-        if ((bool)section_id_init_args[1]) current = this;
-    }
-
-    public override void invert_id(byte[] id_bytes)
-    {
-        // Get my name from my id bytes
-        name = System.Text.Encoding.ASCII.GetString(id_bytes);
-    }
-
-    public bool local { get => current == this; }
 
     //#################//
     // PLAYER CREATION //
@@ -706,11 +657,23 @@ public class player : networked.section
 
             // Start with the map closed
             map_open = false;
-        }
-        else // Not local
-        {
-            // Don't send updates from non-local players
-            send_network_updates = false;
+
+            // Add the player controller once everything has loaded
+            // (stops the controller from snapping us back to 0,0,0)
+            controller = gameObject.AddComponent<CharacterController>();
+            controller.height = HEIGHT;
+            controller.radius = WIDTH / 2;
+            controller.center = new Vector3(0, controller.height / 2f, 0);
+            controller.skinWidth = controller.radius / 10f;
+            controller.slopeLimit = 60f;
+
+            // This is the local player
+            player.current = this;
+
+            // Now that we know where the player is, we can start loading
+            // the map around the player.
+            var biome_coords = biome.coords(transform.position);
+            biome.generate(biome_coords[0], biome_coords[1]);
         }
 
         // Initialize the inventory to closed
@@ -723,26 +686,6 @@ public class player : networked.section
         // Player starts with an axe
         inventory.add("axe", 1);
         inventory.add("furnace", 1);
-    }
-
-    protected override void on_first_sync()
-    {
-        if (local)
-        {
-            // Add the player controller once everything has loaded
-            // (stops the controller from snapping us back to 0,0,0)
-            controller = gameObject.AddComponent<CharacterController>();
-            controller.height = HEIGHT;
-            controller.radius = WIDTH / 2;
-            controller.center = new Vector3(0, controller.height / 2f, 0);
-            controller.skinWidth = controller.radius / 10f;
-            controller.slopeLimit = 60f;
-
-            // Now that we know where the player is, we can start loading
-            // the map around the player.
-            var biome_coords = biome.coords(transform.position);
-            biome.generate(biome_coords[0], biome_coords[1]);
-        }
     }
 
     //###########//

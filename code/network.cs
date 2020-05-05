@@ -1,1867 +1,1837 @@
-﻿#define SIMULATE_PING
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using UnityEngine;
+using System.Net.Sockets;
 
-/// <summary>
-/// A MonoBehaviour whose existance is serialized over a network connection. Custom
-/// data can also be serialized by overriding <c>serialize()</c> and <c>deserialize()</c>.
-/// </summary>
-public abstract class networked : MonoBehaviour
+public class networked : MonoBehaviour
 {
-#   if SIMULATE_PING
-    const int SIMULATED_PING = 200; // Simulated ping (ms)
-#   endif
+    /// <summary> My radius as far as the server is concerned 
+    /// for determining if I can be seen. </summary>
+    public virtual float network_radius() { return 1f; }
 
-    /// <summary>
-    /// The unique id of this object on the network.
-    /// Positive id's are network-wide unique, negative
-    /// id's are locally unique and indicate we are
-    /// awaiting a network-wide id.
-    /// </summary>
-    int network_id
+    /// <summary> How far I move before sending updated positions to the server. </summary>
+    public virtual float position_resolution() { return 0.1f; }
+
+    /// <summary> How fast I lerp my position. </summary>
+    public virtual float position_lerp_speed() { return 5f; }
+
+    /// <summary> Called when network variables should be initialized. </summary>
+    public virtual void on_init_network_variables() { }
+
+    /// <summary> Called when created. </summary>
+    public virtual void on_create() { }
+
+    /// <summary> Local == true iff this was created by this client. </summary>
+    protected bool local { get; private set; }
+    public void on_create(bool local)
+    {
+        this.local = local;
+
+        foreach (var n in networked_variables)
+            n.on_create();
+
+        on_create();
+    }
+
+    /// <summary> Called just before we enumerate the network variables of this object. </summary>
+    public void init_network_variables()
+    {
+        x_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        y_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        z_local = new networked_variable.net_float(
+            lerp_speed: position_lerp_speed(), resolution: position_resolution());
+
+        if (local)
+        {
+            x_local.on_change = (x) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = x;
+                transform.localPosition = local_pos;
+            };
+
+            y_local.on_change = (y) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = y;
+                transform.localPosition = local_pos;
+            };
+
+            z_local.on_change = (z) =>
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = z;
+                transform.localPosition = local_pos;
+            };
+        }
+
+        on_init_network_variables();
+
+        networked_variables = new List<networked_variable>();
+        foreach (var f in networked_fields[GetType()])
+            networked_variables.Add((networked_variable)f.GetValue(this));
+    }
+
+    /// <summary> All of the variables I contain that
+    /// are serialized over the network. </summary>
+    List<networked_variable> networked_variables;
+
+    // Networked position (used by the engine to determine visibility)
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
+    networked_variable.net_float x_local;
+
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Y)]
+    networked_variable.net_float y_local;
+
+    [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Z)]
+    networked_variable.net_float z_local;
+
+    /// <summary> Called every time client.update is called. </summary>
+    public void network_update()
+    {
+        if (network_id > 0) // Registered on the network
+        {
+            // Send queued variable updates
+            for (int i = 0; i < networked_variables.Count; ++i)
+            {
+                var nv = networked_variables[i];
+                if (nv.queued_serial != null)
+                {
+                    client.send_variable_update(network_id, i, nv.queued_serial);
+                    nv.queued_serial = null;
+                }
+            }
+        }
+
+        if (!local)
+        {
+            // LERP my position
+            transform.localPosition = new Vector3(
+                x_local.lerped_value,
+                y_local.lerped_value,
+                z_local.lerped_value
+            );
+        }
+    }
+
+    /// <summary> My position as stored by the network. </summary>
+    public Vector3 networked_position
+    {
+        get => new Vector3(x_local.value, y_local.value, z_local.value);
+        set
+        {
+            transform.position = value;
+            x_local.value = transform.localPosition.x;
+            y_local.value = transform.localPosition.y;
+            z_local.value = transform.localPosition.z;
+        }
+    }
+
+    /// <summary> Serailize all of my network variables into a single byte array. </summary>
+    public byte[] serialize_networked_variables()
+    {
+        List<byte> serial = new List<byte>();
+        for (int i = 0; i < networked_variables.Count; ++i)
+        {
+            var nv_btyes = networked_variables[i].serialization();
+            serial.AddRange(network_utils.encode_int(nv_btyes.Length));
+            serial.AddRange(nv_btyes);
+        }
+        return serial.ToArray();
+    }
+
+    /// <summary> Called when the networked variable with the given index
+    /// recives an updated serialization. </summary>
+    public void variable_update(int index, byte[] buffer, int offset, int length)
+    {
+        networked_variables[index].deserialize(buffer, offset, length);
+    }
+
+    /// <summary> My unique id on the network. Negative values are unique only on this
+    /// client and indicate that I'm awating a network-wide id. </summary>
+    public int network_id
     {
         get => _network_id;
         set
         {
-            int old_id = _network_id;
+            objects.Remove(_network_id);
+
+            if (objects.ContainsKey(value))
+                throw new System.Exception("Tried to overwrite network id!");
+
+            objects[value] = this;
             _network_id = value;
-            client.on_update_id(this, old_id, _network_id);
         }
     }
     int _network_id;
 
-    /// <summary>
-    /// Set to false to disable sending serializations from this object.
-    /// This is useful if we want a particular client to have full control
-    /// over the object (so serializations don't bounce back and forth between
-    /// two clients).
-    /// </summary>
-    protected bool send_network_updates = true;
-
-    /// <summary>
-    /// The last local (negative) network id assigned to
-    /// a networked object.
-    /// </summary>
-    static int last_local_id = 0;
-
-    /// <summary>
-    /// The parent of this networked object. The resulting hierarchy of
-    /// networked objects will be mimicked on the server, to allow 
-    /// reconstruction on the client. 
-    /// </summary>   
-    networked net_parent
+    /// <summary> Forget the netowrk object on this client. The object
+    /// remains on the server + potentially on other clients. </summary>
+    public void forget()
     {
-        get => _net_parent;
-        set
-        {
-            if (_net_parent != null)
-                throw new System.NotImplementedException("Tried to change a networked_monobehaviour's network parent!");
+        network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
+        Destroy(gameObject);
+    }
 
-            _net_parent = value ?? throw new System.Exception("Tried to parent a networked_monobehaviour to null!");
-            transform.SetParent(_net_parent.transform);
+    /// <summary> Remove a networked object from the server and all clients. </summary>
+    public void delete()
+    {
+        if (network_id < 0)
+        {
+            // If unregistered, try again until registered.
+            Invoke("delete", 0.1f);
+            return;
         }
-    }
-    networked _net_parent;
 
-    /// <summary>
-    /// The unique id of the type of this networked object.
-    /// </summary>
-    int type_id { get => get_networked_type_id(GetType()); }
-
-    /// <summary>
-    /// Create a networked object of the given type on the client side. This will
-    /// automatically send the neccassary messages to also create the object on the server.
-    /// </summary>
-    /// <param name="parent">Networked parent under which to create.</param>
-    /// <param name="type">Type of networked object to create.</param>
-    /// <returns>A newly created network object of given type.</returns>
-    public static networked create(networked parent, System.Type type)
-    {
-        if (parent.network_id < 0)
-            throw new System.Exception("Tried to create a child of an unregistered networked_monobehaviour!");
-
-        var t = (networked)new GameObject().AddComponent(type);
-        t.name = t.GetType().Name;
-        t.finish_create(parent);
-        return t;
+        client.on_delete(this);
+        network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
+        Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Generic overload of <see cref="create(networked, System.Type)"/>.
-    /// </summary>
-    public static networked create<T>(networked parent)
-        where T : networked
+    //################//
+    // STATIC METHODS //
+    //################//
+
+    /// <summary> Look up a networked prefab from the prefab path. </summary>
+    public static networked look_up(string path)
     {
-        return create(parent, typeof(T));
+        var found = Resources.Load<networked>(path);
+        if (found == null) throw new System.Exception("Could not find the prefab " + path);
+        return found;
     }
 
-    /// <summary>
-    /// Overload of <see cref="create(networked, System.Type)"/> that starts by
-    /// copying another networked object.
-    /// </summary>
-    public static networked create(networked parent, networked to_copy)
+    /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
+    static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
+
+    /// <summary> Load the <see cref="networked_fields"/> dictionary. </summary>
+    public static void load_networked_fields()
     {
-        var t = Instantiate(to_copy);
-        t.name = to_copy.name;
-        t.finish_create(parent);
-        return t;
-    }
+        networked_fields = new Dictionary<System.Type, List<System.Reflection.FieldInfo>>();
 
-    void finish_create(networked parent)
-    {
-        // Set the parent
-        net_parent = parent;
-
-        // Assign a unique negative id
-        network_id = --last_local_id;
-
-        // Client-side initialization
-        on_create(true);
-
-        // This object is being newly added as a child 
-        // of a networked_monobehaviour, this implies it is new
-        // to both the client and the server (otherwise
-        // it would have been created when it's parent
-        // was created).
-        client.send_message(this, CLIENT_MSG.CREATE_NEW);
-    }
-
-    /// <summary>
-    /// The last set of serialzied bytes sent to the server.
-    /// </summary>
-    byte[] last_serialized;
-
-    /// <summary>
-    /// Run updates for this networked object.
-    /// </summary>
-    private void update()
-    {
-        if (network_id < 0) return; // Don't send unregistered serialization updates
-        if (!send_network_updates) return; // Don't send serialization updates
-
-        byte[] serial = serialize();
-        if (serial == null) return; // No serialization to do
-
-        // Check if the serialization has 
-        // changed since the last one sent
-        if (last_serialized != null)
+        // Loop over all networked implementations
+        foreach (var type in typeof(networked).Assembly.GetTypes())
         {
-            if (last_serialized.Length != serial.Length)
-                throw new System.Exception("Variable length serialization is not supported!");
+            if (type.IsAbstract) continue;
+            if (!type.IsSubclassOf(typeof(networked))) continue;
 
-            bool same = true;
-            for (int i = 0; i < serial.Length; ++i)
-                if (serial[i] != last_serialized[i])
+            var fields = new List<System.Reflection.FieldInfo>();
+            int special_fields_count = System.Enum.GetNames(typeof(engine_networked_variable.TYPE)).Length;
+            var special_fields = new System.Reflection.FieldInfo[special_fields_count];
+
+            // Find all networked_variables in this type (or it's base types)
+            for (var t = type; t != typeof(networked).BaseType; t = t.BaseType)
+            {
+                foreach (var f in t.GetFields(
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic))
                 {
-                    same = false;
-                    break;
+                    var ft = f.FieldType;
+                    if (ft.IsAbstract) continue;
+                    if (!ft.IsSubclassOf(typeof(networked_variable))) continue;
+
+                    // Find special fields that are used by the engine
+                    var attrs = f.GetCustomAttributes(typeof(engine_networked_variable), true);
+                    if (attrs.Length != 0)
+                    {
+                        if (attrs.Length > 1)
+                        {
+                            string err = "More than one " + typeof(engine_networked_variable) +
+                                         " found on a field!";
+                            throw new System.Exception(err);
+                        }
+
+                        var atr = (engine_networked_variable)attrs[0];
+                        special_fields[(int)atr.type] = f;
+                        continue;
+                    }
+
+                    fields.Add(f);
                 }
+            }
 
-            if (same) return; // No serialization to do
+            // Check we've got all of the special fields
+            for (int i = 0; i < special_fields.Length; ++i)
+                if (special_fields[i] == null)
+                    throw new System.Exception("Engine field not found for type" + type + "!");
+
+            // Sort fields alphabetically, so the order 
+            // is the same on every client.
+            fields.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
+
+            // Add the special fields at the start, so we
+            // know how to access them in the engine.
+            fields.InsertRange(0, special_fields);
+
+            networked_fields[type] = fields;
         }
-
-        // Send the updated serialization to the server
-        last_serialized = serial;
-        client.send_message(this, CLIENT_MSG.SERIALIZATION_UPDATE);
     }
 
-    /// <summary>
-    /// Called when the object is created, but just before any messages are sent to the server.
-    /// This allows for initialization, so that the server reccives a suitably initialized object.
-    /// </summary>
-    /// <param name="creation_args"></param>
-    protected virtual void on_create(bool local) { }
+    /// <summary> The objects on this client, keyed by their network id. </summary>
+    static Dictionary<int, networked> objects = new Dictionary<int, networked>();
 
-    /// <summary>
-    /// Called the first time that this object is syncronised with the
-    /// version on the server (post syncronisation).
-    /// </summary>
-    protected virtual void on_first_sync() { }
+    /// <summary> Return the object with the given network id. </summary>
+    public static networked find_by_id(int id) { return objects[id]; }
 
-    /// <summary> 
-    /// Serialize object data into bytes.
-    /// </summary>
-    /// <returns></returns>
-    // Virtual, because it is a reasonable use case 
-    // for a networked_monobehaviour to simply exist
-    // and not contain any serialized infromation
-    // (a network_section, for example).
-    protected virtual byte[] serialize() { return null; }
+    /// <summary> Called every time client.update is called. </summary>
+    public static void network_updates()
+    {
+        foreach (var kv in objects)
+            kv.Value.network_update();
+    }
 
-    /// <summary>
-    /// Deserialize object data from the given bytes
-    /// starting at offset and continuing for count bytes.
-    /// </summary>
-    /// <param name="bytes">Bytes containing serialization.</param>
-    /// <param name="offset">Start of serialization within <paramref name="bytes"/>.</param>
-    /// <param name="count">Length of serialization within <paramref name="bytes"/>.</param>
-    protected virtual void deserialize(byte[] bytes, int offset, int count) { }
+    public static string objects_info()
+    {
+        return objects.Count + " objects.";
+    }
 
 #if UNITY_EDITOR
-    /// <summary>
-    /// Custom editor for a networked object, displaying network info in the inspector.
-    /// </summary>
+
+    // The custom editor for networked types
     [UnityEditor.CustomEditor(typeof(networked), true)]
-    class custom_editor : UnityEditor.Editor
+    class editor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            var nm = (networked)target;
-            UnityEditor.EditorGUILayout.IntField("Network id", nm.network_id);
             base.OnInspectorGUI();
+            var nw = (networked)target;
+            UnityEditor.EditorGUILayout.IntField("Network ID", nw.network_id);
         }
     }
+
 #endif
+}
 
-
-
-    //#################//
-    // NETWORK SECTION //
-    //#################//
-
-
-
-    /// <summary>
-    /// A top-level networked object; all networked objects should be children of 
-    /// a <c>networked.section</c>. The existance of a <c>networked.section</c> 
-    /// on a client implies that it's children should be serialized to that client.
-    /// </summary>
-    public abstract class section : networked
+public class networked_player : networked
+{
+    /// <summary> How far can the player see other networked objects? </summary>
+    public float render_range
     {
-        /// <summary>
-        /// Bytes used to compare network sections on the server, to check if this
-        /// a section is already open on the server, or if it needs creating.
-        /// </summary>
-        /// <returns></returns>
-        public abstract byte[] section_id_bytes();
-
-        public abstract void invert_id(byte[] id_bytes);
-
-        public abstract void section_id_initialize(params object[] section_id_init_args);
-
-        /// <summary>
-        /// Called when a networked section is created, note that there is no
-        /// argument specifying if this was a local creation or not, because
-        /// sections cannot be local.
-        /// </summary>
-        public virtual void on_create() { }
-
-        /// <summary>
-        /// Create a network section on the client. Messages will automatically
-        /// be sent to the server to retrieve and build the section if it already exists.
-        /// </summary>
-        /// <typeparam name="T">The type of section to create</typeparam>
-        /// <param name="section_id_init_args"></param>
-        /// <returns>
-        /// A new section, that will soon be either
-        /// be deserializd from the server, or created on the server.
-        /// </returns>
-        public static T create<T>(params object[] section_id_init_args)
-            where T : section
+        get => _render_range;
+        set
         {
-            var t = new GameObject().AddComponent<T>();
-            t.name = t.GetType().Name;
+            if (_render_range == value)
+                return; // No change
 
-            // Assign a unique negative id
-            t.network_id = --last_local_id;
-
-            // Carry out client-side initialization
-            t.section_id_initialize(section_id_init_args);
-
-            // Call on_create
-            t.on_create();
-
-            // Ask the server to check if this network_section exists
-            client.send_message(t, CLIENT_MSG.CHECK_SECTION);
-
-            return t;
+            _render_range = value;
+            client.on_render_range_change(this);
         }
     }
+    float _render_range = server.INIT_RENDER_RANGE;
+}
 
-
-
-
-    //########//
-    // CLIENT //
-    //########//
-
-
-
-    /// <summary>
-    /// Client-side management of networked objects.
-    /// </summary>
-    public static class client
+/// <summary> Tag a networked variable with a predefined type, because 
+/// it has a special meaning to the network engine. </summary>
+public class engine_networked_variable : System.Attribute
+{
+    public enum TYPE : int
     {
-        /// <summary>
-        /// Returns true if the client is connected to a server.
-        /// </summary>
-        public static bool connected { get { return tcp != null; } }
-
-        /// <summary>
-        /// The TCP data stream to/from the server.
-        /// </summary>
-        static NetworkStream stream;
-
-        /// <summary>
-        /// The TCP connection to the server.
-        /// </summary>
-        static TcpClient tcp;
-
-        /// <summary>
-        /// All of the networked monobehaviours on the client, indexed by network id
-        /// </summary>
-        static Dictionary<int, networked> networked_behaviours = new Dictionary<int, networked>();
-
-        static traffic_monitor sent;
-        static traffic_monitor received;
-
-        /// <summary>
-        /// The buffer of bytes reccived from the server.
-        /// </summary>
-        static byte[] buffer;
-
-        /// <summary>
-        /// A message from the client to the server.
-        /// </summary>
-        class message
-        {
-            byte[] to_send;
-
-#           if SIMULATE_PING
-            float time_queued = 0;
-#           endif
-
-            public message(byte[] to_send)
-            {
-
-#               if SIMULATE_PING
-                time_queued = Time.realtimeSinceStartup;
-#               endif
-
-                this.to_send = to_send;
-                queue.Enqueue(this);
-            }
-
-            /// <summary>
-            /// The message queue.
-            /// </summary>
-            static Queue<message> queue = new Queue<message>();
-
-            /// <summary>
-            /// Send the messages in the queue.
-            /// </summary>
-            public static void send_queue()
-            {
-                byte[] send_buffer = new byte[tcp.SendBufferSize];
-
-                int offset = 0;
-                while (queue.Count > 0)
-                {
-
-#                   if SIMULATE_PING
-                    // Check that this message needs sending
-                    if (queue.Peek().time_queued > Time.realtimeSinceStartup - SIMULATED_PING / 1000f)
-                        break; // Messages from here on in the queue are too new
-#                   endif
-
-                    message msg = queue.Dequeue();
-                    if (msg.to_send.Length > send_buffer.Length)
-                        throw new System.Exception("Message is too long!");
-
-                    if (offset + msg.to_send.Length > send_buffer.Length)
-                    {
-                        // This message would overrun the send buffer, send
-                        // what we have already to free the buffer.
-                        tcp.GetStream().Write(send_buffer, 0, offset);
-                        send_buffer = new byte[tcp.SendBufferSize];
-                        offset = 0;
-                    }
-
-                    System.Buffer.BlockCopy(msg.to_send, 0, send_buffer, offset, msg.to_send.Length);
-                    offset += msg.to_send.Length; // Shift to next message
-                }
-
-                // Send the buffer
-                if (offset > 0) tcp.GetStream().Write(send_buffer, 0, offset);
-            }
-        }
-
-        /// <summary>
-        /// Deserialize an entire network section on the client. This works simmilarly to
-        /// server.load_from_disk, except that it creates the objects for real, rather than
-        /// creating server representations of them.
-        /// </summary>
-        /// <param name="section">The (already existing) section that is being deserialized.</param>
-        /// <param name="serialization_offset">The location of the section serialization in the buffer.</param>
-        /// <param name="serialization_length">The length of the section serialization in the buffer.</param>
-        static void deserialize_tree(section section,
-            int serialization_offset, int serialization_length)
-        {
-            bool first = true;
-            int offset = serialization_offset;
-            int end = serialization_offset + serialization_length;
-
-            // The first thing will be the id bytes for this section
-            int id_bytes_length = System.BitConverter.ToInt32(buffer, offset);
-            offset += sizeof(int);
-
-            byte[] id_bytes = new byte[id_bytes_length];
-            System.Buffer.BlockCopy(buffer, offset, id_bytes, 0, id_bytes.Length);
-
-            if (section != null)
-            {
-                // compare the id bytes to check that we've reccived serialization 
-                // from the corresponding section on the server (this should always be the case).
-                var id_bytes_compare = section.section_id_bytes();
-
-                if (id_bytes_compare.Length != id_bytes_length)
-                    throw new System.Exception("Tried to deserialize tree with mismatched id bytes!");
-
-                for (int i = 0; i < id_bytes_length; ++i)
-                    if (id_bytes[i] != id_bytes_compare[i])
-                        throw new System.Exception("Tried to deserialize tree with mismatched id bytes!");
-            }
-
-            offset += id_bytes_length;
-
-            while (offset < end)
-            {
-                int length = System.BitConverter.ToInt32(buffer, offset);
-                int id = System.BitConverter.ToInt32(buffer, offset + sizeof(int));
-                int parent_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 2);
-                int type_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 3);
-
-                if (first)
-                {
-                    if (section == null)
-                    {
-                        // See if a section with this id already exists
-                        networked found;
-                        if (networked_behaviours.TryGetValue(id, out found))
-                        {
-                            section = (section)found;
-                            if (section.type_id != type_id)
-                                throw new System.Exception("Wrong section type found!");
-                            var id_found = section.section_id_bytes();
-                            if (id_found.Length != id_bytes.Length)
-                                throw new System.Exception("Wrong section id found!");
-                            for (int i = 0; i < id_bytes.Length; ++i)
-                                if (id_found[i] != id_bytes[i])
-                                    throw new System.Exception("Wrong section id found!");
-                        }
-                        else
-                        {
-                            // Create the top-level section
-                            create_section_from_network(type_id, id, id_bytes,
-                                offset + sizeof(int) * 4, length - sizeof(int) * 4);
-                        }
-                    }
-                    else
-                    {
-                        // The very first serialization reccived from the 
-                        // server will is that of the section itself.
-
-                        // Check if the section already exists
-                        networked found;
-                        if (networked_behaviours.TryGetValue(id, out found))
-                        {
-                            // Section already exists, keep the newer version
-                            section found_sec = (section)found;
-                            Destroy(found_sec.gameObject);
-                            networked_behaviours.Remove(id);
-                        }
-
-                        section.network_id = id;
-                        section.deserialize(buffer, offset + sizeof(int) * 4, length - sizeof(int) * 4);
-                        section.on_first_sync();
-                    }
-
-                    first = false;
-                }
-                else
-                {
-                    // This is a decendant of the section and so 
-                    // needs creating as well as deseriailizing.
-                    create_from_network(type_id, id, parent_id,
-                        offset + sizeof(int) * 4, length - sizeof(int) * 4);
-                }
-
-                offset += length;
-            }
-        }
-
-        /// <summary>
-        /// Create a new networked object, that was initially created on another client,
-        /// according to instructions sent by the server.
-        /// </summary>
-        /// <param name="network_id">Network id of the object to create.</param>
-        /// <param name="msg_start">Start of data descibing the object in the buffer.</param>
-        /// <param name="msg_length">Length of data describing the object in the buffer.</param>
-        static void deserialize_new_creation(int network_id, int msg_start, int msg_length)
-        {
-            int type_id = System.BitConverter.ToInt32(buffer, msg_start);
-            int parent_id = System.BitConverter.ToInt32(buffer, msg_start + sizeof(int));
-            int serial_start = msg_start + 2 * sizeof(int);
-            int serial_length = msg_length - 2 * sizeof(int);
-            create_from_network(type_id, network_id, parent_id, serial_start, serial_length);
-        }
-
-        /// <summary>
-        /// Create a networked_monobheaviour on a the client, based on
-        /// instructions sent by the server.
-        /// </summary>
-        /// <param name="type_id">The id of the network type to create.</param>
-        /// <param name="network_id">The network id of the object to be created.</param>
-        /// <param name="parent_id">The id of the parent of the object to be created.</param>
-        /// <param name="serialization_offset">The location of the serialization in the buffer.</param>
-        /// <param name="serialization_length">The length of the serialization in the buffer.</param>
-        static void create_from_network(int type_id, int network_id, int parent_id,
-            int serialization_offset, int serialization_length)
-        {
-            System.Type type = get_networked_type_by_id(type_id);
-            var nm = (networked)new GameObject().AddComponent(type);
-            nm.name = type.Name;
-            nm.network_id = network_id;
-            nm.net_parent = networked_behaviours[parent_id];
-            nm.on_create(false); // This is not a local object
-            nm.last_serialized = new byte[serialization_length];
-            System.Buffer.BlockCopy(
-                buffer, serialization_offset,
-                nm.last_serialized, 0, serialization_length);
-            nm.deserialize(nm.last_serialized, 0, serialization_length);
-            nm.on_first_sync();
-        }
-
-        /// <summary>
-        /// Create a networked section on the client, on instruction from the
-        /// server.
-        /// </summary>
-        /// <param name="type_id">The id of the network type to create.</param>
-        /// <param name="network_id">The network id of the object to be created.</param>
-        /// <param name="id_bytes">The value of the id bytes of this object on the server.</param>
-        /// <param name="serialization_offset">The location of the serialization in the buffer.</param>
-        /// <param name="serialization_length">The length of the serialization in the buffer.</param>
-        static void create_section_from_network(
-            int type_id, int network_id, byte[] id_bytes,
-            int serialization_offset, int serialization_length)
-        {
-            System.Type type = get_networked_type_by_id(type_id);
-            var sec = (section)new GameObject().AddComponent(type);
-            sec.name = type.Name;
-            sec.network_id = network_id;
-            sec.invert_id(id_bytes);
-            sec.on_create();
-            sec.last_serialized = new byte[serialization_length];
-            System.Buffer.BlockCopy(
-                buffer, serialization_offset,
-                sec.last_serialized, 0, serialization_length
-            );
-            sec.deserialize(sec.last_serialized, 0, serialization_length);
-            sec.on_first_sync();
-        }
-
-        /// <summary>
-        /// Send a message to the server of the given type and payload,
-        /// filling in message header information in a standard way.
-        /// </summary>
-        /// <param name="from">The networked object that the message is about.</param>
-        /// <param name="message_type">The type of message being sent.</param>
-        /// <param name="payload">The payload to send.</param>
-        static void send_payload(networked from, byte message_type, byte[] payload)
-        {
-            if (!connected)
-                throw new System.Exception("Networking client not started!");
-
-            int tot_length = sizeof(int) * 2 + 1 + payload.Length;
-            byte[] to_send = concat_buffers(
-                System.BitConverter.GetBytes(tot_length),      // Length of message
-                new byte[] { message_type },                   // Message type
-                System.BitConverter.GetBytes(from.network_id), // Network id
-                payload                                        // Payload
-            );
-
-            if (to_send.Length != tot_length)
-                throw new System.Exception("Check calculation of message length!");
-
-            sent.log_bytes(to_send.Length);
-            if (to_send.Length > tcp.SendBufferSize)
-                throw new System.Exception("Message too long!");
-
-            new message(to_send);
-        }
-
-        /// <summary>
-        /// Send a predefined message type to the server from
-        /// the given networked object.
-        /// </summary>
-        /// <param name="from">The network object that the message is about.</param>
-        /// <param name="message_type">The type of message to send.</param>
-        public static void send_message(networked from, CLIENT_MSG message_type)
-        {
-            switch (message_type)
-            {
-                // Send an upadted serialization
-                case CLIENT_MSG.SERIALIZATION_UPDATE:
-                    send_payload(from, (byte)CLIENT_MSG.SERIALIZATION_UPDATE, from.last_serialized);
-                    break;
-
-                // Ask the server if a section exists
-                case CLIENT_MSG.CHECK_SECTION:
-                    var sec_from = (section)from;
-                    send_payload(sec_from, (byte)CLIENT_MSG.CHECK_SECTION, concat_buffers(
-                        System.BitConverter.GetBytes(sec_from.type_id),
-                        sec_from.section_id_bytes()
-                    ));
-                    break;
-
-                // Request the server make a new object of this type
-                case CLIENT_MSG.CREATE_NEW_SECTION:
-
-                    // Send the server my serialization
-                    sec_from = (section)from;
-                    var sec_id_bytes = sec_from.section_id_bytes();
-                    var sec_serial = sec_from.serialize();
-                    sec_from.last_serialized = sec_serial;
-
-                    send_payload(sec_from, (byte)CLIENT_MSG.CREATE_NEW_SECTION, concat_buffers(
-                        System.BitConverter.GetBytes(sec_from.type_id),    // Type id
-                        System.BitConverter.GetBytes(sec_id_bytes.Length), // Length of section id bytes
-                        sec_id_bytes,                                      // Section id bytes
-                        sec_serial ?? new byte[] { }                       // Serialization
-                    ));
-
-                    break;
-
-                // Create a new networked_monobehaviour on the server
-                case CLIENT_MSG.CREATE_NEW:
-
-                    // Send the server my serialization
-                    var serial = from.serialize();
-                    from.last_serialized = serial;
-
-                    send_payload(from, (byte)CLIENT_MSG.CREATE_NEW, concat_buffers(
-                        System.BitConverter.GetBytes(from.type_id),               // Type id
-                        System.BitConverter.GetBytes(from.net_parent.network_id), // Parent id
-                        serial ?? new byte[0]                                     // Serialization
-                    ));
-
-                    break;
-
-                // Let the server know we've forgotten about an object
-                case CLIENT_MSG.OBJECT_FORGOTTEN:
-
-                    // Send the server the id of the section to forget about
-                    send_payload(from, (byte)CLIENT_MSG.OBJECT_FORGOTTEN, new byte[0]);
-                    break;
-
-                default:
-                    throw new System.Exception("Unkown send message type: " + message_type + "!");
-            }
-        }
-
-        /// <summary>
-        /// Process a message from the server that is about the networked object with
-        /// the specified id.
-        /// </summary>
-        /// <param name="message_type">The type of message.</param>
-        /// <param name="network_id">The id of the networked object to which the message is directed.</param>
-        /// <param name="msg_offset">The location of the message in the buffer.</param>
-        /// <param name="msg_length">The length of the message in the buffer.</param>
-        static void process_message(SERVER_MSG message_type, int network_id, int msg_offset, int msg_length)
-        {
-            // Messages that are not addressed to a network
-            // object that already exists.
-            switch (message_type)
-            {
-                case SERVER_MSG.NEW_CREATION:
-                    deserialize_new_creation(network_id, msg_offset, msg_length);
-                    return;
-
-                case SERVER_MSG.FORCED_SECTION:
-                    deserialize_tree(null, msg_offset, msg_length);
-                    return;
-            }
-
-            // Find the network object this message is addressed to
-            // (if it still exists)
-            networked recipient = null;
-            networked_behaviours.TryGetValue(network_id, out recipient);
-
-            switch (message_type)
-            {
-                case SERVER_MSG.SERIALIZATION_UPDATE:
-                    if (recipient == null) return;
-                    System.Buffer.BlockCopy(buffer, msg_offset, recipient.last_serialized, 0, msg_length);
-                    recipient.deserialize(recipient.last_serialized, 0, msg_length);
-                    return;
-
-                case SERVER_MSG.SECTION_DOESNT_EXIST:
-                    if (recipient == null) return;
-                    send_message(recipient, CLIENT_MSG.CREATE_NEW_SECTION);
-                    return;
-
-                case SERVER_MSG.SECTION_EXISTS:
-                    if (recipient == null) return;
-                    deserialize_tree((section)recipient, msg_offset, msg_length);
-                    return;
-
-                case SERVER_MSG.SECTION_CREATION_SUCCESS:
-                    if (recipient == null) return;
-                    recipient.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
-                    recipient.on_first_sync(); // We've synced with the server for the first time
-                    return;
-
-                case SERVER_MSG.CREATION_SUCCESS:
-                    if (recipient == null) return;
-                    recipient.network_id = System.BitConverter.ToInt32(buffer, msg_offset);
-                    recipient.on_first_sync(); // We've synced with the server for the first time
-                    return;
-
-                default:
-                    throw new System.Exception("Unkown message type: " + message_type);
-            }
-        }
-
-        /// <summary>
-        /// Process the first <paramref name="count"/> bytes of the buffer.
-        /// </summary>
-        /// <param name="count">Number of bytes to process.</param>
-        static void process_buffer(int count)
-        {
-            int offset = 0;
-            while (offset < count)
-            {
-                // Get the length of this message (including the message type and the length bytes)
-                int message_length = System.BitConverter.ToInt32(buffer, offset);
-
-                // Get the messge type
-                SERVER_MSG msg_type = (SERVER_MSG)buffer[offset + sizeof(int)];
-
-                // Get the network id
-                int network_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) + 1);
-
-                // Process just the message part
-                int header_length = 2 * sizeof(int) + 1;
-                process_message(msg_type, network_id,
-                    offset + header_length, message_length - header_length);
-
-                // Shift to next message
-                offset += message_length;
-                if (offset > count)
-                    throw new System.Exception("Message overrun!");
-            }
-        }
-
-        /// <summary>
-        /// Connect to a server at the given hostname and port.
-        /// </summary>
-        /// <param name="host">Hostname of server.</param>
-        /// <param name="port">Port to connect through.</param>
-        public static void connect_to_server(string host, int port)
-        {
-            tcp = new TcpClient(host, port);
-            stream = tcp.GetStream();
-            buffer = new byte[tcp.ReceiveBufferSize];
-            sent = new traffic_monitor(Time.realtimeSinceStartup);
-            received = new traffic_monitor(Time.realtimeSinceStartup);
-        }
-
-        /// <summary>
-        /// Disconnect from the server (if connected).
-        /// </summary>
-        public static void disconnect()
-        {
-            // No need to tell the server - it will work it out
-            tcp.Close();
-            tcp = null;
-        }
-
-        /// <summary>
-        /// Called when a networked behaviour's id changes.
-        /// </summary>
-        /// <param name="nw">The behaviour whose id is changing.</param>
-        /// <param name="old_id">The id of this behaviour before the change.</param>
-        /// <param name="new_id">The id of this behaviour after the change.</param>
-        public static void on_update_id(networked nw, int old_id, int new_id)
-        {
-            // Update the networked behaviours dictionary
-            networked_behaviours.Remove(old_id);
-
-            if (networked_behaviours.ContainsKey(new_id))
-            {
-                Debug.Log(old_id + " -> " + new_id);
-                Debug.Log("Clashes with " + networked_behaviours[new_id].name);
-                throw new System.Exception("networked behaviour with this id already exists!");
-            }
-
-            networked_behaviours[new_id] = nw;
-        }
-
-        /// <summary>
-        /// Deal with replies from the server, and update networked
-        /// objects correspondingly.
-        /// </summary>
-        public static void update()
-        {
-            if (!connected) return;
-
-            while (stream.DataAvailable)
-            {
-                int bytes_read = stream.Read(buffer, 0, buffer.Length);
-                if (bytes_read == buffer.Length)
-                    throw new System.Exception("Buffer too small!");
-
-                received.log_bytes(bytes_read);
-                process_buffer(bytes_read);
-            }
-
-            List<int> destroyed = new List<int>();
-            foreach (var kv in networked_behaviours)
-            {
-                if (kv.Value == null)
-                {
-                    // This networked object has been destroyed
-                    // let the server know we've forgotten about it
-                    send_message(kv.Value, CLIENT_MSG.OBJECT_FORGOTTEN);
-                    destroyed.Add(kv.Key);
-                }
-                else
-                {
-                    if (kv.Value.network_id != kv.Key)
-                        throw new System.Exception("Network id mismatch!");
-                    kv.Value.update();
-                }
-            }
-
-            // Un-schedule updates about destroyed behaviours
-            foreach (var i in destroyed)
-                networked_behaviours.Remove(i);
-
-            // Send queued messages
-            message.send_queue();
-
-            sent.log_time(Time.realtimeSinceStartup);
-            received.log_time(Time.realtimeSinceStartup);
-        }
-
-        public static string info()
-        {
-            if (!connected) return "Not connected.";
-            string inf = "Client connected\n";
-            inf += "Traffic:\n    " + sent.usage() + " up\n    " + received.usage() + " down\n";
-            inf += "Objects: " + networked_behaviours.Count;
-            return inf;
-        }
+        POSITION_X,
+        POSITION_Y,
+        POSITION_Z,
     }
 
+    public TYPE type;
+    public engine_networked_variable(TYPE type) { this.type = type; }
+}
 
+/// <summary> A value serialized over the network. </summary>
+public abstract class networked_variable
+{
+    /// <summary> Serialize my value into a form suitable
+    /// for sending over the network </summary>
+    public abstract byte[] serialization();
 
-    //########//
-    // SERVER //
-    //########//
+    /// <summary> Reconstruct my value from the result of
+    /// <see cref="serialization"/>. </summary>
+    public abstract void deserialize(byte[] buffer, int offset, int length);
 
+    /// <summary> Called when the object we belong to has been created. </summary>
+    public virtual void on_create() { }
 
-
-    /// <summary>
-    /// Server-side management of networked objects.
-    /// </summary>
-    public static class server
+    /// <summary> Called when a variable update
+    /// needs to be sent to the server. </summary>
+    protected void send_update()
     {
-        public const int DEFAULT_PORT = 6969;
+        queued_serial = serialization();
+    }
+    public byte[] queued_serial;
 
-        // A client connected to the server
-        class client
+    /// <summary> A simple networked integer. </summary>
+    public class net_int : networked_variable
+    {
+        public int value
         {
-            public TcpClient tcp { get; private set; }
-            public NetworkStream stream { get; private set; }
-
-            public client(TcpClient client)
+            get => _value;
+            set
             {
-                tcp = client;
-                stream = client.GetStream();
+                if (_value == value)
+                    return; // No change
+
+                _value = value;
+                on_change?.Invoke(_value);
+                send_update();
             }
         }
+        int _value;
 
-        /// <summary>
-        /// Returns true if the server has been started.
-        /// </summary>
-        public static bool started { get => tcp != null; }
+        public net_int() { }
+        public net_int(int init) { _value = init; }
 
-        /// <summary>
-        /// Returns the port that the server is listening
-        /// on, if it is listening.
-        /// </summary>
-        public static int port { get; private set; }
-
-        /// <summary>
-        /// The tcp listener that the server is listening on.
-        /// </summary>
-        static TcpListener tcp;
-
-        /// <summary>
-        /// The clients currenlty connected to the server.
-        /// </summary>
-        static HashSet<client> clients = new HashSet<client>();
-
-        /// <summary>
-        /// Server-side representations of networked objects.
-        /// </summary>
-        static Dictionary<int, representation> representations
-            = new Dictionary<int, representation>();
-
-        /// <summary>
-        /// Server-side representations of network sections.
-        /// </summary>
-        static Dictionary<int, section_representation> section_representations
-            = new Dictionary<int, section_representation>();
-
-        /// <summary>
-        /// Buffer containing messages from clients.
-        /// </summary>
-        static byte[] buffer;
-
-        static traffic_monitor sent;
-        static traffic_monitor received;
-
-        public static string savename { get; private set; }
-
-        /// <summary>
-        /// Configure the server so objects of type T are forced
-        /// to exist on every client.
-        /// </summary>
-        /// <typeparam name="T">The type to set as forced.</typeparam>
-        public static void set_forced<T>() where T : section
+        public override byte[] serialization()
         {
-            forced_types.Add(get_networked_type_id(typeof(T)));
-        }
-        static HashSet<int> forced_types = new HashSet<int>();
-
-        /// <summary>
-        /// Get the directory where this game is saved.
-        /// Ensures the directory exists.
-        /// </summary>
-        /// <returns>Path to the save directory.</returns>
-        public static string save_directory()
-        {
-            var path = saves_directory() + "/" + savename;
-            if (!System.IO.Directory.Exists(path))
-                System.IO.Directory.CreateDirectory(path);
-            return path;
+            return System.BitConverter.GetBytes(value);
         }
 
-        /// <summary>
-        /// Get the directory where savegames are stored, ensures
-        /// that the directory exists.
-        /// </summary>
-        /// <returns>Path to the saves directory.</returns>
-        public static string saves_directory()
+        public override void deserialize(byte[] buffer, int offset, int length)
         {
-            var path = Application.persistentDataPath + "/saves";
-            if (!System.IO.Directory.Exists(path))
-                System.IO.Directory.CreateDirectory(path);
-            return path;
+            _value = System.BitConverter.ToInt32(buffer, offset);
+            on_change?.Invoke(_value);
         }
 
-        /// <summary>
-        /// A message from the server to a client.
-        /// </summary>
-        class message
+        public delegate void change_func(int new_value);
+        public change_func on_change;
+    }
+
+    /// <summary> A networked floating point number, supporting resolution + lerp. </summary>
+    public class net_float : networked_variable
+    {
+        /// <summary> The most up-to-date value we have. </summary>
+        public float value
         {
-            byte[] to_send;
-
-#           if SIMULATE_PING
-            float time_queued;
-#           endif
-
-            public message(client recipient, byte[] to_send)
+            get => _value;
+            set
             {
-                this.to_send = to_send;
+                if (_value == value)
+                    return; // No change
 
-#               if SIMULATE_PING
-                time_queued = Time.realtimeSinceStartup;
-#               endif
+                _value = value;
+                on_change?.Invoke(_value);
 
-                // Queue the message to a client-specific queue
-                Queue<message> recipient_queue;
-                if (!queues.TryGetValue(recipient, out recipient_queue))
+                // Only send network updates if we've
+                // moved by more than the resolution
+                if (Mathf.Abs(_last_sent - _value) > resolution)
                 {
-                    recipient_queue = new Queue<message>();
-                    queues[recipient] = recipient_queue;
-                }
-                recipient_queue.Enqueue(this);
-            }
-
-            /// <summary>
-            /// The message queue.
-            /// </summary>
-            static Dictionary<client, Queue<message>> queues =
-                new Dictionary<client, Queue<message>>();
-
-            public static void on_disconnect(client c)
-            {
-                queues.Remove(c);
-            }
-
-            public static void send_queues()
-            {
-                // Loop over message queues.
-                foreach (var kv in new List<KeyValuePair<client, Queue<message>>>(queues))
-                {
-                    var client = kv.Key;
-                    var queue = kv.Value;
-
-                    byte[] send_buffer = new byte[client.tcp.SendBufferSize];
-
-                    int offset = 0;
-                    while (queue.Count > 0)
-                    {
-
-#                       if SIMULATE_PING
-                        if (queue.Peek().time_queued > Time.realtimeSinceStartup - SIMULATED_PING / 1000f)
-                            break; // Messages from here on in the queue are too recent.
-#                       endif
-
-                        message msg = queue.Dequeue();
-                        if (msg.to_send.Length > client.tcp.SendBufferSize)
-                            throw new System.Exception("Message too large!");
-
-                        if (offset + msg.to_send.Length > send_buffer.Length)
-                        {
-                            // This message would overrun the send buffer, send
-                            // what we have already to free the buffer.
-                            try
-                            {
-                                client.tcp.GetStream().Write(send_buffer, 0, offset);
-                            }
-                            catch
-                            {
-                                disconnect(client);
-                            }
-                            send_buffer = new byte[client.tcp.SendBufferSize];
-                            offset = 0;
-                        }
-
-                        System.Buffer.BlockCopy(msg.to_send, 0, send_buffer, offset, msg.to_send.Length);
-                        offset += msg.to_send.Length; // Shift to next message
-                    }
-
-                    // Send the buffer
-                    if (offset > 0)
-                    {
-                        try
-                        {
-                            client.tcp.GetStream().Write(send_buffer, 0, offset);
-                        }
-                        catch
-                        {
-                            disconnect(client);
-                        }
-                    }
+                    _last_sent = _value;
+                    send_update();
                 }
             }
         }
-
-        /// <summary>
-        /// Called when a client has been found to have disconnected.
-        /// </summary>
-        /// <param name="c"></param>
-        static void disconnect(client c)
-        {
-            // Cancel all pending messages to the client
-            message.on_disconnect(c);
-
-            // Remove the client from all records
-            clients.Remove(c);
-            foreach (var sec in new List<section_representation>(
-                section_representations.Values))
-                sec.remove_client(c);
-
-            // Close the connection
-            c.stream.Close();
-            c.tcp.Close();
-        }
-
-        /// <summary>
-        /// Get a section_representation from the section id 
-        /// bytes stored at the given location in the buffer.
-        /// </summary>
-        /// <param name="sec_id_bytes_start">The location of the section id in the buffer.</param>
-        /// <param name="sec_id_bytes_count">The legnth of the section id in the buffer.</param>
-        /// <returns>The representation if found, otherwise null.</returns>
-        static section_representation find_section(int type_id, int sec_id_bytes_start, int sec_id_bytes_count)
-        {
-            foreach (var kv in section_representations)
-            {
-                var r = kv.Value;
-
-                if (r.type_id != type_id)
-                    continue;
-
-                if (r.section_id_bytes.Length != sec_id_bytes_count)
-                    continue;
-
-                bool same = true;
-                for (int i = 0; i < sec_id_bytes_count; ++i)
-                    if (r.section_id_bytes[i] != buffer[sec_id_bytes_start + i])
-                    {
-                        same = false;
-                        break;
-                    }
-
-                if (same) return r;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Send a message to the given client.
-        /// </summary>
-        /// <param name="client">Client to send the message to.</param>
-        /// <param name="mgs_type">The type of message to send.</param>
-        /// <param name="network_id">The network id of the object the message is about.</param>
-        /// <param name="payload">The payload to send.</param>
-        static void send_payload(client client,
-            byte mgs_type, int network_id, byte[] payload)
-        {
-            int msg_length = sizeof(int) * 2 + 1 + payload.Length;
-            byte[] to_send = concat_buffers(
-                    System.BitConverter.GetBytes(msg_length), // Length of message
-                    new byte[] { mgs_type },                  // Message type
-                    System.BitConverter.GetBytes(network_id), // Network id
-                    payload                                   // Payload
-            );
-
-            if (to_send.Length != msg_length)
-                throw new System.Exception("Check calculation of message length!");
-
-            sent.log_bytes(to_send.Length);
-            if (to_send.Length > client.tcp.SendBufferSize)
-                throw new System.Exception("Message too long!");
-            new message(client, to_send);
-        }
-
-        /// <summary>
-        /// Proccess a message within the buffer.
-        /// </summary>
-        /// <param name="client">The client the message is from.</param>
-        /// <param name="message_type">The message type received.</param>
-        /// <param name="network_id">The id of the object the message is about.</param>
-        /// <param name="message_offset">The location of the message in the buffer.</param>
-        /// <param name="message_length">The length of the message in the buffer.</param>
-        static void process_message(client client,
-            CLIENT_MSG message_type, int network_id, int message_offset, int message_length)
-        {
-            switch (message_type)
-            {
-                // Update the serialization of the given networked objects representation
-                case CLIENT_MSG.SERIALIZATION_UPDATE:
-
-                    var target = representations[network_id];
-                    System.Buffer.BlockCopy(buffer, message_offset, target.serialization, 0, message_length);
-
-                    foreach (var c in target.connected_clients())
-                        if (c != client)
-                            send_payload(c, (byte)SERVER_MSG.SERIALIZATION_UPDATE, network_id, target.serialization);
-
-                    break;
-
-                // Check if a section with the sent section_id_bytes exists
-                case CLIENT_MSG.CHECK_SECTION:
-                    if (network_id >= 0)
-                        throw new System.Exception("Should not be checking for registered sections!");
-
-                    int type_id = System.BitConverter.ToInt32(buffer, message_offset);
-                    section_representation found = find_section(type_id,
-                        message_offset + sizeof(int), message_length - sizeof(int));
-                    if (found == null)
-                    {
-                        // No section found, let the client know it's safe to go ahead and create it
-                        send_payload(client, (byte)SERVER_MSG.SECTION_DOESNT_EXIST, network_id, new byte[] { });
-                    }
-                    else
-                    {
-                        // Section exists, record the fact that this client can see the section
-                        // and send the client the neccassary information to reconstruct it.
-                        found.add_client(client);
-                        send_payload(client, (byte)SERVER_MSG.SECTION_EXISTS,
-                                     network_id, found.tree_serialization());
-
-                        // If this is a forced type, ensure all clients get it
-                        if (forced_types.Contains(type_id))
-                            foreach (var c in clients)
-                            {
-                                if (c == client) continue; // Already sent to client
-                                found.add_client(c);
-                                send_payload(c, (byte)SERVER_MSG.FORCED_SECTION,
-                                     network_id, found.tree_serialization());
-                            }
-                    }
-                    break;
-
-                // Create a new section
-                case CLIENT_MSG.CREATE_NEW_SECTION:
-
-                    if (network_id >= 0)
-                        throw new System.Exception("Registered objects should not send CREATE_NEW messages!");
-
-                    // Parse the type from the message payload
-                    type_id = System.BitConverter.ToInt32(buffer, message_offset);
-                    System.Type type = get_networked_type_by_id(type_id);
-
-                    // The length of the section id bytes
-                    int sec_id_bytes_length = System.BitConverter.ToInt32(buffer, message_offset + sizeof(int));
-
-                    // Get the section id bytes
-                    byte[] sec_id_bytes = new byte[sec_id_bytes_length];
-                    System.Buffer.BlockCopy(buffer, message_offset + 2 * sizeof(int),
-                        sec_id_bytes, 0, sec_id_bytes_length);
-
-                    // Get hte initial serialization
-                    byte[] init_serialization = new byte[message_length - sec_id_bytes_length - 2 * sizeof(int)];
-                    System.Buffer.BlockCopy(buffer, message_offset + 2 * sizeof(int) + sec_id_bytes_length,
-                        init_serialization, 0, init_serialization.Length);
-
-                    // Create the section representation
-                    var sec_rep = section_representation.create(client, type, init_serialization, sec_id_bytes);
-
-                    // Reply with the newly-created id
-                    send_payload(client, (byte)SERVER_MSG.SECTION_CREATION_SUCCESS, network_id, concat_buffers(
-                        System.BitConverter.GetBytes(sec_rep.id)
-                    ));
-
-                    // If this is a forced type, ensure all clients get it
-                    if (forced_types.Contains(type_id))
-                        foreach (var c in clients)
-                        {
-                            if (c == client) continue; // Already sent to client
-                            sec_rep.add_client(c);
-                            send_payload(c, (byte)SERVER_MSG.FORCED_SECTION,
-                                 network_id, sec_rep.tree_serialization());
-                        }
-
-                    break;
-
-                // Create a new networked object
-                case CLIENT_MSG.CREATE_NEW:
-
-                    if (network_id >= 0)
-                        throw new System.Exception("Registered objects should not send CREATE_NEW messages!");
-
-                    // Parse the type id from the message payload
-                    type_id = System.BitConverter.ToInt32(buffer, message_offset);
-
-                    // Parse the parent id from the message payload
-                    int parent_id = System.BitConverter.ToInt32(buffer, message_offset + sizeof(int));
-
-                    // Parse the initial serialization from the message payload
-                    byte[] serialization = new byte[message_length - 2 * sizeof(int)];
-                    System.Buffer.BlockCopy(buffer, message_offset + 2 * sizeof(int),
-                        serialization, 0, serialization.Length);
-
-                    // Create the representation of this networked object
-                    var rep = representation.create(type_id, parent_id, serialization);
-
-                    // Reply with the newly-created id (still addressed to the old negative network_id,
-                    // because the client has yet to reccive the new id).
-                    send_payload(client, (byte)SERVER_MSG.CREATION_SUCCESS, network_id, concat_buffers(
-                        System.BitConverter.GetBytes(rep.id)
-                    ));
-
-                    // Let other clients know that the object was created (they reccive the new id, as
-                    // these clients will create the corresponding object).
-                    foreach (var c in rep.connected_clients())
-                        if (c != client)
-                            send_payload(c, (byte)SERVER_MSG.NEW_CREATION, rep.id, concat_buffers(
-                                System.BitConverter.GetBytes(type_id),
-                                System.BitConverter.GetBytes(parent_id),
-                                serialization
-                            ));
-
-                    break;
-
-                // The client has forgotten about a section
-                case CLIENT_MSG.OBJECT_FORGOTTEN:
-
-                    // Stop sending object serializations to clients that no longer
-                    // have the object
-                    if (section_representations.TryGetValue(network_id, out found))
-                        found.remove_client(client);
-
-                    break;
-
-                default:
-                    throw new System.Exception("Unkown message type: " + message_type + "!");
-            }
-        }
-
-        /// <summary>
-        /// Process the first count bytes from the buffer, which were sent by the given client.
-        /// </summary>
-        /// <param name="client">The client that sent the bytes.</param>
-        /// <param name="count">The number of bytes to process.</param>
-        static void process_buffer(client client, int count)
-        {
-            // The offset is the start of the current message
-            int offset = 0;
-            while (offset < count)
-            {
-                // Get the length of this message (including the message type and the length bytes)
-                int message_length = System.BitConverter.ToInt32(buffer, offset);
-
-                // Get the messge type
-                CLIENT_MSG message_type = (CLIENT_MSG)buffer[offset + sizeof(int)];
-
-                // Get the network id
-                int network_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) + 1);
-
-                // Process just the message part
-                int header_length = 2 * sizeof(int) + 1;
-                process_message(client, message_type, network_id,
-                    offset + header_length, message_length - header_length);
-
-                // Shift to next message
-                offset += message_length;
-                if (offset > count)
-                    throw new System.Exception("Message overrun!");
-            }
-        }
-
-        /// <summary>
-        /// Start a server on the local machine.
-        /// </summary>
-        /// <param name="port">The port to listen on.</param>
-        /// <param name="save">The save location on disc.</param>
-        public static void start(int port, string save)
-        {
-            if (started) return;
-            var address = local_ip_address();
-
-            // So we know what name to save the game under
-            savename = save;
-
-            // Load the previously saved sections
-            foreach (var f in System.IO.Directory.GetFiles(save_directory()))
-                section_representation.load_from_disk(f);
-
-            // Create and start the listener
-            tcp = new TcpListener(address, port);
-            server.port = port;
-            tcp.Start();
-
-            sent = new traffic_monitor(Time.realtimeSinceStartup);
-            received = new traffic_monitor(Time.realtimeSinceStartup);
-        }
-
-        /// <summary>
-        /// Stop the server listening.
-        /// </summary>
-        public static void stop()
-        {
-            // Disconnect all the clients
-            foreach (var c in new List<client>(clients))
-                disconnect(c);
-
-            tcp.Stop();
-            tcp = null;
-        }
-
-        /// <summary>
-        /// Get the ip address of the local machine, as used by a server.
-        /// </summary>
-        /// <returns></returns>
-        public static System.Net.IPAddress local_ip_address()
-        {
-            // Find the local ip address to listen on
-            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
-            System.Net.IPAddress address = null;
-            foreach (var ip in host.AddressList)
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    address = ip;
-                    break;
-                }
-
-            if (address == null)
-                throw new System.Exception("No network adapters found!");
-
-            return address;
-        }
-
-        /// <summary>
-        /// Process messages from clients and send serialization updates.
-        /// </summary>
-        public static void update()
-        {
-            if (!started) return;
-
-            // Check for pending connection requests
-            while (tcp.Pending())
-            {
-                var client = new client(tcp.AcceptTcpClient());
-                clients.Add(client);
-
-                // Send the client all forced sections 
-                foreach (var sec in section_representations.Values)
-                    if (forced_types.Contains(sec.type_id))
-                    {
-                        sec.add_client(client);
-                        send_payload(client, (byte)SERVER_MSG.FORCED_SECTION,
-                                     sec.id, sec.tree_serialization());
-                    }
-            }
-
-            // Read stream updates (enumerate over new list, so we can modify the connected clients)
-            foreach (var c in new List<client>(clients))
-            {
-                if (!c.tcp.Connected) continue;
-
-                if (buffer == null || buffer.Length < c.tcp.SendBufferSize)
-                    buffer = new byte[c.tcp.SendBufferSize];
-
-                while (c.stream.DataAvailable)
-                {
-                    int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
-                    if (bytes_read == buffer.Length)
-                        throw new System.Exception("Buffer too small, please implement dynamic resizing!");
-
-                    received.log_bytes(bytes_read);
-                    process_buffer(c, bytes_read);
-                }
-            }
-
-            // Send messages to the clients
-            message.send_queues();
-
-            sent.log_time(Time.realtimeSinceStartup);
-            received.log_time(Time.realtimeSinceStartup);
-        }
-
-        public static string info()
-        {
-            if (!started) return "Not running.";
-
-            string inf = "Listening on " + tcp.LocalEndpoint + "\n";
-#           if SIMULATE_PING
-            inf += "Simulated ping: " + SIMULATED_PING + " ms\n";
-#           endif
-            inf += "Traffic:\n    " + sent.usage() + " up\n    " + received.usage() + " down\n";
-            inf += "Clients:" + clients.Count + "\n";
-            inf += "Objects: " + representations.Count +
-                   " (of which " + section_representations.Count + " are sections)";
-            return inf;
-        }
-
-
-
-        //#################//
-        // REPRESENTATIONS //
-        //#################//
-
-
-
-        /// <summary>
-        /// The transform representing the server, which will be the
-        /// parent of the section_representations.
-        /// </summary>
-        static Transform server_representation
+        float _value;
+        float _last_sent;
+
+        /// <summary> A smoothed value. </summary>
+        public float lerped_value
         {
             get
             {
-                if (_server_representation == null)
-                    _server_representation = new GameObject("server").transform;
-                return _server_representation;
+                _lerp_value = Mathf.Lerp(_lerp_value, _value, Time.deltaTime * lerp_speed);
+                return _lerp_value;
             }
         }
-        static Transform _server_representation;
+        float _lerp_value;
 
-        /// <summary>
-        /// The server-side representation of a networked object.
-        /// </summary>
-        class representation : MonoBehaviour
+        public override void on_create()
         {
-            /// <summary>
-            /// The network id of the object this represents.
-            /// </summary>
-            public int id { get; protected set; }
-            protected static int last_id = 0;
+            // Start lerp value at initial value
+            _lerp_value = _value;
+        }
 
-            /// <summary>
-            /// The network id of the parent of the object this represents.
-            /// </summary>
-            public int parent_id { get; protected set; }
+        float lerp_speed;
+        float resolution;
 
-            /// <summary>
-            /// The type id of the object this represents.
-            /// </summary>
-            public int type_id { get; protected set; }
+        public net_float(float lerp_speed = 5f, float resolution = 0f)
+        {
+            this.lerp_speed = lerp_speed;
+            this.resolution = resolution;
+        }
 
-            /// <summary>
-            /// The serialization of the object this represents.
-            /// </summary>
-            public byte[] serialization { get; protected set; }
+        public override byte[] serialization()
+        {
+            return System.BitConverter.GetBytes(value);
+        }
 
-            /// <summary>
-            /// Returns the clients that have need updates about this representation.
-            /// </summary>
-            /// <returns></returns>
-            public virtual List<client> connected_clients()
+        public override void deserialize(byte[] buffer, int offset, int length)
+        {
+            _value = System.BitConverter.ToSingle(buffer, offset);
+            on_change?.Invoke(_value);
+        }
+
+        public delegate void change_func(float new_value);
+        public change_func on_change;
+    }
+}
+
+
+
+//########//
+// CLIENT //
+//########//
+
+
+
+public static class client
+{
+    static int last_local_id = 0;
+
+    static TcpClient tcp;
+
+    static network_utils.traffic_monitor traffic_up;
+    static network_utils.traffic_monitor traffic_down;
+
+    public static networked create(Vector3 position,
+        string local_prefab, string remote_prefab = null,
+        networked parent = null, Quaternion rotation = default, int network_id=-1)
+    {
+        // If remote prefab not specified, it is the same
+        // as the local prefab.
+        if (remote_prefab == null)
+            remote_prefab = local_prefab;
+
+        // Instantiate the local object, but keep the name
+        var created = networked.look_up(local_prefab);
+        string name = created.name;
+        created = Object.Instantiate(created);
+        created.name = name;
+
+        if (network_id < 0)
+        {
+            // Assign a (negative) unique local id
+            created.network_id = --last_local_id;
+        }
+        else
+        {
+            // Copy the given network id
+            created.network_id = network_id;
+        }
+
+        created.init_network_variables();
+
+        // Parent if requested
+        if (parent != null)
+            created.transform.SetParent(parent.transform);
+
+        // Create the object with the desired position + rotation
+        if (rotation.Equals(default)) rotation = Quaternion.identity;
+        created.networked_position = position;
+        created.transform.rotation = rotation;
+
+        // Get the id of my parent
+        int parent_id = 0;
+        if (parent != null) parent_id = parent.network_id;
+        if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
+
+        // I'm local
+        created.on_create(true);
+
+        // Request creation on the server
+        message_senders[MESSAGE.CREATE](created.network_id, parent_id,
+            local_prefab, remote_prefab, created.serialize_networked_variables());
+
+        return created;
+    }
+
+    /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
+    static void create_from_network(byte[] buffer, int offset, int length, bool local)
+    {
+        // Record where the end of the serialization is
+        int end = offset + length;
+
+        // Deserialize info needed to reproduce the object
+        int network_id = network_utils.decode_int(buffer, ref offset);
+        int parent_id = network_utils.decode_int(buffer, ref offset);
+        string local_prefab = network_utils.decode_string(buffer, ref offset);
+        string remote_prefab = network_utils.decode_string(buffer, ref offset);
+
+        // Create the reproduction
+        var nw = networked.look_up(local ? local_prefab : remote_prefab);
+        string name = nw.name;
+        nw = Object.Instantiate(nw);
+        nw.transform.SetParent(parent_id > 0 ? networked.find_by_id(parent_id).transform : null);
+        nw.name = name;
+        nw.network_id = network_id;
+        nw.init_network_variables();
+
+        // Local rotation is intialized to the identity. If rotation
+        // is variable, the user should implement that.
+        nw.transform.localRotation = Quaternion.identity;
+
+        // The rest is network variables that need deserializing
+        int index = 0;
+        while (offset < end)
+        {
+            int nv_length = network_utils.decode_int(buffer, ref offset);
+            nw.variable_update(index, buffer, offset, nv_length);
+            offset += nv_length;
+            index += 1;
+        }
+
+        nw.on_create(local);
+    }
+
+    /// <summary> A message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float time_sent;
+    }
+
+    /// <summary> Messages to be sent to the server. </summary>
+    static Queue<pending_message> message_queue = new Queue<pending_message>();
+
+    /// <summary> Send all of the messages currently queued. </summary>
+    static void send_queued_messages()
+    {
+        // The buffer used to send messages
+        byte[] send_buffer = new byte[tcp.SendBufferSize];
+        int offset = 0;
+        var stream = tcp.GetStream();
+
+        // Send the message queue
+        while (message_queue.Count > 0)
+        {
+            var msg = message_queue.Dequeue();
+
+            if (msg.bytes.Length > tcp.SendBufferSize)
+                throw new System.Exception("Message too large!");
+
+            if (offset + msg.bytes.Length > send_buffer.Length)
             {
-                // Recurse upwards to the section representation
-                // and then return it's clients.
-                representation rep = this;
-                representation parent;
-                while (representations.TryGetValue(rep.parent_id, out parent))
-                    rep = parent;
-                return rep.connected_clients();
+                // Message would overrun buffer, send the
+                // buffer and obtain a new one
+                traffic_up.log_bytes(offset);
+                stream.Write(send_buffer, 0, offset);
+                send_buffer = new byte[tcp.SendBufferSize];
+                offset = 0;
             }
 
-            /// <summary>
-            /// Create a representation.
-            /// </summary>
-            /// <param name="type_id">ID of the type to create.</param>
-            /// <param name="parent_id">The parent id of the object to create.</param>
-            /// <param name="initial_serialization">The initial serialization of the object.</param>
-            /// <returns></returns>
-            public static representation create(int type_id, int parent_id, byte[] initial_serialization,
-                int? network_id = null)
+            // Copy the message into the send buffer
+            System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+            offset += msg.bytes.Length; // Move to next message
+        }
+
+        // Send the buffer
+        if (offset > 0)
+        {
+            traffic_up.log_bytes(offset);
+            stream.Write(send_buffer, 0, offset);
+        }
+    }
+
+    /// <summary> Send the updated serialization of the variable with the 
+    /// given index, belonging to the networked object with the given network id. </summary>
+    public static void send_variable_update(int network_id, int index, byte[] serialization)
+    {
+        message_senders[MESSAGE.VARIABLE_UPDATE](network_id, index, serialization);
+    }
+
+    /// <summary> Called when the render range of a player changes. </summary>
+    public static void on_render_range_change(networked_player player)
+    {
+        message_senders[MESSAGE.RENDER_RANGE_UPDATE](player);
+    }
+
+    /// <summary> Called when an object is deleted on this client, sends the server that info. </summary>
+    public static void on_delete(networked deleted)
+    {
+        message_senders[MESSAGE.DELETE](deleted.network_id);
+    }
+
+    /// <summary> Connect the client to a server. </summary>
+    public static void connect(string host, int port, string username, string password)
+    {
+        // Load networked type info
+        networked.load_networked_fields();
+
+        // Connect the TCP client + initialize buffers
+        tcp = new TcpClient(host, port);
+
+        traffic_up = new network_utils.traffic_monitor();
+        traffic_down = new network_utils.traffic_monitor();
+
+        // Setup message parsers
+        message_parsers = new Dictionary<server.MESSAGE, message_parser>
+        {
+            [server.MESSAGE.CREATE_LOCAL] = (buffer, offset, length) =>
+                create_from_network(buffer, offset, length, true),
+
+            [server.MESSAGE.CREATE_REMOTE] = (buffer, offset, length) =>
+                create_from_network(buffer, offset, length, false),
+
+            [server.MESSAGE.FORCE_CREATE] = (buffer, offset, length) =>
             {
-                // Create the representation
-                var type = get_networked_type_by_id(type_id);
-                var rep = new GameObject(type.Name).AddComponent<representation>();
-                var reps = representations;
-                rep.transform.SetParent(reps[parent_id].transform);
+                Vector3 position = network_utils.decode_vector3(buffer, ref offset);
+                string local_prefab = network_utils.decode_string(buffer, ref offset);
+                string remote_prefab = network_utils.decode_string(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                int parent_id = network_utils.decode_int(buffer, ref offset);
 
-                // Save the information
-                if (network_id == null) rep.id = ++last_id;
-                else rep.id = (int)network_id;
-                rep.parent_id = parent_id;
-                rep.type_id = type_id;
-                representations[rep.id] = rep;
-                rep.serialization = initial_serialization;
+                var created = create(position, local_prefab, remote_prefab,
+                    parent: parent_id > 0 ? networked.find_by_id(parent_id) : null,
+                    network_id: network_id);
+            },
 
-                return rep;
+            [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
+            {
+                // Forward the variable update to the correct object
+                int start = offset;
+                int id = network_utils.decode_int(buffer, ref offset);
+                int index = network_utils.decode_int(buffer, ref offset);
+                networked.find_by_id(id).variable_update(index, buffer, offset, length - (offset - start));
+            },
+
+            [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
+            {
+                // Remove the object from the client
+                int id = network_utils.decode_int(buffer, ref offset);
+                networked.find_by_id(id).forget();
+            },
+
+            [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>
+            {
+                // Update the local id to a network-wide one
+                int local_id = network_utils.decode_int(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                networked.find_by_id(local_id).network_id = network_id;
+            }
+        };
+
+        // Send a message type + payload
+        void send(MESSAGE msg_type, byte[] payload)
+        {
+            // Message is of form [length, type, payload]
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                new byte[] { (byte)msg_type },
+                payload
+            );
+
+            message_queue.Enqueue(new pending_message
+            {
+                bytes = to_send,
+                time_sent = Time.realtimeSinceStartup
+            });
+        }
+
+        // Setup message senders
+        message_senders = new Dictionary<MESSAGE, message_sender>
+        {
+            [MESSAGE.LOGIN] = (args) =>
+            {
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                string uname = (string)args[0];
+                string pword = (string)args[1];
+
+                var hasher = System.Security.Cryptography.SHA256.Create();
+                var hashed = hasher.ComputeHash(System.Text.Encoding.ASCII.GetBytes(pword));
+
+                // Send the username + hashed password to the server
+                send(MESSAGE.LOGIN, network_utils.concat_buffers(
+                    network_utils.encode_string(uname), hashed));
+            },
+
+            [MESSAGE.DISCONNECT] = (args) =>
+            {
+                if (args.Length != 0)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                send(MESSAGE.DISCONNECT, new byte[] { });
+            },
+
+            [MESSAGE.CREATE] = (args) =>
+            {
+                if (args.Length != 5)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int local_id = (int)args[0];
+                int parent_id = (int)args[1];
+                string local_prefab = (string)args[2];
+                string remote_prefab = (string)args[3];
+                byte[] variable_serializations = (byte[])args[4];
+
+                send(MESSAGE.CREATE, network_utils.concat_buffers(
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(parent_id),
+                    network_utils.encode_string(local_prefab),
+                    network_utils.encode_string(remote_prefab),
+                    variable_serializations
+                ));
+
+            },
+
+            [MESSAGE.DELETE] = (args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                if (network_id < 0)
+                    throw new System.Exception("Tried to delete an unregistered object!");
+
+                send(MESSAGE.DELETE, network_utils.encode_int(network_id));
+            },
+
+            [MESSAGE.RENDER_RANGE_UPDATE] = (args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var nw = (networked_player)args[0];
+
+                // Send the new render range
+                send(MESSAGE.RENDER_RANGE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_float(nw.render_range)
+                ));
+            },
+
+            [MESSAGE.VARIABLE_UPDATE] = (args) =>
+            {
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                int index = (int)args[1];
+                byte[] serialization = (byte[])args[2];
+
+                send(MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(index),
+                    serialization
+                ));
+            }
+        };
+
+        // Send login message
+        message_senders[MESSAGE.LOGIN](username, password);
+    }
+
+    public static void disconnect()
+    {
+        if (tcp == null) return;
+
+        // Send a disconnect message, and any
+        // queued messages
+        message_senders[MESSAGE.DISCONNECT]();
+        send_queued_messages();
+        tcp.LingerState = new LingerOption(true, 2);
+
+        // Close the stream
+        tcp.GetStream().Close();
+        tcp.Close();
+    }
+
+    public static void update()
+    {
+        if (tcp == null) return;
+
+        // Get the tcp stream
+        var stream = tcp.GetStream();
+        int offset = 0;
+
+        // Read messages to the client
+        while (stream.DataAvailable)
+        {
+            byte[] buffer = new byte[tcp.ReceiveBufferSize];
+            int bytes_read = stream.Read(buffer, 0, buffer.Length);
+            traffic_down.log_bytes(bytes_read);
+
+            offset = 0;
+            while (offset < bytes_read)
+            {
+                // Parse payload length
+                int payload_length = network_utils.decode_int(buffer, ref offset);
+
+                // Parse message type
+                var msg_type = (server.MESSAGE)buffer[offset];
+                offset += 1;
+
+                // Handle the message
+                message_parsers[msg_type](buffer, offset, payload_length);
+                offset += payload_length;
+            }
+        }
+
+        // Run network_update for each object
+        networked.network_updates();
+
+        // Send messages
+        send_queued_messages();
+    }
+
+    public static string info()
+    {
+        if (tcp == null) return "Client not connected.";
+        return "Client connected\n" +
+               networked.objects_info() + "\n" +
+               "Traffic:\n" +
+               "    " + traffic_up.usage() + " up\n" +
+               "    " + traffic_down.usage() + " down";
+
+    }
+
+    public enum MESSAGE : byte
+    {
+        // Numbering starts at 1 so erroneous 0's are caught
+        LOGIN = 1,           // Client has logged in
+        DISCONNECT,          // Disconnect this client
+        CREATE,              // Create an object on the server
+        DELETE,              // Delete an object from the server
+        RENDER_RANGE_UPDATE, // Client render range has changed
+        VARIABLE_UPDATE,     // A networked_variable has changed
+    }
+
+    delegate void message_sender(params object[] args);
+    static Dictionary<MESSAGE, message_sender> message_senders;
+
+    delegate void message_parser(byte[] message, int offset, int length);
+    static Dictionary<server.MESSAGE, message_parser> message_parsers;
+}
+
+
+
+//########//
+// SERVER //
+//########//
+
+
+
+public static class server
+{
+    /// <summary> A client connected to the server. </summary>
+    class client
+    {
+        // The username + password of this client
+        public string username { get; private set; }
+        public byte[] password { get; private set; }
+
+        /// <summary> The representation of this clients player object. </summary>
+        public representation player
+        {
+            get => _player;
+            set
+            {
+                if (_player != null)
+                    throw new System.Exception("Client already has a player!");
+                _player = value;
+                player_representations[username] = value;
+            }
+        }
+        representation _player;
+
+        // The TCP connection to this client
+        public TcpClient tcp { get; private set; }
+        public NetworkStream stream { get; private set; }
+
+        public float render_range = INIT_RENDER_RANGE;
+
+        public client(TcpClient tcp)
+        {
+            this.tcp = tcp;
+            stream = tcp.GetStream();
+        }
+
+        public void login(string username, byte[] password)
+        {
+            // Attempt to load the player
+            representation player = null;
+            if (!player_representations.TryGetValue(username, out player))
+            {
+                // Force the creation of the player on the client
+                player = null;
+                message_senders[MESSAGE.FORCE_CREATE](this,
+                    Vector3.zero, player_prefab_local, player_prefab_remote,
+                    ++representation.last_network_id_assigned, 0
+                );
             }
 
-#if UNITY_EDITOR
-            /// <summary>
-            /// Custom editor for server representations.
-            /// </summary>
-            [UnityEditor.CustomEditor(typeof(representation), true)]
-            class custom_editor : UnityEditor.Editor
+            this.username = username;
+            this.password = password;
+
+            if (player != null)
             {
-                public override void OnInspectorGUI()
+                this.player = player;
+                player.transform.SetParent(active_representations);
+                load(player, true, false);
+            }
+        }
+
+        public void disconnect()
+        {
+            connected_clients.Remove(this);
+            message_queues.Remove(this);
+            stream.Close();
+            tcp.Close();
+
+            // Unload the player (also remove it from representations
+            // so that it doens't just get re-loaded based on proximity)
+            foreach (var c in connected_clients)
+                if (c.has_loaded(player))
+                    c.unload(player);
+
+            player.transform.SetParent(inactive_representations);
+        }
+
+        /// <summary> The representations loaded as objects on this client. </summary>
+        HashSet<representation> loaded = new HashSet<representation>();
+
+        /// <summary> Returns true if the client should load the provided representation. </summary>
+        bool should_load(representation rep)
+        {
+            if (player == null)
+                return false;
+
+            return (rep.transform.position - player.transform.position).magnitude <
+                rep.radius + render_range;
+        }
+
+        public void update_loaded()
+        {
+            // Loop over active representations
+            foreach (Transform t in active_representations)
+            {
+                var rep = t.GetComponent<representation>();
+                if (rep == null) continue;
+
+                if (has_loaded(rep))
                 {
-                    var rep = (representation)target;
-                    UnityEditor.EditorGUILayout.IntField("Network id", rep.id);
-                    base.OnInspectorGUI();
+                    // Unload from clients that are too far away
+                    if (!should_load(rep))
+                        unload(rep);
+                }
+                else
+                {
+                    // Load on clients that are within range
+                    if (should_load(rep))
+                        load(rep, false);
                 }
             }
-#endif
-
         }
 
-        /// <summary>
-        /// The server-side representation of a network section.
-        /// </summary>
-        class section_representation : representation
+        /// <summary> Returns true if the given representation is loaded on this client. </summary>
+        public bool has_loaded(representation rep)
         {
-            public static section_representation create(
-                client client,
-                System.Type type,
-                byte[] initial_serialization,
-                byte[] section_id_bytes,
-                int? network_id = null)
+            return loaded.Contains(rep);
+        }
+
+        /// <summary> Load an object corresponding to the given representation 
+        /// on this client. </summary>
+        public void load(representation rep, bool local, bool already_created = false)
+        {
+            // Load rep and all it's children
+            network_utils.top_down<representation>(rep.transform, (loading) =>
             {
-                var rep = new GameObject(type.Name).AddComponent<section_representation>();
+                if (already_created && loading != rep)
+                    throw new System.Exception("A representation with children should not be already_created!");
 
-                if (network_id == null) rep.id = ++last_id;
-                else rep.id = (int)network_id;
+                if (!already_created)
+                {
+                    MESSAGE m = local ? MESSAGE.CREATE_LOCAL : MESSAGE.CREATE_REMOTE;
+                    message_senders[m](this, loading.serialize());
+                }
 
-                rep.type_id = get_networked_type_id(type);
-                rep.serialization = initial_serialization;
-                rep.section_id_bytes = section_id_bytes;
-                rep.transform.SetParent(server_representation);
-                if (client != null) rep.clients = new HashSet<client>() { client };
-                else rep.clients = new HashSet<client> { };
+                // Add this object to the loaded set
+                loaded.Add(loading);
+            });
+        }
 
-                representations[rep.id] = rep;
-                section_representations[rep.id] = rep;
+        /// <summary>  Unload the object corresponding to the given 
+        /// representation on this client. </summary>
+        public void unload(representation rep, bool already_removed = false)
+        {
+            // Unload rep and all of it's children
+            network_utils.top_down<representation>(rep.transform, (unloading) =>
+            {
+                if (!loaded.Contains(unloading))
+                {
+                    string err = "Client " + username + " tried to unload an object (" + unloading.name +
+                                 " id = " + unloading.network_id + ") which was not loaded!";
+                    throw new System.Exception(err);
+                }
 
-                return rep;
+                loaded.Remove(unloading);
+            });
+
+            // Let the client know that rep has been unloaded
+            // (the client will automatically unload it's children also)
+            if (!already_removed)
+                message_senders[MESSAGE.UNLOAD](this, rep.network_id);
+        }
+    }
+
+
+    //################//
+    // REPRESENTATION //
+    //################//
+
+
+    /// <summary> Represents a networked object on the server. </summary>
+    class representation : MonoBehaviour
+    {
+        /// <summary> The serialized values of networked_variables 
+        /// beloning to this object. </summary>
+        List<byte[]> serializations = new List<byte[]>();
+
+        void set_serialization(int i, byte[] serial)
+        {
+            // Deal with special networked_variables
+            if (i == (int)engine_networked_variable.TYPE.POSITION_X)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (i == (int)engine_networked_variable.TYPE.POSITION_Y)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
+            }
+            else if (i == (int)engine_networked_variable.TYPE.POSITION_Z)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = System.BitConverter.ToSingle(serial, 0);
+                transform.localPosition = local_pos;
             }
 
-            /// <summary>
-            /// Creates a section representation from the tree serialization stored
-            /// in the given file. This works simmilarly to client.deserialize_tree
-            /// except that it creates a section_reperesntation rather than a real
-            /// section.
-            /// </summary>
-            /// <param name="path">The path to the file containing the serialization.</param>
-            /// <returns></returns>
-            public static section_representation load_from_disk(string path)
+            if (serializations.Count > i) serializations[i] = serial;
+            else if (serializations.Count == i) serializations.Add(serial);
+            else throw new System.Exception("Tried to skip a serial!");
+        }
+
+        /// <summary> Called when the serialization 
+        /// of a networked_variable changes. </summary>
+        public void on_network_variable_change(
+            client sender, int index, byte[] new_serialization)
+        {
+            // Store the serialization
+            set_serialization(index, new_serialization);
+
+            foreach (var c in connected_clients)
+                if ((c != sender) && c.has_loaded(this))
+                    message_senders[MESSAGE.VARIABLE_UPDATE](c, network_id, index, new_serialization);
+        }
+
+        /// <summary> My network id. Automatically updates the 
+        /// representations[network_id] dictionary. </summary>
+        public int network_id
+        {
+            get => _network_id;
+            private set
             {
-                byte[] buffer = System.IO.File.ReadAllBytes(path);
+                representations.Remove(_network_id);
+                if (representations.ContainsKey(value))
+                    throw new System.Exception("Tried to overwrite representation id!");
+                representations[value] = this;
+                _network_id = value;
+            }
+        }
+        int _network_id;
 
-                section_representation ret = null;
-                bool first = true;
-                int offset = 0;
+        // The prefab to create on new local clients
+        public string local_prefab
+        {
+            get => _local_prefab;
+            private set
+            {
+                _local_prefab = value;
+                radius = networked.look_up(value).network_radius();
+            }
+        }
+        string _local_prefab;
 
-                // The first bytes will be the id bytes for this section
-                int id_bytes_length = System.BitConverter.ToInt32(buffer, offset);
-                offset += 4;
-                byte[] id_bytes = new byte[id_bytes_length];
-                System.Buffer.BlockCopy(buffer, offset, id_bytes, 0, id_bytes_length);
-                offset += id_bytes_length;
+        // The prefab to create on new remote clients
+        public string remote_prefab { get; private set; }
 
-                while (offset < buffer.Length)
+        // Needed for proximity tests
+        public float radius { get; private set; }
+
+        /// <summary> Serialize this representation into a form that can 
+        /// be sent over the network, or saved to disk. </summary>
+        public byte[] serialize()
+        {
+            // Parent_id = 0 if I am not a child of another networked_v2
+            representation parent = transform.parent.GetComponent<representation>();
+            int parent_id = parent == null ? 0 : parent.network_id;
+
+            if (parent_id < 0)
+                throw new System.Exception("Tried to set unregistered parent!");
+
+            // Serialize the basic info needed to reproduce the object
+            List<byte[]> to_send = new List<byte[]>
+            {
+                network_utils.encode_int(network_id),
+                network_utils.encode_int(parent_id),
+                network_utils.encode_string(local_prefab),
+                network_utils.encode_string(remote_prefab)
+            };
+
+            // Serialize all saved network variables
+            for (int i = 0; i < serializations.Count; ++i)
+            {
+                var serial = serializations[i];
+                to_send.Add(network_utils.encode_int(serial.Length));
+                to_send.Add(serial);
+            }
+
+            return network_utils.concat_buffers(to_send.ToArray());
+        }
+
+        /// <summary>  Create a network representation. This does not load the
+        /// representation on any clients, or send creation messages. </summary>
+        public static representation create(byte[] buffer, int offset, int length, out int input_id)
+        {
+            // Remember where the the end of the serialization is
+            int end = offset + length;
+
+            // Deserialize the basic info needed to reproduce the object
+            input_id = network_utils.decode_int(buffer, ref offset);
+            int parent_id = network_utils.decode_int(buffer, ref offset);
+            string local_prefab = network_utils.decode_string(buffer, ref offset);
+            string remote_prefab = network_utils.decode_string(buffer, ref offset);
+
+            // Create the representation
+            representation rep = new GameObject(local_prefab).AddComponent<representation>();
+            if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
+            else rep.transform.SetParent(active_representations);
+
+            rep.local_prefab = local_prefab;
+            rep.remote_prefab = remote_prefab;
+            if (input_id < 0)
+            {
+                // This was a local id, assign a unique network id
+                rep.network_id = ++last_network_id_assigned; // Network id's start at 1
+            }
+            else
+            {
+                // Restore the given network id
+                rep.network_id = input_id;
+                if (input_id > last_network_id_assigned)
+                    last_network_id_assigned = input_id;
+            }
+
+            // Everything else is networked variables to deserialize
+            int index = 0;
+            while (offset < end)
+            {
+                byte[] serial = new byte[network_utils.decode_int(buffer, ref offset)];
+                System.Buffer.BlockCopy(buffer, offset, serial, 0, serial.Length);
+                offset += serial.Length;
+                rep.set_serialization(index, serial);
+                ++index;
+            }
+
+            return rep;
+        }
+
+        public static int last_network_id_assigned = 0;
+
+#       if UNITY_EDITOR
+
+        // The custom editor for server representations
+        [UnityEditor.CustomEditor(typeof(representation), true)]
+        class editor : UnityEditor.Editor
+        {
+            public override void OnInspectorGUI()
+            {
+                base.OnInspectorGUI();
+                var rep = (representation)target;
+                UnityEditor.EditorGUILayout.IntField("Network ID", rep.network_id);
+            }
+        }
+
+#       endif
+
+    }
+
+
+    //##############//
+    // SERVER LOGIC //
+    //##############//
+
+    // STATE VARIABLES //
+
+    /// <summary> The render range for clients starts at this value. </summary>
+    public const float INIT_RENDER_RANGE = 0f;
+
+    /// <summary> The default port to listen on. </summary>
+    public const int DEFAULT_PORT = 6969;
+
+    /// <summary> The TCP listener the server is listening with. </summary>
+    static TcpListener tcp;
+
+    /// <summary> Returns true if the server has been started. </summary>
+    public static bool started { get => tcp != null; }
+
+    /// <summary> The name that this session is saved under. </summary>
+    static string savename;
+
+    /// <summary> The directory in which games are saved. </summary>
+    public static string saves_dir()
+    {
+        // Ensure the saves/ directory exists
+        string saves_dir = Application.persistentDataPath + "/saves";
+        if (!System.IO.Directory.Exists(saves_dir))
+            System.IO.Directory.CreateDirectory(saves_dir);
+        return saves_dir;
+    }
+
+    /// <summary> The directory that this session is saved in. </summary>
+    static string save_dir()
+    {      
+        return saves_dir() + "/" + savename;
+    }
+
+    // Information about how to create new players
+    static string player_prefab_local;
+    static string player_prefab_remote;
+
+    /// <summary> The clients currently connected to the server </summary>
+    static HashSet<client> connected_clients = new HashSet<client>();
+
+    /// <summary> Representations on the server, keyed by network id. </summary>
+    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
+
+    /// <summary> Player representations on the server, keyed by username. </summary>
+    static Dictionary<string, representation> player_representations = new Dictionary<string, representation>();
+
+    /// <summary> The transform representing the server. </summary>
+    static Transform transform
+    {
+        get
+        {
+            if (_transform == null)
+                _transform = new GameObject("server").transform;
+            return _transform;
+        }
+    }
+    static Transform _transform;
+
+    /// <summary> Transform containing active representations (those which are
+    /// considered for existance on clients) </summary>
+    static Transform active_representations
+    {
+        get
+        {
+            if (_active_representations == null)
+            {
+                _active_representations = new GameObject("active").transform;
+                _active_representations.SetParent(transform);
+            }
+            return _active_representations;
+        }
+    }
+    static Transform _active_representations;
+
+    /// <summary> Representations that are not considered for existance
+    /// on clients, but need to be remembered
+    /// (such as logged out players) </summary>
+    static Transform inactive_representations
+    {
+        get
+        {
+            if (_inactive_representations == null)
+            {
+                _inactive_representations = new GameObject("inactive").transform;
+                _inactive_representations.SetParent(transform);
+            }
+            return _inactive_representations;
+        }
+    }
+    static Transform _inactive_representations;
+
+    /// <summary> A server message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float send_time;
+    }
+
+    /// <summary> Messages that are yet to be sent. </summary>
+    static Dictionary<client, Queue<pending_message>> message_queues =
+        new Dictionary<client, Queue<pending_message>>();
+
+    // Traffic monitors
+    static network_utils.traffic_monitor traffic_down;
+    static network_utils.traffic_monitor traffic_up;
+
+    // END STATE VARIABLES //
+
+
+    /// <summary> Start a server listening on the given port on the local machine. </summary>
+    public static void start(
+        int port, string savename,
+        string player_prefab_local, string player_prefab_remote)
+    {
+        server.player_prefab_local = player_prefab_local;
+        server.player_prefab_remote = player_prefab_remote;
+
+        if (!networked.look_up(player_prefab_local).GetType().IsSubclassOf(typeof(networked_player)))
+            throw new System.Exception("Local player object must be a networked_player!");
+
+        tcp = new TcpListener(network_utils.local_ip_address(), port);
+        tcp.Start();
+
+        server.savename = savename;
+        if (System.IO.Directory.Exists(save_dir()))
+            load();
+
+        traffic_up = new network_utils.traffic_monitor();
+        traffic_down = new network_utils.traffic_monitor();
+
+        // Setup the message senders
+        message_parsers = new Dictionary<global::client.MESSAGE, message_parser>
+        {
+            [global::client.MESSAGE.LOGIN] = (client, bytes, offset, length) =>
+            {
+                int init_offset = offset;
+                string uname = network_utils.decode_string(bytes, ref offset);
+
+                byte[] pword = new byte[length - (offset - init_offset)];
+                System.Buffer.BlockCopy(bytes, offset, pword, 0, pword.Length);
+
+                // Check if this username is in use
+                foreach (var c in connected_clients)
+                    if (c.username == uname)
+                        throw new System.NotImplementedException();
+
+                // Login
+                client.login(uname, pword);
+            },
+
+            [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
+            {
+                client.disconnect();
+            },
+
+            [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
+            {
+                // Forward the updated variable serialization to the correct representation
+                int start = offset;
+                int id = network_utils.decode_int(bytes, ref offset);
+                int index = network_utils.decode_int(bytes, ref offset);
+                int serial_length = length - (offset - start);
+                byte[] serialization = new byte[serial_length];
+                System.Buffer.BlockCopy(bytes, offset, serialization, 0, serial_length);
+                representations[id].on_network_variable_change(client, index, serialization);
+            },
+
+            [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
+            {
+                client.render_range = network_utils.decode_float(bytes, ref offset);
+            },
+
+            [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
+            {
+                // Create the representation from the info sent from the client
+                int input_id;
+                var rep = representation.create(bytes, offset, length, out input_id);
+                if (input_id > 0) 
                 {
-                    int length = System.BitConverter.ToInt32(buffer, offset);
-                    int id = System.BitConverter.ToInt32(buffer, offset + sizeof(int));
-                    int parent_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 2);
-                    int type_id = System.BitConverter.ToInt32(buffer, offset + sizeof(int) * 3);
-                    byte[] serialization = new byte[length - 4 * sizeof(int)];
-                    System.Buffer.BlockCopy(buffer, offset + sizeof(int) * 4, serialization, 0, serialization.Length);
-                    System.Type type = get_networked_type_by_id(type_id);
+                    // This was a forced create
 
-                    if (id < 0)
-                        throw new System.Exception("Unregistered network object loaded!");
-
-                    if (first)
+                    if (rep.local_prefab == player_prefab_local)
                     {
-                        // The first serialization is the section we will be creating
-                        ret = create(null, type, serialization, id_bytes, id);
-                        first = false;
+                        // This was a forced player creation
+                        client.player = rep;
                     }
                     else
                     {
-                        // All other serializations are regular representations
-                        create(type_id, parent_id, serialization, id);
+                        throw new System.NotImplementedException();
                     }
-
-                    offset += length; // Shift to next object
                 }
 
-                return ret;
+                client.load(rep, true, true);
+
+                // If this is a child, load it on all other
+                // clients that have the parent.
+                var parent = rep.transform.parent.GetComponent<representation>();
+                if (parent != null)
+                    foreach (var c in connected_clients)
+                        if (c != client)
+                            if (c.has_loaded(parent))
+                                c.load(rep, false);
+
+                message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
+            },
+
+            [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
+            {
+                // Find the representation being deleted
+                int network_id = network_utils.decode_int(bytes, ref offset);
+                var deleting = representations[network_id];
+
+                // Unload the object with the above network_id 
+                // from all clients + the server (children will
+                // also be unloaded by the client).
+                foreach (var c in connected_clients)
+                    if (c.has_loaded(deleting))
+                        c.unload(deleting, c == client);
+
+                // Remove/destroy the representation + all children
+                network_utils.top_down<representation>(deleting.transform,
+                    (rep) => representations.Remove(rep.network_id));
+                Object.Destroy(deleting.gameObject);
+            }
+        };
+
+        // Send a payload to a client
+        void send(client client, MESSAGE msg_type, byte[] payload)
+        {
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                new byte[] { (byte)msg_type },
+                payload
+            );
+
+            // Queue the message, creating the queue for this
+            // client if it doesn't already exist
+            Queue<pending_message> queue;
+            if (!message_queues.TryGetValue(client, out queue))
+            {
+                queue = new Queue<pending_message>();
+                message_queues[client] = queue;
             }
 
-            /// <summary>
-            /// The clients that currently have access to this section.
-            /// </summary>
-            HashSet<client> clients;
-
-            /// <summary>
-            /// Return a copy of the list of connected clients.
-            /// </summary>
-            /// <returns></returns>
-            public override List<client> connected_clients()
+            queue.Enqueue(new pending_message
             {
-                return new List<client>(clients);
+                bytes = to_send,
+                send_time = Time.realtimeSinceStartup
+            });
+        }
+
+        // Setup the message senders
+        message_senders = new Dictionary<MESSAGE, message_sender>
+        {
+            [MESSAGE.CREATE_LOCAL] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                send(client, MESSAGE.CREATE_LOCAL, (byte[])args[0]);
+            },
+
+            [MESSAGE.CREATE_REMOTE] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                send(client, MESSAGE.CREATE_REMOTE, (byte[])args[0]);
+            },
+
+            [MESSAGE.FORCE_CREATE] = (client, args) =>
+            {
+                if (args.Length != 5)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                Vector3 position = (Vector3)args[0];
+                string local_prefab = (string)args[1];
+                string remote_prefab = (string)args[2];
+                int network_id = (int)args[3];
+                int parent_id = (int)args[4];
+
+                send(client, MESSAGE.FORCE_CREATE, network_utils.concat_buffers(
+                    network_utils.encode_vector3(position),
+                    network_utils.encode_string(local_prefab),
+                    network_utils.encode_string(remote_prefab),
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(parent_id)
+                ));
+            },
+
+            [MESSAGE.UNLOAD] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+
+                send(client, MESSAGE.UNLOAD, network_utils.encode_int(network_id));
+            },
+
+            [MESSAGE.VARIABLE_UPDATE] = (client, args) =>
+            {
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var id = (int)args[0];
+                var index = (int)args[1];
+                var serialization = (byte[])args[2];
+
+                send(client, MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(id),
+                    network_utils.encode_int(index),
+                    serialization
+                ));
+            },
+
+            [MESSAGE.CREATION_SUCCESS] = (client, args) =>
+            {
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int local_id = (int)args[0];
+                int network_id = (int)args[1];
+
+                send(client, MESSAGE.CREATION_SUCCESS, network_utils.concat_buffers(
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(network_id)
+                ));
             }
+        };
+    }
 
-            /// <summary>
-            /// Register the fact that a client has access to this section.
-            /// </summary>
-            /// <param name="client">The client to register.</param>
-            public void add_client(client client)
+    static void load()
+    {
+        // Find all the files to load, in alphabetical order
+        List<string> files = new List<string>(System.IO.Directory.GetFiles(save_dir()));
+        for (int i = 0; i < files.Count; ++i)
+            files[i] = System.IO.Path.GetFileName(files[i]);
+
+        // Ensure files are loaded in correct order
+        files.Sort((f1, f2) =>
+        {
+            int i1 = int.Parse(f1.Split('_')[0]);
+            int i2 = int.Parse(f2.Split('_')[0]);
+            return i1.CompareTo(i2);
+        });
+
+        foreach (var f in files)
+        {
+            // Get the filename + bytes
+            byte[] bytes = System.IO.File.ReadAllBytes(save_dir() + "/" + f);
+            var tags = f.Split('_');
+
+            int input_id;
+            var rep = representation.create(bytes, 0, bytes.Length, out input_id);
+            if (input_id != rep.network_id)
+                throw new System.Exception("Network id loaded incoorectly!");
+
+            if (tags[1] == "player")
             {
-                clients.Add(client);
+                // This representation was a player; start inactive +
+                // record the username.
+                rep.transform.SetParent(inactive_representations);
+                player_representations[tags[2]] = rep;
             }
-
-            /// <summary>
-            /// Register the fact that a client no longer has access to this section.
-            /// </summary>
-            /// <param name="client">The client that lost access to this section.</param>
-            public void remove_client(client client)
+            else if (tags[1] == "inrep")
             {
-                clients.Remove(client);
-
-                if (clients.Count == 0)
-                    offload_to_disk();
+                // This was a top-level inactive representation, move it there
+                if (rep.transform.parent == active_representations)
+                    rep.transform.SetParent(inactive_representations);
             }
-
-            /// <summary>
-            /// Called when a section is no longer needed by any clients, saving
-            /// the section to disk.
-            /// </summary>
-            public void offload_to_disk()
+            else if (tags[1] == "rep")
             {
-                // Remove me from the various lists
-                section_representations.Remove(id);
-                representations.Remove(id);
-                Destroy(gameObject);
-
-                // Save my serialization
-                System.IO.File.WriteAllBytes(save_directory() + "/section_" + id, tree_serialization());
+                // Active representations need no more work
             }
+            else throw new System.Exception("Could not load " + f);
+        }
+    }
 
-            /// <summary>
-            /// The identifying bytes of this section.
-            /// </summary>
-            public byte[] section_id_bytes { get; private set; }
+    static void save()
+    {
+        // Ensure the directory is blank
+        if (System.IO.Directory.Exists(save_dir()))
+            System.IO.Directory.Delete(save_dir(), true);
+        System.IO.Directory.CreateDirectory(save_dir());
 
-            /// <summary>
-            /// Get the serialization of this and all child objects, the
-            /// serialization is guaranteed to be in order of depth. The
-            /// first serialization is the section representation itself, then
-            /// it's children and so on. This is so that, when we deserialize,
-            /// the parent for each deserialized object will already have been
-            /// deserialized and available to be assigned as the parent.
-            /// </summary>
-            /// <returns></returns>
-            public byte[] tree_serialization()
+        // Remember which network_id's have been saved
+        HashSet<int> saved = new HashSet<int>();
+
+        // Save the reprentations in top-down order
+        int order = 0;
+
+        // Save the players first
+        foreach (var kv in player_representations)
+        {
+            string fname = save_dir() + "/" + (++order) + "_player_" + kv.Key;
+            System.IO.File.WriteAllBytes(fname, kv.Value.serialize());
+            saved.Add(kv.Value.network_id);
+        }
+
+        // Then save active representations
+        network_utils.top_down<representation>(active_representations, (rep) =>
+        {
+            if (saved.Contains(rep.network_id)) return;
+            string fname = save_dir() + "/" + (++order) + "_rep";
+            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            saved.Add(rep.network_id);
+        });
+
+        // Then save inactive representations
+        network_utils.top_down<representation>(inactive_representations, (rep) =>
+        {
+            if (saved.Contains(rep.network_id)) return;
+            string fname = save_dir() + "/" + (++order) + "_inrep";
+            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            saved.Add(rep.network_id);
+        });
+    }
+
+    public static void stop()
+    {
+        if (tcp == null) return;
+        tcp.Stop();
+        save();
+    }
+
+    public static void update()
+    {
+        if (tcp == null) return;
+
+        // Connect new clients
+        while (tcp.Pending())
+            connected_clients.Add(new client(tcp.AcceptTcpClient()));
+
+        // Recive messages from clients
+        foreach (var c in new List<client>(connected_clients))
+        {
+            byte[] buffer = new byte[c.tcp.ReceiveBufferSize];
+            while (c.stream.CanRead && c.stream.DataAvailable)
             {
-                List<byte> ser = new List<byte>();
+                int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
+                int offset = 0;
+                traffic_down.log_bytes(bytes_read);
 
-                // First bytes are my id bytes (this is only actually needed
-                // when saving to disk, but is used as a check when sent to
-                // a client).
-                ser.AddRange(System.BitConverter.GetBytes(section_id_bytes.Length));
-                ser.AddRange(section_id_bytes);
-
-                List<representation> to_serialize = new List<representation> { this };
-
-                while (to_serialize.Count > 0)
+                while (offset < bytes_read)
                 {
-                    List<representation> children = new List<representation>();
+                    // Parse message length
+                    int payload_length = network_utils.decode_int(buffer, ref offset);
 
-                    foreach (var r in to_serialize)
-                    {
-                        // The serialization for this representation, with enough info
-                        // to completely reconstruct it client-side
-                        int length = sizeof(int) * 4 + r.serialization.Length;
-                        ser.AddRange(System.BitConverter.GetBytes(length));      // The length of the serialization
-                        ser.AddRange(System.BitConverter.GetBytes(r.id));        // id
-                        ser.AddRange(System.BitConverter.GetBytes(r.parent_id)); // parents id
-                        ser.AddRange(System.BitConverter.GetBytes(r.type_id));   // type id
-                        ser.AddRange(r.serialization);                           // type-specific serialization
+                    // Parse message type
+                    var msg_type = (global::client.MESSAGE)buffer[offset];
+                    offset += 1;
 
-                        // Remember the children, they are next up for serialization
-                        foreach (Transform t in r.transform)
-                        {
-                            var c = t.GetComponent<representation>();
-                            if (c != null)
-                                children.Add(c);
-                        }
-                    }
-
-                    to_serialize = children;
+                    // Handle the message
+                    message_parsers[msg_type](c, buffer, offset, payload_length);
+                    offset += payload_length;
                 }
-
-                return ser.ToArray();
             }
         }
-    }
 
+        // Update the objects which are loaded on the clients
+        foreach (var c in connected_clients)
+            c.update_loaded();
 
-
-    //###########//
-    // UTILITIES //
-    //###########//
-
-
-
-    /// <summary>
-    /// The types of messages that can be sent from a client.
-    /// </summary>
-    public enum CLIENT_MSG : byte
-    {
-        // Request a check for section existance
-        CHECK_SECTION = 1, // Start numbering at 1, so erroneous 0's error out
-
-        // Request an id for a newly-created object
-        CREATE_NEW,
-        CREATE_NEW_SECTION,
-
-        // Send a serialization update
-        SERIALIZATION_UPDATE,
-
-        // Sent when a client destroys a section, so we know
-        // to stop sending serialization updates there
-        OBJECT_FORGOTTEN,
-    }
-
-    /// <summary>
-    /// The types of message that can be sent from the server.
-    /// </summary>
-    public enum SERVER_MSG : byte
-    {
-        // Replies to query for section existance
-        SECTION_EXISTS = 1,  // Start numbering at 1, so erroneous 0's error out
-        SECTION_DOESNT_EXIST,
-
-        // Replies to confirm creation of objects
-        CREATION_SUCCESS,
-        SECTION_CREATION_SUCCESS,
-
-        // Messages to inform clients about the create of objects
-        NEW_CREATION,
-
-        // A serialization update needs to be applied
-        SERIALIZATION_UPDATE,
-
-        // A section has been created on a client
-        // who's existance is forced upon other clients
-        FORCED_SECTION,
-    }
-
-    /// <summary>
-    /// Class for monitoring network traffic
-    /// </summary>
-    class traffic_monitor
-    {
-        int bytes_since_last;
-        float time_last;
-        float rate;
-        float window_length;
-
-        /// <summary>
-        /// Create a traffic monitor.
-        /// </summary>
-        /// <param name="time">Time in seconds created.</param>
-        /// <param name="smoothing">Amount to smooth calculated rates.</param>
-        public traffic_monitor(float time, float window_length = 0.5f)
+        // Send the messages from the queue
+        var disconnected_during_write = new List<client>();
+        foreach (var kv in message_queues)
         {
-            time_last = time;
-            this.window_length = window_length;
+            var client = kv.Key;
+            var queue = kv.Value;
+
+            // The buffer to concatinate messages into
+            byte[] send_buffer = new byte[client.tcp.SendBufferSize];
+            int offset = 0;
+
+            while (queue.Count > 0)
+            {
+                var msg = queue.Dequeue();
+
+                if (msg.bytes.Length > send_buffer.Length)
+                    throw new System.Exception("Message too large!");
+
+                if (offset + msg.bytes.Length > send_buffer.Length)
+                {
+                    // Message would overrun buffer, send the buffer
+                    // and create a new one
+                    try
+                    {
+                        traffic_up.log_bytes(offset);
+                        client.stream.Write(send_buffer, 0, offset);
+                    }
+                    catch
+                    {
+                        disconnected_during_write.Add(client);
+                    }
+                    send_buffer = new byte[client.tcp.SendBufferSize];
+                    offset = 0;
+                }
+
+                // Copy the message into the send buffer
+                System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+                offset += msg.bytes.Length; // Move to next message
+            }
+
+            // Send the buffer
+            if (offset > 0)
+            {
+                try
+                {
+                    traffic_up.log_bytes(offset);
+                    client.stream.Write(send_buffer, 0, offset);
+                }
+                catch
+                {
+                    disconnected_during_write.Add(client);
+                }
+            }
         }
 
-        /// <summary>
-        /// Log a time interval, and calculate the rate
-        /// since the last time interval.
-        /// </summary>
-        /// <param name="time">The time to log.</param>
-        public void log_time(float time)
-        {
-            // Don't update rate unless sufficent time has passed
-            if (time - time_last < window_length) return;
-            rate = bytes_since_last / (time - time_last);
-            bytes_since_last = 0;
-            time_last = time;
-        }
-
-        /// <summary>
-        /// Get a string reporting the usage (e.g 124.3 KB/s)
-        /// </summary>
-        /// <returns></returns>
-        public string usage()
-        {
-            if (rate < 1e3f) return System.Math.Round(rate, 2) + " B/s";
-            if (rate < 1e6f) return System.Math.Round(rate / 1e3f, 2) + " KB/s";
-            if (rate < 1e9f) return System.Math.Round(rate / 1e6f, 2) + " MB/s";
-            if (rate < 1e12f) return System.Math.Round(rate / 1e9f, 2) + " GB/s";
-            return "A lot";
-        }
-
-        public void log_bytes(int bytes) { bytes_since_last += bytes; }
+        // Properly disconnect clients that were found
+        // to have disconnected during message writing
+        foreach (var d in disconnected_during_write)
+            d.disconnect();
     }
 
-    /// <summary>
-    /// Concatinate the given byte arrays into a single byte array.
-    /// </summary>
-    /// <param name="buffers">Arrays to concatinate.</param>
-    /// <returns></returns>
+    public static void draw_gizmos()
+    {
+        foreach (var c in connected_clients)
+        {
+            if (c.player == null)
+                continue;
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(c.player.transform.position, c.player.radius);
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(c.player.transform.position, c.render_range);
+        }
+    }
+
+    public static string info()
+    {
+        if (tcp == null) return "Server not started.";
+        return "Server listening on " + tcp.LocalEndpoint + "\n" +
+               connected_clients.Count + " clients connected\n" +
+               representations.Count + " representations\n" +
+               "Traffic:\n" +
+               "    " + traffic_up.usage() + " up\n" +
+               "    " + traffic_down.usage() + " down";
+    }
+
+    public enum MESSAGE : byte
+    {
+        CREATE_LOCAL = 1,  // Create a local network object on a client
+        CREATE_REMOTE,     // Create a remote network object on a client
+        FORCE_CREATE,      // Force a client to create an object
+        UNLOAD,            // Unload an object on a client
+        CREATION_SUCCESS,  // Send when a creation requested by a client was successful
+        VARIABLE_UPDATE,   // Send a networked_variable update to a client
+    }
+
+    delegate void message_parser(client c, byte[] bytes, int offset, int length);
+    static Dictionary<global::client.MESSAGE, message_parser> message_parsers;
+
+    delegate void message_sender(client c, params object[] args);
+    static Dictionary<MESSAGE, message_sender> message_senders;
+}
+
+
+
+//###############//
+// NETWORK UTILS //
+//###############//
+
+
+
+public static class network_utils
+{
+    /// <summary> Concatinate the given byte arrays into a single byte array. </summary>
     public static byte[] concat_buffers(params byte[][] buffers)
     {
         int tot_length = 0;
@@ -1879,52 +1849,192 @@ public abstract class networked : MonoBehaviour
         return ret;
     }
 
-    static Dictionary<int, System.Type> networked_types_by_id;
-    static Dictionary<System.Type, int> networked_ids_by_type;
-
-    /// <summary>
-    /// Load the library of networked types, indexed by uniquely defined integers.
-    /// </summary>
-    static void load_type_ids()
+    /// <summary> Get a string displaying the given bytes. </summary>
+    public static string byte_string(byte[] bytes, int offset = 0, int length = -1)
     {
-        networked_types_by_id = new Dictionary<int, System.Type>();
-        networked_ids_by_type = new Dictionary<System.Type, int>();
+        if (length < 0) length = bytes.Length;
+        string ret = "";
+        for (int i = 0; i < length; ++i)
+            ret += bytes[offset + i] + ", ";
+        ret = ret.Substring(0, ret.Length - 2);
+        return ret;
+    }
 
-        // Get all implementations of networked_object that exist in the assembely
-        List<System.Type> types = new List<System.Type>();
-        var asm = System.Reflection.Assembly.GetAssembly(typeof(networked));
-        foreach (var t in asm.GetTypes())
-            if (t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(networked)))
-                types.Add(t);
+    /// <summary> Get the ip address of the local machine, as used by a server. </summary>
+    public static System.Net.IPAddress local_ip_address()
+    {
+        // Find the local ip address to listen on
+        var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+        System.Net.IPAddress address = null;
+        foreach (var ip in host.AddressList)
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                address = ip;
+                break;
+            }
 
-        // Ensure types are in the same order across clients
-        types.Sort((t1, t2) => string.Compare(t1.FullName, t2.FullName, false));
-        for (int i = 0; i < types.Count; ++i)
+        if (address == null)
+            throw new System.Exception("No network adapters found!");
+
+        return address;
+    }
+
+    /// <summary> Apply the function <paramref name="f"/> to 
+    /// <paramref name="parent"/>, and all T in it's children. 
+    /// Guaranteed to carry out in top-down order. </summary>
+    public static void top_down<T>(Transform parent, do_func<T> f)
+        where T : MonoBehaviour
+    {
+        Queue<Transform> to_do = new Queue<Transform>();
+        to_do.Enqueue(parent);
+
+        while (to_do.Count > 0)
         {
-            networked_types_by_id[i] = types[i];
-            networked_ids_by_type[types[i]] = i;
+            var doing_to = to_do.Dequeue();
+
+            foreach (Transform t in doing_to)
+                to_do.Enqueue(t);
+
+            var found = doing_to.GetComponent<T>();
+            if (found != null) f(found);
         }
     }
+    public delegate void do_func<T>(T t);
 
-    /// <summary>
-    /// Get the unique id of a particular networked type.
-    /// </summary>
-    /// <param name="type">The type to retrieve the id of.</param>
-    /// <returns></returns>
-    public static int get_networked_type_id(System.Type type)
+    /// <summary> Class for monitoring network traffic </summary>
+    public class traffic_monitor
     {
-        if (networked_ids_by_type == null) load_type_ids();
-        return networked_ids_by_type[type];
+        int bytes_since_last;
+        float time_last;
+        float rate;
+        float window_length;
+
+        /// <summary> Create a traffic monitor. </summary>
+        public traffic_monitor(float window_length = 0.5f)
+        {
+            time_last = Time.realtimeSinceStartup;
+            this.window_length = window_length;
+        }
+
+        /// <summary> Get a string reporting the usage (e.g 124.3 KB/s) </summary>
+        public string usage()
+        {
+            // Update rate if sufficent time has passed
+            float time = Time.realtimeSinceStartup;
+            if (time - time_last > window_length)
+            {
+                rate = bytes_since_last / (time - time_last);
+                bytes_since_last = 0;
+                time_last = time;
+            }
+
+            if (rate < 1e3f) return System.Math.Round(rate, 2) + " B/s";
+            if (rate < 1e6f) return System.Math.Round(rate / 1e3f, 2) + " KB/s";
+            if (rate < 1e9f) return System.Math.Round(rate / 1e6f, 2) + " MB/s";
+            if (rate < 1e12f) return System.Math.Round(rate / 1e9f, 2) + " GB/s";
+            return "A lot";
+        }
+
+        public void log_bytes(int bytes) { bytes_since_last += bytes; }
     }
 
-    /// <summary>
-    /// Get a networked type by it's unique id.
-    /// </summary>
-    /// <param name="id">The id of the type to retrieve.</param>
-    /// <returns></returns>
-    public static System.Type get_networked_type_by_id(int id)
+    /// <summary> Encode a string ready to be sent over the network (including it's length). </summary>
+    public static byte[] encode_string(string str)
     {
-        if (networked_types_by_id == null) load_type_ids();
-        return networked_types_by_id[id];
+        byte[] ascii = System.Text.Encoding.ASCII.GetBytes(str);
+        if (ascii.Length > byte.MaxValue)
+            throw new System.Exception("String too long to encode!");
+        return concat_buffers(
+            new byte[] { (byte)ascii.Length },
+            ascii
+        );
+    }
+
+    /// <summary> Decode a string encoded using <see cref="encode_string(string)"/>.
+    /// <paramref name="offset"/> will be incremented by the number of bytes decoded. </summary>
+    public static string decode_string(byte[] buffer, ref int offset)
+    {
+        int length = buffer[offset];
+        string str = System.Text.Encoding.ASCII.GetString(buffer, offset + 1, length);
+        offset += length + 1;
+        return str;
+    }
+
+    /// <summary> Encode a vector3 ready to be sent over the network. </summary>
+    public static byte[] encode_vector3(Vector3 v)
+    {
+        return concat_buffers(
+            System.BitConverter.GetBytes(v.x),
+            System.BitConverter.GetBytes(v.y),
+            System.BitConverter.GetBytes(v.z)
+        );
+    }
+
+    /// <summary> Decode a vector3 encoded using <see cref="encode_vector3(Vector3)"/>. 
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static Vector3 decode_vector3(byte[] buffer, ref int offset)
+    {
+        var vec = new Vector3(
+            System.BitConverter.ToSingle(buffer, offset),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float)),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 2)
+        );
+        offset += 3 * sizeof(float);
+        return vec;
+    }
+
+    /// <summary> Encode an int ready to be sent over the network. </summary>
+    public static byte[] encode_int(int i)
+    {
+        return System.BitConverter.GetBytes(i);
+    }
+
+    /// <summary> Decode an integer that was encoded using <see cref="encode_int(int)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static int decode_int(byte[] buffer, ref int offset)
+    {
+        int i = System.BitConverter.ToInt32(buffer, offset);
+        offset += sizeof(int);
+        return i;
+    }
+
+    /// <summary> Encode a float ready to be sent over the network. </summary>
+    public static byte[] encode_float(float f)
+    {
+        return System.BitConverter.GetBytes(f);
+    }
+
+    /// <summary> Decode a float encoded with <see cref="encode_float(float)"/>.
+    /// Increments offset by the number of bytes decoded. </summary>
+    public static float decode_float(byte[] buffer, ref int offset)
+    {
+        float f = System.BitConverter.ToSingle(buffer, offset);
+        offset += sizeof(float);
+        return f;
+    }
+
+    /// <summary> Encodes a quaternion ready to be sent over the network. </summary>
+    public static byte[] encode_quaternion(Quaternion q)
+    {
+        return concat_buffers(
+            System.BitConverter.GetBytes(q.x),
+            System.BitConverter.GetBytes(q.y),
+            System.BitConverter.GetBytes(q.z),
+            System.BitConverter.GetBytes(q.w)
+        );
+    }
+
+    /// <summary> Decode a quaternion encoded using <see cref="encode_quaternion(Quaternion)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static Quaternion decode_quaternion(byte[] buffer, ref int offset)
+    {
+        Quaternion q = new Quaternion(
+            System.BitConverter.ToSingle(buffer, offset),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float)),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 2),
+            System.BitConverter.ToSingle(buffer, offset + sizeof(float) * 3)
+        );
+        offset += sizeof(float) * 4;
+        return q;
     }
 }

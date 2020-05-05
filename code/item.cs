@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item : networked
+public class item : MonoBehaviour
 {
     //###########//
     // VARIABLES //
@@ -115,39 +115,6 @@ public class item : networked
         }
     }
 
-    //############//
-    // NETWORKING //
-    //############//
-
-    protected override byte[] serialize()
-    {
-        return concat_buffers(
-            System.BitConverter.GetBytes(transform.position.x),
-            System.BitConverter.GetBytes(transform.position.y),
-            System.BitConverter.GetBytes(transform.position.z),
-            System.BitConverter.GetBytes(transform.rotation.x),
-            System.BitConverter.GetBytes(transform.rotation.y),
-            System.BitConverter.GetBytes(transform.rotation.z),
-            System.BitConverter.GetBytes(transform.rotation.w)
-        );
-    }
-
-    protected override void deserialize(byte[] bytes, int offset, int count)
-    {
-        transform.position = new Vector3(
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 0),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 1),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 2)
-        );
-
-        transform.rotation = new Quaternion(
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 3),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 4),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 5),
-            System.BitConverter.ToSingle(bytes, offset + sizeof(float) * 6)
-        );
-    }
-
     //##############//
     // STATIC STUFF //
     //##############//
@@ -170,7 +137,8 @@ public class item : networked
     {
         // Create a networked version of the  
         chunk parent = chunk.at(position);
-        var i = (item)create(parent, load_from_id(id));
+        var i = load_from_id(id).inst();
+        i.transform.SetParent(parent.transform);
         i.transform.position = position;
         i.transform.rotation = rotation;
         i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
