@@ -94,14 +94,17 @@ public class networked_v2 : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
-        // Send queued variable updates
-        for(int i=0; i<networked_variables.Count; ++i)
+        if (network_id > 0) // Registered on the network
         {
-            var nv = networked_variables[i];
-            if (nv.queued_serial != null)
+            // Send queued variable updates
+            for (int i = 0; i < networked_variables.Count; ++i)
             {
-                client.send_variable_update(network_id, i, nv.queued_serial);
-                nv.queued_serial = null;
+                var nv = networked_variables[i];
+                if (nv.queued_serial != null)
+                {
+                    client.send_variable_update(network_id, i, nv.queued_serial);
+                    nv.queued_serial = null;
+                }
             }
         }
 
@@ -447,7 +450,7 @@ public static class client
 
     public static networked_v2 create(Vector3 position,
         string local_prefab, string remote_prefab = null,
-        networked_v2 parent = null, Quaternion rotation = default)
+        networked_v2 parent = null, Quaternion rotation = default, int network_id=-1)
     {
         // If remote prefab not specified, it is the same
         // as the local prefab.
@@ -460,8 +463,17 @@ public static class client
         created = Object.Instantiate(created);
         created.name = name;
 
-        // Assign a (negative) unique local id
-        created.network_id = --last_local_id;
+        if (network_id < 0)
+        {
+            // Assign a (negative) unique local id
+            created.network_id = --last_local_id;
+        }
+        else
+        {
+            // Copy the given network id
+            created.network_id = network_id;
+        }
+
         created.init_network_variables();
 
         // Parent if requested
@@ -614,6 +626,19 @@ public static class client
 
             [server.MESSAGE.CREATE_REMOTE] = (buffer, offset, length) =>
                 create_from_network(buffer, offset, length, false),
+
+            [server.MESSAGE.FORCE_CREATE] = (buffer, offset, length) =>
+            {
+                Vector3 position = network_utils.decode_vector3(buffer, ref offset);
+                string local_prefab = network_utils.decode_string(buffer, ref offset);
+                string remote_prefab = network_utils.decode_string(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                int parent_id = network_utils.decode_int(buffer, ref offset);
+
+                var created = create(position, local_prefab, remote_prefab,
+                    parent: parent_id > 0 ? networked_v2.find_by_id(parent_id) : null,
+                    network_id: network_id);
+            },
 
             [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
             {
@@ -849,7 +874,20 @@ public static class server
         // The username + password of this client
         public string username { get; private set; }
         public byte[] password { get; private set; }
-        public representation player { get; private set; }
+
+        /// <summary> The representation of this clients player object. </summary>
+        public representation player
+        {
+            get => _player;
+            set
+            {
+                if (_player != null)
+                    throw new System.Exception("Client already has a player!");
+                _player = value;
+                player_representations[username] = value;
+            }
+        }
+        representation _player;
 
         // The TCP connection to this client
         public TcpClient tcp { get; private set; }
@@ -869,31 +907,23 @@ public static class server
             representation player = null;
             if (!player_representations.TryGetValue(username, out player))
             {
-                // Load failed - create the player
-                // Mimic a client.MESSAGE.CREATE
-                byte[] new_player = network_utils.concat_buffers(
-                    network_utils.encode_int(-1), // Local id
-                    network_utils.encode_int(0),  // Parent id = none
-                    network_utils.encode_string(player_prefab_local),
-                    network_utils.encode_string(player_prefab_remote),
-                    networked_v2.look_up(player_prefab_local).serialize_networked_variables()
+                // Force the creation of the player on the client
+                player = null;
+                message_senders[MESSAGE.FORCE_CREATE](this,
+                    Vector3.zero, player_prefab_local, player_prefab_remote,
+                    ++representation.last_network_id_assigned, 0
                 );
-
-                int local_id;
-                player = representation.create(new_player, 0, new_player.Length, out local_id);
-                if (local_id != -1)
-                    throw new System.Exception("Local id from spoofed player buffer was read incorrecly!");
-
-                player_representations[username] = player;
             }
 
             this.username = username;
             this.password = password;
-            this.player = player;
 
-            player.transform.SetParent(active_representations);
-
-            load(player, true, false);
+            if (player != null)
+            {
+                this.player = player;
+                player.transform.SetParent(active_representations);
+                load(player, true, false);
+            }
         }
 
         public void disconnect()
@@ -1119,13 +1149,13 @@ public static class server
 
         /// <summary>  Create a network representation. This does not load the
         /// representation on any clients, or send creation messages. </summary>
-        public static representation create(byte[] buffer, int offset, int length, out int local_id)
+        public static representation create(byte[] buffer, int offset, int length, out int input_id)
         {
             // Remember where the the end of the serialization is
             int end = offset + length;
 
             // Deserialize the basic info needed to reproduce the object
-            int network_id = network_utils.decode_int(buffer, ref offset);
+            input_id = network_utils.decode_int(buffer, ref offset);
             int parent_id = network_utils.decode_int(buffer, ref offset);
             string local_prefab = network_utils.decode_string(buffer, ref offset);
             string remote_prefab = network_utils.decode_string(buffer, ref offset);
@@ -1137,19 +1167,17 @@ public static class server
 
             rep.local_prefab = local_prefab;
             rep.remote_prefab = remote_prefab;
-            if (network_id < 0)
+            if (input_id < 0)
             {
                 // This was a local id, assign a unique network id
                 rep.network_id = ++last_network_id_assigned; // Network id's start at 1
-                local_id = network_id;
             }
             else
             {
                 // Restore the given network id
-                rep.network_id = network_id;
-                if (network_id > last_network_id_assigned)
-                    last_network_id_assigned = network_id;
-                local_id = 0;
+                rep.network_id = input_id;
+                if (input_id > last_network_id_assigned)
+                    last_network_id_assigned = input_id;
             }
 
             // Everything else is networked variables to deserialize
@@ -1165,7 +1193,8 @@ public static class server
 
             return rep;
         }
-        static int last_network_id_assigned = 0;
+
+        public static int last_network_id_assigned = 0;
 
 #       if UNITY_EDITOR
 
@@ -1354,8 +1383,22 @@ public static class server
             [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
             {
                 // Create the representation from the info sent from the client
-                int local_id;
-                var rep = representation.create(bytes, offset, length, out local_id);
+                int input_id;
+                var rep = representation.create(bytes, offset, length, out input_id);
+                if (input_id > 0) 
+                {
+                    // This was a forced create
+
+                    if (rep.local_prefab == player_prefab_local)
+                    {
+                        // This was a forced player creation
+                        client.player = rep;
+                    }
+                    else
+                    {
+                        throw new System.NotImplementedException();
+                    }
+                }
 
                 client.load(rep, true, true);
 
@@ -1368,7 +1411,7 @@ public static class server
                             if (c.has_loaded(parent))
                                 c.load(rep, false);
 
-                message_senders[MESSAGE.CREATION_SUCCESS](client, local_id, rep.network_id);
+                message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
             },
 
             [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
@@ -1435,6 +1478,26 @@ public static class server
                 send(client, MESSAGE.CREATE_REMOTE, (byte[])args[0]);
             },
 
+            [MESSAGE.FORCE_CREATE] = (client, args) =>
+            {
+                if (args.Length != 5)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                Vector3 position = (Vector3)args[0];
+                string local_prefab = (string)args[1];
+                string remote_prefab = (string)args[2];
+                int network_id = (int)args[3];
+                int parent_id = (int)args[4];
+
+                send(client, MESSAGE.FORCE_CREATE, network_utils.concat_buffers(
+                    network_utils.encode_vector3(position),
+                    network_utils.encode_string(local_prefab),
+                    network_utils.encode_string(remote_prefab),
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(parent_id)
+                ));
+            },
+
             [MESSAGE.UNLOAD] = (client, args) =>
             {
                 if (args.Length != 1)
@@ -1498,8 +1561,10 @@ public static class server
             byte[] bytes = System.IO.File.ReadAllBytes(save_dir() + "/" + f);
             var tags = f.Split('_');
 
-            int local_id;
-            var rep = representation.create(bytes, 0, bytes.Length, out local_id);
+            int input_id;
+            var rep = representation.create(bytes, 0, bytes.Length, out input_id);
+            if (input_id != rep.network_id)
+                throw new System.Exception("Network id loaded incoorectly!");
 
             if (tags[1] == "player")
             {
@@ -1697,6 +1762,7 @@ public static class server
     {
         CREATE_LOCAL = 1,  // Create a local network object on a client
         CREATE_REMOTE,     // Create a remote network object on a client
+        FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
