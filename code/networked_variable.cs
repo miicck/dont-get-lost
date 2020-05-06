@@ -153,8 +153,10 @@ public abstract class networked_variable
         float lerp_speed;
         float resolution;
 
-        public net_float(float lerp_speed = 5f, float resolution = 0f)
+        public net_float(float init = 0f, float lerp_speed = 5f, float resolution = 0f)
         {
+            _value = init;
+            _lerp_value = init;
             this.lerp_speed = lerp_speed;
             this.resolution = resolution;
         }
@@ -171,6 +173,47 @@ public abstract class networked_variable
         }
 
         public delegate void change_func(float new_value);
+        public change_func on_change;
+    }
+
+    public class net_quaternion : networked_variable
+    {
+        public Quaternion value
+        {
+            get => value;
+            set
+            {
+                if (_value == value)
+                    return; // No change
+                _value = value;
+                on_change?.Invoke(_value);
+                send_update();
+            }
+        }
+        Quaternion _value = Quaternion.identity;
+
+        public override byte[] serialization()
+        {
+            return network_utils.concat_buffers(
+                network_utils.encode_float(_value.x),
+                network_utils.encode_float(_value.y),
+                network_utils.encode_float(_value.z),
+                network_utils.encode_float(_value.w)
+            );
+        }
+
+        public override void deserialize(byte[] buffer, int offset, int length)
+        {
+            _value = new Quaternion(
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset)
+            );
+            on_change?.Invoke(_value);
+        }
+
+        public delegate void change_func(Quaternion new_value);
         public change_func on_change;
     }
 }

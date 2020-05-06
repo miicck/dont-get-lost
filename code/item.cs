@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item : MonoBehaviour
+public class item : networked
 {
     //###########//
     // VARIABLES //
@@ -16,6 +16,9 @@ public class item : MonoBehaviour
     // requires a fixed number of bytes, rather than a variable-size string)
     new public string name { get { return parse_id_name(base.name).Value; } }
     public int id { get { return parse_id_name(base.name).Key; } }
+
+    // The name of the prefab I was created from
+    public string prefab { get { return "items/" + base.name; } }
 
     //############//
     // PLAYER USE //
@@ -98,7 +101,7 @@ public class item : MonoBehaviour
         // Attempt to pick up the item (put it in the player
         // inventory/destroy in-game representation)
         if (player.current.inventory.add(name, 1))
-            Destroy(this.gameObject);
+            delete();
     }
 
     //#################//
@@ -113,6 +116,26 @@ public class item : MonoBehaviour
             rigidbody.velocity = Vector3.zero;
             transform.position = player.current.camera.transform.position;
         }
+    }
+
+    //############//
+    // NETWORKING //
+    //############//
+
+    public networked_variable.net_quaternion networked_rotation;
+
+    public override void on_init_network_variables()
+    {
+        networked_rotation = new networked_variable.net_quaternion();
+        transform.rotation = Quaternion.identity;
+        networked_rotation.on_change = (rot) => transform.rotation = rot;
+    }
+
+    public override void on_create()
+    {
+        // Start kinematic
+        rigidbody = gameObject.AddComponent<Rigidbody>();
+        rigidbody.isKinematic = true;
     }
 
     //##############//

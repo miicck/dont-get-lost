@@ -575,6 +575,9 @@ public static class server
                     if (c.has_loaded(deleting))
                         c.unload(deleting, c == client);
 
+                // Move to inactive whilst deleting.
+                deleting.transform.SetParent(inactive_representations);
+
                 // Remove/destroy the representation + all children
                 network_utils.top_down<representation>(deleting.transform,
                     (rep) => representations.Remove(rep.network_id));

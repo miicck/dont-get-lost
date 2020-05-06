@@ -300,7 +300,7 @@ public class building_material : item
                 player.current.camera_ray(), out same_hit, BUILD_RANGE, (b) => b.name == name);
             if (found_same != null)
                 if (player.current.inventory.add(name, 1))
-                    Destroy(found_same.gameObject);
+                    found_same.delete();
             return use_result.complete;
         }
 
@@ -342,8 +342,13 @@ public class building_material : item
     {
         if (spawned != null)
         {
-            // Create a proper version of the spawned object
-            var created = spawn(spawned.name, spawned.transform.position, spawned.transform.rotation);
+            // Create a proper, networked version of the spawned object
+            var created = (building_material)client.create(
+                spawned.transform.position, spawned.prefab);
+
+            created.networked_rotation.value = spawned.transform.rotation;
+            
+            //var created = spawn(spawned.name, spawned.transform.position, spawned.transform.rotation);
             created.rigidbody.isKinematic = true;
             Destroy(spawned.gameObject);
         }
