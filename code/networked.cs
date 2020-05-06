@@ -98,6 +98,25 @@ public class networked : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
+        if (!local)
+        {
+            // Nonlocal => LERP my position
+            // We do this first, so that transform.localPosition is properly
+            // initialized before the first on_network_update() call
+            transform.localPosition = new Vector3(
+                x_local.lerped_value,
+                y_local.lerped_value,
+                z_local.lerped_value
+            );
+        }
+
+        // Call implementation-specific network updates
+        // We do this before sending variable updates
+        // so that if networked variables change in
+        // on_network_update, we send their changed
+        // values immediately
+        on_network_update();
+
         if (network_id > 0) // Registered on the network
         {
             // Send queued variable updates
@@ -111,18 +130,6 @@ public class networked : MonoBehaviour
                 }
             }
         }
-
-        if (!local)
-        {
-            // LERP my position
-            transform.localPosition = new Vector3(
-                x_local.lerped_value,
-                y_local.lerped_value,
-                z_local.lerped_value
-            );
-        }
-
-        on_network_update();
     }
 
     /// <summary> My position as stored by the network. </summary>

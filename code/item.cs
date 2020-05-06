@@ -108,14 +108,6 @@ public class item : networked
             rigidbody.velocity = Vector3.zero;
             transform.position = player.current.camera.transform.position;
         }
-
-        /*
-        if (networked_rotation != null)
-        {
-            networked_position = transform.position;
-            networked_rotation.value = transform.rotation;
-        }
-        */
     }
 
     //############//
