@@ -120,7 +120,9 @@ public class player : networked_player
                         var spawned = item.create(
                             equipped.name,
                             equipped.transform.position, 
-                            equipped.transform.rotation);
+                            equipped.transform.rotation,
+                            kinematic: false,
+                            networked: true);
                         spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
                         re_equip();
                     }

@@ -21,6 +21,9 @@ public class networked : MonoBehaviour
     /// or when <see cref="client.create_from_network"/> is called). </summary>
     public virtual void on_create() { }
 
+    /// <summary> Called whenever client.update() is. </summary>
+    public virtual void on_network_update() {}
+
     /// <summary> Local == true iff this was created by this client. </summary>
     public bool local;
 
@@ -118,6 +121,8 @@ public class networked : MonoBehaviour
                 z_local.lerped_value
             );
         }
+
+        on_network_update();
     }
 
     /// <summary> My position as stored by the network. </summary>

@@ -108,6 +108,14 @@ public class item : networked
             rigidbody.velocity = Vector3.zero;
             transform.position = player.current.camera.transform.position;
         }
+
+        /*
+        if (networked_rotation != null)
+        {
+            networked_position = transform.position;
+            networked_rotation.value = transform.rotation;
+        }
+        */
     }
 
     //############//
@@ -118,6 +126,7 @@ public class item : networked
 
     public override void on_init_network_variables()
     {
+        // Create newtorked variables
         networked_rotation = new networked_variable.net_quaternion();
         transform.rotation = Quaternion.identity;
         networked_rotation.on_change = (rot) => transform.rotation = rot;
@@ -125,6 +134,14 @@ public class item : networked
 
     public override void on_create()
     {
+        // Initialize networked variables
+        networked_rotation.value = transform.rotation;
+    }
+
+    public override void on_network_update()
+    {
+        // Keep networked variables up to date
+        networked_position = transform.position;
         networked_rotation.value = transform.rotation;
     }
 
@@ -152,6 +169,9 @@ public class item : networked
             if (item == null)
                 throw new System.Exception("Could not find the item: " + name);
             item = item.inst();
+            item.transform.position = position;
+            item.transform.rotation = rotation;
+            item.transform.SetParent(network_parent == null ? null : network_parent.transform);
         }
 
         item.rigidbody = item.gameObject.AddComponent<Rigidbody>();
