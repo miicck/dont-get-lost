@@ -102,6 +102,11 @@ public class game : MonoBehaviour
     }
     private static float _render_range = chunk.SIZE;
 
+    public static void on_local_player_create(player p)
+    {
+        p.username.value = startup.username;
+    }
+
     void Start()
     {
         // Various startup modes
@@ -164,6 +169,9 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F3))
+            debug_text.enabled = !debug_text.enabled;
+
         debug_text.text = "";
 
         debug_text.text += world.info() + "\n";
@@ -175,11 +183,7 @@ public class game : MonoBehaviour
         client.update();
         debug_text.text += client.info() + "\n";
 
-        if (player.current != null)
-        {
-            debug_text.text += "Player info:\n";
-            debug_text.text += player.current.info();
-        }
+        debug_text.text += player.info() + "\n";
 
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;

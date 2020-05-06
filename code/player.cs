@@ -414,16 +414,13 @@ public class player : networked_player
         else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
-        /*
         if (map_open)
         {
             if (Input.GetKey(KeyCode.D)) y_rotation.value += ROTATION_SPEED * Time.deltaTime;
-            else if (Input.GetKey(KeyCode.A)) y_rotation.value -= -ROTATION_SPEED * Time.deltaTime;
+            else if (Input.GetKey(KeyCode.A)) y_rotation.value -= ROTATION_SPEED * Time.deltaTime;
             else velocity -= Vector3.Project(velocity, camera.transform.right);
         }
-        */
-
-        if (!map_open)
+        else
         {
             if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
             else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
@@ -511,14 +508,6 @@ public class player : networked_player
 
     void mouse_look()
     {
-        if (map_open)
-        {
-            // Rotate the player with A/D
-            if (Input.GetKey(KeyCode.A)) y_rotation.value -= Time.deltaTime * ROTATION_SPEED;
-            else if (Input.GetKey(KeyCode.D)) y_rotation.value += Time.deltaTime * ROTATION_SPEED;
-            return;
-        }
-
         // Rotate the view using the mouse
         // Note that horizontal moves rotate the player
         // vertical moves rotate the camera
@@ -666,6 +655,8 @@ public class player : networked_player
 
             // This is the local player
             current = this;
+
+            game.on_local_player_create(this);
         }
 
         // Initialize the inventory to closed
@@ -706,6 +697,7 @@ public class player : networked_player
     //############//
 
     networked_variable.net_float y_rotation;
+    public networked_variable.net_string username;
 
     public override void on_init_network_variables()
     {
@@ -714,15 +706,8 @@ public class player : networked_player
         {
             transform.rotation = Quaternion.Euler(0, yrot, 0);
         };
-    }
 
-    //###########//
-    // UTILITIES //
-    //###########//
-
-    public string info()
-    {
-        return "Position " + transform.position.x + ", " + transform.position.y + ", " + transform.position.z;
+        username = new networked_variable.net_string();
     }
 
     //################//
@@ -731,7 +716,15 @@ public class player : networked_player
 
     // The current (local) player
     public static player current;
-    public static string username;
+
+    public static string info()
+    {
+        if (current == null) return "No local player";
+        return "Local player " + current.username.value + " at " +
+            System.Math.Round(current.transform.position.x, 1) + " " +
+            System.Math.Round(current.transform.position.y, 1) + " " +
+            System.Math.Round(current.transform.position.z, 1);
+    }
 }
 
 public static class cursors
