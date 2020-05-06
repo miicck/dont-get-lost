@@ -98,11 +98,12 @@ public class chunk : MonoBehaviour
     }
 
     // Returns the chunk at the given location
-    public static chunk at(Vector3 location)
+    public static chunk at(Vector3 location, bool generated_only=false)
     {
         var c = coords(location);
         var gc = find_generated(c[0], c[1]);
         if (gc != null) return gc;
+        if (generated_only) return null;
         Debug.Log("chunk.at fallback triggered.");
         return GameObject.Find("chunk_" + c[0] + "_" + c[1])?.GetComponent<chunk>();
     }

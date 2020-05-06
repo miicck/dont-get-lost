@@ -18,15 +18,18 @@ public class networked : MonoBehaviour
     /// <summary> Called when network variables should be initialized. </summary>
     public virtual void on_init_network_variables() { }
 
-    /// <summary> Called when created. </summary>
+    /// <summary> Called when created (either when <see cref="client.create"/> is called,
+    /// or when <see cref="client.create_from_network"/> is called). </summary>
     public virtual void on_create() { }
 
     /// <summary> Local == true iff this was created by this client. </summary>
-    protected bool local { get; private set; }
-    public void on_create(bool local)
-    {
-        this.local = local;
+    public bool local;
 
+    /// <summary> Called when I'm created. The argument <paramref name="from_network"/> = true 
+    /// if created by <see cref="client.create_from_network"/> or false if created by
+    /// <see cref="client.create"/>. </summary>
+    public void on_create(bool from_network)
+    {
         foreach (var n in networked_variables)
             n.on_create();
 
@@ -384,17 +387,48 @@ public abstract class networked_variable
 
         public override byte[] serialization()
         {
-            return System.BitConverter.GetBytes(value);
+            return network_utils.encode_int(value);
         }
 
         public override void deserialize(byte[] buffer, int offset, int length)
         {
-            _value = System.BitConverter.ToInt32(buffer, offset);
+            _value = network_utils.decode_int(buffer, ref offset);
             on_change?.Invoke(_value);
         }
 
         public delegate void change_func(int new_value);
         public change_func on_change;
+    }
+
+    /// <summary> A networked string. </summary>
+    public class net_string : networked_variable
+    {
+        public string value
+        {
+            get => _value;
+            set
+            {
+                if (value == null)
+                    value = ""; // Can't serialize null strings
+
+                if (_value == value)
+                    return; // No change
+
+                _value = value;
+                send_update();
+            }
+        }
+        string _value = ""; // Can't serialize null strings
+
+        public override byte[] serialization()
+        {
+            return network_utils.encode_string(_value);
+        }
+
+        public override void deserialize(byte[] buffer, int offset, int length)
+        {
+            _value = network_utils.decode_string(buffer, ref offset);
+        }
     }
 
     /// <summary> A networked floating point number, supporting resolution + lerp. </summary>
@@ -452,12 +486,12 @@ public abstract class networked_variable
 
         public override byte[] serialization()
         {
-            return System.BitConverter.GetBytes(value);
+            return network_utils.encode_float(value);
         }
 
         public override void deserialize(byte[] buffer, int offset, int length)
         {
-            _value = System.BitConverter.ToSingle(buffer, offset);
+            _value = network_utils.decode_float(buffer, ref offset);
             on_change?.Invoke(_value);
         }
 
@@ -483,9 +517,19 @@ public static class client
     static network_utils.traffic_monitor traffic_up;
     static network_utils.traffic_monitor traffic_down;
 
+    struct pending_creation_message
+    {
+        public int parent_id;
+        public string local_prefab;
+        public string remote_prefab;
+        public networked creating;
+    }
+    static Queue<pending_creation_message> pending_creation_messages =
+        new Queue<pending_creation_message>();
+
     public static networked create(Vector3 position,
         string local_prefab, string remote_prefab = null,
-        networked parent = null, Quaternion rotation = default, int network_id=-1)
+        networked parent = null, Quaternion rotation = default, int network_id = -1)
     {
         // If remote prefab not specified, it is the same
         // as the local prefab.
@@ -497,6 +541,7 @@ public static class client
         string name = created.name;
         created = Object.Instantiate(created);
         created.name = name;
+        created.local = true; // Created on this client => local
 
         if (network_id < 0)
         {
@@ -525,12 +570,15 @@ public static class client
         if (parent != null) parent_id = parent.network_id;
         if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
 
-        // I'm local
-        created.on_create(true);
+        created.on_create(false);
 
-        // Request creation on the server
-        message_senders[MESSAGE.CREATE](created.network_id, parent_id,
-            local_prefab, remote_prefab, created.serialize_networked_variables());
+        pending_creation_messages.Enqueue(new pending_creation_message
+        {
+            creating = created,
+            parent_id = parent_id,
+            local_prefab = local_prefab,
+            remote_prefab = remote_prefab,
+        });
 
         return created;
     }
@@ -551,6 +599,7 @@ public static class client
         var nw = networked.look_up(local ? local_prefab : remote_prefab);
         string name = nw.name;
         nw = Object.Instantiate(nw);
+        nw.local = local;
         nw.transform.SetParent(parent_id > 0 ? networked.find_by_id(parent_id).transform : null);
         nw.name = name;
         nw.network_id = network_id;
@@ -570,7 +619,7 @@ public static class client
             index += 1;
         }
 
-        nw.on_create(local);
+        nw.on_create(true);
     }
 
     /// <summary> A message waiting to be sent. </summary>
@@ -696,7 +745,8 @@ public static class client
                 // Update the local id to a network-wide one
                 int local_id = network_utils.decode_int(buffer, ref offset);
                 int network_id = network_utils.decode_int(buffer, ref offset);
-                networked.find_by_id(local_id).network_id = network_id;
+                var nw = networked.find_by_id(local_id);
+                nw.network_id = network_id;
             }
         };
 
@@ -857,6 +907,22 @@ public static class client
             }
         }
 
+        // Queue pending creation messages (delayed until now
+        // so that for each created object we have the most
+        // up-to-date network variables).
+        while(pending_creation_messages.Count > 0)
+        {
+            var cm = pending_creation_messages.Dequeue();
+
+            if (cm.creating == null)
+                continue; // This object has since been deleted
+
+            // Request creation on the server
+            message_senders[MESSAGE.CREATE](cm.creating.network_id,
+                cm.parent_id, cm.local_prefab, cm.remote_prefab,
+                cm.creating.serialize_networked_variables());
+        }
+
         // Run network_update for each object
         networked.network_updates();
 
@@ -983,15 +1049,15 @@ public static class server
         /// <summary> Returns true if the client should load the provided representation. </summary>
         bool should_load(representation rep)
         {
-            if (player == null)
-                return false;
-
             return (rep.transform.position - player.transform.position).magnitude <
                 rep.radius + render_range;
         }
 
         public void update_loaded()
         {
+            if (player == null)
+                return; // Only update loaded if we have a player
+
             // Loop over active representations
             foreach (Transform t in active_representations)
             {
@@ -1283,7 +1349,7 @@ public static class server
 
     /// <summary> The directory that this session is saved in. </summary>
     static string save_dir()
-    {      
+    {
         return saves_dir() + "/" + savename;
     }
 
@@ -1431,7 +1497,7 @@ public static class server
                 // Create the representation from the info sent from the client
                 int input_id;
                 var rep = representation.create(bytes, offset, length, out input_id);
-                if (input_id > 0) 
+                if (input_id > 0)
                 {
                     // This was a forced create
 

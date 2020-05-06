@@ -414,13 +414,16 @@ public class player : networked_player
         else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
+        /*
         if (map_open)
         {
-            if (Input.GetKey(KeyCode.D)) transform.Rotate(0, ROTATION_SPEED * Time.deltaTime, 0);
-            else if (Input.GetKey(KeyCode.A)) transform.Rotate(0, -ROTATION_SPEED * Time.deltaTime, 0);
+            if (Input.GetKey(KeyCode.D)) y_rotation.value += ROTATION_SPEED * Time.deltaTime;
+            else if (Input.GetKey(KeyCode.A)) y_rotation.value -= -ROTATION_SPEED * Time.deltaTime;
             else velocity -= Vector3.Project(velocity, camera.transform.right);
         }
-        else
+        */
+
+        if (!map_open)
         {
             if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
             else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
@@ -511,17 +514,16 @@ public class player : networked_player
         if (map_open)
         {
             // Rotate the player with A/D
-            float xr = 0;
-            if (Input.GetKey(KeyCode.A)) xr = -1f;
-            else if (Input.GetKey(KeyCode.D)) xr = 1.0f;
-            transform.Rotate(0, xr * Time.deltaTime * ROTATION_SPEED, 0);
+            if (Input.GetKey(KeyCode.A)) y_rotation.value -= Time.deltaTime * ROTATION_SPEED;
+            else if (Input.GetKey(KeyCode.D)) y_rotation.value += Time.deltaTime * ROTATION_SPEED;
             return;
         }
 
         // Rotate the view using the mouse
         // Note that horizontal moves rotate the player
         // vertical moves rotate the camera
-        transform.Rotate(0, Input.GetAxis("Mouse X") * 5, 0);
+        float yr = Input.GetAxis("Mouse X") * 5f;
+        if (yr != 0) y_rotation.value += yr;
         camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
     }
 
@@ -583,6 +585,7 @@ public class player : networked_player
         var body = Resources.Load<GameObject>("misc/player_body").inst();
         body.transform.SetParent(transform);
         body.transform.localPosition = Vector3.zero;
+        body.transform.localRotation = Quaternion.identity;
 
         // Scale the player body so the eyes are at the correct height
         var eye_level = body.transform.Find("eye_level");
@@ -658,22 +661,11 @@ public class player : networked_player
             // Start with the map closed
             map_open = false;
 
-            // Add the player controller once everything has loaded
-            // (stops the controller from snapping us back to 0,0,0)
-            controller = gameObject.AddComponent<CharacterController>();
-            controller.height = HEIGHT;
-            controller.radius = WIDTH / 2;
-            controller.center = new Vector3(0, controller.height / 2f, 0);
-            controller.skinWidth = controller.radius / 10f;
-            controller.slopeLimit = 60f;
+            // Start looking to add the player controller
+            Invoke("add_controller", 0.1f);
 
             // This is the local player
-            player.current = this;
-
-            // Now that we know where the player is, we can start loading
-            // the map around the player.
-            var biome_coords = biome.coords(transform.position);
-            biome.generate(biome_coords[0], biome_coords[1]);
+            current = this;
         }
 
         // Initialize the inventory to closed
@@ -686,6 +678,42 @@ public class player : networked_player
         // Player starts with an axe
         inventory.add("axe", 1);
         inventory.add("furnace", 1);
+    }
+
+    void add_controller()
+    {
+        var c = chunk.at(transform.position, true);
+        if (c == null)
+        {
+            // Wait until the chunk has generated
+            Invoke("add_controller", 0.1f);
+            return;
+        }
+
+        // Add the player controller once everything has loaded
+        // (stops the controller from snapping us back to 0,0,0 and
+        //  ensures the geometry we're standing on is properly loaded)
+        controller = gameObject.AddComponent<CharacterController>();
+        controller.height = HEIGHT;
+        controller.radius = WIDTH / 2;
+        controller.center = new Vector3(0, controller.height / 2f, 0);
+        controller.skinWidth = controller.radius / 10f;
+        controller.slopeLimit = 60f;
+    }
+
+    //############//
+    // NETWORKING //
+    //############//
+
+    networked_variable.net_float y_rotation;
+
+    public override void on_init_network_variables()
+    {
+        y_rotation = new networked_variable.net_float(resolution: 5f);
+        y_rotation.on_change = (yrot) =>
+        {
+            transform.rotation = Quaternion.Euler(0, yrot, 0);
+        };
     }
 
     //###########//
