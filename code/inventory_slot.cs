@@ -46,7 +46,7 @@ public class inventory_slot : MonoBehaviour
             if (_item?.name == value)
                 return; // No change
 
-            _item = value == null ? null : global::item.load_from_name(value);
+            _item = value == null ? null : Resources.Load<item>("items/" + value);
 
             if (_item == null)
             {

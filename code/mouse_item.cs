@@ -11,7 +11,7 @@ public class mouse_item : MonoBehaviour
         get { return _item.name; }
         set
         {
-            _item = value == null ? null : global::item.load_from_name(value);
+            _item = value == null ? null : Resources.Load<item>("items/" + value);
             if (_item == null) Destroy(gameObject);
             else item_image.sprite = _item.sprite;
         }

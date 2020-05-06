@@ -12,14 +12,6 @@ public class item : networked
     new public Rigidbody rigidbody { get; private set; } // The rigidbody attached to this item in-world
     Transform carry_pivot; // The point we are carrying this item by in carry mode
 
-    // base.name is of the form id_name (the id is used so saving an item
-    // requires a fixed number of bytes, rather than a variable-size string)
-    new public string name { get { return parse_id_name(base.name).Value; } }
-    public int id { get { return parse_id_name(base.name).Key; } }
-
-    // The name of the prefab I was created from
-    public string prefab { get { return "items/" + base.name; } }
-
     //############//
     // PLAYER USE //
     //############//
@@ -133,77 +125,38 @@ public class item : networked
 
     public override void on_create()
     {
-        // Start kinematic
-        rigidbody = gameObject.AddComponent<Rigidbody>();
-        rigidbody.isKinematic = true;
+        networked_rotation.value = transform.rotation;
     }
 
-    //##############//
-    // STATIC STUFF //
-    //##############//
+    //################//
+    // STATIC METHODS //
+    //################//
 
-    static KeyValuePair<int, string> parse_id_name(string to_parse)
+    /// <summary> Create an item. Attaches a rigidbody to 
+    /// the item in the process. </summary>
+    public static item create(string name,
+        Vector3 position, Quaternion rotation,
+        bool kinematic = true, bool networked = false,
+        networked network_parent = null)
     {
-        int us_index = to_parse.IndexOf("_");
-        int id = int.Parse(to_parse.Substring(0, us_index));
-        string name = to_parse.Substring(us_index + 1);
-        return new KeyValuePair<int, string>(id, name);
-    }
+        item item = null;
 
-    public static item spawn(string name, Vector3 position, Quaternion rotation)
-    {
-        var i = create(id_from_name(name), position, rotation);
-        return i;
-    }
-
-    static item create(int id, Vector3 position, Quaternion rotation)
-    {
-        // Create a networked version of the  
-        chunk parent = chunk.at(position);
-        var i = load_from_id(id).inst();
-        i.transform.SetParent(parent.transform);
-        i.transform.position = position;
-        i.transform.rotation = rotation;
-        i.rigidbody = i.gameObject.AddComponent<Rigidbody>();
-        return i;
-    }
-
-    // Lookup tables for items by name or id
-    static Dictionary<int, item> item_by_id;
-    static Dictionary<string, int> id_by_name;
-
-    // Load the above lookup tables
-    static void load_item_libraries()
-    {
-        item_by_id = new Dictionary<int, item>();
-        id_by_name = new Dictionary<string, int>();
-
-        foreach (var i in Resources.LoadAll<item>("items/"))
+        if (networked)
         {
-            item_by_id[i.id] = i;
-            id_by_name[i.name] = i.id;
+            item = (item)client.create(position, "items/" + name,
+                rotation: rotation, parent: network_parent);
         }
-    }
+        else
+        {
+            item = Resources.Load<item>("items/" + name);
+            if (item == null)
+                throw new System.Exception("Could not find the item: " + name);
+            item = item.inst();
+        }
 
-    // Load an item by name
-    public static item load_from_name(string name)
-    {
-        return load_from_id(id_from_name(name));
-    }
+        item.rigidbody = item.gameObject.AddComponent<Rigidbody>();
+        item.rigidbody.isKinematic = kinematic;
 
-    // Load an item by id
-    public static item load_from_id(int id)
-    {
-        if (item_by_id == null)
-            load_item_libraries();
-        return item_by_id[id];
-    }
-
-    // Get an item id from an item name
-    public static int id_from_name(string name)
-    {
-        if (id_by_name == null)
-            load_item_libraries();
-        return id_by_name[name];
+        return item;
     }
 }

@@ -89,7 +89,7 @@ public class recipe
     public crafting_entry get_entry()
     {
         var ce = crafting_entry.create();
-        var itm = item.load_from_name(product);
+        var itm = Resources.Load<item>("items/"+product);
         ce.image.sprite = itm.sprite;
         ce.text.text = "";
         foreach (var i in ingredients)

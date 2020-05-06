@@ -233,8 +233,9 @@ public class building_material : item
 
     building_material spawn_from_inventory_and_fix_to(building_material other, RaycastHit hit)
     {
-        var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
+        var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
+
         snap_point snap_from = spawned.snap_points[0];
         snap_point snap_to = other.closest_to_ray(player.current.camera_ray());
 
@@ -256,8 +257,9 @@ public class building_material : item
 
     building_material spawn_from_inventory_and_fix_at(RaycastHit hit)
     {
-        var spawned = (building_material)spawn(name, hit.point, Quaternion.identity);
+        var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
+
         snap_point snap_from = spawned.snap_points[0];
 
         if (snap_from == null)
@@ -343,13 +345,10 @@ public class building_material : item
         if (spawned != null)
         {
             // Create a proper, networked version of the spawned object
-            var created = (building_material)client.create(
-                spawned.transform.position, spawned.prefab);
-
-            created.networked_rotation.value = spawned.transform.rotation;
-            
-            //var created = spawn(spawned.name, spawned.transform.position, spawned.transform.rotation);
-            created.rigidbody.isKinematic = true;
+            var created = (building_material)create(spawned.name,
+                spawned.transform.position, spawned.transform.rotation,
+                kinematic: true, networked: true);
+        
             Destroy(spawned.gameObject);
         }
 

@@ -117,7 +117,10 @@ public class player : networked_player
                     if (equipped != null)
                     {
                         inventory.remove(equipped.name, 1);
-                        var spawned = item.spawn(equipped.name, equipped.transform.position, equipped.transform.rotation);
+                        var spawned = item.create(
+                            equipped.name,
+                            equipped.transform.position, 
+                            equipped.transform.rotation);
                         spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
                         re_equip();
                     }
@@ -321,7 +324,7 @@ public class player : networked_player
             if (have)
             {
                 // Create an equipped-type copy of the item
-                _equipped = item.load_from_name(item_name).inst();
+                _equipped = item.create(item_name, transform.position, transform.rotation);
                 foreach (var c in _equipped.GetComponentsInChildren<Collider>())
                     Destroy(c);
             }
