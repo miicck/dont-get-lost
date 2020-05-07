@@ -74,6 +74,8 @@ public class player : networked_player
             else if (scroll < 0) game.render_range_target *= 1.2f;
             camera.orthographicSize = game.render_range;
         }
+        else if (Input.GetKeyDown(KeyCode.V))
+            first_person = !first_person;
 
         // Use items if the inventory/map aren't open
         item.use_result use_result = item.use_result.complete;
@@ -119,7 +121,7 @@ public class player : networked_player
                         inventory.remove(equipped.name, 1);
                         var spawned = item.create(
                             equipped.name,
-                            equipped.transform.position, 
+                            equipped.transform.position,
                             equipped.transform.rotation,
                             kinematic: false,
                             networked: true);
@@ -492,6 +494,33 @@ public class player : networked_player
     GameObject map_obscurer;
     GameObject underwater_screen;
 
+    /// <summary> Are we in first, or third person? </summary>
+    bool first_person
+    {
+        get => _first_person;
+        set
+        {
+            if (map_open)
+                return; // Can't change perspective if the map is open
+
+            _first_person = value;
+            camera.transform.position = first_person_camera_position;
+            if (!_first_person)
+            {
+                // Move the camera back and slightly to the left
+                camera.transform.position -= camera.transform.forward * 2f;
+                camera.transform.position -= camera.transform.right * 0.25f;
+            }
+        }
+    }
+    bool _first_person;
+
+    Vector3 first_person_camera_position
+    {
+        get => transform.position + 
+            (HEIGHT - WIDTH / 2f) * Vector3.up;
+    }
+
     // Called when the render range changes
     public void update_render_range()
     {
@@ -516,9 +545,15 @@ public class player : networked_player
         // Rotate the view using the mouse
         // Note that horizontal moves rotate the player
         // vertical moves rotate the camera
+
+        // y rotation of player controlled by left/right of mouse
         float yr = Input.GetAxis("Mouse X") * 5f;
         if (yr != 0) y_rotation.value += yr;
-        camera.transform.Rotate(-Input.GetAxis("Mouse Y") * 5, 0, 0);
+
+        // Rotate the camera around the first person camera position
+        // around the right axis when the mouse is moved up/down
+         camera.transform.RotateAround(first_person_camera_position,
+                camera.transform.right, -Input.GetAxis("Mouse Y") * 5f);
     }
 
     // Saved rotation to restore when we return to the 3D view
@@ -592,7 +627,6 @@ public class player : networked_player
             camera = FindObjectOfType<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.transform.SetParent(transform);
-            camera.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, 0);
             camera.nearClipPlane = 0.1f;
 
             // Enforce the render limit with a sky-color object
@@ -652,8 +686,9 @@ public class player : networked_player
             // Initialize the render range
             update_render_range();
 
-            // Start with the map closed
+            // Start with the map closed, first person view
             map_open = false;
+            first_person = true;
 
             // Start looking to add the player controller
             Invoke("add_controller", 0.1f);
