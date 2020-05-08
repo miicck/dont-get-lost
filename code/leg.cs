@@ -31,9 +31,9 @@ public class leg : MonoBehaviour
     // The amount a body should bob up and down because of this leg
     public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f); } }
 
-    Vector3 position_last;       // The position of step_centre, last frame
-    Vector3 velocity;            // The velocity of step_centre, this frame
-    Vector3 ground_normal;       // The last recorded ground normal 
+    public Vector3 velocity { get; private set; } // The velocity of step_centre, this frame
+    Vector3 position_last;                        // The position of step_centre, last frame
+    Vector3 ground_normal;                        // The last recorded ground normal
 
     const float MIN_FOOT_SPEED = 0.2f;
     const float MIN_STEP_SIZE = 0.01f;

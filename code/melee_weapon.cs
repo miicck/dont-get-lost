@@ -5,6 +5,7 @@ using UnityEngine;
 public class melee_weapon : item
 {
     public float swing_time = 0.25f;
+    public float swing_length = 0.5f;
     public float max_forward_in_up = 5f;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
@@ -31,28 +32,32 @@ public class melee_weapon : item
         if (swing_progress >= 1f)
             return use_result.complete;
 
-        float sin = Mathf.Min(
-                -Mathf.Sin(swing_progress * Mathf.PI * 2f) * swing_progress,
-                swing_progress_at_impact > 0 ?
-                -Mathf.Sin(swing_progress_at_impact * Mathf.PI * 2f) * swing_progress_at_impact : 1f
-            );
+        // Work out where we are in the swing
+        float arg = swing_progress;
+        if (swing_progress_at_impact > 0)
+            arg = Mathf.Min(swing_progress, swing_progress_at_impact);
+        float sin = Mathf.Sin(Mathf.PI * 2f * arg);
 
+        // Set the forward/back amount
+        transform.position = player.current.hand_centre.position +
+                             swing_length * player.current.hand_centre.forward * sin;
 
-        transform.position = player.current.hand.position +
-                             player.current.hand.forward * sin;
-
+        // Remove some of the right/left component
+        // so we strike in the middle
         float fw_amt = Mathf.Max(sin, 0);
         transform.position -= fw_amt * Vector3.Project(
             transform.position - player.current.camera.transform.position,
             player.current.transform.right
         );
 
-        Vector3 up = player.current.hand.up + max_forward_in_up * player.current.hand.forward * sin;
+        // Work out/apply the swing rotation
+        Vector3 up = player.current.hand_centre.up + max_forward_in_up * player.current.hand_centre.forward * sin;
         Vector3 fw = -Vector3.Cross(up,
-            player.current.hand.right +
-            player.current.hand.forward * fw_amt / 2f);
+            player.current.hand_centre.right +
+            player.current.hand_centre.forward * fw_amt / 2f);
         transform.rotation = Quaternion.LookRotation(fw, up);
 
+        // Check to ee if we've hit something
         if (swing_progress_at_impact < 0)
             foreach (var ip in impact_points)
                 if (ip.test(this))
@@ -61,16 +66,16 @@ public class melee_weapon : item
                     break;
                 }
 
-        if (swing_progress_at_impact > 0)
+        if (swing_progress_at_impact > 0) // We're stuck in something
             return use_result.underway_allows_none;
-        return use_result.underway_allows_all;
+        return use_result.underway_allows_all; // We're still swinging
     }
 
     public override void on_use_end(player.USE_TYPE use_type)
     {
         swing_progress = 0f;
         swing_progress_at_impact = -1f;
-        transform.position = player.current.hand.transform.position;
-        transform.rotation = player.current.hand.transform.rotation;
+        transform.position = player.current.hand_centre.transform.position;
+        transform.rotation = player.current.hand_centre.transform.rotation;
     }
 }

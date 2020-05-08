@@ -8,12 +8,14 @@ public class player : networked_player
     // CONSTANTS //
     //###########//
 
+    // Size + kinematics
     public const float HEIGHT = 1.5f;
     public const float WIDTH = 0.45f;
     public const float GRAVITY = 10f;
     public const float BOUYANCY = 5f;
     public const float WATER_DRAG = 1.5f;
 
+    // Movement
     public const float SPEED = 7f;
     public const float ACCELERATION_TIME = 0.2f;
     public const float ACCELERATION = SPEED / ACCELERATION_TIME;
@@ -21,8 +23,15 @@ public class player : networked_player
     public const float JUMP_VEL = 5f;
     public const float THROW_VELOCITY = 6f;
 
+    // Where does the hand appear
+    public const float EYES_TO_HAND_DISTANCE = 0.3f;
+    public const float HAND_SCREEN_X = 0.9f;
+    public const float HAND_SCREEN_Y = 0.1f;
+
+    // How far away can we interact with things
     public const float INTERACTION_RANGE = 3f;
 
+    // Map camera setup
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
     public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
     public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
@@ -34,6 +43,9 @@ public class player : networked_player
     void Update()
     {
         if (!local) return;
+
+        // Allign the arm with the hand
+        right_arm.to_grab = equipped?.transform;
 
         // Toggle menus only if not using an item/the map isn't open
         if (current_item_use == USE_TYPE.NOT_USING && !map_open)
@@ -230,8 +242,8 @@ public class player : networked_player
         }
     }
 
-    // The hand which carries an item
-    public Transform hand { get; private set; }
+    // The position of the hand when carrying an item at rest
+    public Transform hand_centre { get; private set; }
 
     UnityEngine.UI.Image crosshairs;
     public string cursor
@@ -340,7 +352,7 @@ public class player : networked_player
         else
         {
             cursor = _equipped.sprite.name;
-            _equipped.transform.SetParent(hand);
+            _equipped.transform.SetParent(hand_centre);
             _equipped.transform.localPosition = Vector3.zero;
             _equipped.transform.localRotation = Quaternion.identity;
         }
@@ -504,7 +516,9 @@ public class player : networked_player
                 return; // Can't change perspective if the map is open
 
             _first_person = value;
-            camera.transform.position = first_person_camera_position;
+
+            camera.transform.position = eye_transform.position;
+
             if (!_first_person)
             {
                 // Move the camera back and slightly to the left
@@ -515,10 +529,27 @@ public class player : networked_player
     }
     bool _first_person;
 
-    Vector3 first_person_camera_position
+
+    void mouse_look()
     {
-        get => transform.position + 
-            (HEIGHT - WIDTH / 2f) * Vector3.up;
+        // Rotate the view using the mouse
+        // Note that horizontal moves rotate the player
+        // vertical moves rotate the camera
+
+        // y rotation of player controlled by left/right of mouse
+        float yr = Input.GetAxis("Mouse X") * 5f;
+        if (yr != 0) y_rotation.value += yr;
+
+        eye_transform.Rotate(-Input.GetAxis("Mouse Y") * 5f, 0, 0);
+
+        /*
+        // Rotate the camera around the first person camera position
+        // around the right axis when the mouse is moved up/down
+        camera.transform.RotateAround(eye_centre,
+            camera.transform.right, -Input.GetAxis("Mouse Y") * 5f);
+
+        eye_transform.rotation = camera.transform.rotation;
+        */
     }
 
     // Called when the render range changes
@@ -538,22 +569,6 @@ public class player : networked_player
             camera.farClipPlane = game.render_range;
             QualitySettings.shadowDistance = camera.farClipPlane;
         }
-    }
-
-    void mouse_look()
-    {
-        // Rotate the view using the mouse
-        // Note that horizontal moves rotate the player
-        // vertical moves rotate the camera
-
-        // y rotation of player controlled by left/right of mouse
-        float yr = Input.GetAxis("Mouse X") * 5f;
-        if (yr != 0) y_rotation.value += yr;
-
-        // Rotate the camera around the first person camera position
-        // around the right axis when the mouse is moved up/down
-         camera.transform.RotateAround(first_person_camera_position,
-                camera.transform.right, -Input.GetAxis("Mouse Y") * 5f);
     }
 
     // Saved rotation to restore when we return to the 3D view
@@ -591,8 +606,8 @@ public class player : networked_player
             else
             {
                 // Restore 3D camera view
-                camera.transform.localPosition = Vector3.up * (HEIGHT - WIDTH / 2f);
                 camera.transform.localRotation = saved_camera_rotation;
+                first_person = first_person; // This is needed
             }
         }
     }
@@ -608,26 +623,39 @@ public class player : networked_player
     // PLAYER CREATION //
     //#################//
 
+    Vector3 eye_centre { get => transform.position + Vector3.up * (HEIGHT - WIDTH / 2f) + transform.forward * 0.25f; }
+
+    Transform eye_transform;
+    arm right_arm;
+    arm left_arm;
+
     public override void on_create()
     {
         // Load the player body
-        var body = Resources.Load<GameObject>("misc/player_body").inst();
+        var body = Resources.Load<player_body>("misc/player_body").inst();
         body.transform.SetParent(transform);
         body.transform.localPosition = Vector3.zero;
         body.transform.localRotation = Quaternion.identity;
 
         // Scale the player body so the eyes are at the correct height
-        var eye_level = body.transform.Find("eye_level");
-        float eye_y = (eye_level.transform.position - transform.position).y;
-        body.transform.localScale *= (HEIGHT - WIDTH / 2f) / eye_y;
+        eye_transform = body.eye_centre;
+        float eye_y = (eye_transform.transform.position - transform.position).y;
+        body.transform.localScale *= (eye_centre - transform.position).magnitude / eye_y;
+
+        // Get references to the arms
+        right_arm = body.right_arm;
+        left_arm = body.left_arm;
 
         if (local)
         {
             // Setup the player camera
             camera = FindObjectOfType<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.transform.SetParent(transform);
+            camera.transform.SetParent(eye_transform);
+            camera.transform.localRotation = Quaternion.identity;
+            camera.transform.localPosition = Vector3.zero;
             camera.nearClipPlane = 0.1f;
+            first_person = true; // Start with camera in 1st person position
 
             // Enforce the render limit with a sky-color object
             obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
@@ -661,16 +689,18 @@ public class player : networked_player
             RenderSettings.skybox = null;
             camera.backgroundColor = sky_color;
 
-            // Set the hand location so it is one meter
-            // away from the camera, 80% of the way across 
-            // the screen and 10% of the way up the screen.
-            hand = new GameObject("hand").transform;
-            hand.SetParent(camera.transform);
-            var r = camera.ScreenPointToRay(new Vector3(
-                 Screen.width * 0.8f,
-                 Screen.height * 0.1f
+            // Set the hand location so it is EYES_TO_HAND_DISTANCE 
+            // metres away from the camera, HAND_SCREEN_X of the way across 
+            // the screen and HAND_SCREEN_Y of the way up the screen.
+            hand_centre = new GameObject("hand").transform;
+            hand_centre.SetParent(eye_transform);
+            hand_centre.transform.localRotation = Quaternion.identity;
+            var hand_ray = camera.ScreenPointToRay(new Vector3(
+                 Screen.width * HAND_SCREEN_X,
+                 Screen.height * HAND_SCREEN_Y
                  ));
-            hand.localPosition = r.direction * 0.75f;
+            hand_centre.transform.position = camera.transform.position +
+                hand_ray.direction * EYES_TO_HAND_DISTANCE;
 
             // Create the crosshairs
             crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
@@ -688,7 +718,6 @@ public class player : networked_player
 
             // Start with the map closed, first person view
             map_open = false;
-            first_person = true;
 
             // Start looking to add the player controller
             Invoke("add_controller", 0.1f);
