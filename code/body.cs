@@ -27,11 +27,16 @@ public class body : MonoBehaviour
         if (legs.Length > 0) return legs[0].body_bob_amt;
         return Mathf.Sin(Mathf.PI * Time.realtimeSinceStartup);
     }
-    
+
     private void Update()
     {
-        Quaternion saved_head_rotation = head.transform.rotation;
-        float saved_head_y = head.transform.position.y;
+        Quaternion saved_head_rotation = Quaternion.identity;
+        float saved_head_y = 0;
+        if (head != null)
+        {
+            saved_head_rotation = head.transform.rotation;
+            saved_head_y = head.transform.position.y;
+        }
 
         // Bob up/down in time with leg
         transform.localPosition = init_local_pos + Vector3.up * bob_amt() * bob_amplitude;
@@ -50,8 +55,11 @@ public class body : MonoBehaviour
             transform.localRotation.eulerAngles.y,
             transform.localRotation.eulerAngles.z);
 
-        head.transform.rotation = saved_head_rotation;
-        head.transform.position += Vector3.up * (saved_head_y - head.transform.position.y);
+        if (head != null)
+        {
+            head.transform.rotation = saved_head_rotation;
+            head.transform.position += Vector3.up * (saved_head_y - head.transform.position.y);
+        }
     }
 
     private void OnDrawGizmosSelected()

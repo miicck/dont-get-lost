@@ -40,8 +40,7 @@ public class mouse_item : MonoBehaviour
             if (origin.item != null && origin.item != item)
                 Debug.LogError("Origin item has changed, I don't know what to do!");
 
-            origin.item = item;
-            origin.count += count;
+            origin.set_item_count(item, origin.count + count);
             count = 0;
         }
 

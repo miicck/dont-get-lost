@@ -551,15 +551,6 @@ public class player : networked_player
         if (yr != 0) y_rotation.value += yr;
 
         eye_transform.Rotate(-Input.GetAxis("Mouse Y") * 5f, 0, 0);
-
-        /*
-        // Rotate the camera around the first person camera position
-        // around the right axis when the mouse is moved up/down
-        camera.transform.RotateAround(eye_centre,
-            camera.transform.right, -Input.GetAxis("Mouse Y") * 5f);
-
-        eye_transform.rotation = camera.transform.rotation;
-        */
     }
 
     // Called when the render range changes
@@ -747,10 +738,25 @@ public class player : networked_player
         inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
         inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
         inventory_open = false;
+    }
+
+    public override void on_first_create()
+    {
+        // Network the inventory
+        inventory.networked_version = (networked_inventory)client.create(
+            transform.position, "misc/networked_inventory", parent: this
+            );
 
         // Player starts with an axe
         inventory.add("axe", 1);
         inventory.add("furnace", 1);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        // Link the networked inventory to the UI inventory
+        if (child is networked_inventory)
+            inventory.networked_version = (networked_inventory)child;
     }
 
     void add_controller()

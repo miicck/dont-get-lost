@@ -15,19 +15,18 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
             if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Left)
             {
                 mi = mouse_item.create(slot.item, slot.count, slot);
-                slot.count = 0;
+                slot.clear();
             }
             else if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Right)
             {
                 int pickup = slot.count > 1 ? slot.count / 2 : 1;
                 mi = mouse_item.create(slot.item, pickup, slot);
-                slot.count -= pickup;
+                slot.set_item_count(slot.item, slot.count - pickup);
             }
         }
         else if (mi.item == slot.item || slot.item == null || slot.count == 0)
         {
-            slot.item = mi.item;
-            slot.count += mi.count;
+            slot.set_item_count(mi.item, slot.count + mi.count);
             mi.item = null;
         }
     }
@@ -41,52 +40,46 @@ public class inventory_slot : MonoBehaviour
     public string item
     {
         get => _item == null ? null : _item.name;
-        set
-        {
-            if (_item?.name == value)
-                return; // No change
-
-            _item = value == null ? null : Resources.Load<item>("items/" + value);
-
-            if (_item == null)
-            {
-                item_image.sprite = Resources.Load<Sprite>("sprites/inventory_slot");
-                count_text.text = "";
-                _count = 0;
-            }
-            else
-            {
-                item_image.enabled = true;
-                item_image.sprite = _item.sprite;
-            }
-
-            foreach (var i in inventories_belonging_to)
-                i.on_change();
-        }
     }
 
-    int _count = 0;
     public int count
     {
-        get => _count;
-        set
-        {
-            if (_count == value)
-                return; // No change
-
-            _count = value;
-            if (_count < 1)
-            {
-                _item = null;
-                item_image.sprite = Resources.Load<Sprite>("sprites/inventory_slot");
-                _count = 0;
-            }
-            count_text.text = _count > 1 ? "" + utils.int_to_quantity_string(_count) : "";
-
-            foreach (var i in inventories_belonging_to)
-                i.on_change();
-        }
+        get; private set;
     }
+
+    public void set_item_count(string item, int count)
+    {
+        if (this.item == item && this.count == count)
+            return; // No change
+
+        // If count = 0 or item = null set both to be true
+        if (item == null) count = 0;
+        if (count == 0) item = null;
+
+        this.count = count;
+
+        if (item == null)
+        {
+            // Clear the item + image
+            _item = null;
+            item_image.sprite = Resources.Load<Sprite>("sprites/inventory_slot");
+        }
+        else
+        {
+            // Load the item + image
+            _item = Resources.Load<item>("items/" + item);
+            item_image.sprite = _item.sprite;
+        }
+
+        // Set the count text
+        count_text.text = count > 1 ? utils.int_to_quantity_string(count) : "";
+
+        // Call the on_change function
+        foreach (var i in inventories_belonging_to)
+            i.on_change();
+    }
+
+    public void clear() { set_item_count(null, 0); }
 
     public Image item_image;
     public Button button;
@@ -98,7 +91,6 @@ public class inventory_slot : MonoBehaviour
         isb.slot = this;
 
         // Ensure images etc are loaded correctly
-        count = count;
-        item = item;
+        set_item_count(item, count);
     }
 }

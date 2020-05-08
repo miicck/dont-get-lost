@@ -48,7 +48,6 @@ public static class client
             // Copy the given network id
             created.network_id = network_id;
         }
-
         created.init_network_variables();
 
         // Parent if requested
@@ -65,8 +64,9 @@ public static class client
         if (parent != null) parent_id = parent.network_id;
         if (parent_id < 0) throw new System.Exception("Cannot create children of unregistered objects!");
 
-        created.on_create(false);
-
+        // Queue the creation message before on_create is called, so that 
+        // we can safely create children in the on_create method (ensure
+        // child creation messaage will arrive after my creation message).
         pending_creation_messages.Enqueue(new pending_creation_message
         {
             creating = created,
@@ -74,6 +74,13 @@ public static class client
             local_prefab = local_prefab,
             remote_prefab = remote_prefab,
         });
+
+        if (parent != null) parent.on_add_networked_child(created);
+        created.on_create(false);
+
+        // This is being created locally => this is the
+        // first time it was created.
+        created.on_first_create();
 
         return created;
     }
@@ -90,12 +97,15 @@ public static class client
         string local_prefab = network_utils.decode_string(buffer, ref offset);
         string remote_prefab = network_utils.decode_string(buffer, ref offset);
 
+        // Find the requested parent
+        networked parent = parent_id > 0 ? networked.find_by_id(parent_id) : null;
+
         // Create the reproduction
         var nw = networked.look_up(local ? local_prefab : remote_prefab);
         string name = nw.name;
         nw = Object.Instantiate(nw);
         nw.local = local;
-        nw.transform.SetParent(parent_id > 0 ? networked.find_by_id(parent_id).transform : null);
+        nw.transform.SetParent(parent?.transform);
         nw.name = name;
         nw.network_id = network_id;
         nw.init_network_variables();
@@ -104,6 +114,7 @@ public static class client
         // is variable, the user should implement that.
         nw.transform.localRotation = Quaternion.identity;
 
+        if (parent != null) parent.on_add_networked_child(nw);
         // The rest is network variables that need deserializing
         int index = 0;
         while (offset < end)

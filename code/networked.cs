@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class networked : MonoBehaviour
 {
+    //###################//
+    // OVERRIDABLE STUFF //
+    //###################//
+
     /// <summary> My radius as far as the server is concerned 
     /// for determining if I can be seen. </summary>
     public virtual float network_radius() { return 1f; }
@@ -21,8 +25,18 @@ public class networked : MonoBehaviour
     /// or when <see cref="client.create_from_network"/> is called). </summary>
     public virtual void on_create() { }
 
+    /// <summary> Called the first time we're created. </summary>
+    public virtual void on_first_create() { }
+
     /// <summary> Called whenever client.update() is. </summary>
     public virtual void on_network_update() {}
+
+    /// <summary> Called whenever a networked child is added. </summary>
+    public virtual void on_add_networked_child(networked child) { }
+
+    //#####################//
+    // NETWORKED VARIABLES //
+    //#####################//
 
     /// <summary> Local == true iff this was created by this client. </summary>
     public bool local;

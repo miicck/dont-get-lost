@@ -216,4 +216,91 @@ public abstract class networked_variable
         public delegate void change_func(Quaternion new_value);
         public change_func on_change;
     }
+
+    /// <summary> Represents a map from strings to ints. </summary>
+    public class net_string_counts : networked_variable, IEnumerable<KeyValuePair<string, int>>
+    {
+        public object this [string str]
+        {
+            get => dict[str];
+            set
+            {
+                int i = (int)value;
+
+                int got;
+                if (dict.TryGetValue(str, out got))
+                    if (i == got)
+                        return; // No change
+
+
+                if (i == 0) dict.Remove(str);
+                else dict[str] = i;
+
+                on_change?.Invoke();
+                send_update();
+            }
+              
+        }
+        SortedDictionary<string, int> dict = new SortedDictionary<string, int>();
+
+        public void set(Dictionary<string, int> counts)
+        {
+            bool different = false;
+            foreach (var kv in counts)
+                if (!dict.ContainsKey(kv.Key) || dict[kv.Key] != kv.Value)
+                {
+                    different = true;
+                    break;
+                }
+
+            if (!different)
+                return;
+
+            dict.Clear();
+            foreach (var kv in counts)
+                dict[kv.Key] = kv.Value;
+
+            on_change?.Invoke();
+            send_update();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+
+        public IEnumerator<KeyValuePair<string,int>> GetEnumerator()
+        {
+            return dict.GetEnumerator();
+        }
+
+        public override byte[] serialization()
+        {
+            List<byte> ret = new List<byte>();
+            foreach (var kv in dict)
+            {
+                ret.AddRange(network_utils.encode_string(kv.Key));
+                ret.AddRange(network_utils.encode_int(kv.Value));
+            }
+            return ret.ToArray();
+        }
+
+        public override void deserialize(byte[] buffer, int offset, int length)
+        {
+            dict.Clear();
+
+            int end = offset + length;
+            while(offset < end)
+            {
+                string key = network_utils.decode_string(buffer, ref offset);
+                int value = network_utils.decode_int(buffer, ref offset);
+                dict[key] = value;
+            }
+
+            on_change?.Invoke();
+        }
+
+        public delegate void change_func();
+        public change_func on_change;
+    }
 }
