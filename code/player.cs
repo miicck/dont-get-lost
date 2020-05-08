@@ -343,6 +343,16 @@ public class player : networked_player
                 _equipped = item.create(item_name, transform.position, transform.rotation);
                 foreach (var c in _equipped.GetComponentsInChildren<Collider>())
                     Destroy(c);
+                if (_equipped is equip_in_hand)
+                {
+                    // This item can be eqipped in my hand
+                }
+                else
+                {
+                    // This item can't be equipped in my hand, make it invisible.
+                    foreach (var r in _equipped.GetComponentsInChildren<Renderer>())
+                        r.enabled = false;
+                }
             }
             else _equipped = null; // Don't have, equip null
         }
@@ -507,10 +517,10 @@ public class player : networked_player
     GameObject underwater_screen;
 
     /// <summary> Are we in first, or third person? </summary>
-    bool first_person
+    public bool first_person
     {
         get => _first_person;
-        set
+        private set
         {
             if (map_open)
                 return; // Can't change perspective if the map is open
@@ -596,8 +606,11 @@ public class player : networked_player
 
                 // Setup the camera in map mode/position   
                 camera.orthographicSize = game.render_range;
-                camera.transform.localPosition = Vector3.up * (MAP_CAMERA_ALT - transform.position.y);
-                camera.transform.localRotation = Quaternion.Euler(90, 0, 0);
+                camera.transform.position = eye_transform.transform.position +
+                    Vector3.up * (MAP_CAMERA_ALT - transform.position.y);
+                camera.transform.rotation = Quaternion.LookRotation(
+                    Vector3.down, transform.forward
+                    );
                 camera.farClipPlane = MAP_CAMERA_CLIP;
 
                 // Render shadows further in map view
@@ -625,7 +638,7 @@ public class player : networked_player
 
     Vector3 eye_centre { get => transform.position + Vector3.up * (HEIGHT - WIDTH / 2f) + transform.forward * 0.25f; }
 
-    Transform eye_transform;
+    public Transform eye_transform { get; private set; }
     arm right_arm;
     arm left_arm;
 
@@ -665,8 +678,8 @@ public class player : networked_player
 
             map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
             map_obscurer.transform.SetParent(camera.transform);
+            map_obscurer.transform.localRotation = Quaternion.identity;
             map_obscurer.transform.localPosition = Vector3.forward;
-            map_obscurer.transform.up = -camera.transform.forward;
 
             // The distance to the underwater screen, just past the near clipping plane
             float usd = camera.nearClipPlane * 1.1f;

@@ -20,11 +20,17 @@ public class impact_test_point : MonoBehaviour
         bool hit = false;
         foreach (var h in Physics.RaycastAll(from, transform.forward, length))
         {
+            // Don't consider hits on the current player
+            if (h.transform.IsChildOf(player.current.transform))
+                continue;
+
             var aii = h.collider.GetComponent<accepts_item_impact>();
 
             if (aii != null)
+            {
                 if (aii.on_impact(i))
                     return true;
+            }
 
             hit = true;
         }

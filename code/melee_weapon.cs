@@ -2,7 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class melee_weapon : item
+public abstract class equip_in_hand : item
+{
+
+}
+
+public class melee_weapon : equip_in_hand
 {
     public float swing_time = 0.25f;
     public float swing_length = 0.5f;
@@ -36,7 +41,7 @@ public class melee_weapon : item
         float arg = swing_progress;
         if (swing_progress_at_impact > 0)
             arg = Mathf.Min(swing_progress, swing_progress_at_impact);
-        float sin = Mathf.Sin(Mathf.PI * 2f * arg);
+        float sin = -Mathf.Sin(Mathf.PI * 2f * arg);
 
         // Set the forward/back amount
         transform.position = player.current.hand_centre.position +
@@ -46,7 +51,7 @@ public class melee_weapon : item
         // so we strike in the middle
         float fw_amt = Mathf.Max(sin, 0);
         transform.position -= fw_amt * Vector3.Project(
-            transform.position - player.current.camera.transform.position,
+            transform.position - player.current.transform.position,
             player.current.transform.right
         );
 

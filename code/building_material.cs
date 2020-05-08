@@ -9,6 +9,24 @@ public class building_material : item
     //###########//
 
     public const float BUILD_RANGE = 5f;
+    public float build_range_from_camera
+    {
+        get
+        {
+            if (player.current.first_person)
+                return BUILD_RANGE;
+
+            Vector3 cam_to_eye = 
+                player.current.eye_transform.position - 
+                player.current.camera.transform.position;
+
+            float boost = Vector3.Project(
+                player.current.camera.transform.forward, 
+                cam_to_eye).magnitude;
+
+            return BUILD_RANGE + boost;
+        }
+    }
 
     //#########//
     // WELDING //
@@ -181,7 +199,7 @@ public class building_material : item
         // snap_point to the raycast hit
         RaycastHit hit;
         if (utils.raycast_for_closest<item>(
-            ray, out hit, BUILD_RANGE,
+            ray, out hit, build_range_from_camera,
             (t) => t == this))
         {
             // Find the nearest snap point to the hit
@@ -299,7 +317,7 @@ public class building_material : item
             // Right click destroys items of the same kind
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
-                player.current.camera_ray(), out same_hit, BUILD_RANGE, (b) => b.name == name);
+                player.current.camera_ray(), out same_hit, build_range_from_camera, (b) => b.name == name);
             if (found_same != null)
                 if (player.current.inventory.add(name, 1))
                     found_same.delete();
@@ -311,10 +329,10 @@ public class building_material : item
             return use_result.complete;
 
         RaycastHit hit;
-        var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, BUILD_RANGE);
+        var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, build_range_from_camera);
         if (bm != null)
             spawned = spawn_from_inventory_and_fix_to(bm, hit);
-        else if (Physics.Raycast(player.current.camera_ray(), out hit, BUILD_RANGE))
+        else if (Physics.Raycast(player.current.camera_ray(), out hit, build_range_from_camera))
             spawned = spawn_from_inventory_and_fix_at(hit);
 
         if (spawned != null) return use_result.underway_allows_none;
