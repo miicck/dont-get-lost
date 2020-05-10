@@ -3090,7 +3090,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: planks
   count: 64
-  inventory: {fileID: 2125155564}
+  inventory: {fileID: 0}
 --- !u!114 &1282133062
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3105,7 +3105,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: log
   count: 64
-  inventory: {fileID: 2125155564}
+  inventory: {fileID: 0}
 --- !u!4 &1282133063
 Transform:
   m_ObjectHideFlags: 0
@@ -3685,18 +3685,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2125155564 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1763839419, guid: 283672d608629ab48a635eca611500b5,
-    type: 3}
-  m_PrefabInstance: {fileID: 1140041435}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1326076720238691929
 PrefabInstance:
   m_ObjectHideFlags: 0

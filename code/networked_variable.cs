@@ -144,10 +144,17 @@ public abstract class networked_variable
         }
         float _lerp_value;
 
+        /// <summary> Sets the lerped value = networked value 
+        /// (i.e fast-forwards the lerping to completion) </summary>
+        public void reset_lerp()
+        {
+            _lerp_value = _value;
+        }
+
         public override void on_create()
         {
             // Start lerp value at initial value
-            _lerp_value = _value;
+            reset_lerp();
         }
 
         float lerp_speed;
@@ -220,7 +227,7 @@ public abstract class networked_variable
     /// <summary> Represents a map from strings to ints. </summary>
     public class net_string_counts : networked_variable, IEnumerable<KeyValuePair<string, int>>
     {
-        public object this [string str]
+        public object this[string str]
         {
             get => dict[str];
             set
@@ -239,19 +246,23 @@ public abstract class networked_variable
                 on_change?.Invoke();
                 send_update();
             }
-              
+
         }
         SortedDictionary<string, int> dict = new SortedDictionary<string, int>();
 
         public void set(Dictionary<string, int> counts)
         {
-            bool different = false;
-            foreach (var kv in counts)
-                if (!dict.ContainsKey(kv.Key) || dict[kv.Key] != kv.Value)
-                {
-                    different = true;
-                    break;
-                }
+            // Chek we have the same number of item types
+            bool different = dict.Count != counts.Count;
+
+            // Check the items we have are the same + in the same quantities
+            if (!different)
+                foreach (var kv in counts)
+                    if (!dict.ContainsKey(kv.Key) || dict[kv.Key] != kv.Value)
+                    {
+                        different = true;
+                        break;
+                    }
 
             if (!different)
                 return;
@@ -269,7 +280,7 @@ public abstract class networked_variable
             return this.GetEnumerator();
         }
 
-        public IEnumerator<KeyValuePair<string,int>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
         {
             return dict.GetEnumerator();
         }
@@ -290,7 +301,7 @@ public abstract class networked_variable
             dict.Clear();
 
             int end = offset + length;
-            while(offset < end)
+            while (offset < end)
             {
                 string key = network_utils.decode_string(buffer, ref offset);
                 int value = network_utils.decode_int(buffer, ref offset);

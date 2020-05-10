@@ -816,8 +816,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7122046191683077136}
-  - component: {fileID: 3332756938614654552}
   - component: {fileID: 6170414130500368767}
+  - component: {fileID: 2601138228866978738}
   m_Layer: 5
   m_Name: workbench
   m_TagString: Untagged
@@ -847,20 +847,6 @@ RectTransform:
   m_AnchoredPosition: {x: 859, y: 288}
   m_SizeDelta: {x: 256, y: 544}
   m_Pivot: {x: 1, y: 1}
---- !u!114 &3332756938614654552
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6998484798724770521}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  is_player_inventory: 0
-  ui_extend_left_point: {fileID: 0}
 --- !u!114 &6170414130500368767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -874,9 +860,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   options_go_here: {fileID: 2452831592792151156}
-  craft_from: {fileID: 3332756938614654552}
+  craft_from: {fileID: 2601138228866978738}
   craft_to: {fileID: 0}
   recipe_group: 0
+--- !u!114 &2601138228866978738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6998484798724770521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49832e23a34ec3644b1b07caed5f09ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  left_expansion_point: {fileID: 0}
 --- !u!1 &7261532067787573880
 GameObject:
   m_ObjectHideFlags: 0

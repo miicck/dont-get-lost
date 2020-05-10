@@ -5,8 +5,8 @@ using UnityEngine;
 public class crafting_input : MonoBehaviour
 {
     public Transform options_go_here;
-    public inventory craft_from;
-    public inventory craft_to;
+    public inventory_section craft_from;
+    public inventory_section craft_to;
     public recipes.RECIPE_GROUP recipe_group;
 
     private void Start()
@@ -37,8 +37,8 @@ public class crafting_input : MonoBehaviour
 public abstract class ingredient
 {
     public abstract string str();
-    public abstract bool in_inventory(inventory i);
-    public abstract void on_craft(inventory i);
+    public abstract bool in_inventory(inventory_section i);
+    public abstract void on_craft(inventory_section i);
 
     public class item : ingredient
     {
@@ -57,7 +57,7 @@ public abstract class ingredient
             return item_name;
         }
 
-        public override bool in_inventory(inventory i)
+        public override bool in_inventory(inventory_section i)
         {
             foreach (var s in i.slots)
                 if (s.item == item_name && s.count >= count)
@@ -65,7 +65,7 @@ public abstract class ingredient
             return false;
         }
 
-        public override void on_craft(inventory i)
+        public override void on_craft(inventory_section i)
         {
             i.remove(item_name, count);
         }
@@ -101,7 +101,7 @@ public class recipe
         return ce;
     }
 
-    public bool can_craft(inventory i)
+    public bool can_craft(inventory_section i)
     {
         foreach (var ing in ingredients)
             if (!ing.in_inventory(i))
@@ -109,7 +109,7 @@ public class recipe
         return true;
     }
 
-    public void craft(inventory from, inventory to)
+    public void craft(inventory_section from, inventory_section to)
     {
         if (!can_craft(from)) return;
         foreach (var ing in ingredients)

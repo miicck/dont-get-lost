@@ -44,6 +44,16 @@ public class player : networked_player
     {
         if (!local) return;
 
+        if (carrying != null)
+        {
+            Vector3 dx =
+                eye_transform.position +
+                eye_transform.forward -
+                carrying.carry_pivot.position;
+
+            carrying.transform.position += dx;
+        }
+
         // Allign the arm with the hand
         right_arm.to_grab = equipped?.transform;
 
@@ -164,10 +174,10 @@ public class player : networked_player
 
     const int QUICKBAR_SLOTS_COUNT = 8;
 
-    public inventory inventory { get; private set; }
+    public inventory inventory { get => GetComponentInChildren<inventory>(); }
 
-    inventory _current_workbench;
-    inventory current_workbench
+    inventory_section _current_workbench;
+    inventory_section current_workbench
     {
         get => _current_workbench;
         set
@@ -178,19 +188,27 @@ public class player : networked_player
             _current_workbench = value;
             if (_current_workbench != null)
             {
+                // Activate the workbench menu + direct its output to 
+                // the player inventory.
                 _current_workbench.gameObject.SetActive(true);
-                _current_workbench.GetComponent<crafting_input>().craft_to = inventory;
+                _current_workbench.GetComponent<crafting_input>().craft_to = inventory.contents;
+
+                // Put the workbench inventory in the right place, but
+                // make sure it isn't a child of the players inventory,
+                // otherwise it will be counted as part of the players
+                // inventory.
                 var rt = _current_workbench.GetComponent<RectTransform>();
-                rt.SetParent(inventory.ui_extend_left_point);
+                rt.SetParent(inventory.contents.left_expansion_point);
                 rt.anchoredPosition = Vector2.zero;
+                rt.SetParent(FindObjectOfType<Canvas>().transform);
             }
         }
     }
 
     bool inventory_open
     {
-        get { return inventory.gameObject.activeInHierarchy; }
-        set { inventory.gameObject.SetActive(value); }
+        get { return inventory.ui_open; }
+        set { inventory.ui_open = value; }
     }
 
     int last_quickbar_slot_accessed = 0;
@@ -510,8 +528,14 @@ public class player : networked_player
     // VIEW/CAMERA CONTROL //
     //#####################//
 
+    /// <summary> The player camera. </summary>
+#if UNITY_EDITOR
+    new
+#endif
+    public Camera camera
+    { get; private set; }
+
     // Objects used to obscure player view
-    public new Camera camera { get; private set; }
     GameObject obscurer;
     GameObject map_obscurer;
     GameObject underwater_screen;
@@ -731,32 +755,16 @@ public class player : networked_player
 
             game.on_local_player_create(this);
         }
-
-        // Initialize the inventory to closed
-        inventory = Resources.Load<inventory>("ui/player_inventory").inst();
-        inventory.name = "player inventory (" + name + ")";
-        inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
-        inventory.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-        inventory_open = false;
     }
 
     public override void on_first_create()
     {
-        // Network the inventory
-        inventory.networked_version = (networked_inventory)client.create(
-            transform.position, "misc/networked_inventory", parent: this
-            );
+        // Create the inventory
+        client.create(transform.position, "misc/player_inventory", parent: this);
 
         // Player starts with an axe
         inventory.add("axe", 1);
         inventory.add("furnace", 1);
-    }
-
-    public override void on_add_networked_child(networked child)
-    {
-        // Link the networked inventory to the UI inventory
-        if (child is networked_inventory)
-            inventory.networked_version = (networked_inventory)child;
     }
 
     void add_controller()

@@ -75,13 +75,12 @@ public static class client
             remote_prefab = remote_prefab,
         });
 
-        if (parent != null) parent.on_add_networked_child(created);
-        created.on_create(false);
-
         // This is being created locally => this is the
         // first time it was created.
         created.on_first_create();
+        created.on_create(false);
 
+        if (parent != null) parent.on_add_networked_child(created);
         return created;
     }
 
@@ -114,7 +113,6 @@ public static class client
         // is variable, the user should implement that.
         nw.transform.localRotation = Quaternion.identity;
 
-        if (parent != null) parent.on_add_networked_child(nw);
         // The rest is network variables that need deserializing
         int index = 0;
         while (offset < end)
@@ -126,6 +124,8 @@ public static class client
         }
 
         nw.on_create(true);
+
+        if (parent != null) parent.on_add_networked_child(nw);
     }
 
     /// <summary> A message waiting to be sent. </summary>
@@ -243,7 +243,10 @@ public static class client
             {
                 // Remove the object from the client
                 int id = network_utils.decode_int(buffer, ref offset);
-                networked.find_by_id(id).forget();
+                var found = networked.try_find_by_id(id);
+                if (found == null) // This should only happen in high-latency edge cases
+                    Debug.Log("Forgetting non-existant id " + id);
+                else found.forget();
             },
 
             [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>

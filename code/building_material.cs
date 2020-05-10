@@ -16,12 +16,12 @@ public class building_material : item
             if (player.current.first_person)
                 return BUILD_RANGE;
 
-            Vector3 cam_to_eye = 
-                player.current.eye_transform.position - 
+            Vector3 cam_to_eye =
+                player.current.eye_transform.position -
                 player.current.camera.transform.position;
 
             float boost = Vector3.Project(
-                player.current.camera.transform.forward, 
+                player.current.camera.transform.forward,
                 cam_to_eye).magnitude;
 
             return BUILD_RANGE + boost;
@@ -39,10 +39,36 @@ public class building_material : item
     // to a particular weld point in space
     public class weld_info
     {
-        item to_weld;             // The item being welded
-        snap_point pivot;         // The pivot of the item, in snapped orientation
-        Vector3 weld_location;    // The world location of the weld
-        Quaternion weld_rotation; // The rotation of the weld (specifying the snap directions)
+        building_material to_weld; // The item being welded
+        snap_point pivot;          // The pivot of the item, in snapped orientation
+
+        public Vector3 weld_location { get; private set; }    // The world location of the weld
+        public Quaternion weld_rotation { get; private set; } // The rotation of the weld (specifying the snap directions)
+
+        // The rotation of the rotation axes
+        public Quaternion rotation_axes_rotation
+        {
+            get => Quaternion.LookRotation(forward_rot, up_rot);
+        }
+
+        /// <summary> The displayed axes. </summary>
+        axes axes;
+
+        /// <summary> Are the axes shown? </summary>
+        public bool display_axes
+        {
+            get => axes != null;
+            set
+            {
+                if (display_axes == value)
+                    return; // No change
+
+                if (value)
+                    axes = Resources.Load<axes>("misc/axes").inst();
+                else
+                    Destroy(axes.gameObject);
+            }
+        }
 
         // Rotate the item so that the pivot has the given rotation
         void set_pivot_rotation(Quaternion rotation)
@@ -56,41 +82,49 @@ public class building_material : item
             to_weld.transform.position += disp;
         }
 
+        /// <summary>
+        /// The index of the pivot in <see cref="to_weld"/>.snap_points.
+        /// </summary>
+        int pivot_index
+        {
+            get => _pivot_index;
+            set
+            {
+                _pivot_index = value;
+                if (_pivot_index > to_weld.snap_points.Length - 1) _pivot_index = 0;
+                else if (_pivot_index < 0) _pivot_index = to_weld.snap_points.Length - 1;
+                pivot = to_weld.snap_points[_pivot_index];
+            }
+        }
+        static int _pivot_index; // Static so it's remembered between placements
+
         // Constructor
         public weld_info(
-            item to_weld,
-            snap_point pivot,
+            building_material to_weld,
             Vector3 weld_location,
             Quaternion weld_rotation
             )
         {
             this.to_weld = to_weld;
-            this.pivot = pivot;
+            pivot_index = pivot_index; // Loads the pivot
+
             this.weld_location = weld_location;
             this.weld_rotation = weld_rotation;
-            snap_pivot_rotation();
+
+            // Determine the rotation axes
+            right_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
+            forward_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
+            up_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
+
+            display_axes = true;
+            axes.transform.position = weld_location;
+            axes.transform.rotation = rotation_axes_rotation;
+
+            set_pivot_rotation(rotation_axes_rotation);
         }
 
-        // The primary axes in the weld-rotated coordinate system
-        Vector3[] weld_axes()
-        {
-            // Axes relative to weld axis
-            Vector3[] axes = new Vector3[]
-            {
-                new Vector3( 1,0,0), new Vector3(0, 1,0), new Vector3(0,0, 1),
-                new Vector3(-1,0,0), new Vector3(0,-1,0), new Vector3(0,0,-1)
-            };
-
-            // Rotate by the weld rotation/normalize to
-            // obtain global rotation weld-axes
-            for (int i = 0; i < axes.Length; ++i)
-                axes[i] = weld_rotation * axes[i];
-
-            return axes;
-        }
-
-        // The rotation axes to snap the pivot up-direction to
-        Vector3[] snap_axes()
+        // The possible rotation axes
+        Vector3[] possible_axes()
         {
             // Axes relative to weld axis
             Vector3[] axes = new Vector3[]
@@ -111,56 +145,54 @@ public class building_material : item
             return axes;
         }
 
-        void snap_pivot_rotation()
-        {
-            // Set the pivot to point along the closest axes to it's current up/forward
-            Vector3 up_axis = utils.find_to_min(snap_axes(), (a) => -Vector3.Dot(a, pivot.transform.up));
-            Vector3 fw_axis = utils.find_to_min(snap_axes(), (a) => -Vector3.Dot(a, pivot.transform.forward));
-            set_pivot_rotation(Quaternion.LookRotation(fw_axis, up_axis));
-        }
-
         // Rotate the pivot with the keyboard keys
-        Vector3 rd;
-        Vector3 fd;
-        Vector3 ud;
+        public Vector3 right_rot { get; private set; }
+        public Vector3 forward_rot { get; private set; }
+        public Vector3 up_rot { get; private set; }
+
         public void key_rotate()
         {
-            rd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
-            fd = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
-            ud = utils.find_to_min(weld_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
+            float pivot_change_dir = Input.GetAxis("Mouse ScrollWheel");
+            if (Input.GetKeyDown(KeyCode.C)) pivot_change_dir = 1f;
+            if (pivot_change_dir != 0)
+            {
+                // Change the pivot
+                Quaternion saved_rotation = pivot.transform.rotation;
+                pivot_index += pivot_change_dir > 0 ? 1 : -1;
+                set_pivot_rotation(saved_rotation);
+            }
 
-            if (Input.GetKeyDown(KeyCode.D)) to_weld.transform.RotateAround(pivot.transform.position, -fd, 50);
-            else if (Input.GetKeyDown(KeyCode.A)) to_weld.transform.RotateAround(pivot.transform.position, fd, 50);
-            else if (Input.GetKeyDown(KeyCode.S)) to_weld.transform.RotateAround(pivot.transform.position, -rd, 50);
-            else if (Input.GetKeyDown(KeyCode.W)) to_weld.transform.RotateAround(pivot.transform.position, rd, 50);
-            else if (Input.GetKeyDown(KeyCode.Q)) to_weld.transform.RotateAround(pivot.transform.position, -ud, 50);
-            else if (Input.GetKeyDown(KeyCode.E)) to_weld.transform.RotateAround(pivot.transform.position, ud, 50);
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
+                axes.highlight_axis(axes.AXIS.Z);
+            }
+            else if (Input.GetKeyDown(KeyCode.A))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, forward_rot, 45);
+                axes.highlight_axis(axes.AXIS.Z);
+            }
+            else if (Input.GetKeyDown(KeyCode.S))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, -right_rot, 45);
+                axes.highlight_axis(axes.AXIS.X);
+            }
+            else if (Input.GetKeyDown(KeyCode.W))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, right_rot, 45);
+                axes.highlight_axis(axes.AXIS.X);
+            }
+            else if (Input.GetKeyDown(KeyCode.Q))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, -up_rot, 45);
+                axes.highlight_axis(axes.AXIS.Y);
+            }
+            else if (Input.GetKeyDown(KeyCode.E))
+            {
+                to_weld.transform.RotateAround(pivot.transform.position, up_rot, 45);
+                axes.highlight_axis(axes.AXIS.Y);
+            }
             else return;
-
-            snap_pivot_rotation();
-        }
-
-        public void draw_gizmos()
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(
-                pivot.transform.position,
-                pivot.transform.position + pivot.transform.up);
-
-            Gizmos.color = Color.red;
-            Vector3 d = Vector3.one / 100f;
-            Gizmos.DrawLine(weld_location + d, weld_location + d + weld_rotation * Vector3.up);
-
-            Gizmos.color = Color.cyan;
-            foreach (var a in snap_axes())
-                Gizmos.DrawLine(weld_location, weld_location + a / 2);
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(weld_location, weld_location + rd);
-
-            Gizmos.matrix = Matrix4x4.Rotate(weld_rotation);
-            Gizmos.DrawWireCube(weld_location, Vector3.one);
-            Gizmos.matrix = Matrix4x4.identity;
         }
     }
 
@@ -180,11 +212,6 @@ public class building_material : item
 
             rigidbody.isKinematic = true;
         }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        weld?.draw_gizmos();
     }
 
     //##########//
@@ -254,10 +281,9 @@ public class building_material : item
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
 
-        snap_point snap_from = spawned.snap_points[0];
         snap_point snap_to = other.closest_to_ray(player.current.camera_ray());
 
-        if (snap_from == null || snap_to == null)
+        if (snap_to == null)
         {
             Destroy(spawned.gameObject);
             return null;
@@ -266,7 +292,6 @@ public class building_material : item
         player.current.inventory.remove(name, 1);
 
         spawned.weld = new weld_info(spawned,
-            snap_from,
             snap_to.transform.position,
             snap_to.transform.rotation);
 
@@ -278,18 +303,9 @@ public class building_material : item
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
 
-        snap_point snap_from = spawned.snap_points[0];
-
-        if (snap_from == null)
-        {
-            Destroy(spawned.gameObject);
-            return null;
-        }
-
         player.current.inventory.remove(name, 1);
 
         spawned.weld = new weld_info(spawned,
-            snap_from,
             hit.point,
             player.current.transform.rotation);
 
@@ -348,6 +364,7 @@ public class building_material : item
         {
             // Cancel build on right click
             player.current.inventory.add(spawned.name, 1);
+            spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);
             spawned = null;
             return use_result.complete;
@@ -366,7 +383,8 @@ public class building_material : item
             var created = (building_material)create(spawned.name,
                 spawned.transform.position, spawned.transform.rotation,
                 kinematic: true, networked: true);
-        
+
+            spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);
         }
 

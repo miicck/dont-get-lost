@@ -15,7 +15,8 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
             if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Left)
             {
                 mi = mouse_item.create(slot.item, slot.count, slot);
-                slot.clear();
+                slot.set_item_count(null, 0);
+                //slot.clear();
             }
             else if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Right)
             {
@@ -34,7 +35,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
 
 public class inventory_slot : MonoBehaviour
 {
-    inventory[] inventories_belonging_to { get => GetComponentsInParent<inventory>(true); }
+    inventory_section[] sections_belonging_to { get => GetComponentsInParent<inventory_section>(true); }
 
     item _item = null;
     public string item
@@ -75,8 +76,8 @@ public class inventory_slot : MonoBehaviour
         count_text.text = count > 1 ? utils.int_to_quantity_string(count) : "";
 
         // Call the on_change function
-        foreach (var i in inventories_belonging_to)
-            i.on_change();
+        foreach (var s in sections_belonging_to)
+            s.on_change();
     }
 
     public void clear() { set_item_count(null, 0); }

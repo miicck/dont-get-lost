@@ -9,6 +9,6 @@ public class add_item_on_start : MonoBehaviour
     public inventory inventory;
     void Start()
     {
-        inventory.add(item, count);
+        inventory.contents.add(item, count);
     }
 }

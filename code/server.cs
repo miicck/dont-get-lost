@@ -566,7 +566,13 @@ public static class server
             {
                 // Find the representation being deleted
                 int network_id = network_utils.decode_int(bytes, ref offset);
-                var deleting = representations[network_id];
+                representation deleting;
+                if (!representations.TryGetValue(network_id, out deleting))
+                {
+                    // This should only happend in high-latency edge cases
+                    Debug.Log("Deleting non-existant id " + network_id);
+                    return;
+                }
 
                 // Unload the object with the above network_id 
                 // from all clients + the server (children will

@@ -9,8 +9,28 @@ public class item : networked
     //###########//
 
     public Sprite sprite; // The sprite represeting this item in inventories etc
-    new public Rigidbody rigidbody { get; private set; } // The rigidbody attached to this item in-world
-    Transform carry_pivot; // The point we are carrying this item by in carry mode
+    public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
+
+    /// <summary> The rigidbody controlling physics for this item 
+    /// (creates if it doesn't already exist). </summary>
+#if UNITY_EDITOR
+    new
+#endif
+    public Rigidbody rigidbody
+    {
+        get
+        {
+            if (_rigidbody == null)
+            {
+                // Rigidbody starts kinematic
+                _rigidbody = gameObject.AddComponent<Rigidbody>();
+                _rigidbody.isKinematic = true;
+            }
+            return _rigidbody;
+        }
+    }
+    Rigidbody _rigidbody;
+
 
     //############//
     // PLAYER USE //
@@ -64,6 +84,8 @@ public class item : networked
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 
+    bool being_carried = false;
+    bool controlling_position = false;
     public void carry(RaycastHit point_hit)
     {
         // Create the pivot point that we clicked the item at
@@ -72,20 +94,19 @@ public class item : networked
         carry_pivot.transform.position = point_hit.point;
         carry_pivot.rotation = player.current.camera.transform.rotation;
 
-        // Item is under player ownership
-        transform.SetParent(player.current.camera.transform);
-
         // Setup item in carry mode
         rigidbody.isKinematic = true;
         rigidbody.detectCollisions = false;
+        being_carried = true;
+        controlling_position = true;
     }
 
     public void stop_carry()
     {
         // Put the item back in physics mode
-        transform.SetParent(chunk.at(transform.position).transform);
         rigidbody.isKinematic = false;
         rigidbody.detectCollisions = true;
+        being_carried = false;
     }
 
     public void pick_up()
@@ -116,6 +137,14 @@ public class item : networked
 
     public networked_variable.net_quaternion networked_rotation;
 
+    public override bool client_controlls_position()
+    {
+        if (!being_carried && rigidbody.velocity.magnitude < 0.1f)
+            controlling_position = false;
+
+        return controlling_position || local;
+    }
+
     public override void on_init_network_variables()
     {
         // Create newtorked variables
@@ -141,8 +170,7 @@ public class item : networked
     // STATIC METHODS //
     //################//
 
-    /// <summary> Create an item. Attaches a rigidbody to 
-    /// the item in the process. </summary>
+    /// <summary> Create an item. </summary>
     public static item create(string name,
         Vector3 position, Quaternion rotation,
         bool kinematic = true, bool networked = false,
@@ -165,9 +193,6 @@ public class item : networked
             item.transform.rotation = rotation;
             item.transform.SetParent(network_parent == null ? null : network_parent.transform);
         }
-
-        item.rigidbody = item.gameObject.AddComponent<Rigidbody>();
-        item.rigidbody.isKinematic = kinematic;
 
         return item;
     }

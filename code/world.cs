@@ -10,7 +10,7 @@ public class world : networked
     public const float MAX_ALTITUDE = 128f;
 
     public networked_variable.net_int networked_seed;
-    public networked_variable.net_string networked_name; 
+    public networked_variable.net_string networked_name;
 
     public override float network_radius()
     {
@@ -52,7 +52,7 @@ public class world : networked
     }
 
     // The name of the world
-    public static string name
+    new public static string name
     {
         get => static_world.networked_name.value;
     }

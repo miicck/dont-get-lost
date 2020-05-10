@@ -34,6 +34,9 @@ public class networked : MonoBehaviour
     /// <summary> Called whenever a networked child is added. </summary>
     public virtual void on_add_networked_child(networked child) { }
 
+    /// <summary> Should return true if this client is controlling my position. </summary>
+    public virtual bool client_controlls_position() { return local; }
+
     //#####################//
     // NETWORKED VARIABLES //
     //#####################//
@@ -52,7 +55,7 @@ public class networked : MonoBehaviour
         on_create();
     }
 
-    /// <summary> Called just before we enumerate the network variables of this object. </summary>
+    /// <summary> Called just before we create this object. </summary>
     public void init_network_variables()
     {
         x_local = new networked_variable.net_float(
@@ -64,29 +67,36 @@ public class networked : MonoBehaviour
         z_local = new networked_variable.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
 
-        if (local)
+        // The local position should be set immediately
+        // to the networked value if this client is controlling
+        // the position (otherwise it should LERP to the networked
+        // value; see network_update).
+        x_local.on_change = (x) =>
         {
-            x_local.on_change = (x) =>
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.x = x;
-                transform.localPosition = local_pos;
-            };
+            if (!client_controlls_position()) return;
+            Vector3 local_pos = transform.localPosition;
+            local_pos.x = x;
+            transform.localPosition = local_pos;
+            x_local.reset_lerp();
+        };
 
-            y_local.on_change = (y) =>
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.y = y;
-                transform.localPosition = local_pos;
-            };
+        y_local.on_change = (y) =>
+        {
+            if (!client_controlls_position()) return;
+            Vector3 local_pos = transform.localPosition;
+            local_pos.y = y;
+            transform.localPosition = local_pos;
+            y_local.reset_lerp();
+        };
 
-            z_local.on_change = (z) =>
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.z = z;
-                transform.localPosition = local_pos;
-            };
-        }
+        z_local.on_change = (z) =>
+        {
+            if (!client_controlls_position()) return;
+            Vector3 local_pos = transform.localPosition;
+            local_pos.z = z;
+            transform.localPosition = local_pos;
+            z_local.reset_lerp();
+        };
 
         on_init_network_variables();
 
@@ -112,9 +122,9 @@ public class networked : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
-        if (!local)
+        if (!client_controlls_position())
         {
-            // Nonlocal => LERP my position
+            // Not controlled by this => LERP my position to networked position
             // We do this first, so that transform.localPosition is properly
             // initialized before the first on_network_update() call
             transform.localPosition = new Vector3(
@@ -208,6 +218,11 @@ public class networked : MonoBehaviour
     /// <summary> Remove a networked object from the server and all clients. </summary>
     public void delete()
     {
+        // Deactivate the object immediately, but
+        // delete only once we have a positive network ID
+        gameObject.SetActive(false);
+        CancelInvoke("delete");
+
         if (network_id < 0)
         {
             // If unregistered, try again until registered.
@@ -302,8 +317,25 @@ public class networked : MonoBehaviour
     /// <summary> The objects on this client, keyed by their network id. </summary>
     static Dictionary<int, networked> objects = new Dictionary<int, networked>();
 
-    /// <summary> Return the object with the given network id. </summary>
-    public static networked find_by_id(int id) { return objects[id]; }
+    /// <summary> Return the object with the given network id. 
+    /// Throws an error if it doesn't exist. </summary>
+    public static networked find_by_id(int id)
+    {
+        networked found;
+        if (!objects.TryGetValue(id, out found))
+            throw new System.Exception("Could not find object with network id " + id);
+        return found;
+    }
+
+    /// <summary> Attempt to find a networked object.
+    /// Returns null if it doesn't exist. </summary>
+    public static networked try_find_by_id(int id)
+    {
+        networked found;
+        if (!objects.TryGetValue(id, out found))
+            return null;
+        return found;
+    }
 
     /// <summary> Called every time client.update is called. </summary>
     public static void network_updates()
