@@ -219,3 +219,49 @@ public static class utils
         return (Mathf.Exp(x) - Mathf.Exp(-x)) / (Mathf.Exp(x) + Mathf.Exp(-x));
     }
 }
+
+/// <summary> A dictionary keyed by two ints. </summary>
+public class two_int_dictionary<T>
+{
+    Dictionary<int, Dictionary<int, T>> dict = 
+        new Dictionary<int, Dictionary<int, T>>();
+
+    public void add(int x, int z, T t)
+    {
+        Dictionary<int, T> inner;
+        if (!dict.TryGetValue(x, out inner))
+        {
+            inner = new Dictionary<int, T>();
+            dict[x] = inner;
+        }
+
+        inner[z] = t;
+    }
+
+    public void remove(int x, int z)
+    {
+        Dictionary<int, T> inner;
+        if (!dict.TryGetValue(x, out inner))
+            return;
+
+        inner.Remove(z);
+        if (inner.Count == 0)
+            dict.Remove(x);
+    }
+
+    public T get(int x, int z)
+    {
+        Dictionary<int, T> inner;
+        if (!dict.TryGetValue(x, out inner))
+        {
+            inner = new Dictionary<int, T>();
+            dict[x] = inner;
+        }
+
+        T ret;
+        if (inner.TryGetValue(z, out ret))
+            return ret;
+
+        return default(T);
+    }
+}

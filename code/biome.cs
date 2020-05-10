@@ -38,8 +38,8 @@ public abstract class biome : MonoBehaviour
             _neihbours[i, j] = null;
 
             // Attempt to find already existing biome, otherwise generate one
-            var go = GameObject.Find("biome_" + (x + dx) + "_" + (z + dz));
-            if (go != null) _neihbours[i, j] = go.GetComponent<biome>();
+            var found = generated_biomes.get(x + dx, z + dz);
+            if (found != null) _neihbours[i, j] = found;
             else if (generate_if_needed)
                 _neihbours[i, j] = generate(x + dx, z + dz);
         }
@@ -248,6 +248,12 @@ public abstract class biome : MonoBehaviour
             Destroy(gameObject);
     }
 
+    private void OnDestroy()
+    {
+        // Remove this from the grid of generated biomes
+        generated_biomes.remove(x, z);
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
@@ -260,6 +266,9 @@ public abstract class biome : MonoBehaviour
     // BIOME GENERATION //
     //##################//
 
+    static two_int_dictionary<biome> generated_biomes = 
+        new two_int_dictionary<biome>();
+
     // Generates the biome at x, z
     public static biome generate(int x, int z)
     {
@@ -268,20 +277,22 @@ public abstract class biome : MonoBehaviour
         System.Random rand = procmath.multiseed_random(x, z, world.seed);
 
         // Use the above random number generator to pick which biome to generate
-        int i = rand.Next() % generated_biomes.Count;
-        return (biome)generated_biomes[i].Invoke(null, new object[] { x, z, rand });
+        int i = rand.Next() % biome_list.Count;
+        var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
+        generated_biomes.add(x, z, b);
+        return b;
     }
 
     // Creation methods for all generated biome types
-    static List<MethodInfo> _generated_biomes;
-    static List<MethodInfo> generated_biomes
+    static List<MethodInfo> _biome_list;
+    static List<MethodInfo> biome_list
     {
         get
         {
-            if (_generated_biomes == null)
+            if (_biome_list == null)
             {
                 // Find the biome types
-                _generated_biomes = new List<MethodInfo>();
+                _biome_list = new List<MethodInfo>();
                 var asem = Assembly.GetAssembly(typeof(biome));
                 var types = asem.GetTypes();
 
@@ -300,7 +311,7 @@ public abstract class biome : MonoBehaviour
                     if (t.Name == world.name)
                     {
                         // Enforce the biome override
-                        _generated_biomes = new List<MethodInfo> { generate_method };
+                        _biome_list = new List<MethodInfo> { generate_method };
                         break;
                     }
 
@@ -312,10 +323,10 @@ public abstract class biome : MonoBehaviour
                             continue; // Skip allowing this biome
                     }
 
-                    _generated_biomes.Add(generate_method);
+                    _biome_list.Add(generate_method);
                 }
             }
-            return _generated_biomes;
+            return _biome_list;
         }
     }
 

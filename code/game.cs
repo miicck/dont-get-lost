@@ -7,6 +7,7 @@ public class game : MonoBehaviour
     public const float MIN_RENDER_RANGE = 0f;
     public const string LOCAL_PLAYER_PREFAB = "misc/player_local";
     public const string REMOTE_PLAYER_PREFAB = "misc/player_remote";
+    public const float SLOW_UPDATE_TIME = 0.5f;
 
     public UnityEngine.UI.Text debug_text;
 
@@ -153,6 +154,8 @@ public class game : MonoBehaviour
 
         if (Application.isEditor)
             QualitySettings.vSyncCount = 0;
+
+        InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
     }
 
     void create_sky()
@@ -172,6 +175,14 @@ public class game : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F3))
             debug_text.enabled = !debug_text.enabled;
 
+        if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
+        if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
+        render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
+    }
+
+    /// <summary> Called every <see cref="SLOW_UPDATE_TIME"/> seconds. </summary>
+    void slow_update()
+    {
         debug_text.text = "";
 
         debug_text.text += world.info() + "\n";
@@ -184,10 +195,6 @@ public class game : MonoBehaviour
         debug_text.text += client.info() + "\n";
 
         debug_text.text += player.info() + "\n";
-
-        if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
-        if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
-        render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
     }
 
     void OnApplicationQuit()

@@ -280,6 +280,165 @@ public class flat_forest : biome
     }
 }
 
+public class farmland : biome
+{
+    /// <summary> The smallest alllowed field edge size. </summary>
+    const int MIN_FIELD_SIZE = 16;
+
+    /// <summary> Fields larger than this will be subdivided. Must
+    /// larger than 2 * MIN_FIELD_SIZE.</summary>
+    const int MAX_FIELD_SIZE = MIN_FIELD_SIZE * 4;
+
+    /// <summary> How wide the grass margin is
+    /// at the edge of the field. </summary>
+    const int MARGIN_WIDTH = 6;
+
+    struct field
+    {
+        public enum TYPE
+        {
+            FIELD,
+            WOODLAND,
+        }
+
+        public field(biome b, int left, int right, int bottom, int top)
+        {
+            type = TYPE.FIELD;
+            if (b.random.range(0, 4) == 0)
+                type = TYPE.WOODLAND;
+
+            this.left = left;
+            this.right = right;
+            this.bottom = bottom;
+            this.top = top;
+        }
+
+        public TYPE type { get; private set; }
+        public int left { get; private set; }
+        public int bottom { get; private set; }
+        public int right { get; private set; }
+        public int top { get; private set; }
+        public int width { get => right - left; }
+        public int height { get => top - bottom; }
+
+        public bool is_margin(int x, int z)
+        {
+            return x > right - MARGIN_WIDTH ||
+                   x < MARGIN_WIDTH ||
+                   z > top - MARGIN_WIDTH ||
+                   z < MARGIN_WIDTH;
+        }
+
+        public bool is_edge(int x, int z)
+        {
+            return x == left ||
+                   z == bottom ||
+                   x == right - 1 ||
+                   z == top - 1;
+        }
+    }
+
+    HashSet<field> fields;
+
+    protected override void generate_grid()
+    {
+        // Use a divisive algorithm to split the area into
+        // fields in a grid-like arrangement.
+
+        // Start with a field covering the whole biome
+        fields = new HashSet<field> { new field(this, 0, SIZE, 0, SIZE) };
+
+        while (true)
+        {
+            // Set to true if a field was subdivided
+            bool created = false;
+
+            foreach (var f in new HashSet<field>(fields))
+            {
+                if (f.width > MAX_FIELD_SIZE)
+                {
+                    // Split field to reduce width
+                    created = true;
+                    fields.Remove(f);
+
+                    int split = random.range(f.left + MIN_FIELD_SIZE, f.right - MIN_FIELD_SIZE);
+
+                    fields.Add(new field(this, f.left, split, f.bottom, f.top));
+                    fields.Add(new field(this, split, f.right, f.bottom, f.top));
+                }
+                else if (f.height > MAX_FIELD_SIZE)
+                {
+                    // Split field to reduce height
+                    created = true;
+                    fields.Remove(f);
+
+                    int split = random.range(f.bottom + MIN_FIELD_SIZE, f.top - MIN_FIELD_SIZE);
+
+                    fields.Add(new field(this, f.left, f.right, f.bottom, split));
+                    fields.Add(new field(this, f.left, f.right, split, f.top));
+                }
+            }
+
+            // No fields subdivided => done
+            if (!created)
+                break;
+        }
+
+        foreach (var f in fields)
+        {
+            for (int x = f.left; x < f.right; ++x)
+                for (int z = f.bottom; z < f.top; ++z)
+                {
+                    var p = new point();
+                    p.altitude = point.BEACH_END;
+
+                    switch (f.type)
+                    {
+                        case field.TYPE.FIELD:
+
+                            if (f.is_margin(x, z))
+                            {
+                                p.terrain_color = terrain_colors.grass;
+                                p.altitude += 0.25f;
+
+                                if (f.is_edge(x, z) && random.range(0, 4) != 0)
+                                {
+                                    if (random.range(0, 30) == 0)
+                                    {
+                                        p.object_to_generate = world_object.load("tree");
+                                    }
+                                    else
+                                    {
+                                        p.object_to_generate = world_object.load("hedge");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                p.terrain_color = terrain_colors.dirt;
+                                p.object_to_generate = world_object.load("wheat_green");
+                            }
+
+                            break;
+
+                        case field.TYPE.WOODLAND:
+
+                            p.terrain_color = terrain_colors.grass;
+                            if (random.range(0, 200) == 0)
+                                p.object_to_generate = world_object.load("tree");
+
+                            break;
+
+                        default:
+                            throw new System.Exception("Unkown field type!");
+                    }
+
+                    grid[x, z] = p;
+                }
+        }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class cubes : biome
 {
