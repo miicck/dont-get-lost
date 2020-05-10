@@ -7,9 +7,10 @@ public class game : MonoBehaviour
     public const float MIN_RENDER_RANGE = 0f;
     public const string LOCAL_PLAYER_PREFAB = "misc/player_local";
     public const string REMOTE_PLAYER_PREFAB = "misc/player_remote";
-    public const float SLOW_UPDATE_TIME = 0.5f;
+    public const float SLOW_UPDATE_TIME = 0.1f;
 
     public UnityEngine.UI.Text debug_text;
+    public GameObject debug_panel;
 
     /// <summary> Information on how to start a game. </summary>
     struct startup_info
@@ -111,13 +112,13 @@ public class game : MonoBehaviour
     void Start()
     {
         // Various startup modes
-        switch(startup.mode)
+        switch (startup.mode)
         {
             case startup_info.MODE.LOAD_AND_HOST:
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                server.start(server.DEFAULT_PORT, startup.world_name, 
+                server.start(server.DEFAULT_PORT, startup.world_name,
                     LOCAL_PLAYER_PREFAB, REMOTE_PLAYER_PREFAB);
 
                 client.connect(network_utils.local_ip_address().ToString(),
@@ -136,7 +137,7 @@ public class game : MonoBehaviour
             case startup_info.MODE.JOIN:
 
                 // Join the server
-                client.connect(startup.hostname, startup.port, 
+                client.connect(startup.hostname, startup.port,
                     startup.username, "password");
 
                 break;
@@ -173,28 +174,31 @@ public class game : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.F3))
-            debug_text.enabled = !debug_text.enabled;
+            debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
+
+        server.update();
+        client.update();
     }
 
     /// <summary> Called every <see cref="SLOW_UPDATE_TIME"/> seconds. </summary>
     void slow_update()
     {
-        debug_text.text = "";
+        if (!debug_panel.activeInHierarchy)
+            return;
 
-        debug_text.text += world.info() + "\n";
-        debug_text.text += "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n";
+        string debug_text = ""
+        + world.info() + "\n"
+        + "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n"
+        + server.info() + "\n"
+        + client.info() + "\n"
+        + player.info() + "\n";
+        debug_text = debug_text.Trim();
 
-        server.update();
-        debug_text.text += server.info() + "\n";
-
-        client.update();
-        debug_text.text += client.info() + "\n";
-
-        debug_text.text += player.info() + "\n";
+        this.debug_text.text = debug_text;
     }
 
     void OnApplicationQuit()

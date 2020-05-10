@@ -297,15 +297,17 @@ public class farmland : biome
     {
         public enum TYPE
         {
-            FIELD,
+            GRASS,
+            LETTUCE,
+            POTATO,
+            APPLE,
             WOODLAND,
         }
 
         public field(biome b, int left, int right, int bottom, int top)
         {
-            type = TYPE.FIELD;
-            if (b.random.range(0, 4) == 0)
-                type = TYPE.WOODLAND;
+            int length = System.Enum.GetNames(typeof(TYPE)).Length;
+            type = (TYPE)b.random.range(0, length);
 
             this.left = left;
             this.right = right;
@@ -394,18 +396,23 @@ public class farmland : biome
 
                     switch (f.type)
                     {
-                        case field.TYPE.FIELD:
+                        case field.TYPE.GRASS:
+                        case field.TYPE.POTATO:
+                        case field.TYPE.LETTUCE:
+                        case field.TYPE.APPLE:
 
                             if (f.is_margin(x, z))
                             {
+                                // Margin area
                                 p.terrain_color = terrain_colors.grass;
                                 p.altitude += 0.25f;
 
                                 if (f.is_edge(x, z) && random.range(0, 4) != 0)
                                 {
+                                    // Hedgerow
                                     if (random.range(0, 30) == 0)
                                     {
-                                        p.object_to_generate = world_object.load("tree");
+                                       // p.object_to_generate = world_object.load("tree");
                                     }
                                     else
                                     {
@@ -415,8 +422,35 @@ public class farmland : biome
                             }
                             else
                             {
-                                p.terrain_color = terrain_colors.dirt;
-                                p.object_to_generate = world_object.load("wheat_green");
+                                // Field
+                                switch (f.type)
+                                {
+                                    case field.TYPE.GRASS:
+                                        p.terrain_color = terrain_colors.grass;
+                                        break;
+
+                                    case field.TYPE.LETTUCE:
+                                        p.terrain_color = terrain_colors.dirt;
+                                        if (x % 2 == 0 && z % 4 == 0)
+                                            p.object_to_generate = world_object.load("lettuce");
+                                        break;
+
+                                    case field.TYPE.POTATO:
+                                        p.terrain_color = terrain_colors.dirt;
+                                        if (x % 4 == 0 && z % 2 == 0)
+                                            p.object_to_generate = world_object.load("potato_plant");
+                                        break;
+
+                                    case field.TYPE.APPLE:
+                                        p.terrain_color = terrain_colors.grass;
+                                        if (x % 5 == 0 && z % 5 == 0)
+                                            p.object_to_generate = world_object.load("apple_tree");
+                                        break;
+
+                                    default:
+                                        throw new System.Exception("Unkown crop!");
+                                }
+
                             }
 
                             break;
@@ -424,8 +458,8 @@ public class farmland : biome
                         case field.TYPE.WOODLAND:
 
                             p.terrain_color = terrain_colors.grass;
-                            if (random.range(0, 200) == 0)
-                                p.object_to_generate = world_object.load("tree");
+                            if (random.range(0, 100) == 0)
+                                p.object_to_generate = world_object.load("bush");
 
                             break;
 

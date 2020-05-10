@@ -214,7 +214,7 @@ public class chunk : MonoBehaviour
         water.transform.localScale = Vector3.one * SIZE;
         water.transform.forward = -Vector3.up;
         var ren = water.gameObject.GetComponent<MeshRenderer>();
-        ren.material = Resources.Load<Material>("materials/water");
+        ren.material = Resources.Load<Material>("materials/standard_shader/water");
 
         // Create the underside of the water
         var water_bottom = water.inst();

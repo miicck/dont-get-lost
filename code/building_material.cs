@@ -268,7 +268,7 @@ public class building_material : item
         rigidbody.detectCollisions = false;
         Destroy(rigidbody);
         foreach (var r in GetComponentsInChildren<Renderer>())
-            r.material = Resources.Load<Material>("materials/building_placeholder");
+            r.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
         foreach (var c in GetComponentsInChildren<Collider>())
         {
             c.enabled = false;
