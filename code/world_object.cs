@@ -57,8 +57,17 @@ public class world_object : MonoBehaviour
                 m.material.color = point.terrain_color;
     }
 
-    public void on_placement(Vector3 terrain_normal, biome.point point, chunk chunk)
+    public chunk chunk { get; private set; }
+    public int x_in_chunk { get; private set; }
+    public int z_in_chunk { get; private set; }
+
+    public void on_placement(Vector3 terrain_normal, biome.point point, 
+        chunk chunk, int x_in_chunk, int z_in_chunk)
     {
+        this.chunk = chunk;
+        this.x_in_chunk = x_in_chunk;
+        this.z_in_chunk = z_in_chunk;
+
         if (randomize_color_on != null)
         {
             Color rand_col = new Color(

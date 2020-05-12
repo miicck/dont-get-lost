@@ -162,10 +162,15 @@ public class player : networked_player
         }
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, game.render_range);
+
+        Gizmos.color = Color.green;
+        float dis;
+        var r = camera_ray(INTERACTION_RANGE, out dis);
+        Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
     }
 
     //###########//
@@ -240,10 +245,25 @@ public class player : networked_player
     {
         if (carrying != null) { carrying = null; return; }
 
+        float dis;
+        var ray = camera_ray(INTERACTION_RANGE, out dis);
+
+        // First, attempt to pick up items
         RaycastHit hit;
-        item clicked = utils.raycast_for_closest<item>(camera_ray(), out hit, INTERACTION_RANGE);
+        item clicked = utils.raycast_for_closest<item>(ray, out hit, dis);
         if (clicked != null)
+        {
             clicked.pick_up();
+            return;
+        }
+
+        // Then attempt to pick items by hand
+        var pick_by_hand = utils.raycast_for_closest<pick_by_hand>(ray, out hit, dis);
+        if (pick_by_hand != null)
+        {
+            pick_by_hand.on_pick();
+            return;
+        }
     }
 
     // Called on a right click when no item is equipped
@@ -645,6 +665,37 @@ public class player : networked_player
     {
         return new Ray(camera.transform.position,
                        camera.transform.forward);
+    }
+
+    /// <summary> Returns a camera ray, starting at the first point on the ray
+    /// within max_range_from_player of the player, and the distance
+    /// along the ray where it leaves max_range_from_player. </summary>
+    public Ray camera_ray(float max_range_from_player, out float distance)
+    {
+        var ray = camera_ray();
+
+        // Solve for the intersection of the ray
+        // with the sphere of radius range_from_player around the player
+        Vector3 cvec = ray.origin - eye_transform.position;
+        float b = 2 * Vector3.Dot(ray.direction, cvec);
+        float c = cvec.sqrMagnitude - max_range_from_player*max_range_from_player;
+
+        // No solutions
+        if (4 * c >= b * b)
+        {
+            distance = 0;
+            return ray;
+        }
+
+        // Two solutions (in + out)
+        var interval = new float[]
+        {
+            (-b - Mathf.Sqrt(b*b-4*c))/2f,
+            (-b + Mathf.Sqrt(b*b-4*c))/2f,
+        };
+
+        distance = interval[1] - interval[0];
+        return new Ray(ray.origin + interval[0] * ray.direction, ray.direction);
     }
 
     //#################//

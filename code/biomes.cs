@@ -301,6 +301,7 @@ public class farmland : biome
             LETTUCE,
             POTATO,
             APPLE,
+            FARMYARD,
             WOODLAND,
         }
 
@@ -445,6 +446,8 @@ public class farmland : biome
                                         p.terrain_color = terrain_colors.grass;
                                         if (x % 5 == 0 && z % 5 == 0)
                                             p.object_to_generate = world_object.load("apple_tree");
+                                        else if (random.range(0, 50) == 0)
+                                            p.object_to_generate = world_object.load("flowers");
                                         break;
 
                                     default:
@@ -461,6 +464,16 @@ public class farmland : biome
                             if (random.range(0, 100) == 0)
                                 p.object_to_generate = world_object.load("bush");
 
+                            break;
+
+
+                        case field.TYPE.FARMYARD:
+
+                            p.terrain_color = terrain_colors.dirt;
+                            if (x == f.left && z == f.bottom)
+                            {
+                                p.object_to_generate = world_object.load("farmyard");
+                            }
                             break;
 
                         default:

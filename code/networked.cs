@@ -34,6 +34,9 @@ public class networked : MonoBehaviour
     /// <summary> Called whenever a networked child is added. </summary>
     public virtual void on_add_networked_child(networked child) { }
 
+    /// <summary> Called when this object is forgotten on a client. </summary>
+    public virtual void on_forget() { }
+
     /// <summary> Should return true if this client is controlling my position. </summary>
     public virtual bool client_controlls_position() { return local; }
 
@@ -211,6 +214,7 @@ public class networked : MonoBehaviour
     /// remains on the server + potentially on other clients. </summary>
     public void forget()
     {
+        on_forget();
         network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
     }
@@ -230,6 +234,7 @@ public class networked : MonoBehaviour
             return;
         }
 
+        on_forget();
         client.on_delete(this);
         network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);

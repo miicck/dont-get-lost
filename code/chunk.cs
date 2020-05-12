@@ -25,8 +25,8 @@ public class chunk : MonoBehaviour
     }
 
     // Keep a quick lookup for chunks
-    static Dictionary<int, Dictionary<int, chunk>> _generated_chunks =
-        new Dictionary<int, Dictionary<int, chunk>>();
+    static two_int_dictionary<chunk> generated_chunks = 
+        new two_int_dictionary<chunk>();
 
     //##################//
     // COORDINATE TOOLS //
@@ -60,48 +60,11 @@ public class chunk : MonoBehaviour
         };
     }
 
-    // Find a fully-generated chunk with coodinates x, z (if it exists)
-    public static chunk find_generated(int x, int z)
-    {
-        Dictionary<int, chunk> inner;
-        if (!_generated_chunks.TryGetValue(x, out inner)) return null;
-
-        chunk ret;
-        if (!inner.TryGetValue(z, out ret)) return null;
-        return ret;
-    }
-
-    // Record a fully generated chunk
-    static void add_generated_chunk(chunk c)
-    {
-        Dictionary<int, chunk> inner;
-        if (!_generated_chunks.TryGetValue(c.x, out inner))
-        {
-            inner = new Dictionary<int, chunk>();
-            _generated_chunks[c.x] = inner;
-        }
-
-        inner[c.z] = c;
-    }
-
-    // Un-record a fully generated chunk
-    static void remove_generated_chunk(chunk c)
-    {
-        // Remove the chunk, and the x dictionary if this was
-        // the last stored chunk at this x coordinate.
-        Dictionary<int, chunk> inner;
-        if (!_generated_chunks.TryGetValue(c.x, out inner)) return;
-
-        inner.Remove(c.z);
-        if (inner.Count == 0)
-            _generated_chunks.Remove(c.x);
-    }
-
     // Returns the chunk at the given location
     public static chunk at(Vector3 location, bool generated_only=false)
     {
         var c = coords(location);
-        var gc = find_generated(c[0], c[1]);
+        var gc = generated_chunks.get(c[0], c[1]);
         if (gc != null) return gc;
         if (generated_only) return null;
         Debug.Log("chunk.at fallback triggered.");
@@ -162,7 +125,7 @@ public class chunk : MonoBehaviour
 
     void OnDestroy()
     {
-        remove_generated_chunk(this);
+        generated_chunks.remove(x, z);
     }
 
     //##################//
@@ -389,7 +352,7 @@ public class chunk : MonoBehaviour
                 var wo = point.object_to_generate.inst();
                 wo.transform.SetParent(transform);
                 wo.transform.localPosition = new Vector3(i, point.altitude, j);
-                wo.on_placement(terrain_normal, point, this);
+                wo.on_placement(terrain_normal, point, this, i, j);
             }
         }
 
@@ -400,7 +363,7 @@ public class chunk : MonoBehaviour
     // Called when the chunk has finished generating
     void on_generation_complete()
     {
-        add_generated_chunk(this);
+        generated_chunks.add(x, z, this);
 
         // Load all the characters
         for (int i = 0; i < SIZE; ++i)

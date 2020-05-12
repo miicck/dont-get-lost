@@ -173,6 +173,24 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F11))
+        {
+            switch (Screen.fullScreenMode)
+            {
+                case FullScreenMode.Windowed:
+                    Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+                    break;
+                case FullScreenMode.FullScreenWindow:
+                    Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+                    break;
+                case FullScreenMode.ExclusiveFullScreen:
+                    Screen.fullScreenMode = FullScreenMode.Windowed;
+                    break;
+                default:
+                    throw new System.Exception("Unkown fullscreen mode!");
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.F3))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
