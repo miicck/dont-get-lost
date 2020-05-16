@@ -75,7 +75,7 @@ public class world_object : MonoBehaviour
                 chunk.random.range(0,1f),
                 chunk.random.range(0,1f)
                 );
-            randomize_color_on.material.color = rand_col;
+            randomize_color_on.material.SetColor("_BaseColor", rand_col);
         }
 
         // Allign to terrain if required

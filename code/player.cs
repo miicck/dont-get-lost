@@ -678,7 +678,7 @@ public class player : networked_player
         // with the sphere of radius range_from_player around the player
         Vector3 cvec = ray.origin - eye_transform.position;
         float b = 2 * Vector3.Dot(ray.direction, cvec);
-        float c = cvec.sqrMagnitude - max_range_from_player*max_range_from_player;
+        float c = cvec.sqrMagnitude - max_range_from_player * max_range_from_player;
 
         // No solutions
         if (4 * c >= b * b)
@@ -765,7 +765,6 @@ public class player : networked_player
             underwater_screen.transform.forward = camera.transform.forward;
 
             // Make the sky the same color as the obscuring object
-            RenderSettings.skybox = null;
             camera.backgroundColor = sky_color;
 
             // Set the hand location so it is EYES_TO_HAND_DISTANCE 
@@ -870,7 +869,8 @@ public class player : networked_player
         return "Local player " + current.username.value + " at " +
             System.Math.Round(current.transform.position.x, 1) + " " +
             System.Math.Round(current.transform.position.y, 1) + " " +
-            System.Math.Round(current.transform.position.z, 1);
+            System.Math.Round(current.transform.position.z, 1) + "\n" +
+            "    Render range: " + game.render_range;
     }
 }
 

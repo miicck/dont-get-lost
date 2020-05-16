@@ -153,8 +153,8 @@ public class game : MonoBehaviour
         // Create the sky!
         create_sky();
 
-        if (Application.isEditor)
-            QualitySettings.vSyncCount = 0;
+        //if (Application.isEditor)
+        QualitySettings.vSyncCount = 0;
 
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
     }
@@ -162,13 +162,9 @@ public class game : MonoBehaviour
     void create_sky()
     {
         // Create the sun
-        var sun = new GameObject("sun").AddComponent<Light>();
+        var sun = FindObjectOfType<Light>();
         sun.transform.position = Vector3.zero;
         sun.transform.LookAt(new Vector3(1, -2, 1));
-        sun.type = LightType.Directional;
-        sun.intensity = 1f;
-        sun.shadows = LightShadows.Soft;
-        RenderSettings.ambientSkyColor = new Color(0.3f, 0.3f, 0.3f);
     }
 
     void Update()

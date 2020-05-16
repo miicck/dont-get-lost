@@ -25,7 +25,7 @@ public class chunk : MonoBehaviour
     }
 
     // Keep a quick lookup for chunks
-    static two_int_dictionary<chunk> generated_chunks = 
+    static two_int_dictionary<chunk> generated_chunks =
         new two_int_dictionary<chunk>();
 
     //##################//
@@ -61,7 +61,7 @@ public class chunk : MonoBehaviour
     }
 
     // Returns the chunk at the given location
-    public static chunk at(Vector3 location, bool generated_only=false)
+    public static chunk at(Vector3 location, bool generated_only = false)
     {
         var c = coords(location);
         var gc = generated_chunks.get(c[0], c[1]);
@@ -178,6 +178,7 @@ public class chunk : MonoBehaviour
         water.transform.forward = -Vector3.up;
         var ren = water.gameObject.GetComponent<MeshRenderer>();
         ren.material = Resources.Load<Material>("materials/standard_shader/water");
+        ren.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         // Create the underside of the water
         var water_bottom = water.inst();

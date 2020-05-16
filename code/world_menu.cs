@@ -56,8 +56,12 @@ public class world_menu : MonoBehaviour
     public InputField ip_input;
     public InputField username_input;
 
+    UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData hd_camera;
+
     private void Start()
     {
+        hd_camera = menu_camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+
         // Find all the saved worlds
         var world_folders = System.IO.Directory.GetDirectories(server.saves_dir());
 
@@ -174,12 +178,12 @@ public class world_menu : MonoBehaviour
     }
 
     private void Update()
-    {
-        Color bg = menu_camera.backgroundColor;
+    {        
+        Color bg = hd_camera.backgroundColorHDR;
         float h, s, v;
         Color.RGBToHSV(bg, out h, out s, out v);
         h += Time.deltaTime / 100f;
         while (h > 1.0f) h -= 1.0f;
-        menu_camera.backgroundColor = Color.HSVToRGB(h, s, v);
+        hd_camera.backgroundColorHDR = Color.HSVToRGB(h, s, v);
     }
 }

@@ -153,7 +153,7 @@ MonoBehaviour:
   m_RenderPipelineRayTracingResources: {fileID: 0}
   m_DefaultVolumeProfile: {fileID: 11400000, guid: 34e2d8a9f00989249b2a2ad41f79a945,
     type: 2}
-  m_DefaultLookDevProfile: {fileID: 11400000, guid: 254c4fe87beb7be4fa72e1681edbed02,
+  m_DefaultLookDevProfile: {fileID: 11400000, guid: 34e2d8a9f00989249b2a2ad41f79a945,
     type: 2}
   m_RenderingPathDefaultCameraFrameSettings:
     bitDatas:
@@ -189,7 +189,7 @@ MonoBehaviour:
     maximumLODLevelQualityLevel: 0
     materialQuality: 0
   m_RenderPipelineSettings:
-    supportShadowMask: 1
+    supportShadowMask: 0
     supportSSR: 0
     supportSSAO: 1
     supportSubsurfaceScattering: 1
@@ -212,10 +212,10 @@ MonoBehaviour:
     colorBufferFormat: 74
     supportCustomPass: 1
     customBufferFormat: 12
-    supportedLitShaderMode: 2
+    supportedLitShaderMode: 1
     supportDecals: 1
     msaaSampleCount: 1
-    supportMotionVectors: 0
+    supportMotionVectors: 1
     supportRuntimeDebugDisplay: 1
     supportDitheringCrossFade: 1
     supportTerrainHole: 0
