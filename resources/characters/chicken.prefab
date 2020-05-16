@@ -35,7 +35,8 @@ MonoBehaviour:
   min_angle: 0
   leg_flap_inherit: 0.25
   flutter_flap_time: 0.15
-  flutter_flap_period: 10
+  min_time_between_flutter: 5
+  max_time_between_flutter: 30
 --- !u!114 &8846711119475580670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,7 +72,8 @@ MonoBehaviour:
   min_angle: 0
   leg_flap_inherit: 0.25
   flutter_flap_time: 0.15
-  flutter_flap_period: 10
+  min_time_between_flutter: 5
+  max_time_between_flutter: 30
 --- !u!114 &8139811975233404486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -85,7 +87,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bob_amplitude: 0.025
+  lean_into_run_amount: 20
+  lean_lerp_speed: 5
+  lean_velocity_scale: 5
   character: {fileID: 4593495881312823388}
+  head: {fileID: 0}
+--- !u!65 &582657879662001323
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8712552501518325814}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.003, y: 0.008, z: 0.007}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8846711120022476091
 GameObject:
   m_ObjectHideFlags: 0
@@ -130,6 +149,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4a641ec7532e3243abf8651f019f9d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  walk_speed: 1
+  run_speed: 4
+  can_walk: 1
+  can_swim: 0
 --- !u!1001 &8846711119482929990
 PrefabInstance:
   m_ObjectHideFlags: 0

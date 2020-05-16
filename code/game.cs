@@ -156,6 +156,9 @@ public class game : MonoBehaviour
         //if (Application.isEditor)
         QualitySettings.vSyncCount = 0;
 
+        // Ensure we're using SRP batching
+        UnityEngine.Rendering.GraphicsSettings.useScriptableRenderPipelineBatching = true;
+
         // Debug panel starts closed
         debug_panel.SetActive(false);
 
