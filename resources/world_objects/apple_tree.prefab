@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regrow_time: 1
+  item_to_pick: apple
+  quantity_to_pick: 5
 --- !u!1 &5694373993177165095
 GameObject:
   m_ObjectHideFlags: 0
