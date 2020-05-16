@@ -96,8 +96,8 @@ public class recipe
             ce.text.text += i.str() + " + ";
         ce.text.text = ce.text.text.Substring(0, ce.text.text.Length - 2);
 
-        if (product_count > 1) ce.text.text += "-> " + product_count + " " + product;
-        else ce.text.text += "-> " + product;
+        if (product_count > 1) ce.text.text += "> " + product_count + " x " + product;
+        else ce.text.text += "> " + product;
         return ce;
     }
 

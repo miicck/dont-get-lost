@@ -66,7 +66,7 @@ public class world_menu : MonoBehaviour
         var world_folders = System.IO.Directory.GetDirectories(server.saves_dir());
 
         var load_header = template_header.inst();
-        load_header.text = "Load existing world...";
+        load_header.text = "Load existing world";
         if (world_folders.Length == 0) load_header.text = "No existing worlds";
         load_header.transform.SetParent(button_container);
 
@@ -102,7 +102,7 @@ public class world_menu : MonoBehaviour
         }
 
         var create_header = template_header.inst();
-        create_header.text = "Create new world...";
+        create_header.text = "Create new world";
         create_header.transform.SetParent(button_container);
 
         // Move world name/seed inputs to bottom
@@ -145,7 +145,7 @@ public class world_menu : MonoBehaviour
         });
 
         var join_header = template_header.inst();
-        join_header.text = "Join game over network...";
+        join_header.text = "Join game over network";
         join_header.transform.SetParent(button_container);
 
         var join_button = template_button.inst();

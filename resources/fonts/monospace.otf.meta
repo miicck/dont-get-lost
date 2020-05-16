@@ -1,0 +1,26 @@
+fileFormatVersion: 2
+guid: db191ceb28809514bbdc255d444af43e
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: TeX Gyre Cursor
+  fontNames:
+  - TeX Gyre Cursor
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: c95d0171fc5884547b86fb0fe9326e31, type: 3}
+  - {fileID: 12800000, guid: 6856c4d8623c0b948875459a6d7a630d, type: 3}
+  - {fileID: 12800000, guid: 487dd8a9d3f2d0b4ebd38d0552d414dd, type: 3}
+  - {fileID: 12800000, guid: ed56bfdc4e8043346b604ac504f489f9, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

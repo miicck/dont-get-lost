@@ -43,6 +43,7 @@ public class player : networked_player
     void Update()
     {
         if (!local) return;
+        if (options_menu.open) return;
 
         if (carrying != null)
         {
@@ -222,6 +223,12 @@ public class player : networked_player
         if (n < 0 || n >= QUICKBAR_SLOTS_COUNT) return null;
         last_quickbar_slot_accessed = n;
         return inventory.slots[n];
+    }
+
+    public void close_all_ui()
+    {
+        inventory_open = false;
+        current_workbench = null;
     }
 
     //##########//

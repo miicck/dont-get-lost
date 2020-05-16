@@ -156,6 +156,9 @@ public class game : MonoBehaviour
         //if (Application.isEditor)
         QualitySettings.vSyncCount = 0;
 
+        // Debug panel starts closed
+        debug_panel.SetActive(false);
+
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
     }
 
@@ -169,6 +172,11 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        // Toggle options on escape key
+        if (Input.GetKeyDown(KeyCode.Escape))
+            options_menu.open = !options_menu.open;
+
+        // Toggle fullscreen modes on F11
         if (Input.GetKeyDown(KeyCode.F11))
         {
             switch (Screen.fullScreenMode)
@@ -187,13 +195,16 @@ public class game : MonoBehaviour
             }
         }
 
+        // Toggle the debug panel on F3
         if (Input.GetKeyDown(KeyCode.F3))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
+        // Increase/Decrease render range on equals/minus keys
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
 
+        // Run networking updates
         server.update();
         client.update();
     }
