@@ -162,6 +162,10 @@ public class game : MonoBehaviour
         // Debug panel starts closed
         debug_panel.SetActive(false);
 
+        // Initialize options
+        options_menu.initialize_options();
+
+        // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
     }
 

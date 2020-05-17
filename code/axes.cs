@@ -5,9 +5,14 @@ using UnityEngine;
 
 public class axes : MonoBehaviour
 {
+    // #pragma is to stop it complaining about these 
+    // not being initialized, because they are initialized
+    // through reflection in the Editor.
+#pragma warning disable 0649
     [SerializeField] GameObject x_axis;
     [SerializeField] GameObject y_axis;
     [SerializeField] GameObject z_axis;
+#pragma warning restore 0649
 
     private void Start()
     {

@@ -227,7 +227,7 @@ public class player : networked_player
 
     public void close_all_ui()
     {
-        inventory_open = false;
+        if (inventory != null) inventory_open = false;
         current_workbench = null;
     }
 
