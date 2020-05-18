@@ -14,22 +14,14 @@ public class axes : MonoBehaviour
     [SerializeField] GameObject z_axis;
 #pragma warning restore 0649
 
-    private void Start()
-    {
-        // Always render on top (in particular, stops the sky 
-        // from rendering in front of the axes)
-        foreach (var r in GetComponentsInChildren<Renderer>())
-            r.material.renderQueue = 5000;
-    }
-
     public enum AXIS
     {
-        NONE,X,Y,Z
+        NONE, X, Y, Z
     }
 
     public GameObject get_axis(AXIS a)
     {
-        switch(a)
+        switch (a)
         {
             case AXIS.X: return x_axis;
             case AXIS.Y: return y_axis;
@@ -39,15 +31,27 @@ public class axes : MonoBehaviour
         }
     }
 
+    Dictionary<Renderer, Color> initial_colors = new Dictionary<Renderer, Color>();
+
+    private void Start()
+    {
+        foreach (var a in new GameObject[] { x_axis, y_axis, z_axis })
+            foreach (var r in GetComponentsInChildren<Renderer>())
+                initial_colors[r] = r.material.color;
+    }
+
     void highlight(GameObject a, bool highlight)
     {
+        float b = highlight ? 0.5f : 1f;
         foreach (var r in a.GetComponentsInChildren<Renderer>())
+        {
+            var init_color = initial_colors[r];
             r.material.color = new Color(
-                r.material.color.r,
-                r.material.color.g,
-                r.material.color.b,
-                highlight ? 1f : 0.05f
+                init_color.r * b + (1 - b),
+                init_color.g * b + (1 - b),
+                init_color.b * b + (1 - b)
             );
+        }
     }
 
     public void highlight_axis(AXIS a)
