@@ -565,7 +565,6 @@ public class canyon : biome
     }
 }
 
-[biome_info(generation_enabled: false)]
 public class town : biome
 {
     // Half the width of a road
@@ -653,7 +652,7 @@ public class town : biome
             int new_top = zmax;
             for (int x = xmin; ;)
             {
-                int remaining = xmax - x;
+                int remaining = new_right - x;
                 if (remaining < building_generator.MIN_FOOTPRINT)
                     break; // Not enough space for another building
 
@@ -766,7 +765,13 @@ public class town : biome
         {
             // Skip this section with a 1/3 probability
             if (random.range(0, 3) == 0)
+            {
+                for (int x = s.left; x < s.right; ++x)
+                    for (int z = s.bottom; z < s.top; ++z)
+                        if (x % 4 == 0 && z % 4 == 0 && random.range(0, 10) == 0)
+                            grid[x, z].object_to_generate = world_object.load("tree");
                 continue;
+            }
 
             // Create the buildings in the section
             s.generate_buildings(random);
