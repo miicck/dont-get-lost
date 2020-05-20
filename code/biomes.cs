@@ -293,7 +293,7 @@ public class farmland : biome
     /// at the edge of the field. </summary>
     const int MARGIN_WIDTH = 6;
 
-    struct field
+    class field : int_rect
     {
         public enum TYPE
         {
@@ -305,39 +305,28 @@ public class farmland : biome
             WOODLAND,
         }
 
-        public field(biome b, int left, int right, int bottom, int top)
+        public field(biome b, int left, int right, int bottom, int top) :
+            base(left, right, bottom, top)
         {
             int length = System.Enum.GetNames(typeof(TYPE)).Length;
             type = (TYPE)b.random.range(0, length);
 
-            this.left = left;
-            this.right = right;
-            this.bottom = bottom;
-            this.top = top;
+            // Don't allow a farmyard in the blended region
+            while (type == TYPE.FARMYARD &&
+                (in_blend_region(left, bottom) || in_blend_region(right, top)))
+                type = (TYPE)b.random.range(0, length);
         }
 
         public TYPE type { get; private set; }
-        public int left { get; private set; }
-        public int bottom { get; private set; }
-        public int right { get; private set; }
-        public int top { get; private set; }
-        public int width { get => right - left; }
-        public int height { get => top - bottom; }
 
         public bool is_margin(int x, int z)
         {
-            return x > right - MARGIN_WIDTH ||
-                   x < MARGIN_WIDTH ||
-                   z > top - MARGIN_WIDTH ||
-                   z < MARGIN_WIDTH;
+            return is_edge(MARGIN_WIDTH, x, z);
         }
 
         public bool is_edge(int x, int z)
         {
-            return x == left ||
-                   z == bottom ||
-                   x == right - 1 ||
-                   z == top - 1;
+            return is_edge(1, x, z);
         }
     }
 
@@ -413,7 +402,7 @@ public class farmland : biome
                                     // Hedgerow
                                     if (random.range(0, 30) == 0)
                                     {
-                                       // p.object_to_generate = world_object.load("tree");
+                                        // p.object_to_generate = world_object.load("tree");
                                     }
                                     else
                                     {
@@ -473,6 +462,7 @@ public class farmland : biome
                             if (x == f.left && z == f.bottom)
                             {
                                 p.object_to_generate = world_object.load("farmyard");
+                                p.gen_info = new int[] { f.width, f.height };
                             }
                             break;
 
@@ -572,6 +562,227 @@ public class canyon : biome
 
                 grid[i, j] = p;
             }
+    }
+}
+
+[biome_info(generation_enabled: false)]
+public class town : biome
+{
+    // Half the width of a road
+    public const int HALF_ROAD_WIDTH = 2;
+
+    // Section needs to be large enough to contain two buildings + a road
+    public const int MIN_SECTION_SIZE = 2 * building_generator.MIN_FOOTPRINT + 2 * HALF_ROAD_WIDTH;
+    public const int MAX_SECTION_SIZE = MIN_SECTION_SIZE * 3;
+
+    class section : int_rect
+    {
+        public class building : int_rect
+        {
+            public building(int left, int right, int bottom, int top) :
+                base(left, right, bottom, top)
+            { }
+        };
+
+        public List<building> buildings;
+
+        public void generate_buildings(System.Random random)
+        {
+            // Generate buildings around the edge
+            buildings = new List<building>();
+
+            int xmin = left + HALF_ROAD_WIDTH;
+            int zmin = bottom + HALF_ROAD_WIDTH;
+            int xmax = right - HALF_ROAD_WIDTH;
+            int zmax = top - HALF_ROAD_WIDTH;
+
+            int zmiddle = (zmin + zmax) / 2;
+            int xmiddle = (xmin + xmax) / 2;
+
+            // Bottom
+            int new_bottom = bottom;
+            for (int x = xmin; ;)
+            {
+                int remaining = xmax - x;
+                if (remaining < building_generator.MIN_FOOTPRINT)
+                    break; // Not enough space for another building
+
+                // If the remining space is too large for
+                // a building, add a random size building
+                int xsize = remaining;
+                if (xsize > building_generator.MAX_FOOTPRINT)
+                    xsize = random.range(
+                        building_generator.MIN_FOOTPRINT,
+                        building_generator.MAX_FOOTPRINT);
+
+                // Set the z size so we don't overlap into the top half
+                int zsize = random.range(building_generator.MIN_FOOTPRINT, zmiddle - zmin);
+
+                // Record where the new bottom of the unbuilt area is
+                if (zmin + zsize > new_bottom)
+                    new_bottom = zmin + zsize;
+
+                buildings.Add(new building(x, x + xsize, zmin, zmin + zsize));
+                x += xsize;
+            }
+
+            // Right
+            int new_right = xmax;
+            for (int z = new_bottom; ;)
+            {
+                int remaining = zmax - z;
+                if (remaining < building_generator.MIN_FOOTPRINT)
+                    break;
+
+                int zsize = remaining;
+                if (zsize > building_generator.MAX_FOOTPRINT)
+                    zsize = random.range(
+                        building_generator.MIN_FOOTPRINT,
+                        building_generator.MAX_FOOTPRINT);
+
+                int xsize = random.range(building_generator.MIN_FOOTPRINT, xmax - xmiddle);
+
+                if (xmax - xsize < new_right)
+                    new_right = xmax - xsize;
+
+                buildings.Add(new building(xmax - xsize, xmax, z, z + zsize));
+                z += zsize;
+            }
+
+            // Top
+            int new_top = zmax;
+            for (int x = xmin; ;)
+            {
+                int remaining = xmax - x;
+                if (remaining < building_generator.MIN_FOOTPRINT)
+                    break; // Not enough space for another building
+
+                // If the remining space is too large for
+                // a building, add a random size building
+                int xsize = remaining;
+                if (xsize > building_generator.MAX_FOOTPRINT)
+                    xsize = random.range(
+                        building_generator.MIN_FOOTPRINT,
+                        building_generator.MAX_FOOTPRINT);
+
+                // Set the z size so we don't overlap into the bottom half
+                int zsize = random.range(building_generator.MIN_FOOTPRINT, zmax - zmiddle);
+
+                // Record where the new top of the unbuilt area is
+                if (zmax - zsize < new_top)
+                    new_top = zmax - zsize;
+
+                buildings.Add(new building(x, x + xsize, zmax - zsize, zmax));
+                x += xsize;
+            }
+
+            // Left
+            for (int z = new_bottom; ;)
+            {
+                int remaining = new_top - z;
+                if (remaining < building_generator.MIN_FOOTPRINT)
+                    break;
+
+                int zsize = remaining;
+                if (zsize > building_generator.MAX_FOOTPRINT)
+                    zsize = random.range(
+                        building_generator.MIN_FOOTPRINT,
+                        building_generator.MAX_FOOTPRINT);
+
+                int xsize = random.range(building_generator.MIN_FOOTPRINT, xmiddle - xmin);
+
+                buildings.Add(new building(xmin, xmin + xsize, z, z + zsize));
+                z += zsize;
+            }
+        }
+
+        public section(int left, int right, int bottom, int top) :
+            base(left, right, bottom, top)
+        { }
+
+        public bool is_road(int x, int z)
+        {
+            return is_edge(HALF_ROAD_WIDTH, x, z);
+        }
+    };
+
+    protected override void generate_grid()
+    {
+        // Default grid
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+                grid[i, j] = new point
+                {
+                    terrain_color = terrain_colors.grass,
+                    altitude = point.BEACH_END
+                };
+
+        // Start with a section covering the non-blended part of the biome
+        var sections = new HashSet<section> { new section(
+            BLEND_DISTANCE, SIZE - BLEND_DISTANCE,
+            BLEND_DISTANCE, SIZE - BLEND_DISTANCE) };
+
+        while (true)
+        {
+            // Set to true if a field was subdivided
+            bool created = false;
+
+            foreach (var s in new HashSet<section>(sections))
+            {
+                if (s.width > MAX_SECTION_SIZE)
+                {
+                    // Split section to reduce width
+                    created = true;
+                    sections.Remove(s);
+
+                    int split = random.range(
+                        s.left + MIN_SECTION_SIZE,
+                        s.right - MIN_SECTION_SIZE);
+
+                    sections.Add(new section(s.left, split, s.bottom, s.top));
+                    sections.Add(new section(split, s.right, s.bottom, s.top));
+                }
+                else if (s.height > MAX_SECTION_SIZE)
+                {
+                    // Split section to reduce height
+                    created = true;
+                    sections.Remove(s);
+
+                    int split = random.range(
+                        s.bottom + MIN_SECTION_SIZE,
+                        s.top - MIN_SECTION_SIZE);
+
+                    sections.Add(new section(s.left, s.right, s.bottom, split));
+                    sections.Add(new section(s.left, s.right, split, s.top));
+                }
+            }
+
+            // No sections subdivided => done
+            if (!created)
+                break;
+        }
+
+        foreach (var s in sections)
+        {
+            // Skip this section with a 1/3 probability
+            if (random.range(0, 3) == 0)
+                continue;
+
+            // Create the buildings in the section
+            s.generate_buildings(random);
+
+            foreach (var b in s.buildings)
+            {
+                grid[b.left, b.bottom].object_to_generate = world_object.load("town_building");
+                grid[b.left, b.bottom].gen_info = new int[] { b.width, b.height };
+            }
+
+            // Color in the road
+            for (int x = s.left; x < s.right; ++x)
+                for (int z = s.bottom; z < s.top; ++z)
+                    if (s.is_road(x, z))
+                        grid[x, z].terrain_color = terrain_colors.dirt;
+        }
     }
 }
 

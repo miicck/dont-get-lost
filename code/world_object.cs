@@ -61,7 +61,7 @@ public class world_object : MonoBehaviour
     public int x_in_chunk { get; private set; }
     public int z_in_chunk { get; private set; }
 
-    public void on_placement(Vector3 terrain_normal, biome.point point, 
+    public virtual void on_placement(Vector3 terrain_normal, biome.point point, 
         chunk chunk, int x_in_chunk, int z_in_chunk)
     {
         this.chunk = chunk;

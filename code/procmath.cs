@@ -34,6 +34,8 @@ public static class procmath
     // Extend system.random to generate integer ranges
     public static int range(this System.Random gen, int min, int max)
     {
+        if (max == min) return min;
+        if (max < min) throw new System.Exception("max < min!");
         return min + gen.Next() % (max - min);
     }
 

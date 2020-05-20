@@ -8,6 +8,10 @@ using UnityEngine;
 // scales, such as the terrain.
 public abstract class biome : MonoBehaviour
 {
+    // Set the blend distance to slightly less than a chunk 
+    // so we only need blend the outermost chunks in a biome
+    public const int BLEND_DISTANCE = chunk.SIZE - 1;
+
     // The biome coordinates
     public int x { get; private set; }
     public int z { get; private set; }
@@ -77,6 +81,16 @@ public abstract class biome : MonoBehaviour
         );
 
         return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
+    }
+
+    /// <summary> Returns true if the given coordinates within a 
+    /// biome are in the blended region near the edge. </summary>
+    protected static bool in_blend_region(int x_in_biome, int z_in_biome)
+    {
+        return x_in_biome <= BLEND_DISTANCE || 
+               z_in_biome <= BLEND_DISTANCE ||
+               x_in_biome >= SIZE - BLEND_DISTANCE || 
+               z_in_biome >= SIZE - BLEND_DISTANCE;
     }
 
     //#########################//
@@ -150,11 +164,6 @@ public abstract class biome : MonoBehaviour
         out float zamt    // Abs(zamt) = amount to blend, Sign(zamt) = z direction to blend
         )
     {
-        // Set the blend distance to slightly less than
-        // a chunk so we only need blend the outermost chunks
-        // in a biome
-        const int BLEND_DISTANCE = chunk.SIZE - 1;
-
         int i = Mathf.FloorToInt(position.x) - x * SIZE;
         int j = Mathf.FloorToInt(position.z) - z * SIZE;
 
@@ -396,6 +405,7 @@ public abstract class biome : MonoBehaviour
         public Color terrain_color;
         public world_object object_to_generate;
         public character character_to_generate;
+        public object gen_info;
 
         // Computea a weighted average of a list of points
         public static point average(point[] pts, float[] wts)
@@ -433,6 +443,7 @@ public abstract class biome : MonoBehaviour
             {
                 ret.object_to_generate = pts[max_i].object_to_generate;
                 ret.character_to_generate = pts[max_i].character_to_generate;
+                ret.gen_info = pts[max_i].gen_info;
             }
 
             return ret;
@@ -477,5 +488,31 @@ public class biome_info : System.Attribute
     public biome_info(bool generation_enabled = true)
     {
         this.generation_enabled = generation_enabled;
+    }
+}
+
+public class int_rect
+{
+    public int_rect(int left, int right, int bottom, int top)
+    {
+        this.left = left;
+        this.right = right;
+        this.bottom = bottom;
+        this.top = top;
+    }
+
+    public int left { get; protected set; }
+    public int bottom { get; protected set; }
+    public int right { get; protected set; }
+    public int top { get; protected set; }
+    public int width { get => right - left; }
+    public int height { get => top - bottom; }
+
+    public bool is_edge(int edge_width, int x, int z)
+    {
+        return x > right - edge_width ||
+               x < left + edge_width  ||
+               z > top - edge_width   ||
+               z < bottom + edge_width;
     }
 }
