@@ -43,15 +43,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e357f1d222038ca478d27b4fe272436b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  align_with_terrain_normal: 0
-  y_rotation_mode: 0
-  min_scale: 0.5
-  max_scale: 2
-  seperate_xz_scale: 0
-  min_altitude: 16
-  max_altitude: 128
-  max_terrain_angle: 90
-  min_terrain_angle: 0
-  random_move_amplitude: 0
-  inherit_terrain_color: 0
-  randomize_color_on: {fileID: 0}
+  wall_sections:
+  - {fileID: 332933080880020586, guid: c2f01f04fdffd204ca9441d41640df06, type: 3}
+  - {fileID: 8042571473512807001, guid: a27d3094bd39d1f4ab2929131db1ff13, type: 3}
+  window_sections:
+  - {fileID: 4602280314766350356, guid: 4e5f9a13bd0912747ac923035a257db1, type: 3}
+  door_sections:
+  - {fileID: 474168023080128643, guid: 75b27c27f48a0e74192f106c8e929849, type: 3}
+  roofs:
+  - {fileID: 5449440668911825121, guid: cd35bbc91bd2fb64191b334426212198, type: 3}

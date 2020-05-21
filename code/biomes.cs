@@ -581,6 +581,8 @@ public class town : biome
             public building(int left, int right, int bottom, int top) :
                 base(left, right, bottom, top)
             { }
+
+            public COMPASS_DIRECTION front;
         };
 
         public List<building> buildings;
@@ -621,7 +623,15 @@ public class town : biome
                 if (zmin + zsize > new_bottom)
                     new_bottom = zmin + zsize;
 
-                buildings.Add(new building(x, x + xsize, zmin, zmin + zsize));
+                // Offset the building from the road
+                int offset = 0;
+                if (zsize > building_generator.MIN_FOOTPRINT && random.range(0, 2) == 0)
+                    offset = 1;
+
+                buildings.Add(new building(x, x + xsize, zmin + offset, zmin + zsize)
+                {
+                    front = COMPASS_DIRECTION.SOUTH
+                });
                 x += xsize;
             }
 
@@ -644,7 +654,14 @@ public class town : biome
                 if (xmax - xsize < new_right)
                     new_right = xmax - xsize;
 
-                buildings.Add(new building(xmax - xsize, xmax, z, z + zsize));
+                int offset = 0;
+                if (xsize > building_generator.MIN_FOOTPRINT && random.range(0, 2) == 0)
+                    offset = 1;
+
+                buildings.Add(new building(xmax - xsize, xmax - offset, z, z + zsize)
+                {
+                    front = COMPASS_DIRECTION.EAST
+                });
                 z += zsize;
             }
 
@@ -654,24 +671,27 @@ public class town : biome
             {
                 int remaining = new_right - x;
                 if (remaining < building_generator.MIN_FOOTPRINT)
-                    break; // Not enough space for another building
+                    break;
 
-                // If the remining space is too large for
-                // a building, add a random size building
                 int xsize = remaining;
                 if (xsize > building_generator.MAX_FOOTPRINT)
                     xsize = random.range(
                         building_generator.MIN_FOOTPRINT,
                         building_generator.MAX_FOOTPRINT);
 
-                // Set the z size so we don't overlap into the bottom half
                 int zsize = random.range(building_generator.MIN_FOOTPRINT, zmax - zmiddle);
 
-                // Record where the new top of the unbuilt area is
                 if (zmax - zsize < new_top)
                     new_top = zmax - zsize;
 
-                buildings.Add(new building(x, x + xsize, zmax - zsize, zmax));
+                int offset = 0;
+                if (zsize > building_generator.MIN_FOOTPRINT && random.range(0, 2) == 0)
+                    offset = 1;
+
+                buildings.Add(new building(x, x + xsize, zmax - zsize, zmax - offset)
+                {
+                    front = COMPASS_DIRECTION.NORTH
+                });
                 x += xsize;
             }
 
@@ -690,7 +710,14 @@ public class town : biome
 
                 int xsize = random.range(building_generator.MIN_FOOTPRINT, xmiddle - xmin);
 
-                buildings.Add(new building(xmin, xmin + xsize, z, z + zsize));
+                int offset = 0;
+                if (xsize > building_generator.MIN_FOOTPRINT && random.range(0, 2) == 0)
+                    offset = 1;
+
+                buildings.Add(new building(xmin + offset, xmin + xsize, z, z + zsize)
+                {
+                    front = COMPASS_DIRECTION.WEST
+                });
                 z += zsize;
             }
         }
@@ -779,7 +806,7 @@ public class town : biome
             foreach (var b in s.buildings)
             {
                 grid[b.left, b.bottom].object_to_generate = world_object.load("town_building");
-                grid[b.left, b.bottom].gen_info = new int[] { b.width, b.height };
+                grid[b.left, b.bottom].gen_info = new object[] { b.width, b.height, b.front };
             }
 
             // Color in the road

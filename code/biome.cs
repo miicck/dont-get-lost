@@ -491,6 +491,14 @@ public class biome_info : System.Attribute
     }
 }
 
+public enum COMPASS_DIRECTION
+{
+    NORTH,
+    SOUTH,
+    EAST,
+    WEST
+}
+
 public class int_rect
 {
     public int_rect(int left, int right, int bottom, int top)

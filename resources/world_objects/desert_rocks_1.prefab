@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2877093053794032774}
-  - component: {fileID: 1834499884146985791}
+  - component: {fileID: -7424042658354358020}
   m_Layer: 0
-  m_Name: desert_rocks_2
+  m_Name: desert_rocks_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,7 +32,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1834499884146985791
+--- !u!114 &-7424042658354358020
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,17 +41,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 468880058101922742}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2307ef892d2d7496bbddda412877f280, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1
   y_rotation_mode: 1
   min_scale: 0.5
   max_scale: 3
+  seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
   min_terrain_angle: 0
+  random_move_amplitude: 0
   inherit_terrain_color: 0
   randomize_color_on: {fileID: 0}
 --- !u!1001 &8683309274565197165

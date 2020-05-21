@@ -103,7 +103,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4890586545916550}
-  - component: {fileID: 114450906102351358}
+  - component: {fileID: 888905408341468348}
   m_Layer: 0
   m_Name: tree
   m_TagString: Untagged
@@ -126,7 +126,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114450906102351358
+--- !u!114 &888905408341468348
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1537824845822944}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2307ef892d2d7496bbddda412877f280, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
@@ -144,9 +144,10 @@ MonoBehaviour:
   max_scale: 3
   seperate_xz_scale: 0
   min_altitude: 17
-  max_altitude: 256
+  max_altitude: 128
   max_terrain_angle: 45
   min_terrain_angle: 0
+  random_move_amplitude: 0
   inherit_terrain_color: 0
   randomize_color_on: {fileID: 0}
 --- !u!1 &1558550862092746

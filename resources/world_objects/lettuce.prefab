@@ -26,6 +26,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regrow_time: 30
+  item_to_pick: lettuce
+  quantity_to_pick: 1
 --- !u!1 &6690538587086003739
 GameObject:
   m_ObjectHideFlags: 0
@@ -35,7 +37,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1470215791898726023}
-  - component: {fileID: 3713746974165995422}
+  - component: {fileID: 6828708695388384742}
   m_Layer: 0
   m_Name: lettuce
   m_TagString: Untagged
@@ -62,7 +64,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3713746974165995422
+--- !u!114 &6828708695388384742
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -71,7 +73,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6690538587086003739}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2307ef892d2d7496bbddda412877f280, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cursor: default_interact_cursor
+  product: log
+  tool: axe
 --- !u!1 &6387041220222361472
 GameObject:
   m_ObjectHideFlags: 0
@@ -60,9 +61,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8048082727727863391}
-  - component: {fileID: 8145671406828742974}
+  - component: {fileID: -8705206723607950555}
   m_Layer: 0
-  m_Name: 4_palm_tree
+  m_Name: palm_tree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83,7 +84,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8145671406828742974
+--- !u!114 &-8705206723607950555
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,17 +93,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 8048082727727863390}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2307ef892d2d7496bbddda412877f280, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 2
   min_scale: 1
   max_scale: 2
+  seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
+  min_terrain_angle: 0
+  random_move_amplitude: 0
   inherit_terrain_color: 0
+  randomize_color_on: {fileID: 0}
 --- !u!1001 &296042175911197578
 PrefabInstance:
   m_ObjectHideFlags: 0

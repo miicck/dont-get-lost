@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class farmyard_generator : world_object
 {
-    public override void on_placement(Vector3 terrain_normal,
-        biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
+    public override void on_placement()
     {
         var size = (int[])point.gen_info;
 
