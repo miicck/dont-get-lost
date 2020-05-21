@@ -723,20 +723,11 @@ public class town : biome
 
         foreach (var s in sections)
         {
-            // In the blended region, generate farmland
-            if (s.in_blended())
+            // Generate farmland with 33% probability,
+            // or if we're in the blended region
+            if (s.in_blended() || random.range(0,3)==0)
             {
                 s.generate_farmland(ref grid, random);
-                continue;
-            }
-
-            // This section is a park with 1/3 probability
-            if (random.range(0, 3) == 0)
-            {
-                for (int x = s.left; x < s.right; ++x)
-                    for (int z = s.bottom; z < s.top; ++z)
-                        if (x % 4 == 0 && z % 4 == 0 && random.range(0, 10) == 0)
-                            grid[x, z].object_to_generate = world_object.load("apple_tree");
                 continue;
             }
 
