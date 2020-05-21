@@ -18,14 +18,14 @@ public class building_generator : world_object
 
     GameObject select_face_object(COMPASS_DIRECTION direction, int n, int y, int n_door)
     {
-        GameObject ret = wall_sections[chunk.random.range(0, wall_sections.Count)];
+        GameObject ret = wall_sections[y % wall_sections.Count];
         if (direction == front)
         {
             if (n / 2 % 2 == 0 && (windows_on_odd_floors || y % 2 == 0))
-                ret = window_sections[chunk.random.range(0, window_sections.Count)];
+                ret = window_sections[y % window_sections.Count];
 
             if (y == 0 && n == n_door)
-                ret = door_sections[chunk.random.range(0, door_sections.Count)];
+                ret = door_sections[0];
         }
         return ret;
     }

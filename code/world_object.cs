@@ -39,4 +39,16 @@ public abstract class world_object : MonoBehaviour
         }
         return _library[name];
     }
+
+    static Dictionary<string, building_generator> _building_library;
+    public static building_generator load_building(string name)
+    {
+        if (_building_library == null)
+        {
+            _building_library = new Dictionary<string, building_generator>();
+            foreach (var o in Resources.LoadAll<building_generator>("buildings/"))
+                _building_library[o.name] = o;
+        }
+        return _building_library[name];
+    }
 }

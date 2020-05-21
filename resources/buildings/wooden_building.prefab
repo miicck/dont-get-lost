@@ -45,7 +45,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wall_sections:
   - {fileID: 332933080880020586, guid: c2f01f04fdffd204ca9441d41640df06, type: 3}
-  - {fileID: 8042571473512807001, guid: a27d3094bd39d1f4ab2929131db1ff13, type: 3}
   window_sections:
   - {fileID: 4602280314766350356, guid: 4e5f9a13bd0912747ac923035a257db1, type: 3}
   door_sections:

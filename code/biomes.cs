@@ -293,7 +293,7 @@ public class farmland : biome
     /// at the edge of the field. </summary>
     const int MARGIN_WIDTH = 6;
 
-    class field : int_rect
+    public class field : int_rect
     {
         public enum TYPE
         {
@@ -305,16 +305,16 @@ public class farmland : biome
             WOODLAND,
         }
 
-        public field(biome b, int left, int right, int bottom, int top) :
+        public field(System.Random random, int left, int right, int bottom, int top) :
             base(left, right, bottom, top)
         {
             int length = System.Enum.GetNames(typeof(TYPE)).Length;
-            type = (TYPE)b.random.range(0, length);
+            type = (TYPE)random.range(0, length);
 
             // Don't allow a farmyard in the blended region
             while (type == TYPE.FARMYARD &&
                 (in_blend_region(left, bottom) || in_blend_region(right, top)))
-                type = (TYPE)b.random.range(0, length);
+                type = (TYPE)random.range(0, length);
         }
 
         public TYPE type { get; private set; }
@@ -328,6 +328,104 @@ public class farmland : biome
         {
             return is_edge(1, x, z);
         }
+
+        public void generate(ref point[,] grid, System.Random random)
+        {
+            for (int x = left; x < right; ++x)
+                for (int z = bottom; z < top; ++z)
+                {
+                    var p = new point();
+                    p.altitude = point.BEACH_END;
+
+                    switch (type)
+                    {
+                        case TYPE.GRASS:
+                        case TYPE.POTATO:
+                        case TYPE.LETTUCE:
+                        case TYPE.APPLE:
+
+                            if (is_margin(x, z))
+                            {
+                                // Margin area
+                                p.terrain_color = terrain_colors.grass;
+                                p.altitude += 0.25f;
+
+                                if (is_edge(x, z) && random.range(0, 4) != 0)
+                                {
+                                    // Hedgerow
+                                    if (random.range(0, 30) == 0)
+                                    {
+                                        // p.object_to_generate = world_object.load("tree");
+                                    }
+                                    else
+                                    {
+                                        p.object_to_generate = world_object.load("hedge");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Field
+                                switch (type)
+                                {
+                                    case TYPE.GRASS:
+                                        p.terrain_color = terrain_colors.grass;
+                                        break;
+
+                                    case TYPE.LETTUCE:
+                                        p.terrain_color = terrain_colors.dirt;
+                                        if (x % 2 == 0 && z % 4 == 0)
+                                            p.object_to_generate = world_object.load("lettuce");
+                                        break;
+
+                                    case TYPE.POTATO:
+                                        p.terrain_color = terrain_colors.dirt;
+                                        if (x % 4 == 0 && z % 2 == 0)
+                                            p.object_to_generate = world_object.load("potato_plant");
+                                        break;
+
+                                    case TYPE.APPLE:
+                                        p.terrain_color = terrain_colors.grass;
+                                        if (x % 5 == 0 && z % 5 == 0)
+                                            p.object_to_generate = world_object.load("apple_tree");
+                                        else if (random.range(0, 50) == 0)
+                                            p.object_to_generate = world_object.load("flowers");
+                                        break;
+
+                                    default:
+                                        throw new System.Exception("Unkown crop!");
+                                }
+
+                            }
+
+                            break;
+
+                        case TYPE.WOODLAND:
+
+                            p.terrain_color = terrain_colors.grass;
+                            if (random.range(0, 100) == 0)
+                                p.object_to_generate = world_object.load("bush");
+
+                            break;
+
+
+                        case TYPE.FARMYARD:
+
+                            p.terrain_color = terrain_colors.dirt;
+                            if (x == left && z == bottom)
+                            {
+                                p.object_to_generate = world_object.load("farmyard");
+                                p.gen_info = new int[] { width, height };
+                            }
+                            break;
+
+                        default:
+                            throw new System.Exception("Unkown field type!");
+                    }
+
+                    grid[x, z] = p;
+                }
+        }
     }
 
     HashSet<field> fields;
@@ -338,7 +436,7 @@ public class farmland : biome
         // fields in a grid-like arrangement.
 
         // Start with a field covering the whole biome
-        fields = new HashSet<field> { new field(this, 0, SIZE, 0, SIZE) };
+        fields = new HashSet<field> { new field(random, 0, SIZE, 0, SIZE) };
 
         while (true)
         {
@@ -355,8 +453,8 @@ public class farmland : biome
 
                     int split = random.range(f.left + MIN_FIELD_SIZE, f.right - MIN_FIELD_SIZE);
 
-                    fields.Add(new field(this, f.left, split, f.bottom, f.top));
-                    fields.Add(new field(this, split, f.right, f.bottom, f.top));
+                    fields.Add(new field(random, f.left, split, f.bottom, f.top));
+                    fields.Add(new field(random, split, f.right, f.bottom, f.top));
                 }
                 else if (f.height > MAX_FIELD_SIZE)
                 {
@@ -366,8 +464,8 @@ public class farmland : biome
 
                     int split = random.range(f.bottom + MIN_FIELD_SIZE, f.top - MIN_FIELD_SIZE);
 
-                    fields.Add(new field(this, f.left, f.right, f.bottom, split));
-                    fields.Add(new field(this, f.left, f.right, split, f.top));
+                    fields.Add(new field(random, f.left, f.right, f.bottom, split));
+                    fields.Add(new field(random, f.left, f.right, split, f.top));
                 }
             }
 
@@ -377,191 +475,7 @@ public class farmland : biome
         }
 
         foreach (var f in fields)
-        {
-            for (int x = f.left; x < f.right; ++x)
-                for (int z = f.bottom; z < f.top; ++z)
-                {
-                    var p = new point();
-                    p.altitude = point.BEACH_END;
-
-                    switch (f.type)
-                    {
-                        case field.TYPE.GRASS:
-                        case field.TYPE.POTATO:
-                        case field.TYPE.LETTUCE:
-                        case field.TYPE.APPLE:
-
-                            if (f.is_margin(x, z))
-                            {
-                                // Margin area
-                                p.terrain_color = terrain_colors.grass;
-                                p.altitude += 0.25f;
-
-                                if (f.is_edge(x, z) && random.range(0, 4) != 0)
-                                {
-                                    // Hedgerow
-                                    if (random.range(0, 30) == 0)
-                                    {
-                                        // p.object_to_generate = world_object.load("tree");
-                                    }
-                                    else
-                                    {
-                                        p.object_to_generate = world_object.load("hedge");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // Field
-                                switch (f.type)
-                                {
-                                    case field.TYPE.GRASS:
-                                        p.terrain_color = terrain_colors.grass;
-                                        break;
-
-                                    case field.TYPE.LETTUCE:
-                                        p.terrain_color = terrain_colors.dirt;
-                                        if (x % 2 == 0 && z % 4 == 0)
-                                            p.object_to_generate = world_object.load("lettuce");
-                                        break;
-
-                                    case field.TYPE.POTATO:
-                                        p.terrain_color = terrain_colors.dirt;
-                                        if (x % 4 == 0 && z % 2 == 0)
-                                            p.object_to_generate = world_object.load("potato_plant");
-                                        break;
-
-                                    case field.TYPE.APPLE:
-                                        p.terrain_color = terrain_colors.grass;
-                                        if (x % 5 == 0 && z % 5 == 0)
-                                            p.object_to_generate = world_object.load("apple_tree");
-                                        else if (random.range(0, 50) == 0)
-                                            p.object_to_generate = world_object.load("flowers");
-                                        break;
-
-                                    default:
-                                        throw new System.Exception("Unkown crop!");
-                                }
-
-                            }
-
-                            break;
-
-                        case field.TYPE.WOODLAND:
-
-                            p.terrain_color = terrain_colors.grass;
-                            if (random.range(0, 100) == 0)
-                                p.object_to_generate = world_object.load("bush");
-
-                            break;
-
-
-                        case field.TYPE.FARMYARD:
-
-                            p.terrain_color = terrain_colors.dirt;
-                            if (x == f.left && z == f.bottom)
-                            {
-                                p.object_to_generate = world_object.load("farmyard");
-                                p.gen_info = new int[] { f.width, f.height };
-                            }
-                            break;
-
-                        default:
-                            throw new System.Exception("Unkown field type!");
-                    }
-
-                    grid[x, z] = p;
-                }
-        }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class cubes : biome
-{
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-                p.altitude = 32f * Mathf.PerlinNoise(i / 64f, j / 64f);
-                p.terrain_color = terrain_colors.grass;
-
-                if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("rock_pillar");
-                else if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("pentagon");
-                grid[i, j] = p;
-            }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class canyon : biome
-{
-    const float CANYON_OUTER_WIDTH = 64f;
-    const float CANYON_INNER_WIDTH = CANYON_OUTER_WIDTH - 16f;
-    const float CANYON_DEPTH = 14f;
-    const float RIVER_DEPTH = 2 * (point.BEACH_END - world.SEA_LEVEL);
-    const float RIVER_WIDTH = 4f;
-    const float CANYON_AMPLITUDE = 32f;
-    const float CANYON_PERIOD = 64f;
-
-    float canyon_profile(float dx)
-    {
-        float abs_dx = 2 * Mathf.Abs(dx);
-        if (abs_dx > CANYON_OUTER_WIDTH) return 1f;
-        if (abs_dx < CANYON_INNER_WIDTH) return 0f;
-        return (abs_dx - CANYON_INNER_WIDTH) / (CANYON_OUTER_WIDTH - CANYON_INNER_WIDTH);
-    }
-
-    float river_profile(float dx)
-    {
-        return Mathf.Exp(-dx * dx / (2 * RIVER_WIDTH * RIVER_WIDTH));
-    }
-
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                float icentre = SIZE / 2 + CANYON_AMPLITUDE * Mathf.Sin(j / CANYON_PERIOD);
-                float jcentre = SIZE / 2 + CANYON_AMPLITUDE * Mathf.Cos(i / CANYON_PERIOD);
-
-                float cp1 = canyon_profile(i - icentre);
-                float cp2 = canyon_profile(j - jcentre);
-
-                float rp1 = river_profile(i - icentre);
-                float rp2 = river_profile(j - jcentre);
-
-                float cp = Mathf.Min(cp1, cp2);
-                float rp = Mathf.Max(rp1, rp2);
-
-                var p = new point();
-
-                float CANYON_BED = point.BEACH_END;
-
-                p.altitude = CANYON_BED + CANYON_DEPTH * cp;
-                p.altitude -= RIVER_DEPTH * rp;
-                p.terrain_color = terrain_colors.desert_rock;
-
-                if (p.altitude < CANYON_BED + CANYON_DEPTH / 2f &&
-                    p.altitude > CANYON_BED + 0.0001f)
-                {
-                    switch (random.range(0, 50))
-                    {
-                        case 0:
-                            p.object_to_generate = world_object.load("desert_rocks_3");
-                            break;
-                        case 1:
-                            p.object_to_generate = world_object.load("desert_rocks_4");
-                            break;
-                    }
-                }
-
-                grid[i, j] = p;
-            }
+            f.generate(ref grid, random);
     }
 }
 
@@ -585,7 +499,23 @@ public class town : biome
             public COMPASS_DIRECTION front;
         };
 
+        /// <summary> Returns true if this section extends into 
+        /// the blended part of the biome. </summary>
+        public bool in_blended()
+        {
+            return (left < BLEND_DISTANCE) ||
+                   (right > SIZE - BLEND_DISTANCE) ||
+                   (bottom < BLEND_DISTANCE) ||
+                   (top > SIZE - BLEND_DISTANCE);
+        }
+
         public List<building> buildings;
+
+        public void generate_farmland(ref point[,] grid, System.Random random)
+        {
+            farmland.field field = new farmland.field(random, left, right, bottom, top);
+            field.generate(ref grid, random);
+        }
 
         public void generate_buildings(System.Random random)
         {
@@ -744,13 +674,16 @@ public class town : biome
                 };
 
         // Start with a section covering the non-blended part of the biome
+        /*
         var sections = new HashSet<section> { new section(
             BLEND_DISTANCE, SIZE - BLEND_DISTANCE,
             BLEND_DISTANCE, SIZE - BLEND_DISTANCE) };
+            */
+        var sections = new HashSet<section> { new section(0, SIZE, 0, SIZE) };
 
         while (true)
         {
-            // Set to true if a field was subdivided
+            // Set to true if a section was subdivided
             bool created = false;
 
             foreach (var s in new HashSet<section>(sections))
@@ -790,13 +723,20 @@ public class town : biome
 
         foreach (var s in sections)
         {
-            // Skip this section with a 1/3 probability
+            // In the blended region, generate farmland
+            if (s.in_blended())
+            {
+                s.generate_farmland(ref grid, random);
+                continue;
+            }
+
+            // This section is a park with 1/3 probability
             if (random.range(0, 3) == 0)
             {
                 for (int x = s.left; x < s.right; ++x)
                     for (int z = s.bottom; z < s.top; ++z)
                         if (x % 4 == 0 && z % 4 == 0 && random.range(0, 10) == 0)
-                            grid[x, z].object_to_generate = world_object.load("tree");
+                            grid[x, z].object_to_generate = world_object.load("apple_tree");
                 continue;
             }
 
@@ -805,16 +745,132 @@ public class town : biome
 
             foreach (var b in s.buildings)
             {
-                grid[b.left, b.bottom].object_to_generate = world_object.load("town_building");
+                switch (random.range(0, 4))
+                {
+                    case 0:
+                        grid[b.left, b.bottom].object_to_generate =
+                            world_object.load_building("wooden_building");
+                        break;
+                    case 1:
+                        grid[b.left, b.bottom].object_to_generate =
+                            world_object.load_building("plastered_building");
+                        break;
+                    case 2:
+                        grid[b.left, b.bottom].object_to_generate =
+                            world_object.load_building("plastered_building_2");
+                        break;
+                    case 3:
+                        grid[b.left, b.bottom].object_to_generate =
+                            world_object.load_building("wood_plaster_building");
+                        break;
+                    default:
+                        throw new System.Exception("Unkown building index");
+                }
+
+
                 grid[b.left, b.bottom].gen_info = new object[] { b.width, b.height, b.front };
             }
 
-            // Color in the road
+            // Color in the road/building terrains
             for (int x = s.left; x < s.right; ++x)
                 for (int z = s.bottom; z < s.top; ++z)
+                {
                     if (s.is_road(x, z))
+                        grid[x, z].terrain_color = terrain_colors.stone;
+                    else
                         grid[x, z].terrain_color = terrain_colors.dirt;
+                }
         }
+    }
+}
+
+
+[biome_info(generation_enabled: false)]
+public class cubes : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                p.altitude = 32f * Mathf.PerlinNoise(i / 64f, j / 64f);
+                p.terrain_color = terrain_colors.grass;
+
+                if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("rock_pillar");
+                else if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("pentagon");
+                grid[i, j] = p;
+            }
+    }
+}
+
+[biome_info(generation_enabled: false)]
+public class canyon : biome
+{
+    const float CANYON_OUTER_WIDTH = 64f;
+    const float CANYON_INNER_WIDTH = CANYON_OUTER_WIDTH - 16f;
+    const float CANYON_DEPTH = 14f;
+    const float RIVER_DEPTH = 2 * (point.BEACH_END - world.SEA_LEVEL);
+    const float RIVER_WIDTH = 4f;
+    const float CANYON_AMPLITUDE = 32f;
+    const float CANYON_PERIOD = 64f;
+
+    float canyon_profile(float dx)
+    {
+        float abs_dx = 2 * Mathf.Abs(dx);
+        if (abs_dx > CANYON_OUTER_WIDTH) return 1f;
+        if (abs_dx < CANYON_INNER_WIDTH) return 0f;
+        return (abs_dx - CANYON_INNER_WIDTH) / (CANYON_OUTER_WIDTH - CANYON_INNER_WIDTH);
+    }
+
+    float river_profile(float dx)
+    {
+        return Mathf.Exp(-dx * dx / (2 * RIVER_WIDTH * RIVER_WIDTH));
+    }
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                float icentre = SIZE / 2 + CANYON_AMPLITUDE * Mathf.Sin(j / CANYON_PERIOD);
+                float jcentre = SIZE / 2 + CANYON_AMPLITUDE * Mathf.Cos(i / CANYON_PERIOD);
+
+                float cp1 = canyon_profile(i - icentre);
+                float cp2 = canyon_profile(j - jcentre);
+
+                float rp1 = river_profile(i - icentre);
+                float rp2 = river_profile(j - jcentre);
+
+                float cp = Mathf.Min(cp1, cp2);
+                float rp = Mathf.Max(rp1, rp2);
+
+                var p = new point();
+
+                float CANYON_BED = point.BEACH_END;
+
+                p.altitude = CANYON_BED + CANYON_DEPTH * cp;
+                p.altitude -= RIVER_DEPTH * rp;
+                p.terrain_color = terrain_colors.desert_rock;
+
+                if (p.altitude < CANYON_BED + CANYON_DEPTH / 2f &&
+                    p.altitude > CANYON_BED + 0.0001f)
+                {
+                    switch (random.range(0, 50))
+                    {
+                        case 0:
+                            p.object_to_generate = world_object.load("desert_rocks_3");
+                            break;
+                        case 1:
+                            p.object_to_generate = world_object.load("desert_rocks_4");
+                            break;
+                    }
+                }
+
+                grid[i, j] = p;
+            }
     }
 }
 

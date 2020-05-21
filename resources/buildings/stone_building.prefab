@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1607840025822522650
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6538166811100619383}
+  - component: {fileID: 7363018594367681796}
+  m_Layer: 0
+  m_Name: stone_building
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6538166811100619383
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607840025822522650}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7363018594367681796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607840025822522650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e357f1d222038ca478d27b4fe272436b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wall_sections:
+  - {fileID: 8042571473512807001, guid: a27d3094bd39d1f4ab2929131db1ff13, type: 3}
+  window_sections:
+  - {fileID: 4602280314766350356, guid: 4e5f9a13bd0912747ac923035a257db1, type: 3}
+  door_sections:
+  - {fileID: 474168023080128643, guid: 75b27c27f48a0e74192f106c8e929849, type: 3}
+  roofs:
+  - {fileID: 5449440668911825121, guid: cd35bbc91bd2fb64191b334426212198, type: 3}
