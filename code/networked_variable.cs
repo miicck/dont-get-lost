@@ -26,10 +26,14 @@ public abstract class networked_variable
 
     /// <summary> Reconstruct my value from the result of
     /// <see cref="serialization"/>. </summary>
-    public abstract void deserialize(byte[] buffer, int offset, int length);
+    public void deserialize(byte[] buffer, int offset, int length)
+    {
+        on_deserialize(buffer, offset, length, first_deserialize);
+        first_deserialize = false;
+    }
+    bool first_deserialize = true;
 
-    /// <summary> Called when the object we belong to has been created. </summary>
-    public virtual void on_create() { }
+    public abstract void on_deserialize(byte[] buffer, int offset, int length, bool first_time);
 
     /// <summary> Called when a variable update
     /// needs to be sent to the server. </summary>
@@ -51,7 +55,7 @@ public abstract class networked_variable
                     return; // No change
 
                 _value = value;
-                on_change?.Invoke(_value);
+                on_change?.Invoke(_value, false);
                 send_update();
             }
         }
@@ -65,13 +69,13 @@ public abstract class networked_variable
             return network_utils.encode_int(value);
         }
 
-        public override void deserialize(byte[] buffer, int offset, int length)
+        public override void on_deserialize(byte[] buffer, int offset, int length, bool first_time)
         {
             _value = network_utils.decode_int(buffer, ref offset);
-            on_change?.Invoke(_value);
+            on_change?.Invoke(_value, true);
         }
 
-        public delegate void change_func(int new_value);
+        public delegate void change_func(int new_value, bool first_deserialize);
         public change_func on_change;
     }
 
@@ -100,7 +104,7 @@ public abstract class networked_variable
             return network_utils.encode_string(_value);
         }
 
-        public override void deserialize(byte[] buffer, int offset, int length)
+        public override void on_deserialize(byte[] buffer, int offset, int length, bool first_time)
         {
             _value = network_utils.decode_string(buffer, ref offset);
         }
@@ -119,7 +123,7 @@ public abstract class networked_variable
                     return; // No change
 
                 _value = value;
-                on_change?.Invoke(_value);
+                on_change?.Invoke(_value, false);
 
                 // Only send network updates if we've
                 // moved by more than the resolution
@@ -151,12 +155,6 @@ public abstract class networked_variable
             _lerp_value = _value;
         }
 
-        public override void on_create()
-        {
-            // Start lerp value at initial value
-            reset_lerp();
-        }
-
         float lerp_speed;
         float resolution;
 
@@ -173,13 +171,14 @@ public abstract class networked_variable
             return network_utils.encode_float(value);
         }
 
-        public override void deserialize(byte[] buffer, int offset, int length)
+        public override void on_deserialize(byte[] buffer, int offset, int length, bool first_time)
         {
             _value = network_utils.decode_float(buffer, ref offset);
-            on_change?.Invoke(_value);
+            if (first_time) reset_lerp(); // Initialize the lerp to the exact value first time
+            on_change?.Invoke(_value, first_time);
         }
 
-        public delegate void change_func(float new_value);
+        public delegate void change_func(float new_value, bool first_deserialize);
         public change_func on_change;
     }
 
@@ -193,7 +192,7 @@ public abstract class networked_variable
                 if (_value == value)
                     return; // No change
                 _value = value;
-                on_change?.Invoke(_value);
+                on_change?.Invoke(_value, false);
                 send_update();
             }
         }
@@ -209,7 +208,7 @@ public abstract class networked_variable
             );
         }
 
-        public override void deserialize(byte[] buffer, int offset, int length)
+        public override void on_deserialize(byte[] buffer, int offset, int length, bool first_time)
         {
             _value = new Quaternion(
                 network_utils.decode_float(buffer, ref offset),
@@ -217,10 +216,10 @@ public abstract class networked_variable
                 network_utils.decode_float(buffer, ref offset),
                 network_utils.decode_float(buffer, ref offset)
             );
-            on_change?.Invoke(_value);
+            on_change?.Invoke(_value, first_time);
         }
 
-        public delegate void change_func(Quaternion new_value);
+        public delegate void change_func(Quaternion new_value, bool first_deserialize);
         public change_func on_change;
     }
 
@@ -296,7 +295,7 @@ public abstract class networked_variable
             return ret.ToArray();
         }
 
-        public override void deserialize(byte[] buffer, int offset, int length)
+        public override void on_deserialize(byte[] buffer, int offset, int length, bool first_time)
         {
             dict.Clear();
 

@@ -673,12 +673,7 @@ public class town : biome
                     altitude = point.BEACH_END
                 };
 
-        // Start with a section covering the non-blended part of the biome
-        /*
-        var sections = new HashSet<section> { new section(
-            BLEND_DISTANCE, SIZE - BLEND_DISTANCE,
-            BLEND_DISTANCE, SIZE - BLEND_DISTANCE) };
-            */
+        // Start with a section covering the entire biome
         var sections = new HashSet<section> { new section(0, SIZE, 0, SIZE) };
 
         while (true)
@@ -725,7 +720,7 @@ public class town : biome
         {
             // Generate farmland with 33% probability,
             // or if we're in the blended region
-            if (s.in_blended() || random.range(0,3)==0)
+            if (s.in_blended() || random.range(0, 3) == 0)
             {
                 s.generate_farmland(ref grid, random);
                 continue;
@@ -772,6 +767,24 @@ public class town : biome
                         grid[x, z].terrain_color = terrain_colors.dirt;
                 }
         }
+    }
+}
+
+public class spawner_test_biome : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                grid[i, j] = new point()
+                {
+                    altitude = point.BEACH_END
+                };
+
+                if (i % 32 == 0 && j % 32 == 0)
+                    grid[i, j].object_to_generate = world_object.load("spawner_test");
+            }
     }
 }
 

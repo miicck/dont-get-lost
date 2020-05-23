@@ -36,7 +36,7 @@ public static class client
         string name = created.name;
         created = Object.Instantiate(created);
         created.name = name;
-        created.local = true; // Created on this client => local
+        created.gain_authority(); // Created on this client => has authority
 
         if (network_id < 0)
         {
@@ -103,10 +103,10 @@ public static class client
         var nw = networked.look_up(local ? local_prefab : remote_prefab);
         string name = nw.name;
         nw = Object.Instantiate(nw);
-        nw.local = local;
         nw.transform.SetParent(parent?.transform);
         nw.name = name;
         nw.network_id = network_id;
+        if (local) nw.gain_authority();
         nw.init_network_variables();
 
         // Local rotation is intialized to the identity. If rotation
@@ -256,6 +256,22 @@ public static class client
                 int network_id = network_utils.decode_int(buffer, ref offset);
                 var nw = networked.find_by_id(local_id);
                 nw.network_id = network_id;
+            },
+
+            [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>
+            {
+                // Gain authority over a networked object
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                var nw = networked.find_by_id(network_id);
+                nw.gain_authority();
+            },
+
+            [server.MESSAGE.LOSE_AUTH] = (buffer, offset, length) =>
+            {
+                // Loose authority over a networked object
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                var nw = networked.find_by_id(network_id);
+                nw.lose_authority();
             }
         };
 

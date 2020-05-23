@@ -137,20 +137,12 @@ public class item : networked
 
     public networked_variable.net_quaternion networked_rotation;
 
-    public override bool client_controlls_position()
-    {
-        if (!being_carried && rigidbody.velocity.magnitude < 0.1f)
-            controlling_position = false;
-
-        return controlling_position || local;
-    }
-
     public override void on_init_network_variables()
     {
         // Create newtorked variables
         networked_rotation = new networked_variable.net_quaternion();
         transform.rotation = Quaternion.identity;
-        networked_rotation.on_change = (rot) => transform.rotation = rot;
+        networked_rotation.on_change = (rot, fd) => transform.rotation = rot;
     }
 
     public override void on_create()
@@ -162,8 +154,11 @@ public class item : networked
     public override void on_network_update()
     {
         // Keep networked variables up to date
-        networked_position = transform.position;
-        networked_rotation.value = transform.rotation;
+        if (has_authority)
+        {
+            networked_position = transform.position;
+            networked_rotation.value = transform.rotation;
+        }
     }
 
     //################//

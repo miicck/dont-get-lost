@@ -29,7 +29,7 @@ public class networked : MonoBehaviour
     public virtual void on_first_create() { }
 
     /// <summary> Called whenever client.update() is. </summary>
-    public virtual void on_network_update() {}
+    public virtual void on_network_update() { }
 
     /// <summary> Called whenever a networked child is added. </summary>
     public virtual void on_add_networked_child(networked child) { }
@@ -37,24 +37,23 @@ public class networked : MonoBehaviour
     /// <summary> Called when this object is forgotten on a client. </summary>
     public virtual void on_forget() { }
 
-    /// <summary> Should return true if this client is controlling my position. </summary>
-    public virtual bool client_controlls_position() { return local; }
+    /// <summary> Called the first time this object reccives a positive id. </summary>
+    public virtual void on_first_register() { }
+
+    /// <summary> Does this client have unique authority over this object. </summary>
+    public bool has_authority { get; private set; }
+    public void gain_authority() { has_authority = true; }
+    public void lose_authority() { has_authority = false; }
 
     //#####################//
     // NETWORKED VARIABLES //
     //#####################//
-
-    /// <summary> Local == true iff this was created by this client. </summary>
-    public bool local;
 
     /// <summary> Called when I'm created. The argument <paramref name="from_network"/> = true 
     /// if created by <see cref="client.create_from_network"/> or false if created by
     /// <see cref="client.create"/>. </summary>
     public void on_create(bool from_network)
     {
-        foreach (var n in networked_variables)
-            n.on_create();
-
         on_create();
     }
 
@@ -74,27 +73,27 @@ public class networked : MonoBehaviour
         // to the networked value if this client is controlling
         // the position (otherwise it should LERP to the networked
         // value; see network_update).
-        x_local.on_change = (x) =>
+        x_local.on_change = (x, fd) =>
         {
-            if (!client_controlls_position()) return;
+            if (!has_authority && !fd) return;
             Vector3 local_pos = transform.localPosition;
             local_pos.x = x;
             transform.localPosition = local_pos;
             x_local.reset_lerp();
         };
 
-        y_local.on_change = (y) =>
+        y_local.on_change = (y, fd) =>
         {
-            if (!client_controlls_position()) return;
+            if (!has_authority && !fd) return;
             Vector3 local_pos = transform.localPosition;
             local_pos.y = y;
             transform.localPosition = local_pos;
             y_local.reset_lerp();
         };
 
-        z_local.on_change = (z) =>
+        z_local.on_change = (z, fd) =>
         {
-            if (!client_controlls_position()) return;
+            if (!has_authority && !fd) return;
             Vector3 local_pos = transform.localPosition;
             local_pos.z = z;
             transform.localPosition = local_pos;
@@ -125,7 +124,7 @@ public class networked : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
-        if (!client_controlls_position())
+        if (!has_authority)
         {
             // Not controlled by this => LERP my position to networked position
             // We do this first, so that transform.localPosition is properly
@@ -204,8 +203,13 @@ public class networked : MonoBehaviour
             if (objects.ContainsKey(value))
                 throw new System.Exception("Tried to overwrite network id!");
 
+            int old_id = _network_id;
+
             objects[value] = this;
             _network_id = value;
+
+            if (old_id <= 0 && _network_id > 0)
+                on_first_register();
         }
     }
     int _network_id;
@@ -365,6 +369,7 @@ public class networked : MonoBehaviour
             base.OnInspectorGUI();
             var nw = (networked)target;
             UnityEditor.EditorGUILayout.IntField("Network ID", nw.network_id);
+            UnityEditor.EditorGUILayout.Toggle("Has authority", nw.has_authority);
         }
     }
 

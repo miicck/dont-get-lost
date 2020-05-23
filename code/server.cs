@@ -139,6 +139,7 @@ public static class server
 
                 // Add this object to the loaded set
                 loaded.Add(loading);
+                loading.on_load_on(this);
             });
         }
 
@@ -156,7 +157,9 @@ public static class server
                     throw new System.Exception(err);
                 }
 
+                // Remove this object from the loaded set
                 loaded.Remove(unloading);
+                unloading.on_unload_on(this);
             });
 
             // Let the client know that rep has been unloaded
@@ -178,6 +181,55 @@ public static class server
         /// <summary> The serialized values of networked_variables 
         /// beloning to this object. </summary>
         List<byte[]> serializations = new List<byte[]>();
+
+        /// <summary> The client which has authority over 
+        /// this networked object. </summary>
+        public client authority
+        {
+            get => _authority;
+            set
+            {
+                // Old client looses authority
+                if (_authority != null)
+                    message_senders[MESSAGE.LOSE_AUTH](_authority, network_id);
+
+                _authority = value;
+
+                // New client gains authority
+                if (_authority != null)
+                    message_senders[MESSAGE.GAIN_AUTH](_authority, network_id);
+            }
+        }
+        client _authority;
+
+        public void on_load_on(client client)
+        {
+            // If I was loaded and don't have authority
+            // then set the client that loaded me to the authority
+            if (authority == null)
+                authority = client;
+        }
+
+        public void on_unload_on(client client)
+        {
+            // If I was unloaded from my authority, find a 
+            // new client that I am loaded on to take over. 
+            // If there are no such clients set my authority 
+            // to null.
+            if (authority == client)
+            {
+                // We don't need to send a LOSE_AUTH message to
+                // a client that has unloaded an object.
+                _authority = null;
+
+                foreach (var c in connected_clients)
+                    if (c.has_loaded(this))
+                    {
+                        authority = c;
+                        break;
+                    }
+            }
+        }
 
         void set_serialization(int i, byte[] serial)
         {
@@ -548,6 +600,13 @@ public static class server
                     }
                 }
 
+                // Let the client know that the creation was successful
+                // (this is done before the load, so that the client that created
+                //  it has the correct network id *before* it reccives 
+                //  load /serialization messages)
+                message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
+
+                // Register (load) the object on clients
                 client.load(rep, true, true);
 
                 // If this is a child, load it on all other
@@ -557,9 +616,7 @@ public static class server
                     foreach (var c in connected_clients)
                         if (c != client)
                             if (c.has_loaded(parent))
-                                c.load(rep, false);
-
-                message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
+                                c.load(rep, false);          
             },
 
             [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
@@ -693,6 +750,30 @@ public static class server
                     network_utils.encode_int(local_id),
                     network_utils.encode_int(network_id)
                 ));
+            },
+
+            [MESSAGE.GAIN_AUTH] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                if (network_id <= 0)
+                    throw new System.Exception("Can't gain authority over unregistered object!");
+
+                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
+            },
+
+            [MESSAGE.LOSE_AUTH] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                if (network_id <= 0)
+                    throw new System.Exception("Can't lose authority over unregistered object!");
+
+                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
             }
         };
     }
@@ -923,6 +1004,8 @@ public static class server
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
+        LOSE_AUTH,         // Sent to a client when they lose authority over an object
+        GAIN_AUTH,         // Sent to a ciient when they gain authority over an object
     }
 
     delegate void message_parser(client c, byte[] bytes, int offset, int length);

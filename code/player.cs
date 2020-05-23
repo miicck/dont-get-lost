@@ -42,7 +42,7 @@ public class player : networked_player
 
     void Update()
     {
-        if (!local) return;
+        if (!has_authority) return;
         if (options_menu.open) return;
 
         if (carrying != null)
@@ -732,7 +732,7 @@ public class player : networked_player
         right_arm = body.right_arm;
         left_arm = body.left_arm;
 
-        if (local)
+        if (has_authority)
         {
             // Setup the player camera
             camera = FindObjectOfType<Camera>();
@@ -855,7 +855,7 @@ public class player : networked_player
     public override void on_init_network_variables()
     {
         y_rotation = new networked_variable.net_float(resolution: 5f);
-        y_rotation.on_change = (yrot) =>
+        y_rotation.on_change = (yrot, f) =>
         {
             transform.rotation = Quaternion.Euler(0, yrot, 0);
         };

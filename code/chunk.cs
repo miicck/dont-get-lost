@@ -64,11 +64,17 @@ public class chunk : MonoBehaviour
     public static chunk at(Vector3 location, bool generated_only = false)
     {
         var c = coords(location);
-        var gc = generated_chunks.get(c[0], c[1]);
+        return at(c[0], c[1], generated_only);
+    }
+
+    // Returns the chunk at the given chunk coordinates
+    public static chunk at(int x_chunk, int z_chunk, bool generated_only = false)
+    {
+        var gc = generated_chunks.get(x_chunk, z_chunk);
         if (gc != null) return gc;
         if (generated_only) return null;
         Debug.Log("chunk.at fallback triggered.");
-        return GameObject.Find("chunk_" + c[0] + "_" + c[1])?.GetComponent<chunk>();
+        return GameObject.Find("chunk_" + x_chunk + "_" + z_chunk).GetComponent<chunk>();
     }
 
     // Is this chunk enabled in the world?
@@ -354,12 +360,24 @@ public class chunk : MonoBehaviour
                 wo.transform.SetParent(transform);
                 wo.transform.localPosition = new Vector3(i, point.altitude, j);
                 wo.on_placement(terrain_normal, point, this, i, j);
+                objects_created.add(i, j, wo);
             }
         }
 
         ++objects_i;
         return false;
     }
+
+    // Get an object that has been generated within the chunk
+    public world_object get_object(int x_in_chunk, int z_in_chunk)
+    {
+        return objects_created.get(x_in_chunk, z_in_chunk);
+    }
+
+    // The objects that have been created in this chunk, 
+    // indexed by their x, z coordinates within the chunk
+    two_int_dictionary<world_object> objects_created = 
+        new two_int_dictionary<world_object>();
 
     // Called when the chunk has finished generating
     void on_generation_complete()

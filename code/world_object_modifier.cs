@@ -15,19 +15,19 @@ public abstract class world_object_modifier : networked
         z_in_chunk = new networked_variable.net_int(-1);
         timeout = new networked_variable.net_float();
 
-        x_in_chunk.on_change = (x) =>
+        x_in_chunk.on_change = (x, f) =>
         {
             CancelInvoke("on_locate");
             Invoke("on_locate", 0f);
         };
 
-        z_in_chunk.on_change = (z) =>
+        z_in_chunk.on_change = (z, f) =>
         {
             CancelInvoke("on_locate");
             Invoke("on_locate", 0f);
         };
 
-        timeout.on_change = (t) =>
+        timeout.on_change = (t, f) =>
         {
             Invoke("on_timeout", t);
         };

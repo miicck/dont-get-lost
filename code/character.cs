@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class character : MonoBehaviour
+public class character : networked
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -25,24 +25,37 @@ public class character : MonoBehaviour
     }
     int path_progress = 0;
 
+    // The character spawner that spawned me
+    character_spawner spawned_by
+    {
+        get
+        {
+            if (_spawned_by == null)
+            {
+                _spawned_by = transform.parent.GetComponent<character_spawner>();
+                if (_spawned_by == null)
+                    throw new System.Exception("Character parent is not a character spawner!");
+            }
+            return _spawned_by;
+        }
+    }
+    character_spawner _spawned_by;
+
     void get_path(Vector3 target)
     {
-        path = new path(transform.position, target, min_altitude: can_swim ? 0 : world.SEA_LEVEL);
-    }
-
-    // The last position that we checked which chunk we were in
-    Vector3 last_chunk_check_position;
-    chunk _chunk;
-    public chunk chunk
-    {
-        get { return _chunk; }
-        private set
+        path = new path(transform.position, target, constraint: (v) =>
         {
-            if (_chunk == value) return;
-            if (value == null) return;
-            _chunk = value;
-            transform.SetParent(_chunk.transform);
-        }
+            // Constraints on path
+
+            // Check we're in the right medium
+            if (!can_swim && v.y < world.SEA_LEVEL) return false;
+            if (!can_walk && v.y > world.SEA_LEVEL) return false;
+
+            // Can't get too far from spawner
+            if ((v - spawned_by.transform.position).magnitude > spawned_by.max_range) return false;
+
+            return true;
+        });
     }
 
     void move_along_path(float speed)
@@ -81,8 +94,11 @@ public class character : MonoBehaviour
         if (path == null)
         {
             // Search for a new walk target
+            Vector3 location = spawned_by.transform.position + 
+                Random.insideUnitSphere * spawned_by.max_range;
+
             RaycastHit hit;
-            if (Physics.Raycast(transform.position + Random.onUnitSphere * 5f, -Vector3.up, out hit, 10f))
+            if (Physics.Raycast(location, -Vector3.up, out hit, 10f))
                 get_path(hit.point);
         }
         else move_along_path(walk_speed);
@@ -99,27 +115,20 @@ public class character : MonoBehaviour
         else move_along_path(run_speed);
     }
 
-    void update_chunk(bool forced = false)
-    {
-        // No updates needed if we haven't moved by more than 1m in the x,y plane from last update
-        Vector3 delta = transform.position - last_chunk_check_position; delta.y = 0;
-        if (delta.magnitude < 1f && !forced) return;
-        last_chunk_check_position = transform.position;
-        chunk = chunk.at(transform.position);
-    }
-
-    private void Start()
-    {
-        // Force a chunk update
-        update_chunk(true);
-    }
-
     private void Update()
     {
+        if (!has_authority) return;
+
         if ((transform.position - player.current.transform.position).magnitude < 5f)
             flee(player.current.transform);
         else
             idle_walk();
+    }
+
+    public override void on_network_update()
+    {
+        if (has_authority)
+            networked_position = transform.position;
     }
 
     private void OnDrawGizmosSelected()
