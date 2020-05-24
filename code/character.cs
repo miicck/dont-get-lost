@@ -16,15 +16,6 @@ public class character : networked
     public bool can_walk = true;
     public bool can_swim = false;
 
-    // The current path the character is walking
-    path _path;
-    path path
-    {
-        get { return _path; }
-        set { _path = value; path_progress = 0; }
-    }
-    int path_progress = 0;
-
     // The character spawner that spawned me
     character_spawner spawned_by
     {
@@ -40,6 +31,19 @@ public class character : networked
         }
     }
     character_spawner _spawned_by;
+
+    //#############//
+    // PATHFINDING //
+    //#############//
+
+    // The current path the character is walking
+    path _path;
+    path path
+    {
+        get { return _path; }
+        set { _path = value; path_progress = 0; }
+    }
+    int path_progress = 0;
 
     void get_path(Vector3 target)
     {
@@ -83,8 +87,14 @@ public class character : networked
             // Look in the direction of travel
             delta.y = 0;
             if (delta.magnitude > 10e-4)
-                transform.forward = Vector3.Lerp(transform.forward,
+            {
+                // Lerp forward look direction
+                Vector3 new_forward = Vector3.Lerp(transform.forward,
                     delta.normalized, speed * 5f * Time.deltaTime);
+
+                if (new_forward.magnitude > 10e-4)
+                    transform.forward = new_forward;
+            }
         }
     }
 
@@ -94,7 +104,7 @@ public class character : networked
         if (path == null)
         {
             // Search for a new walk target
-            Vector3 location = spawned_by.transform.position + 
+            Vector3 location = spawned_by.transform.position +
                 Random.insideUnitSphere * spawned_by.max_range;
 
             RaycastHit hit;
@@ -115,6 +125,10 @@ public class character : networked
         else move_along_path(run_speed);
     }
 
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
+
     private void Update()
     {
         if (!has_authority) return;
@@ -125,12 +139,6 @@ public class character : networked
             idle_walk();
     }
 
-    public override void on_network_update()
-    {
-        if (has_authority)
-            networked_position = transform.position;
-    }
-
     private void OnDrawGizmosSelected()
     {
         // Draw path gizmos
@@ -138,16 +146,32 @@ public class character : networked
             path.draw_gizmos();
     }
 
-    // The characters in the resources/characters directory
-    static Dictionary<string, character> character_library;
-    public static character load(string name)
+    //############//
+    // NETWORKING //
+    //############//
+
+    networked_variable.net_float y_rotation;
+
+    public override void on_init_network_variables()
     {
-        if (character_library == null)
+        y_rotation = new networked_variable.net_float(resolution: 5f);
+        y_rotation.on_change = (y, f) =>
         {
-            character_library = new Dictionary<string, character>();
-            foreach (var c in Resources.LoadAll<character>("characters/"))
-                character_library[c.name] = c;
+            if (!has_authority || f)
+            {
+                var ea = transform.rotation.eulerAngles;
+                ea.y = y;
+                transform.rotation = Quaternion.Euler(ea);
+            }
+        };
+    }
+
+    public override void on_network_update()
+    {
+        if (has_authority)
+        {
+            networked_position = transform.position;
+            y_rotation.value = transform.rotation.eulerAngles.y;
         }
-        return character_library[name];
     }
 }

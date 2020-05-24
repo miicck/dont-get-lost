@@ -25,8 +25,12 @@ public class character_spawner : spawned_by_world_object
 
     void check_spawn()
     {
+        if (network_id < 0)
+            return; // Wait until registered
+
         int to_sapwn = max_to_spawn - spawned.Length;
-        if (to_sapwn <= 0) return;
+        if (to_sapwn <= 0)
+            return; // None left to spawn
 
         for (int i = 0; i < to_sapwn; ++i)
             client.create(transform.position, character_to_spawn, parent: this);
