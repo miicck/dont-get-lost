@@ -26,10 +26,15 @@ public class natural_world_object : world_object
         ALLIGN_Z_DOWNHILL
     }
 
-    public override bool can_place(biome.point p, Vector3 terrain_normal)
+    public override bool can_place(biome.point p)
     {
         if (p.altitude > max_altitude) return false;
         if (p.altitude < min_altitude) return false;
+        return true;
+    }
+
+    public override bool can_place(Vector3 terrain_normal)
+    {
         float angle = Vector3.Angle(terrain_normal, Vector3.up);
         if (angle > max_terrain_angle) return false;
         if (angle < min_terrain_angle) return false;

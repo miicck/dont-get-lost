@@ -273,7 +273,7 @@ public class flat_forest : biome
                 else if (random.range(0, 200) == 0)
                     p.object_to_generate = world_object.load("bush");
                 else if (random.range(0, 1000) == 0)
-                    p.character_to_generate = character.load("chicken");
+                    p.object_to_generate = world_object.load("chicken_nest");
 
                 grid[i, j] = p;
             }
@@ -770,6 +770,7 @@ public class town : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class spawner_test_biome : biome
 {
     protected override void generate_grid()
@@ -783,11 +784,10 @@ public class spawner_test_biome : biome
                 };
 
                 if (i % 32 == 0 && j % 32 == 0)
-                    grid[i, j].object_to_generate = world_object.load("spawner_test");
+                    grid[i, j].object_to_generate = world_object.load("chicken_nest");
             }
     }
 }
-
 
 [biome_info(generation_enabled: false)]
 public class cubes : biome

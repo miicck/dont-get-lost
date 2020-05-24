@@ -353,7 +353,8 @@ public class chunk : MonoBehaviour
             float zf = j / (float)TERRAIN_RES;
             Vector3 terrain_normal = terrain.terrainData.GetInterpolatedNormal(xf, zf);
 
-            if (point.object_to_generate.can_place(point, terrain_normal))
+            // Check that the object can be placed somewhere with this terrain normal
+            if (point.object_to_generate.can_place(terrain_normal))
             {
                 // Place the world object
                 var wo = point.object_to_generate.inst();
@@ -383,19 +384,6 @@ public class chunk : MonoBehaviour
     void on_generation_complete()
     {
         generated_chunks.add(x, z, this);
-
-        // Load all the characters
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var point = blended_points[i, j];
-                if (point.character_to_generate != null)
-                {
-                    var c = point.character_to_generate.inst();
-                    c.transform.position = transform.position + new Vector3(i, point.altitude, j);
-                }
-            }
-
         biome.update_chunk_neighbours();
     }
 

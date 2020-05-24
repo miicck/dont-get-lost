@@ -404,7 +404,6 @@ public abstract class biome : MonoBehaviour
         public float altitude;
         public Color terrain_color;
         public world_object object_to_generate;
-        public character character_to_generate;
         public object gen_info;
 
         // Computea a weighted average of a list of points
@@ -442,7 +441,6 @@ public abstract class biome : MonoBehaviour
             if (pts[max_i] != null)
             {
                 ret.object_to_generate = pts[max_i].object_to_generate;
-                ret.character_to_generate = pts[max_i].character_to_generate;
                 ret.gen_info = pts[max_i].gen_info;
             }
 
@@ -460,17 +458,11 @@ public abstract class biome : MonoBehaviour
                 terrain_color = Color.Lerp(terrain_color, terrain_colors.sand, s);
             }
 
-            // Don't allow characters that can't swim to spawn underwater
-            if (character_to_generate != null)
-                if (!character_to_generate.can_swim)
-                    if (altitude < world.SEA_LEVEL)
-                        character_to_generate = null;
-
-            // Don't allow characters that can't walk to spawn on dry land
-            if (character_to_generate != null)
-                if (!character_to_generate.can_walk)
-                    if (altitude > world.SEA_LEVEL)
-                        character_to_generate = null;
+            // Check if the object can be placed 
+            // here, if not, remove it
+            if (object_to_generate != null)
+                if (!object_to_generate.can_place(this))
+                    object_to_generate = null;
         }
 
         public string info()

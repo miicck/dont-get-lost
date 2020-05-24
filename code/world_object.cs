@@ -23,7 +23,12 @@ public abstract class world_object : MonoBehaviour
         on_placement();
     }
 
-    public virtual bool can_place(biome.point p, Vector3 terrain_normal)
+    public virtual bool can_place(Vector3 terrain_normal)
+    {
+        return true;
+    }
+
+    public virtual bool can_place(biome.point p)
     {
         return true;
     }

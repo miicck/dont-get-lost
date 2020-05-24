@@ -2,6 +2,54 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> When created, a networked_object_spawner will wait until it is within
+/// render range of the player and will create a networked object of the given type, 
+/// unless one is produced by the server within a given time limit. </summary>
+public class networked_object_spawner : world_object
+{ 
+    public string prefab_to_spawn;
+
+    spawned_by_world_object created;
+
+    public override void on_placement()
+    {
+        Invoke("check_in_range", 0.1f);
+    }
+
+    void check_in_range()
+    {
+        var dist = (transform.position - player.current.transform.position).magnitude;
+        if (dist > game.render_range * 0.75f)
+        {
+            // Not in range, check again in a bit
+            Invoke("check_in_range", 0.1f);
+            return;
+        }
+
+        // In range, trigger creation unless the server provides
+        // us with a networked version soon
+        Invoke("create", 2f);
+    }
+
+    public void created_from_network(spawned_by_world_object created)
+    {
+        this.created = created;
+
+        // We've got a networked object, no need to
+        // check to see if we should create one
+        CancelInvoke("check_in_range");
+        CancelInvoke("create");
+    }
+
+    void create()
+    {
+        if (this.created != null) return; // Already loaded from network, don't create another
+        created = (spawned_by_world_object)client.create(transform.position, prefab_to_spawn);
+        created.set_spawner(this);
+        created.on_first_spawn();
+    }   
+}
+
 public class spawned_by_world_object : networked
 {
     networked_variable.net_int chunk_x;
@@ -62,52 +110,4 @@ public class spawned_by_world_object : networked
     }
 
     public virtual void on_first_spawn() { }
-}
-
-/// <summary> When created, a networked_object_spawner will wait until it is within
-/// render range of the player and will create a networked object of the given type, 
-/// unless one is produced by the server within a given time limit. </summary>
-public abstract class networked_object_spawner : world_object
-{
-    spawned_by_world_object created;
-
-    public override void on_placement()
-    {
-        Invoke("check_in_range", 0.1f);
-    }
-
-    void check_in_range()
-    {
-        var dist = (transform.position - player.current.transform.position).magnitude;
-        if (dist > game.render_range * 0.75f)
-        {
-            // Not in range, check again in a bit
-            Invoke("check_in_range", 0.1f);
-            return;
-        }
-
-        // In range, trigger creation unless the server provides
-        // us with a networked version soon
-        Invoke("create", 2f);
-    }
-
-    public void created_from_network(spawned_by_world_object created)
-    {
-        this.created = created;
-
-        // We've got a networked object, no need to
-        // check to see if we should create one
-        CancelInvoke("check_in_range");
-        CancelInvoke("create");
-    }
-
-    void create()
-    {
-        if (this.created != null) return; // Already loaded from network, don't create another
-        created = (spawned_by_world_object)client.create(transform.position, prefab_to_spawn());
-        created.set_spawner(this);
-        created.on_first_spawn();
-    }
-
-    protected abstract string prefab_to_spawn();
 }
