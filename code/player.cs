@@ -477,6 +477,16 @@ public class player : networked_player
     {
         if (controller == null) return; // Controller hasn't started yet
 
+        if (Input.GetKey(KeyCode.LeftShift))
+            fly_move();
+        else
+            normal_move();
+
+        networked_position = transform.position;
+    }
+
+    void normal_move()
+    {
         if (controller.isGrounded)
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -509,16 +519,21 @@ public class player : networked_player
         }
 
         Vector3 move = velocity * Time.deltaTime;
-        if (Input.GetKey(KeyCode.LeftShift))
-        {
-            move.x *= 10f;
-            move.z *= 10f;
-        }
 
         controller.Move(move);
         stay_above_terrain();
+    }
 
-        networked_position = transform.position;
+    void fly_move()
+    {
+        Vector3 velocity = Vector3.zero;
+        if (Input.GetKey(KeyCode.W)) velocity += camera.transform.forward;
+        if (Input.GetKey(KeyCode.S)) velocity -= camera.transform.forward;
+        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right;
+        if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right;
+
+        Vector3 move = velocity * 20 * Time.deltaTime;
+        controller.Move(move);
     }
 
     void float_in_water()
