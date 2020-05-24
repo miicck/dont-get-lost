@@ -5,15 +5,14 @@ using UnityEngine;
 public class game : MonoBehaviour
 {
     public const float MIN_RENDER_RANGE = 0f;
-    public const string LOCAL_PLAYER_PREFAB = "misc/player_local";
-    public const string REMOTE_PLAYER_PREFAB = "misc/player_remote";
+    public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
 
     public UnityEngine.UI.Text debug_text;
     public GameObject debug_panel;
 
     /// <summary> Information on how to start a game. </summary>
-    struct startup_info
+    public struct startup_info
     {
         public enum MODE
         {
@@ -29,7 +28,7 @@ public class game : MonoBehaviour
         public string hostname;
         public int port;
     }
-    static startup_info startup;
+    public static startup_info startup;
 
     /// <summary> Load/host a game from disk. </summary>
     public static void load_and_host_world(string world_name, string username)
@@ -104,11 +103,6 @@ public class game : MonoBehaviour
     }
     private static float _render_range = chunk.SIZE;
 
-    public static void on_local_player_create(player p)
-    {
-        p.username.value = startup.username;
-    }
-
     void Start()
     {
         // Various startup modes
@@ -118,8 +112,7 @@ public class game : MonoBehaviour
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                server.start(server.DEFAULT_PORT, startup.world_name,
-                    LOCAL_PLAYER_PREFAB, REMOTE_PLAYER_PREFAB);
+                server.start(server.DEFAULT_PORT, startup.world_name, PLAYER_PREFAB);
 
                 client.connect(network_utils.local_ip_address().ToString(),
                     server.DEFAULT_PORT, startup.username, "password");

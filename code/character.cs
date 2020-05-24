@@ -150,17 +150,17 @@ public class character : networked
     // NETWORKING //
     //############//
 
-    networked_variable.net_float y_rotation;
+    networked_variables.net_float y_rotation;
 
     public override void on_init_network_variables()
     {
-        y_rotation = new networked_variable.net_float(resolution: 5f);
-        y_rotation.on_change = (y, f) =>
+        y_rotation = new networked_variables.net_float(resolution: 5f);
+        y_rotation.on_change = () =>
         {
-            if (!has_authority || f)
+            if (has_authority)
             {
                 var ea = transform.rotation.eulerAngles;
-                ea.y = y;
+                ea.y = y_rotation.value;
                 transform.rotation = Quaternion.Euler(ea);
             }
         };

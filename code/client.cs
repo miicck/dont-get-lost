@@ -15,28 +15,24 @@ public static class client
     struct pending_creation_message
     {
         public int parent_id;
-        public string local_prefab;
-        public string remote_prefab;
+        public string prefab;
         public networked creating;
     }
     static Queue<pending_creation_message> pending_creation_messages =
         new Queue<pending_creation_message>();
 
-    public static networked create(Vector3 position,
-        string local_prefab, string remote_prefab = null,
-        networked parent = null, Quaternion rotation = default, int network_id = -1)
+    public static networked create(
+        Vector3 position,
+        string prefab,
+        networked parent = null,
+        Quaternion rotation = default,
+        int network_id = -1)
     {
-        // If remote prefab not specified, it is the same
-        // as the local prefab.
-        if (remote_prefab == null)
-            remote_prefab = local_prefab;
-
         // Instantiate the local object, but keep the name
-        var created = networked.look_up(local_prefab);
+        var created = networked.look_up(prefab);
         string name = created.name;
         created = Object.Instantiate(created);
         created.name = name;
-        created.gain_authority(); // Created on this client => has authority
 
         if (network_id < 0)
         {
@@ -71,21 +67,21 @@ public static class client
         {
             creating = created,
             parent_id = parent_id,
-            local_prefab = local_prefab,
-            remote_prefab = remote_prefab,
+            prefab = prefab
         });
 
-        // This is being created locally => this is the
-        // first time it was created.
+        // This is being created by this client
+        // so must be the first time/it must have
+        // authority
         created.on_first_create();
-        created.on_create(false);
+        created.on_create();
 
         if (parent != null) parent.on_add_networked_child(created);
         return created;
     }
 
     /// <summary> Create an object as instructred by a server message, stored in the given buffer. </summary>
-    static void create_from_network(byte[] buffer, int offset, int length, bool local)
+    static void create_from_network(byte[] buffer, int offset, int length)
     {
         // Record where the end of the serialization is
         int end = offset + length;
@@ -93,20 +89,18 @@ public static class client
         // Deserialize info needed to reproduce the object
         int network_id = network_utils.decode_int(buffer, ref offset);
         int parent_id = network_utils.decode_int(buffer, ref offset);
-        string local_prefab = network_utils.decode_string(buffer, ref offset);
-        string remote_prefab = network_utils.decode_string(buffer, ref offset);
+        string prefab = network_utils.decode_string(buffer, ref offset);
 
         // Find the requested parent
         networked parent = parent_id > 0 ? networked.find_by_id(parent_id) : null;
 
         // Create the reproduction
-        var nw = networked.look_up(local ? local_prefab : remote_prefab);
+        var nw = networked.look_up(prefab);
         string name = nw.name;
         nw = Object.Instantiate(nw);
         nw.transform.SetParent(parent?.transform);
         nw.name = name;
         nw.network_id = network_id;
-        if (local) nw.gain_authority();
         nw.init_network_variables();
 
         // Local rotation is intialized to the identity. If rotation
@@ -123,7 +117,7 @@ public static class client
             index += 1;
         }
 
-        nw.on_create(true);
+        nw.on_create();
 
         if (parent != null) parent.on_add_networked_child(nw);
     }
@@ -211,23 +205,28 @@ public static class client
         // Setup message parsers
         message_parsers = new Dictionary<server.MESSAGE, message_parser>
         {
-            [server.MESSAGE.CREATE_LOCAL] = (buffer, offset, length) =>
-                create_from_network(buffer, offset, length, true),
-
-            [server.MESSAGE.CREATE_REMOTE] = (buffer, offset, length) =>
-                create_from_network(buffer, offset, length, false),
+            [server.MESSAGE.CREATE] = (buffer, offset, length) =>
+                create_from_network(buffer, offset, length),
 
             [server.MESSAGE.FORCE_CREATE] = (buffer, offset, length) =>
             {
                 Vector3 position = network_utils.decode_vector3(buffer, ref offset);
-                string local_prefab = network_utils.decode_string(buffer, ref offset);
-                string remote_prefab = network_utils.decode_string(buffer, ref offset);
+                string prefab = network_utils.decode_string(buffer, ref offset);
                 int network_id = network_utils.decode_int(buffer, ref offset);
                 int parent_id = network_utils.decode_int(buffer, ref offset);
 
-                var created = create(position, local_prefab, remote_prefab,
+                var created = create(position, prefab,
                     parent: parent_id > 0 ? networked.find_by_id(parent_id) : null,
                     network_id: network_id);
+            },
+
+            [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>
+            {
+                // Update the local id to a network-wide one
+                int local_id = network_utils.decode_int(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                var nw = networked.find_by_id(local_id);
+                nw.network_id = network_id;
             },
 
             [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
@@ -247,15 +246,6 @@ public static class client
                 if (found == null) // This should only happen in high-latency edge cases
                     Debug.Log("Forgetting non-existant id " + id);
                 else found.forget();
-            },
-
-            [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>
-            {
-                // Update the local id to a network-wide one
-                int local_id = network_utils.decode_int(buffer, ref offset);
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.find_by_id(local_id);
-                nw.network_id = network_id;
             },
 
             [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>
@@ -321,20 +311,18 @@ public static class client
 
             [MESSAGE.CREATE] = (args) =>
             {
-                if (args.Length != 5)
+                if (args.Length != 4)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 int local_id = (int)args[0];
                 int parent_id = (int)args[1];
-                string local_prefab = (string)args[2];
-                string remote_prefab = (string)args[3];
-                byte[] variable_serializations = (byte[])args[4];
+                string prefab = (string)args[2];
+                byte[] variable_serializations = (byte[])args[3];
 
                 send(MESSAGE.CREATE, network_utils.concat_buffers(
                     network_utils.encode_int(local_id),
                     network_utils.encode_int(parent_id),
-                    network_utils.encode_string(local_prefab),
-                    network_utils.encode_string(remote_prefab),
+                    network_utils.encode_string(prefab),
                     variable_serializations
                 ));
 
@@ -444,8 +432,7 @@ public static class client
 
             // Request creation on the server
             message_senders[MESSAGE.CREATE](cm.creating.network_id,
-                cm.parent_id, cm.local_prefab, cm.remote_prefab,
-                cm.creating.serialize_networked_variables());
+                cm.parent_id, cm.prefab, cm.creating.serialize_networked_variables());
         }
 
         // Run network_update for each object

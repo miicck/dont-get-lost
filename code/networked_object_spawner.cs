@@ -52,10 +52,10 @@ public class networked_object_spawner : world_object
 
 public class spawned_by_world_object : networked
 {
-    networked_variable.net_int chunk_x;
-    networked_variable.net_int chunk_z;
-    networked_variable.net_int x_in_chunk;
-    networked_variable.net_int z_in_chunk;
+    networked_variables.net_int chunk_x;
+    networked_variables.net_int chunk_z;
+    networked_variables.net_int x_in_chunk;
+    networked_variables.net_int z_in_chunk;
     protected networked_object_spawner spawned_by { get; private set; }
 
     void on_get_coords()
@@ -66,15 +66,15 @@ public class spawned_by_world_object : networked
 
     public override void on_init_network_variables()
     {
-        chunk_x = new networked_variable.net_int();
-        chunk_z = new networked_variable.net_int();
-        x_in_chunk = new networked_variable.net_int();
-        z_in_chunk = new networked_variable.net_int();
+        chunk_x = new networked_variables.net_int();
+        chunk_z = new networked_variables.net_int();
+        x_in_chunk = new networked_variables.net_int();
+        z_in_chunk = new networked_variables.net_int();
 
-        chunk_x.on_change = (x, f) => on_get_coords();
-        chunk_z.on_change = (z, f) => on_get_coords();
-        x_in_chunk.on_change = (xic, f) => on_get_coords();
-        z_in_chunk.on_change = (zic, f) => on_get_coords();
+        chunk_x.on_change = on_get_coords;
+        chunk_z.on_change = on_get_coords;
+        x_in_chunk.on_change = on_get_coords;
+        z_in_chunk.on_change = on_get_coords;
     }
 
     void set_spawner()

@@ -135,14 +135,14 @@ public class item : networked
     // NETWORKING //
     //############//
 
-    public networked_variable.net_quaternion networked_rotation;
+    public networked_variables.net_quaternion networked_rotation;
 
     public override void on_init_network_variables()
     {
         // Create newtorked variables
-        networked_rotation = new networked_variable.net_quaternion();
+        networked_rotation = new networked_variables.net_quaternion();
         transform.rotation = Quaternion.identity;
-        networked_rotation.on_change = (rot, fd) => transform.rotation = rot;
+        networked_rotation.on_change = () => transform.rotation = networked_rotation.value;
     }
 
     public override void on_create()

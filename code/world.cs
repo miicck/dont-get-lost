@@ -9,8 +9,8 @@ public class world : networked
     public const int SEA_LEVEL = 16;
     public const float MAX_ALTITUDE = 128f;
 
-    public networked_variable.net_int networked_seed;
-    public networked_variable.net_string networked_name;
+    public networked_variables.net_int networked_seed;
+    public networked_variables.net_string networked_name;
 
     public override float network_radius()
     {
@@ -20,8 +20,8 @@ public class world : networked
 
     public override void on_init_network_variables()
     {
-        networked_seed = new networked_variable.net_int();
-        networked_name = new networked_variable.net_string();
+        networked_seed = new networked_variables.net_int();
+        networked_name = new networked_variables.net_string();
         static_world = this;
         Invoke("start_generation", 0.1f);
     }

@@ -28,6 +28,12 @@ public class networked : MonoBehaviour
     /// <summary> Called the first time we're created. </summary>
     public virtual void on_first_create() { }
 
+    /// <summary> Called when we gain authority over an object. </summary>
+    public virtual void on_gain_authority() { }
+
+    /// <summary> Called when we loose authority over an object. </summary>
+    public virtual void on_loose_authority() { }
+
     /// <summary> Called whenever client.update() is. </summary>
     public virtual void on_network_update() { }
 
@@ -40,64 +46,59 @@ public class networked : MonoBehaviour
     /// <summary> Called the first time this object reccives a positive id. </summary>
     public virtual void on_first_register() { }
 
-    /// <summary> Does this client have unique authority over this object. </summary>
-    public bool has_authority { get; private set; }
-    public void gain_authority() { has_authority = true; }
-    public void lose_authority() { has_authority = false; }
-
     //#####################//
     // NETWORKED VARIABLES //
     //#####################//
 
-    /// <summary> Called when I'm created. The argument <paramref name="from_network"/> = true 
-    /// if created by <see cref="client.create_from_network"/> or false if created by
-    /// <see cref="client.create"/>. </summary>
-    public void on_create(bool from_network)
-    {
-        on_create();
-    }
-
     /// <summary> Called just before we create this object. </summary>
     public void init_network_variables()
     {
-        x_local = new networked_variable.net_float(
+        x_local = new networked_variables.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
 
-        y_local = new networked_variable.net_float(
+        y_local = new networked_variables.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
 
-        z_local = new networked_variable.net_float(
+        z_local = new networked_variables.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
 
         // The local position should be set immediately
-        // to the networked value if this client is controlling
-        // the position (otherwise it should LERP to the networked
+        // to the networked value if this client has authority
+        // or this is the initialization of the networked value.
+        // (otherwise it should LERP to the networked
         // value; see network_update).
-        x_local.on_change = (x, fd) =>
+
+        x_local.on_change = () =>
         {
-            if (!has_authority && !fd) return;
-            Vector3 local_pos = transform.localPosition;
-            local_pos.x = x;
-            transform.localPosition = local_pos;
-            x_local.reset_lerp();
+            if (has_authority || !x_local.initialized)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.x = x_local.value;
+                transform.localPosition = local_pos;
+                x_local.reset_lerp();
+            }
         };
 
-        y_local.on_change = (y, fd) =>
+        y_local.on_change = () =>
         {
-            if (!has_authority && !fd) return;
-            Vector3 local_pos = transform.localPosition;
-            local_pos.y = y;
-            transform.localPosition = local_pos;
-            y_local.reset_lerp();
+            if (has_authority || !y_local.initialized)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.y = y_local.value;
+                transform.localPosition = local_pos;
+                y_local.reset_lerp();
+            }
         };
 
-        z_local.on_change = (z, fd) =>
+        z_local.on_change = () =>
         {
-            if (!has_authority && !fd) return;
-            Vector3 local_pos = transform.localPosition;
-            local_pos.z = z;
-            transform.localPosition = local_pos;
-            z_local.reset_lerp();
+            if (has_authority || !z_local.initialized)
+            {
+                Vector3 local_pos = transform.localPosition;
+                local_pos.z = z_local.value;
+                transform.localPosition = local_pos;
+                z_local.reset_lerp();
+            }
         };
 
         on_init_network_variables();
@@ -113,13 +114,13 @@ public class networked : MonoBehaviour
 
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
-    networked_variable.net_float x_local;
+    networked_variables.net_float x_local;
 
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Y)]
-    networked_variable.net_float y_local;
+    networked_variables.net_float y_local;
 
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_Z)]
-    networked_variable.net_float z_local;
+    networked_variables.net_float z_local;
 
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
@@ -188,8 +189,12 @@ public class networked : MonoBehaviour
     /// recives an updated serialization. </summary>
     public void variable_update(int index, byte[] buffer, int offset, int length)
     {
-        networked_variables[index].deserialize(buffer, offset, length);
+        networked_variables[index].reccive_serialization(buffer, offset, length);
     }
+
+    //###############//
+    // NETWORK STATE //
+    //###############//
 
     /// <summary> My unique id on the network. Negative values are unique only on this
     /// client and indicate that I'm awating a network-wide id. </summary>
@@ -213,6 +218,25 @@ public class networked : MonoBehaviour
         }
     }
     int _network_id;
+
+    /// <summary> Does this client have unique authority over this object. </summary>
+    public bool has_authority { get; private set; }
+
+    public void gain_authority()
+    {
+        has_authority = true;
+        on_gain_authority();
+    }
+
+    public void lose_authority()
+    {
+        has_authority = false;
+        on_loose_authority();
+    }
+
+    //##########################//
+    // TERMINATION OF EXISTANCE //
+    //##########################//
 
     /// <summary> Forget the netowrk object on this client. The object
     /// remains on the server + potentially on other clients. </summary>

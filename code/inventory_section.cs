@@ -91,9 +91,9 @@ public class inventory_section : MonoBehaviour
     }
 
     /// <summary> The contents of this inventory, keyed by item name. </summary>
-    public Dictionary<string, int> contents()
+    public SortedDictionary<string, int> contents()
     {
-        var ret = new Dictionary<string, int>();
+        var ret = new SortedDictionary<string, int>();
         foreach (var s in slots)
         {
             if (s.item == null || s.count == 0) continue;

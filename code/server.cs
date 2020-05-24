@@ -47,7 +47,7 @@ public static class server
                 // Force the creation of the player on the client
                 player = null;
                 message_senders[MESSAGE.FORCE_CREATE](this,
-                    Vector3.zero, player_prefab_local, player_prefab_remote,
+                    Vector3.zero, player_prefab,
                     ++representation.last_network_id_assigned, 0
                 );
             }
@@ -59,7 +59,7 @@ public static class server
             {
                 this.player = player;
                 player.transform.SetParent(active_representations);
-                load(player, true, false);
+                load(player);
             }
         }
 
@@ -123,7 +123,7 @@ public static class server
 
         /// <summary> Load an object corresponding to the given representation 
         /// on this client. </summary>
-        public void load(representation rep, bool local, bool already_created = false)
+        public void load(representation rep, bool already_created = false)
         {
             // Load rep and all it's children
             network_utils.top_down<representation>(rep.transform, (loading) =>
@@ -132,10 +132,7 @@ public static class server
                     throw new System.Exception("A representation with children should not be already_created!");
 
                 if (!already_created)
-                {
-                    MESSAGE m = local ? MESSAGE.CREATE_LOCAL : MESSAGE.CREATE_REMOTE;
-                    message_senders[m](this, loading.serialize());
-                }
+                    message_senders[MESSAGE.CREATE](this, loading.serialize());
 
                 // Add this object to the loaded set
                 loaded.Add(loading);
@@ -287,20 +284,17 @@ public static class server
         }
         int _network_id;
 
-        // The prefab to create on new local clients
-        public string local_prefab
+        // The prefab to create on new clients
+        public string prefab
         {
-            get => _local_prefab;
+            get => _prefab;
             private set
             {
-                _local_prefab = value;
+                _prefab = value;
                 radius = networked.look_up(value).network_radius();
             }
         }
-        string _local_prefab;
-
-        // The prefab to create on new remote clients
-        public string remote_prefab { get; private set; }
+        string _prefab;
 
         // Needed for proximity tests
         public float radius { get; private set; }
@@ -321,8 +315,7 @@ public static class server
             {
                 network_utils.encode_int(network_id),
                 network_utils.encode_int(parent_id),
-                network_utils.encode_string(local_prefab),
-                network_utils.encode_string(remote_prefab)
+                network_utils.encode_string(prefab)
             };
 
             // Serialize all saved network variables
@@ -346,16 +339,14 @@ public static class server
             // Deserialize the basic info needed to reproduce the object
             input_id = network_utils.decode_int(buffer, ref offset);
             int parent_id = network_utils.decode_int(buffer, ref offset);
-            string local_prefab = network_utils.decode_string(buffer, ref offset);
-            string remote_prefab = network_utils.decode_string(buffer, ref offset);
+            string prefab = network_utils.decode_string(buffer, ref offset);
 
             // Create the representation
-            representation rep = new GameObject(local_prefab).AddComponent<representation>();
+            representation rep = new GameObject(prefab).AddComponent<representation>();
             if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
             else rep.transform.SetParent(active_representations);
 
-            rep.local_prefab = local_prefab;
-            rep.remote_prefab = remote_prefab;
+            rep.prefab = prefab;
             if (input_id < 0)
             {
                 // This was a local id, assign a unique network id
@@ -442,8 +433,7 @@ public static class server
     }
 
     // Information about how to create new players
-    static string player_prefab_local;
-    static string player_prefab_remote;
+    static string player_prefab;
 
     /// <summary> The clients currently connected to the server </summary>
     static HashSet<client> connected_clients = new HashSet<client>();
@@ -518,14 +508,11 @@ public static class server
 
 
     /// <summary> Start a server listening on the given port on the local machine. </summary>
-    public static void start(
-        int port, string savename,
-        string player_prefab_local, string player_prefab_remote)
+    public static void start(int port, string savename, string player_prefab)
     {
-        server.player_prefab_local = player_prefab_local;
-        server.player_prefab_remote = player_prefab_remote;
+        server.player_prefab = player_prefab;
 
-        if (!networked.look_up(player_prefab_local).GetType().IsSubclassOf(typeof(networked_player)))
+        if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
             throw new System.Exception("Local player object must be a networked_player!");
 
         tcp = new TcpListener(network_utils.local_ip_address(), port);
@@ -589,25 +576,26 @@ public static class server
                 {
                     // This was a forced create
 
-                    if (rep.local_prefab == player_prefab_local)
+                    if (rep.prefab == player_prefab)
                     {
                         // This was a forced player creation
                         client.player = rep;
                     }
                     else
                     {
-                        throw new System.NotImplementedException();
+                        throw new System.NotImplementedException(
+                            "Forced creation of non-players is not supported!");
                     }
                 }
 
                 // Let the client know that the creation was successful
                 // (this is done before the load, so that the client that created
                 //  it has the correct network id *before* it reccives 
-                //  load /serialization messages)
+                //  load/serialization messages)
                 message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
 
                 // Register (load) the object on clients
-                client.load(rep, true, true);
+                client.load(rep, true);
 
                 // If this is a child, load it on all other
                 // clients that have the parent.
@@ -676,37 +664,27 @@ public static class server
         // Setup the message senders
         message_senders = new Dictionary<MESSAGE, message_sender>
         {
-            [MESSAGE.CREATE_LOCAL] = (client, args) =>
+            [MESSAGE.CREATE] = (client, args) =>
             {
                 if (args.Length != 1)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                send(client, MESSAGE.CREATE_LOCAL, (byte[])args[0]);
-            },
-
-            [MESSAGE.CREATE_REMOTE] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                send(client, MESSAGE.CREATE_REMOTE, (byte[])args[0]);
+                send(client, MESSAGE.CREATE, (byte[])args[0]);
             },
 
             [MESSAGE.FORCE_CREATE] = (client, args) =>
             {
-                if (args.Length != 5)
+                if (args.Length != 4)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 Vector3 position = (Vector3)args[0];
-                string local_prefab = (string)args[1];
-                string remote_prefab = (string)args[2];
-                int network_id = (int)args[3];
-                int parent_id = (int)args[4];
+                string prefab = (string)args[1];
+                int network_id = (int)args[2];
+                int parent_id = (int)args[3];
 
                 send(client, MESSAGE.FORCE_CREATE, network_utils.concat_buffers(
                     network_utils.encode_vector3(position),
-                    network_utils.encode_string(local_prefab),
-                    network_utils.encode_string(remote_prefab),
+                    network_utils.encode_string(prefab),
                     network_utils.encode_int(network_id),
                     network_utils.encode_int(parent_id)
                 ));
@@ -998,8 +976,8 @@ public static class server
 
     public enum MESSAGE : byte
     {
-        CREATE_LOCAL = 1,  // Create a local network object on a client
-        CREATE_REMOTE,     // Create a remote network object on a client
+        // Numbering starts at 1 so erroneous 0's are caught
+        CREATE = 1,        // Create a networked object on a client
         FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful

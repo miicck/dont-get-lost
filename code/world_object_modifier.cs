@@ -5,31 +5,31 @@ using UnityEngine;
 /// <summary> Created when a world object is modified from it's default state. </summary>
 public abstract class world_object_modifier : networked
 {
-    public networked_variable.net_int x_in_chunk;
-    public networked_variable.net_int z_in_chunk;
-    public networked_variable.net_float timeout;
+    public networked_variables.net_int x_in_chunk;
+    public networked_variables.net_int z_in_chunk;
+    public networked_variables.net_float timeout;
 
     public override void on_init_network_variables()
     {
-        x_in_chunk = new networked_variable.net_int(-1);
-        z_in_chunk = new networked_variable.net_int(-1);
-        timeout = new networked_variable.net_float();
+        x_in_chunk = new networked_variables.net_int();
+        z_in_chunk = new networked_variables.net_int();
+        timeout = new networked_variables.net_float();
 
-        x_in_chunk.on_change = (x, f) =>
+        x_in_chunk.on_change = () =>
         {
             CancelInvoke("on_locate");
             Invoke("on_locate", 0f);
         };
 
-        z_in_chunk.on_change = (z, f) =>
+        z_in_chunk.on_change = () =>
         {
             CancelInvoke("on_locate");
             Invoke("on_locate", 0f);
         };
 
-        timeout.on_change = (t, f) =>
+        timeout.on_change = () =>
         {
-            Invoke("on_timeout", t);
+            Invoke("on_timeout", timeout.value);
         };
     }
 

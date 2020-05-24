@@ -16,7 +16,7 @@ public class inventory : networked
     public void remove(string item, int count) { contents.remove(item, count); }
 
     /// <summary> The networked collection of items in the inventory. </summary>
-    public networked_variable.net_string_counts item_counts;
+    public networked_variables.net_string_counts item_counts;
 
     bool updating_from_network = false;
     public override void on_init_network_variables()
@@ -32,15 +32,15 @@ public class inventory : networked
             if (updating_from_network) return;
 
             // Keep the network up up to date with changes
-            item_counts.set(contents.contents());
+            item_counts.value = contents.contents();
         });
 
-        item_counts = new networked_variable.net_string_counts();
+        item_counts = new networked_variables.net_string_counts();
         item_counts.on_change = () =>
         {
             updating_from_network = true;
 
-            foreach (var kv in item_counts)
+            foreach (var kv in item_counts.value)
                 contents.set(kv.Key, kv.Value);
 
             updating_from_network = false;

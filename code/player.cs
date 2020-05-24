@@ -715,6 +715,95 @@ public class player : networked_player
     arm right_arm;
     arm left_arm;
 
+    public override void on_loose_authority()
+    {
+        throw new System.Exception("Authority should not be lost for players!");
+    }
+
+    bool first_gain_auth = true;
+    public override void on_gain_authority()
+    {
+        if (!first_gain_auth)
+            throw new System.Exception("Players should not gain authority more than once!");
+        first_gain_auth = false;
+
+        // Setup the player camera
+        camera = FindObjectOfType<Camera>();
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.transform.SetParent(eye_transform);
+        camera.transform.localRotation = Quaternion.identity;
+        camera.transform.localPosition = Vector3.zero;
+        camera.nearClipPlane = 0.1f;
+        first_person = true; // Start with camera in 1st person position
+
+        // Enforce the render limit with a sky-color object
+        obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
+        obscurer.transform.SetParent(transform);
+        obscurer.transform.localPosition = Vector3.zero;
+        var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
+
+        map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
+        map_obscurer.transform.SetParent(camera.transform);
+        map_obscurer.transform.localRotation = Quaternion.identity;
+        map_obscurer.transform.localPosition = Vector3.forward;
+
+        // The distance to the underwater screen, just past the near clipping plane
+        float usd = camera.nearClipPlane * 1.1f;
+        Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
+        Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
+        Vector3 delta = tr_corner_point - bl_corner_point;
+
+        // Setup the underwater screen so it exactly covers the screen
+        underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
+        underwater_screen.transform.SetParent(camera.transform);
+        underwater_screen.transform.localPosition = Vector3.forward * usd;
+        underwater_screen.transform.localScale = new Vector3(
+            Vector3.Dot(delta, camera.transform.right),
+            Vector3.Dot(delta, camera.transform.up),
+            1f
+        ) * 1.01f; // 1.01f factor to ensure that it covers the screen
+        underwater_screen.transform.forward = camera.transform.forward;
+
+        // Make the sky the same color as the obscuring object
+        camera.backgroundColor = sky_color;
+
+        // Set the hand location so it is EYES_TO_HAND_DISTANCE 
+        // metres away from the camera, HAND_SCREEN_X of the way across 
+        // the screen and HAND_SCREEN_Y of the way up the screen.
+        hand_centre = new GameObject("hand").transform;
+        hand_centre.SetParent(eye_transform);
+        hand_centre.transform.localRotation = Quaternion.identity;
+        var hand_ray = camera.ScreenPointToRay(new Vector3(
+             Screen.width * HAND_SCREEN_X,
+             Screen.height * HAND_SCREEN_Y
+             ));
+        hand_centre.transform.position = camera.transform.position +
+            hand_ray.direction * EYES_TO_HAND_DISTANCE;
+
+        // Create the crosshairs
+        crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
+        crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        crosshairs.color = new Color(1, 1, 1, 0.5f);
+        var crt = crosshairs.GetComponent<RectTransform>();
+        crt.sizeDelta = new Vector2(64, 64);
+        crt.anchorMin = new Vector2(0.5f, 0.5f);
+        crt.anchorMax = new Vector2(0.5f, 0.5f);
+        crt.anchoredPosition = Vector2.zero;
+        cursor = "default_cursor";
+
+        // Initialize the render range
+        update_render_range();
+
+        // Start with the map closed, first person view
+        map_open = false;
+
+        // Start looking to add the player controller
+        Invoke("add_controller", 0.1f);
+
+        // This is the local player
+        current = this;
+    }
+
     public override void on_create()
     {
         // Load the player body
@@ -731,87 +820,6 @@ public class player : networked_player
         // Get references to the arms
         right_arm = body.right_arm;
         left_arm = body.left_arm;
-
-        if (has_authority)
-        {
-            // Setup the player camera
-            camera = FindObjectOfType<Camera>();
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.transform.SetParent(eye_transform);
-            camera.transform.localRotation = Quaternion.identity;
-            camera.transform.localPosition = Vector3.zero;
-            camera.nearClipPlane = 0.1f;
-            first_person = true; // Start with camera in 1st person position
-
-            // Enforce the render limit with a sky-color object
-            obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
-            obscurer.transform.SetParent(transform);
-            obscurer.transform.localPosition = Vector3.zero;
-            var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
-
-            map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-            map_obscurer.transform.SetParent(camera.transform);
-            map_obscurer.transform.localRotation = Quaternion.identity;
-            map_obscurer.transform.localPosition = Vector3.forward;
-
-            // The distance to the underwater screen, just past the near clipping plane
-            float usd = camera.nearClipPlane * 1.1f;
-            Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
-            Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
-            Vector3 delta = tr_corner_point - bl_corner_point;
-
-            // Setup the underwater screen so it exactly covers the screen
-            underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
-            underwater_screen.transform.SetParent(camera.transform);
-            underwater_screen.transform.localPosition = Vector3.forward * usd;
-            underwater_screen.transform.localScale = new Vector3(
-                Vector3.Dot(delta, camera.transform.right),
-                Vector3.Dot(delta, camera.transform.up),
-                1f
-            ) * 1.01f; // 1.01f factor to ensure that it covers the screen
-            underwater_screen.transform.forward = camera.transform.forward;
-
-            // Make the sky the same color as the obscuring object
-            camera.backgroundColor = sky_color;
-
-            // Set the hand location so it is EYES_TO_HAND_DISTANCE 
-            // metres away from the camera, HAND_SCREEN_X of the way across 
-            // the screen and HAND_SCREEN_Y of the way up the screen.
-            hand_centre = new GameObject("hand").transform;
-            hand_centre.SetParent(eye_transform);
-            hand_centre.transform.localRotation = Quaternion.identity;
-            var hand_ray = camera.ScreenPointToRay(new Vector3(
-                 Screen.width * HAND_SCREEN_X,
-                 Screen.height * HAND_SCREEN_Y
-                 ));
-            hand_centre.transform.position = camera.transform.position +
-                hand_ray.direction * EYES_TO_HAND_DISTANCE;
-
-            // Create the crosshairs
-            crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
-            crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
-            crosshairs.color = new Color(1, 1, 1, 0.5f);
-            var crt = crosshairs.GetComponent<RectTransform>();
-            crt.sizeDelta = new Vector2(64, 64);
-            crt.anchorMin = new Vector2(0.5f, 0.5f);
-            crt.anchorMax = new Vector2(0.5f, 0.5f);
-            crt.anchoredPosition = Vector2.zero;
-            cursor = "default_cursor";
-
-            // Initialize the render range
-            update_render_range();
-
-            // Start with the map closed, first person view
-            map_open = false;
-
-            // Start looking to add the player controller
-            Invoke("add_controller", 0.1f);
-
-            // This is the local player
-            current = this;
-
-            game.on_local_player_create(this);
-        }
     }
 
     public override void on_first_create()
@@ -849,18 +857,18 @@ public class player : networked_player
     // NETWORKING //
     //############//
 
-    networked_variable.net_float y_rotation;
-    public networked_variable.net_string username;
+    networked_variables.net_float y_rotation;
+    public networked_variables.net_string username;
 
     public override void on_init_network_variables()
     {
-        y_rotation = new networked_variable.net_float(resolution: 5f);
-        y_rotation.on_change = (yrot, f) =>
+        y_rotation = new networked_variables.net_float(resolution: 5f);
+        y_rotation.on_change = () =>
         {
-            transform.rotation = Quaternion.Euler(0, yrot, 0);
+            transform.rotation = Quaternion.Euler(0, y_rotation.value, 0);
         };
 
-        username = new networked_variable.net_string();
+        username = new networked_variables.net_string();
     }
 
     //################//
@@ -868,7 +876,18 @@ public class player : networked_player
     //################//
 
     // The current (local) player
-    public static player current;
+    public static player current
+    {
+        get => _player;
+        private set
+        {
+            if (_player != null)
+                throw new System.Exception("Tried to overwrite player.current!");
+            _player = value;
+            _player.username.value = game.startup.username;
+        }
+    }
+    static player _player;
 
     public static string info()
     {
