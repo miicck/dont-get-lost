@@ -16,3 +16,11 @@ When a chunk needs `biome.point` information near the edge of a biome, the adjac
 
 Because only chunks near the edge of the biome need blending information, this process does not just continue recursively to infinity; only a finite region of the world is generated. The first biome is generated when the player loads in, and the world is extended from there.
 **Relevant functions:** `world.start_generation`, `biome.blended_point`, `biome.point.average`.
+
+## Networking
+
+### Rewrite
+I'm not 100% happy with the networking engine. If it were to be rewritten some nice features would be
+1. The same representation of a network object is used both on the client and the server. This would allow the serialization/deserialization to be defined within the same object/would be generally simpler.
+2. Redundant messages could be detected/not sent. For example, there is no point sending variable updates followed by a delete message.
+3. Messages could be combined based on which network id they are intended for. This would reduce the overhead needed for metadata, and potentially also allow guarantees to be made about messages for the same network id arriving together. For example, it would be useful to guarantee that a create message followed by a gain authority message both arrive on the same frame, so we know about authority when creating the object.
