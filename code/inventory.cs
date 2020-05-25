@@ -12,7 +12,14 @@ public class inventory : networked
     /// <summary> The UI object that has the inventory slots. </summary>
     public inventory_section contents { get; private set; }
 
-    public bool add(string item, int count) { return contents.add(item, count); }
+    public bool add(string item, int count)
+    {
+        bool ret = contents.add(item, count);
+        if (transform.IsChildOf(player.current?.transform))
+            popup_message.create("+ " + count + " " + item + " (" + contents.contents()[item] + ")");
+        return ret;
+    }
+
     public void remove(string item, int count) { contents.remove(item, count); }
 
     /// <summary> The networked collection of items in the inventory. </summary>

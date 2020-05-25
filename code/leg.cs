@@ -107,20 +107,6 @@ public class leg : MonoBehaviour
             if (!h.transform.IsChildOf(character.transform))
             {
                 ground_normal = h.normal;
-
-                // Re-evaluate the walking sound
-                if (!footstep_source.isPlaying)
-                {
-                    var rend = h.transform.GetComponent<Renderer>();
-                    Material ground_mat = null;
-                    if (rend != null) ground_mat = rend.material;
-
-                    float vol;
-                    footstep_source.clip = material_sound.sound(
-                        material_sound.TYPE.STEP, ground_mat, out vol);
-                    footstep_source.volume = vol * footstep_volume_multiplier;
-                }
-
                 grounded = true;
                 return h.point;
             }
@@ -172,12 +158,42 @@ public class leg : MonoBehaviour
         if (contact_made_this_step) return;
         contact_made_this_step = true;
 
-        if (grounded)
+        bool underwater = false;
+        if (foot.transform.position.y < world.SEA_LEVEL)
+        {
+            underwater = true;
+            footstep_source.clip = Resources.Load<AudioClip>("sounds/water_step");
+            footstep_source.volume = 0.3f * footstep_volume_multiplier;
+        }
+
+        if (!underwater)
+        {
+            // Re-evaluate the walking sound
+            RaycastHit hit;
+            var rend = utils.raycast_for_closest<Renderer>(
+                new Ray(foot.transform.position + Vector3.up, 
+                Vector3.down), out hit);
+
+            Material ground_mat = null;
+            if (rend != null) ground_mat = rend.material;
+
+            float vol;
+            footstep_source.clip = material_sound.sound(
+                material_sound.TYPE.STEP, ground_mat, out vol);
+            footstep_source.volume = vol * footstep_volume_multiplier;
+        }
+
+        if (grounded && !underwater)
         {
             footstep_source.pitch = Random.Range(0.95f, 1.05f);
             if (footstep_source.isPlaying)
                 footstep_source.Stop();
             footstep_source.Play();
+        }
+        else if (underwater)
+        {
+            if (!footstep_source.isPlaying)
+                footstep_source.Play();
         }
     }
 
