@@ -482,6 +482,10 @@ public class player : networked_player
         else
             normal_move();
 
+        // Ensure we don't accumulate too much -ve y velocity
+        if (controller.isGrounded && velocity.y < -1f)
+            velocity.y = -1f;
+
         networked_position = transform.position;
     }
 
