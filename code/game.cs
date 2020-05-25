@@ -218,6 +218,7 @@ public class game : MonoBehaviour
         string debug_text = ""
         + world.info() + "\n"
         + "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n"
+        + "Fullscreen mode: " + Screen.fullScreenMode + "\n"
         + server.info() + "\n"
         + client.info() + "\n"
         + player.info() + "\n";

@@ -442,10 +442,28 @@ public static class client
         send_queued_messages();
     }
 
+    static System.Net.NetworkInformation.Ping ping;
+    static long last_ping = 0;
+
     public static string info()
     {
+        var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
+
+        if (ping == null)
+        {
+            ping = new System.Net.NetworkInformation.Ping();
+            ping.PingCompleted += (sender, e) =>
+            {
+                last_ping = e.Reply.RoundtripTime;
+                ping = null;
+            };
+
+            ping.SendAsync(ep.Address, null);
+        }
+
         if (tcp == null) return "Client not connected.";
-        return "Client connected\n" +
+        return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
+               "Ping: " + last_ping + " ms\n" +
                networked.objects_info() + "\n" +
                "Traffic:\n" +
                "    " + traffic_up.usage() + " up\n" +
