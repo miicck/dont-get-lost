@@ -45,6 +45,80 @@ public class character : networked
         return true;
     }
 
+    //########//
+    // SOUNDS //
+    //########//
+
+    Dictionary<character_sound.TYPE, List<character_sound>> sounds =
+        new Dictionary<character_sound.TYPE, List<character_sound>>();
+
+    AudioSource sound_source;
+
+    void load_sounds()
+    {
+        // Record all of the sounds I can make
+        Vector3 sound_centre = transform.position;
+        foreach (var s in GetComponentsInChildren<character_sound>())
+        {
+            List<character_sound> type_sounds;
+            if (!sounds.TryGetValue(s.type, out type_sounds))
+            {
+                type_sounds = new List<character_sound>();
+                sounds[s.type] = type_sounds;
+            }
+            type_sounds.Add(s);
+
+            sound_centre = s.transform.position;
+        }
+
+        // Normalize probabilities
+        foreach (var kv in sounds)
+        {
+            var list = kv.Value;
+            float total_prob = 0;
+            foreach (var s in list) total_prob += s.probability;
+            foreach (var s in list) s.probability /= total_prob;
+        }
+
+        if (sound_source == null)
+        {
+            sound_source = new GameObject("sound_source").AddComponent<AudioSource>();
+            sound_source.transform.position = sound_centre;
+            sound_source.transform.SetParent(transform);
+            sound_source.spatialBlend = 1f; // 3D
+        }
+    }
+
+    public void play_random_sound(character_sound.TYPE type)
+    {
+        var sound_list = sounds[type];
+        character_sound chosen = sound_list[0];
+        float rnd = Random.Range(0, 1f);
+        float total = 0;
+        foreach (var s in sound_list)
+        {
+            total += s.probability;
+            if (total > rnd)
+            {
+                chosen = s;
+                break;
+            }
+        }
+
+        sound_source.pitch = Random.Range(0.95f, 1.05f);
+        sound_source.clip = chosen.clip;
+        sound_source.volume = chosen.volume;
+        sound_source.Play();
+    }
+
+    void play_idle_sounds()
+    {
+        // Play idle sounds
+        if (!sound_source.isPlaying)
+            if (Random.Range(0, 1f) < 0.1f)
+                play_random_sound(character_sound.TYPE.IDLE);
+    }
+
     //#############//
     // PATHFINDING //
     //#############//
@@ -133,6 +207,17 @@ public class character : networked
     //#################//
     // UNITY CALLBACKS //
     //#################//
+
+    private void Start()
+    {
+        load_sounds();
+        InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
+    }
+
+    void slow_update()
+    {
+        play_idle_sounds();
+    }
 
     private void Update()
     {
