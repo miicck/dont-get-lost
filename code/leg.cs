@@ -39,6 +39,13 @@ public class leg : MonoBehaviour
     const float MIN_STEP_SIZE = 0.01f;
     const float MAG_EPSILON = 10e-4f;
 
+    // The source of footstep sounds
+    AudioSource footstep_source;
+    public float footstep_volume_multiplier = 1f;
+
+    // Is the foot grounded
+    bool grounded = false;
+
     // The length of a step, from step_back to step_front
     float step_length
     {
@@ -100,9 +107,25 @@ public class leg : MonoBehaviour
             if (!h.transform.IsChildOf(character.transform))
             {
                 ground_normal = h.normal;
+
+                // Re-evaluate the walking sound
+                if (!footstep_source.isPlaying)
+                {
+                    var rend = h.transform.GetComponent<Renderer>();
+                    Material ground_mat = null;
+                    if (rend != null) ground_mat = rend.material;
+
+                    float vol;
+                    footstep_source.clip = material_sound.sound(
+                        material_sound.TYPE.STEP, ground_mat, out vol);
+                    footstep_source.volume = vol * footstep_volume_multiplier;
+                }
+
+                grounded = true;
                 return h.point;
             }
 
+        grounded = false;
         ground_normal = Vector3.up;
         return test_point;
     }
@@ -137,6 +160,25 @@ public class leg : MonoBehaviour
         init_foot_scale = foot.transform.localScale;
         init_shin_scale = shin.transform.localScale;
         init_thigh_scale = thigh.transform.localScale;
+
+        // Create the footstep sound source
+        footstep_source = foot.gameObject.AddComponent<AudioSource>();
+        footstep_source.spatialBlend = 1f; // 3D
+    }
+
+    bool contact_made_this_step = false;
+    void on_foot_contact()
+    {
+        if (contact_made_this_step) return;
+        contact_made_this_step = true;
+
+        if (grounded)
+        {
+            footstep_source.pitch = Random.Range(0.95f, 1.05f);
+            if (footstep_source.isPlaying)
+                footstep_source.Stop();
+            footstep_source.Play();
+        }
     }
 
     private void Update()
@@ -160,7 +202,9 @@ public class leg : MonoBehaviour
             strafe_length = (following.step_centre.position - step_centre.position).magnitude;
             following.strafe_length = strafe_length;
         }
-        progress -= Mathf.Floor(progress / 2f) * 2f; // Progress loops in [0,2]
+
+        // Progress loops in [0,2]
+        progress -= Mathf.Floor(progress / 2f) * 2f;
 
         if (velocity.magnitude < MAG_EPSILON)
         {
@@ -174,12 +218,14 @@ public class leg : MonoBehaviour
         if (progress < 1f)
         {
             // Foot moving backward on ground
+            if (!contact_made_this_step) on_foot_contact();
             Vector3 line_point = step_front * (1 - progress) + step_back * progress;
             move_foot_towards(grounding_point(line_point));
         }
         else
         {
             // Foot moving forward above the ground
+            contact_made_this_step = false;
             float fw_prog = progress - 1f;
             Vector3 line_point = step_front * fw_prog + step_back * (1 - fw_prog);
             float amt_above_ground = Mathf.Sin(fw_prog * Mathf.PI) * shin_length / 2f;
@@ -279,6 +325,7 @@ public class leg : MonoBehaviour
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(step_front, step_back);
+            Gizmos.DrawWireSphere(step_back + (step_front - step_back) * progress / 2f, 0.1f);
         }
 
         // Draw the thigh

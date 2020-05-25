@@ -12,8 +12,10 @@ public class melee_weapon : equip_in_hand
     public float swing_time = 0.25f;
     public float swing_length = 0.5f;
     public float max_forward_in_up = 5f;
+    public AudioSource swing_audio;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
+
 
     impact_test_point[] impact_points { get { return GetComponentsInChildren<impact_test_point>(); } }
 
@@ -25,6 +27,7 @@ public class melee_weapon : equip_in_hand
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
 
+        swing_audio.Play();
         swing_progress = 0;
         swing_progress_at_impact = -1f;
         return use_result.underway_allows_all;

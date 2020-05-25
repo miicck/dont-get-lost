@@ -18,6 +18,7 @@ MonoBehaviour:
   thigh: {fileID: 1250966252943337203}
   following: {fileID: 0}
   knees_bend_backward: 1
+  footstep_volume_multiplier: 0.2
 --- !u!114 &1749728736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -55,6 +56,7 @@ MonoBehaviour:
   thigh: {fileID: 1197608907169656134}
   following: {fileID: 8846711119482930044}
   knees_bend_backward: 1
+  footstep_volume_multiplier: 0.2
 --- !u!114 &421950273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,6 +104,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8846711120022476090}
   - component: {fileID: 1291796199}
+  - component: {fileID: 6941076464649910738}
   m_Layer: 0
   m_Name: chicken
   m_TagString: Untagged
@@ -138,8 +141,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walk_speed: 1
   run_speed: 4
+  max_health: 10
   can_walk: 1
   can_swim: 0
+--- !u!114 &6941076464649910738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8846711120022476091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f365b255c6119aa4481fcc5f2c2538ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8846711119482929990
 PrefabInstance:
   m_ObjectHideFlags: 0

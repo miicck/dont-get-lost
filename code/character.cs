@@ -11,6 +11,7 @@ public class character : networked
     // The speed of the character
     public float walk_speed = 1f;
     public float run_speed = 4f;
+    public float max_health = 10;
 
     // Can I walk on land, or swim in water
     public bool can_walk = true;
@@ -32,6 +33,18 @@ public class character : networked
     }
     character_spawner _spawned_by;
 
+    bool is_allowed_at(Vector3 v)
+    {
+        // Check we're in the right medium
+        if (!can_swim && v.y < world.SEA_LEVEL) return false;
+        if (!can_walk && v.y > world.SEA_LEVEL) return false;
+
+        // Can't get too far from spawner
+        if ((v - spawned_by.transform.position).magnitude > spawned_by.max_range) return false;
+
+        return true;
+    }
+
     //#############//
     // PATHFINDING //
     //#############//
@@ -47,19 +60,7 @@ public class character : networked
 
     void get_path(Vector3 target)
     {
-        path = new path(transform.position, target, constraint: (v) =>
-        {
-            // Constraints on path
-
-            // Check we're in the right medium
-            if (!can_swim && v.y < world.SEA_LEVEL) return false;
-            if (!can_walk && v.y > world.SEA_LEVEL) return false;
-
-            // Can't get too far from spawner
-            if ((v - spawned_by.transform.position).magnitude > spawned_by.max_range) return false;
-
-            return true;
-        });
+        path = new path(transform.position, target, constraint: is_allowed_at);
     }
 
     void move_along_path(float speed)
@@ -120,7 +121,11 @@ public class character : networked
         if (path == null)
         {
             Vector3 delta = transform.position - fleeing_from.position;
-            get_path(transform.position + delta.normalized * 5f);
+            Vector3 flee_to = transform.position + delta.normalized * 5f;
+            if (is_allowed_at(flee_to))
+                get_path(flee_to); // Flee away
+            else
+                get_path(fleeing_from.position - delta * 5f); // Flee back the way we came
         }
         else move_along_path(run_speed);
     }

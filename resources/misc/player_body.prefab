@@ -36,6 +36,7 @@ MonoBehaviour:
   thigh: {fileID: 938879984869627966}
   following: {fileID: 0}
   knees_bend_backward: 0
+  footstep_volume_multiplier: 0.02
 --- !u!114 &820900991
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -103,6 +104,7 @@ MonoBehaviour:
   thigh: {fileID: 920145574536172427}
   following: {fileID: 7394371375518449028}
   knees_bend_backward: 0
+  footstep_volume_multiplier: 0.02
 --- !u!114 &271869971
 MonoBehaviour:
   m_ObjectHideFlags: 0

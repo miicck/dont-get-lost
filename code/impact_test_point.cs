@@ -24,7 +24,11 @@ public class impact_test_point : MonoBehaviour
             if (h.transform.IsChildOf(player.current.transform))
                 continue;
 
-            var aii = h.collider.GetComponent<accepts_item_impact>();
+            var rend = h.transform.GetComponent<Renderer>();
+            if (rend != null)
+                material_sound.play(material_sound.TYPE.HIT, h.point, rend.material);
+
+            var aii = h.collider.GetComponentInParent<accepts_item_impact>();
 
             if (aii != null)
             {
