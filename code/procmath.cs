@@ -42,7 +42,7 @@ public static class procmath
     // Maps for a single floating point value
     public static class maps
     {
-        // Smoothly increases from 0 at x = thresh to 1 at x = 1
+        /// <summary> Smoothly increases from 0 at x = thresh to 1 at x = 1 </summary>
         public static float smooth_max_cos(float x, float thresh = 0f)
         {
             if (x <= thresh) return 0;
@@ -50,7 +50,7 @@ public static class procmath
             return 1 - Mathf.Cos((x - thresh) * Mathf.PI / (2 * (1.0f - thresh)));
         }
 
-        // Maps x to a linear curve, smoothed towards x = 0 and x = 1
+        /// <summary> Maps x to a linear curve, smoothed towards x = 0 and x = 1</summary>
         public static float end_smoothed_linear(float x, float smooth_range)
         {
             if (x <= 0) return 0;
@@ -64,8 +64,8 @@ public static class procmath
             return scale * (1f - d - (1f - x) * (1f - x) / (2f * d));
         }
 
-        // Map x to something which switches on at start and linearly
-        // increases to 1 at end
+        /// <summary> Map x to something which switches on at start and linearly
+        /// increases to 1 at end</summary>
         public static float linear_turn_on(float x, float start, float end)
         {
             if (x < start) return 0;
@@ -73,7 +73,7 @@ public static class procmath
             return (x - start) / (end - start);
         }
 
-        // Map x to a smoothed version of the floor function
+        /// <summary> Map x to a smoothed version of the floor function</summary>
         public static float smoothed_floor(float x, float smoothing)
         {
             float xf = Mathf.Floor(x);

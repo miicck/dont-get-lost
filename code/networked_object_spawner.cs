@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary> When created, a networked_object_spawner will wait until it is within
 /// render range of the player and will create a networked object of the given type, 
 /// unless one is produced by the server within a given time limit. </summary>
-public class networked_object_spawner : world_object
+public class networked_object_spawner : natural_world_object
 { 
     public string prefab_to_spawn;
 
@@ -13,6 +13,7 @@ public class networked_object_spawner : world_object
 
     public override void on_placement()
     {
+        base.on_placement();
         Invoke("check_in_range", 0.1f);
     }
 

@@ -15,7 +15,7 @@ public class inventory : networked
     public bool add(string item, int count)
     {
         bool ret = contents.add(item, count);
-        if (transform.IsChildOf(player.current?.transform))
+        if (player.current != null && transform.IsChildOf(player.current.transform))
             popup_message.create("+ " + count + " " + item + " (" + contents.contents()[item] + ")");
         return ret;
     }

@@ -13,4 +13,5 @@ public static class terrain_colors
     public static readonly Color desert_rock = new Color(0.51f, 0.31f, 0.14f, 0);
     public static readonly Color dirt = new Color(0.6f, 0.45f, 0.27f, 0);
     public static readonly Color stone = new Color(0.6f, 0.6f, 0.6f, 0);
+    public static readonly Color charred_earth = new Color(0, 0, 0, 0);
 }

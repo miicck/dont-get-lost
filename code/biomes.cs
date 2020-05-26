@@ -770,6 +770,77 @@ public class town : biome
     }
 }
 
+public class charred_forest : biome
+{
+    public const float HILL_HEIGHT = 4f;
+    public const float HILL_PERIOD = 20f;
+    public const int SPIDER_GRID_SPACING = 64;
+    public const float SPIDER_HILL_HEIGHT = 8f;
+    public const int SPIDER_HILL_PERIOD = 24;
+    public const float SPIDER_HILL_MOD_PERIOD = 12f;
+
+    protected override void generate_grid()
+    {
+        float[,] spideryness = new float[SIZE, SIZE];
+
+        HashSet<int> x_spawners = new HashSet<int>();
+        HashSet<int> z_spawners = new HashSet<int>();
+
+        for (int i = SPIDER_GRID_SPACING / 2;
+            i < SIZE - SPIDER_GRID_SPACING / 2;
+            i += SPIDER_GRID_SPACING)
+            for (int j = SPIDER_GRID_SPACING / 2;
+                j < SIZE - SPIDER_GRID_SPACING / 2;
+                j += SPIDER_GRID_SPACING)
+            {
+                int x = i + random.range(0, SPIDER_GRID_SPACING / 2);
+                int z = j + random.range(0, SPIDER_GRID_SPACING / 2);
+                x_spawners.Add(x);
+                z_spawners.Add(z);
+
+                procmath.float_2D_tools.add_smooth_dome(
+                    ref spideryness, x, z, SPIDER_HILL_PERIOD, 1f);
+            }
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                float s = spideryness[i, j];
+
+                float altitude = HILL_HEIGHT * Mathf.PerlinNoise(
+                    i / HILL_PERIOD, j / HILL_PERIOD);
+
+                if (s > 10e-4)
+                {
+                    altitude += s * SPIDER_HILL_HEIGHT * Mathf.PerlinNoise(
+                        i / SPIDER_HILL_MOD_PERIOD, j / SPIDER_HILL_MOD_PERIOD);
+
+                    bool spawner = s > 0.25f && i % 4 == 0 && j % 4 == 0 && 
+                        random.range(0, 8) == 0;
+
+                    if (x_spawners.Contains(i) && z_spawners.Contains(j))
+                        spawner = true;
+
+                    if (spawner)
+                        p.object_to_generate = world_object.load("smoke_spider_nest");
+                    else if (random.range(0, 10) == 0)
+                        p.object_to_generate = world_object.load("charred_rock");
+                }
+                else
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("charred_tree_stump");
+                }
+
+                p.altitude = point.BEACH_END + altitude;
+                p.terrain_color = terrain_colors.charred_earth;
+
+                grid[i, j] = p;
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class spawner_test_biome : biome
 {
