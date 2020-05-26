@@ -25,6 +25,7 @@ public class mangroves : biome
                 p.altitude = ISLAND_SIZE * Mathf.PerlinNoise(
                     xrand + i / ISLAND_SIZE, zrand + j / ISLAND_SIZE);
                 p.terrain_color = terrain_colors.grass;
+                p.sky_color = sky_colors.light_blue;
 
                 // Work out mangrove amount, starts slightly below sea
                 // level so mangroves go into water
@@ -98,6 +99,7 @@ public class desert : biome
                 // No water => altitiude is above the stage where beaches end
                 var p = new point();
                 p.altitude = alt[i, j] + point.BEACH_END;
+                p.sky_color = sky_colors.light_blue;
 
                 // Rockyness amount decreases with altitiude
                 float rockyness = Mathf.Exp(-alt[i, j] / ROCKYNESS_DECAY_HEIGHT);
@@ -172,6 +174,7 @@ public class ocean : biome
                 point p = new point
                 {
                     terrain_color = terrain_colors.sand,
+                    sky_color= sky_colors.light_blue,
                     altitude = alt[i, j]
                 };
 
@@ -219,7 +222,8 @@ public class mountains : biome
                 point p = new point
                 {
                     altitude = alt[i, j],
-                    terrain_color = terrain_colors.grass
+                    terrain_color = terrain_colors.grass,
+                    sky_color = sky_colors.light_blue
                 };
 
                 // Choose terrain color based on altitiude
@@ -261,9 +265,10 @@ public class flat_forest : biome
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                var p = new biome.point();
+                var p = new point();
                 p.altitude = point.BEACH_END;
                 p.terrain_color = terrain_colors.grass;
+                p.sky_color = sky_colors.light_blue;
                 if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("tree");
                 else if (random.range(0, 40) == 0)
@@ -336,6 +341,7 @@ public class farmland : biome
                 {
                     var p = new point();
                     p.altitude = point.BEACH_END;
+                    p.sky_color = sky_colors.light_blue;
 
                     switch (type)
                     {
@@ -670,6 +676,7 @@ public class town : biome
                 grid[i, j] = new point
                 {
                     terrain_color = terrain_colors.grass,
+                    sky_color = sky_colors.light_blue,
                     altitude = point.BEACH_END
                 };
 
@@ -835,6 +842,7 @@ public class charred_forest : biome
 
                 p.altitude = point.BEACH_END + altitude;
                 p.terrain_color = terrain_colors.charred_earth;
+                p.sky_color = sky_colors.smoke_grey;
 
                 grid[i, j] = p;
             }

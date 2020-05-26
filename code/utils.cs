@@ -218,6 +218,43 @@ public static class utils
     {
         return (Mathf.Exp(x) - Mathf.Exp(-x)) / (Mathf.Exp(x) + Mathf.Exp(-x));
     }
+
+    public static float interpolate_constant_speed(float a, float b, float speed)
+    {
+        float delta = speed * Time.deltaTime;
+        if (Mathf.Abs(b - a) < delta) return b;
+        return a + delta * Mathf.Sign(b - a);
+    }
+
+    public static Color interpolate_constant_speed(Color a, Color b, float speed)
+    {
+        return new Color(
+            interpolate_constant_speed(a.r, b.r, speed),
+            interpolate_constant_speed(a.g, b.g, speed),
+            interpolate_constant_speed(a.b, b.b, speed),
+            interpolate_constant_speed(a.a, b.a, speed)
+        );
+    }
+
+    public static string base_color_string(Material m)
+    {
+        switch (m.shader.name)
+        {
+            case "HDRP/Unlit": return "_UnlitColor";
+            default:
+                throw new System.Exception("Unkown shader name " + m.shader.name);
+        }
+    }
+
+    public static void set_color(Material m, Color c)
+    {
+        m.SetColor(base_color_string(m), c);
+    }
+
+    public static Color get_color(Material m)
+    {
+        return m.GetColor(base_color_string(m));
+    }
 }
 
 /// <summary> A dictionary keyed by two ints. </summary>

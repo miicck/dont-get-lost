@@ -45,6 +45,15 @@ public class player : networked_player
         if (!has_authority) return;
         if (options_menu.open) return;
 
+        var biome_in = biome.at(transform.position);
+        if (biome_in != null)
+        {
+            var point_at = biome_in.blended_point(transform.position);
+            target_sky_color = point_at.sky_color;
+        }
+
+        sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
+
         if (carrying != null)
         {
             Vector3 dx =
@@ -586,6 +595,21 @@ public class player : networked_player
     GameObject map_obscurer;
     GameObject underwater_screen;
 
+    Color target_sky_color;
+
+    Color sky_color
+    {
+        get => utils.get_color(obscurer_renderer.material);
+        set
+        {
+            camera.backgroundColor = value;
+            utils.set_color(obscurer_renderer.material, value);
+            utils.set_color(map_obscurer_renderer.material, value);
+        }
+    }
+    Renderer obscurer_renderer;
+    Renderer map_obscurer_renderer;
+
     /// <summary> Are we in first, or third person? </summary>
     public bool first_person
     {
@@ -759,12 +783,13 @@ public class player : networked_player
         obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
         obscurer.transform.SetParent(transform);
         obscurer.transform.localPosition = Vector3.zero;
-        var sky_color = obscurer.GetComponentInChildren<Renderer>().material.color;
+        obscurer_renderer = obscurer.GetComponentInChildren<Renderer>();
 
         map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
         map_obscurer.transform.SetParent(camera.transform);
         map_obscurer.transform.localRotation = Quaternion.identity;
         map_obscurer.transform.localPosition = Vector3.forward;
+        map_obscurer_renderer = map_obscurer.GetComponentInChildren<Renderer>();
 
         // The distance to the underwater screen, just past the near clipping plane
         float usd = camera.nearClipPlane * 1.1f;
@@ -782,9 +807,6 @@ public class player : networked_player
             1f
         ) * 1.01f; // 1.01f factor to ensure that it covers the screen
         underwater_screen.transform.forward = camera.transform.forward;
-
-        // Make the sky the same color as the obscuring object
-        camera.backgroundColor = sky_color;
 
         // Set the hand location so it is EYES_TO_HAND_DISTANCE 
         // metres away from the camera, HAND_SCREEN_X of the way across 
@@ -809,6 +831,9 @@ public class player : networked_player
         crt.anchorMax = new Vector2(0.5f, 0.5f);
         crt.anchoredPosition = Vector2.zero;
         cursor = "default_cursor";
+
+        // Ensure sky color is set properly
+        sky_color = sky_color;
 
         // Initialize the render range
         update_render_range();

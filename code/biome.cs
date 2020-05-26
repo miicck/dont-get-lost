@@ -65,6 +65,13 @@ public abstract class biome : MonoBehaviour
         };
     }
 
+    // Returns the chunk at the given location
+    public static biome at(Vector3 location)
+    {
+        var c = coords(location);
+        return generated_biomes.get(c[0], c[1]);
+    }
+
     // Check if the biome at x, z is within render range
     // (essentially testing if the render range circle 
     //  intersects the biome square)
@@ -225,7 +232,7 @@ public abstract class biome : MonoBehaviour
             weights[3] = damt;
         }
 
-        return point.average(points, weights);
+        return point.blend(points, weights);
     }
 
     // Get a particular point in the biome grid in world
@@ -403,11 +410,12 @@ public abstract class biome : MonoBehaviour
 
         public float altitude;
         public Color terrain_color;
+        public Color sky_color;
         public world_object object_to_generate;
         public object gen_info;
 
-        // Computea a weighted average of a list of points
-        public static point average(point[] pts, float[] wts)
+        // Compute a weighted average of a list of points
+        public static point blend(point[] pts, float[] wts)
         {
             point ret = new point
             {
@@ -430,6 +438,10 @@ public abstract class biome : MonoBehaviour
                 ret.terrain_color.r += p.terrain_color.r * w;
                 ret.terrain_color.g += p.terrain_color.g * w;
                 ret.terrain_color.b += p.terrain_color.b * w;
+                ret.sky_color.r += p.sky_color.r * w;
+                ret.sky_color.g += p.sky_color.g * w;
+                ret.sky_color.b += p.sky_color.b * w;
+                ret.sky_color.a += p.sky_color.a * w;
 
                 if (wts[i] > max_w)
                 {

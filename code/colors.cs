@@ -15,3 +15,9 @@ public static class terrain_colors
     public static readonly Color stone = new Color(0.6f, 0.6f, 0.6f, 0);
     public static readonly Color charred_earth = new Color(0, 0, 0, 0);
 }
+
+public static class sky_colors
+{
+    public static readonly Color light_blue = new Color(0.58f, 0.89f, 0.89f, 1f);
+    public static readonly Color smoke_grey = new Color(0.2f, 0.2f, 0.2f, 1f);
+}
