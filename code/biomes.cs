@@ -849,6 +849,64 @@ public class charred_forest : biome
     }
 }
 
+public class crystal_field : biome
+{
+    public const int MOUNTAIN_WIDTH = 64;
+    public const float MOUNTAIN_HEIGHT = 32f;
+    public const float MOUNTAIN_PERIOD = 100f;
+    public const float MOUNTAIN_DENSITY = 1 / (32f * 32f);
+
+    protected override void generate_grid()
+    {
+        float[,] alt = new float[SIZE, SIZE];
+
+        const int mountains = (int)(MOUNTAIN_DENSITY * SIZE * SIZE);
+
+        for (int i = 0; i < mountains; ++i)
+        {
+            int x = random.range(0, SIZE);
+            int z = random.range(0, SIZE);
+            float m = Mathf.PerlinNoise(x / MOUNTAIN_PERIOD, z / MOUNTAIN_PERIOD);
+            if (m < 0.5f) continue;
+            procmath.float_2D_tools.add_pyramid(ref alt, x, z, 
+                MOUNTAIN_WIDTH, 1f, rotation: random.range(0f,360f));
+        };
+
+        procmath.float_2D_tools.rescale(ref alt, 0, MOUNTAIN_HEIGHT);
+
+        for (int i=0; i<SIZE; ++i)
+            for (int j=0; j<SIZE; ++j)
+            {
+                float m = Mathf.PerlinNoise(i / MOUNTAIN_PERIOD, j / MOUNTAIN_PERIOD);
+
+                var p = new point();
+                p.sky_color = sky_colors.crystal_purple;
+                p.altitude = point.BEACH_END + alt[i, j];
+                p.terrain_color = Color.Lerp(
+                    terrain_colors.crystal_light,
+                    terrain_colors.crystal_dark, m);
+
+                if (m < 0.25f)
+                    p.altitude *= m * 4f;
+
+                if (m < 0.5f)
+                {
+                    if (random.range(0, 30) == 0 && i % 4 == 0 && j % 4 == 0)
+                        p.object_to_generate = world_object.load("crystal_tree");
+                }
+                else
+                {
+                    if (random.range(0, 30) == 0 && i % 4 == 0 && j % 4 == 0)
+                        p.object_to_generate = world_object.load("crystal1");
+                    else if (i % 10 == 0 && j % 10 == 0 && random.range(0, 10) == 0)
+                        p.object_to_generate = world_object.load("crystal2");
+                }
+
+                grid[i, j] = p;
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class spawner_test_biome : biome
 {
