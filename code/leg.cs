@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class leg : MonoBehaviour
 {
-    public Transform character;  // The character to which these legs belong (stops the legs from stepping on colliders contained within the character itself)
-    public Transform foot;       // The foot, with pivot set at the ankle
-    public Transform shin;       // The shin, with pivot set at the knee
-    public Transform thigh;      // The thigh, with pivot set at the hip
-    public leg following;        // The leg I am following, and should be out of phase with
+    public Transform character;         // The character to which these legs belong (stops the legs from stepping on colliders contained within the character itself)
+    public Transform foot;              // The foot, with pivot set at the ankle
+    public Transform shin;              // The shin, with pivot set at the knee
+    public Transform thigh;             // The thigh, with pivot set at the hip
+    public leg following;               // The leg I am following, and should be out of phase with
+    public float step_length_mult = 1f; // Multiply my step length by this value
+    public float following_phase = 1f;  // How far out of phase I am with the leg I'm following
 
     // Bird knees?
     public bool knees_bend_backward = false;
@@ -41,7 +43,10 @@ public class leg : MonoBehaviour
 
     // The source of footstep sounds
     AudioSource footstep_source;
+    public AudioClip custom_footstep_sound;
     public float footstep_volume_multiplier = 1f;
+    public float min_footstep_pitch = 0.95f;
+    public float max_footsetp_pitch = 1.05f;
 
     // Is the foot grounded
     bool grounded = false;
@@ -68,6 +73,7 @@ public class leg : MonoBehaviour
                         jump_length * up_amt;
 
             ret *= 1f + Mathf.Min(Mathf.Sqrt(velocity.magnitude / (shin_length + thigh_length)), 0.5f);
+            ret *= step_length_mult;
 
             if (ret < MIN_STEP_SIZE) ret = MIN_STEP_SIZE;
             return ret;
@@ -168,24 +174,33 @@ public class leg : MonoBehaviour
 
         if (!underwater)
         {
-            // Re-evaluate the walking sound
-            RaycastHit hit;
-            var rend = utils.raycast_for_closest<Renderer>(
-                new Ray(foot.transform.position + Vector3.up, 
-                Vector3.down), out hit);
+            if (custom_footstep_sound != null)
+            {
+                // Use custom footstep sound
+                footstep_source.clip = custom_footstep_sound;
+                footstep_source.volume = footstep_volume_multiplier;
+            }
+            else
+            {
+                // Re-evaluate the walking sound based on ground type
+                RaycastHit hit;
+                var rend = utils.raycast_for_closest<Renderer>(
+                    new Ray(foot.transform.position + Vector3.up,
+                    Vector3.down), out hit);
 
-            Material ground_mat = null;
-            if (rend != null) ground_mat = rend.material;
+                Material ground_mat = null;
+                if (rend != null) ground_mat = rend.material;
 
-            float vol;
-            footstep_source.clip = material_sound.sound(
-                material_sound.TYPE.STEP, ground_mat, out vol);
-            footstep_source.volume = vol * footstep_volume_multiplier;
+                float vol;
+                footstep_source.clip = material_sound.sound(
+                    material_sound.TYPE.STEP, ground_mat, out vol);
+                footstep_source.volume = vol * footstep_volume_multiplier;
+            }
         }
 
         if (grounded && !underwater)
         {
-            footstep_source.pitch = Random.Range(0.95f, 1.05f);
+            footstep_source.pitch = Random.Range(min_footstep_pitch, max_footsetp_pitch);
             if (footstep_source.isPlaying)
                 footstep_source.Stop();
             footstep_source.Play();
@@ -212,7 +227,7 @@ public class leg : MonoBehaviour
         else
         {
             // Ensure I am out of phase with the leg I am following
-            progress = following.progress - 1f;
+            progress = following.progress - following_phase;
 
             // Set the strafe length to be sensible, given the leg I'm following
             strafe_length = (following.step_centre.position - step_centre.position).magnitude;

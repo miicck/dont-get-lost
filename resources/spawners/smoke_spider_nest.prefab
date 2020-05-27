@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4726429143761849152}
   - component: {fileID: 4944166899484714637}
   m_Layer: 0
-  m_Name: chicken_nest
+  m_Name: smoke_spider_nest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,7 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5449969387f36d47a5a1a8181887660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  local: 0
-  character_to_spawn: characters/chicken
+  character_to_spawn: characters/smoke_spider
   max_to_spawn: 1
-  max_range: 5
+  max_range: 20

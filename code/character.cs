@@ -2,18 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(character_hitbox))]
 public class character : networked
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
     public const float ARRIVE_DISTANCE = 0.25f;
 
-    // The speed of the character
+    // Character behaviour
     public float walk_speed = 1f;
     public float run_speed = 4f;
     public float max_health = 10;
-
-    // Can I walk on land, or swim in water
+    public float pathfinding_resolution = 0.5f;
+    public float agro_range = 5f;
+    public float reach = 0.5f;
+    public bool aggressive = false;
     public bool can_walk = true;
     public bool can_swim = false;
 
@@ -91,7 +94,13 @@ public class character : networked
 
     public void play_random_sound(character_sound.TYPE type)
     {
-        var sound_list = sounds[type];
+        List<character_sound> sound_list;
+        if (!sounds.TryGetValue(type, out sound_list))
+        {
+            Debug.Log("No character sounds of type " + type + " for " + name);
+            return;
+        }
+
         character_sound chosen = sound_list[0];
         float rnd = Random.Range(0, 1f);
         float total = 0;
@@ -105,7 +114,8 @@ public class character : networked
             }
         }
 
-        sound_source.pitch = Random.Range(0.95f, 1.05f);
+        sound_source.Stop();
+        sound_source.pitch = chosen.pitch_modifier * Random.Range(0.95f, 1.05f);
         sound_source.clip = chosen.clip;
         sound_source.volume = chosen.volume;
         sound_source.Play();
@@ -134,7 +144,38 @@ public class character : networked
 
     void get_path(Vector3 target)
     {
-        path = new path(transform.position, target, constraint: is_allowed_at);
+        path = new path(transform.position, target,
+            constraint: is_allowed_at,
+            resolution: pathfinding_resolution
+        );
+    }
+
+    bool move_towards(Vector3 point, float speed)
+    {
+        // Work out how far to the point
+        Vector3 delta = point - transform.position;
+        float dis = Time.deltaTime * speed;
+
+        Vector3 new_pos = transform.position;
+
+        if (delta.magnitude < dis) new_pos += delta;
+        else new_pos += delta.normalized * dis;
+
+        if (!is_allowed_at(new_pos)) return false;
+        transform.position = new_pos;
+
+        // Look in the direction of travel
+        delta.y = 0;
+        if (delta.magnitude > 10e-4)
+        {
+            // Lerp forward look direction
+            Vector3 new_forward = Vector3.Lerp(transform.forward,
+                delta.normalized, speed * Time.deltaTime);
+
+            if (new_forward.magnitude > 10e-4)
+                transform.forward = new_forward;
+        }
+        return true;
     }
 
     void move_along_path(float speed)
@@ -154,22 +195,18 @@ public class character : networked
                 return;
             }
 
-            // Work out how far to the next path point
-            Vector3 delta = path[path_progress] - transform.position;
-            if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
-            transform.position += delta.normalized * speed * Time.deltaTime;
-
-            // Look in the direction of travel
-            delta.y = 0;
-            if (delta.magnitude > 10e-4)
+            // Move towards the next path point
+            if (!move_towards(path[path_progress], speed))
             {
-                // Lerp forward look direction
-                Vector3 new_forward = Vector3.Lerp(transform.forward,
-                    delta.normalized, speed * 5f * Time.deltaTime);
-
-                if (new_forward.magnitude > 10e-4)
-                    transform.forward = new_forward;
+                // Couldn't walk along the path
+                path = null;
+                return;
             }
+
+            Vector3 delta = path[path_progress] - transform.position;
+
+            // Increment progress if we've arrived at the next path point
+            if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
         }
     }
 
@@ -192,14 +229,42 @@ public class character : networked
     // Run from the given transform
     void flee(Transform fleeing_from)
     {
+        play_idle_sounds();
+
         if (path == null)
         {
             Vector3 delta = transform.position - fleeing_from.position;
             Vector3 flee_to = transform.position + delta.normalized * 5f;
+
             if (is_allowed_at(flee_to))
                 get_path(flee_to); // Flee away
             else
                 get_path(fleeing_from.position - delta * 5f); // Flee back the way we came
+        }
+        else move_along_path(run_speed);
+    }
+
+    void chase(Transform chasing)
+    {
+        play_idle_sounds();
+
+        if (path == null)
+        {
+            Vector3 delta = chasing.position - transform.position;
+            Vector3 chase_to = transform.position + delta;
+
+            if (delta.magnitude < pathfinding_resolution)
+            {
+                if (delta.magnitude > reach)
+                    move_towards(chasing.position, run_speed);
+
+                return;
+            }
+
+            if (is_allowed_at(chase_to))
+                get_path(chase_to);
+            else
+                idle_walk();
         }
         else move_along_path(run_speed);
     }
@@ -223,8 +288,15 @@ public class character : networked
     {
         if (!has_authority) return;
 
-        if ((transform.position - player.current.transform.position).magnitude < 5f)
-            flee(player.current.transform);
+        // Check we're not somewhere we shouldn't be
+        if (!is_allowed_at(transform.position))
+            transform.position = spawned_by.transform.position;
+
+        if ((transform.position - player.current.transform.position).magnitude < agro_range)
+        {
+            if (aggressive) chase(player.current.transform);
+            else flee(player.current.transform);
+        }
         else
             idle_walk();
     }
