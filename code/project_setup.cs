@@ -7,7 +7,9 @@ using UnityEngine;
 // Utility class to run project setup
 public class project_setup : MonoBehaviour
 {
-    static void setup()
+    public List<UnityEditor.SceneAsset> scenes_in_build = new List<UnityEditor.SceneAsset>();
+
+    void setup()
     {
         string log = "Running project setup...\n";
 
@@ -27,6 +29,13 @@ public class project_setup : MonoBehaviour
         UnityEditor.EditorSettings.externalVersionControl = "Visible Meta Files";
         log += "External version control: " + UnityEditor.EditorSettings.externalVersionControl + "\n";
 
+        var scenes = new List<UnityEditor.EditorBuildSettingsScene>();
+        foreach (var s in scenes_in_build)
+            scenes.Add(new UnityEditor.EditorBuildSettingsScene(
+                UnityEditor.AssetDatabase.GetAssetPath(s), true));
+        UnityEditor.EditorBuildSettings.scenes = scenes.ToArray();
+        log += "Added " + scenes.Count + " scenes to build\n";
+
         Debug.Log(log);
     }
 
@@ -37,7 +46,7 @@ public class project_setup : MonoBehaviour
         {
             base.OnInspectorGUI();
             if (UnityEditor.EditorGUILayout.Toggle("Run setup", false))
-                setup();
+                ((project_setup)target).setup();
         }
     }
 

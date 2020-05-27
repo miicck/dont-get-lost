@@ -31,7 +31,7 @@ public class leg : MonoBehaviour
     public float progress { get; private set; }
 
     // The amount a body should bob up and down because of this leg
-    public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f); } }
+    public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f / following_phase); } }
 
     public Vector3 velocity { get; private set; } // The velocity of step_centre, this frame
     Vector3 position_last;                        // The position of step_centre, last frame

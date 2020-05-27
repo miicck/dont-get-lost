@@ -56,6 +56,20 @@ MonoBehaviour:
   random_move_amplitude: 0
   inherit_terrain_color: 0
   randomize_color_on: {fileID: 0}
+--- !u!114 &1113978166584607826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9125090975999284465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  product: iron_ore
+  tool: pickaxe
 --- !u!1001 &973684561735060984
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -145,6 +159,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9c95cee0c87b2d14aac26fa37f411a98, type: 3}
+--- !u!1 &9125090975999284465 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 9c95cee0c87b2d14aac26fa37f411a98,
+    type: 3}
+  m_PrefabInstance: {fileID: 973684561735060984}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5258388236641347298 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 9c95cee0c87b2d14aac26fa37f411a98,

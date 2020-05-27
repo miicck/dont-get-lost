@@ -278,7 +278,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cabaef7eb71ea84b884de03941cd7db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bob_amplitude: 0.1
+  bob_amplitude: 0.02
   lean_into_run_amount: 20
   lean_lerp_speed: 5
   lean_velocity_scale: 5

@@ -177,7 +177,7 @@ MonoBehaviour:
   options_go_here: {fileID: 3778643437991156276}
   craft_from: {fileID: 6674013591925208340}
   craft_to: {fileID: 5170092332706670682}
-  recipe_group: 0
+  default_recipes_folder: recipes/by_hand
 --- !u!1 &2582502226613850136
 GameObject:
   m_ObjectHideFlags: 0

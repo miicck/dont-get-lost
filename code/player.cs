@@ -956,6 +956,7 @@ public class player : networked_player
 
         // Player starts with an axe
         inventory.add("axe", 1);
+        inventory.add("pickaxe", 1);
         inventory.add("furnace", 1);
     }
 

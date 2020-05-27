@@ -229,7 +229,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  local: 0
   sprite: {fileID: 21300000, guid: 53475a6cbf9325c4585e0ef430bd3440, type: 3}
 --- !u!114 &-5169961100938236186
 MonoBehaviour:
@@ -243,7 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  recipe_group: 1
+  load_recipies_from: recipes/workbenches/furnace
 --- !u!1 &2868603861710057958
 GameObject:
   m_ObjectHideFlags: 0

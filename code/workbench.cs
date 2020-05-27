@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class workbench : MonoBehaviour
 {
-    public recipes.RECIPE_GROUP recipe_group;
+    public string load_recipies_from;
 
     inventory_section _inventory;
     public inventory_section inventory
@@ -18,7 +18,7 @@ public class workbench : MonoBehaviour
                 _inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
                 _inventory.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 _inventory.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().name.capitalize();
-                _inventory.GetComponent<crafting_input>().recipe_group = recipe_group;
+                _inventory.GetComponentInChildren<crafting_input>().load_recipies(load_recipies_from);
             }
             return _inventory;
         }
