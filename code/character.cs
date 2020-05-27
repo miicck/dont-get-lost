@@ -319,12 +319,9 @@ public class character : networked
         y_rotation = new networked_variables.net_float(resolution: 5f);
         y_rotation.on_change = () =>
         {
-            if (has_authority)
-            {
-                var ea = transform.rotation.eulerAngles;
-                ea.y = y_rotation.value;
-                transform.rotation = Quaternion.Euler(ea);
-            }
+            var ea = transform.rotation.eulerAngles;
+            ea.y = y_rotation.value;
+            transform.rotation = Quaternion.Euler(ea);
         };
     }
 
