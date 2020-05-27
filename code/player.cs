@@ -45,6 +45,9 @@ public class player : networked_player
         if (!has_authority) return;
         if (options_menu.open) return;
 
+        if (Input.GetKeyDown(KeyCode.F1))
+            cinematic_mode = !cinematic_mode;
+
         var biome_in = biome.at(transform.position);
         if (biome_in != null)
         {
@@ -304,13 +307,23 @@ public class player : networked_player
     {
         get
         {
-            if (crosshairs.sprite == null) return null;
+            if (crosshairs == null ||
+                crosshairs.sprite == null ||
+                !crosshairs.gameObject.activeInHierarchy) return null;
             return crosshairs.sprite.name;
         }
         set
         {
             if (cursor == value) return;
-            crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
+            if (value == null)
+            {
+                crosshairs.gameObject.SetActive(false);
+            }
+            else
+            {
+                crosshairs.gameObject.SetActive(true);
+                crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
+            }
         }
     }
 
@@ -482,17 +495,46 @@ public class player : networked_player
     CharacterController controller;
     Vector3 velocity = Vector3.zero;
 
+    bool cinematic_mode
+    {
+        get => _cinematic_mode;
+        set
+        {
+            _cinematic_mode = value;
+
+            fly_velocity = Vector3.zero;
+            mouse_look_velocity = Vector2.zero;
+
+            if (value)
+            {
+                close_all_ui();
+                cursor = null;
+            }
+            else
+            {
+                cursor = cursors.DEFAULT;
+            }
+
+            // Make the player (in)visible
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+            {
+                // Doesn't affect the obscurers
+                if (r.transform.IsChildOf(obscurer.transform)) continue;
+                if (r.transform.IsChildOf(map_obscurer.transform)) continue;
+                r.enabled = !value;
+            }
+        }
+    }
+    bool _cinematic_mode;
+
     void move()
     {
         if (controller == null) return; // Controller hasn't started yet
 
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (cinematic_mode)
             fly_move();
         else
-        {
-            fly_velocity = Vector3.zero;
             normal_move();
-        }
 
         // Ensure we don't accumulate too much -ve y velocity
         if (controller.isGrounded && velocity.y < -1f)
@@ -553,7 +595,7 @@ public class player : networked_player
         if (Input.GetKey(KeyCode.D)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
         if (Input.GetKey(KeyCode.A)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
         if (Input.GetKey(KeyCode.Space)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.LeftControl)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.LeftShift)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
 
         if (fly_velocity.magnitude > FLY_ACCEL * Time.deltaTime)
             fly_velocity -= fly_velocity.normalized * FLY_ACCEL * Time.deltaTime;
@@ -680,13 +722,10 @@ public class player : networked_player
 
     void mouse_look()
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (cinematic_mode)
             mouse_look_fly();
         else
-        {
-            mouse_look_velocity = Vector2.zero;
             mouse_look_normal();
-        }
     }
 
     // Called when the render range changes
