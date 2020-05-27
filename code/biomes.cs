@@ -174,7 +174,7 @@ public class ocean : biome
                 point p = new point
                 {
                     terrain_color = terrain_colors.sand,
-                    sky_color= sky_colors.light_blue,
+                    sky_color = sky_colors.light_blue,
                     altitude = alt[i, j]
                 };
 
@@ -823,7 +823,7 @@ public class charred_forest : biome
                     altitude += s * SPIDER_HILL_HEIGHT * Mathf.PerlinNoise(
                         i / SPIDER_HILL_MOD_PERIOD, j / SPIDER_HILL_MOD_PERIOD);
 
-                    bool spawner = s > 0.25f && i % 4 == 0 && j % 4 == 0 && 
+                    bool spawner = s > 0.25f && i % 4 == 0 && j % 4 == 0 &&
                         random.range(0, 8) == 0;
 
                     if (x_spawners.Contains(i) && z_spawners.Contains(j))
@@ -868,14 +868,14 @@ public class crystal_field : biome
             int z = random.range(0, SIZE);
             float m = Mathf.PerlinNoise(x / MOUNTAIN_PERIOD, z / MOUNTAIN_PERIOD);
             if (m < 0.5f) continue;
-            procmath.float_2D_tools.add_pyramid(ref alt, x, z, 
-                MOUNTAIN_WIDTH, 1f, rotation: random.range(0f,360f));
+            procmath.float_2D_tools.add_pyramid(ref alt, x, z,
+                MOUNTAIN_WIDTH, 1f, rotation: random.range(0f, 360f));
         };
 
         procmath.float_2D_tools.rescale(ref alt, 0, MOUNTAIN_HEIGHT);
 
-        for (int i=0; i<SIZE; ++i)
-            for (int j=0; j<SIZE; ++j)
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
             {
                 float m = Mathf.PerlinNoise(i / MOUNTAIN_PERIOD, j / MOUNTAIN_PERIOD);
 
@@ -901,6 +901,31 @@ public class crystal_field : biome
                     else if (i % 10 == 0 && j % 10 == 0 && random.range(0, 10) == 0)
                         p.object_to_generate = world_object.load("crystal2");
                 }
+
+                grid[i, j] = p;
+            }
+    }
+}
+
+public class ice_ocean : biome
+{
+    public const float OSCILLATION_PERIOD = 64f;
+    public const float OSCILLATION_AMP = 16f;
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                p.terrain_color = terrain_colors.snow;
+                p.sky_color = sky_colors.light_blue;
+                p.altitude = 0;
+
+                if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("ice_sheet");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("iceberg");
 
                 grid[i, j] = p;
             }

@@ -268,6 +268,10 @@ public abstract class biome : MonoBehaviour
     {
         // Remove this from the grid of generated biomes
         generated_biomes.remove(x, z);
+
+        // Trigger removal of unused assets, to try to
+        // reduce memory usage
+        Resources.UnloadUnusedAssets();
     }
 
     private void OnDrawGizmos()

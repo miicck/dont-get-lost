@@ -16,6 +16,7 @@ public class natural_world_object : world_object
     public float min_terrain_angle = 0f;
     public float random_move_amplitude = 0f;
     public bool inherit_terrain_color = false;
+    public float fixed_altitude = -1;
     public Renderer randomize_color_on;
 
     // The way that y rotation is chosen for this object
@@ -96,6 +97,13 @@ public class natural_world_object : world_object
                 chunk.random.range(-random_move_amplitude, random_move_amplitude)
             );
             transform.position += delta;
+        }
+
+        if (fixed_altitude >= 0)
+        {
+            Vector3 pos = transform.position;
+            pos.y = fixed_altitude;
+            transform.position = pos;
         }
     }
 }
