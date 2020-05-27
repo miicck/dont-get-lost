@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+
 // Utility class to run project setup
 public class project_setup : MonoBehaviour
 {
@@ -28,7 +30,6 @@ public class project_setup : MonoBehaviour
         Debug.Log(log);
     }
 
-#if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(project_setup))]
     class editor : UnityEditor.Editor
     {
@@ -39,5 +40,7 @@ public class project_setup : MonoBehaviour
                 setup();
         }
     }
-#endif
+
 }
+
+#endif

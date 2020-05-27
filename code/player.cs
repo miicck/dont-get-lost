@@ -489,7 +489,10 @@ public class player : networked_player
         if (Input.GetKey(KeyCode.LeftShift))
             fly_move();
         else
+        {
+            fly_velocity = Vector3.zero;
             normal_move();
+        }
 
         // Ensure we don't accumulate too much -ve y velocity
         if (controller.isGrounded && velocity.y < -1f)
@@ -537,15 +540,27 @@ public class player : networked_player
         stay_above_terrain();
     }
 
+    Vector3 fly_velocity = Vector3.zero;
     void fly_move()
     {
-        Vector3 velocity = Vector3.zero;
-        if (Input.GetKey(KeyCode.W)) velocity += camera.transform.forward;
-        if (Input.GetKey(KeyCode.S)) velocity -= camera.transform.forward;
-        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right;
-        if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right;
+        const float FLY_ACCEL = 10f;
 
-        Vector3 move = velocity * 20 * Time.deltaTime;
+        Vector3 fw = map_open ? transform.forward : camera.transform.forward;
+        Vector3 ri = camera.transform.right;
+
+        if (Input.GetKey(KeyCode.W)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.S)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.D)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.A)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.Space)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (Input.GetKey(KeyCode.LeftControl)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+
+        if (fly_velocity.magnitude > FLY_ACCEL * Time.deltaTime)
+            fly_velocity -= fly_velocity.normalized * FLY_ACCEL * Time.deltaTime;
+        else
+            fly_velocity = Vector3.zero;
+
+        Vector3 move = fly_velocity * Time.deltaTime;
         controller.Move(move);
     }
 
@@ -633,8 +648,7 @@ public class player : networked_player
     }
     bool _first_person;
 
-
-    void mouse_look()
+    void mouse_look_normal()
     {
         // Rotate the view using the mouse
         // Note that horizontal moves rotate the player
@@ -645,6 +659,34 @@ public class player : networked_player
         if (yr != 0) y_rotation.value += yr;
 
         eye_transform.Rotate(-Input.GetAxis("Mouse Y") * 5f, 0, 0);
+    }
+
+    Vector2 mouse_look_velocity = Vector2.zero;
+    void mouse_look_fly()
+    {
+        // Smooth mouse look for fly mode
+        mouse_look_velocity.x += Input.GetAxis("Mouse X");
+        mouse_look_velocity.y += Input.GetAxis("Mouse Y");
+
+        float deccel = Time.deltaTime * 10f;
+        if (mouse_look_velocity.magnitude < deccel)
+            mouse_look_velocity = Vector2.zero;
+        else
+            mouse_look_velocity -= mouse_look_velocity.normalized * deccel;
+
+        y_rotation.value += mouse_look_velocity.x * Time.deltaTime;
+        eye_transform.Rotate(-mouse_look_velocity.y * Time.deltaTime * 5f, 0, 0);
+    }
+
+    void mouse_look()
+    {
+        if (Input.GetKey(KeyCode.LeftShift))
+            mouse_look_fly();
+        else
+        {
+            mouse_look_velocity = Vector2.zero;
+            mouse_look_normal();
+        }
     }
 
     // Called when the render range changes
