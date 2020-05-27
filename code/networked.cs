@@ -377,10 +377,7 @@ public class networked : MonoBehaviour
             kv.Value.network_update();
     }
 
-    public static string objects_info()
-    {
-        return objects.Count + " objects.";
-    }
+    public static int object_count { get => objects.Count; }
 
 #if UNITY_EDITOR
 

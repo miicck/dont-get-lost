@@ -40,6 +40,8 @@ public class player : networked_player
     // UNITY CALLBACKS //
     //#################//
 
+    public biome biome { get; private set; }
+
     void Update()
     {
         if (!has_authority) return;
@@ -48,10 +50,10 @@ public class player : networked_player
         if (Input.GetKeyDown(KeyCode.F1))
             cinematic_mode = !cinematic_mode;
 
-        var biome_in = biome.at(transform.position);
-        if (biome_in != null)
+        biome = biome.at(transform.position);
+        if (biome != null)
         {
-            var point_at = biome_in.blended_point(transform.position);
+            var point_at = biome.blended_point(transform.position);
             target_sky_color = point_at.sky_color;
         }
 
@@ -1020,8 +1022,7 @@ public class player : networked_player
         return "Local player " + current.username.value + " at " +
             System.Math.Round(current.transform.position.x, 1) + " " +
             System.Math.Round(current.transform.position.y, 1) + " " +
-            System.Math.Round(current.transform.position.z, 1) + "\n" +
-            "    Render range: " + game.render_range;
+            System.Math.Round(current.transform.position.z, 1);
     }
 }
 

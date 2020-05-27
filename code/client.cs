@@ -463,11 +463,10 @@ public static class client
 
         if (tcp == null) return "Client not connected.";
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
-               "Ping: " + last_ping + " ms\n" +
-               networked.objects_info() + "\n" +
-               "Traffic:\n" +
-               "    " + traffic_up.usage() + " up\n" +
-               "    " + traffic_down.usage() + " down";
+               "    Objects  : " + networked.object_count + "\n" +
+               "    Upload   : " + traffic_up.usage() + "\n" +
+               "    Download : " + traffic_down.usage() + "\n" +
+               "    Ping     : " + last_ping + "ms";
 
     }
 

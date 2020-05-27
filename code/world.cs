@@ -60,7 +60,10 @@ public class world : networked
     public static string info()
     {
         if (static_world == null) return "No world";
-        return "World " + name + " (seed " + seed + ")";
+        return "World " + name + "\n" +
+               "    Seed         : " + seed + "\n" +
+               "    Biome        : " + player.current.biome.GetType().Name + "\n" +
+               "    Render range : " + game.render_range;
     }
 
 #if UNITY_EDITOR

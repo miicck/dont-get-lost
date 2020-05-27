@@ -967,11 +967,10 @@ public static class server
     {
         if (tcp == null) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
-               connected_clients.Count + " clients connected\n" +
-               representations.Count + " representations\n" +
-               "Traffic:\n" +
-               "    " + traffic_up.usage() + " up\n" +
-               "    " + traffic_down.usage() + " down";
+               "    Connected clients : " + connected_clients.Count + "\n" +
+               "    Representations   : " + representations.Count + "\n" +
+               "    Upload            : " + traffic_up.usage() + "\n" +
+               "    Download          : " + traffic_down.usage();
     }
 
     public enum MESSAGE : byte

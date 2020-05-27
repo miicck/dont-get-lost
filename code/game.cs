@@ -215,16 +215,48 @@ public class game : MonoBehaviour
         if (!debug_panel.activeInHierarchy)
             return;
 
-        string debug_text = ""
-        + world.info() + "\n"
-        + "FPS: " + System.Math.Round(1 / Time.deltaTime, 0) + "\n"
-        + "Fullscreen mode: " + Screen.fullScreenMode + "\n"
-        + server.info() + "\n"
-        + client.info() + "\n"
-        + player.info() + "\n";
+        string debug_text = "" +
+            "\nWORLD\n" +
+            world.info() + "\n" +
+            "\nGRAPHICS\n" +
+            graphics_info() + "\n" +
+            "\nSERVER\n" +
+            server.info() + "\n" +
+            "\nCLIENT\n" +
+            client.info() + "\n" +
+            "\nPLAYER\n" +
+            player.info() + "\n";
+
         debug_text = debug_text.Trim();
 
-        this.debug_text.text = debug_text;
+        // Allign all of the :'s precceded by a space
+        int max_found = 0;
+        foreach (var line in debug_text.Split('\n'))
+        {
+            int found = line.IndexOf(':');
+            if (found > max_found)
+            {
+                if (line[found - 1] != ' ') continue;
+                max_found = found;
+            }
+        }
+
+        string padded = "";
+        foreach (var line in debug_text.Split('\n'))
+        {
+            int found = line.IndexOf(':');
+            string padded_line = line;
+            if (found > 0)
+            {
+                padded_line = line.Substring(0, found);
+                for (int i = 0; i < max_found - found; ++i)
+                    padded_line += " ";
+                padded_line += line.Substring(found);
+            }
+            padded += padded_line + "\n";
+        }
+
+        this.debug_text.text = padded;
     }
 
     void OnApplicationQuit()
@@ -232,5 +264,11 @@ public class game : MonoBehaviour
         // Disconnect from the network
         client.disconnect();
         server.stop();
+    }
+
+    public string graphics_info()
+    {
+        return "    FPS             : " + System.Math.Round(1 / Time.deltaTime, 0) + "\n" +
+               "    Fullscreen mode : " + Screen.fullScreenMode;
     }
 }
