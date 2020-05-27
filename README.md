@@ -17,7 +17,6 @@ To setup a unity project for development, follow these steps:
 and "LookDev Volume Profile Asset" are set to Assets/pipeline/global_volume.
 5. Load Assets/scenes/main, go to Lighting settings and, under "Environment" ensure "Profile" is set to 
 Assets/pipeline/global_volume and the "Static Lighting Sky" dropdown is set to GradientSky.
-6. Add Assets/scenes/world_menu and Assets/scenes/main (in that order!) to File > Build Settings > Scenes In Build.
-7. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
+6. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
 the world is rendered, it might look super weird for a few seconds while the pipeline fires up for the first time. 
 The materials should load in momentarily.
