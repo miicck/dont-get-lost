@@ -73,6 +73,10 @@ public class options_menu : MonoBehaviour
                 color_adjust.saturation.value = Mathf.Clamp(val, -100f, 100f);
                 break;
 
+            case "master_volume":
+                AudioListener.volume = val;
+                break;
+
             default:
                 throw new System.Exception("Unkown float option: " + name);
         }
