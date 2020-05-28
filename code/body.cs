@@ -10,7 +10,8 @@ public class body : MonoBehaviour
     public float lean_velocity_scale = 5f;
     public Transform character;
     public Transform head;
-    public bool head_bobs = false;
+    public float head_bob_amt = 0f;
+    public float head_lean_inherit_amt = 0f;
 
     leg[] legs;
     Vector3 init_local_pos;
@@ -58,9 +59,12 @@ public class body : MonoBehaviour
 
         if (head != null)
         {
-            head.transform.rotation = saved_head_rotation;
-            if (!head_bobs)
-                head.transform.position += Vector3.up * (saved_head_y - head.transform.position.y);
+            head.transform.rotation = Quaternion.Lerp(
+                saved_head_rotation, head.transform.rotation, head_lean_inherit_amt);
+
+            head.transform.position +=
+                Vector3.up * (saved_head_y - head.transform.position.y)
+                * (1 - head_bob_amt);
         }
     }
 

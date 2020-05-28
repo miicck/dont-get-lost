@@ -255,6 +255,11 @@ public static class utils
     {
         return m.GetColor(base_color_string(m));
     }
+
+    public static bool isNaN(this Vector3 v)
+    {
+        return float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z);
+    }
 }
 
 /// <summary> A dictionary keyed by two ints. </summary>

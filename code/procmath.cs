@@ -84,6 +84,13 @@ public static class procmath
             add = end_smoothed_linear(add, 0.25f);
             return xf + add;
         }
+
+        /// <summary> Asymptotically approach +/- 1 as x -> +/- infinity </summary>
+        public static float asmptote_to_1(float x)
+        {
+            if (x < 0) return asmptote_to_1(-x);
+            return 1f - Mathf.Exp(-x);
+        }
     }
 
     // Pick a choice from the given array, with a Gaussian probability with the given width

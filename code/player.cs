@@ -16,9 +16,9 @@ public class player : networked_player
     public const float WATER_DRAG = 1.5f;
 
     // Movement
-    public const float SPEED = 7f;
+    public const float BASE_SPEED = 7f;
     public const float ACCELERATION_TIME = 0.2f;
-    public const float ACCELERATION = SPEED / ACCELERATION_TIME;
+    public const float ACCELERATION = BASE_SPEED / ACCELERATION_TIME;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float THROW_VELOCITY = 6f;
@@ -497,6 +497,28 @@ public class player : networked_player
     CharacterController controller;
     Vector3 velocity = Vector3.zero;
 
+    public float speed
+    {
+        get
+        {
+            float s = BASE_SPEED;
+            if (crouched) s /= 2f;
+            return s;
+        }
+    }
+
+    public bool crouched
+    {
+        get => _crouched;
+        private set
+        {
+            _crouched = value;
+            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
+            else body.transform.localPosition = Vector3.zero;
+        }
+    }
+    bool _crouched;
+
     bool cinematic_mode
     {
         get => _cinematic_mode;
@@ -532,6 +554,9 @@ public class player : networked_player
     void move()
     {
         if (controller == null) return; // Controller hasn't started yet
+
+        if (Input.GetKeyDown(KeyCode.LeftShift)) crouched = true;
+        if (Input.GetKeyUp(KeyCode.LeftShift)) crouched = false;
 
         if (cinematic_mode)
             fly_move();
@@ -572,10 +597,10 @@ public class player : networked_player
         }
 
         float xz = new Vector3(velocity.x, 0, velocity.z).magnitude;
-        if (xz > SPEED)
+        if (xz > speed)
         {
-            velocity.x *= SPEED / xz;
-            velocity.z *= SPEED / xz;
+            velocity.x *= speed / xz;
+            velocity.z *= speed / xz;
         }
 
         Vector3 move = velocity * Time.deltaTime;
@@ -742,10 +767,10 @@ public class player : networked_player
 
         if (!map_open)
         {
-            // If in 3D mode, set the camera clipping plane range to
-            // the same as render_range
-            camera.farClipPlane = game.render_range;
-            QualitySettings.shadowDistance = camera.farClipPlane;
+            // Scale camera clipping plane/shadow distance to work
+            // with the new render range
+            camera.farClipPlane = game.render_range * 1.5f;
+            QualitySettings.shadowDistance = game.render_range;
         }
     }
 
@@ -931,10 +956,12 @@ public class player : networked_player
         current = this;
     }
 
+    public player_body body { get; private set; }
+
     public override void on_create()
     {
         // Load the player body
-        var body = Resources.Load<player_body>("misc/player_body").inst();
+        body = Resources.Load<player_body>("misc/player_body").inst();
         body.transform.SetParent(transform);
         body.transform.localPosition = Vector3.zero;
         body.transform.localRotation = Quaternion.identity;

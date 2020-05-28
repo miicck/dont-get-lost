@@ -4,175 +4,307 @@ using UnityEngine;
 
 public class leg : MonoBehaviour
 {
-    public Transform character;         // The character to which these legs belong (stops the legs from stepping on colliders contained within the character itself)
-    public Transform foot;              // The foot, with pivot set at the ankle
-    public Transform shin;              // The shin, with pivot set at the knee
-    public Transform thigh;             // The thigh, with pivot set at the hip
-    public leg following;               // The leg I am following, and should be out of phase with
-    public float step_length_mult = 1f; // Multiply my step length by this value
-    public float following_phase = 1f;  // How far out of phase I am with the leg I'm following
-
-    // Bird knees?
-    public bool knees_bend_backward = false;
-
-    Transform step_centre;       // The location/rotation of the foot on Start()
-    float thigh_length;          // The distance between hip and knee
-    float shin_length;           // The distance between knee and ankle
-    float strafe_length;         // The step distance when strafing
-
-    // The initial scales of leg parts
-    Vector3 init_foot_scale;
-    Vector3 init_thigh_scale;
-    Vector3 init_shin_scale;
-
-    // The progress through the current step
-    // [0,1] => Foot on ground, going backward
-    // [1,2] => Foot in air, going forward
-    public float progress { get; private set; }
-
-    // The amount a body should bob up and down because of this leg
-    public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f / following_phase); } }
-
-    public Vector3 velocity { get; private set; } // The velocity of step_centre, this frame
-    Vector3 position_last;                        // The position of step_centre, last frame
-    Vector3 ground_normal;                        // The last recorded ground normal
-
+    const float EPS_MAG = 0.001f;
     const float MIN_FOOT_SPEED = 0.2f;
     const float MIN_STEP_SIZE = 0.01f;
-    const float MAG_EPSILON = 10e-4f;
 
-    // The source of footstep sounds
+    public Transform character;
+    public Transform hip;
+    public Transform knee;
+    public Transform ankle;
+    public Transform foot_base;
+    public bool knees_bend_backward;
+    public leg following;
+    public float following_phase = 1f;
+    public float min_step_length_boost = 0.1f;
+    public float max_step_length_boost = 1f;
+    public float max_boost_at_speed = player.BASE_SPEED;
+    public float max_leg_stretch = 1.5f;
+
+    public Vector3 velocity { get; private set; }
+    Transform step_centre;
+    Vector3 position_last;
+    float progress;
+    bool contact_made_this_step;
+    Vector3 grounding;
+    float thigh_length;
+    float shin_length;
+    float ankle_length;
+    float init_hip_scale;
+    float init_knee_scale;
+    float test_up_amt;
+    float test_down_amt;
     AudioSource footstep_source;
     public AudioClip custom_footstep_sound;
     public float footstep_volume_multiplier = 1f;
     public float min_footstep_pitch = 0.95f;
     public float max_footsetp_pitch = 1.05f;
 
-    // Is the foot grounded
-    bool grounded = false;
+    float step_length_boost
+    {
+        get
+        {
+            float boost = velocity.magnitude / max_boost_at_speed;
+            if (boost > 1f) boost = 1f;
+            return min_step_length_boost + boost *
+                (max_step_length_boost - min_step_length_boost);
+        }
+    }
 
-    // The length of a step, from step_back to step_front
     float step_length
     {
         get
         {
-            // Step length is weighted by the direction we're moving
-            float forward_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
-            float right_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
-            float up_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
+            float fw_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
+            float lr_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
+            float ud_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
 
-            // Normal step length = leg length
-            float normal_length = thigh_length + shin_length;
+            float tot = fw_amt + lr_amt + ud_amt;
+            fw_amt /= tot;
+            lr_amt /= tot;
+            ud_amt /= tot;
 
-            // Jump is shorter, so legs flail around belivably when jumping
-            float jump_length = shin_length + thigh_length / 2f;
+            float fw_length = shin_length + thigh_length + ankle_length;
+            float lr_length = shin_length;
+            float ud_length = shin_length + ankle_length + thigh_length / 2f;
 
-            // Return weighted length
-            float ret = normal_length * forward_amt +
-                        strafe_length * right_amt +
-                        jump_length * up_amt;
+            float step = fw_amt * fw_length +
+                         lr_amt * lr_length +
+                         ud_amt * ud_length;
 
-            ret *= 1f + Mathf.Min(Mathf.Sqrt(velocity.magnitude / (shin_length + thigh_length)), 0.5f);
-            ret *= step_length_mult;
-
+            var ret = step * step_length_boost;
             if (ret < MIN_STEP_SIZE) ret = MIN_STEP_SIZE;
             return ret;
         }
     }
 
-    // The direction we're stepping in
+    bool grounded { get => (foot_base.position - grounding).magnitude < 0.25f; }
+
     Vector3 step_direction
     {
-        get
-        {
-            // Same as the velocity, default to forward
-            if (velocity.magnitude > MAG_EPSILON) return velocity.normalized;
-            return step_centre.forward;
-        }
+        get => velocity.magnitude > EPS_MAG ? velocity.normalized : step_centre.forward;
     }
 
-    // The front of the step
-    Vector3 step_front
-    {
-        get { return step_centre.position + step_direction * step_length / 2f; }
-    }
+    // The amount a body should bob up and down because of this leg
+    public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f / following_phase); } }
 
-    // The back of the step
-    Vector3 step_back
-    {
-        get { return step_centre.position - step_direction * step_length / 2f; }
-    }
+    // Desired orientation of thigh
+    Vector3 thigh_up { get => (hip.position - knee.position).normalized; }
+    Vector3 thigh_forward { get => Vector3.Cross(transform.right, thigh_up).normalized; }
 
-    // Find the grounding nearest the given test point
-    Vector3 grounding_point(Vector3 test_point)
-    {
-        Vector3 test_start = test_point + (shin_length + thigh_length / 2f) * Vector3.up;
-        Vector3 test_end = test_point - (shin_length / 2f) * Vector3.up;
-        Vector3 delta = test_end - test_start;
-        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
-            if (!h.transform.IsChildOf(character.transform))
-            {
-                ground_normal = h.normal;
-                grounded = true;
-                return h.point;
-            }
+    // Desired orientation of shin
+    Vector3 shin_up { get => (knee.position - ankle.position).normalized; }
+    Vector3 shin_forward { get => Vector3.Cross(transform.right, shin_up).normalized; }
 
-        grounded = false;
-        ground_normal = Vector3.up;
-        return test_point;
-    }
+    Vector3 step_front { get => step_centre.position + step_direction * step_length / 2f; }
+    Vector3 step_back { get => step_centre.position - step_direction * step_length / 2f; }
 
-    // Move the foot towards a target point, ensuring
-    // it doesn't move too quickly
-    void move_foot_towards(Vector3 pos)
+    Vector3 test_start { get => step_front + Vector3.up * test_up_amt; }
+    Vector3 test_end { get => step_front - Vector3.up * test_down_amt; }
+
+    void align_axes(Transform t, Quaternion rot)
     {
-        float max_foot_speed = MIN_FOOT_SPEED + velocity.magnitude;
-        Vector3 delta = pos - foot.transform.position;
-        if (delta.magnitude > max_foot_speed * Time.deltaTime)
-            delta = max_foot_speed * Time.deltaTime * delta.normalized;
-        foot.transform.position += delta;
+        // Unparent all children of t
+        List<Transform> children = new List<Transform>();
+        foreach (Transform c in t) children.Add(c);
+        foreach (var c in children) c.SetParent(null);
+
+        // Rotate t to the given alignment
+        Quaternion drot = rot * Quaternion.Inverse(t.rotation);
+        t.rotation = drot * t.rotation;
+
+        // Reparent all children of t
+        foreach (Transform c in children) c.SetParent(t);
     }
 
     private void Start()
     {
-        // Record the foot centre position/orientation
-        step_centre = new GameObject("foot_initial").transform;
+        // Get the hip-to-foot vector
+        Vector3 whole_leg = foot_base.position - hip.position;
+
+        // Work out the direction the knee should bend in
+        Vector3 knee_forward = knee.position - hip.position;
+        knee_forward -= Vector3.Project(knee_forward, whole_leg);
+        if (knee_forward.magnitude < EPS_MAG)
+        {
+            string err = "Knee must be sligtly in front of the hip -> ankle line!";
+            err += " (" + name + ")";
+            throw new System.Exception(err);
+        }
+        knee_forward.Normalize();
+
+        // Work out the right direction (perpendicular to the knee 
+        // bend direction) and the forward direction (perpendicular 
+        // to right/up).
+        Vector3 right = Vector3.Cross(knee_forward, whole_leg).normalized;
+        Vector3 forward = Vector3.Cross(right, Vector3.up);
+        align_axes(transform, Quaternion.LookRotation(forward, Vector3.up));
+
+        // Reorient the hip so that hip.down points to the knee
+        var new_hip = new GameObject("hip").transform;
+        new_hip.position = hip.position;
+        new_hip.SetParent(transform);
+        align_axes(new_hip, Quaternion.LookRotation(thigh_forward, thigh_up));
+        hip.SetParent(new_hip);
+        hip = new_hip;
+
+        // Reorient the knee so that knee.down points to the ankle
+        var new_knee = new GameObject("knee").transform;
+        new_knee.position = knee.position;
+        new_knee.SetParent(transform);
+        align_axes(new_knee, Quaternion.LookRotation(shin_forward, shin_up));
+        knee.SetParent(new_knee);
+        knee = new_knee;
+
+        // Work out the lengths of the various parts of the leg
+        thigh_length = (hip.position - knee.position).magnitude;
+        shin_length = (knee.position - ankle.position).magnitude;
+        ankle_length = (ankle.position - foot_base.position).magnitude;
+
+        // Record the initial foot position
+        step_centre = new GameObject("step_centre").transform;
+        step_centre.position = foot_base.position;
+        step_centre.rotation = transform.rotation;
         step_centre.SetParent(transform);
-        step_centre.position = foot.transform.position;
-        step_centre.rotation = foot.transform.rotation;
 
-        // Record the thigh/shin lengths
-        thigh_length = (thigh.transform.position - shin.transform.position).magnitude;
-        shin_length = (shin.transform.position - foot.transform.position).magnitude;
+        // Initialize kineamtics
+        position_last = step_centre.position;
+        velocity = Vector3.zero;
+        progress = 0;
 
-        // Initialize strafe step size
-        strafe_length = shin_length;
+        // Ensure heirarchy is correct
+        foot_base.transform.SetParent(ankle);
+        ankle.transform.SetParent(transform);
+        knee.transform.SetParent(transform);
+        hip.transform.SetParent(transform);
 
-        // Save initial scales
-        init_foot_scale = foot.transform.localScale;
-        init_shin_scale = shin.transform.localScale;
-        init_thigh_scale = thigh.transform.localScale;
+        // Remember the intial scales
+        init_hip_scale = hip.transform.localScale.y;
+        init_knee_scale = knee.transform.localScale.y;
 
-        // Create the footstep sound source
-        footstep_source = foot.gameObject.AddComponent<AudioSource>();
+        test_up_amt = Mathf.Max(
+            shin_length,
+            hip.position.y - foot_base.position.y,
+            knee.position.y - foot_base.position.y,
+            ankle.position.y - foot_base.position.y
+        );
+
+        test_down_amt = test_up_amt;
+
+        footstep_source = new GameObject("footstep_source").AddComponent<AudioSource>();
+        footstep_source.transform.SetParent(foot_base.transform);
+        footstep_source.transform.localPosition = Vector3.zero;
         footstep_source.spatialBlend = 1f; // 3D
     }
 
-    bool contact_made_this_step = false;
-    void on_foot_contact()
+    void solve_orientation_and_scale()
     {
-        if (contact_made_this_step) return;
-        contact_made_this_step = true;
+        hip.rotation = Quaternion.LookRotation(thigh_forward, thigh_up);
+        float new_thigh_lenth = (hip.position - knee.position).magnitude;
+        Vector3 ls = hip.transform.localScale;
+        ls.y = init_hip_scale * new_thigh_lenth / thigh_length;
+        hip.transform.localScale = ls;
 
-        bool underwater = false;
-        if (foot.transform.position.y < world.SEA_LEVEL)
+        knee.rotation = Quaternion.LookRotation(shin_forward, shin_up);
+        float new_shin_length = (knee.position - ankle.position).magnitude;
+        ls = knee.transform.localScale;
+        ls.y = init_knee_scale * new_shin_length / shin_length;
+        knee.transform.localScale = ls;
+    }
+
+    void solve_leg()
+    {
+        // Work out the position of the thigh and shin, given the current foot position
+        // according to the following diagram.
+        // 
+        //                                         a = thigh_length = hip-to-knee distance
+        //   thigh.transform.position = hip -> ._________. <- knee = shin.transform.position
+        //                                     \        /
+        //                                      \L     /  
+        //                hip-ankle distance = d \    / b = shin_length = knee-to-ankle distance
+        //                                        \  /
+        //                                         \/. <- ankle = foot.transform.position
+        //
+        // point labelled L = the closest point to the knee along the hip-to-ankle line
+        //           lambda = the distance between the knee and the point labelled L
+        //               d1 = the distance between the hip  and the point labelled L
+
+        float a = thigh_length;
+        float b = shin_length;
+        Vector3 dvec = ankle.position - hip.position;
+        float d = dvec.magnitude;
+
+        // Asymptotically approach streight leg
+        if (d > a + b)
         {
-            underwater = true;
+            // Foot is further than the maximum extent of the leg, create a streight leg
+            knee.position = hip.position + a * dvec / (a + b);
+            solve_orientation_and_scale();
+            return;
+        }
+
+        // Work out lambda
+        float lambda = d * d + b * b - a * a;
+        lambda = b * b - lambda * lambda / (4 * d * d);
+        lambda = Mathf.Sqrt(lambda);
+
+        // Work out d1
+        float d1 = a * a - lambda * lambda;
+        d1 = Mathf.Sqrt(d1);
+
+        if (knees_bend_backward) lambda = -lambda;
+
+        // Setup the bent leg accordingly
+        Vector3 new_knee_pos =
+            hip.position +
+            d1 * dvec.normalized -
+            lambda * Vector3.Cross(transform.right, dvec.normalized);
+
+        if (new_knee_pos.isNaN()) return;
+        knee.position = new_knee_pos;
+        solve_orientation_and_scale();
+    }
+
+    void move_foot_towards(Vector3 position)
+    {
+        // To move the foot, we actually move the ankle so 
+        // that the foot is in the given location.
+        Vector3 foot_to_ankle = ankle.position - foot_base.position;
+        Vector3 delta = position + foot_to_ankle - ankle.position;
+
+        // Ensure we don't move the foot too fast
+        float max_foot_speed = MIN_FOOT_SPEED + velocity.magnitude;
+        if (delta.magnitude > max_foot_speed * Time.deltaTime)
+            delta = delta.normalized * max_foot_speed * Time.deltaTime;
+
+        // Check we don't over-stretch the leg
+        Vector3 new_pos = ankle.position + delta;
+        float new_leg_length = (new_pos - hip.position).magnitude;
+        if (new_leg_length / (shin_length + thigh_length) > max_leg_stretch)
+            return;
+
+        ankle.position += delta;
+    }
+
+    void make_contact(Vector3 test_point)
+    {
+        // Find the grounding point
+        Vector3 delta = test_end - test_start;
+        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
+        {
+            if (h.transform.IsChildOf(character)) continue;
+            grounding = h.point;
+            contact_made_this_step = true;
+            break;
+        }
+
+        bool underwater = foot_base.transform.position.y < world.SEA_LEVEL;
+        if (underwater)
+        {
             footstep_source.clip = Resources.Load<AudioClip>("sounds/water_step");
             footstep_source.volume = 0.3f * footstep_volume_multiplier;
         }
-
-        if (!underwater)
+        else
         {
             if (custom_footstep_sound != null)
             {
@@ -185,7 +317,7 @@ public class leg : MonoBehaviour
                 // Re-evaluate the walking sound based on ground type
                 RaycastHit hit;
                 var rend = utils.raycast_for_closest<Renderer>(
-                    new Ray(foot.transform.position + Vector3.up,
+                    new Ray(foot_base.position + Vector3.up,
                     Vector3.down), out hit);
 
                 Material ground_mat = null;
@@ -210,174 +342,110 @@ public class leg : MonoBehaviour
             if (!footstep_source.isPlaying)
                 footstep_source.Play();
         }
+
     }
 
     private void Update()
     {
-        // Work out kinematics
-        Vector3 delta = step_centre.transform.position - position_last;
-        position_last = step_centre.transform.position;
+        Vector3 delta = step_centre.position - position_last;
+        position_last = step_centre.position;
         velocity = delta / Time.deltaTime;
 
-        // Increment progress in step_direction
         if (following == null)
-        {
+            // Increment progress in step_direction
             progress += Vector3.Dot(delta, step_direction) / step_length;
-        }
         else
-        {
-            // Ensure I am out of phase with the leg I am following
+            // Ensure I'm out of phase with the leg I'm following
             progress = following.progress - following_phase;
-
-            // Set the strafe length to be sensible, given the leg I'm following
-            strafe_length = (following.step_centre.position - step_centre.position).magnitude;
-            following.strafe_length = strafe_length;
-        }
 
         // Progress loops in [0,2]
         progress -= Mathf.Floor(progress / 2f) * 2f;
 
-        if (velocity.magnitude < MAG_EPSILON)
+        if (velocity.magnitude < EPS_MAG)
         {
-            // Not really moving, reset foot position
-            move_foot_towards(grounding_point(step_centre.position));
-            solve_leg_positions();
-            solve_leg_orientation_and_scale();
+            // Essentially not moving, return to default position
+            move_foot_towards(step_centre.position);
+            solve_leg();
             return;
         }
 
         if (progress < 1f)
         {
-            // Foot moving backward on ground
-            if (!contact_made_this_step) on_foot_contact();
-            Vector3 line_point = step_front * (1 - progress) + step_back * progress;
-            move_foot_towards(grounding_point(line_point));
+            // Foot moving backwards on the ground
+            if (!contact_made_this_step) make_contact(step_front);
+            if (grounded) move_foot_towards(grounding);
+            else
+            {
+                float bw_progresss = progress;
+                Vector3 line_point = step_back * bw_progresss + step_front * (1 - bw_progresss);
+                move_foot_towards(line_point);
+            }
         }
         else
         {
-            // Foot moving forward above the ground
+            // Foot moving forwards in the air
             contact_made_this_step = false;
             float fw_prog = progress - 1f;
+
             Vector3 line_point = step_front * fw_prog + step_back * (1 - fw_prog);
             float amt_above_ground = Mathf.Sin(fw_prog * Mathf.PI) * shin_length / 2f;
-            move_foot_towards(grounding_point(line_point) + amt_above_ground * Vector3.up);
+            move_foot_towards(line_point + amt_above_ground * Vector3.up);
         }
 
-        solve_leg_positions();
-        solve_leg_orientation_and_scale();
+        solve_leg();
     }
 
-    void solve_leg_orientation_and_scale()
+    private void OnDrawGizmos()
     {
-        // Unity uses a left-handed coordinate system for some reason
-        // so cross products are left-hand-rule rather than right-hand-rule
-        Vector3 knee_to_hip = thigh.transform.position - shin.transform.position;
-        Vector3 hip_normal = -Vector3.Cross(knee_to_hip, step_centre.right);
-        thigh.transform.rotation = Quaternion.LookRotation(hip_normal, knee_to_hip);
-        thigh.transform.localScale = new Vector3(
-            init_thigh_scale.x,
-            init_thigh_scale.y * knee_to_hip.magnitude / thigh_length,
-            init_thigh_scale.z);
+        if (hip == null || knee == null || ankle == null || foot_base == null) return;
 
-        Vector3 foot_to_knee = shin.transform.position - foot.transform.position;
-        Vector3 shin_normal = -Vector3.Cross(foot_to_knee, step_centre.right);
-        shin.transform.rotation = Quaternion.LookRotation(shin_normal, foot_to_knee);
-        shin.transform.localScale = new Vector3(
-            init_shin_scale.x,
-            init_shin_scale.y * foot_to_knee.magnitude / shin_length,
-            init_shin_scale.z);
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(hip.position, knee.position);
 
-        if (progress > 1f) // On backswing => foot fixed to shin rotation
-            foot.transform.rotation = shin.transform.rotation;
-        else // On ground => foot fixed to ground
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(knee.position, ankle.position);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(ankle.position, foot_base.position);
+
+        if (step_centre == null) return;
+
+        Gizmos.DrawLine(
+            step_centre.position + step_length * step_direction / 2f,
+            step_centre.position - step_length * step_direction / 2f);
+
+        Gizmos.DrawLine(test_start, test_end);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(grounding, 0.05f);
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.CanEditMultipleObjects()]
+    [UnityEditor.CustomEditor(typeof(leg))]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
         {
-            Vector3 foot_up = ground_normal - Vector3.Project(ground_normal, step_centre.right);
-            if (foot_up.magnitude > MAG_EPSILON)
+            base.OnInspectorGUI();
+            if (Application.isPlaying)
             {
-                Vector3 foot_forward = -Vector3.Cross(foot_up, step_centre.right);
-                foot.transform.rotation = Quaternion.LookRotation(foot_forward, foot_up);
+                var l = (leg)target;
+
+                float stretch_amt = (l.hip.position - l.knee.position).magnitude;
+                stretch_amt += (l.knee.position - l.ankle.position).magnitude;
+                stretch_amt /= (l.thigh_length + l.shin_length);
+
+                string debug = "Speed " + l.velocity.magnitude + "\n" +
+                               "Step boost " + l.step_length_boost + "\n" +
+                               "Step length " + l.step_length + "\n" +
+                               "Stretch " + stretch_amt + "\n";
+
+                UnityEditor.EditorGUILayout.TextArea(debug);
+                UnityEditor.EditorUtility.SetDirty(target); // Update every frame
             }
-            else foot.transform.rotation = step_centre.rotation;
         }
     }
+#endif
 
-    void solve_leg_positions()
-    {
-        // Work out the position of the thigh and shin, given the current foot position
-        // according to the following diagram.
-        // 
-        //                                         a = thigh_length = hip-to-knee distance
-        //   thigh.transform.position = hip -> ._________. <- knee = shin.transform.position
-        //                                     \        /
-        //                                      \L     /  
-        //                hip-ankle distance = d \    / b = shin_length = knee-to-ankle distance
-        //                                        \  /
-        //                                         \/. <- ankle = foot.transform.position
-        //
-        // point labelled L = the closest point to the knee along the hip-to-ankle line
-        //           lambda = the distance between the knee and the point labelled L
-        //               d1 = the distance between the hip  and the point labelled L
-
-        float a = thigh_length;
-        float b = shin_length;
-        Vector3 dvec = foot.transform.position - thigh.transform.position;
-        float d = dvec.magnitude;
-
-        // Asymptotically approach streight leg
-        if (d > a + b)
-        {
-            // Foot is further than the maximum extent of the leg, create a streight leg
-            shin.transform.position = thigh.transform.position + a * dvec / (a + b);
-            return;
-        }
-
-        // Work out lambda
-        float lambda = d * d + b * b - a * a;
-        lambda = b * b - lambda * lambda / (4 * d * d);
-        lambda = Mathf.Sqrt(lambda);
-
-        // Work out d1
-        float d1 = a * a - lambda * lambda;
-        d1 = Mathf.Sqrt(d1);
-
-        if (knees_bend_backward) lambda = -lambda;
-        if (float.IsNaN(lambda)) return;
-
-        // Setup the bent leg accordingly
-        shin.transform.position =
-            thigh.transform.position +
-            d1 * dvec.normalized -
-            lambda * Vector3.Cross(transform.right, dvec.normalized);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (step_centre != null)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(step_front, step_back);
-            Gizmos.DrawWireSphere(step_back + (step_front - step_back) * progress / 2f, 0.1f);
-        }
-
-        // Draw the thigh
-        if (thigh != null && shin != null)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(thigh.transform.position, shin.transform.position);
-        }
-
-        // Draw the shin
-        if (shin != null && foot != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(shin.transform.position, foot.transform.position);
-        }
-
-        // Draw the foot
-        if (foot != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(foot.transform.position, foot.transform.position + foot.transform.forward / 4f);
-        }
-    }
 }

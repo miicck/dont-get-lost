@@ -25,8 +25,10 @@ public class arm : MonoBehaviour
     /// <summary> The arm follows the leg, so it looks like we're running </summary>
     void update_with_leg()
     {
+        if (following == null) return;
+
         // Shoulder rotation is half of thigh rotation
-        Quaternion thigh_rot = following.thigh.transform.rotation;
+        Quaternion thigh_rot = following.hip.rotation;
         Quaternion sholder_rot = Quaternion.Lerp(transform.rotation, thigh_rot, 0.5f);
         shoulder.transform.rotation = sholder_rot;
 
