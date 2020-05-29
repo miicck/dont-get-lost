@@ -760,7 +760,6 @@ public class town : biome
                         throw new System.Exception("Unkown building index");
                 }
 
-
                 grid[b.left, b.bottom].gen_info = new object[] { b.width, b.height, b.front };
                 grid[b.centre_x, b.centre_z].object_to_generate = world_object.load("native_spawner");
             }

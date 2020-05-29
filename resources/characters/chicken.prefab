@@ -321,10 +321,10 @@ MonoBehaviour:
   walk_speed: 1
   run_speed: 4
   max_health: 10
-  pathfinding_resolution: 0.5
+  pathfinding_resolution: {x: 0.5, y: 0.5, z: 0.5}
   agro_range: 5
   reach: 0.5
-  aggressive: 0
+  friendliness: 2
   can_walk: 1
   can_swim: 0
 --- !u!114 &6941076464649910738

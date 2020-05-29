@@ -13,12 +13,19 @@ public class character : networked
     public float walk_speed = 1f;
     public float run_speed = 4f;
     public float max_health = 10;
-    public float pathfinding_resolution = 0.5f;
+    public Vector3 pathfinding_resolution = Vector3.one / 2f;
     public float agro_range = 5f;
     public float reach = 0.5f;
-    public bool aggressive = false;
+    public FRIENDLINESS friendliness;
     public bool can_walk = true;
     public bool can_swim = false;
+
+    public enum FRIENDLINESS
+    {
+        AGRESSIVE,
+        FRIENDLY,
+        AFRAID
+    }
 
     // The character spawner that spawned me
     character_spawner spawned_by
@@ -170,7 +177,7 @@ public class character : networked
         {
             // Lerp forward look direction
             Vector3 new_forward = Vector3.Lerp(transform.forward,
-                delta.normalized, speed * Time.deltaTime);
+                delta.normalized, 8f * speed * Time.deltaTime);
 
             if (new_forward.magnitude > 10e-4)
                 transform.forward = new_forward;
@@ -178,12 +185,13 @@ public class character : networked
         return true;
     }
 
-    void move_along_path(float speed)
+    void move_along_path(float speed, bool random = false)
     {
         if (!path.complete)
         {
             // Run pathfinding
-            path.run_pathfinding(1);
+            if (random) path.run_random_pathfinding(1, 10);
+            else path.run_pathfinding(1);
             return;
         }
         else
@@ -223,7 +231,7 @@ public class character : networked
             if (Physics.Raycast(location, -Vector3.up, out hit, 10f))
                 get_path(hit.point);
         }
-        else move_along_path(walk_speed);
+        else move_along_path(walk_speed, random: true);
     }
 
     // Run from the given transform
@@ -253,7 +261,10 @@ public class character : networked
             Vector3 delta = chasing.position - transform.position;
             Vector3 chase_to = transform.position + delta;
 
-            if (delta.magnitude < pathfinding_resolution)
+            if (delta.magnitude < Mathf.Max(
+                pathfinding_resolution.x,
+                pathfinding_resolution.y,
+                pathfinding_resolution.z))
             {
                 if (delta.magnitude > reach)
                     move_towards(chasing.position, run_speed);
@@ -294,8 +305,20 @@ public class character : networked
 
         if ((transform.position - player.current.transform.position).magnitude < agro_range)
         {
-            if (aggressive) chase(player.current.transform);
-            else flee(player.current.transform);
+            switch(friendliness)
+            {
+                case FRIENDLINESS.AGRESSIVE:
+                    chase(player.current.transform);
+                    break;
+
+                case FRIENDLINESS.AFRAID:
+                    flee(player.current.transform);
+                    break;
+
+                default:
+                    idle_walk();
+                    break;
+            }
         }
         else
             idle_walk();
