@@ -260,6 +260,23 @@ public static class utils
     {
         return float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z);
     }
+
+    /// <summary> Allign the axes of a transform to a given rotation,
+    /// without affecting that transforms children. </summary>
+    public static void align_axes(Transform t, Quaternion rot)
+    {
+        // Unparent all children of t
+        List<Transform> children = new List<Transform>();
+        foreach (Transform c in t) children.Add(c);
+        foreach (var c in children) c.SetParent(null);
+
+        // Rotate t to the given alignment
+        Quaternion drot = rot * Quaternion.Inverse(t.rotation);
+        t.rotation = drot * t.rotation;
+
+        // Reparent all children of t
+        foreach (Transform c in children) c.SetParent(t);
+    }
 }
 
 /// <summary> A dictionary keyed by two ints. </summary>

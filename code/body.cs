@@ -17,8 +17,17 @@ public class body : MonoBehaviour
     Vector3 init_local_pos;
     float lean = 0;
 
+    new Transform transform;
+
     void Start()
     {
+        // Replace my transform with one alligned to the player
+        transform = new GameObject("body").transform;
+        transform.rotation = character.rotation;
+        transform.position = base.transform.position;
+        transform.SetParent(base.transform.parent);
+        base.transform.SetParent(transform);
+
         legs = character.GetComponentsInChildren<leg>();
         init_local_pos = transform.localPosition;
     }
@@ -71,6 +80,8 @@ public class body : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.up * bob_amplitude);
+        Gizmos.DrawLine(
+            base.transform.position, 
+            base.transform.position + Vector3.up * bob_amplitude);
     }
 }

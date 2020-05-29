@@ -9,6 +9,7 @@ public class arm : MonoBehaviour
     public Transform hand;
 
     public leg following;
+    public float swing_multiplier = 3f;
 
     public Transform to_grab;
     public bool elbow_bends_backwards = false;
@@ -75,7 +76,9 @@ public class arm : MonoBehaviour
     {
         if (following == null) return;
 
-        float s = Mathf.Sin(following.progress * Mathf.PI);
+        float s = swing_multiplier * 
+            Mathf.Sin(following.progress * Mathf.PI) * 
+            following.step_length_boost;
 
         Vector3 shoulder_forward = initial_shoulder.forward + initial_shoulder.up * s / 2f;
         shoulder.rotation = Quaternion.LookRotation(shoulder_forward, initial_shoulder.up);

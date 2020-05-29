@@ -742,7 +742,7 @@ public class player : networked_player
         {
             float down_amt = Mathf.Abs(eye_transform.forward.y);
             down_amt /= eye_transform.forward.magnitude;
-            hc.z *= 1f + down_amt * 3f;
+            hc.z *= 1f + down_amt * 2.5f;
         }
         hand_centre.localPosition = hc;
     }

@@ -40,7 +40,7 @@ public class leg : MonoBehaviour
     public float min_footstep_pitch = 0.95f;
     public float max_footsetp_pitch = 1.05f;
 
-    float step_length_boost
+    public float step_length_boost
     {
         get
         {
@@ -102,21 +102,6 @@ public class leg : MonoBehaviour
     Vector3 test_start { get => step_front + Vector3.up * test_up_amt; }
     Vector3 test_end { get => step_front - Vector3.up * test_down_amt; }
 
-    void align_axes(Transform t, Quaternion rot)
-    {
-        // Unparent all children of t
-        List<Transform> children = new List<Transform>();
-        foreach (Transform c in t) children.Add(c);
-        foreach (var c in children) c.SetParent(null);
-
-        // Rotate t to the given alignment
-        Quaternion drot = rot * Quaternion.Inverse(t.rotation);
-        t.rotation = drot * t.rotation;
-
-        // Reparent all children of t
-        foreach (Transform c in children) c.SetParent(t);
-    }
-
     private void Start()
     {
         // Get the hip-to-ankle vector
@@ -138,13 +123,13 @@ public class leg : MonoBehaviour
         // to right/up).
         Vector3 right = Vector3.Cross(knee_bend_dir, whole_leg).normalized;
         Vector3 forward = Vector3.Cross(right, Vector3.up);
-        align_axes(transform, Quaternion.LookRotation(forward, Vector3.up));
+        utils.align_axes(transform, Quaternion.LookRotation(forward, Vector3.up));
 
         // Reorient the hip so that hip.down points to the knee
         var new_hip = new GameObject("hip").transform;
         new_hip.position = hip.position;
         new_hip.SetParent(transform);
-        align_axes(new_hip, Quaternion.LookRotation(thigh_forward, thigh_up));
+        new_hip.rotation = Quaternion.LookRotation(thigh_forward, thigh_up);
         hip.SetParent(new_hip);
         hip = new_hip;
 
@@ -152,7 +137,7 @@ public class leg : MonoBehaviour
         var new_knee = new GameObject("knee").transform;
         new_knee.position = knee.position;
         new_knee.SetParent(transform);
-        align_axes(new_knee, Quaternion.LookRotation(shin_forward, shin_up));
+        new_knee.rotation = Quaternion.LookRotation(shin_forward, shin_up);
         knee.SetParent(new_knee);
         knee = new_knee;
 
