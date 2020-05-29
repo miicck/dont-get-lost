@@ -24,7 +24,7 @@ public class player : networked_player
     public const float THROW_VELOCITY = 6f;
 
     // Where does the hand appear
-    public const float EYES_TO_HAND_DISTANCE = 0.3f;
+    public const float BASE_EYE_TO_HAND_DIS = 0.3f;
     public const float HAND_SCREEN_X = 0.9f;
     public const float HAND_SCREEN_Y = 0.1f;
 
@@ -301,9 +301,6 @@ public class player : networked_player
         }
     }
 
-    // The position of the hand when carrying an item at rest
-    public Transform hand_centre { get; private set; }
-
     UnityEngine.UI.Image crosshairs;
     public string cursor
     {
@@ -503,6 +500,8 @@ public class player : networked_player
         {
             float s = BASE_SPEED;
             if (crouched) s /= 2f;
+            else if (Input.GetKey(KeyCode.LeftControl)) s /= 10f;
+
             return s;
         }
     }
@@ -717,6 +716,13 @@ public class player : networked_player
     }
     bool _first_person;
 
+    // The position of the hand when carrying an item at rest
+    public Transform hand_centre { get; private set; }
+
+    /// <summary> The initial distance that the hand is from the camera,
+    /// along the camera.forward direction. </summary>
+    float init_hand_plane;
+
     void mouse_look_normal()
     {
         // Rotate the view using the mouse
@@ -728,6 +734,17 @@ public class player : networked_player
         if (yr != 0) y_rotation.value += yr;
 
         eye_transform.Rotate(-Input.GetAxis("Mouse Y") * 5f, 0, 0);
+
+        // Move the hand away from the eye if we're looking down
+        var hc = hand_centre.localPosition;
+        hc.z = init_hand_plane;
+        if (eye_transform.forward.y < 0)
+        {
+            float down_amt = Mathf.Abs(eye_transform.forward.y);
+            down_amt /= eye_transform.forward.magnitude;
+            hc.z *= 1f + down_amt * 3f;
+        }
+        hand_centre.localPosition = hc;
     }
 
     Vector2 mouse_look_velocity = Vector2.zero;
@@ -927,7 +944,8 @@ public class player : networked_player
              Screen.height * HAND_SCREEN_Y
              ));
         hand_centre.transform.position = camera.transform.position +
-            hand_ray.direction * EYES_TO_HAND_DISTANCE;
+            hand_ray.direction * BASE_EYE_TO_HAND_DIS;
+        init_hand_plane = hand_centre.localPosition.z;
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();

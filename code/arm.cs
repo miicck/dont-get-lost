@@ -16,10 +16,58 @@ public class arm : MonoBehaviour
     float bicep_length;
     float forearm_length;
 
+    Transform initial_shoulder;
+    Transform initial_elbow;
+
     private void Start()
     {
-        bicep_length = (elbow.transform.position - shoulder.transform.position).magnitude;
-        forearm_length = (hand.transform.position - elbow.transform.position).magnitude;
+        // Get the shoulder-to-arm vector
+        Vector3 whole_arm = hand.position - shoulder.position;
+
+        // The direction the elbow sticks out
+        Vector3 elbow_bend_dir = elbow.position - shoulder.position;
+        elbow_bend_dir -= Vector3.Project(elbow_bend_dir, whole_arm);
+        Vector3 right = Vector3.Cross(elbow_bend_dir, -whole_arm);
+
+        // Create a new shoulder object with
+        // rotation so that down points towards elbow
+        Transform shoulder_new = new GameObject("shoulder").transform;
+        shoulder_new.position = shoulder.position;
+        Vector3 shoulder_up = shoulder.position - elbow.position;
+        Vector3 shoulder_forward = Vector3.Cross(right, shoulder_up);
+        shoulder_new.rotation = Quaternion.LookRotation(shoulder_forward, shoulder_up);
+        shoulder_new.SetParent(transform);
+        shoulder.SetParent(shoulder_new);
+        shoulder = shoulder_new;
+
+        // Create a new elbow object with
+        //  rotation so that down points towards hand
+        Transform elbow_new = new GameObject("elbow").transform;
+        elbow_new.position = elbow.position;       
+        Vector3 elbow_up = elbow.position - hand.position;
+        Vector3 elbow_forward = Vector3.Cross(right, elbow_up);
+        elbow_new.rotation = Quaternion.LookRotation(elbow_forward, elbow_up);
+        elbow_new.SetParent(transform);
+        elbow.SetParent(elbow_new);
+        elbow = elbow_new;
+
+        bicep_length = (elbow.position - shoulder.position).magnitude;
+        forearm_length = (hand.position - elbow.position).magnitude;
+    
+        // Record the initial shoulder location + rotation
+        initial_shoulder = new GameObject("initial_shoulder").transform;
+        initial_shoulder.rotation = shoulder.rotation;
+        initial_shoulder.position = shoulder.position;
+        initial_shoulder.SetParent(transform);
+
+        // Record the initial elbow location + rotation
+        initial_elbow = new GameObject("initial_elbow").transform;
+        initial_elbow.rotation = elbow.rotation;
+        initial_elbow.position = elbow.position;
+        initial_elbow.SetParent(transform);
+
+        // Ensure parenting is correct
+        hand.transform.SetParent(elbow);
     }
 
     /// <summary> The arm follows the leg, so it looks like we're running </summary>
@@ -27,34 +75,36 @@ public class arm : MonoBehaviour
     {
         if (following == null) return;
 
-        // Shoulder rotation is half of thigh rotation
-        Quaternion thigh_rot = following.hip.rotation;
-        Quaternion sholder_rot = Quaternion.Lerp(transform.rotation, thigh_rot, 0.5f);
-        shoulder.transform.rotation = sholder_rot;
+        float s = Mathf.Sin(following.progress * Mathf.PI);
 
-        // Elbow rotation is same as thigh rotation, but can't bend backwards
-        elbow.transform.rotation = thigh_rot;
-        if (Vector3.Dot(elbow.transform.up, transform.forward) > 0)
-            elbow.transform.rotation = transform.rotation;
+        Vector3 shoulder_forward = initial_shoulder.forward + initial_shoulder.up * s / 2f;
+        shoulder.rotation = Quaternion.LookRotation(shoulder_forward, initial_shoulder.up);
+
+        elbow.position = shoulder.position - shoulder.up * bicep_length;
+
+        if (s < -0.5f) s = -0.5f;
+        Vector3 elbow_forward = initial_elbow.forward + initial_elbow.up * s;
+        elbow.rotation = Quaternion.LookRotation(elbow_forward, initial_elbow.up);
     }
 
-    /// <summary> The arm grabs grab_position. </summary>
+    /// <summary> The arm grabs grab_position. Maths is 
+    /// simmilar to <see cref="leg.solve_leg"/> </summary>
     void update_to_grab()
     {
         float a = bicep_length;
         float b = forearm_length;
-        Vector3 dvec = to_grab.position - shoulder.transform.position;
+        Vector3 dvec = to_grab.position - shoulder.position;
         float d = dvec.magnitude;
 
         Vector3 shoulder_elbow;
+        Vector3 elbow_bend_dir = Vector3.Cross(initial_shoulder.right, dvec.normalized);
 
         if (d > a + b) // Overstretched
         {
-            shoulder_elbow = dvec;
+            shoulder_elbow = dvec * a / (a + b);
         }
         else
         {
-
             // Work out lambda
             float lambda = d * d + b * b - a * a;
             lambda = b * b - lambda * lambda / (4 * d * d);
@@ -64,21 +114,21 @@ public class arm : MonoBehaviour
             float d1 = a * a - lambda * lambda;
             d1 = Mathf.Sqrt(d1);
 
-            if (!elbow_bends_backwards)
-                lambda = -lambda;
-
-            shoulder_elbow = d1 * dvec.normalized -
-                lambda * Vector3.Cross(transform.right, dvec.normalized);
+            shoulder_elbow = d1 * dvec.normalized +
+                lambda * elbow_bend_dir;
         }
 
-        shoulder.transform.rotation = Quaternion.LookRotation(
-            Vector3.Cross(shoulder_elbow, transform.right), -shoulder_elbow
-        );
+        elbow.position = shoulder.position + shoulder_elbow;
+        Vector3 right = Vector3.Cross(dvec, elbow_bend_dir);
 
-        Vector3 elbow_wrist = to_grab.position - elbow.transform.position;
-        elbow.transform.rotation = Quaternion.LookRotation(
-            Vector3.Cross(elbow_wrist, transform.right), -elbow_wrist
-        );
+        Vector3 shoulder_up = shoulder.position - elbow.position;
+        Vector3 sholder_fw = Vector3.Cross(right, shoulder_up);
+        shoulder.rotation = Quaternion.LookRotation(sholder_fw, shoulder_up);
+
+        Vector3 elbow_up = elbow.position - to_grab.position;
+        Vector3 elbow_fw = Vector3.Cross(right, elbow_up);
+        elbow.rotation = Quaternion.LookRotation(elbow_fw, elbow_up);
+
     }
 
     private void Update()
@@ -92,7 +142,13 @@ public class arm : MonoBehaviour
         if (shoulder != null && elbow != null)
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawLine(shoulder.transform.position, elbow.transform.position);
+            Gizmos.DrawLine(shoulder.position, elbow.position);
+        }
+
+        if (elbow != null && hand != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(elbow.position, hand.position);
         }
 
         if (to_grab != null)

@@ -523,6 +523,8 @@ public class int_rect
     public int top { get; protected set; }
     public int width { get => right - left; }
     public int height { get => top - bottom; }
+    public int centre_x { get => (right + left) / 2; }
+    public int centre_z { get => (top + bottom) / 2; }
 
     public bool is_edge(int edge_width, int x, int z)
     {

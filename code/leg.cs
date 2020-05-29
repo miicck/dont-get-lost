@@ -22,9 +22,9 @@ public class leg : MonoBehaviour
     public float max_leg_stretch = 1.5f;
 
     public Vector3 velocity { get; private set; }
+    public float progress { get; private set; }
     Transform step_centre;
     Vector3 position_last;
-    float progress;
     bool contact_made_this_step;
     Vector3 grounding;
     float thigh_length;
@@ -119,24 +119,24 @@ public class leg : MonoBehaviour
 
     private void Start()
     {
-        // Get the hip-to-foot vector
-        Vector3 whole_leg = foot_base.position - hip.position;
+        // Get the hip-to-ankle vector
+        Vector3 whole_leg = ankle.position - hip.position;
 
         // Work out the direction the knee should bend in
-        Vector3 knee_forward = knee.position - hip.position;
-        knee_forward -= Vector3.Project(knee_forward, whole_leg);
-        if (knee_forward.magnitude < EPS_MAG)
+        Vector3 knee_bend_dir = knee.position - hip.position;
+        knee_bend_dir -= Vector3.Project(knee_bend_dir, whole_leg);
+        if (knee_bend_dir.magnitude < EPS_MAG)
         {
             string err = "Knee must be sligtly in front of the hip -> ankle line!";
             err += " (" + name + ")";
             throw new System.Exception(err);
         }
-        knee_forward.Normalize();
+        knee_bend_dir.Normalize();
 
         // Work out the right direction (perpendicular to the knee 
         // bend direction) and the forward direction (perpendicular 
         // to right/up).
-        Vector3 right = Vector3.Cross(knee_forward, whole_leg).normalized;
+        Vector3 right = Vector3.Cross(knee_bend_dir, whole_leg).normalized;
         Vector3 forward = Vector3.Cross(right, Vector3.up);
         align_axes(transform, Quaternion.LookRotation(forward, Vector3.up));
 
@@ -345,6 +345,15 @@ public class leg : MonoBehaviour
 
     }
 
+    float flick_amount
+    {
+        get
+        {
+            if (progress < 1.5f) return 0f;
+            return 0.25f * step_length * (progress - 1.5f) / 0.5f;
+        }
+    }
+
     private void Update()
     {
         Vector3 delta = step_centre.position - position_last;
@@ -373,12 +382,16 @@ public class leg : MonoBehaviour
         {
             // Foot moving backwards on the ground
             if (!contact_made_this_step) make_contact(step_front);
-            if (grounded) move_foot_towards(grounding);
+
+            if (grounded)
+            {
+                move_foot_towards(grounding + Vector3.up * flick_amount);
+            }
             else
             {
                 float bw_progresss = progress;
                 Vector3 line_point = step_back * bw_progresss + step_front * (1 - bw_progresss);
-                move_foot_towards(line_point);
+                move_foot_towards(line_point + Vector3.up * flick_amount);
             }
         }
         else
