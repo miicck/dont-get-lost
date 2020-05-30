@@ -47,8 +47,7 @@ public class player : networked_player
         if (!has_authority) return;
         if (options_menu.open) return;
 
-        if (Input.GetKeyDown(KeyCode.Tab)) inspect_info.visible = true;
-        if (Input.GetKeyUp(KeyCode.Tab)) inspect_info.visible = false;
+        inspect_info.visible = Input.GetKey(KeyCode.Tab);
 
         if (Input.GetKeyDown(KeyCode.F1))
             cinematic_mode = !cinematic_mode;
