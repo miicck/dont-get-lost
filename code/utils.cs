@@ -59,7 +59,6 @@ public static class utils
     public delegate bool accept_func<T>(T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
         float max_distance = float.MaxValue, accept_func<T> accept = null)
-        where T : Component
     {
         float min_dis = float.MaxValue;
         hit = new RaycastHit();
@@ -276,6 +275,22 @@ public static class utils
 
         // Reparent all children of t
         foreach (Transform c in children) c.SetParent(t);
+    }
+
+    public static string a_or_an(string name)
+    {
+        string n = name.Trim().ToLower();
+        switch(n[0])
+        {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                return "an";
+            default:
+                return "a";
+        }
     }
 }
 

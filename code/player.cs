@@ -47,6 +47,9 @@ public class player : networked_player
         if (!has_authority) return;
         if (options_menu.open) return;
 
+        if (Input.GetKeyDown(KeyCode.Tab)) inspect_info.visible = true;
+        if (Input.GetKeyUp(KeyCode.Tab)) inspect_info.visible = false;
+
         if (Input.GetKeyDown(KeyCode.F1))
             cinematic_mode = !cinematic_mode;
 
@@ -486,6 +489,27 @@ public class player : networked_player
             }
         }
     }
+
+    //############//
+    // INSPECTION //
+    //############//
+
+    inspect_info inspect_info
+    {
+        get
+        {
+            // Create the inspect_info object if it doesn't already exist
+            if (_inspect_info == null)
+            {
+                _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst();
+                _inspect_info.transform.SetParent(FindObjectOfType<Canvas>().transform);
+                _inspect_info.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            }
+
+            return _inspect_info;
+        }
+    }
+    inspect_info _inspect_info;
 
     //###########//
     //  MOVEMENT //

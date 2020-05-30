@@ -16,7 +16,12 @@ public class inventory : networked
     {
         bool ret = contents.add(item, count);
         if (player.current != null && transform.IsChildOf(player.current.transform))
-            popup_message.create("+ " + count + " " + item + " (" + contents.contents()[item] + ")");
+        {
+            item itm = Resources.Load<item>("items/" + item);
+            string msg = "+ " + count + " " + (count > 1 ? itm.plural : itm.name);
+            msg += " (" + contents.contents()[item] + ")";
+            popup_message.create(msg);
+        }
         return ret;
     }
 

@@ -4,29 +4,7 @@ using UnityEngine;
 
 public class building_material : item
 {
-    //###########//
-    // CONSTANTS //
-    //###########//
-
     public const float BUILD_RANGE = 5f;
-    public float build_range_from_camera
-    {
-        get
-        {
-            if (player.current.first_person)
-                return BUILD_RANGE;
-
-            Vector3 cam_to_eye =
-                player.current.eye_transform.position -
-                player.current.camera.transform.position;
-
-            float boost = Vector3.Project(
-                player.current.camera.transform.forward,
-                cam_to_eye).magnitude;
-
-            return BUILD_RANGE + boost;
-        }
-    }
 
     //#########//
     // WELDING //
@@ -218,7 +196,7 @@ public class building_material : item
     // ITEM USE //
     //##########//
 
-    snap_point closest_to_ray(Ray ray)
+    snap_point closest_to_ray(Ray ray, float ray_distance)
     {
         snap_point ret = null;
 
@@ -226,7 +204,7 @@ public class building_material : item
         // snap_point to the raycast hit
         RaycastHit hit;
         if (utils.raycast_for_closest<item>(
-            ray, out hit, build_range_from_camera,
+            ray, out hit, ray_distance,
             (t) => t == this))
         {
             // Find the nearest snap point to the hit
@@ -276,12 +254,14 @@ public class building_material : item
         }
     }
 
-    building_material spawn_from_inventory_and_fix_to(building_material other, RaycastHit hit)
+    building_material spawn_from_inventory_and_fix_to(
+        building_material other, RaycastHit hit,
+        Ray player_ray, float ray_distance)
     {
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
 
-        snap_point snap_to = other.closest_to_ray(player.current.camera_ray());
+        snap_point snap_to = other.closest_to_ray(player_ray, ray_distance);
 
         if (snap_to == null)
         {
@@ -322,6 +302,11 @@ public class building_material : item
 
     public override use_result on_use_start(player.USE_TYPE use_type)
     {
+        // Get the ray to cast along, that stays within 
+        // BUILD_RANGE of the player
+        float raycast_distance = 0;
+        var camera_ray = player.current.camera_ray(BUILD_RANGE, out raycast_distance);
+
         if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
         {
             // Stop cancelling a build with right-click from immediately 
@@ -333,24 +318,35 @@ public class building_material : item
             // Right click destroys items of the same kind
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
-                player.current.camera_ray(), out same_hit, build_range_from_camera, (b) => b.name == name);
+                camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
             if (found_same != null)
                 if (player.current.inventory.add(name, 1))
                     found_same.delete();
             return use_result.complete;
         }
 
-        // Only have a left click action
+        // Only allow left click action from here
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
 
+        // Find a building_material under cursor
         RaycastHit hit;
-        var bm = utils.raycast_for_closest<building_material>(player.current.camera_ray(), out hit, build_range_from_camera);
-        if (bm != null)
-            spawned = spawn_from_inventory_and_fix_to(bm, hit);
-        else if (Physics.Raycast(player.current.camera_ray(), out hit, build_range_from_camera))
-            spawned = spawn_from_inventory_and_fix_at(hit);
+        var bm = utils.raycast_for_closest<building_material>(
+            camera_ray, out hit, raycast_distance);
 
+        // If a building material is found, fix new build to it
+        // otherwise, just fix to any solid object
+        if (bm != null)
+            spawned = spawn_from_inventory_and_fix_to(bm, hit, camera_ray, raycast_distance);
+        else
+        {
+            var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
+                (c) => !c.transform.IsChildOf(player.current.transform));
+
+            if (col != null) spawned = spawn_from_inventory_and_fix_at(hit);
+        }
+
+        // Move onto rotation stage if something was spawned
         if (spawned != null) return use_result.underway_allows_none;
         return use_result.complete;
     }

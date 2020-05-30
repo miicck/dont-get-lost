@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class pick_by_hand : MonoBehaviour
+/// <summary> Part of a world object that can be picked by hand
+/// to yield a product, and takes time to regrow. </summary>
+public class pick_by_hand : MonoBehaviour, IInspectable
 {
     public float regrow_time = 1f;
     public string item_to_pick = "lettuce";
     public int quantity_to_pick = 1;
     public AudioClip play_on_pick;
     public float play_on_pick_volume = 1f;
+
+    item pick_item { get => Resources.Load<item>("items/" + item_to_pick); }
 
     AudioSource source;
 
@@ -40,7 +44,7 @@ public class pick_by_hand : MonoBehaviour
         var wo = GetComponentInParent<world_object>();
 
         var woh = (world_object_harvested)
-            client.create(wo.transform.position, 
+            client.create(wo.transform.position,
             "misc/world_object_harvested");
 
         woh.x_in_chunk.value = wo.x_in_chunk;
@@ -48,5 +52,20 @@ public class pick_by_hand : MonoBehaviour
         woh.timeout.value = regrow_time;
 
         player.current.inventory.add(item_to_pick, quantity_to_pick);
+    }
+
+    public string inspect_info()
+    {
+        return pick_item.plural + " can bn picked by hand";
+    }
+
+    public Sprite main_sprite()
+    {
+        return pick_item.sprite;
+    }
+
+    public Sprite secondary_sprite()
+    {
+        return Resources.Load<Sprite>("sprites/default_interact_cursor");
     }
 }

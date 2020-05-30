@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 278741605361968175}
   - component: {fileID: 2857990679801850892}
   m_Layer: 0
-  m_Name: 4_stick
+  m_Name: stick
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,6 +134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: b8707173d183ceb4aaab62608b95b419, type: 3}
+  plural: planks
 --- !u!1 &8721397989101648849
 GameObject:
   m_ObjectHideFlags: 0
