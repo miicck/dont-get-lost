@@ -7,12 +7,9 @@ using UnityEngine;
 public class pick_by_hand : MonoBehaviour, IInspectable
 {
     public float regrow_time = 1f;
-    public string item_to_pick = "lettuce";
-    public int quantity_to_pick = 1;
+    public product product;
     public AudioClip play_on_pick;
     public float play_on_pick_volume = 1f;
-
-    item pick_item { get => Resources.Load<item>("items/" + item_to_pick); }
 
     AudioSource source;
 
@@ -51,17 +48,17 @@ public class pick_by_hand : MonoBehaviour, IInspectable
         woh.z_in_chunk.value = wo.z_in_chunk;
         woh.timeout.value = regrow_time;
 
-        player.current.inventory.add(item_to_pick, quantity_to_pick);
+        product.create_in_inventory(player.current.inventory.contents);
     }
 
     public string inspect_info()
     {
-        return pick_item.plural + " can bn picked by hand";
+        return product.product_name_plural() + " can bn harvested by hand";
     }
 
     public Sprite main_sprite()
     {
-        return pick_item.sprite;
+        return product.sprite();
     }
 
     public Sprite secondary_sprite()

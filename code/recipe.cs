@@ -4,19 +4,25 @@ using UnityEngine;
 
 public class recipe : MonoBehaviour
 {
-    public product product;
+    public List<product> products;
     public List<ingredient> ingredients;
 
     public crafting_entry get_entry()
     {
         var ce = crafting_entry.create();
-        ce.image.sprite = product.sprite();
+        ce.image.sprite = products[0].sprite();
         ce.text.text = "";
+
         foreach (var i in ingredients)
             ce.text.text += i.str() + " + ";
         ce.text.text = ce.text.text.Substring(0, ce.text.text.Length - 2);
 
-        ce.text.text += "> " + product.crafting_string();
+        ce.text.text += "> ";
+
+        foreach (var p in products)
+            ce.text.text += p.crafting_string() + " + ";
+        ce.text.text = ce.text.text.Substring(0, ce.text.text.Length - 2);
+
         return ce;
     }
 
@@ -33,7 +39,8 @@ public class recipe : MonoBehaviour
         if (!can_craft(from)) return;
         foreach (var ing in ingredients)
             ing.on_craft(from);
-        product.on_craft(to);
+        foreach (var p in products)
+            p.create_in_inventory(to);
     }
 }
 
@@ -47,6 +54,8 @@ public abstract class ingredient : MonoBehaviour
 public abstract class product : MonoBehaviour
 {
     public abstract string crafting_string();
-    public abstract void on_craft(inventory_section to);
+    public abstract string product_name();
+    public abstract string product_name_plural();
+    public abstract void create_in_inventory(inventory_section inv);
     public abstract Sprite sprite();
 }

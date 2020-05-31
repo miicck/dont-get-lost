@@ -892,6 +892,11 @@ public class player : networked_player
             (-b + Mathf.Sqrt(b*b-4*c))/2f,
         };
 
+        // If the camera is inside the sphere, the in solution
+        // is behind the camera, move it forward to the camera
+        if (cvec.magnitude < max_range_from_player)
+            interval[0] = 0;
+
         distance = interval[1] - interval[0];
         return new Ray(ray.origin + interval[0] * ray.direction, ray.direction);
     }

@@ -43,6 +43,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  product: {fileID: 5081333389596564324, guid: 0dcb9cddff9fe24489ffc0f6e9b3ceb4, type: 3}
+  products:
+  - {fileID: 5081333389596564324, guid: 0dcb9cddff9fe24489ffc0f6e9b3ceb4, type: 3}
+  - {fileID: 5081333389596564324, guid: 626b64b208cf9034c98205c3ab74fb54, type: 3}
   ingredients:
   - {fileID: 8683897040918789808, guid: bd106dd28d12dcc49a381fa799921f21, type: 3}

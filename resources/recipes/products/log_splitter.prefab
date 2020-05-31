@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6443868640840716121}
   - component: {fileID: 5081333389596564324}
   m_Layer: 0
-  m_Name: log_splitting_station
+  m_Name: log_splitter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,4 +44,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 7834596815681828916, guid: 70c668a92a1126f499deb89518324205, type: 3}
-  count: 1
+  min_count: 1
+  max_count: 1
+  mode: 0

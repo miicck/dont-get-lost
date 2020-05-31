@@ -15,6 +15,8 @@ MonoBehaviour:
   regrow_time: 1
   item_to_pick: apple
   quantity_to_pick: 5
+  play_on_pick: {fileID: 0}
+  play_on_pick_volume: 1
 --- !u!1 &5694373993177165095
 GameObject:
   m_ObjectHideFlags: 0
@@ -70,6 +72,7 @@ MonoBehaviour:
   min_terrain_angle: 0
   random_move_amplitude: 0
   inherit_terrain_color: 0
+  fixed_altitude: -1
   randomize_color_on: {fileID: 0}
 --- !u!114 &8211653758997630590
 MonoBehaviour:
@@ -83,8 +86,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  product: log
-  tool: axe
+  product: {fileID: 5081333389596564324, guid: 3cfcbd78ea592fc4e98cd8036e13e83c, type: 3}
+  tool: {fileID: -7063243170304937286, guid: d42050e3acc45e048baa8234afb2df42, type: 3}
 --- !u!1001 &5694373993941890066
 PrefabInstance:
   m_ObjectHideFlags: 0

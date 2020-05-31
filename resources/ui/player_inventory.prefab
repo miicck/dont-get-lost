@@ -162,6 +162,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   left_expansion_point: {fileID: 0}
+  is_player_inventory: 0
 --- !u!114 &1461431723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,6 +395,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   left_expansion_point: {fileID: 0}
+  is_player_inventory: 0
 --- !u!1 &3719522317600806876
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,6 +674,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   left_expansion_point: {fileID: 0}
+  is_player_inventory: 0
 --- !u!1 &4922385182657336514
 GameObject:
   m_ObjectHideFlags: 0
@@ -734,6 +737,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   left_expansion_point: {fileID: 324448780633128876}
+  is_player_inventory: 1
 --- !u!1 &4954353463424663347
 GameObject:
   m_ObjectHideFlags: 0

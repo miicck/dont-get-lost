@@ -377,6 +377,12 @@ public class networked : MonoBehaviour
             kv.Value.network_update();
     }
 
+    public string network_info()
+    {
+        return "Network id = " + network_id + "\n" +
+               "Has authority = " + has_authority;
+    }
+
     public static int object_count { get => objects.Count; }
 
 #if UNITY_EDITOR
@@ -388,9 +394,11 @@ public class networked : MonoBehaviour
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            var nw = (networked)target;
-            UnityEditor.EditorGUILayout.IntField("Network ID", nw.network_id);
-            UnityEditor.EditorGUILayout.Toggle("Has authority", nw.has_authority);
+            if (Application.isPlaying)
+            {
+                var nw = (networked)target;
+                UnityEditor.EditorGUILayout.TextArea("Network info\n" + nw.network_info());
+            }
         }
     }
 

@@ -10,7 +10,7 @@ public class item_ingredient : ingredient
     public override string str()
     {
         if (count > 1) return count + " " + item.plural;
-        return item.display_name();
+        return item.display_name;
     }
 
     public override bool in_inventory(inventory_section i)

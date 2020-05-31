@@ -55,6 +55,7 @@ MonoBehaviour:
   min_terrain_angle: 0
   random_move_amplitude: 0
   inherit_terrain_color: 0
+  fixed_altitude: -1
   randomize_color_on: {fileID: 0}
 --- !u!114 &9178569149703883962
 MonoBehaviour:
@@ -68,8 +69,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  product: charcoal
-  tool: axe
+  product: {fileID: 5081333389596564324, guid: 0733d19dedf9da14094402c1d584564f, type: 3}
+  tool: {fileID: -7063243170304937286, guid: d42050e3acc45e048baa8234afb2df42, type: 3}
 --- !u!1001 &708413639769299536
 PrefabInstance:
   m_ObjectHideFlags: 0

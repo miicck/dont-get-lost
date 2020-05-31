@@ -5,6 +5,7 @@ using UnityEngine;
 public class building_material : item
 {
     public const float BUILD_RANGE = 5f;
+    public float axes_scale = 1f;
 
     //#########//
     // WELDING //
@@ -42,7 +43,10 @@ public class building_material : item
                     return; // No change
 
                 if (value)
+                {
                     axes = Resources.Load<axes>("misc/axes").inst();
+                    axes.transform.localScale = Vector3.one * to_weld.axes_scale;
+                }
                 else
                     Destroy(axes.gameObject);
             }
@@ -300,12 +304,13 @@ public class building_material : item
         return true;
     }
 
+    Ray camera_ray;
     public override use_result on_use_start(player.USE_TYPE use_type)
     {
         // Get the ray to cast along, that stays within 
         // BUILD_RANGE of the player
         float raycast_distance = 0;
-        var camera_ray = player.current.camera_ray(BUILD_RANGE, out raycast_distance);
+        camera_ray = player.current.camera_ray(BUILD_RANGE, out raycast_distance);
 
         if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
         {
@@ -386,5 +391,10 @@ public class building_material : item
 
         spawned = null;
         player.current.re_equip();
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawLine(camera_ray.origin, camera_ray.origin + camera_ray.direction);
     }
 }

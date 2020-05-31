@@ -6,17 +6,14 @@ using UnityEngine;
 /// to yield a specific product, repeatedly. </summary>
 public class harvestable : accepts_item_impact, IInspectable
 {
-    public string product = "log";
-    public string tool = "axe";
-
-    item product_item { get => Resources.Load<item>("items/" + product); }
-    item tool_item { get => Resources.Load<item>("items/" + tool); }
+    public product product;
+    public melee_weapon tool;
 
     public override bool on_impact(item i)
     {
-        if (i.name == tool)
+        if (i.name == tool.name)
         {
-            player.current.inventory.add(product, 1);
+            product.create_in_inventory(player.current.inventory.contents);
             return true;
         }
         return false;
@@ -24,17 +21,17 @@ public class harvestable : accepts_item_impact, IInspectable
 
     public string inspect_info()
     {
-        return product_item.plural + " can be harvested with " + 
-               utils.a_or_an(tool) + " " + tool;
+        return product.product_name_plural() + " can be harvested with " +
+               utils.a_or_an(tool.display_name) + " " + tool.display_name;
     }
 
     public Sprite main_sprite()
     {
-        return product_item.sprite;
+        return product.sprite();
     }
 
     public Sprite secondary_sprite()
     {
-        return tool_item.sprite;
+        return tool.sprite;
     }
 }

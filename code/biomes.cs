@@ -50,6 +50,11 @@ public class mangroves : biome
                 else if (random.range(0, 500) == 0)
                     p.object_to_generate = world_object.load("mossy_log");
 
+                else if (p.altitude < point.BEACH_END &&
+                         p.altitude > world.SEA_LEVEL &&
+                         random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("flint");
+
                 grid[i, j] = p;
             }
     }
@@ -236,6 +241,9 @@ public class mountains : biome
                 {
                     float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
                     p.terrain_color = Color.Lerp(terrain_colors.grass, terrain_colors.rock, r);
+
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("slate");
                 }
 
                 // Generate these objects between sea-level and rock-level
