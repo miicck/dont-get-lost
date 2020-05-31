@@ -4,22 +4,22 @@ using UnityEngine;
 
 public class item_product : product
 {
-    public string item;
+    public item item;
     public int count;
 
     public override string crafting_string()
     {
-        if (count > 1) return item + " x " + count;
-        else return item;
+        if (count > 1) return count + item.plural;
+        else return item.display_name();
     }
 
     public override void on_craft(inventory_section to)
     {
-        to.add(item, count);
+        to.add(item.name, count);
     }
 
     public override Sprite sprite()
     {
-        return Resources.Load<item>("items/" + item).sprite;
+        return item.sprite;
     }
 }

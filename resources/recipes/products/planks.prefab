@@ -43,5 +43,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4173f8207b305ba40a662e9a2bd6ef65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: planks
+  item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
   count: 1

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6954976732035254712}
   - component: {fileID: 8683897040918789808}
   m_Layer: 0
-  m_Name: charcoal_x1
+  m_Name: log_x4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,5 +43,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 3463273078711589885, guid: afca0d03acdf50d40aaf5fa59af44cb4, type: 3}
-  count: 1
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  count: 4

@@ -12,6 +12,11 @@ public class item : networked
     public string plural;
     public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
 
+    public string display_name()
+    {
+        return name.Replace('_', ' ');
+    }
+
     /// <summary> The rigidbody controlling physics for this item 
     /// (creates if it doesn't already exist). </summary>
 #if UNITY_EDITOR

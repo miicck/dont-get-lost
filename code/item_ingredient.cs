@@ -4,25 +4,25 @@ using UnityEngine;
 
 public class item_ingredient : ingredient
 {
-    public string item_name;
+    public item item;
     public int count;
 
     public override string str()
     {
-        if (count > 1) return count + " " + item_name;
-        return item_name;
+        if (count > 1) return count + " " + item.plural;
+        return item.display_name();
     }
 
     public override bool in_inventory(inventory_section i)
     {
         foreach (var s in i.slots)
-            if (s.item == item_name && s.count >= count)
+            if (s.item == item.name && s.count >= count)
                 return true;
         return false;
     }
 
     public override void on_craft(inventory_section i)
     {
-        i.remove(item_name, count);
+        i.remove(item.name, count);
     }
 }
