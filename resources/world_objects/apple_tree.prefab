@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regrow_time: 1
-  item_to_pick: apple
-  quantity_to_pick: 5
-  play_on_pick: {fileID: 0}
+  product: {fileID: 5081333389596564324, guid: 62de962f48904cf4ca2786c9807535f8, type: 3}
+  play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
   play_on_pick_volume: 1
 --- !u!1 &5694373993177165095
 GameObject:

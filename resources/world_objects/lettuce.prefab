@@ -26,8 +26,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   regrow_time: 30
-  item_to_pick: lettuce
-  quantity_to_pick: 1
+  product: {fileID: 5081333389596564324, guid: 6c908190ad662a641b1283df0f50c8ba, type: 3}
+  play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
+  play_on_pick_volume: 1
 --- !u!1 &6690538587086003739
 GameObject:
   m_ObjectHideFlags: 0
@@ -87,6 +88,7 @@ MonoBehaviour:
   min_terrain_angle: 0
   random_move_amplitude: 0
   inherit_terrain_color: 0
+  fixed_altitude: -1
   randomize_color_on: {fileID: 0}
 --- !u!1001 &2264577494805444376
 PrefabInstance:
