@@ -1026,11 +1026,6 @@ public class player : networked_player
     {
         // Create the inventory
         client.create(transform.position, "misc/player_inventory", parent: this);
-
-        // Player starts with an axe
-        inventory.add("axe", 1);
-        inventory.add("pickaxe", 1);
-        inventory.add("furnace", 1);
     }
 
     void add_controller()

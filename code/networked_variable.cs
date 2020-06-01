@@ -251,5 +251,10 @@ namespace networked_variables
 
             return new_dict;
         }
+
+        protected override SortedDictionary<string, int> default_value()
+        {
+            return new SortedDictionary<string, int>();
+        }
     }
 }

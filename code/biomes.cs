@@ -51,9 +51,13 @@ public class mangroves : biome
                     p.object_to_generate = world_object.load("mossy_log");
 
                 else if (p.altitude < point.BEACH_END &&
-                         p.altitude > world.SEA_LEVEL &&
-                         random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("flint");
+                         p.altitude > world.SEA_LEVEL)
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint");
+                    else if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint_piece");
+                }
 
                 grid[i, j] = p;
             }
