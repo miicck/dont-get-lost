@@ -1,19 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &2782755981596081066
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7029828633783653765}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  product: {fileID: 5081333389596564324, guid: 9cff80de28e0e95428451655fb68f662, type: 3}
-  tool: {fileID: 8203345796614698957, guid: 895ad34d6e489d743b10e9a41cac9efa, type: 3}
 --- !u!114 &6672583733566807371
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27,7 +13,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   product: {fileID: 5081333389596564324, guid: 9cff80de28e0e95428451655fb68f662, type: 3}
-  tool: {fileID: 8203345796614698957, guid: 895ad34d6e489d743b10e9a41cac9efa, type: 3}
+  tool: {fileID: 6404131038158855240}
+--- !u!114 &2782755981596081066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7029828633783653765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  product: {fileID: 5081333389596564324, guid: 9cff80de28e0e95428451655fb68f662, type: 3}
+  tool: {fileID: 6404131038158855240}
 --- !u!1 &8586480640683914011
 GameObject:
   m_ObjectHideFlags: 0
@@ -85,6 +85,22 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+--- !u!114 &6404131038158855240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8759248583802437259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 1
+  tool_quality: 0
 --- !u!1001 &769824422842099586
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -179,6 +195,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7ae65126c92aafd49a37206835450a4e, type: 3}
+--- !u!1 &8759248583802437259 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 7ae65126c92aafd49a37206835450a4e,
+    type: 3}
+  m_PrefabInstance: {fileID: 769824422842099586}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5752297345206570136 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 7ae65126c92aafd49a37206835450a4e,

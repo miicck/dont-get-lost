@@ -70,7 +70,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   product: {fileID: 5081333389596564324, guid: 5351f365105fa744f9a57e73657b8f44, type: 3}
-  tool: {fileID: 8203345796614698957, guid: 895ad34d6e489d743b10e9a41cac9efa, type: 3}
+  tool: {fileID: 885409008433755833}
+--- !u!114 &885409008433755833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6140138860899931955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 1
+  tool_quality: 0
 --- !u!1001 &2744885516054580794
 PrefabInstance:
   m_ObjectHideFlags: 0

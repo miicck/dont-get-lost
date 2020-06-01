@@ -7,11 +7,11 @@ using UnityEngine;
 public class harvestable : accepts_item_impact, IInspectable
 {
     public product product;
-    public melee_weapon tool;
+    public item_requirement tool;
 
     public override bool on_impact(item i)
     {
-        if (i.name == tool.name)
+        if (tool.satisfied(i))
         {
             product.create_in_inventory(player.current.inventory.contents);
             return true;
