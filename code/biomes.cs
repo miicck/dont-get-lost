@@ -320,7 +320,6 @@ public class farmland : biome
             LETTUCE,
             POTATO,
             APPLE,
-            FARMYARD,
             WOODLAND,
         }
 
@@ -329,11 +328,6 @@ public class farmland : biome
         {
             int length = System.Enum.GetNames(typeof(TYPE)).Length;
             type = (TYPE)random.range(0, length);
-
-            // Don't allow a farmyard in the blended region
-            while (type == TYPE.FARMYARD &&
-                (in_blend_region(left, bottom) || in_blend_region(right, top)))
-                type = (TYPE)random.range(0, length);
         }
 
         public TYPE type { get; private set; }
@@ -426,17 +420,6 @@ public class farmland : biome
                             if (random.range(0, 100) == 0)
                                 p.object_to_generate = world_object.load("bush");
 
-                            break;
-
-
-                        case TYPE.FARMYARD:
-
-                            p.terrain_color = terrain_colors.dirt;
-                            if (x == left && z == bottom)
-                            {
-                                p.object_to_generate = world_object.load("farmyard");
-                                p.gen_info = new int[] { width, height };
-                            }
                             break;
 
                         default:
