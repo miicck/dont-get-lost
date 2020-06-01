@@ -2,40 +2,87 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> A product is triggered by some event, leading to 
+/// items potentially being added to the player inventory. </summary>
 public class product : MonoBehaviour
 {
+    /// <summary> The different ways that a product can be created. </summary>
     public enum MODE
     {
         SIMPLE,
         RANDOM_AMOUNT,
     }
 
+    /// <summary> The way this product is created. </summary>
     public MODE mode;
+
+    /// <summary> The item (if any) that this product produces. </summary>
     public item item;
+
+    /// <summary> The minimum count of this product to be produced. </summary>
     public int min_count = 1;
+
+    /// <summary> The maximum count of this product to be produced. </summary>
     public int max_count = 1;
 
+    /// <summary> The display name of this product. </summary>
     public string product_name()
     {
-        return item.display_name;
+        switch(mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                return item.display_name;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }      
     }
 
-
+    /// <summary> The display name of this product, pluralized. </summary>
     public string product_name_plural()
     {
-        return item.plural;
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                return item.plural;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }
     }
 
+    /// <summary> Called when this product is produced in the given inventory. </summary>
     public void create_in_inventory(inventory_section inv)
     {
-        inv.add(item.name, Random.Range(min_count, max_count + 1));
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                inv.add(item.name, Random.Range(min_count, max_count + 1));
+                break;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }     
     }
 
+    /// <summary> A sprite representing the product. </summary>
     public Sprite sprite()
     {
-        return item.sprite;
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                return item.sprite;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }
     }
 
+    /// <summary> Convert a list of products to a string describing that list. </summary>
     public static string product_list(IList<product> products)
     {
         string ret = "";
@@ -52,11 +99,15 @@ public class product : MonoBehaviour
         return ret;
     }
 
+    //###############//
+    // CUSTOM EDITOR //
+    //###############//
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(product))]
     class editor : UnityEditor.Editor
     {
+        /// <summary> Create a dropdown to select the product mode. </summary>
         void select_mode(product p)
         {
             var new_mode = (MODE)UnityEditor.EditorGUILayout.EnumPopup("mode", p.mode);
@@ -67,6 +118,7 @@ public class product : MonoBehaviour
             }
         }
 
+        /// <summary> Create a dropdown to select the item produced. </summary>
         void select_item(product p)
         {
             var new_item = (item)UnityEditor.EditorGUILayout.ObjectField("item", p.item, typeof(item), false);
