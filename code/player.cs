@@ -281,7 +281,7 @@ public class player : networked_player
         }
 
         // Then attempt to pick items by hand
-        var pick_by_hand = utils.raycast_for_closest<pick_by_hand>(ray, out hit, dis);
+        var pick_by_hand = utils.raycast_for_closest<harvest_by_hand>(ray, out hit, dis);
         if (pick_by_hand != null)
         {
             pick_by_hand.on_pick();
