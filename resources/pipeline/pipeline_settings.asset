@@ -227,7 +227,7 @@ MonoBehaviour:
       cubeCookieTexArraySize: 16
       cookieAtlasLastValidMip: 0
       cookieTexArraySize: 1
-      planarReflectionAtlasSize: 1024
+      planarReflectionAtlasSize: 2048
       reflectionProbeCacheSize: 16
       reflectionCubemapSize: 128
       reflectionCacheCompressed: 0

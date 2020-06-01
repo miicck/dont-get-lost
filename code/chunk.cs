@@ -175,6 +175,7 @@ public class chunk : MonoBehaviour
     void begin_generation()
     {
         // Create the water level
+        /*
         var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
         Destroy(water.GetComponent<Collider>());
         water.transform.SetParent(transform);
@@ -192,6 +193,7 @@ public class chunk : MonoBehaviour
         water_bottom.transform.SetParent(water.transform);
         water_bottom.transform.localPosition = Vector3.zero;
         water_bottom.transform.forward = Vector3.up;
+        */
 
         // Create the terrain object, collider and datastructure
         terrain = new GameObject("terrain").AddComponent<Terrain>();
@@ -377,7 +379,7 @@ public class chunk : MonoBehaviour
 
     // The objects that have been created in this chunk, 
     // indexed by their x, z coordinates within the chunk
-    two_int_dictionary<world_object> objects_created = 
+    two_int_dictionary<world_object> objects_created =
         new two_int_dictionary<world_object>();
 
     // Called when the chunk has finished generating

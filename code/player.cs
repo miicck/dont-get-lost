@@ -564,9 +564,10 @@ public class player : networked_player
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
-                // Doesn't affect the obscurers
+                // Doesn't affect the obscurers/water
                 if (r.transform.IsChildOf(obscurer.transform)) continue;
                 if (r.transform.IsChildOf(map_obscurer.transform)) continue;
+                if (r.transform.IsChildOf(water.transform)) continue;
                 r.enabled = !value;
             }
         }
@@ -910,6 +911,7 @@ public class player : networked_player
     public Transform eye_transform { get; private set; }
     arm right_arm;
     arm left_arm;
+    water_reflections water;
 
     public override void on_loose_authority()
     {
@@ -985,6 +987,12 @@ public class player : networked_player
         crt.anchorMax = new Vector2(0.5f, 0.5f);
         crt.anchoredPosition = Vector2.zero;
         cursor = "default_cursor";
+
+        // Add the water
+        water = new GameObject("water").AddComponent<water_reflections>();
+        water.transform.SetParent(transform);
+        water.transform.position = transform.position;
+        water.transform.rotation = transform.rotation;
 
         // Ensure sky color is set properly
         sky_color = sky_color;

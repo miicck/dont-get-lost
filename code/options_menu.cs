@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public abstract class options_menu_option : MonoBehaviour
+{
+    public abstract void load_default();
+    public abstract void initialize_option();
+}
+
 public class options_menu : MonoBehaviour
 {
     public UnityEngine.UI.ScrollRect scroll_rect;
@@ -20,7 +26,7 @@ public class options_menu : MonoBehaviour
 
     public void restore_default_options()
     {
-        foreach (var o in GetComponentsInChildren<options_menu_float>(true))
+        foreach (var o in GetComponentsInChildren<options_menu_option>(true))
             o.load_default();
     }
 
@@ -51,8 +57,8 @@ public class options_menu : MonoBehaviour
     public static void initialize_options()
     {
         var om = Resources.Load<options_menu>("ui/options_menu");
-        foreach (var o in om.GetComponentsInChildren<options_menu_float>(true))
-            o.init();
+        foreach (var o in om.GetComponentsInChildren<options_menu_option>(true))
+            o.initialize_option();
     }
 
     public static void set_float(string name, float val)
@@ -82,6 +88,21 @@ public class options_menu : MonoBehaviour
         }
 
         PlayerPrefs.SetFloat(name, val);
+    }
+
+    public static void set_bool(string name, bool value)
+    {
+        switch(name)
+        {
+            case "water_reflections":
+                water_reflections.reflections_enabled = value;
+                break;
+
+            default:
+                throw new System.Exception("Unkown bool option: " + name);
+        }
+
+        PlayerPrefs.SetInt(name, value ? 1 : 0);
     }
 
     /// <summary> Is the options menu currently open? </summary>

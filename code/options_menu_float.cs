@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class options_menu_float : MonoBehaviour
+public class options_menu_float : options_menu_option
 {
     public string option_name = "contrast";
     public float default_value = 0;
@@ -16,7 +16,7 @@ public class options_menu_float : MonoBehaviour
             float val;
             if (float.TryParse(s, out val))
             {
-                val = Mathf.Clamp(val, -100, 100);
+                val = Mathf.Clamp(val, slider.minValue, slider.maxValue);
                 input.text = "" + val;
                 options_menu.set_float(option_name, val);
                 slider.value = val;
@@ -33,12 +33,12 @@ public class options_menu_float : MonoBehaviour
         slider.onValueChanged.Invoke(PlayerPrefs.GetFloat(option_name, default_value));
     }
 
-    public void init()
+    public override void initialize_option()
     {
         options_menu.set_float(option_name, PlayerPrefs.GetFloat(option_name, default_value));
     }
 
-    public void load_default()
+    public override void load_default()
     {
         slider.onValueChanged.Invoke(default_value);
     }

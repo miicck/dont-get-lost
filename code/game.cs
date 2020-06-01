@@ -99,6 +99,7 @@ public class game : MonoBehaviour
             if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
             _render_range = value;
             player.current.update_render_range();
+            water_reflections.water_range = value;
         }
     }
     private static float _render_range = chunk.SIZE;
