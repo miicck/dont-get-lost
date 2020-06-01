@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> A boolean value that can be set
+/// via the options menu. </summary>
 public class options_menu_bool : options_menu_option
 {
     public string option_name = "water_reflections";
@@ -10,21 +12,26 @@ public class options_menu_bool : options_menu_option
 
     private void Start()
     {
+        // The option is simply syncronised with the toggle
         toggle.onValueChanged.AddListener((b) =>
         {
             options_menu.set_bool(option_name, b);
         });
 
+        // Initialize the toggle to the saved value
         toggle.onValueChanged.Invoke(PlayerPrefs.GetInt(option_name) > 0);
     }
 
     public override void load_default()
     {
+        // Set the toggle (and therefore the option via the 
+        // toggle.onValueChanged method) to the default value
         toggle.onValueChanged.Invoke(default_value);
     }
 
     public override void initialize_option()
     {
+        // Load the option from saved value
         options_menu.set_bool(option_name, PlayerPrefs.GetInt(option_name) > 0);
     }
 }

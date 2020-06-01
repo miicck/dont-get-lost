@@ -2,17 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> An option that can be changed from the options menu. </summary>
 public abstract class options_menu_option : MonoBehaviour
 {
     public abstract void load_default();
     public abstract void initialize_option();
 }
 
+/// <summary> The options menu (essentially just a collection of 
+/// options_menu_option children). </summary>
 public class options_menu : MonoBehaviour
 {
     public UnityEngine.UI.ScrollRect scroll_rect;
     public RectTransform main_menu;
 
+    /// <summary> Change the currenly open sub-menu. </summary>
     public void change_content(RectTransform content)
     {
         // Disable all content
@@ -24,6 +28,7 @@ public class options_menu : MonoBehaviour
         scroll_rect.content = content;
     }
 
+    /// <summary> Set all the options to their default value. </summary>
     public void restore_default_options()
     {
         foreach (var o in GetComponentsInChildren<options_menu_option>(true))
@@ -34,6 +39,8 @@ public class options_menu : MonoBehaviour
     // STATIC STUFF //
     //##############//
 
+    /// <summary> This is a useful thing to have access to here, 
+    /// as many graphics settings are controlled by this. </summary>
     static UnityEngine.Rendering.Volume global_volume
     {
         get
@@ -45,15 +52,22 @@ public class options_menu : MonoBehaviour
     }
     static UnityEngine.Rendering.Volume _global_volume;
 
+    /// <summary> Called when the player clicks on "save and quit". </summary>
     public void save_and_quit()
     {
 #if UNITY_EDITOR
+        // In the editor, this simply un-plays the game
         UnityEditor.EditorApplication.isPlaying = false;
 #else
+        // Actually quit the application
         Application.Quit();
 #endif
     }
 
+    /// <summary> Called to initialize the options from their saved values.
+    /// Note that this might be called before the menu is open, so 
+    /// <see cref="options_menu_option.initialize_option"/> should
+    /// not depend on the UI being loaded. </summary>
     public static void initialize_options()
     {
         var om = Resources.Load<options_menu>("ui/options_menu");
@@ -61,6 +75,7 @@ public class options_menu : MonoBehaviour
             o.initialize_option();
     }
 
+    /// <summary> Set a floating point option. </summary>
     public static void set_float(string name, float val)
     {
         UnityEngine.Rendering.HighDefinition.ColorAdjustments color_adjust;
@@ -90,6 +105,7 @@ public class options_menu : MonoBehaviour
         PlayerPrefs.SetFloat(name, val);
     }
 
+    /// <summary> Set a boolean option. </summary>
     public static void set_bool(string name, bool value)
     {
         switch(name)
