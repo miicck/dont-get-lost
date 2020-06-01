@@ -5,12 +5,14 @@ using UnityEngine;
 /// <summary> Part of a world object that can be harvested by hand
 /// to yield a product, and takes time to regrow. The part will
 /// be disabled until it regrows. </summary>
+[RequireComponent(typeof(product))]
 public class harvest_by_hand : MonoBehaviour, IInspectable
 {
-    public float regrow_time = 1f;
-    public product product;
     public AudioClip play_on_pick;
+    public float regrow_time = 1f;
     public float play_on_pick_volume = 1f;
+
+    product[] products { get => GetComponents<product>(); }
 
     AudioSource source;
 
@@ -51,7 +53,8 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
         woh.timeout.value = regrow_time;
 
         // Create the product in the player inventory
-        product.create_in_inventory(player.current.inventory.contents);
+        foreach (var p in products)
+            p.create_in_inventory(player.current.inventory.contents);
     }
 
     //##############//
@@ -60,12 +63,12 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
     public string inspect_info()
     {
-        return product.product_name_plural() + " can bn harvested by hand";
+        return product.product_list(products) + " can bn harvested by hand";
     }
 
     public Sprite main_sprite()
     {
-        return product.sprite();
+        return products[0].sprite();
     }
 
     public Sprite secondary_sprite()

@@ -4,16 +4,19 @@ using UnityEngine;
 
 /// <summary> An object that can be harvested with a specific tool, 
 /// to yield a specific product, repeatedly. </summary>
+[RequireComponent(typeof(product))]
+[RequireComponent(typeof(item_requirement))]
 public class harvestable : accepts_item_impact, IInspectable
 {
-    public product product;
-    public item_requirement tool;
+    product[] products { get => GetComponents<product>(); }
+    item_requirement tool { get => GetComponent<item_requirement>(); }
 
     public override bool on_impact(item i)
     {
         if (tool.satisfied(i))
         {
-            product.create_in_inventory(player.current.inventory.contents);
+            foreach (var p in products)
+                p.create_in_inventory(player.current.inventory.contents);
             return true;
         }
         return false;
@@ -21,13 +24,13 @@ public class harvestable : accepts_item_impact, IInspectable
 
     public string inspect_info()
     {
-        return product.product_name_plural() + " can be harvested with " +
+        return product.product_list(products) + " can be harvested with " +
                utils.a_or_an(tool.display_name) + " " + tool.display_name;
     }
 
     public Sprite main_sprite()
     {
-        return product.sprite();
+        return products[0].sprite();
     }
 
     public Sprite secondary_sprite()

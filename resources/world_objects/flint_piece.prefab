@@ -13,7 +13,23 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.66
   m_Center: {x: 0, y: 0.31, z: 0}
---- !u!114 &1854545648833524981
+--- !u!114 &4863423840526624791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1291475565239093175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 293668860053935267, guid: 5b0d1a0d073312c4195f95d950e57339, type: 3}
+  min_count: 1
+  max_count: 1
+--- !u!114 &5506277834653041577
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25,9 +41,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd2930d42479a5e4caf62938a315f4ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  regrow_time: 1
-  product: {fileID: 5081333389596564324, guid: 9cff80de28e0e95428451655fb68f662, type: 3}
   play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
+  regrow_time: 1
   play_on_pick_volume: 1
 --- !u!1 &8586480640683914011
 GameObject:

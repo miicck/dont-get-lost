@@ -17,6 +17,9 @@ public class inventory_section : MonoBehaviour
     /// <summary> Add the given number of a particular item to the inventory. </summary>
     public bool add(string item, int count)
     {
+        if (count == 0)
+            return true;
+
         inventory_slot slot_found = null;
         foreach (var s in slots)
         {
@@ -52,6 +55,9 @@ public class inventory_section : MonoBehaviour
     /// <summary> Remove the given number of a particular item from the inventory. </summary>
     public void remove(string item, int count)
     {
+        if (count == 0)
+            return;
+
         int total_removed = 0;
         foreach (var s in slots)
             if (s.item == item)
