@@ -24,6 +24,10 @@ public class water_reflections : MonoBehaviour
         probe.influenceVolume.sphereRadius = 64f;
         probe.influenceVolume.sphereBlendDistance = 32f;
 
+        // Limit clipping planes for performance
+        probe.settingsRaw.cameraSettings.frustum.farClipPlaneRaw =
+            probe.influenceVolume.sphereRadius;
+
         // Create the water
         var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
         Destroy(water.GetComponent<Collider>());
@@ -31,9 +35,9 @@ public class water_reflections : MonoBehaviour
 
         water.transform.localRotation = Quaternion.identity;
         water.transform.localPosition = new Vector3(0, 0, WATER_CENTRE_OFFSET);
-        water.transform.forward = -Vector3.up;
-        water_renderer = water.gameObject.GetComponent<MeshRenderer>();
+        water.transform.rotation = Quaternion.LookRotation(Vector3.down, transform.right);
 
+        water_renderer = water.gameObject.GetComponent<MeshRenderer>();
         water_renderer.material = Resources.Load<Material>("materials/standard_shader/water_reflective");
         water_renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
@@ -80,7 +84,7 @@ public class water_reflections : MonoBehaviour
         transform.position = pos;
 
         water_renderer.transform.localScale = Vector3.one *
-            (water_range * 2 + WATER_CENTRE_OFFSET);
+            (water_range + WATER_CENTRE_OFFSET) * 2f;
     }
 
     public static float water_range = 256;
