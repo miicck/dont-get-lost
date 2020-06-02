@@ -206,6 +206,8 @@ public class chunk : MonoBehaviour
         terrain.terrainData.heightmapResolution = TERRAIN_RES;
         terrain.terrainData.size = new Vector3(SIZE, world.MAX_ALTITUDE, SIZE);
         terrain.enabled = false;
+        terrain.heightmapPixelError = 16f;
+        terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         // Start the gradual chunk generator
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
