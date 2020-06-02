@@ -44,7 +44,7 @@ public class inventory_section : MonoBehaviour
         if (is_player_inventory)
         {
             item itm = Resources.Load<item>("items/" + item);
-            string msg = "+ " + count + " " + (count > 1 ? itm.plural : itm.name);
+            string msg = "+ " + count + " " + (count > 1 ? itm.plural : itm.display_name);
             msg += " (" + contents()[item] + ")";
             popup_message.create(msg);
         }
