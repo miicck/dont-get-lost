@@ -11,6 +11,9 @@ public class water_reflections : MonoBehaviour
     /// it appears behind transparent objects that are nearer. </summary>
     const float WATER_CENTRE_OFFSET = 64f;
 
+    const float WATER_REFLECTION_RANGE = 64f;
+    const float WATER_BLEND_RANGE = WATER_REFLECTION_RANGE / 3f;
+
     void Start()
     {
         // Create the water reflection probe
@@ -20,9 +23,15 @@ public class water_reflections : MonoBehaviour
         probe.transform.position = transform.position + transform.forward * 16f;
         probe.transform.rotation = transform.rotation;
         probe.transform.SetParent(transform);
-        probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Sphere;
-        probe.influenceVolume.sphereRadius = 64f;
-        probe.influenceVolume.sphereBlendDistance = 32f;
+
+        probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Box;
+        probe.influenceVolume.boxSize = new Vector3(WATER_REFLECTION_RANGE, 0.01f, WATER_REFLECTION_RANGE);
+        probe.influenceVolume.boxBlendDistanceNegative = new Vector3(
+            WATER_BLEND_RANGE, 0.005f, WATER_BLEND_RANGE
+        );
+        probe.influenceVolume.boxBlendDistancePositive = new Vector3(
+            WATER_BLEND_RANGE, 0.005f, WATER_BLEND_RANGE
+        );
 
         // Limit clipping planes for performance
         probe.settingsRaw.cameraSettings.frustum.farClipPlaneRaw =
