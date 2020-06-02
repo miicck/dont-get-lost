@@ -13,7 +13,8 @@ public class character : networked
     public float walk_speed = 1f;
     public float run_speed = 4f;
     public float max_health = 10;
-    public Vector3 pathfinding_resolution = Vector3.one / 2f;
+    public float pathfinding_resolution = 0.5f;
+    public float height = 2f;
     public float agro_range = 5f;
     public float reach = 0.5f;
     public FRIENDLINESS friendliness;
@@ -151,9 +152,10 @@ public class character : networked
 
     void get_path(Vector3 target)
     {
-        path = new path(transform.position, target,
-            constraint: is_allowed_at,
-            resolution: pathfinding_resolution
+        path = new path(
+            transform.position, target, transform,
+            height, pathfinding_resolution,
+            constraint: is_allowed_at
         );
     }
 
@@ -177,7 +179,7 @@ public class character : networked
         {
             // Lerp forward look direction
             Vector3 new_forward = Vector3.Lerp(transform.forward,
-                delta.normalized, 8f * speed * Time.deltaTime);
+                delta.normalized, speed * Time.deltaTime);
 
             if (new_forward.magnitude > 10e-4)
                 transform.forward = new_forward;
@@ -185,36 +187,47 @@ public class character : networked
         return true;
     }
 
-    void move_along_path(float speed, bool random = false)
+    void move_along_path(float speed)
     {
-        if (!path.complete)
+        switch (path.state)
         {
-            // Run pathfinding
-            if (random) path.run_random_pathfinding(1, 10);
-            else path.run_pathfinding(1);
-            return;
-        }
-        else
-        {
-            if (path.length <= path_progress)
-            {
-                // Path complete, reset
-                path = null;
+
+            case path.STATE.SEARCHING:
+                // Run pathfinding
+                path.pathfind(1);
                 return;
-            }
 
-            // Move towards the next path point
-            if (!move_towards(path[path_progress], speed))
-            {
-                // Couldn't walk along the path
+            case path.STATE.FAILED:
+                // Path failed, diffuse around a little to try and fix it
                 path = null;
+                transform.position += Random.onUnitSphere * 0.05f;
                 return;
-            }
 
-            Vector3 delta = path[path_progress] - transform.position;
+            case path.STATE.COMPLETE:
 
-            // Increment progress if we've arrived at the next path point
-            if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
+                if (path.length <= path_progress)
+                {
+                    // Path complete, reset
+                    path = null;
+                    return;
+                }
+
+                // Move towards the next path point
+                if (!move_towards(path[path_progress], speed))
+                {
+                    // Couldn't walk along the path
+                    path = null;
+                    return;
+                }
+
+                Vector3 delta = path[path_progress] - transform.position;
+
+                // Increment progress if we've arrived at the next path point
+                if (delta.magnitude < ARRIVE_DISTANCE) ++path_progress;
+                return;
+
+            default:
+                throw new System.Exception("Unkown path state!");
         }
     }
 
@@ -231,7 +244,7 @@ public class character : networked
             if (Physics.Raycast(location, -Vector3.up, out hit, 10f))
                 get_path(hit.point);
         }
-        else move_along_path(walk_speed, random: true);
+        else move_along_path(walk_speed);
     }
 
     // Run from the given transform
@@ -241,8 +254,8 @@ public class character : networked
 
         if (path == null)
         {
-            Vector3 delta = transform.position - fleeing_from.position;
-            Vector3 flee_to = transform.position + delta.normalized * 5f;
+            Vector3 delta = (transform.position - fleeing_from.position).normalized;
+            Vector3 flee_to = transform.position + delta * 5f;
 
             if (is_allowed_at(flee_to))
                 get_path(flee_to); // Flee away
@@ -261,10 +274,7 @@ public class character : networked
             Vector3 delta = chasing.position - transform.position;
             Vector3 chase_to = transform.position + delta;
 
-            if (delta.magnitude < Mathf.Max(
-                pathfinding_resolution.x,
-                pathfinding_resolution.y,
-                pathfinding_resolution.z))
+            if (delta.magnitude < pathfinding_resolution)
             {
                 if (delta.magnitude > reach)
                     move_towards(chasing.position, run_speed);
@@ -305,7 +315,7 @@ public class character : networked
 
         if ((transform.position - player.current.transform.position).magnitude < agro_range)
         {
-            switch(friendliness)
+            switch (friendliness)
             {
                 case FRIENDLINESS.AGRESSIVE:
                     chase(player.current.transform);
@@ -329,6 +339,23 @@ public class character : networked
         // Draw path gizmos
         if (path != null)
             path.draw_gizmos();
+
+        Vector3 f = transform.forward * pathfinding_resolution * 0.5f;
+        Vector3 r = transform.right * pathfinding_resolution * 0.5f;
+        Vector3[] square = new Vector3[]
+        {
+            transform.position + f + r,
+            transform.position + f - r,
+            transform.position - f - r,
+            transform.position - f + r,
+            transform.position + f + r
+        };
+
+        Gizmos.color = Color.green;
+        for (int i = 1; i < square.Length; ++i)
+            Gizmos.DrawLine(square[i - 1], square[i]);
+
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.up * height);
     }
 
     //############//
@@ -356,4 +383,20 @@ public class character : networked
             y_rotation.value = transform.rotation.eulerAngles.y;
         }
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(character), true)]
+    new public class editor : networked.editor
+    {
+        string last_path = "Last path info";
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var c = (character)target;
+            if (c.path != null)
+                last_path = "Last path info\n" + c.path.info();
+            UnityEditor.EditorGUILayout.TextArea(last_path);
+        }
+    }
+#endif
 }

@@ -321,7 +321,8 @@ MonoBehaviour:
   walk_speed: 1
   run_speed: 4
   max_health: 10
-  pathfinding_resolution: {x: 0.5, y: 0.5, z: 0.5}
+  pathfinding_resolution: 0.5
+  height: 1
   agro_range: 5
   reach: 0.5
   friendliness: 2
@@ -422,7 +423,7 @@ PrefabInstance:
     - target: {fileID: -4216859302048453862, guid: c5c72aa1a21a4c54691b0f866f1b4b65,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.271
+      value: -0.266
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: c5c72aa1a21a4c54691b0f866f1b4b65,
         type: 3}

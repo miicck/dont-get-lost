@@ -389,7 +389,7 @@ public class networked : MonoBehaviour
 
     // The custom editor for networked types
     [UnityEditor.CustomEditor(typeof(networked), true)]
-    class editor : UnityEditor.Editor
+    public class editor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

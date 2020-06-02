@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> A floating point value, that can be changed 
+/// <summary> A floating point value that can be changed 
 /// via the options menu. </summary>
 public class options_menu_float : options_menu_option
 {

@@ -341,6 +341,22 @@ public class Dictionary<K1, K2, V>
         if (inner.Count == 0)
             dict.Remove(k1);
     }
+
+    public delegate void iter_func(K1 k1, K2 k2, V v);
+
+    /// <summary> Apply <paramref name="f"/> to every 
+    /// key-value set in the dictionary.
+    public void iterate(iter_func f)
+    {
+        foreach (var k1v in dict)
+            foreach (var k2v in k1v.Value)
+            {
+                K1 k1 = k1v.Key;
+                K2 k2 = k2v.Key;
+                V v = k2v.Value;
+                f(k1, k2, v);
+            }
+    }
 }
 
 /// <summary> A dictionary with three keys. </summary>
@@ -387,5 +403,18 @@ public class Dictionary<K1,K2,K3,V>
             return;
 
         inner.clear(k2, k3);
+    }
+
+    public delegate void iter_func(K1 k1, K2 k2, K3 k3, V v);
+
+    /// <summary> Apply <paramref name="f"/> to every 
+    /// key-value set in the dictionary.
+    public void iterate(iter_func f)
+    {
+        foreach (var k1v in dict)
+        {
+            K1 k1 = k1v.Key;
+            k1v.Value.iterate((k2, k3, v) => f(k1, k2, k3, v));
+        }
     }
 }
