@@ -309,10 +309,6 @@ public class character : networked
     {
         if (!has_authority) return;
 
-        // Check we're not somewhere we shouldn't be
-        if (!is_allowed_at(transform.position))
-            transform.position = spawned_by.transform.position;
-
         if ((transform.position - player.current.transform.position).magnitude < agro_range)
         {
             switch (friendliness)

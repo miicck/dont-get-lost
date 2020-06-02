@@ -200,15 +200,6 @@ public class path
         // This is the centre of the waypoint box
         Vector3 centre = start + new Vector3(x, y, z) * resolution;
 
-        // Test the constraint at the centre point
-        if (!constraint(centre))
-        {
-            // Waypoint fails constraint test, add to closed set
-            wp.open = false;
-            closed_set.set(x, y, z, wp);
-            return wp;
-        }
-
         // Attempt to find grounding within the waypoint box
         if (!find_grounding(x, y, z, out RaycastHit hit))
         {
@@ -220,6 +211,14 @@ public class path
 
         // Record the grounding point
         wp.grounding = hit.point;
+
+        // Check the grounding point satisfies the constraint
+        if (!constraint(wp.grounding))
+        {
+            wp.open = false;
+            closed_set.set(x, y, z, wp);
+            return wp;
+        }
 
         float angle = Vector3.Angle(Vector3.up, hit.normal);
         if (angle > max_incline)
