@@ -25,8 +25,8 @@ public class chunk : MonoBehaviour
     }
 
     // Keep a quick lookup for chunks
-    static two_int_dictionary<chunk> generated_chunks =
-        new two_int_dictionary<chunk>();
+    static Dictionary<int, int, chunk> generated_chunks =
+        new Dictionary<int, int, chunk>();
 
     //##################//
     // COORDINATE TOOLS //
@@ -131,7 +131,7 @@ public class chunk : MonoBehaviour
 
     void OnDestroy()
     {
-        generated_chunks.remove(x, z);
+        generated_chunks.clear(x, z);
     }
 
     //##################//
@@ -363,7 +363,7 @@ public class chunk : MonoBehaviour
                 wo.transform.SetParent(transform);
                 wo.transform.localPosition = new Vector3(i, point.altitude, j);
                 wo.on_placement(terrain_normal, point, this, i, j);
-                objects_created.add(i, j, wo);
+                objects_created.set(i, j, wo);
             }
         }
 
@@ -379,13 +379,13 @@ public class chunk : MonoBehaviour
 
     // The objects that have been created in this chunk, 
     // indexed by their x, z coordinates within the chunk
-    two_int_dictionary<world_object> objects_created =
-        new two_int_dictionary<world_object>();
+    Dictionary<int, int, world_object> objects_created =
+        new Dictionary<int, int, world_object>();
 
     // Called when the chunk has finished generating
     void on_generation_complete()
     {
-        generated_chunks.add(x, z, this);
+        generated_chunks.set(x, z, this);
         biome.update_chunk_neighbours();
     }
 

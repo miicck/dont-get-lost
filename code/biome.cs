@@ -267,7 +267,7 @@ public abstract class biome : MonoBehaviour
     private void OnDestroy()
     {
         // Remove this from the grid of generated biomes
-        generated_biomes.remove(x, z);
+        generated_biomes.clear(x, z);
 
         // Trigger removal of unused assets, to try to
         // reduce memory usage
@@ -286,8 +286,8 @@ public abstract class biome : MonoBehaviour
     // BIOME GENERATION //
     //##################//
 
-    static two_int_dictionary<biome> generated_biomes = 
-        new two_int_dictionary<biome>();
+    static Dictionary<int,int,biome> generated_biomes = 
+        new Dictionary<int,int,biome>();
 
     // Generates the biome at x, z
     public static biome generate(int x, int z)
@@ -299,7 +299,7 @@ public abstract class biome : MonoBehaviour
         // Use the above random number generator to pick which biome to generate
         int i = rand.Next() % biome_list.Count;
         var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
-        generated_biomes.add(x, z, b);
+        generated_biomes.set(x, z, b);
         return b;
     }
 

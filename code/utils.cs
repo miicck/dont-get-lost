@@ -294,48 +294,98 @@ public static class utils
     }
 }
 
-/// <summary> A dictionary keyed by two ints. </summary>
-public class two_int_dictionary<T>
+/// <summary> A dictionary with two keys. </summary>
+public class Dictionary<K1, K2, V>
 {
-    Dictionary<int, Dictionary<int, T>> dict = 
-        new Dictionary<int, Dictionary<int, T>>();
+    // The underlying datastructure is just a dictionary
+    Dictionary<K1, Dictionary<K2, V>> dict = 
+        new Dictionary<K1, Dictionary<K2, V>>();
 
-    public void add(int x, int z, T t)
+    /// <summary> Set the value <paramref name="v"/> associated with
+    /// the keys <paramref name="k1"/> and <paramref name="k2"/>. </summary>
+    public void set(K1 k1, K2 k2, V v)
     {
-        Dictionary<int, T> inner;
-        if (!dict.TryGetValue(x, out inner))
+        if (!dict.TryGetValue(k1, out Dictionary<K2, V> inner))
         {
-            inner = new Dictionary<int, T>();
-            dict[x] = inner;
+            inner = new Dictionary<K2, V>();
+            dict[k1] = inner;
         }
 
-        inner[z] = t;
+        inner[k2] = v;
     }
 
-    public void remove(int x, int z)
+    /// <summary> Get the value <paramref name="v"/> associated with
+    /// the keys <paramref name="k1"/> and <paramref name="k2"/>. </summary>
+    public V get(K1 k1, K2 k2)
     {
-        Dictionary<int, T> inner;
-        if (!dict.TryGetValue(x, out inner))
-            return;
-
-        inner.Remove(z);
-        if (inner.Count == 0)
-            dict.Remove(x);
-    }
-
-    public T get(int x, int z)
-    {
-        Dictionary<int, T> inner;
-        if (!dict.TryGetValue(x, out inner))
+        if (!dict.TryGetValue(k1, out Dictionary<K2, V> inner))
         {
-            inner = new Dictionary<int, T>();
-            dict[x] = inner;
+            inner = new Dictionary<K2, V>();
+            dict[k1] = inner;
         }
 
-        T ret;
-        if (inner.TryGetValue(z, out ret))
+        if (inner.TryGetValue(k2, out V ret))
             return ret;
 
-        return default(T);
+        return default;
+    }
+
+    /// <summary> Clear the value <paramref name="v"/> associated with
+    /// the keys <paramref name="k1"/> and <paramref name="k2"/>. </summary>
+    public void clear(K1 k1, K2 k2)
+    {
+        if (!dict.TryGetValue(k1, out Dictionary<K2, V> inner))
+            return;
+
+        inner.Remove(k2);
+        if (inner.Count == 0)
+            dict.Remove(k1);
+    }
+}
+
+/// <summary> A dictionary with three keys. </summary>
+public class Dictionary<K1,K2,K3,V>
+{
+    // The underlying datastructure is a two-key dictionary
+    Dictionary<K1, Dictionary<K2, K3, V>> dict =
+        new Dictionary<K1, Dictionary<K2, K3, V>>();
+
+    /// <summary> Set the value <paramref name="v"/> 
+    /// associated with the keys <paramref name="k1"/>, 
+    /// <paramref name="k2"/> and <paramref name="k3"/>. </summary>
+    public void set(K1 k1, K2 k2, K3 k3, V v)
+    {
+        if (!dict.TryGetValue(k1, out Dictionary<K2, K3, V> inner))
+        {
+            inner = new Dictionary<K2, K3, V>();
+            dict[k1] = inner;
+        }
+
+        inner.set(k2, k3, v);
+    }
+
+    /// <summary> Get the value <paramref name="v"/> 
+    /// associated with the keys <paramref name="k1"/>, 
+    /// <paramref name="k2"/> and <paramref name="k3"/>. </summary>
+    public V get(K1 k1, K2 k2, K3 k3)
+    {
+        if (!dict.TryGetValue(k1, out Dictionary<K2, K3, V> inner))
+        {
+            inner = new Dictionary<K2, K3, V>();
+            dict[k1] = inner;
+        }
+
+        return inner.get(k2, k3);
+    }
+
+    /// <summary> Clear the value <paramref name="v"/> 
+    /// associated with the keys <paramref name="k1"/>, 
+    /// <paramref name="k2"/> and <paramref name="k3"/>. </summary>
+    public void clear(K1 k1, K2 k2, K3 k3)
+    {
+        if (!dict.TryGetValue(k1, out Dictionary<K2, K3, V> inner))
+            return;
+
+        inner.clear(k2, k3);
     }
 }
