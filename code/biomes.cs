@@ -291,6 +291,8 @@ public class flat_forest : biome
                     p.object_to_generate = world_object.load("mossy_log");
                 else if (random.range(0, 200) == 0)
                     p.object_to_generate = world_object.load("bush");
+                else if (random.range(0, 500) == 0)
+                    p.object_to_generate = world_object.load("flint_piece");
                 else if (random.range(0, 1000) == 0)
                     p.object_to_generate = world_object.load("chicken_nest");
 
