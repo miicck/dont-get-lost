@@ -41,7 +41,7 @@ public class options_menu_float : options_menu_option
         });
 
         // Load the slider (and therefore also the input field) with the saved value
-        slider.onValueChanged.Invoke(PlayerPrefs.GetFloat(option_name, default_value));
+        slider.value = PlayerPrefs.GetFloat(option_name, default_value);
     }
 
     public override void initialize_option()
@@ -54,6 +54,6 @@ public class options_menu_float : options_menu_option
     {
         // Set the slider (and therefore the option and input field text)
         // to the default value
-        slider.onValueChanged.Invoke(default_value);
+        slider.value = default_value;
     }
 }

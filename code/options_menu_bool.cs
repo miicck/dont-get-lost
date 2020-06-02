@@ -19,14 +19,14 @@ public class options_menu_bool : options_menu_option
         });
 
         // Initialize the toggle to the saved value
-        toggle.onValueChanged.Invoke(PlayerPrefs.GetInt(option_name) > 0);
+        toggle.isOn = PlayerPrefs.GetInt(option_name) > 0;
     }
 
     public override void load_default()
     {
         // Set the toggle (and therefore the option via the 
         // toggle.onValueChanged method) to the default value
-        toggle.onValueChanged.Invoke(default_value);
+        toggle.isOn = default_value;
     }
 
     public override void initialize_option()
