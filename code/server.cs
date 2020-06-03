@@ -106,7 +106,7 @@ public static class server
                 if (c.has_loaded(player))
                     c.unload(player);
 
-            player.transform.SetParent(inactive_representations);
+            player?.transform.SetParent(inactive_representations);
         }
 
         /// <summary> The representations loaded as objects on this client. </summary>
@@ -543,7 +543,10 @@ public static class server
                 // Check if this username is in use
                 foreach (var c in connected_clients)
                     if (c.username == uname)
-                        throw new System.NotImplementedException();
+                    {
+                        client.disconnect("Username already in use.");
+                        return;
+                    }
 
                 // Login
                 client.login(uname, pword);
