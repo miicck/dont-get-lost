@@ -68,7 +68,7 @@ public class world : networked
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(world))]
-    class editor : UnityEditor.Editor
+    new class editor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

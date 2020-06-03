@@ -268,23 +268,49 @@ public class networked : MonoBehaviour
         Destroy(gameObject);
     }
 
+
     //################//
     // STATIC METHODS //
     //################//
+
+
+    // STATE VARIABLES //
+
+    /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
+    static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
+
+    /// <summary> The objects on this client, keyed by their network id. </summary>
+    static Dictionary<int, networked> objects;
+
+    /// <summary> A dictionary keyed by recently forgotten network 
+    /// id's, with the time forgotten stored as the value. </summary>
+    static Dictionary<int, float> recently_forgotten;
+
+    public static int object_count { get => objects.Count; }
+    public static int recently_forgotten_count { get => recently_forgotten.Count; }
+
+    // END STATE VARIABLES //
+
+
+    /// <summary> Called when a client starts up, indicating 
+    /// we should (re)initialize all static stuff </summary>
+    public static void client_initialize()
+    {
+        load_networked_fields();
+        objects = new Dictionary<int, networked>();
+        recently_forgotten = new Dictionary<int, float>();
+    }
 
     /// <summary> Look up a networked prefab from the prefab path. </summary>
     public static networked look_up(string path)
     {
         var found = Resources.Load<networked>(path);
-        if (found == null) throw new System.Exception("Could not find the prefab " + path);
+        if (found == null) throw new System.Exception("Could not find networked prefab " + path);
         return found;
     }
 
-    /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
-    static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
-
     /// <summary> Load the <see cref="networked_fields"/> dictionary. </summary>
-    public static void load_networked_fields()
+    static void load_networked_fields()
     {
         networked_fields = new Dictionary<System.Type, List<System.Reflection.FieldInfo>>();
 
@@ -347,13 +373,6 @@ public class networked : MonoBehaviour
         }
     }
 
-    /// <summary> The objects on this client, keyed by their network id. </summary>
-    static Dictionary<int, networked> objects = new Dictionary<int, networked>();
-
-    /// <summary> A dictionary keyed by recently forgotten network 
-    /// id's, with the time forgotten stored as the value. </summary>
-    static Dictionary<int, float> recently_forgotten = new Dictionary<int, float>();
-
     /// <summary> Called when a networked object is 
     /// forgotten or deleted on this client. </summary>
     static void on_forget(networked forgetting)
@@ -414,9 +433,6 @@ public class networked : MonoBehaviour
         return "Network id = " + network_id + "\n" +
                "Has authority = " + has_authority;
     }
-
-    public static int object_count { get => objects.Count; }
-    public static int recently_forgotten_count { get => recently_forgotten.Count; }
 
 #if UNITY_EDITOR
 

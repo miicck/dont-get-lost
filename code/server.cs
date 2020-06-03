@@ -5,9 +5,25 @@ using System.Net.Sockets;
 
 public static class server
 {
+    //###########//
+    // CONSTANTS //
+    //###########//
+
     /// <summary> Clients that take longer than this (in seconds) to respond to a sent 
     /// message (i.e two times the ping) should be disconnected. </summary>
     public const float CLIENT_TIMEOUT = 2f;
+
+    /// <summary> The render range for clients starts at this value. </summary>
+    public const float INIT_RENDER_RANGE = 0f;
+
+    /// <summary> The default port to listen on. </summary>
+    public const int DEFAULT_PORT = 6969;
+
+
+    //########//
+    // CLIENT //
+    //########//
+
 
     /// <summary> A client connected to the server. </summary>
     class client
@@ -67,11 +83,21 @@ public static class server
             }
         }
 
-        public void disconnect()
+        /// <summary> Called when a client disconnects. If message is not 
+        /// null, it is sent to the server as part of a DISCONNECT message, 
+        /// otherwise no DISCONNECT message is sent to the server. </summary>
+        public void disconnect(string message)
         {
+            // Send the disconnect message
+            if (message != null)
+                message_senders[MESSAGE.DISCONNECT](this, message);
+
             connected_clients.Remove(this);
             message_queues.Remove(this);
-            stream.Close();
+
+            // Close with a timeout, so that any hanging messages
+            // (in particular the DISCONNECT message) can be sent.
+            stream.Close((int)(CLIENT_TIMEOUT * 1000));
             tcp.Close();
 
             // Unload the player (also remove it from representations
@@ -187,7 +213,14 @@ public static class server
         /// this networked object. </summary>
         public client authority
         {
-            get => _authority;
+            get
+            {
+                // Check to see if my authority is still connected
+                if (!connected_clients.Contains(_authority))
+                    _authority = null;
+
+                return _authority;
+            }
             set
             {
                 // Old client looses authority
@@ -403,13 +436,8 @@ public static class server
     // SERVER LOGIC //
     //##############//
 
+
     // STATE VARIABLES //
-
-    /// <summary> The render range for clients starts at this value. </summary>
-    public const float INIT_RENDER_RANGE = 0f;
-
-    /// <summary> The default port to listen on. </summary>
-    public const int DEFAULT_PORT = 6969;
 
     /// <summary> The TCP listener the server is listening with. </summary>
     static TcpListener tcp;
@@ -420,89 +448,32 @@ public static class server
     /// <summary> The name that this session is saved under. </summary>
     static string savename;
 
-    /// <summary> The directory in which games are saved. </summary>
-    public static string saves_dir()
-    {
-        // Ensure the saves/ directory exists
-        string saves_dir = Application.persistentDataPath + "/saves";
-        if (!System.IO.Directory.Exists(saves_dir))
-            System.IO.Directory.CreateDirectory(saves_dir);
-        return saves_dir;
-    }
-
-    /// <summary> The directory that this session is saved in. </summary>
-    static string save_dir()
-    {
-        return saves_dir() + "/" + savename;
-    }
-
     // Information about how to create new players
     static string player_prefab;
 
     /// <summary> The clients currently connected to the server </summary>
-    static HashSet<client> connected_clients = new HashSet<client>();
+    static HashSet<client> connected_clients;
 
     /// <summary> Representations on the server, keyed by network id. </summary>
-    static Dictionary<int, representation> representations = new Dictionary<int, representation>();
+    static Dictionary<int, representation> representations;
 
     /// <summary> Player representations on the server, keyed by username. </summary>
-    static Dictionary<string, representation> player_representations = new Dictionary<string, representation>();
+    static Dictionary<string, representation> player_representations;
 
     /// <summary> The transform representing the server. </summary>
-    static Transform transform
-    {
-        get
-        {
-            if (_transform == null)
-                _transform = new GameObject("server").transform;
-            return _transform;
-        }
-    }
-    static Transform _transform;
+    static Transform transform;
 
     /// <summary> Transform containing active representations (those which are
     /// considered for existance on clients) </summary>
-    static Transform active_representations
-    {
-        get
-        {
-            if (_active_representations == null)
-            {
-                _active_representations = new GameObject("active").transform;
-                _active_representations.SetParent(transform);
-            }
-            return _active_representations;
-        }
-    }
-    static Transform _active_representations;
+    static Transform active_representations;
 
     /// <summary> Representations that are not considered for existance
     /// on clients, but need to be remembered
     /// (such as logged out players) </summary>
-    static Transform inactive_representations
-    {
-        get
-        {
-            if (_inactive_representations == null)
-            {
-                _inactive_representations = new GameObject("inactive").transform;
-                _inactive_representations.SetParent(transform);
-            }
-            return _inactive_representations;
-        }
-    }
-    static Transform _inactive_representations;
-
-    /// <summary> A server message waiting to be sent. </summary>
-    struct pending_message
-    {
-        public byte[] bytes;
-        public float send_time;
-    }
+    static Transform inactive_representations;
 
     /// <summary> Messages that are yet to be sent. </summary>
-    static Dictionary<client, Queue<pending_message>> message_queues =
-        new Dictionary<client, Queue<pending_message>>();
+    static Dictionary<client, Queue<pending_message>> message_queues;
 
     // Traffic monitors
     static network_utils.traffic_monitor traffic_down;
@@ -511,23 +482,52 @@ public static class server
     // END STATE VARIABLES //
 
 
+    /// <summary> A server message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float send_time;
+    }
+
     /// <summary> Start a server listening on the given port on the local machine. </summary>
     public static void start(int port, string savename, string player_prefab)
     {
+        if (started)
+            throw new System.Exception("Server already running!");
+
+        // Cleanup from previous run
+        if (transform != null) Object.Destroy(transform.gameObject);
+        if (active_representations != null) Object.Destroy(active_representations.gameObject);
+        if (inactive_representations != null) Object.Destroy(inactive_representations.gameObject);
+
+        // Initialize state variables
         server.player_prefab = player_prefab;
-
-        if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
-            throw new System.Exception("Local player object must be a networked_player!");
-
-        tcp = new TcpListener(network_utils.local_ip_address(), port);
-        tcp.Start();
-
         server.savename = savename;
-        if (System.IO.Directory.Exists(save_dir()))
-            load();
-
+        tcp = new TcpListener(network_utils.local_ip_address(), port);
         traffic_up = new network_utils.traffic_monitor();
         traffic_down = new network_utils.traffic_monitor();
+        connected_clients = new HashSet<client>();
+        representations = new Dictionary<int, representation>();
+        player_representations = new Dictionary<string, representation>();
+        message_queues = new Dictionary<client, Queue<pending_message>>();
+        transform = new GameObject("server").transform;     
+        active_representations = new GameObject("active").transform;
+        inactive_representations = new GameObject("inactive").transform;
+
+        // Tidy up the heirarcy a bit
+        active_representations.SetParent(transform);
+        inactive_representations.SetParent(transform);
+
+        // Check that server configuration is valid
+        if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
+            throw new System.Exception("Local player object must be a networked_player!");
+    
+        // Start listening
+        tcp.Start();
+     
+        // Load the world
+        if (System.IO.Directory.Exists(save_dir()))
+            load();
 
         // Setup the message senders
         message_parsers = new Dictionary<global::client.MESSAGE, message_parser>
@@ -551,7 +551,9 @@ public static class server
 
             [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
             {
-                client.disconnect();
+                // No need to send a server.DISCONNECT message to
+                // the client as they requested the disconnect
+                client.disconnect(null);
             },
 
             [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
@@ -608,7 +610,7 @@ public static class server
                     foreach (var c in connected_clients)
                         if (c != client)
                             if (c.has_loaded(parent))
-                                c.load(rep, false);          
+                                c.load(rep, false);
             },
 
             [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
@@ -641,13 +643,34 @@ public static class server
         };
 
         // Send a payload to a client
-        void send(client client, MESSAGE msg_type, byte[] payload)
+        void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
         {
             byte[] to_send = network_utils.concat_buffers(
                 network_utils.encode_int(payload.Length),
                 new byte[] { (byte)msg_type },
                 payload
             );
+
+            if (immediate)
+            {
+                // Send the message immediately
+                // this results in lower throughput and should only
+                // be used when absolutely neccassary
+                try
+                {
+                    client.stream.Write(to_send, 0, to_send.Length);
+                }
+                catch
+                {
+                    // Client was found to have disconnected
+                    // during immediate message send (message
+                    // = null because there would be no point
+                    // trying to contact them, given they just
+                    // disconnected).
+                    client.disconnect(null);
+                }
+                return;
+            }
 
             // Queue the message, creating the queue for this
             // client if it doesn't already exist
@@ -756,6 +779,21 @@ public static class server
                     throw new System.Exception("Can't lose authority over unregistered object!");
 
                 send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
+            },
+
+            [MESSAGE.DISCONNECT] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                // The disconnection message
+                string msg = (string)args[0];
+                if (msg == null)
+                    throw new System.Exception("Disconnect messages should not be sent without a payload!");
+
+                // Disconnect messages are sent immediately, so that the client object (including 
+                // it's message queues) can be immediately removed afterwards
+                send(client, MESSAGE.DISCONNECT, network_utils.encode_string(msg), immediate: true);
             }
         };
     }
@@ -849,14 +887,19 @@ public static class server
 
     public static void stop()
     {
-        if (tcp == null) return;
+        if (!started) return;
+
+        foreach (var c in new List<client>(connected_clients))
+            c.disconnect("Server stopped.");
+
         tcp.Stop();
         save();
+        tcp = null;
     }
 
     public static void update()
     {
-        if (tcp == null) return;
+        if (!started) return;
 
         // Connect new clients
         while (tcp.Pending())
@@ -950,7 +993,23 @@ public static class server
         // Properly disconnect clients that were found
         // to have disconnected during message writing
         foreach (var d in disconnected_during_write)
-            d.disconnect();
+            d.disconnect(null);
+    }
+
+    /// <summary> The directory in which games are saved. </summary>
+    public static string saves_dir()
+    {
+        // Ensure the saves/ directory exists
+        string saves_dir = Application.persistentDataPath + "/saves";
+        if (!System.IO.Directory.Exists(saves_dir))
+            System.IO.Directory.CreateDirectory(saves_dir);
+        return saves_dir;
+    }
+
+    /// <summary> The directory that this session is saved in. </summary>
+    static string save_dir()
+    {
+        return saves_dir() + "/" + savename;
     }
 
     public static void draw_gizmos()
@@ -969,7 +1028,7 @@ public static class server
 
     public static string info()
     {
-        if (tcp == null) return "Server not started.";
+        if (!started) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
                "    Connected clients : " + connected_clients.Count + "\n" +
                "    Representations   : " + representations.Count + "\n" +
@@ -987,6 +1046,7 @@ public static class server
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
         LOSE_AUTH,         // Sent to a client when they lose authority over an object
         GAIN_AUTH,         // Sent to a ciient when they gain authority over an object
+        DISCONNECT,        // Sent to a client when they are disconnected
     }
 
     delegate void message_parser(client c, byte[] bytes, int offset, int length);

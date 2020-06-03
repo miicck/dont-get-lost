@@ -104,6 +104,12 @@ public class game : MonoBehaviour
     }
     private static float _render_range = chunk.SIZE;
 
+    void on_client_disconnect(string message_from_server)
+    {
+        // Go back to the world menu
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/world_menu");
+    }
+
     void Start()
     {
         // Various startup modes
@@ -116,7 +122,7 @@ public class game : MonoBehaviour
                 server.start(server.DEFAULT_PORT, startup.world_name, PLAYER_PREFAB);
 
                 client.connect(network_utils.local_ip_address().ToString(),
-                    server.DEFAULT_PORT, startup.username, "password");
+                    server.DEFAULT_PORT, startup.username, "password", on_client_disconnect);
 
                 // Create the world (if required)
                 if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
@@ -132,7 +138,7 @@ public class game : MonoBehaviour
 
                 // Join the server
                 client.connect(startup.hostname, startup.port,
-                    startup.username, "password");
+                    startup.username, "password", on_client_disconnect);
 
                 break;
 
@@ -263,7 +269,7 @@ public class game : MonoBehaviour
     void OnApplicationQuit()
     {
         // Disconnect from the network
-        client.disconnect();
+        client.disconnect(true);
         server.stop();
     }
 

@@ -5,22 +5,54 @@ using System.Net.Sockets;
 
 public static class client
 {
+    // STATE VARIABLES //
+
+    static TcpClient tcp; 
     static int last_local_id = 0;
-
-    static TcpClient tcp;
-
     static network_utils.traffic_monitor traffic_up;
     static network_utils.traffic_monitor traffic_down;
+    static Queue<pending_message> message_queue;
+    static Queue<pending_creation_message> pending_creation_messages;
+    static disconnect_func on_disconnect;
 
+    // END STATE VARIABLES //
+
+    /// <summary> Called when the client disconnects. </summary>
+    /// <param name="message">The message from the server, if it 
+    /// caused the disconnect, null otherwise.</param>
+    public delegate void disconnect_func(string message);
+
+    /// <summary> A message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float time_sent;
+    }
+
+    /// <summary> A message about creation waiting to be sent. </summary>
     struct pending_creation_message
     {
         public int parent_id;
         public string prefab;
         public networked creating;
     }
-    static Queue<pending_creation_message> pending_creation_messages =
-        new Queue<pending_creation_message>();
 
+    /// <summary> Is the client connected to a server. </summary>
+    public static bool connected { get => tcp != null; }
+
+    /// <summary> Create a networked object on the client. Automatically lets the
+    /// server know, which will syncronise the object (including it's existance)
+    /// on other clients. </summary>
+    /// <param name="position">The position to create the object at.</param>
+    /// <param name="prefab">The prefab to create.</param>
+    /// <param name="parent">The parent of the object to crreate</param>
+    /// <param name="rotation">The rotation to create the object with.</param>
+    /// <param name="network_id">The network id to create the object with. Negative values
+    /// will be assigned a unique negative local id and await a network wide id (this covers
+    /// most use cases). Positive values should only be used if we are sure that they 
+    /// already exist on the server and should be associated with the object that we 
+    /// are creating. </param>
+    /// <returns>The created networked object.</returns>
     public static networked create(
         Vector3 position,
         string prefab,
@@ -122,16 +154,6 @@ public static class client
         if (parent != null) parent.on_add_networked_child(nw);
     }
 
-    /// <summary> A message waiting to be sent. </summary>
-    struct pending_message
-    {
-        public byte[] bytes;
-        public float time_sent;
-    }
-
-    /// <summary> Messages to be sent to the server. </summary>
-    static Queue<pending_message> message_queue = new Queue<pending_message>();
-
     /// <summary> Send all of the messages currently queued. </summary>
     static void send_queued_messages()
     {
@@ -191,10 +213,15 @@ public static class client
     }
 
     /// <summary> Connect the client to a server. </summary>
-    public static void connect(string host, int port, string username, string password)
+    public static void connect(string host, int port, string username, string password, disconnect_func on_disconnect)
     {
-        // Load networked type info
-        networked.load_networked_fields();
+        // Initialize client state
+        networked.client_initialize();
+        pending_creation_messages = new Queue<pending_creation_message>();
+        message_queue = new Queue<pending_message>();
+
+        // Remember what to call when we disconnect
+        client.on_disconnect = on_disconnect;
 
         // Connect the TCP client + initialize buffers
         tcp = new TcpClient(host, port);
@@ -261,6 +288,13 @@ public static class client
                 int network_id = network_utils.decode_int(buffer, ref offset);
                 var nw = networked.try_find_by_id(network_id);
                 nw?.lose_authority();
+            },
+
+            [server.MESSAGE.DISCONNECT] = (buffer, offset, length) =>
+            {
+                // The server told us to disconnect. How rude.
+                string msg = network_utils.decode_string(buffer, ref offset);
+                disconnect(false, msg_from_server: msg);
             }
         };
 
@@ -373,24 +407,28 @@ public static class client
         message_senders[MESSAGE.LOGIN](username, password);
     }
 
-    public static void disconnect()
+    public static void disconnect(bool initiated_by_client, string msg_from_server = null)
     {
-        if (tcp == null) return;
+        if (!connected) return; // Not connected
 
-        // Send a disconnect message, and any
-        // queued messages
-        message_senders[MESSAGE.DISCONNECT]();
-        send_queued_messages();
-        tcp.LingerState = new LingerOption(true, 2);
+        if (initiated_by_client)
+        {
+            // Send any queued messages, followed by a disconnect message
+            send_queued_messages();
+            message_senders[MESSAGE.DISCONNECT]();
+        }
 
-        // Close the stream
-        tcp.GetStream().Close();
+        // Close the stream (with a timeout so the above messages can be sent)
+        tcp.GetStream().Close((int)(server.CLIENT_TIMEOUT * 1000));
         tcp.Close();
+        tcp = null;
+
+        on_disconnect(msg_from_server);
     }
 
     public static void update()
     {
-        if (tcp == null) return;
+        if (!connected) return;
 
         // Get the tcp stream
         var stream = tcp.GetStream();
@@ -416,6 +454,11 @@ public static class client
                 // Handle the message
                 message_parsers[msg_type](buffer, offset, payload_length);
                 offset += payload_length;
+
+                // The last message parsed caused a disconnect, we
+                // should stop immedately as we can no longer send
+                // messages to the server.
+                if (!connected) return;
             }
         }
 
@@ -446,8 +489,9 @@ public static class client
 
     public static string info()
     {
-        var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
+        if (!connected) return "Client not connected.";
 
+        var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
         if (ping == null)
         {
             ping = new System.Net.NetworkInformation.Ping();
@@ -460,7 +504,6 @@ public static class client
             ping.SendAsync(ep.Address, null);
         }
 
-        if (tcp == null) return "Client not connected.";
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
                "    Objects            : " + networked.object_count + "\n" +
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +

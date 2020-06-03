@@ -60,6 +60,10 @@ public class world_menu : MonoBehaviour
 
     private void Start()
     {
+        // Ensure the mouse is visible
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         hd_camera = menu_camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
 
         // Find all the saved worlds

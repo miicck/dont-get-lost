@@ -55,13 +55,8 @@ public class options_menu : MonoBehaviour
     /// <summary> Called when the player clicks on "save and quit". </summary>
     public void save_and_quit()
     {
-#if UNITY_EDITOR
-        // In the editor, this simply un-plays the game
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        // Actually quit the application
-        Application.Quit();
-#endif
+        client.disconnect(true);
+        server.stop();
     }
 
     /// <summary> Called to initialize the options from their saved values.
