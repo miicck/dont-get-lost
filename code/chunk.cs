@@ -174,27 +174,6 @@ public class chunk : MonoBehaviour
     // Trigger the generation of this chunk
     void begin_generation()
     {
-        // Create the water level
-        /*
-        var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        Destroy(water.GetComponent<Collider>());
-        water.transform.SetParent(transform);
-        water.transform.localPosition = new Vector3(
-            SIZE / 2, world.SEA_LEVEL, SIZE / 2);
-        water.transform.localScale = Vector3.one * SIZE;
-        water.transform.forward = -Vector3.up;
-        var ren = water.gameObject.GetComponent<MeshRenderer>();
-        ren.material = Resources.Load<Material>("materials/standard_shader/water");
-        ren.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-
-        // Create the underside of the water
-        var water_bottom = water.inst();
-        Destroy(water_bottom.GetComponent<Collider>());
-        water_bottom.transform.SetParent(water.transform);
-        water_bottom.transform.localPosition = Vector3.zero;
-        water_bottom.transform.forward = Vector3.up;
-        */
-
         // Create the terrain object, collider and datastructure
         terrain = new GameObject("terrain").AddComponent<Terrain>();
         var tc = terrain.gameObject.AddComponent<TerrainCollider>();

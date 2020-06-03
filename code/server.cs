@@ -5,6 +5,10 @@ using System.Net.Sockets;
 
 public static class server
 {
+    /// <summary> Clients that take longer than this (in seconds) to respond to a sent 
+    /// message (i.e two times the ping) should be disconnected. </summary>
+    public const float CLIENT_TIMEOUT = 2f;
+
     /// <summary> A client connected to the server. </summary>
     class client
     {

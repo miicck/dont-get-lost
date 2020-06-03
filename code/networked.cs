@@ -243,7 +243,7 @@ public class networked : MonoBehaviour
     public void forget()
     {
         on_forget();
-        network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
+        on_forget(this);
         Destroy(gameObject);
     }
 
@@ -263,8 +263,8 @@ public class networked : MonoBehaviour
         }
 
         on_forget();
+        on_forget(this);
         client.on_delete(this);
-        network_utils.top_down<networked>(transform, (nw) => objects.Remove(nw.network_id));
         Destroy(gameObject);
     }
 
@@ -350,6 +350,23 @@ public class networked : MonoBehaviour
     /// <summary> The objects on this client, keyed by their network id. </summary>
     static Dictionary<int, networked> objects = new Dictionary<int, networked>();
 
+    /// <summary> A dictionary keyed by recently forgotten network 
+    /// id's, with the time forgotten stored as the value. </summary>
+    static Dictionary<int, float> recently_forgotten = new Dictionary<int, float>();
+
+    /// <summary> Called when a networked object is 
+    /// forgotten or deleted on this client. </summary>
+    static void on_forget(networked forgetting)
+    {
+        // Remove all child networked objects from the objecst dictionary
+        // and record the time that they were removed
+        network_utils.top_down<networked>(forgetting.transform, (nw) =>
+        {
+            objects.Remove(nw.network_id);
+            recently_forgotten[nw.network_id] = Time.realtimeSinceStartup;
+        });
+    }
+
     /// <summary> Return the object with the given network id. 
     /// Throws an error if it doesn't exist. </summary>
     public static networked find_by_id(int id)
@@ -362,11 +379,16 @@ public class networked : MonoBehaviour
 
     /// <summary> Attempt to find a networked object.
     /// Returns null if it doesn't exist. </summary>
-    public static networked try_find_by_id(int id)
+    public static networked try_find_by_id(int id, bool error_if_not_recently_forgotten = true)
     {
         networked found;
         if (!objects.TryGetValue(id, out found))
+        {
+            if (error_if_not_recently_forgotten && !recently_forgotten.ContainsKey(id))
+                throw new System.Exception("Missing object was not recently forgotten!");
+
             return null;
+        }
         return found;
     }
 
@@ -375,6 +397,16 @@ public class networked : MonoBehaviour
     {
         foreach (var kv in objects)
             kv.Value.network_update();
+
+        // Objects that were forgotten longer than the client 
+        // timeout ago are no longer considered recently forgotten
+        HashSet<int> to_remove = new HashSet<int>();
+        foreach (var kv in recently_forgotten)
+            if (Time.realtimeSinceStartup - kv.Value > server.CLIENT_TIMEOUT)
+                to_remove.Add(kv.Key);
+
+        foreach (var id in to_remove)
+            recently_forgotten.Remove(id);
     }
 
     public string network_info()
@@ -384,6 +416,7 @@ public class networked : MonoBehaviour
     }
 
     public static int object_count { get => objects.Count; }
+    public static int recently_forgotten_count { get => recently_forgotten.Count; }
 
 #if UNITY_EDITOR
 

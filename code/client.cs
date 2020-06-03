@@ -225,8 +225,8 @@ public static class client
                 // Update the local id to a network-wide one
                 int local_id = network_utils.decode_int(buffer, ref offset);
                 int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.find_by_id(local_id);
-                nw.network_id = network_id;
+                var nw = networked.try_find_by_id(local_id);
+                if (nw != null) nw.network_id = network_id;
             },
 
             [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
@@ -235,7 +235,8 @@ public static class client
                 int start = offset;
                 int id = network_utils.decode_int(buffer, ref offset);
                 int index = network_utils.decode_int(buffer, ref offset);
-                networked.find_by_id(id).variable_update(index, buffer, offset, length - (offset - start));
+                var nw = networked.try_find_by_id(id);
+                nw?.variable_update(index, buffer, offset, length - (offset - start));
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
@@ -243,25 +244,23 @@ public static class client
                 // Remove the object from the client
                 int id = network_utils.decode_int(buffer, ref offset);
                 var found = networked.try_find_by_id(id);
-                if (found == null) // This should only happen in high-latency edge cases
-                    Debug.Log("Forgetting non-existant id " + id);
-                else found.forget();
+                found.forget();
             },
 
             [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>
             {
                 // Gain authority over a networked object
                 int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.find_by_id(network_id);
-                nw.gain_authority();
+                var nw = networked.try_find_by_id(network_id);
+                nw?.gain_authority();
             },
 
             [server.MESSAGE.LOSE_AUTH] = (buffer, offset, length) =>
             {
                 // Loose authority over a networked object
                 int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.find_by_id(network_id);
-                nw.lose_authority();
+                var nw = networked.try_find_by_id(network_id);
+                nw?.lose_authority();
             }
         };
 
@@ -463,11 +462,11 @@ public static class client
 
         if (tcp == null) return "Client not connected.";
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
-               "    Objects  : " + networked.object_count + "\n" +
-               "    Upload   : " + traffic_up.usage() + "\n" +
-               "    Download : " + traffic_down.usage() + "\n" +
-               "    Ping     : " + last_ping + "ms";
-
+               "    Objects            : " + networked.object_count + "\n" +
+               "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
+               "    Upload             : " + traffic_up.usage() + "\n" +
+               "    Download           : " + traffic_down.usage() + "\n" +
+               "    Ping               : " + last_ping + "ms";
     }
 
     public enum MESSAGE : byte
