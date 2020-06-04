@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d64fdd44a2ef67b42a72ad47122f0f7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 743afd3840a0064449493caab72b2e3e, type: 3}
+  sprite: {fileID: 21300000, guid: a4e1d99cbfb288f4aa282d44c9c42922, type: 3}
   plural: pickaxes
   swing_time: 0.5
   swing_length: 0.15
