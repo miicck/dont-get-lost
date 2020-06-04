@@ -183,25 +183,6 @@ public class game : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
             options_menu.open = !options_menu.open;
 
-        // Toggle fullscreen modes on F11
-        if (Input.GetKeyDown(KeyCode.F11))
-        {
-            switch (Screen.fullScreenMode)
-            {
-                case FullScreenMode.Windowed:
-                    Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                    break;
-                case FullScreenMode.FullScreenWindow:
-                    Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
-                    break;
-                case FullScreenMode.ExclusiveFullScreen:
-                    Screen.fullScreenMode = FullScreenMode.Windowed;
-                    break;
-                default:
-                    throw new System.Exception("Unkown fullscreen mode!");
-            }
-        }
-
         // Toggle the debug panel on F3
         if (Input.GetKeyDown(KeyCode.F3))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
