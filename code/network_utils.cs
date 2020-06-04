@@ -211,4 +211,18 @@ public static class network_utils
         offset += sizeof(float) * 4;
         return q;
     }
+
+    /// <summary> Encodes a bool ready to be sent over the network. </summary>
+    public static byte[] encode_bool(bool b)
+    {
+        return System.BitConverter.GetBytes(b);
+    }
+    /// <summary> Decode a bool encoded using <see cref="encode_bool(bool)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static bool decode_bool(byte[] buffer, ref int offset)
+    {
+        bool b = System.BitConverter.ToBoolean(buffer, offset);
+        offset += sizeof(bool);
+        return b;
+    }
 }

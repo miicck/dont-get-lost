@@ -207,9 +207,9 @@ public static class client
     }
 
     /// <summary> Called when an object is deleted on this client, sends the server that info. </summary>
-    public static void on_delete(networked deleted)
+    public static void on_delete(networked deleted, bool response_required)
     {
-        message_senders[MESSAGE.DELETE](deleted.network_id);
+        message_senders[MESSAGE.DELETE](deleted.network_id, response_required);
     }
 
     /// <summary> Connect the client to a server. </summary>
@@ -256,6 +256,13 @@ public static class client
                 if (nw != null) nw.network_id = network_id;
             },
 
+            [server.MESSAGE.DELETE_SUCCESS] = (buffer, offset, length) =>
+            {
+                // A delete was succesfully processed on the server
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                networked.on_delete_success_response(network_id);
+            },
+
             [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
             {
                 // Forward the variable update to the correct object
@@ -271,7 +278,7 @@ public static class client
                 // Remove the object from the client
                 int id = network_utils.decode_int(buffer, ref offset);
                 var found = networked.try_find_by_id(id);
-                found.forget();
+                found?.forget();
             },
 
             [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>
@@ -363,14 +370,19 @@ public static class client
 
             [MESSAGE.DELETE] = (args) =>
             {
-                if (args.Length != 1)
+                if (args.Length != 2)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 int network_id = (int)args[0];
                 if (network_id < 0)
                     throw new System.Exception("Tried to delete an unregistered object!");
 
-                send(MESSAGE.DELETE, network_utils.encode_int(network_id));
+                bool response_required = (bool)args[1];
+
+                send(MESSAGE.DELETE, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_bool(response_required)
+                ));
             },
 
             [MESSAGE.RENDER_RANGE_UPDATE] = (args) =>

@@ -214,7 +214,14 @@ public class networked : MonoBehaviour
             _network_id = value;
 
             if (old_id <= 0 && _network_id > 0)
+            {
                 on_first_register();
+                if (awaiting_delete != null)
+                {
+                    awaiting_delete();
+                    awaiting_delete = null;
+                }
+            }
         }
     }
     int _network_id;
@@ -247,26 +254,64 @@ public class networked : MonoBehaviour
         Destroy(gameObject);
     }
 
-    /// <summary> Remove a networked object from the server and all clients. </summary>
-    public void delete()
+    public delegate void delete_success_callback();
+
+    /// <summary> If this is not null, it means we are scheduled to 
+    /// be deleted once we get a positive network id. </summary>
+    awaiting_delete_callback awaiting_delete;
+    public delegate void awaiting_delete_callback();
+
+    /// <summary> Remove a networked object from the server and all clients. 
+    /// If <paramref name="callback"/> is not null, the server will be asked
+    /// to respond when the object has been successfully deleted. When this
+    /// response is recived, callback will be called. </summary>
+    public void delete(delete_success_callback callback = null)
     {
         // Deactivate the object immediately, but
         // delete only once we have a positive network ID
         gameObject.SetActive(false);
-        CancelInvoke("delete");
 
         if (network_id < 0)
         {
-            // If unregistered, try again until registered.
-            Invoke("delete", 0.1f);
+            // If unregistered, try again when registered.
+            awaiting_delete = () => delete(callback);
             return;
         }
 
+        if (callback != null)
+            delete_callbacks[network_id] = callback;
+
         on_forget();
         on_forget(this);
-        client.on_delete(this);
+        client.on_delete(this, callback != null);
         Destroy(gameObject);
     }
+
+    /// <summary> Get information about this networked object. </summary>
+    public string network_info()
+    {
+        return "Network id = " + network_id + "\n" +
+               "Has authority = " + has_authority;
+    }
+
+#if UNITY_EDITOR
+
+    // The custom editor for networked types
+    [UnityEditor.CustomEditor(typeof(networked), true)]
+    public class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            if (Application.isPlaying)
+            {
+                var nw = (networked)target;
+                UnityEditor.EditorGUILayout.TextArea("Network info\n" + nw.network_info());
+            }
+        }
+    }
+
+#endif
 
 
     //################//
@@ -286,6 +331,9 @@ public class networked : MonoBehaviour
     /// id's, with the time forgotten stored as the value. </summary>
     static Dictionary<int, float> recently_forgotten;
 
+    /// <summary> Deleted object callbacks, see <see cref="networked.delete(delete_success_callback)"/>. </summary>
+    static Dictionary<int, delete_success_callback> delete_callbacks;
+
     public static int object_count { get => objects.Count; }
     public static int recently_forgotten_count { get => recently_forgotten.Count; }
 
@@ -299,6 +347,7 @@ public class networked : MonoBehaviour
         load_networked_fields();
         objects = new Dictionary<int, networked>();
         recently_forgotten = new Dictionary<int, float>();
+        delete_callbacks = new Dictionary<int, delete_success_callback>();
     }
 
     /// <summary> Look up a networked prefab from the prefab path. </summary>
@@ -404,7 +453,7 @@ public class networked : MonoBehaviour
         if (!objects.TryGetValue(id, out found))
         {
             if (error_if_not_recently_forgotten && !recently_forgotten.ContainsKey(id))
-                throw new System.Exception("Missing object was not recently forgotten!");
+                Debug.Log("Missing object was not recently forgotten!");
 
             return null;
         }
@@ -428,30 +477,16 @@ public class networked : MonoBehaviour
             recently_forgotten.Remove(id);
     }
 
-    public string network_info()
+    /// <summary> Called when a delete operation that 
+    /// requested a response reccives that response. See 
+    /// <see cref="networked.delete(delete_success_callback)"/>. </summary>
+    public static void on_delete_success_response(int network_id)
     {
-        return "Network id = " + network_id + "\n" +
-               "Has authority = " + has_authority;
+        if (!delete_callbacks.TryGetValue(network_id, out delete_success_callback callback))
+            throw new System.Exception("Recived unexpected delete confirmation!");
+
+        callback();
     }
-
-#if UNITY_EDITOR
-
-    // The custom editor for networked types
-    [UnityEditor.CustomEditor(typeof(networked), true)]
-    public class editor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-            if (Application.isPlaying)
-            {
-                var nw = (networked)target;
-                UnityEditor.EditorGUILayout.TextArea("Network info\n" + nw.network_info());
-            }
-        }
-    }
-
-#endif
 }
 
 public class networked_player : networked

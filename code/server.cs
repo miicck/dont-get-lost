@@ -510,7 +510,7 @@ public static class server
         representations = new Dictionary<int, representation>();
         player_representations = new Dictionary<string, representation>();
         message_queues = new Dictionary<client, Queue<pending_message>>();
-        transform = new GameObject("server").transform;     
+        transform = new GameObject("server").transform;
         active_representations = new GameObject("active").transform;
         inactive_representations = new GameObject("inactive").transform;
 
@@ -521,10 +521,10 @@ public static class server
         // Check that server configuration is valid
         if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
             throw new System.Exception("Local player object must be a networked_player!");
-    
+
         // Start listening
         tcp.Start();
-     
+
         // Load the world
         if (System.IO.Directory.Exists(save_dir()))
             load();
@@ -618,8 +618,10 @@ public static class server
 
             [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
             {
-                // Find the representation being deleted
                 int network_id = network_utils.decode_int(bytes, ref offset);
+                bool response = network_utils.decode_bool(bytes, ref offset);
+
+                // Find the representation being deleted
                 representation deleting;
                 if (!representations.TryGetValue(network_id, out deleting))
                 {
@@ -642,6 +644,10 @@ public static class server
                 network_utils.top_down<representation>(deleting.transform,
                     (rep) => representations.Remove(rep.network_id));
                 Object.Destroy(deleting.gameObject);
+
+                // Delete successfull. If the client requested a response, send one.
+                if (response)
+                    message_senders[MESSAGE.DELETE_SUCCESS](client, network_id);
             }
         };
 
@@ -758,6 +764,15 @@ public static class server
                     network_utils.encode_int(local_id),
                     network_utils.encode_int(network_id)
                 ));
+            },
+
+            [MESSAGE.DELETE_SUCCESS] = (client, args) =>
+            {
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                send(client, MESSAGE.DELETE_SUCCESS, network_utils.encode_int(network_id));
             },
 
             [MESSAGE.GAIN_AUTH] = (client, args) =>
@@ -1046,6 +1061,7 @@ public static class server
         FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
+        DELETE_SUCCESS,    // Send when a client deletes a networked object and requests a response
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
         LOSE_AUTH,         // Sent to a client when they lose authority over an object
         GAIN_AUTH,         // Sent to a ciient when they gain authority over an object

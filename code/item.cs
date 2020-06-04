@@ -117,10 +117,12 @@ public class item : networked
 
     public void pick_up()
     {
-        // Attempt to pick up the item (put it in the player
-        // inventory/destroy in-game representation)
-        if (player.current.inventory.add(name, 1))
-            delete();
+        // Delete the object on the network / add it to
+        // inventory only if succesfully deleted on the
+        // server. This stops two clients from simultaneously
+        // deleting an object to duplicate it.
+        string name_copy = name; // Copy for lambda expression
+        delete(() => player.current.inventory.add(name_copy, 1));
     }
 
     //#################//
