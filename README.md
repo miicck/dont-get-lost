@@ -1,6 +1,6 @@
 # Don't get lost
 A procedurally generated video game.
-## Devloping
+## Developing
 To setup a unity project for development, follow these steps:
 1. Using the latest version of unity, create a new unity project using the "High Definition RP" template.
 2. Replace the Assets/ folder (in its entirety) with a clone of this repository. <br>
