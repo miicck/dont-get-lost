@@ -88,6 +88,7 @@ public class inventory_section : MonoBehaviour
     public void sort()
     {
         Dictionary<string, int> contents = new Dictionary<string, int>();
+
         foreach (var s in slots)
         {
             if (s.item == null || s.count == 0) continue;
@@ -106,6 +107,13 @@ public class inventory_section : MonoBehaviour
             s.set_item_count(kv.Key, kv.Value);
             ++i;
         }
+    }
+
+    public void transfer_all_to(inventory_section other)
+    {
+        foreach (var s in slots)
+            if (other.add(s.item, s.count))
+                s.clear();
     }
 
     /// <summary> The contents of this inventory, keyed by item name. </summary>

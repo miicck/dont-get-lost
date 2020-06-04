@@ -205,7 +205,10 @@ public class player : networked_player
         set
         {
             if (_current_workbench != null)
+            {
+                _current_workbench.transfer_all_to(inventory.contents);
                 _current_workbench.gameObject.SetActive(false);
+            }
 
             _current_workbench = value;
             if (_current_workbench != null)
