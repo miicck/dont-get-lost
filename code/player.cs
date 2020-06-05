@@ -537,6 +537,9 @@ public class player : networked_player
         get => _crouched;
         private set
         {
+            // Can't crouch in cinematic mode
+            if (cinematic_mode) value = false;
+
             _crouched = value;
             if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
             else body.transform.localPosition = Vector3.zero;
