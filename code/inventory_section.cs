@@ -11,8 +11,8 @@ public class inventory_section : MonoBehaviour
     /// <summary> The point at which sub-menus attach on the left. </summary>
     public RectTransform left_expansion_point;
 
-    /// <summary> Set to true if this inventory is the main player inventory. </summary>
-    public bool is_player_inventory;
+    /// <summary> If this is a player inventory, this will be set to that player. Otherwise null. </summary>
+    public player belongs_to;
 
     /// <summary> Add the given number of a particular item to the inventory. </summary>
     public bool add(string item, int count)
@@ -41,7 +41,7 @@ public class inventory_section : MonoBehaviour
 
         slot_found.set_item_count(item, slot_found.count + count);
 
-        if (is_player_inventory)
+        if (belongs_to != null && belongs_to.has_authority)
         {
             item itm = Resources.Load<item>("items/" + item);
             string msg = "+ " + count + " " + (count > 1 ? itm.plural : itm.display_name);

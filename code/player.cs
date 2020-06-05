@@ -1078,6 +1078,16 @@ public class player : networked_player
         username = new networked_variables.net_string();
     }
 
+    public override void on_add_networked_child(networked child)
+    {
+        // Let the inventory know it belongs to this player
+        if (child is inventory)
+        {
+            var inv = (inventory)child;
+            inv.contents.belongs_to = this;
+        }
+    }
+
     //################//
     // STATIC METHODS //
     //################//
