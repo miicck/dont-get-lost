@@ -173,6 +173,9 @@ public class game : MonoBehaviour
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
+
+        // Set the network updates going
+        InvokeRepeating("network_update", 1f / 60f, 1f / 60f);
     }
 
     void create_sky()
@@ -197,7 +200,10 @@ public class game : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
+    }
 
+    void network_update()
+    {
         // Run networking updates
         server.update();
         client.update();
