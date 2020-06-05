@@ -69,7 +69,7 @@ public abstract class biome : MonoBehaviour
     public static biome at(Vector3 location)
     {
         var c = coords(location);
-        return generated_biomes.get(c[0], c[1]);
+        return generated_biomes?.get(c[0], c[1]);
     }
 
     // Check if the biome at x, z is within render range
@@ -286,8 +286,50 @@ public abstract class biome : MonoBehaviour
     // BIOME GENERATION //
     //##################//
 
-    static Dictionary<int,int,biome> generated_biomes = 
-        new Dictionary<int,int,biome>();
+    static Dictionary<int, int, biome> generated_biomes;
+    static List<MethodInfo> biome_list;
+
+    // Initialize biomes for generation
+    public static void initialize()
+    {
+        // Initialize static variables
+        generated_biomes = new Dictionary<int, int, biome>();
+        biome_list = new List<MethodInfo>();
+
+        // Find the biome types
+        var asem = Assembly.GetAssembly(typeof(biome));
+        var types = asem.GetTypes();
+
+        foreach (var t in types)
+        {
+            // Check if this type is a valid biome
+            if (!t.IsSubclassOf(typeof(biome))) continue;
+            if (t.IsAbstract) continue;
+
+            // Get the create method
+            var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
+            var generate_method = method.MakeGenericMethod(t);
+
+            // If the world is named after a biome, only generate that biome
+            // (useful for testing)
+            if (t.Name == world.name)
+            {
+                // Enforce the biome override
+                biome_list = new List<MethodInfo> { generate_method };
+                break;
+            }
+
+            // Get biome info, if it exists
+            var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
+            if (bi != null)
+            {
+                if (!bi.generation_enabled)
+                    continue; // Skip allowing this biome
+            }
+
+            biome_list.Add(generate_method);
+        }
+    }
 
     // Generates the biome at x, z
     public static biome generate(int x, int z)
@@ -301,53 +343,6 @@ public abstract class biome : MonoBehaviour
         var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
         generated_biomes.set(x, z, b);
         return b;
-    }
-
-    // Creation methods for all generated biome types
-    static List<MethodInfo> _biome_list;
-    static List<MethodInfo> biome_list
-    {
-        get
-        {
-            if (_biome_list == null)
-            {
-                // Find the biome types
-                _biome_list = new List<MethodInfo>();
-                var asem = Assembly.GetAssembly(typeof(biome));
-                var types = asem.GetTypes();
-
-                foreach (var t in types)
-                {
-                    // Check if this type is a valid biome
-                    if (!t.IsSubclassOf(typeof(biome))) continue;
-                    if (t.IsAbstract) continue;
-
-                    // Get the create method
-                    var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
-                    var generate_method = method.MakeGenericMethod(t);
-
-                    // If the world is named after a biome, only generate that biome
-                    // (useful for testing)
-                    if (t.Name == world.name)
-                    {
-                        // Enforce the biome override
-                        _biome_list = new List<MethodInfo> { generate_method };
-                        break;
-                    }
-
-                    // Get biome info, if it exists
-                    var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
-                    if (bi != null)
-                    {
-                        if (!bi.generation_enabled)
-                            continue; // Skip allowing this biome
-                    }
-
-                    _biome_list.Add(generate_method);
-                }
-            }
-            return _biome_list;
-        }
     }
 
     // Create a biome of the given type
