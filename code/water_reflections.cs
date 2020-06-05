@@ -53,11 +53,11 @@ public class water_reflections : MonoBehaviour
         water_renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         // Needs to be fiddled with on startup to work for some reason
-        fiddle_count = 2;
+        fiddle_needed = true;
         last_fiddled = player.current.transform.position;
     }
 
-    int fiddle_count;
+    bool fiddle_needed = false;
     Vector3 last_fiddled;
 
     void Update()
@@ -67,17 +67,17 @@ public class water_reflections : MonoBehaviour
         if ((last_fiddled - player.current.transform.position).magnitude >
              probe.influenceVolume.sphereRadius)
         {
-            fiddle_count += 2;
+            fiddle_needed = true;
             last_fiddled = player.current.transform.position;
         }
 
-        if (fiddle_count > 0)
-        {
-            --fiddle_count;
-            reflections_enabled = !reflections_enabled;
-        }
-
         bool should_reflect = reflections_enabled && !player.current.map_open;
+
+        if (fiddle_needed)
+        {
+            fiddle_needed = false;
+            probe.enabled = false;
+        }
 
         if (probe.enabled != should_reflect)
         {
