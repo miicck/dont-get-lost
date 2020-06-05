@@ -14,6 +14,7 @@ public static class client
     static Queue<pending_message> message_queue;
     static Queue<pending_creation_message> pending_creation_messages;
     static disconnect_func on_disconnect;
+    static float last_ping = 0;
 
     // END STATE VARIABLES //
 
@@ -175,7 +176,15 @@ public static class client
                 // Message would overrun buffer, send the
                 // buffer and obtain a new one
                 traffic_up.log_bytes(offset);
-                stream.Write(send_buffer, 0, offset);
+                try
+                {
+                    stream.Write(send_buffer, 0, offset);
+                }
+                catch
+                {
+                    disconnect(false, "Write failed, connection forcibly closed.");
+                    return;
+                }
                 send_buffer = new byte[tcp.SendBufferSize];
                 offset = 0;
             }
@@ -189,7 +198,15 @@ public static class client
         if (offset > 0)
         {
             traffic_up.log_bytes(offset);
-            stream.Write(send_buffer, 0, offset);
+            try
+            {
+                stream.Write(send_buffer, 0, offset);
+            }
+            catch
+            {
+                disconnect(false, "Write failed, connection forcibly closed.");
+                return;
+            }
         }
     }
 
@@ -297,6 +314,18 @@ public static class client
                 nw?.lose_authority();
             },
 
+            [server.MESSAGE.HEARTBEAT] = (buffer, offset, length) =>
+            {
+                // Send a heartbeat response
+                message_senders[MESSAGE.HEARTBEAT]();
+            },
+
+            [server.MESSAGE.HEARTBEAT_INFO] = (buffer, offset, length) =>
+            {
+                // Get the ping of the last heartbeat
+                last_ping = network_utils.decode_float(buffer, ref offset);
+            },
+
             [server.MESSAGE.DISCONNECT] = (buffer, offset, length) =>
             {
                 // The server told us to disconnect. How rude.
@@ -341,12 +370,20 @@ public static class client
                     network_utils.encode_string(uname), hashed));
             },
 
+            [MESSAGE.HEARTBEAT] = (args)=>
+            {
+                if (args.Length != 0)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                send(MESSAGE.HEARTBEAT, new byte[0]);
+            },
+
             [MESSAGE.DISCONNECT] = (args) =>
             {
                 if (args.Length != 0)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                send(MESSAGE.DISCONNECT, new byte[] { });
+                send(MESSAGE.DISCONNECT, new byte[0]);
             },
 
             [MESSAGE.CREATE] = (args) =>
@@ -430,8 +467,16 @@ public static class client
             message_senders[MESSAGE.DISCONNECT]();
         }
 
-        // Close the stream (with a timeout so the above messages can be sent)
-        tcp.GetStream().Close((int)(server.CLIENT_TIMEOUT * 1000));
+        try
+        {
+            // Close the stream (with a timeout so the above messages can be sent)
+            tcp.GetStream().Close((int)(server.CLIENT_TIMEOUT * 1000));
+        }
+        catch
+        {
+            Debug.Log("Connection severed ungracefully.");
+        }
+
         tcp.Close();
         tcp = null;
 
@@ -496,38 +541,25 @@ public static class client
         send_queued_messages();
     }
 
-    static System.Net.NetworkInformation.Ping ping;
-    static long last_ping = 0;
-
     public static string info()
     {
         if (!connected) return "Client not connected.";
 
         var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
-        if (ping == null)
-        {
-            ping = new System.Net.NetworkInformation.Ping();
-            ping.PingCompleted += (sender, e) =>
-            {
-                last_ping = e.Reply.RoundtripTime;
-                ping = null;
-            };
-
-            ping.SendAsync(ep.Address, null);
-        }
 
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
                "    Objects            : " + networked.object_count + "\n" +
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage() + "\n" +
-               "    Ping               : " + last_ping + "ms";
+               "    Effective ping     : " + (last_ping * 1000) + " ms";
     }
 
     public enum MESSAGE : byte
     {
         // Numbering starts at 1 so erroneous 0's are caught
         LOGIN = 1,           // Client has logged in
+        HEARTBEAT,           // Heartbeat response
         DISCONNECT,          // Disconnect this client
         CREATE,              // Create an object on the server
         DELETE,              // Delete an object from the server

@@ -55,6 +55,10 @@ public class world_menu : MonoBehaviour
     public InputField world_seed_input;
     public InputField ip_input;
     public InputField username_input;
+    public Text message;
+
+    /// <summary> The message to display when the world menu starts. </summary>
+    public static string message_to_display = "";
 
     UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData hd_camera;
 
@@ -65,6 +69,10 @@ public class world_menu : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
 
         hd_camera = menu_camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+
+        // Display the message, but reset it for next time
+        message.text = message_to_display;
+        message_to_display = "";
 
         // Find all the saved worlds
         var world_folders = System.IO.Directory.GetDirectories(server.saves_dir());

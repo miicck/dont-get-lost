@@ -106,7 +106,13 @@ public class game : MonoBehaviour
 
     void on_client_disconnect(string message_from_server)
     {
+        // Stop the server if this was the host
+        if (server.started)
+            server.stop();
+
         // Go back to the world menu
+        if (message_from_server != null)
+            world_menu.message_to_display = "Disconnected: " + message_from_server;
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/world_menu");
     }
 
