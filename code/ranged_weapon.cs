@@ -30,9 +30,10 @@ public class ranged_weapon : equip_in_hand
         }
 
         player.current.inventory.contents.remove(ammo_found.name, 1);
-        Vector3 fired_position = 
-            player.current.hand_centre.position + 
-            player.current.hand_centre.forward;
+        Vector3 fired_position =
+            player.current.hand_centre.position +
+            player.current.hand_centre.forward *
+            Resources.Load<projectile>("items/" + ammo_found.name).start_distance;
 
         var fired = client.create(
             fired_position, "items/" + ammo_found.name,
