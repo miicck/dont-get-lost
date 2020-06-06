@@ -225,7 +225,7 @@ public class player : networked_player
                 var rt = _current_workbench.GetComponent<RectTransform>();
                 rt.SetParent(inventory.contents.left_expansion_point);
                 rt.anchoredPosition = Vector2.zero;
-                rt.SetParent(FindObjectOfType<Canvas>().transform);
+                rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
             }
         }
     }
@@ -505,7 +505,7 @@ public class player : networked_player
             if (_inspect_info == null)
             {
                 _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst();
-                _inspect_info.transform.SetParent(FindObjectOfType<Canvas>().transform);
+                _inspect_info.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 _inspect_info.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             }
 
@@ -986,7 +986,7 @@ public class player : networked_player
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
-        crosshairs.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        crosshairs.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
         crosshairs.color = new Color(1, 1, 1, 0.5f);
         var crt = crosshairs.GetComponent<RectTransform>();
         crt.sizeDelta = new Vector2(64, 64);
@@ -1144,7 +1144,7 @@ public class popup_message : MonoBehaviour
         m.text = m.gameObject.AddComponent<UnityEngine.UI.Text>();
 
         m.transform = m.GetComponent<RectTransform>();
-        m.transform.SetParent(FindObjectOfType<Canvas>().transform);
+        m.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
         m.transform.anchorMin = new Vector2(0.5f, 0.25f);
         m.transform.anchorMax = new Vector2(0.5f, 0.25f);
         m.transform.anchoredPosition = Vector2.zero;

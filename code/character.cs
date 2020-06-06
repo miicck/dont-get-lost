@@ -12,7 +12,7 @@ public class character : networked
     // Character behaviour
     public float walk_speed = 1f;
     public float run_speed = 4f;
-    public float max_health = 10;
+    public int max_health = 10;
     public float pathfinding_resolution = 0.5f;
     public float height = 2f;
     public float agro_range = 5f;
@@ -359,6 +359,23 @@ public class character : networked
     //############//
 
     networked_variables.net_float y_rotation;
+    public networked_variables.net_int health;
+
+    healthbar healthbar
+    {
+        get
+        {
+            if (_healthbar == null)
+            {
+                _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
+                _healthbar.transform.SetParent(transform);
+                _healthbar.transform.position = transform.position + Vector3.up;
+                _healthbar.belongs_to = this;
+            }
+            return _healthbar;
+        }
+    }
+    healthbar _healthbar;
 
     public override void on_init_network_variables()
     {
@@ -368,6 +385,27 @@ public class character : networked
             var ea = transform.rotation.eulerAngles;
             ea.y = y_rotation.value;
             transform.rotation = Quaternion.Euler(ea);
+        };
+
+        health = new networked_variables.net_int();
+        health.value = max_health;
+
+        health.on_change = () =>
+        {
+            if (health.value >= max_health)
+            {
+                if (healthbar != null)
+                    Destroy(healthbar.gameObject);
+            }
+            else
+                healthbar.belongs_to = this;
+
+            if (health.value <= 0 && has_authority)
+            {
+                foreach (var p in GetComponents<product>())
+                    p.create_in_inventory(player.current.inventory.contents);
+                delete();
+            }
         };
     }
 
@@ -395,4 +433,62 @@ public class character : networked
         }
     }
 #endif
+}
+
+class healthbar : MonoBehaviour
+{
+    public const int WIDTH = 100;
+    public const int HEIGHT = 10;
+
+    Canvas canv;
+    RectTransform canv_rect;
+    public character belongs_to;
+
+    UnityEngine.UI.Image background;
+    UnityEngine.UI.Image foreground;
+    RectTransform background_rect;
+    RectTransform foreground_rect;
+
+    private void Start()
+    {
+        canv = gameObject.AddComponent<Canvas>();
+        canv.renderMode = RenderMode.WorldSpace;
+        canv.worldCamera = player.current.camera;
+        canv_rect = canv.GetComponent<RectTransform>();
+        canv_rect.SetParent(transform);
+        canv_rect.localRotation = Quaternion.identity;
+        canv_rect.sizeDelta = new Vector2(WIDTH, HEIGHT);
+
+        background = new GameObject("background").AddComponent<UnityEngine.UI.Image>();
+        foreground = new GameObject("foreground").AddComponent<UnityEngine.UI.Image>();
+        background.color = Color.red;
+        foreground.color = Color.green;
+        background_rect = background.GetComponent<RectTransform>();
+        foreground_rect = foreground.GetComponent<RectTransform>();
+
+        background_rect.SetParent(canv_rect);
+        foreground_rect.SetParent(canv_rect);
+
+        background_rect.sizeDelta = canv_rect.sizeDelta;
+        foreground_rect.sizeDelta = canv_rect.sizeDelta;
+
+        background_rect.localPosition = Vector3.zero;
+        foreground_rect.localPosition = Vector3.zero;
+
+        background_rect.anchoredPosition = Vector2.zero;
+        foreground_rect.anchoredPosition = Vector2.zero;
+
+        background_rect.localRotation = Quaternion.identity;
+        foreground_rect.localRotation = Quaternion.identity;
+
+        canv_rect.transform.localScale = new Vector3(1f, 1f, 1f) / (float)WIDTH;
+    }
+
+    private void Update()
+    {
+        foreground.GetComponent<RectTransform>().sizeDelta = new Vector2(
+            canv_rect.sizeDelta.x * belongs_to.health.value / belongs_to.max_health,
+            canv_rect.sizeDelta.y
+        );
+    }
 }

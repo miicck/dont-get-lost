@@ -8,6 +8,7 @@ public class game : MonoBehaviour
     public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
 
+    public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
     public GameObject debug_panel;
 

@@ -9,6 +9,7 @@ public abstract class equip_in_hand : item
 
 public class melee_weapon : equip_in_hand
 {
+    public int damage = 1;
     public float swing_time = 0.25f;
     public float swing_length = 0.5f;
     public float max_forward_in_up = 5f;
