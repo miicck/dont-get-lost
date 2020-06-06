@@ -91,6 +91,15 @@ public static class procmath
             if (x < 0) return asmptote_to_1(-x);
             return 1f - Mathf.Exp(-x);
         }
+
+        /// <summary> Returns a function that is 1 in the middle 
+        /// of the range [min, max), and 0 at the ends. </summary>
+        public static float maximum_in_middle(int x, int min, int max)
+        {
+            if (min >= max) throw new System.Exception("min >= max!");
+            float xf = (x - min) / (float)(max - min);
+            return 0.5f * (1 - Mathf.Cos(2f * Mathf.PI * xf));
+        }
     }
 
     // Pick a choice from the given array, with a Gaussian probability with the given width

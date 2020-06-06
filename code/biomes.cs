@@ -76,6 +76,38 @@ public class desert : biome
     const float LARGE_ROCKS_START = 0.8f;
     const float SMALL_ROCKS_START = 0.5f;
 
+    void create_oasis(int x, int z, int scale)
+    {
+        // Ensure we're in range
+        int x_min = x - scale / 2; if (x_min < 0) return;
+        int x_max = x + scale / 2; if (x_max > SIZE) return;
+        int z_min = z - scale / 2; if (z_min < 0) return;
+        int z_max = z + scale / 2; if (z_max > SIZE) return;
+
+        for (int i = x_min; i < x_max; ++i)
+            for (int j = z_min; j < z_max; ++j)
+            {
+                // Remove all objects
+                grid[i, j].object_to_generate = null;
+
+                // Lower terrain
+                float im = procmath.maps.maximum_in_middle(i, x_min, x_max);
+                float jm = procmath.maps.maximum_in_middle(j, z_min, z_max);
+                grid[i, j].altitude -= im * jm * 8f;
+
+                if (grid[i, j].altitude < point.BEACH_END && 
+                    grid[i,j].altitude > world.SEA_LEVEL)
+                {
+                    if (random.range(0, 50) == 0)
+                        grid[i, j].object_to_generate = world_object.load("palm_tree");
+                    else if (random.range(0, 50) == 0)
+                        grid[i, j].object_to_generate = world_object.load("mossy_log");
+                    else if (random.range(0, 50) == 0)
+                        grid[i, j].object_to_generate = world_object.load("flint_piece");
+                }
+            }
+    }
+
     protected override void generate_grid()
     {
         float[,] alt = new float[SIZE, SIZE];
@@ -142,6 +174,11 @@ public class desert : biome
 
                 grid[i, j] = p;
             }
+
+        for (int i = 0; i < 8; ++i)
+        {
+            create_oasis(random.range(0, SIZE), random.range(0, SIZE), random.range(16, 32));
+        }
     }
 }
 
