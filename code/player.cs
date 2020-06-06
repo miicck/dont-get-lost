@@ -413,7 +413,8 @@ public class player : networked_player
                 // Create an equipped-type copy of the item
                 _equipped = item.create(item_name, transform.position, transform.rotation);
                 foreach (var c in _equipped.GetComponentsInChildren<Collider>())
-                    Destroy(c);
+                    c.enabled = false;
+
                 if (_equipped is equip_in_hand)
                 {
                     // This item can be eqipped in my hand

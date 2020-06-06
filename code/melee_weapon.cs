@@ -16,8 +16,7 @@ public class melee_weapon : equip_in_hand
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
 
-
-    impact_test_point[] impact_points { get { return GetComponentsInChildren<impact_test_point>(); } }
+    impact_test_point[] impact_points { get => GetComponentsInChildren<impact_test_point>(); }
 
     public override bool allow_left_click_held_down() { return true; }
 
