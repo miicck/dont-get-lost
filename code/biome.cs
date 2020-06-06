@@ -105,7 +105,7 @@ public abstract class biome : MonoBehaviour
     //#########################//
 
     // The size of a biome in chunks per side
-    public const int CHUNKS_PER_SIDE = 4;
+    public const int CHUNKS_PER_SIDE = 3;
     public const int SIZE = CHUNKS_PER_SIDE * chunk.SIZE;
 
     // The grid of chunks within the biome

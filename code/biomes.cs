@@ -95,8 +95,8 @@ public class desert : biome
                 float jm = procmath.maps.maximum_in_middle(j, z_min, z_max);
                 grid[i, j].altitude -= im * jm * 8f;
 
-                if (grid[i, j].altitude < point.BEACH_END && 
-                    grid[i,j].altitude > world.SEA_LEVEL)
+                if (grid[i, j].altitude < point.BEACH_END &&
+                    grid[i, j].altitude > world.SEA_LEVEL)
                 {
                     if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("palm_tree");
@@ -797,7 +797,7 @@ public class town : biome
                 }
 
                 grid[b.left, b.bottom].gen_info = new object[] { b.width, b.height, b.front };
-                grid[b.centre_x, b.centre_z].object_to_generate = world_object.load("native_spawner");
+                //grid[b.centre_x, b.centre_z].object_to_generate = world_object.load("native_spawner");
             }
 
             // Color in the road/building terrains
@@ -885,6 +885,33 @@ public class charred_forest : biome
     }
 }
 
+public class ice_ocean : biome
+{
+    public const float OSCILLATION_PERIOD = 64f;
+    public const float OSCILLATION_AMP = 16f;
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                p.terrain_color = terrain_colors.snow;
+                p.sky_color = sky_colors.light_blue;
+                p.altitude = 0;
+
+                if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("ice_sheet");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("iceberg");
+
+                grid[i, j] = p;
+            }
+    }
+}
+
+
+[biome_info(generation_enabled: false)]
 public class crystal_field : biome
 {
     public const int MOUNTAIN_WIDTH = 64;
@@ -943,27 +970,25 @@ public class crystal_field : biome
     }
 }
 
-public class ice_ocean : biome
+[biome_info(generation_enabled: false)]
+public class caves : biome
 {
-    public const float OSCILLATION_PERIOD = 64f;
-    public const float OSCILLATION_AMP = 16f;
-
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
                 var p = new point();
-                p.terrain_color = terrain_colors.snow;
-                p.sky_color = sky_colors.light_blue;
-                p.altitude = 0;
-
-                if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("ice_sheet");
-                else if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("iceberg");
-
                 grid[i, j] = p;
+
+                float perl = Mathf.PerlinNoise(i / 64f, j / 64f);
+
+                p.altitude = 64f * perl * perl;
+                p.terrain_color = terrain_colors.rock;
+                p.sky_color = sky_colors.light_blue;
+
+                if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("rock_doughnut_1");
             }
     }
 }
