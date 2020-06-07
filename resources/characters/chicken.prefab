@@ -353,10 +353,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
-  item: {fileID: 1258904545578886467, guid: 16eb9109f496e144c8e50ceeae24d2c3, type: 3}
-  min_count: 1
-  max_count: 1
+  mode: 1
+  item: {fileID: 6346620150498834249, guid: d0437790d945c9a4aaa73b74a4304091, type: 3}
+  min_count: 0
+  max_count: 10
 --- !u!1 &9030473764433901683
 GameObject:
   m_ObjectHideFlags: 0

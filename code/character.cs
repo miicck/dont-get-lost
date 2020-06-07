@@ -359,7 +359,21 @@ public class character : networked
     //############//
 
     networked_variables.net_float y_rotation;
-    public networked_variables.net_int health;
+    networked_variables.net_int health;
+
+    public int remaining_health { get => health.value; }
+
+    public void take_damage(int damage)
+    {
+        play_random_sound(character_sound.TYPE.INJURY);
+        health.value -= damage;
+        if (health.value < 0)
+        {
+            foreach (var p in GetComponents<product>())
+                p.create_in_inventory(player.current.inventory.contents);
+            delete();
+        }
+    }
 
     healthbar healthbar
     {
@@ -394,18 +408,11 @@ public class character : networked
         {
             if (health.value >= max_health)
             {
-                if (healthbar != null)
-                    Destroy(healthbar.gameObject);
+                if (_healthbar != null)
+                    Destroy(_healthbar.gameObject);
             }
             else
                 healthbar.belongs_to = this;
-
-            if (health.value <= 0 && has_authority)
-            {
-                foreach (var p in GetComponents<product>())
-                    p.create_in_inventory(player.current.inventory.contents);
-                delete();
-            }
         };
     }
 
@@ -487,7 +494,7 @@ class healthbar : MonoBehaviour
     private void Update()
     {
         foreground.GetComponent<RectTransform>().sizeDelta = new Vector2(
-            canv_rect.sizeDelta.x * belongs_to.health.value / belongs_to.max_health,
+            canv_rect.sizeDelta.x * belongs_to.remaining_health / belongs_to.max_health,
             canv_rect.sizeDelta.y
         );
     }

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class projectile : item
 {
+    public int damage = 4;
     public float start_distance = 1f;
     string got_stuck_in;
 
@@ -18,6 +19,9 @@ public class projectile : item
         // Don't get stuck in player, or other projectiles
         if (collision.collider.transform.IsChildOf(player.current.transform)) return;
         if (collision.collider.GetComponent<projectile>() != null) return;
+
+        // Apply damage to characters
+        collision.collider.GetComponentInParent<character>()?.take_damage(damage);
 
         // Get stuck in whatever I hit
         got_stuck_in = collision.collider.name;

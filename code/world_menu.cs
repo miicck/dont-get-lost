@@ -175,6 +175,22 @@ public class world_menu : MonoBehaviour
         ip_input.text = network_utils.local_ip_address() + ":" + server.DEFAULT_PORT;
         ip_input.transform.SetAsLastSibling();
 
+        var quit_header = template_header.inst();
+        quit_header.text = "";
+        quit_header.transform.SetParent(button_container);
+
+        var quit_button = template_button.inst();
+        quit_button.transform.SetParent(button_container);
+        quit_button.GetComponentInChildren<Text>().text = "Quit game";
+        quit_button.onClick.AddListener(() =>
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        });
+
         // Remove the templates
         Destroy(template_button.gameObject);
         Destroy(template_header.gameObject);
@@ -190,7 +206,7 @@ public class world_menu : MonoBehaviour
     }
 
     private void Update()
-    {        
+    {
         Color bg = hd_camera.backgroundColorHDR;
         float h, s, v;
         Color.RGBToHSV(bg, out h, out s, out v);
