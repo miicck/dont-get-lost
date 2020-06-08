@@ -247,6 +247,34 @@ public class mountains : biome
     const float ROCK_END = 70f;
     const float MOUNTAIN_DENSITY = 0.0008f;
 
+    void add_quarry(int x, int z, int scale)
+    {
+        int min_x = x - scale / 2; if (min_x < 0) return;
+        int min_z = z - scale / 2; if (min_z < 0) return;
+        int max_x = x + scale / 2; if (max_x > SIZE) return;
+        int max_z = z + scale / 2; if (max_z > SIZE) return;
+
+        // Work out the average altitude of the quarry
+        float average = 0;
+        float count = 0;
+        for (int i = min_x; i < max_x; ++i)
+            for (int j = min_z; j < max_z; ++j)
+            {
+                average += grid[i, j].altitude;
+                count += 1;
+            }
+        average /= count;
+
+        for (int i = min_x; i < max_x; ++i)
+            for (int j = min_z; j < max_z; ++j)
+            {
+                var it = procmath.maps.trapesium(i, min_x, max_x, scale / 4);
+                var jt = procmath.maps.trapesium(j, min_z, max_z, scale / 4);
+                float av_amt = it * jt;
+                grid[i, j].altitude = grid[i, j].altitude * (1f - av_amt) + average * av_amt;
+            }
+    }
+
     protected override void generate_grid()
     {
         var alt = new float[SIZE, SIZE];
@@ -285,8 +313,23 @@ public class mountains : biome
                     float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
                     p.terrain_color = Color.Lerp(terrain_colors.grass, terrain_colors.rock, r);
 
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("slate");
+                    if (p.altitude > ROCK_END)
+                        if (i > 0 && j > 0 && i < SIZE - 1 && j < SIZE - 1)
+                        {
+                            // Not at the edge, calculate the gradient
+                            float gradient = 0f;
+                            gradient += Mathf.Abs(alt[i + 1, j] - alt[i, j]);
+                            gradient += Mathf.Abs(alt[i, j] - alt[i - 1, j]);
+                            gradient += Mathf.Abs(alt[i, j + 1] - alt[i, j]);
+                            gradient += Mathf.Abs(alt[i, j] - alt[i, j - 1]);
+                            gradient /= 2f;
+
+                            if (gradient < 1f)
+                            {
+                                if (random.range(0, 2) == 0)
+                                    p.object_to_generate = world_object.load("slate");
+                            }
+                        }
                 }
 
                 // Generate these objects between sea-level and rock-level
@@ -971,6 +1014,28 @@ public class crystal_field : biome
 }
 
 [biome_info(generation_enabled: false)]
+public class canyon_new : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                grid[i, j] = p;
+
+                int ib = i + x * SIZE;
+                int jb = j + z * SIZE;
+
+                float mb = procmath.maps.mandelbrot(ib, jb, 4, 256f);
+
+                p.altitude = 64f * mb;
+                p.terrain_color = terrain_colors.grass;
+            }
+    }
+}
+
+[biome_info(generation_enabled: false)]
 public class caves : biome
 {
     protected override void generate_grid()
@@ -987,8 +1052,10 @@ public class caves : biome
                 p.terrain_color = terrain_colors.rock;
                 p.sky_color = sky_colors.light_blue;
 
-                if (random.range(0, 100) == 0)
+                if (random.range(0, 200) == 0)
                     p.object_to_generate = world_object.load("rock_doughnut_1");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("stone_archway");
             }
     }
 }

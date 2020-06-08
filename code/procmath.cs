@@ -97,8 +97,87 @@ public static class procmath
         public static float maximum_in_middle(int x, int min, int max)
         {
             if (min >= max) throw new System.Exception("min >= max!");
+            if (x < min) return 0;
+            if (x >= max) return 0;
             float xf = (x - min) / (float)(max - min);
             return 0.5f * (1 - Mathf.Cos(2f * Mathf.PI * xf));
+        }
+
+        /// <summary> Create a trapesium of height 1 between 
+        /// <paramref name="min"/> and <paramref name="max"/>.
+        /// The flat part goes between 
+        /// <paramref name="min"/> + <paramref name="edge"/> and 
+        /// <paramref name="max"/> - <paramref name="edge"/>. </summary>
+        public static float trapesium(int x, int min, int max, int edge)
+        {
+            if (max <= min + 2 * edge) throw new System.Exception("max <= min + 2 * edge!");
+            if (x <= min) return 0;
+            if (x >= max) return 0;
+
+            int xr = x - min;
+            if (xr < edge) return xr / (float)edge;
+
+            int xl = max - x;
+            if (xl < edge) return xl / (float)edge;
+
+            return 1f;
+        }
+
+        /// <summary> Returns a pattern that looks like a sprawling set 
+        /// of rivers repeats in x, z in [0,1]. </summary>
+        public static float river_map(float x, float z)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        struct complex
+        {
+            public float r;
+            public float i;
+
+            public complex(float r, float i)
+            {
+                this.r = r;
+                this.i = i;
+            }
+
+            public float magnitude { get => Mathf.Sqrt(r * r + i * i); }
+
+            public static complex operator *(complex a, complex b)
+            {
+                return new complex(a.r * b.r - a.i * b.i, a.r * b.i + a.i * b.r);
+            }
+
+            public static complex operator +(complex a, complex b)
+            {
+                return new complex(a.r + b.r, a.i + b.i);
+            }
+        }
+
+        /// <summary> Returns the number of mandelbrot iterations before
+        /// the modulus of the complex number x + iy exceeds 2.
+        /// Stops when max_iter is hit. </summary>
+        public static float mandelbrot(float x, float y, int iter, float period)
+        {
+            x = Mathf.Sin(x / period);
+            y = Mathf.Sin(y / period);
+
+            /*
+            x /= period;
+            y /= period;
+            x -= Mathf.Floor(x);
+            y -= Mathf.Floor(y);
+            x = (x - 0.5f) * 2f;
+            y = (y - 0.5f) * 2f;
+            */
+
+            complex c = new complex(x, y);
+            complex z = new complex(x, y);
+
+            for (int i = 0; i < iter; ++i)
+                z = z * z * z * z + c;
+
+            return asmptote_to_1(z.magnitude);
         }
     }
 
