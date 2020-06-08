@@ -61,16 +61,6 @@ public class player : networked_player
 
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
 
-        if (carrying != null)
-        {
-            Vector3 dx =
-                eye_transform.position +
-                eye_transform.forward -
-                carrying.carry_pivot.position;
-
-            carrying.transform.position += dx;
-        }
-
         // Allign the arm with the hand
         right_arm.to_grab = equipped?.transform;
 
@@ -254,23 +244,9 @@ public class player : networked_player
     // ITEM USE //
     //##########//
 
-    item _carrying;
-    item carrying
-    {
-        get { return _carrying; }
-        set
-        {
-            if (_carrying != null)
-                _carrying.stop_carry();
-            _carrying = value;
-        }
-    }
-
     // Called on a left click when no item is equipped
     public void left_click_with_hand()
     {
-        if (carrying != null) { carrying = null; return; }
-
         float dis;
         var ray = camera_ray(INTERACTION_RANGE, out dis);
 
@@ -295,15 +271,7 @@ public class player : networked_player
     // Called on a right click when no item is equipped
     public void right_click_with_hand()
     {
-        if (carrying != null) { carrying = null; return; }
 
-        RaycastHit hit;
-        item clicked = utils.raycast_for_closest<item>(camera_ray(), out hit, INTERACTION_RANGE);
-        if (clicked != null)
-        {
-            clicked.carry(hit);
-            carrying = clicked;
-        }
     }
 
     UnityEngine.UI.Image crosshairs;

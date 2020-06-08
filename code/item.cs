@@ -90,31 +90,6 @@ public class item : networked
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 
-    bool being_carried = false;
-    bool controlling_position = false;
-    public void carry(RaycastHit point_hit)
-    {
-        // Create the pivot point that we clicked the item at
-        carry_pivot = new GameObject("pivot").transform;
-        carry_pivot.SetParent(transform);
-        carry_pivot.transform.position = point_hit.point;
-        carry_pivot.rotation = player.current.camera.transform.rotation;
-
-        // Setup item in carry mode
-        rigidbody.isKinematic = true;
-        rigidbody.detectCollisions = false;
-        being_carried = true;
-        controlling_position = true;
-    }
-
-    public void stop_carry()
-    {
-        // Put the item back in physics mode
-        rigidbody.isKinematic = false;
-        rigidbody.detectCollisions = true;
-        being_carried = false;
-    }
-
     public void pick_up()
     {
         // Delete the object on the network / add it to
