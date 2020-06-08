@@ -294,8 +294,9 @@ public static class client
             {
                 // Remove the object from the client
                 int id = network_utils.decode_int(buffer, ref offset);
+                bool deleting = network_utils.decode_bool(buffer, ref offset);
                 var found = networked.try_find_by_id(id);
-                found?.forget();
+                found?.forget(deleting);
             },
 
             [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>

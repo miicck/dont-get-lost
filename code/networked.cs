@@ -40,8 +40,14 @@ public class networked : MonoBehaviour
     /// <summary> Called whenever a networked child is added. </summary>
     public virtual void on_add_networked_child(networked child) { }
 
+    /// <summary> Called whenever a networked child is deleted. </summary>
+    public virtual void on_delete_networked_child(networked child) { }
+
     /// <summary> Called when this object is forgotten on a client. </summary>
-    public virtual void on_forget() { }
+    public virtual void on_forget(bool deleted) { }
+
+    /// <summary> Called on the client that deletes this object. </summary>
+    public virtual void on_delete() { }
 
     /// <summary> Called the first time this object reccives a positive id. </summary>
     public virtual void on_first_register() { }
@@ -245,12 +251,15 @@ public class networked : MonoBehaviour
     // TERMINATION OF EXISTANCE //
     //##########################//
 
-    /// <summary> Forget the netowrk object on this client. The object
-    /// remains on the server + potentially on other clients. </summary>
-    public void forget()
+    /// <summary> Forget the network object on this client. If <paramref name="deleting"/>
+    /// is true, this object has been forgotten permantently, otherwise it has just been
+    /// forgotten temporarily (i.e has gone out of range). </summary>
+    public void forget(bool deleting)
     {
-        on_forget();
+        on_forget(deleting);
         on_forget(this);
+        if (deleting)
+            transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
         Destroy(gameObject);
     }
 
@@ -281,10 +290,8 @@ public class networked : MonoBehaviour
         if (callback != null)
             delete_callbacks[network_id] = callback;
 
-        on_forget();
-        on_forget(this);
         client.on_delete(this, callback != null);
-        Destroy(gameObject);
+        forget(true);
     }
 
     /// <summary> Get information about this networked object. </summary>

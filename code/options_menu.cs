@@ -63,7 +63,7 @@ public class options_menu : MonoBehaviour
     /// Note that this might be called before the menu is open, so 
     /// <see cref="options_menu_option.initialize_option"/> should
     /// not depend on the UI being loaded. </summary>
-    public static void initialize_options()
+    public static void initialize()
     {
         var om = Resources.Load<options_menu>("ui/options_menu");
         foreach (var o in om.GetComponentsInChildren<options_menu_option>(true))

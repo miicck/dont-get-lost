@@ -70,7 +70,7 @@ public abstract class world_object_modifier : networked
     void on_timeout() { delete(); }
 
     /// <summary> Untarget when destroyed. </summary>
-    public override void on_forget() { target = null; }
+    public override void on_forget(bool deleted) { target = null; }
 
     /// <summary> Called whenever the target world object changes. </summary>
     protected abstract void change_target(world_object old_target, world_object new_target);

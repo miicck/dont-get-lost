@@ -127,7 +127,7 @@ public static class server
             // so that it doens't just get re-loaded based on proximity)
             foreach (var c in connected_clients)
                 if (c.has_loaded(player))
-                    c.unload(player);
+                    c.unload(player, false);
 
             player?.transform.SetParent(inactive_representations);
         }
@@ -159,7 +159,7 @@ public static class server
                 {
                     // Unload from clients that are too far away
                     if (!should_load(rep))
-                        unload(rep);
+                        unload(rep, false);
                 }
                 else
                 {
@@ -216,7 +216,7 @@ public static class server
 
         /// <summary>  Unload the object corresponding to the given 
         /// representation on this client. </summary>
-        public void unload(representation rep, bool already_removed = false)
+        public void unload(representation rep, bool deleting, bool already_removed = false)
         {
             // Unload rep and all of it's children
             network_utils.top_down<representation>(rep.transform, (unloading) =>
@@ -236,7 +236,7 @@ public static class server
             // Let the client know that rep has been unloaded
             // (the client will automatically unload it's children also)
             if (!already_removed)
-                message_senders[MESSAGE.UNLOAD](this, rep.network_id);
+                message_senders[MESSAGE.UNLOAD](this, rep.network_id, deleting);
         }
     }
 
@@ -685,7 +685,7 @@ public static class server
                 // also be unloaded by the client).
                 foreach (var c in connected_clients)
                     if (c.has_loaded(deleting))
-                        c.unload(deleting, c == client);
+                        c.unload(deleting, true, already_removed: c == client);
 
                 // Move to inactive whilst deleting.
                 deleting.transform.SetParent(inactive_representations);
@@ -695,7 +695,7 @@ public static class server
                     (rep) => representations.Remove(rep.network_id));
                 Object.Destroy(deleting.gameObject);
 
-                // Delete successfull. If the client requested a response, send one.
+                // Delete successful. If the client requested a response, send one.
                 if (response)
                     message_senders[MESSAGE.DELETE_SUCCESS](client, network_id);
             }
@@ -778,12 +778,16 @@ public static class server
 
             [MESSAGE.UNLOAD] = (client, args) =>
             {
-                if (args.Length != 1)
+                if (args.Length != 2)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 int network_id = (int)args[0];
+                bool deleting = (bool)args[1];
 
-                send(client, MESSAGE.UNLOAD, network_utils.encode_int(network_id));
+                send(client, MESSAGE.UNLOAD, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_bool(deleting)
+                ));
             },
 
             [MESSAGE.VARIABLE_UPDATE] = (client, args) =>

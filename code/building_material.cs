@@ -376,6 +376,10 @@ public class building_material : item
         return use_result.underway_allows_none;
     }
 
+    /// <summary> Returns the networked object to parent this 
+    /// building material to when it is placed. </summary>
+    protected virtual networked parent_on_placement() { return null; }
+
     public override void on_use_end(player.USE_TYPE use_type)
     {
         if (spawned != null)
@@ -383,7 +387,7 @@ public class building_material : item
             // Create a proper, networked version of the spawned object
             var created = (building_material)create(spawned.name,
                 spawned.transform.position, spawned.transform.rotation,
-                kinematic: true, networked: true);
+                kinematic: true, networked: true, network_parent: parent_on_placement());
 
             spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);

@@ -953,6 +953,31 @@ public class ice_ocean : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
+public class test_biome : biome
+{
+    protected override void generate_grid()
+    {
+        world_object[] objects = new world_object[]
+        {
+            world_object.load("mossy_log"),
+            world_object.load("flint_piece"),
+        };
+        int index = 0;
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                grid[i, j] = p;
+                p.altitude = point.BEACH_END;
+
+                if (i % 5 == 0 && j % 5 == 0)
+                    p.object_to_generate = objects[++index % objects.Length];
+            }
+    }
+}
+
 
 [biome_info(generation_enabled: false)]
 public class crystal_field : biome
