@@ -426,6 +426,7 @@ public class leg : MonoBehaviour
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+
             if (Application.isPlaying)
             {
                 var l = (leg)target;
@@ -441,6 +442,20 @@ public class leg : MonoBehaviour
 
                 UnityEditor.EditorGUILayout.TextArea(debug);
                 UnityEditor.EditorUtility.SetDirty(target); // Update every frame
+            }
+            else
+            {
+                if (UnityEditor.EditorGUILayout.Toggle("Auto setup", false))
+                {
+                    var l = (leg)target;
+                    foreach (Transform t in l.transform)
+                    {
+                        if (t.name.Contains("ankle")) l.ankle = t;
+                        else if (t.name.Contains("knee")) l.knee = t;
+                        else if (t.name.Contains("hip")) l.hip = t;
+                        else if (t.name.Contains("foot_base")) l.foot_base = t;
+                    }
+                }
             }
         }
     }

@@ -44,7 +44,7 @@ public class arm : MonoBehaviour
         // Create a new elbow object with
         //  rotation so that down points towards hand
         Transform elbow_new = new GameObject("elbow").transform;
-        elbow_new.position = elbow.position;       
+        elbow_new.position = elbow.position;
         Vector3 elbow_up = elbow.position - hand.position;
         Vector3 elbow_forward = Vector3.Cross(right, elbow_up);
         elbow_new.rotation = Quaternion.LookRotation(elbow_forward, elbow_up);
@@ -54,7 +54,7 @@ public class arm : MonoBehaviour
 
         bicep_length = (elbow.position - shoulder.position).magnitude;
         forearm_length = (hand.position - elbow.position).magnitude;
-    
+
         // Record the initial shoulder location + rotation
         initial_shoulder = new GameObject("initial_shoulder").transform;
         initial_shoulder.rotation = shoulder.rotation;
@@ -76,8 +76,8 @@ public class arm : MonoBehaviour
     {
         if (following == null) return;
 
-        float s = swing_multiplier * 
-            Mathf.Sin(following.progress * Mathf.PI) * 
+        float s = swing_multiplier *
+            Mathf.Sin(following.progress * Mathf.PI) *
             following.step_length_boost;
 
         Vector3 shoulder_forward = initial_shoulder.forward + initial_shoulder.up * s / 2f;
@@ -160,4 +160,26 @@ public class arm : MonoBehaviour
             Gizmos.DrawWireSphere(to_grab.position, 0.05f);
         }
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(arm))]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            if (UnityEditor.EditorGUILayout.Toggle("auto setup", false))
+            {
+                var a = (arm)target;
+                foreach (Transform t in a.transform)
+                {
+                    if (t.name.Contains("upper")) a.shoulder = t;
+                    else if (t.name.Contains("lower")) a.elbow = t;
+                    else if (t.name.Contains("hand")) a.hand = t;
+                }
+            }
+        }
+    }
+#endif
+
 }
