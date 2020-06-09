@@ -6,7 +6,7 @@ using UnityEngine;
 public class bed : building_material, IInspectable
 {
     static HashSet<bed> all_beds;
-    
+
     public static void initialize_beds()
     {
         all_beds = new HashSet<bed>();
@@ -26,6 +26,19 @@ public class bed : building_material, IInspectable
     List<fixture> fixtures = new List<fixture>();
     settler occupant;
     bool fixtures_dirty = false;
+
+    public override Dictionary<string, int> add_to_inventory_on_pickup()
+    {
+        // Also pick up all fixtures
+        var dict = base.add_to_inventory_on_pickup();
+        foreach (var f in fixtures)
+            foreach (var kv in f.add_to_inventory_on_pickup())
+            {
+                if (!dict.ContainsKey(kv.Key)) dict[kv.Key] = 0;
+                dict[kv.Key] += kv.Value;
+            }
+        return dict;
+    }
 
     public override void on_add_networked_child(networked child)
     {

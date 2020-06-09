@@ -90,14 +90,25 @@ public class item : networked
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 
+    public virtual Dictionary<string, int> add_to_inventory_on_pickup()
+    {
+        var ret = new Dictionary<string, int>();
+        ret[name] = 1;
+        return ret;
+    }
+
     public void pick_up()
     {
         // Delete the object on the network / add it to
         // inventory only if succesfully deleted on the
         // server. This stops two clients from simultaneously
         // deleting an object to duplicate it.
-        string name_copy = name; // Copy for lambda expression
-        delete(() => player.current.inventory.add(name_copy, 1));
+        var to_pickup = add_to_inventory_on_pickup();
+        delete(() =>
+        {
+            foreach (var kv in to_pickup)
+                player.current.inventory.add(kv.Key, kv.Value);
+        });
     }
 
     //#################//

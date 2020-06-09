@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A memeber of a settlment. </summary>
-public class settler : pathfinding_agent
+public class settler : pathfinding_agent, IInspectable
 {
     public bed bed { get => GetComponentInParent<bed>(); }
     item_requirement[] requirements { get => GetComponents<item_requirement>(); }
@@ -44,5 +44,20 @@ public class settler : pathfinding_agent
         base.on_gain_authority();
 
         idle();
+    }
+
+    public string inspect_info()
+    {
+        return name;
+    }
+
+    public Sprite main_sprite()
+    {
+        return null;
+    }
+
+    public Sprite secondary_sprite()
+    {
+        return null;
     }
 }
