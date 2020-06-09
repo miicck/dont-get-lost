@@ -34,7 +34,20 @@ public class path
             if (i == 0) return start;
             if (i - 1 < path_found.Count)
                 return path_found[i - 1].grounding;
-            return goal;
+
+            if (path_found.Count > 0)
+            {
+                var last = path_found[path_found.Count - 1].grounding;
+                Vector3 delta = goal - last;
+                if (delta.magnitude < resolution) return goal;
+                return last;
+            }
+            else
+            {
+                Vector3 delta = goal - start;
+                if (delta.magnitude < resolution) return goal;
+                return start;
+            }
         }
     }
 
@@ -250,23 +263,6 @@ public class path
     /// valid grid point is found. </summary>
     waypoint load(Vector3 v)
     {
-        // Find the nearest grounding point to v in the up/down direction
-        Vector3? grounding = null;
-        float min_dis = float.PositiveInfinity;
-        foreach (var hit in Physics.RaycastAll(v + Vector3.up * 10, Vector3.down, 20))
-            if (!hit.transform.IsChildOf(ignore_collisions_with))
-            {
-                float dis = (hit.point - v).sqrMagnitude;
-                if (dis < min_dis)
-                {
-                    min_dis = dis;
-                    grounding = hit.point;
-                }
-            }
-
-        if (grounding != null)
-            v = (Vector3)grounding;
-
         Vector3 d = v - start;
         int x0 = Mathf.RoundToInt(d.x / resolution);
         int y0 = Mathf.RoundToInt(d.y / resolution);

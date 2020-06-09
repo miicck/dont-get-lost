@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A memeber of a settlment. </summary>
-public class settler : networked
+public class settler : pathfinding_agent
 {
     public bed bed { get => GetComponentInParent<bed>(); }
     item_requirement[] requirements { get => GetComponents<item_requirement>(); }
@@ -27,5 +27,22 @@ public class settler : networked
         }
 
         return true;
+    }
+
+    protected override bool path_constriant(Vector3 v)
+    {
+        return (v - bed.transform.position).magnitude < 5f;
+    }
+
+    void idle()
+    {
+        go_to(random_target(5f), on_fail: idle, on_arrive: idle);
+    }
+
+    public override void on_gain_authority()
+    {
+        base.on_gain_authority();
+
+        idle();
     }
 }

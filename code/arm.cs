@@ -162,6 +162,7 @@ public class arm : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    [UnityEditor.CanEditMultipleObjects()]
     [UnityEditor.CustomEditor(typeof(arm))]
     class editor : UnityEditor.Editor
     {

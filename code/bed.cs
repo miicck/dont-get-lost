@@ -17,7 +17,13 @@ public class bed : building_material, IInspectable
         return utils.find_to_min(all_beds, (b) => (b.transform.position - position).sqrMagnitude);
     }
 
-    HashSet<fixture> fixtures = new HashSet<fixture>();
+    public fixture random_fixture()
+    {
+        if (fixtures.Count == 0) return null;
+        return fixtures[Random.Range(0, fixtures.Count)];
+    }
+
+    List<fixture> fixtures = new List<fixture>();
     settler occupant;
     bool fixtures_dirty = false;
 
@@ -35,8 +41,9 @@ public class bed : building_material, IInspectable
         else if (child is fixture)
         {
             var f = (fixture)child;
-            if (!fixtures.Add(f))
+            if (fixtures.Contains(f))
                 throw new System.Exception("Tried to add a fixture multiple times!");
+            fixtures.Add(f);
 
             fixtures_dirty = has_authority;
         }
