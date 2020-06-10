@@ -2,31 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class workbench : MonoBehaviour
+public class workbench : MonoBehaviour, ILeftPlayerMenu
 {
     public string load_recipies_from;
 
-    inventory_section _inventory;
-    public inventory_section inventory
-    {
-        get
-        {
-            if (_inventory == null)
-            {
-                // Create the workbench inventory
-                _inventory = Resources.Load<inventory_section>("ui/workbench").inst();
-                _inventory.transform.SetParent(FindObjectOfType<Canvas>().transform);
-                _inventory.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-                _inventory.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().display_name.capitalize();
-                _inventory.GetComponentInChildren<crafting_input>().load_recipies(load_recipies_from);
-            }
-            return _inventory;
-        }
-    }
+    //#################//
+    // ILeftPlayerMenu //
+    //#################//
 
-    private void OnDestroy()
+    public RectTransform left_menu_transform()
     {
-        if (_inventory != null)
-            Destroy(_inventory.gameObject);
+        if (craft_menu == null)
+        {
+            craft_menu = Resources.Load<RectTransform>("ui/workbench").inst();
+            craft_menu.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().display_name.capitalize();
+            craft_menu.GetComponentInChildren<crafting_input>().load_recipies(load_recipies_from);
+        }
+
+        return craft_menu;
     }
+    RectTransform craft_menu;
+
+    public void on_left_menu_open() { }
+    public void on_left_menu_close() { }
 }

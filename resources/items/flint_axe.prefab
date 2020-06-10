@@ -77,6 +77,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: cbd8085e62644be499559f8c7fea825c, type: 3}
   plural: flint axes
+  value: 15
   damage: 4
   swing_time: 0.5
   swing_length: 0.15

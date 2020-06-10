@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: 94ba0bb3d4ccca24f9c287ff8fb080c9, type: 3}
   plural: charcoal
+  value: 2
 --- !u!1001 &9148232638271662606
 PrefabInstance:
   m_ObjectHideFlags: 0

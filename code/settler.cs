@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A memeber of a settlment. </summary>
-public class settler : pathfinding_agent, IInspectable
+public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
 {
     public bed bed { get => GetComponentInParent<bed>(); }
     item_requirement[] requirements { get => GetComponents<item_requirement>(); }
@@ -46,18 +46,33 @@ public class settler : pathfinding_agent, IInspectable
         idle();
     }
 
-    public string inspect_info()
+    //#################//
+    // ILeftPlayerMenu //
+    //#################//
+
+    public RectTransform left_menu_transform()
     {
-        return name;
+        if (trade_window == null)
+        {
+            trade_window = Resources.Load<settler_trade_window>("ui/settler_trade_window").inst();
+            trade_window.setup(this);
+        }
+        return trade_window.GetComponent<RectTransform>();
+    }
+    settler_trade_window trade_window;
+
+    public void on_left_menu_open()
+    {
+        trade_window.on_open();
     }
 
-    public Sprite main_sprite()
-    {
-        return null;
-    }
+    public void on_left_menu_close() { }
 
-    public Sprite secondary_sprite()
-    {
-        return null;
-    }
+    //##############//
+    // IInspectable //
+    //##############//
+
+    public string inspect_info() { return name.capitalize(); }
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 }

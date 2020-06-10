@@ -136,6 +136,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: 8ea21a4c7006ab24aac3ab1c3982c02b, type: 3}
   plural: slate
+  value: 1
   axes_scale: 1
 --- !u!1 &7394056408457303176
 GameObject:

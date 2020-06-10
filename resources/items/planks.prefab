@@ -137,6 +137,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sprite: {fileID: 21300000, guid: 7e814e8fef7057b47bf7ef744171891c, type: 3}
   plural: planks
+  value: 2
+  axes_scale: 1
 --- !u!65 &2292200334867980753
 BoxCollider:
   m_ObjectHideFlags: 0

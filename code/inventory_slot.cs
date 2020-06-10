@@ -16,7 +16,6 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
             {
                 mi = mouse_item.create(slot.item, slot.count, slot);
                 slot.set_item_count(null, 0);
-                //slot.clear();
             }
             else if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Right)
             {

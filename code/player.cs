@@ -75,14 +75,13 @@ public class player : networked_player
                 Cursor.visible = inventory_open;
                 Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
 
-                // Find a workbench to interact with
+                // Open/close the left menu
                 if (inventory_open)
                 {
-                    RaycastHit hit;
-                    var wb = utils.raycast_for_closest<workbench>(camera_ray(), out hit, INTERACTION_RANGE);
-                    if (wb != null) current_workbench = wb.inventory;
+                    var ray = camera_ray(INTERACTION_RANGE, out float dist);
+                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
                 }
-                else current_workbench = null;
+                else left_menu = null;
             }
         }
 
@@ -188,37 +187,39 @@ public class player : networked_player
 
     public inventory inventory { get => GetComponentInChildren<inventory>(); }
 
-    inventory_section _current_workbench;
-    inventory_section current_workbench
+    /// <summary> The menu that appears to the left of the inventory. </summary>
+    ILeftPlayerMenu left_menu
     {
-        get => _current_workbench;
+        get => _left_menu;
         set
         {
-            if (_current_workbench != null)
-            {
-                _current_workbench.transfer_all_to(inventory.contents);
-                _current_workbench.gameObject.SetActive(false);
-            }
+            if (_left_menu == value)
+                return; // No change
 
-            _current_workbench = value;
-            if (_current_workbench != null)
+            if (value != null)
             {
-                // Activate the workbench menu + direct its output to 
-                // the player inventory.
-                _current_workbench.gameObject.SetActive(true);
-                _current_workbench.GetComponent<crafting_input>().craft_to = inventory.contents;
-
-                // Put the workbench inventory in the right place, but
-                // make sure it isn't a child of the players inventory,
-                // otherwise it will be counted as part of the players
-                // inventory.
-                var rt = _current_workbench.GetComponent<RectTransform>();
+                // Position the left menu at the left_expansion_point
+                // but leave it parented to the canvas, rather than
+                // the player inventory
+                var rt = value.left_menu_transform();
+                rt.gameObject.SetActive(true);
                 rt.SetParent(inventory.contents.left_expansion_point);
                 rt.anchoredPosition = Vector2.zero;
                 rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                value.on_left_menu_open();
             }
+
+            if (_left_menu != null)
+            {
+                // Deactivate the menu
+                _left_menu.on_left_menu_close();
+                _left_menu.left_menu_transform().gameObject.SetActive(false);
+            }
+
+            _left_menu = value;
         }
     }
+    ILeftPlayerMenu _left_menu;
 
     bool inventory_open
     {
@@ -237,7 +238,7 @@ public class player : networked_player
     public void close_all_ui()
     {
         if (inventory != null) inventory_open = false;
-        current_workbench = null;
+        left_menu = null;
     }
 
     //##########//
@@ -1141,4 +1142,11 @@ public class popup_message : MonoBehaviour
         if (time > 1)
             Destroy(this.gameObject);
     }
+}
+
+public interface ILeftPlayerMenu
+{
+    RectTransform left_menu_transform();
+    void on_left_menu_close();
+    void on_left_menu_open();
 }

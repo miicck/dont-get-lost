@@ -10,6 +10,7 @@ public class item : networked
 
     public Sprite sprite; // The sprite represeting this item in inventories etc
     public string plural;
+    public int value;
     public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
 
     public string display_name

@@ -12,6 +12,15 @@ public class inventory : networked
     /// <summary> The UI object that has the inventory slots. </summary>
     public inventory_section contents { get; private set; }
 
+    /// <summary> Returns the number of a given item in the inventory. </summary>
+    public int count(string item)
+    {
+        var cts = contents.contents();
+        if (!cts.TryGetValue(item, out int ret))
+            ret = 0;
+        return ret;
+    }
+
     public bool add(string item, int count)
     {
         bool ret = contents.add(item, count);
