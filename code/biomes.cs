@@ -953,6 +953,82 @@ public class ice_ocean : biome
     }
 }
 
+public class rock_stacks : biome
+{
+    public const float HILL_PERIOD = 64f;
+    public const float HILL_SIZE = 32f;
+    public const float WATER_FRAC = 0.25f;
+    public const float WIGGLE_PERIOD = 16f;
+    public const float WIGGLE_AMP = HILL_SIZE;
+
+    protected override void generate_grid()
+    {
+        // Derived constants
+        const float HILL_ABOVE = HILL_SIZE * (1 - WATER_FRAC);
+        const float HILL_BELOW = HILL_SIZE * WATER_FRAC;
+        const float ROCK_THRESH_ALT = world.SEA_LEVEL + HILL_ABOVE * 0.5f - HILL_BELOW;
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.terrain_color = terrain_colors.grass;
+                p.sky_color = sky_colors.light_blue;
+
+                // Generate the altitude using some perlin noise (where the coordinates
+                // have been wiggled with another perlin noise)
+                float i_wiggle = i + WIGGLE_AMP * Mathf.PerlinNoise(i / WIGGLE_PERIOD, j / WIGGLE_PERIOD);
+                float hill_amt = Mathf.PerlinNoise(i_wiggle / HILL_PERIOD, j / HILL_PERIOD);
+                p.altitude = world.SEA_LEVEL + HILL_ABOVE * hill_amt - HILL_BELOW;
+
+                if (p.altitude < world.SEA_LEVEL + 0.1f)
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint_piece");
+                }
+                else if (hill_amt > 0.3f)
+                {
+                    // Generate some well-spaced trees
+                    if (i % 3 == 0 && j % 3 == 0 && random.range(0, 10) == 0)
+                    {
+                        p.object_to_generate = world_object.load("tree");
+
+                        if (random.range(0, 5) == 0 && i > 2 && j > 2)
+                            grid[i - 2, j - 2].object_to_generate = world_object.load("mossy_log");
+                    }
+
+                    // Generate bushes
+                    else if (random.range(0, 200) == 0)
+                        p.object_to_generate = world_object.load("bush");
+                }
+            }
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j];
+                if (p.altitude > ROCK_THRESH_ALT)
+                {
+                    // Generate some well-spaced rocks
+                    if (i % 5 == 0 && j % 5 == 0 && random.range(0, 8) == 0)
+                    {
+                        // Clear a space for the rocks
+                        const int CLEAR_SIZE = 5;
+                        for (int i2 = Mathf.Max(0, i - CLEAR_SIZE);
+                                 i2 < Mathf.Min(SIZE, i + CLEAR_SIZE); ++i2)
+                            for (int j2 = Mathf.Max(0, j - CLEAR_SIZE);
+                                     j2 < Mathf.Min(SIZE, j + CLEAR_SIZE); ++j2)
+                                grid[i2, j2].object_to_generate = null;
+
+                        // Add the rocks
+                        p.object_to_generate = world_object.load("rock_stacks_1");
+                    }
+                }
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class test_biome : biome
 {
@@ -1034,28 +1110,6 @@ public class crystal_field : biome
                 }
 
                 grid[i, j] = p;
-            }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class canyon_new : biome
-{
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-                grid[i, j] = p;
-
-                int ib = i + x * SIZE;
-                int jb = j + z * SIZE;
-
-                float mb = procmath.maps.mandelbrot(ib, jb, 4, 256f);
-
-                p.altitude = 64f * mb;
-                p.terrain_color = terrain_colors.grass;
             }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class pathfinding_agent : networked
 {
-    public float agent_height = 2f;
+    public float agent_height = 1.5f;
     public float agent_resolution = 0.5f;
     public float base_speed = 5f;
 
@@ -67,7 +67,7 @@ public class pathfinding_agent : networked
     protected Vector3 random_target(float range)
     {
         Vector3 rt = transform.position + Random.insideUnitSphere * range;
-        if (Physics.Raycast(rt + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
+        if (Physics.Raycast(rt + Vector3.up, Vector3.down, out RaycastHit hit, 2f))
             rt = hit.point;
         return rt;
     }
