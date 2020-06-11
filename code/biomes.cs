@@ -1029,6 +1029,35 @@ public class rock_stacks : biome
     }
 }
 
+public class jungle : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.terrain_color = terrain_colors.jungle_moss;
+                p.sky_color = sky_colors.jungle_green;
+                p.altitude = point.BEACH_END;
+
+                if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("jungle_tree_1");
+                else if (random.range(0, 50) == 0)
+                {
+                    if (random.range(0, 2) == 0)
+                        p.object_to_generate = world_object.load("tree_fern_bent");
+                    else
+                        p.object_to_generate = world_object.load("tree_fern");
+                }
+                else if (random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("mossy_log");
+
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class test_biome : biome
 {

@@ -16,6 +16,7 @@ public static class terrain_colors
     public static readonly Color charred_earth = new Color(0, 0, 0, 0);
     public static readonly Color crystal_light = new Color(0.77f, 0.47f, 0.82f);
     public static readonly Color crystal_dark = new Color(0.62f, 0.14f, 0.76f);
+    public static readonly Color jungle_moss = new Color(0.18f, 0.30f, 0.11f);
 }
 
 public static class sky_colors
@@ -23,4 +24,5 @@ public static class sky_colors
     public static readonly Color light_blue = new Color(0.58f, 0.89f, 0.89f, 1f);
     public static readonly Color smoke_grey = new Color(0.2f, 0.2f, 0.2f, 1f);
     public static readonly Color crystal_purple = new Color(0.55f, 0.21f, 0.49f);
+    public static readonly Color jungle_green = new Color(0.38f, 0.57f, 0.29f);
 }
