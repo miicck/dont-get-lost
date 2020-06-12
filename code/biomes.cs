@@ -606,6 +606,24 @@ public class swamp : biome
     }
 }
 
+public class caves : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL - 2f;
+                p.sky_color = sky_colors.underground_darkness;
+
+                if (i % 5 == 0 && j % 5 == 0 && random.range(0, 10) == 0)
+                    p.object_to_generate = world_object.load("rock_pillar_1");
+            }
+    }
+}
+
 
 [biome_info(generation_enabled: false)]
 public class farmland : biome
@@ -1199,31 +1217,6 @@ public class crystal_field : biome
                 }
 
                 grid[i, j] = p;
-            }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class caves : biome
-{
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-                grid[i, j] = p;
-
-                float perl = Mathf.PerlinNoise(i / 64f, j / 64f);
-
-                p.altitude = 64f * perl * perl;
-                p.terrain_color = terrain_colors.rock;
-                p.sky_color = sky_colors.light_blue;
-
-                if (random.range(0, 200) == 0)
-                    p.object_to_generate = world_object.load("rock_doughnut_1");
-                else if (random.range(0, 200) == 0)
-                    p.object_to_generate = world_object.load("stone_archway");
             }
     }
 }
