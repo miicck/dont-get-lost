@@ -94,9 +94,9 @@ public abstract class biome : MonoBehaviour
     /// biome are in the blended region near the edge. </summary>
     protected static bool in_blend_region(int x_in_biome, int z_in_biome)
     {
-        return x_in_biome <= BLEND_DISTANCE || 
+        return x_in_biome <= BLEND_DISTANCE ||
                z_in_biome <= BLEND_DISTANCE ||
-               x_in_biome >= SIZE - BLEND_DISTANCE || 
+               x_in_biome >= SIZE - BLEND_DISTANCE ||
                z_in_biome >= SIZE - BLEND_DISTANCE;
     }
 
@@ -408,8 +408,9 @@ public abstract class biome : MonoBehaviour
         public const float BEACH_END = world.SEA_LEVEL + 2f;
 
         public float altitude;
-        public Color terrain_color;
-        public Color sky_color;
+        public Color water_color = water_colors.cyan;
+        public Color terrain_color = terrain_colors.grass;
+        public Color sky_color = sky_colors.light_blue;
         public world_object object_to_generate;
         public object gen_info;
 
@@ -419,7 +420,9 @@ public abstract class biome : MonoBehaviour
             point ret = new point
             {
                 altitude = 0,
-                terrain_color = new Color(0, 0, 0, 0)
+                terrain_color = new Color(0, 0, 0, 0),
+                sky_color = new Color(0, 0, 0, 1),
+                water_color = new Color(0, 0, 0, 0)
             };
 
             float total_weight = 0;
@@ -434,13 +437,18 @@ public abstract class biome : MonoBehaviour
                 if (p == null) continue;
 
                 ret.altitude += p.altitude * w;
+
                 ret.terrain_color.r += p.terrain_color.r * w;
                 ret.terrain_color.g += p.terrain_color.g * w;
                 ret.terrain_color.b += p.terrain_color.b * w;
+
                 ret.sky_color.r += p.sky_color.r * w;
                 ret.sky_color.g += p.sky_color.g * w;
                 ret.sky_color.b += p.sky_color.b * w;
-                ret.sky_color.a += p.sky_color.a * w;
+
+                ret.water_color.r += p.water_color.r * w;
+                ret.water_color.g += p.water_color.g * w;
+                ret.water_color.b += p.water_color.b * w;
 
                 if (wts[i] > max_w)
                 {
@@ -524,8 +532,8 @@ public class int_rect
     public bool is_edge(int edge_width, int x, int z)
     {
         return x > right - edge_width ||
-               x < left + edge_width  ||
-               z > top - edge_width   ||
+               x < left + edge_width ||
+               z > top - edge_width ||
                z < bottom + edge_width;
     }
 }

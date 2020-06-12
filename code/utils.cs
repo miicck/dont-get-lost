@@ -240,6 +240,7 @@ public static class utils
         switch (m.shader.name)
         {
             case "HDRP/Unlit": return "_UnlitColor";
+            case "HDRP/Lit": return "_BaseColor";
             default:
                 throw new System.Exception("Unkown shader name " + m.shader.name);
         }

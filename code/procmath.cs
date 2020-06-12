@@ -123,11 +123,19 @@ public static class procmath
             return 1f;
         }
 
-        public static float soft_floor(float x, float softening = 0.25f)
+        /// <summary> Returns a number in [0,1] in a pattern that looks
+        /// like rivers. 1 => river 0 => no river. </summary>
+        public static float river_map(float x, float y, float river_period, float river_width)
         {
-            float ret = Mathf.Floor(x);
-            ret += smooth_max_cos(x - ret, 1 - softening);
-            return ret;
+            float xs = x + river_period * Mathf.PerlinNoise(x / river_period, y / river_period);
+            float ys = y + river_period * Mathf.PerlinNoise(0.3232f - x / river_period, y / river_period);
+
+            float dx = Mathf.Abs(xs - river_period * Mathf.Round(xs / river_period));
+            float dy = Mathf.Abs(ys - river_period * Mathf.Round(ys / river_period));
+
+            river_width /= 2f;
+            float dmin = Mathf.Min(dx, dy);
+            return 1f - asmptote_to_1(dmin / river_width);
         }
     }
 

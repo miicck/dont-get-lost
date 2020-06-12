@@ -57,6 +57,7 @@ public class player : networked_player
         {
             var point_at = biome.blended_point(transform.position);
             target_sky_color = point_at.sky_color;
+            water.color = point_at.water_color;
         }
 
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);

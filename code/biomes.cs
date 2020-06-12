@@ -381,6 +381,233 @@ public class flat_forest : biome
     }
 }
 
+public class charred_forest : biome
+{
+    public const float HILL_HEIGHT = 4f;
+    public const float HILL_PERIOD = 20f;
+    public const int SPIDER_GRID_SPACING = 64;
+    public const float SPIDER_HILL_HEIGHT = 8f;
+    public const int SPIDER_HILL_PERIOD = 24;
+    public const float SPIDER_HILL_MOD_PERIOD = 12f;
+
+    protected override void generate_grid()
+    {
+        float[,] spideryness = new float[SIZE, SIZE];
+
+        HashSet<int> x_spawners = new HashSet<int>();
+        HashSet<int> z_spawners = new HashSet<int>();
+
+        for (int i = SPIDER_GRID_SPACING / 2;
+            i < SIZE - SPIDER_GRID_SPACING / 2;
+            i += SPIDER_GRID_SPACING)
+            for (int j = SPIDER_GRID_SPACING / 2;
+                j < SIZE - SPIDER_GRID_SPACING / 2;
+                j += SPIDER_GRID_SPACING)
+            {
+                int x = i + random.range(0, SPIDER_GRID_SPACING / 2);
+                int z = j + random.range(0, SPIDER_GRID_SPACING / 2);
+                x_spawners.Add(x);
+                z_spawners.Add(z);
+
+                procmath.float_2D_tools.add_smooth_dome(
+                    ref spideryness, x, z, SPIDER_HILL_PERIOD, 1f);
+            }
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                float s = spideryness[i, j];
+
+                float altitude = HILL_HEIGHT * Mathf.PerlinNoise(
+                    i / HILL_PERIOD, j / HILL_PERIOD);
+
+                if (s > 10e-4)
+                {
+                    altitude += s * SPIDER_HILL_HEIGHT * Mathf.PerlinNoise(
+                        i / SPIDER_HILL_MOD_PERIOD, j / SPIDER_HILL_MOD_PERIOD);
+
+                    bool spawner = s > 0.25f && i % 4 == 0 && j % 4 == 0 &&
+                        random.range(0, 8) == 0;
+
+                    if (x_spawners.Contains(i) && z_spawners.Contains(j))
+                        spawner = true;
+
+                    if (spawner)
+                        p.object_to_generate = world_object.load("smoke_spider_nest");
+                    else if (random.range(0, 10) == 0)
+                        p.object_to_generate = world_object.load("charred_rock");
+                }
+                else
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("charred_tree_stump");
+                }
+
+                p.altitude = point.BEACH_END + altitude;
+                p.terrain_color = terrain_colors.charred_earth;
+                p.sky_color = sky_colors.smoke_grey;
+
+                grid[i, j] = p;
+            }
+    }
+}
+
+public class ice_ocean : biome
+{
+    public const float OSCILLATION_PERIOD = 64f;
+    public const float OSCILLATION_AMP = 16f;
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = new point();
+                p.terrain_color = terrain_colors.snow;
+                p.sky_color = sky_colors.light_blue;
+                p.altitude = 0;
+
+                if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("ice_sheet");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("iceberg");
+
+                grid[i, j] = p;
+            }
+    }
+}
+
+public class rock_stacks : biome
+{
+    public const float HILL_PERIOD = 64f;
+    public const float HILL_SIZE = 32f;
+    public const float WATER_FRAC = 0.25f;
+    public const float WIGGLE_PERIOD = 16f;
+    public const float WIGGLE_AMP = HILL_SIZE;
+
+    protected override void generate_grid()
+    {
+        // Derived constants
+        const float HILL_ABOVE = HILL_SIZE * (1 - WATER_FRAC);
+        const float HILL_BELOW = HILL_SIZE * WATER_FRAC;
+        const float ROCK_THRESH_ALT = world.SEA_LEVEL + HILL_ABOVE * 0.5f - HILL_BELOW;
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.terrain_color = terrain_colors.grass;
+                p.sky_color = sky_colors.light_blue;
+
+                // Generate the altitude using some perlin noise (where the coordinates
+                // have been wiggled with another perlin noise)
+                float i_wiggle = i + WIGGLE_AMP * Mathf.PerlinNoise(i / WIGGLE_PERIOD, j / WIGGLE_PERIOD);
+                float hill_amt = Mathf.PerlinNoise(i_wiggle / HILL_PERIOD, j / HILL_PERIOD);
+                p.altitude = world.SEA_LEVEL + HILL_ABOVE * hill_amt - HILL_BELOW;
+
+                if (p.altitude < world.SEA_LEVEL + 0.1f)
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint_piece");
+                }
+                else if (hill_amt > 0.3f)
+                {
+                    // Generate some well-spaced trees
+                    if (i % 3 == 0 && j % 3 == 0 && random.range(0, 10) == 0)
+                    {
+                        p.object_to_generate = world_object.load("tree");
+
+                        if (random.range(0, 5) == 0 && i > 2 && j > 2)
+                            grid[i - 2, j - 2].object_to_generate = world_object.load("mossy_log");
+                    }
+
+                    // Generate bushes
+                    else if (random.range(0, 200) == 0)
+                        p.object_to_generate = world_object.load("bush");
+                }
+            }
+
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j];
+                if (p.altitude > ROCK_THRESH_ALT)
+                {
+                    // Generate some well-spaced rocks
+                    if (i % 5 == 0 && j % 5 == 0 && random.range(0, 8) == 0)
+                    {
+                        // Clear a space for the rocks
+                        const int CLEAR_SIZE = 5;
+                        for (int i2 = Mathf.Max(0, i - CLEAR_SIZE);
+                                 i2 < Mathf.Min(SIZE, i + CLEAR_SIZE); ++i2)
+                            for (int j2 = Mathf.Max(0, j - CLEAR_SIZE);
+                                     j2 < Mathf.Min(SIZE, j + CLEAR_SIZE); ++j2)
+                                grid[i2, j2].object_to_generate = null;
+
+                        // Add the rocks
+                        p.object_to_generate = world_object.load("rock_stacks_1");
+                    }
+                }
+            }
+    }
+}
+
+public class jungle : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.terrain_color = terrain_colors.jungle_moss;
+                p.sky_color = sky_colors.jungle_green;
+                p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
+
+                if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("jungle_tree_1");
+                else if (random.range(0, 50) == 0)
+                {
+                    if (random.range(0, 2) == 0)
+                        p.object_to_generate = world_object.load("tree_fern_bent");
+                    else
+                        p.object_to_generate = world_object.load("tree_fern");
+                }
+                else if (random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("mossy_log_jungle");
+
+            }
+    }
+}
+
+public class swamp : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + 0.1f - 0.5f * Mathf.PerlinNoise(i / 16f, j / 16f);
+                p.water_color = water_colors.swampy_green;
+                p.sky_color = sky_colors.jungle_green;
+
+                if (random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("spiky_tree_stump");
+                else if (random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("swampy_tree");
+                else if (random.range(0, 10) == 0)
+                    p.object_to_generate = world_object.load("lillypad");
+            }
+    }
+}
+
+
+[biome_info(generation_enabled: false)]
 public class farmland : biome
 {
     /// <summary> The smallest alllowed field edge size. </summary>
@@ -564,6 +791,7 @@ public class farmland : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class town : biome
 {
     // Half the width of a road
@@ -856,180 +1084,8 @@ public class town : biome
     }
 }
 
-public class charred_forest : biome
-{
-    public const float HILL_HEIGHT = 4f;
-    public const float HILL_PERIOD = 20f;
-    public const int SPIDER_GRID_SPACING = 64;
-    public const float SPIDER_HILL_HEIGHT = 8f;
-    public const int SPIDER_HILL_PERIOD = 24;
-    public const float SPIDER_HILL_MOD_PERIOD = 12f;
-
-    protected override void generate_grid()
-    {
-        float[,] spideryness = new float[SIZE, SIZE];
-
-        HashSet<int> x_spawners = new HashSet<int>();
-        HashSet<int> z_spawners = new HashSet<int>();
-
-        for (int i = SPIDER_GRID_SPACING / 2;
-            i < SIZE - SPIDER_GRID_SPACING / 2;
-            i += SPIDER_GRID_SPACING)
-            for (int j = SPIDER_GRID_SPACING / 2;
-                j < SIZE - SPIDER_GRID_SPACING / 2;
-                j += SPIDER_GRID_SPACING)
-            {
-                int x = i + random.range(0, SPIDER_GRID_SPACING / 2);
-                int z = j + random.range(0, SPIDER_GRID_SPACING / 2);
-                x_spawners.Add(x);
-                z_spawners.Add(z);
-
-                procmath.float_2D_tools.add_smooth_dome(
-                    ref spideryness, x, z, SPIDER_HILL_PERIOD, 1f);
-            }
-
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-                float s = spideryness[i, j];
-
-                float altitude = HILL_HEIGHT * Mathf.PerlinNoise(
-                    i / HILL_PERIOD, j / HILL_PERIOD);
-
-                if (s > 10e-4)
-                {
-                    altitude += s * SPIDER_HILL_HEIGHT * Mathf.PerlinNoise(
-                        i / SPIDER_HILL_MOD_PERIOD, j / SPIDER_HILL_MOD_PERIOD);
-
-                    bool spawner = s > 0.25f && i % 4 == 0 && j % 4 == 0 &&
-                        random.range(0, 8) == 0;
-
-                    if (x_spawners.Contains(i) && z_spawners.Contains(j))
-                        spawner = true;
-
-                    if (spawner)
-                        p.object_to_generate = world_object.load("smoke_spider_nest");
-                    else if (random.range(0, 10) == 0)
-                        p.object_to_generate = world_object.load("charred_rock");
-                }
-                else
-                {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("charred_tree_stump");
-                }
-
-                p.altitude = point.BEACH_END + altitude;
-                p.terrain_color = terrain_colors.charred_earth;
-                p.sky_color = sky_colors.smoke_grey;
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-public class ice_ocean : biome
-{
-    public const float OSCILLATION_PERIOD = 64f;
-    public const float OSCILLATION_AMP = 16f;
-
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = new point();
-                p.terrain_color = terrain_colors.snow;
-                p.sky_color = sky_colors.light_blue;
-                p.altitude = 0;
-
-                if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("ice_sheet");
-                else if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("iceberg");
-
-                grid[i, j] = p;
-            }
-    }
-}
-
-public class rock_stacks : biome
-{
-    public const float HILL_PERIOD = 64f;
-    public const float HILL_SIZE = 32f;
-    public const float WATER_FRAC = 0.25f;
-    public const float WIGGLE_PERIOD = 16f;
-    public const float WIGGLE_AMP = HILL_SIZE;
-
-    protected override void generate_grid()
-    {
-        // Derived constants
-        const float HILL_ABOVE = HILL_SIZE * (1 - WATER_FRAC);
-        const float HILL_BELOW = HILL_SIZE * WATER_FRAC;
-        const float ROCK_THRESH_ALT = world.SEA_LEVEL + HILL_ABOVE * 0.5f - HILL_BELOW;
-
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                // Point setup
-                var p = grid[i, j] = new point();
-                p.terrain_color = terrain_colors.grass;
-                p.sky_color = sky_colors.light_blue;
-
-                // Generate the altitude using some perlin noise (where the coordinates
-                // have been wiggled with another perlin noise)
-                float i_wiggle = i + WIGGLE_AMP * Mathf.PerlinNoise(i / WIGGLE_PERIOD, j / WIGGLE_PERIOD);
-                float hill_amt = Mathf.PerlinNoise(i_wiggle / HILL_PERIOD, j / HILL_PERIOD);
-                p.altitude = world.SEA_LEVEL + HILL_ABOVE * hill_amt - HILL_BELOW;
-
-                if (p.altitude < world.SEA_LEVEL + 0.1f)
-                {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("flint_piece");
-                }
-                else if (hill_amt > 0.3f)
-                {
-                    // Generate some well-spaced trees
-                    if (i % 3 == 0 && j % 3 == 0 && random.range(0, 10) == 0)
-                    {
-                        p.object_to_generate = world_object.load("tree");
-
-                        if (random.range(0, 5) == 0 && i > 2 && j > 2)
-                            grid[i - 2, j - 2].object_to_generate = world_object.load("mossy_log");
-                    }
-
-                    // Generate bushes
-                    else if (random.range(0, 200) == 0)
-                        p.object_to_generate = world_object.load("bush");
-                }
-            }
-
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = grid[i, j];
-                if (p.altitude > ROCK_THRESH_ALT)
-                {
-                    // Generate some well-spaced rocks
-                    if (i % 5 == 0 && j % 5 == 0 && random.range(0, 8) == 0)
-                    {
-                        // Clear a space for the rocks
-                        const int CLEAR_SIZE = 5;
-                        for (int i2 = Mathf.Max(0, i - CLEAR_SIZE);
-                                 i2 < Mathf.Min(SIZE, i + CLEAR_SIZE); ++i2)
-                            for (int j2 = Mathf.Max(0, j - CLEAR_SIZE);
-                                     j2 < Mathf.Min(SIZE, j + CLEAR_SIZE); ++j2)
-                                grid[i2, j2].object_to_generate = null;
-
-                        // Add the rocks
-                        p.object_to_generate = world_object.load("rock_stacks_1");
-                    }
-                }
-            }
-    }
-}
-
-public class jungle : biome
+[biome_info(generation_enabled: false)]
+public class marshes : biome
 {
     protected override void generate_grid()
     {
@@ -1038,22 +1094,26 @@ public class jungle : biome
             {
                 // Point setup
                 var p = grid[i, j] = new point();
-                p.terrain_color = terrain_colors.jungle_moss;
-                p.sky_color = sky_colors.jungle_green;
-                p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
+                p.terrain_color = terrain_colors.marshy_grass;
+                p.sky_color = sky_colors.light_blue;
 
-                if (random.range(0, 200) == 0)
-                    p.object_to_generate = world_object.load("jungle_tree_1");
-                else if (random.range(0, 50) == 0)
+                float ig = x * SIZE + i;
+                float jg = z * SIZE + j;
+
+                float scale = Mathf.PerlinNoise(ig / 256f, jg / 256f);
+                float river_period = 64f + 128f * scale;
+                float river_width = 12f + 12f * scale;
+
+                float river = procmath.maps.river_map(ig, jg, river_period, river_width);
+                float alt = (1f - river) * Mathf.PerlinNoise(ig / 64f, jg / 64f);
+
+                p.altitude = world.SEA_LEVEL + 10f * alt - 4f;
+
+                if (p.altitude < world.SEA_LEVEL + 0.5f)
                 {
-                    if (random.range(0, 2) == 0)
-                        p.object_to_generate = world_object.load("tree_fern_bent");
-                    else
-                        p.object_to_generate = world_object.load("tree_fern");
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("mangroves");
                 }
-                else if (random.range(0, 50) == 0)
-                    p.object_to_generate = world_object.load("mossy_log_jungle");
-
             }
     }
 }

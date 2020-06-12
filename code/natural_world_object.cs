@@ -105,5 +105,8 @@ public class natural_world_object : world_object
             pos.y = fixed_altitude;
             transform.position = pos;
         }
+
+        // Stop z-fighting
+        transform.position += Random.insideUnitSphere * 0.001f;
     }
 }

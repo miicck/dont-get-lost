@@ -60,6 +60,8 @@ public class water_reflections : MonoBehaviour
     bool fiddle_needed = false;
     Vector3 last_fiddled;
 
+    public Color color = water_colors.cyan;
+
     void Update()
     {
         // Workaround to stop the reflections from just randomly disapearing
@@ -88,6 +90,9 @@ public class water_reflections : MonoBehaviour
                 "materials/standard_shader/water_normal"
                 );
         }
+
+        color.a = probe.enabled ? 0.84f : 0.31f;
+        utils.set_color(water_renderer.material, color);
 
         // Ensure probe stays at water level
         Vector3 pos = transform.position;
