@@ -1040,7 +1040,7 @@ public class jungle : biome
                 var p = grid[i, j] = new point();
                 p.terrain_color = terrain_colors.jungle_moss;
                 p.sky_color = sky_colors.jungle_green;
-                p.altitude = point.BEACH_END;
+                p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
 
                 if (random.range(0, 200) == 0)
                     p.object_to_generate = world_object.load("jungle_tree_1");
@@ -1052,7 +1052,7 @@ public class jungle : biome
                         p.object_to_generate = world_object.load("tree_fern");
                 }
                 else if (random.range(0, 50) == 0)
-                    p.object_to_generate = world_object.load("mossy_log");
+                    p.object_to_generate = world_object.load("mossy_log_jungle");
 
             }
     }
