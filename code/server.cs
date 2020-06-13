@@ -11,10 +11,11 @@ public static class server
 
     /// <summary> Clients that take longer than this (in seconds) to respond to a sent 
     /// message (i.e two times the ping) should be disconnected. </summary>
-    public const float CLIENT_TIMEOUT = 2f;
+    public const float CLIENT_TIMEOUT = 6f;
 
-    /// <summary> How often to send a heartbeat request. </summary>
-    public const float HEARTBEAT_PERIOD = 1f;
+    /// <summary> How often a client should send a heartbeat 
+    /// (both to avoid timeout, and to measure ping). </summary>
+    public const float CLIENT_HEARTBEAT_PERIOD = 1f;
 
     /// <summary> The render range for clients starts at this value. </summary>
     public const float INIT_RENDER_RANGE = 0f;
@@ -55,25 +56,8 @@ public static class server
 
         public float render_range = INIT_RENDER_RANGE;
 
-        struct heartbeat_status
-        {
-            public float last_sent;
-            public float last_ping;
-            public bool awaiting_response;
-        }
-
-        /// <summary> Client's current heartbeat status. </summary>
-        heartbeat_status heartbeat;
-
-        public void recive_heartbeat_reply()
-        {
-            if (!heartbeat.awaiting_response)
-                throw new System.Exception("Unexpected heartbeat response!");
-
-            heartbeat.awaiting_response = false;
-            heartbeat.last_ping = Time.realtimeSinceStartup - heartbeat.last_sent;
-            message_senders[MESSAGE.HEARTBEAT_INFO](this, heartbeat.last_ping);
-        }
+        // The last time we reccived a message from this client
+        public float last_message_time = 0;
 
         public client(TcpClient tcp)
         {
@@ -111,6 +95,8 @@ public static class server
         /// otherwise no DISCONNECT message is sent to the server. </summary>
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT)
         {
+            Debug.Log("Client " + username + " disconnected, message: " + message);
+
             // Send the disconnect message
             if (message != null)
                 message_senders[MESSAGE.DISCONNECT](this, message);
@@ -169,24 +155,14 @@ public static class server
                 }
             }
 
-            // How long since the last heartbeat request was sent
-            float time_since_heartbeat = Time.realtimeSinceStartup - heartbeat.last_sent;
+            // How long since the last message was recived from this client
+            float time_since_last_message = Time.realtimeSinceStartup - last_message_time;
 
-            if (heartbeat.awaiting_response)
-            {
-                // Check if we've timed out, if so disconnect, but with
-                // a large timeout to send remaining messages, in the
-                // off chance that the client will actually recive them.
-                if (time_since_heartbeat > CLIENT_TIMEOUT)
-                    disconnect("Timed out", timeout: 10);
-            }
-            else if (time_since_heartbeat > HEARTBEAT_PERIOD)
-            {
-                // Send a new heartbeat
-                heartbeat.last_sent = Time.realtimeSinceStartup;
-                heartbeat.awaiting_response = true;
-                message_senders[MESSAGE.HEARTBEAT](this);
-            }
+            // Check if we've timed out, if so disconnect, but with
+            // a large timeout to send remaining messages, in the
+            // off chance that the client will actually recive them.
+            if (time_since_last_message > CLIENT_TIMEOUT)
+                disconnect("Timed out", timeout: 10);
         }
 
         /// <summary> Returns true if the given representation is loaded on this client. </summary>
@@ -605,8 +581,9 @@ public static class server
 
             [global::client.MESSAGE.HEARTBEAT] = (client, bytes, offset, length) =>
             {
-                // This client is still kicking
-                client.recive_heartbeat_reply();
+                // This client is still kicking - respond so they can time the ping
+                int heartbeat_key = network_utils.decode_int(bytes, ref offset);
+                message_senders[MESSAGE.HEARTBEAT](client, heartbeat_key);
             },
 
             [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
@@ -855,19 +832,11 @@ public static class server
 
             [MESSAGE.HEARTBEAT] = (client, args) =>
             {
-                if (args.Length != 0)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                send(client, MESSAGE.HEARTBEAT, new byte[0]);
-            },
-
-            [MESSAGE.HEARTBEAT_INFO] = (client, args) =>
-            {
                 if (args.Length != 1)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                float ping = (float)args[0];
-                send(client, MESSAGE.HEARTBEAT_INFO, network_utils.encode_float(ping));
+                int heartbeat_key = (int)args[0];
+                send(client, MESSAGE.HEARTBEAT, network_utils.encode_int(heartbeat_key));
             },
 
             [MESSAGE.DISCONNECT] = (client, args) =>
@@ -1017,6 +986,7 @@ public static class server
                     if (!message_parsers.TryGetValue(msg_type, out message_parser parser))
                         throw new System.Exception("Unkown message " + msg_type);
 
+                    c.last_message_time = Time.realtimeSinceStartup;
                     parser(c, buffer, offset, payload_length);
                     offset += payload_length;
                 }
@@ -1139,8 +1109,7 @@ public static class server
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
         LOSE_AUTH,         // Sent to a client when they lose authority over an object
         GAIN_AUTH,         // Sent to a ciient when they gain authority over an object
-        HEARTBEAT,         // Sent to a client when a heartbeat is requested
-        HEARTBEAT_INFO,    // Send a client info about the last heartbeat
+        HEARTBEAT,         // Respond to a client heartbeat
         DISCONNECT,        // Sent to a client when they are disconnected
     }
 

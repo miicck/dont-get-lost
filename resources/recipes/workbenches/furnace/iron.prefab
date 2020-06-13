@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 1849496975812320664}
   - component: {fileID: -7845326207384050824}
   - component: {fileID: -3501409818469146156}
-  - component: {fileID: -3916422775389006522}
   - component: {fileID: 1213581095459593720}
+  - component: {fileID: -4553750974437377852}
   m_Layer: 0
   m_Name: iron
   m_TagString: Untagged
@@ -60,20 +60,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: {fileID: 5464482740840503985, guid: e76e0c72940ad734bb4ee3347d4f602e, type: 3}
   count: 1
---- !u!114 &-3916422775389006522
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 3463273078711589885, guid: afca0d03acdf50d40aaf5fa59af44cb4, type: 3}
-  count: 1
 --- !u!114 &1213581095459593720
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,3 +76,16 @@ MonoBehaviour:
   item: {fileID: 7373243042018251868, guid: a9a59cd52fdcf6945be5ae01f7f87f02, type: 3}
   min_count: 1
   max_count: 1
+--- !u!114 &-4553750974437377852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4183066231069393111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c115349308b276345950de919ec67a3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_required: 4

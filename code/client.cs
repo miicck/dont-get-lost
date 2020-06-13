@@ -7,14 +7,15 @@ public static class client
 {
     // STATE VARIABLES //
 
-    static TcpClient tcp; 
-    static int last_local_id = 0;
+    static int last_local_id;
+    static float last_ping;
+    static KeyValuePair<int, float> last_heartbeat;
     static network_utils.traffic_monitor traffic_up;
     static network_utils.traffic_monitor traffic_down;
     static Queue<pending_message> message_queue;
     static Queue<pending_creation_message> pending_creation_messages;
     static disconnect_func on_disconnect;
-    static float last_ping = 0;
+    static TcpClient tcp;
 
     // END STATE VARIABLES //
 
@@ -233,18 +234,18 @@ public static class client
     public static void connect(string host, int port, string username, string password, disconnect_func on_disconnect)
     {
         // Initialize client state
-        networked.client_initialize();
-        pending_creation_messages = new Queue<pending_creation_message>();
-        message_queue = new Queue<pending_message>();
-
-        // Remember what to call when we disconnect
-        client.on_disconnect = on_disconnect;
-
-        // Connect the TCP client + initialize buffers
-        tcp = new TcpClient(host, port);
-
+        last_local_id = 0;
+        last_ping = 0;
+        last_heartbeat = default;
         traffic_up = new network_utils.traffic_monitor();
         traffic_down = new network_utils.traffic_monitor();
+        message_queue = new Queue<pending_message>();
+        pending_creation_messages = new Queue<pending_creation_message>();
+        client.on_disconnect = on_disconnect;
+        tcp = new TcpClient(host, port);
+
+        // Initialize the networked object static state
+        networked.client_initialize();
 
         // Setup message parsers
         message_parsers = new Dictionary<server.MESSAGE, message_parser>
@@ -317,14 +318,17 @@ public static class client
 
             [server.MESSAGE.HEARTBEAT] = (buffer, offset, length) =>
             {
-                // Send a heartbeat response
-                message_senders[MESSAGE.HEARTBEAT]();
-            },
-
-            [server.MESSAGE.HEARTBEAT_INFO] = (buffer, offset, length) =>
-            {
-                // Get the ping of the last heartbeat
-                last_ping = network_utils.decode_float(buffer, ref offset);
+                int heartbeat_key = network_utils.decode_int(buffer, ref offset);
+                if (last_heartbeat.Key == heartbeat_key)
+                {
+                    // Record the ping
+                    last_ping = Time.realtimeSinceStartup - last_heartbeat.Value;
+                }
+                else
+                {
+                    last_ping = -1;
+                    Debug.Log("Heartbeat key mismatch, packet loss/very high ping?");
+                }
             },
 
             [server.MESSAGE.DISCONNECT] = (buffer, offset, length) =>
@@ -371,12 +375,18 @@ public static class client
                     network_utils.encode_string(uname), hashed));
             },
 
-            [MESSAGE.HEARTBEAT] = (args)=>
+            [MESSAGE.HEARTBEAT] = (args) =>
             {
                 if (args.Length != 0)
                     throw new System.Exception("Wrong number of arguments!");
 
-                send(MESSAGE.HEARTBEAT, new byte[0]);
+                // Increment the heartbeat key, and record the send time
+                last_heartbeat = new KeyValuePair<int, float>(
+                    last_heartbeat.Key + 1,
+                    Time.realtimeSinceStartup
+                );
+
+                send(MESSAGE.HEARTBEAT, network_utils.encode_int(last_heartbeat.Key));
             },
 
             [MESSAGE.DISCONNECT] = (args) =>
@@ -403,7 +413,6 @@ public static class client
                     network_utils.encode_string(prefab),
                     variable_serializations
                 ));
-
             },
 
             [MESSAGE.DELETE] = (args) =>
@@ -538,6 +547,10 @@ public static class client
         // Run network_update for each object
         networked.network_updates();
 
+        // If it's been long enough, send another heartbeat
+        if (Time.realtimeSinceStartup - last_heartbeat.Value > server.CLIENT_HEARTBEAT_PERIOD)
+            message_senders[MESSAGE.HEARTBEAT]();
+
         // Send messages
         send_queued_messages();
     }
@@ -548,12 +561,16 @@ public static class client
 
         var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
 
+        // Convert ping to string
+        string ping = (last_ping * 1000) + " ms";
+        if (last_ping < 0) ping = "> " + server.CLIENT_HEARTBEAT_PERIOD * 1000 + " ms";
+
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
                "    Objects            : " + networked.object_count + "\n" +
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage() + "\n" +
-               "    Effective ping     : " + (last_ping * 1000) + " ms";
+               "    Effective ping     : " + ping;
     }
 
     public enum MESSAGE : byte

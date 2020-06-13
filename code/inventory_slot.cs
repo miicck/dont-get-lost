@@ -68,6 +68,12 @@ public class inventory_slot : MonoBehaviour
         {
             // Load the item + image
             _item = Resources.Load<item>("items/" + item);
+            if (_item == null)
+            {
+                Debug.Log("Unkown item: " + item);
+                set_item_count(null, 0);
+                return;
+            }
             item_image.sprite = _item.sprite;
         }
 
