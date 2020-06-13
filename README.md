@@ -15,5 +15,4 @@ To setup a unity project for development, follow these steps:
 3. Load the scene Assets/scenes/project_setup, select the object called *setup* in the heirarchy and click *Run setup* in the inspector.
 4. (optional, recommended) Go to Window > Package Manager, locate *High Definition RP* and update it to the latest version.
 5. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
-the world is rendered, it might look super weird for a few seconds while the pipeline fires up for the first time. 
-The materials should load in momentarily.
+the world is rendered, it might look super weird for a few seconds while the shaders compile for the first time.
