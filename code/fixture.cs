@@ -9,18 +9,18 @@ public class fixture : building_material, IInspectable
 {
     public bed bed { get => GetComponentInParent<bed>(); }
 
-    public string inspect_info()
+    new public string inspect_info()
     {
         if (bed == null) return "Fixture has no associated bed.";
         return "Fixture is associated to " + bed.display_name + ".";
     }
 
-    public Sprite main_sprite()
+    new public Sprite main_sprite()
     {
         return sprite;
     }
 
-    public Sprite secondary_sprite()
+    new public Sprite secondary_sprite()
     {
         return bed?.sprite;
     }

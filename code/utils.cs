@@ -281,7 +281,7 @@ public static class utils
     public static string a_or_an(string name)
     {
         string n = name.Trim().ToLower();
-        switch(n[0])
+        switch (n[0])
         {
             case 'a':
             case 'e':
@@ -293,13 +293,23 @@ public static class utils
                 return "a";
         }
     }
+
+    public static void gizmos_tube(Vector3 start, Vector3 end, float width)
+    {
+        Vector3 up = (start - end).normalized;
+        Vector3 fw = new Vector3(up.y, -up.x, 0).normalized;
+        float dist = (start - end).magnitude;
+        Gizmos.matrix = Matrix4x4.TRS(start, Quaternion.LookRotation(fw, up), Vector3.one);
+        Gizmos.DrawWireCube(new Vector3(0, -dist / 2f, 0), new Vector3(width, dist, width));
+        Gizmos.matrix = Matrix4x4.identity;
+    }
 }
 
 /// <summary> A dictionary with two keys. </summary>
 public class Dictionary<K1, K2, V>
 {
     // The underlying datastructure is just a dictionary
-    Dictionary<K1, Dictionary<K2, V>> dict = 
+    Dictionary<K1, Dictionary<K2, V>> dict =
         new Dictionary<K1, Dictionary<K2, V>>();
 
     /// <summary> Set the value <paramref name="v"/> associated with
@@ -361,7 +371,7 @@ public class Dictionary<K1, K2, V>
 }
 
 /// <summary> A dictionary with three keys. </summary>
-public class Dictionary<K1,K2,K3,V>
+public class Dictionary<K1, K2, K3, V>
 {
     // The underlying datastructure is a two-key dictionary
     Dictionary<K1, Dictionary<K2, K3, V>> dict =

@@ -184,6 +184,28 @@ public class player : networked_player
     // INVENTORY //
     //###########//
 
+    public armour_piece get_armour(armour_piece.LOCATION location)
+    {
+        foreach (var al in GetComponentsInChildren<armour_locator>())
+            if (al.location == location)
+                return al.equipped;
+        return null;
+    }
+
+    public void set_armour(armour_piece armour, armour_piece.HANDEDNESS slot_handedness)
+    {
+        foreach (var al in GetComponentsInChildren<armour_locator>())
+            if (al.location == armour.location && al.handedness == slot_handedness)
+                al.equipped = armour;
+    }
+
+    public void clear_armour(armour_piece.LOCATION location, armour_piece.HANDEDNESS handedness)
+    {
+        foreach (var al in GetComponentsInChildren<armour_locator>())
+            if (al.location == location && al.handedness == handedness)
+                al.equipped = null;
+    }
+
     const int QUICKBAR_SLOTS_COUNT = 8;
 
     public inventory inventory { get => GetComponentInChildren<inventory>(); }

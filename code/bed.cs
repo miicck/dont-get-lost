@@ -124,7 +124,7 @@ public class bed : building_material, IInspectable
         Debug.Log("checking fixtures...");
     }
 
-    public string inspect_info()
+    new public string inspect_info()
     {
         if (fixtures.Count == 0)
             return "Bed has no fixtures associated.";
@@ -134,12 +134,12 @@ public class bed : building_material, IInspectable
         return str;
     }
 
-    public Sprite main_sprite()
+    new public Sprite main_sprite()
     {
         return sprite;
     }
 
-    public Sprite secondary_sprite()
+    new public Sprite secondary_sprite()
     {
         return null;
     }

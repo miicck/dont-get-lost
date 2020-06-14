@@ -182,6 +182,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7264410171171831994}
   - component: {fileID: 8160425552160629829}
+  - component: {fileID: 5871161957040132491}
   m_Layer: 0
   m_Name: anvil
   m_TagString: Untagged
@@ -229,6 +230,19 @@ MonoBehaviour:
   value: 0
   fuel_value: 0
   axes_scale: 1
+--- !u!114 &5871161957040132491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4576969950555926830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  load_recipies_from: recipes/workbenches/anvil
 --- !u!1 &4698113465533711652
 GameObject:
   m_ObjectHideFlags: 0
