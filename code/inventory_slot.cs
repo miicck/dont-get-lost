@@ -38,7 +38,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
 
 public class inventory_slot : MonoBehaviour
 {
-    inventory_section[] sections_belonging_to { get => GetComponentsInParent<inventory_section>(true); }
+    protected inventory_section[] sections_belonging_to { get => GetComponentsInParent<inventory_section>(true); }
 
     public virtual bool accepts(string item_name) { return true; }
 
@@ -118,4 +118,19 @@ public class inventory_slot : MonoBehaviour
         // Ensure images etc are loaded correctly
         set_item_count(item, count);
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(inventory_slot))]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var slot = (inventory_slot)target;
+            UnityEditor.EditorGUILayout.TextArea(
+                "Item: " + slot.item + "\n" +
+                "Count: " + slot.count);
+        }
+    }
+#endif
 }

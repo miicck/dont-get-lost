@@ -2,9 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> An item that can be worn. </summary>
 public class armour_piece : item
 { 
+    /// <summary> The location on the body where this armour piece is worn. </summary>
     public LOCATION location;
+
+    /// <summary> The side of the body that this armour pice is worn on. Armour
+    /// pieces with handedness set to EITHER will be mirrored when equipped on
+    /// the left hand side. </summary>
     public HANDEDNESS handedness = HANDEDNESS.EITHER;
 
     public Vector3 size = Vector3.one;
@@ -30,6 +36,8 @@ public class armour_piece : item
         RIGHT
     };
 
+    /// <summary> Returns true if a slot with handedness <paramref name="slot_handedness"/> can contain
+    /// a piece of armour with handednesss <paramref name="piece_handedness"/>. </summary>
     public static bool compatible_handedness(HANDEDNESS slot_handedness, HANDEDNESS piece_handedness)
     {
         switch (piece_handedness)
@@ -52,6 +60,7 @@ public class armour_piece : item
 
     private void OnDrawGizmos()
     {
+        if (Application.isPlaying) return;
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(transform.position, size);
     }

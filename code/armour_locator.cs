@@ -2,11 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> Used to locate a piece of armour on the player model. </summary>
 public class armour_locator : MonoBehaviour
 {
+    /// <summary> The size of the bounding box that armour pieces will be stretched to fill. </summary>
+    public Vector3 size = Vector3.one;
+
+    /// <summary> The location on the body that this locator corresponds to. </summary>
     public armour_piece.LOCATION location;
+
+    /// <summary> The side of the body that this locator corresponds to. </summary>
     public armour_piece.HANDEDNESS handedness = armour_piece.HANDEDNESS.EITHER;
 
+    /// <summary> The pice of armour actually equipped in this location. This should
+    /// be set to a prefab, which will be instanced, or null. The previously
+    /// equipped piece of armour (if it exists) will be destroyed. </summary>
     public armour_piece equipped
     {
         get => _equipped;
@@ -42,8 +52,6 @@ public class armour_locator : MonoBehaviour
         }
     }
     armour_piece _equipped;
-
-    public Vector3 size = Vector3.one;
 
     private void OnDrawGizmos()
     {
