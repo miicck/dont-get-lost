@@ -24,6 +24,7 @@ public class armour_locator : MonoBehaviour
             if (_equipped == null)
                 return;
 
+            // Mirror left-handed pieces
             float x_mod = handedness == armour_piece.HANDEDNESS.LEFT ? -1f : 1f;
 
             // Create the newly-equipped peice
