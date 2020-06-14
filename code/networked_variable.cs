@@ -257,4 +257,47 @@ namespace networked_variables
             return new SortedDictionary<string, int>();
         }
     }
+
+    public class net_inventory : networked_variable<Dictionary<int, KeyValuePair<string, int>>>
+    {
+        public override byte[] serialization()
+        {
+            List<byte> serial = new List<byte>();
+
+            foreach(var slot in value)
+            {
+                var slot_number = slot.Key;
+                var name = slot.Value.Key;
+                var count = slot.Value.Value;
+                serial.AddRange(network_utils.encode_int(slot_number));
+                serial.AddRange(network_utils.encode_string(name));
+                serial.AddRange(network_utils.encode_int(count));
+            }
+
+            return serial.ToArray();
+        }
+
+        protected override Dictionary<int, KeyValuePair<string, int>> deserialize(
+            byte[] buffer, int offset, int length)
+        {
+            Dictionary<int, KeyValuePair<string, int>> ret = 
+                new Dictionary<int, KeyValuePair<string, int>>();
+
+            int end = offset + length;
+            while(offset < end)
+            {
+                var slot_number = network_utils.decode_int(buffer, ref offset);
+                var name = network_utils.decode_string(buffer, ref offset);
+                var count = network_utils.decode_int(buffer, ref offset);
+                ret[slot_number] = new KeyValuePair<string, int>(name, count);
+            }
+
+            return ret;
+        }
+
+        protected override Dictionary<int, KeyValuePair<string, int>> default_value()
+        {
+            return new Dictionary<int, KeyValuePair<string, int>>();
+        }
+    }
 }

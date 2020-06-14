@@ -30,7 +30,7 @@ public class inventory : networked
     public void remove(string item, int count) { contents.remove(item, count); }
 
     /// <summary> The networked collection of items in the inventory. </summary>
-    public networked_variables.net_string_counts item_counts;
+    public networked_variables.net_inventory net_inventory;
 
     bool updating_from_network = false;
     public override void on_init_network_variables()
@@ -46,16 +46,26 @@ public class inventory : networked
             if (updating_from_network) return;
 
             // Keep the network up up to date with changes
-            item_counts.value = contents.contents();
+            var new_values = new Dictionary<int, KeyValuePair<string, int>>();
+            for (int i = 0; i < slots.Length; ++i)
+                if (slots[i].item != null)
+                    new_values[i] = new KeyValuePair<string, int>(slots[i].item, slots[i].count);
+            net_inventory.value = new_values;
         });
 
-        item_counts = new networked_variables.net_string_counts();
-        item_counts.on_change = () =>
+        net_inventory = new networked_variables.net_inventory();
+        net_inventory.on_change = () =>
         {
             updating_from_network = true;
 
-            foreach (var kv in item_counts.value)
-                contents.set(kv.Key, kv.Value);
+            // Update the slot contents from the network
+            for (int i = 0; i < slots.Length; ++i)
+            {
+                if (net_inventory.value.TryGetValue(i, out KeyValuePair<string, int> name_contents))
+                    slots[i].set_item_count(name_contents.Key, name_contents.Value);
+                else
+                    slots[i].clear();
+            }
 
             updating_from_network = false;
         };
