@@ -858,6 +858,8 @@ public static class server
 
     static void load()
     {
+        Debug.Log("Loading: " + System.IO.Path.GetFullPath(save_dir()));
+
         // Find all the files to load, in alphabetical order
         List<string> files = new List<string>(System.IO.Directory.GetFiles(save_dir()));
         for (int i = 0; i < files.Count; ++i)

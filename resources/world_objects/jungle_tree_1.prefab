@@ -61,6 +61,50 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+--- !u!114 &7643210213870091039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4365691190905314523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  min_count: 1
+  max_count: 1
+--- !u!114 &8235667217098244478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4365691190905314523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 0
+  tool_quality: 0
+--- !u!114 &7532309459575076934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4365691190905314523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &447522373604225636
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -503,6 +547,12 @@ PrefabInstance:
 --- !u!4 &4285643818126687948 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 413efe96aca7a1a4bbf29095a07634e8,
+    type: 3}
+  m_PrefabInstance: {fileID: 9080134903920825814}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4365691190905314523 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4425609515867240179, guid: 413efe96aca7a1a4bbf29095a07634e8,
     type: 3}
   m_PrefabInstance: {fileID: 9080134903920825814}
   m_PrefabAsset: {fileID: 0}
