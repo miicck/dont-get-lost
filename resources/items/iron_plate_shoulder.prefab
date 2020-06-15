@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4410528d189d86041af0b63db3f91e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 8a623bf39275a99418fbc25440c4e859, type: 3}
+  sprite: {fileID: 21300000, guid: 2b5059842f3184c4e9efb74f071318ae, type: 3}
   plural: iron plate shoulders
   value: 32
   fuel_value: 0
