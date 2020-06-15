@@ -152,7 +152,7 @@ public class player : networked_player
                             kinematic: false,
                             networked: true);
                         spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                        re_equip();
+                        validate_equip();
                     }
 
             // Look around
@@ -257,13 +257,11 @@ public class player : networked_player
         set { inventory.ui_open = value; }
     }
 
-    int last_quickbar_slot_accessed = 0;
     public inventory_slot quickbar_slot(int n)
     {
         n -= 1; // Move to zero-offset array
         if (inventory?.slots == null) return null;
         if (n < 0 || n >= inventory.slots.Length) return null;
-        last_quickbar_slot_accessed = n;
         return inventory.slots[n];
     }
 
@@ -445,14 +443,16 @@ public class player : networked_player
         }
     }
 
-    public void re_equip()
+    public void validate_equip()
     {
-        equipped = Resources.Load<item>("items/" + equipped.name);
+        // Unequip if item is no more
+        if (equipped?.name != quickbar_slot(slot_equipped.value)?.item)
+            slot_equipped.value = 0;
     }
 
     void toggle_equip(int slot)
     {
-        if (slot_equipped.value == slot) slot_equipped.value = -1;
+        if (slot_equipped.value == slot) slot_equipped.value = 0;
         else slot_equipped.value = slot;
     }
 
@@ -473,16 +473,18 @@ public class player : networked_player
 
         if (sw != 0)
         {
+            int new_slot = slot_equipped.value;
             for (int attempt = 0; attempt < QUICKBAR_SLOTS_COUNT; ++attempt)
             {
-                if (sw > 0) ++last_quickbar_slot_accessed;
-                else if (sw < 0) --last_quickbar_slot_accessed;
-                if (last_quickbar_slot_accessed < 0) last_quickbar_slot_accessed = QUICKBAR_SLOTS_COUNT - 1;
-                last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
+                if (sw > 0) ++new_slot;
+                else if (sw < 0) --new_slot;
 
-                if (quickbar_slot(last_quickbar_slot_accessed)?.item != null)
+                if (new_slot < 1) new_slot = QUICKBAR_SLOTS_COUNT;
+                if (new_slot > QUICKBAR_SLOTS_COUNT) new_slot = 1;
+
+                if (quickbar_slot(new_slot)?.item != null)
                 {
-                    toggle_equip(last_quickbar_slot_accessed);
+                    slot_equipped.value = new_slot;
                     break;
                 }
             }
@@ -1088,6 +1090,11 @@ public class player : networked_player
         {
             var inv = (inventory)child;
             inv.contents.belongs_to = this;
+
+            inv.contents.add_on_change_listener(() =>
+            {
+                validate_equip();
+            });
         }
     }
 

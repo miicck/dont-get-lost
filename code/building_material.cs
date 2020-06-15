@@ -258,7 +258,7 @@ public class building_material : item
         }
     }
 
-    building_material spawn_from_inventory_and_fix_to(
+    building_material spawn_and_fix_to(
         building_material other, RaycastHit hit,
         Ray player_ray, float ray_distance)
     {
@@ -273,8 +273,6 @@ public class building_material : item
             return null;
         }
 
-        player.current.inventory.remove(name, 1);
-
         spawned.weld = new weld_info(spawned,
             snap_to.transform.position,
             snap_to.transform.rotation);
@@ -282,12 +280,10 @@ public class building_material : item
         return spawned;
     }
 
-    building_material spawn_from_inventory_and_fix_at(RaycastHit hit)
+    building_material spawn_and_fix_at(RaycastHit hit)
     {
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_placeholder();
-
-        player.current.inventory.remove(name, 1);
 
         spawned.weld = new weld_info(spawned,
             hit.point,
@@ -342,13 +338,13 @@ public class building_material : item
         // If a building material is found, fix new build to it
         // otherwise, just fix to any solid object
         if (bm != null)
-            spawned = spawn_from_inventory_and_fix_to(bm, hit, camera_ray, raycast_distance);
+            spawned = spawn_and_fix_to(bm, hit, camera_ray, raycast_distance);
         else
         {
             var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
                 (c) => !c.transform.IsChildOf(player.current.transform));
 
-            if (col != null) spawned = spawn_from_inventory_and_fix_at(hit);
+            if (col != null) spawned = spawn_and_fix_at(hit);
         }
 
         // Move onto rotation stage if something was spawned
@@ -364,7 +360,6 @@ public class building_material : item
         if (Input.GetMouseButtonDown(1))
         {
             // Cancel build on right click
-            player.current.inventory.add(spawned.name, 1);
             spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);
             spawned = null;
@@ -384,6 +379,9 @@ public class building_material : item
     {
         if (spawned != null)
         {
+            // Remove the object we're building from the inventory
+            player.current.inventory.remove(spawned.name, 1);
+
             // Create a proper, networked version of the spawned object
             var created = (building_material)create(spawned.name,
                 spawned.transform.position, spawned.transform.rotation,
@@ -394,7 +392,7 @@ public class building_material : item
         }
 
         spawned = null;
-        player.current.re_equip();
+        player.current.validate_equip();
     }
 
     private void OnDrawGizmos()
