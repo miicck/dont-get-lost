@@ -260,6 +260,7 @@ public class player : networked_player
     int last_quickbar_slot_accessed = 0;
     public inventory_slot quickbar_slot(int n)
     {
+        n -= 1; // Move to zero-offset array
         if (inventory?.slots == null) return null;
         if (n < 0 || n >= inventory.slots.Length) return null;
         last_quickbar_slot_accessed = n;
@@ -458,14 +459,14 @@ public class player : networked_player
     void run_quickbar_shortcuts()
     {
         // Select quickbar item using keyboard shortcut
-        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(0);
-        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(1);
-        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(2);
-        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(3);
-        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(4);
-        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(5);
-        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(6);
-        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(7);
+        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(1);
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(2);
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(3);
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(4);
+        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(5);
+        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(6);
+        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(7);
+        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(8);
 
         // Scroll through quickbar items
         float sw = Input.GetAxis("Mouse ScrollWheel");
@@ -1018,7 +1019,7 @@ public class player : networked_player
         left_arm = body.left_arm;
 
         // Create the hand at the position specified by the hand_init_pos object
-        hand_centre = new GameObject("hand").transform;      
+        hand_centre = new GameObject("hand").transform;
         hand_centre.SetParent(eye_transform);
         hand_centre.transform.localRotation = Quaternion.identity;
         var init_pos = eye_transform.Find("hand_init_pos");
@@ -1067,7 +1068,7 @@ public class player : networked_player
         slot_equipped = new networked_variables.net_int();
         slot_equipped.on_change = () =>
         {
-            if (slot_equipped.value < 0) equipped = null;
+            if (slot_equipped.value < 1) equipped = null;
             else equipped = Resources.Load<item>("items/" + quickbar_slot(slot_equipped.value)?.item);
         };
 
