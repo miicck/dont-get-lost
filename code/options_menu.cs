@@ -89,6 +89,11 @@ public class options_menu : MonoBehaviour
                 color_adjust.saturation.value = Mathf.Clamp(val, -100f, 100f);
                 break;
 
+            case "brightness":
+                color_adjust.postExposure.overrideState = true;
+                color_adjust.postExposure.value = Mathf.Clamp(val, -5f, 5f);
+                break;
+
             case "master_volume":
                 AudioListener.volume = val;
                 break;
