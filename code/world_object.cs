@@ -53,18 +53,4 @@ public abstract class world_object : MonoBehaviour
         return _library[name];
     }
     static Dictionary<string, world_object> _library;
-
-    /// <summary> Loads a building_generator from the resources/buildings
-    /// folder (saves results in a dictionary for speedy access). </summary>
-    public static building_generator load_building(string name)
-    {
-        if (_building_library == null)
-        {
-            _building_library = new Dictionary<string, building_generator>();
-            foreach (var o in Resources.LoadAll<building_generator>("buildings/"))
-                _building_library[o.name] = o;
-        }
-        return _building_library[name];
-    }
-    static Dictionary<string, building_generator> _building_library;
 }
