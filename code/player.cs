@@ -172,8 +172,7 @@ public class player : networked_player
         if (has_authority)
             local_update();
 
-        // Allign the arm with the hand
-        right_arm.to_grab = equipped?.transform;
+        set_hand_position();
     }
 
     private void OnDrawGizmosSelected()
@@ -754,16 +753,13 @@ public class player : networked_player
 
     void mouse_look_normal()
     {
-        // Rotate the view using the mouse
-        // Note that horizontal moves rotate the player
-        // vertical moves rotate the camera
+        // Rotate the player view
+        y_rotation.value += Input.GetAxis("Mouse X") * 5f;
+        x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
+    }
 
-        // y rotation of player controlled by left/right of mouse
-        float yr = Input.GetAxis("Mouse X") * 5f;
-        if (yr != 0) y_rotation.value += yr;
-
-        eye_transform.Rotate(-Input.GetAxis("Mouse Y") * 5f, 0, 0);
-
+    void set_hand_position()
+    {
         // Move the hand away from the eye if we're looking down
         var hc = hand_centre.localPosition;
         hc.z = init_hand_plane;
@@ -774,6 +770,9 @@ public class player : networked_player
             hc.z *= 1f + down_amt * 2.5f;
         }
         hand_centre.localPosition = hc;
+
+        // Allign the arm with the hand
+        right_arm.to_grab = equipped?.transform;
     }
 
     Vector2 mouse_look_velocity = Vector2.zero;
@@ -1003,33 +1002,6 @@ public class player : networked_player
 
     public player_body body { get; private set; }
 
-    public override void on_create()
-    {
-        // Load the player body
-        body = Resources.Load<player_body>("misc/player_body").inst();
-        body.transform.SetParent(transform);
-        body.transform.localPosition = Vector3.zero;
-        body.transform.localRotation = Quaternion.identity;
-
-        // Scale the player body so the eyes are at the correct height
-        eye_transform = body.eye_centre;
-        float eye_y = (eye_transform.transform.position - transform.position).y;
-        body.transform.localScale *= (eye_centre - transform.position).magnitude / eye_y;
-
-        // Get references to the arms
-        right_arm = body.right_arm;
-        left_arm = body.left_arm;
-
-        // Create the hand at the position specified by the hand_init_pos object
-        hand_centre = new GameObject("hand").transform;
-        hand_centre.SetParent(eye_transform);
-        hand_centre.transform.localRotation = Quaternion.identity;
-        var init_pos = eye_transform.Find("hand_init_pos");
-        hand_centre.transform.position = init_pos.position;
-        Destroy(init_pos.gameObject);
-        init_hand_plane = hand_centre.localPosition.z;
-    }
-
     public override void on_first_create()
     {
         // Create the inventory
@@ -1063,10 +1035,35 @@ public class player : networked_player
 
     networked_variables.net_int slot_equipped;
     networked_variables.net_float y_rotation;
+    networked_variables.net_float x_rotation;
     public networked_variables.net_string username;
 
     public override void on_init_network_variables()
     {
+        // Load the player body
+        body = Resources.Load<player_body>("misc/player_body").inst();
+        body.transform.SetParent(transform);
+        body.transform.localPosition = Vector3.zero;
+        body.transform.localRotation = Quaternion.identity;
+
+        // Scale the player body so the eyes are at the correct height
+        eye_transform = body.eye_centre;
+        float eye_y = (eye_transform.transform.position - transform.position).y;
+        body.transform.localScale *= (eye_centre - transform.position).magnitude / eye_y;
+
+        // Get references to the arms
+        right_arm = body.right_arm;
+        left_arm = body.left_arm;
+
+        // Create the hand at the position specified by the hand_init_pos object
+        hand_centre = new GameObject("hand").transform;
+        hand_centre.SetParent(eye_transform);
+        hand_centre.transform.localRotation = Quaternion.identity;
+        var init_pos = eye_transform.Find("hand_init_pos");
+        hand_centre.transform.position = init_pos.position;
+        Destroy(init_pos.gameObject);
+        init_hand_plane = hand_centre.localPosition.z;
+
         slot_equipped = new networked_variables.net_int();
         slot_equipped.on_change = () =>
         {
@@ -1078,6 +1075,12 @@ public class player : networked_player
         y_rotation.on_change = () =>
         {
             transform.rotation = Quaternion.Euler(0, y_rotation.value, 0);
+        };
+
+        x_rotation = new networked_variables.net_float(resolution: 5f);
+        x_rotation.on_change = () =>
+        {
+            eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
         };
 
         username = new networked_variables.net_string();
