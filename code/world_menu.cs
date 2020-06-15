@@ -89,7 +89,7 @@ public class world_menu : MonoBehaviour
             var button = template_world_button.inst();
             button.transform.SetParent(button_container);
 
-            string[] splt = wf.Split('/', '\\');
+            string[] splt = wf.Replace(".save", "").Split('/', '\\');
             string name = splt[splt.Length - 1];
 
             var load_button = button.Find("load").GetComponent<Button>();
@@ -107,6 +107,7 @@ public class world_menu : MonoBehaviour
             {
                 Destroy(button.gameObject);
                 System.IO.File.Delete(wf);
+                Debug.Log(wf);
                 world_count -= 1;
                 if (world_count == 0)
                     load_header.text = "No existing worlds";

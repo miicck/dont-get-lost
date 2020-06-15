@@ -861,47 +861,68 @@ public static class server
         string fullpath = System.IO.Path.GetFullPath(save_file());
         Debug.Log("Loading: " + fullpath);
 
-        byte[] bytes = System.IO.File.ReadAllBytes(fullpath);
-
-        int offset = 0;
-        while (offset < bytes.Length)
+        using (var file = System.IO.File.OpenRead(fullpath))
+        using (var decompress = new System.IO.Compression.GZipStream(file, 
+            System.IO.Compression.CompressionMode.Decompress))
+        using (var buffer = new System.IO.MemoryStream())
         {
-            // Deserialize the type, and length of the representation serialization
-            SAVE_TYPE type = (SAVE_TYPE)bytes[offset]; offset += 1;
-            int length = network_utils.decode_int(bytes, ref offset);
+            decompress.CopyTo(buffer);
+            buffer.Seek(0, System.IO.SeekOrigin.Begin);
 
-            // Deserialize the representation
-            var rep = representation.create(bytes, offset, length, out int input_id);
-            offset += length;
+            int length = 0;
+            byte[] length_bytes = new byte[sizeof(int)];
 
-            // Check the network id recovered makes sense
-            if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");
-            if (input_id != rep.network_id) throw new System.Exception("Network id loaded incorrectly!");
-
-            switch (type)
+            while (true)
             {
-                case SAVE_TYPE.PLAYER:
+                // Deserialize the type of the representation
+                int type_int = buffer.ReadByte();
+                if (type_int < 0) break;
+                SAVE_TYPE type = (SAVE_TYPE)type_int;
 
-                    // For players, deserialize also the username
-                    string username = network_utils.decode_string(bytes, ref offset);
-                    rep.transform.SetParent(inactive_representations);
-                    player_representations[username] = rep;
-                    break;
+                // Desrielize the length of the representation
+                buffer.Read(length_bytes, 0, sizeof(int));
+                length = System.BitConverter.ToInt32(length_bytes, 0);
 
-                case SAVE_TYPE.ACTIVE:
+                // Deserialize the representation
+                byte[] rep_bytes = new byte[length];
+                buffer.Read(rep_bytes, 0, length);
+                var rep = representation.create(rep_bytes, 0, length, out int input_id);
 
-                    // Nothing needs doing
-                    break;
+                // Check the network id recovered makes sense
+                if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");
+                if (input_id != rep.network_id) throw new System.Exception("Network id loaded incorrectly!");
 
-                case SAVE_TYPE.INACTIVE:
+                switch (type)
+                {
+                    case SAVE_TYPE.PLAYER:
 
-                    // If this is a top-level representation, move to inactive
-                    if (rep.transform == active_representations)
+                        // For players, deserialize also the username
+                        buffer.Read(length_bytes, 0, sizeof(int));
+                        length = System.BitConverter.ToInt32(length_bytes, 0);
+                        byte[] uname_bytes = new byte[length];
+                        buffer.Read(uname_bytes, 0, length);
+                        string username = System.Text.Encoding.ASCII.GetString(uname_bytes);
+
+                        // Players start inactive
                         rep.transform.SetParent(inactive_representations);
-                    break;
+                        player_representations[username] = rep;
+                        break;
 
-                default:
-                    throw new System.Exception("Unkown save type: " + type);
+                    case SAVE_TYPE.ACTIVE:
+
+                        // Nothing needs doing
+                        break;
+
+                    case SAVE_TYPE.INACTIVE:
+
+                        // If this is a top-level representation, move to inactive
+                        if (rep.transform == active_representations)
+                            rep.transform.SetParent(inactive_representations);
+                        break;
+
+                    default:
+                        throw new System.Exception("Unkown save type: " + type);
+                }
             }
         }
     }
@@ -916,51 +937,54 @@ public static class server
     }
 
     /// <summary> Extension method to write a variable-size byte array to a filestream. </summary>
-    public static void write_bytes_with_length(this System.IO.FileStream fs, byte[] bytes)
+    public static void write_bytes_with_length(this System.IO.Stream s, byte[] bytes)
     {
-        byte[] size_bytes = network_utils.encode_int(bytes.Length);
-        fs.Write(size_bytes, 0, size_bytes.Length);
-        fs.Write(bytes, 0, bytes.Length);
+        byte[] size_bytes = System.BitConverter.GetBytes(bytes.Length);
+        s.Write(size_bytes, 0, size_bytes.Length);
+        s.Write(bytes, 0, bytes.Length);
     }
 
     static void save()
     {
         // The file containing the savegame
-        var file = System.IO.File.OpenWrite(save_file());
-
-        // Remember which network_id's have been saved
-        HashSet<int> saved = new HashSet<int>();
-
-        // Save the players first
-        foreach (var kv in player_representations)
+        using (var file = System.IO.File.OpenWrite(save_file()))
+        using (var compressor = new System.IO.Compression.GZipStream(file,
+            System.IO.Compression.CompressionLevel.Optimal))
         {
-            file.WriteByte((byte)SAVE_TYPE.PLAYER);
-            file.write_bytes_with_length(kv.Value.serialize());
+            // Remember which network_id's have been saved
+            HashSet<int> saved = new HashSet<int>();
 
-            // Write the username
-            foreach (var b in network_utils.encode_string(kv.Key))
-                file.WriteByte(b);
+            // Save the players first
+            foreach (var kv in player_representations)
+            {
+                compressor.WriteByte((byte)SAVE_TYPE.PLAYER);
+                compressor.write_bytes_with_length(kv.Value.serialize());
 
-            saved.Add(kv.Value.network_id);
+                // Write the username
+                var uname_bytes = System.Text.Encoding.ASCII.GetBytes(kv.Key);
+                compressor.write_bytes_with_length(uname_bytes);
+
+                saved.Add(kv.Value.network_id);
+            }
+
+            // Then save active representations
+            network_utils.top_down<representation>(active_representations, (rep) =>
+            {
+                if (saved.Contains(rep.network_id)) return;
+                compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
+                compressor.write_bytes_with_length(rep.serialize());
+                saved.Add(rep.network_id);
+            });
+
+            // Then save inactive representations
+            network_utils.top_down<representation>(inactive_representations, (rep) =>
+            {
+                if (saved.Contains(rep.network_id)) return;
+                compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
+                compressor.write_bytes_with_length(rep.serialize());
+                saved.Add(rep.network_id);
+            });
         }
-
-        // Then save active representations
-        network_utils.top_down<representation>(active_representations, (rep) =>
-        {
-            if (saved.Contains(rep.network_id)) return;
-            file.WriteByte((byte)SAVE_TYPE.ACTIVE);
-            file.write_bytes_with_length(rep.serialize());
-            saved.Add(rep.network_id);
-        });
-
-        // Then save inactive representations
-        network_utils.top_down<representation>(inactive_representations, (rep) =>
-        {
-            if (saved.Contains(rep.network_id)) return;
-            file.WriteByte((byte)SAVE_TYPE.INACTIVE);
-            file.write_bytes_with_length(rep.serialize());
-            saved.Add(rep.network_id);
-        });
     }
 
     public static void stop()
@@ -1097,10 +1121,7 @@ public static class server
     /// <summary> Get an array of all the save files on this machine. </summary>
     public static string[] existing_saves()
     {
-        List<string> list = new List<string>();
-        foreach (var f in System.IO.Directory.GetFiles(saves_dir()))
-            list.Add(f.Replace(".save", ""));
-        return list.ToArray();
+        return System.IO.Directory.GetFiles(saves_dir());
     }
 
     /// <summary> Returns true if the save with the given name already exists. </summary>
