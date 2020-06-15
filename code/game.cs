@@ -190,6 +190,10 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        // Toggle the console using the caret
+        if (Input.GetKeyDown(KeyCode.BackQuote))
+            console.open = !console.open;
+
         // Toggle options on escape key
         if (Input.GetKeyDown(KeyCode.Escape))
             options_menu.open = !options_menu.open;

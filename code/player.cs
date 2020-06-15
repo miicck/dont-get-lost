@@ -168,6 +168,10 @@ public class player : networked_player
 
     void Update()
     {
+        // Don't do anything if the console is open
+        if (console.open)
+            return;
+
         // Call the local update function
         if (has_authority)
             local_update();
