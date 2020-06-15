@@ -42,9 +42,9 @@ public class player : networked_player
 
     public biome biome { get; private set; }
 
-    void Update()
+    /// <summary> Update function that is only called on the local client. </summary>
+    void local_update()
     {
-        if (!has_authority) return;
         if (options_menu.open) return;
 
         inspect_info.visible = Input.GetKey(KeyCode.Tab);
@@ -61,9 +61,6 @@ public class player : networked_player
         }
 
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
-
-        // Allign the arm with the hand
-        right_arm.to_grab = equipped?.transform;
 
         // Toggle menus only if not using an item/the map isn't open
         if (current_item_use == USE_TYPE.NOT_USING && !map_open)
@@ -169,6 +166,16 @@ public class player : networked_player
         }
     }
 
+    void Update()
+    {
+        // Call the local update function
+        if (has_authority)
+            local_update();
+
+        // Allign the arm with the hand
+        right_arm.to_grab = equipped?.transform;
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;
@@ -253,7 +260,8 @@ public class player : networked_player
     int last_quickbar_slot_accessed = 0;
     public inventory_slot quickbar_slot(int n)
     {
-        if (n < 0 || n >= QUICKBAR_SLOTS_COUNT) return null;
+        if (inventory?.slots == null) return null;
+        if (n < 0 || n >= inventory.slots.Length) return null;
         last_quickbar_slot_accessed = n;
         return inventory.slots[n];
     }
@@ -375,93 +383,89 @@ public class player : networked_player
 
     // The current equipped item
     item _equipped;
-    public item equipped { get => _equipped; }
-
-    void equip(string item_name)
+    public item equipped
     {
-        if (_equipped != null && _equipped.name == item_name)
-            return; // Already equipped
-
-        if (_equipped != null)
-            Destroy(_equipped.gameObject);
-
-        if (item_name == null)
+        get => _equipped;
+        private set
         {
-            _equipped = null;
-        }
-        else
-        {
-            // Ensure we actually have one of these in my inventory
-            bool have = false;
-            foreach (var s in inventory.slots)
-                if (s.item == item_name)
-                {
-                    have = true;
-                    break;
-                }
+            if (_equipped == value)
+                return; // Already equipped
 
-            if (have)
+            if (_equipped != null)
+                Destroy(_equipped.gameObject);
+
+            if (value == null)
             {
-                // Create an equipped-type copy of the item
-                _equipped = item.create(item_name, transform.position, transform.rotation);
-                foreach (var c in _equipped.GetComponentsInChildren<Collider>())
-                    c.enabled = false;
-
-                if (_equipped is equip_in_hand)
-                {
-                    // This item can be eqipped in my hand
-                }
-                else
-                {
-                    // This item can't be equipped in my hand, make it invisible.
-                    foreach (var r in _equipped.GetComponentsInChildren<Renderer>())
-                        r.enabled = false;
-                }
+                _equipped = null;
             }
-            else _equipped = null; // Don't have, equip null
-        }
+            else
+            {
+                // Ensure we actually have one of these in my inventory
+                bool have = false;
+                foreach (var s in inventory.slots)
+                    if (s.item == value.name)
+                    {
+                        have = true;
+                        break;
+                    }
 
-        if (_equipped == null)
-            cursor = cursors.DEFAULT;
-        else
-        {
-            cursor = _equipped.sprite.name;
-            _equipped.transform.SetParent(hand_centre);
-            _equipped.transform.localPosition = Vector3.zero;
-            _equipped.transform.localRotation = Quaternion.identity;
+                if (have)
+                {
+                    // Create an equipped-type copy of the item
+                    _equipped = item.create(value.name, transform.position, transform.rotation);
+                    foreach (var c in _equipped.GetComponentsInChildren<Collider>())
+                        c.enabled = false;
+
+                    if (_equipped is equip_in_hand)
+                    {
+                        // This item can be eqipped in my hand
+                    }
+                    else
+                    {
+                        // This item can't be equipped in my hand, make it invisible.
+                        foreach (var r in _equipped.GetComponentsInChildren<Renderer>())
+                            r.enabled = false;
+                    }
+                }
+                else _equipped = null; // Don't have, equip null
+            }
+
+            if (_equipped != null)
+            {
+                // Parent the equipped object to the hand
+                _equipped.transform.SetParent(hand_centre);
+                _equipped.transform.localPosition = Vector3.zero;
+                _equipped.transform.localRotation = Quaternion.identity;
+            }
+
+            // If this is the local player, set the cursor
+            if (has_authority)
+                cursor = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
         }
     }
 
     public void re_equip()
     {
-        // Re-equip the current item if we still have one in inventory
-        if (equipped == null) equip(null);
-        else
-        {
-            string re_eq_name = equipped.name;
-            Destroy(equipped.gameObject);
-            equip(null);
-            equip(re_eq_name);
-        }
+        equipped = Resources.Load<item>("items/" + equipped.name);
     }
 
-    void toggle_equip(string item)
+    void toggle_equip(int slot)
     {
-        if (equipped?.name == item) equip(null);
-        else equip(item);
+        if (slot_equipped.value == slot) slot_equipped.value = -1;
+        else slot_equipped.value = slot;
     }
 
     void run_quickbar_shortcuts()
     {
         // Select quickbar item using keyboard shortcut
-        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(quickbar_slot(0)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(quickbar_slot(1)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(quickbar_slot(2)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(quickbar_slot(3)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(quickbar_slot(4)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(quickbar_slot(5)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(quickbar_slot(6)?.item);
-        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(quickbar_slot(7)?.item);
+        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(0);
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(1);
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(2);
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(3);
+        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(4);
+        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(5);
+        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(6);
+        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(7);
 
         // Scroll through quickbar items
         float sw = Input.GetAxis("Mouse ScrollWheel");
@@ -475,10 +479,9 @@ public class player : networked_player
                 if (last_quickbar_slot_accessed < 0) last_quickbar_slot_accessed = QUICKBAR_SLOTS_COUNT - 1;
                 last_quickbar_slot_accessed = last_quickbar_slot_accessed % QUICKBAR_SLOTS_COUNT;
 
-                var itm = quickbar_slot(last_quickbar_slot_accessed)?.item;
-                if (itm != null)
+                if (quickbar_slot(last_quickbar_slot_accessed)?.item != null)
                 {
-                    equip(itm);
+                    toggle_equip(last_quickbar_slot_accessed);
                     break;
                 }
             }
@@ -962,20 +965,6 @@ public class player : networked_player
         ) * 1.01f; // 1.01f factor to ensure that it covers the screen
         underwater_screen.transform.forward = camera.transform.forward;
 
-        // Set the hand location so it is EYES_TO_HAND_DISTANCE 
-        // metres away from the camera, HAND_SCREEN_X of the way across 
-        // the screen and HAND_SCREEN_Y of the way up the screen.
-        hand_centre = new GameObject("hand").transform;
-        hand_centre.SetParent(eye_transform);
-        hand_centre.transform.localRotation = Quaternion.identity;
-        var hand_ray = camera.ScreenPointToRay(new Vector3(
-             Screen.width * HAND_SCREEN_X,
-             Screen.height * HAND_SCREEN_Y
-             ));
-        hand_centre.transform.position = camera.transform.position +
-            hand_ray.direction * BASE_EYE_TO_HAND_DIS;
-        init_hand_plane = hand_centre.localPosition.z;
-
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
         crosshairs.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
@@ -1027,6 +1016,15 @@ public class player : networked_player
         // Get references to the arms
         right_arm = body.right_arm;
         left_arm = body.left_arm;
+
+        // Create the hand at the position specified by the hand_init_pos object
+        hand_centre = new GameObject("hand").transform;      
+        hand_centre.SetParent(eye_transform);
+        hand_centre.transform.localRotation = Quaternion.identity;
+        var init_pos = eye_transform.Find("hand_init_pos");
+        hand_centre.transform.position = init_pos.position;
+        Destroy(init_pos.gameObject);
+        init_hand_plane = hand_centre.localPosition.z;
     }
 
     public override void on_first_create()
@@ -1060,11 +1058,19 @@ public class player : networked_player
     // NETWORKING //
     //############//
 
+    networked_variables.net_int slot_equipped;
     networked_variables.net_float y_rotation;
     public networked_variables.net_string username;
 
     public override void on_init_network_variables()
     {
+        slot_equipped = new networked_variables.net_int();
+        slot_equipped.on_change = () =>
+        {
+            if (slot_equipped.value < 0) equipped = null;
+            else equipped = Resources.Load<item>("items/" + quickbar_slot(slot_equipped.value)?.item);
+        };
+
         y_rotation = new networked_variables.net_float(resolution: 5f);
         y_rotation.on_change = () =>
         {
