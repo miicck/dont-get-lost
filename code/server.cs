@@ -546,7 +546,7 @@ public static class server
         tcp.Start();
 
         // Load the world
-        if (System.IO.Directory.Exists(save_dir()))
+        if (System.IO.File.Exists(save_file()))
             load();
 
         // Setup the message senders
@@ -858,71 +858,89 @@ public static class server
 
     static void load()
     {
-        Debug.Log("Loading: " + System.IO.Path.GetFullPath(save_dir()));
+        string fullpath = System.IO.Path.GetFullPath(save_file());
+        Debug.Log("Loading: " + fullpath);
 
-        // Find all the files to load, in alphabetical order
-        List<string> files = new List<string>(System.IO.Directory.GetFiles(save_dir()));
-        for (int i = 0; i < files.Count; ++i)
-            files[i] = System.IO.Path.GetFileName(files[i]);
+        byte[] bytes = System.IO.File.ReadAllBytes(fullpath);
 
-        // Ensure files are loaded in correct order
-        files.Sort((f1, f2) =>
+        int offset = 0;
+        while (offset < bytes.Length)
         {
-            int i1 = int.Parse(f1.Split('_')[0]);
-            int i2 = int.Parse(f2.Split('_')[0]);
-            return i1.CompareTo(i2);
-        });
+            // Deserialize the type, and length of the representation serialization
+            SAVE_TYPE type = (SAVE_TYPE)bytes[offset]; offset += 1;
+            int length = network_utils.decode_int(bytes, ref offset);
 
-        foreach (var f in files)
-        {
-            // Get the filename + bytes
-            byte[] bytes = System.IO.File.ReadAllBytes(save_dir() + "/" + f);
-            var tags = f.Split('_');
+            // Deserialize the representation
+            var rep = representation.create(bytes, offset, length, out int input_id);
+            offset += length;
 
-            int input_id;
-            var rep = representation.create(bytes, 0, bytes.Length, out input_id);
-            if (input_id != rep.network_id)
-                throw new System.Exception("Network id loaded incoorectly!");
+            // Check the network id recovered makes sense
+            if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");
+            if (input_id != rep.network_id) throw new System.Exception("Network id loaded incorrectly!");
 
-            if (tags[1] == "player")
+            switch (type)
             {
-                // This representation was a player; start inactive +
-                // record the username.
-                rep.transform.SetParent(inactive_representations);
-                player_representations[tags[2]] = rep;
-            }
-            else if (tags[1] == "inrep")
-            {
-                // This was a top-level inactive representation, move it there
-                if (rep.transform.parent == active_representations)
+                case SAVE_TYPE.PLAYER:
+
+                    // For players, deserialize also the username
+                    string username = network_utils.decode_string(bytes, ref offset);
                     rep.transform.SetParent(inactive_representations);
+                    player_representations[username] = rep;
+                    break;
+
+                case SAVE_TYPE.ACTIVE:
+
+                    // Nothing needs doing
+                    break;
+
+                case SAVE_TYPE.INACTIVE:
+
+                    // If this is a top-level representation, move to inactive
+                    if (rep.transform == active_representations)
+                        rep.transform.SetParent(inactive_representations);
+                    break;
+
+                default:
+                    throw new System.Exception("Unkown save type: " + type);
             }
-            else if (tags[1] == "rep")
-            {
-                // Active representations need no more work
-            }
-            else throw new System.Exception("Could not load " + f);
         }
+    }
+
+    /// <summary> The byte identifying which kind of 
+    /// object comes next in the save file. </summary>
+    enum SAVE_TYPE : byte
+    {
+        PLAYER = 1,
+        ACTIVE,
+        INACTIVE
+    }
+
+    /// <summary> Extension method to write a variable-size byte array to a filestream. </summary>
+    public static void write_bytes_with_length(this System.IO.FileStream fs, byte[] bytes)
+    {
+        byte[] size_bytes = network_utils.encode_int(bytes.Length);
+        fs.Write(size_bytes, 0, size_bytes.Length);
+        fs.Write(bytes, 0, bytes.Length);
     }
 
     static void save()
     {
-        // Ensure the directory is blank
-        if (System.IO.Directory.Exists(save_dir()))
-            System.IO.Directory.Delete(save_dir(), true);
-        System.IO.Directory.CreateDirectory(save_dir());
+        // The file containing the savegame
+        var file = System.IO.File.OpenWrite(save_file());
 
         // Remember which network_id's have been saved
         HashSet<int> saved = new HashSet<int>();
 
-        // Save the reprentations in top-down order
-        int order = 0;
-
         // Save the players first
         foreach (var kv in player_representations)
         {
-            string fname = save_dir() + "/" + (++order) + "_player_" + kv.Key;
-            System.IO.File.WriteAllBytes(fname, kv.Value.serialize());
+            file.WriteByte((byte)SAVE_TYPE.PLAYER);
+            file.write_bytes_with_length(kv.Value.serialize());
+
+            // Write the username
+            foreach (var b in network_utils.encode_string(kv.Key))
+                file.WriteByte(b);
+
             saved.Add(kv.Value.network_id);
         }
 
@@ -930,8 +948,8 @@ public static class server
         network_utils.top_down<representation>(active_representations, (rep) =>
         {
             if (saved.Contains(rep.network_id)) return;
-            string fname = save_dir() + "/" + (++order) + "_rep";
-            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            file.WriteByte((byte)SAVE_TYPE.ACTIVE);
+            file.write_bytes_with_length(rep.serialize());
             saved.Add(rep.network_id);
         });
 
@@ -939,8 +957,8 @@ public static class server
         network_utils.top_down<representation>(inactive_representations, (rep) =>
         {
             if (saved.Contains(rep.network_id)) return;
-            string fname = save_dir() + "/" + (++order) + "_inrep";
-            System.IO.File.WriteAllBytes(fname, rep.serialize());
+            file.WriteByte((byte)SAVE_TYPE.INACTIVE);
+            file.write_bytes_with_length(rep.serialize());
             saved.Add(rep.network_id);
         });
     }
@@ -1061,7 +1079,7 @@ public static class server
     }
 
     /// <summary> The directory in which games are saved. </summary>
-    public static string saves_dir()
+    static string saves_dir()
     {
         // Ensure the saves/ directory exists
         string saves_dir = Application.persistentDataPath + "/saves";
@@ -1071,9 +1089,24 @@ public static class server
     }
 
     /// <summary> The directory that this session is saved in. </summary>
-    static string save_dir()
+    static string save_file()
     {
-        return saves_dir() + "/" + savename;
+        return saves_dir() + "/" + savename + ".save";
+    }
+
+    /// <summary> Get an array of all the save files on this machine. </summary>
+    public static string[] existing_saves()
+    {
+        List<string> list = new List<string>();
+        foreach (var f in System.IO.Directory.GetFiles(saves_dir()))
+            list.Add(f.Replace(".save", ""));
+        return list.ToArray();
+    }
+
+    /// <summary> Returns true if the save with the given name already exists. </summary>
+    public static bool save_exists(string savename)
+    {
+        return System.IO.File.Exists(saves_dir() + "/" + savename + ".save");
     }
 
     public static void draw_gizmos()

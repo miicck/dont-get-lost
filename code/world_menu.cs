@@ -75,16 +75,16 @@ public class world_menu : MonoBehaviour
         message_to_display = "";
 
         // Find all the saved worlds
-        var world_folders = System.IO.Directory.GetDirectories(server.saves_dir());
+        var world_files = server.existing_saves();
 
         var load_header = template_header.inst();
         load_header.text = "Load existing world";
-        if (world_folders.Length == 0) load_header.text = "No existing worlds";
+        if (world_files.Length == 0) load_header.text = "No existing worlds";
         load_header.transform.SetParent(button_container);
 
-        int world_count = world_folders.Length;
+        int world_count = world_files.Length;
 
-        foreach (var wf in world_folders)
+        foreach (var wf in world_files)
         {
             var button = template_world_button.inst();
             button.transform.SetParent(button_container);
@@ -106,7 +106,7 @@ public class world_menu : MonoBehaviour
             delete_button.onClick.AddListener(() =>
             {
                 Destroy(button.gameObject);
-                System.IO.Directory.Delete(wf, true);
+                System.IO.File.Delete(wf);
                 world_count -= 1;
                 if (world_count == 0)
                     load_header.text = "No existing worlds";
@@ -135,8 +135,7 @@ public class world_menu : MonoBehaviour
             }
 
             string name = world_name_input.text.Trim();
-            string folder = server.saves_dir() + "/" + name;
-            if (System.IO.Directory.Exists(folder))
+            if (server.save_exists(name))
             {
                 error_highlighter.highlight(world_name_input.GetComponent<Image>());
                 return;

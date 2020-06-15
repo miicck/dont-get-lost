@@ -250,10 +250,19 @@ public class player : networked_player
     }
     ILeftPlayerMenu _left_menu;
 
+    /// <summary> True if the inventory is open, false otherwise. </summary>
     bool inventory_open
     {
-        get { return inventory.ui_open; }
-        set { inventory.ui_open = value; }
+        get
+        {
+            if (inventory == null) return false;
+            return inventory.ui_open;
+        }
+        set
+        {
+            if (inventory == null) return;
+            inventory.ui_open = value; 
+        }
     }
 
     public inventory_slot quickbar_slot(int n)
