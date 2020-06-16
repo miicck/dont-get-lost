@@ -86,6 +86,7 @@ MonoBehaviour:
   - {fileID: 2808796277189992633}
   - {fileID: -1446103422384330775}
   - {fileID: 610633721520860576}
+  - {fileID: 7771789819109101315}
 --- !u!114 &610633721520860576
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -228,11 +229,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d08ce26990eb1a4a9177b860541e702, type: 3}
   m_Name: Exposure
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   m_AdvancedMode: 0
   mode:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   meteringMode:
     m_OverrideState: 0
     m_Value: 2
@@ -243,8 +244,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0
   compensation:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: -1
   limitMin:
     m_OverrideState: 0
     m_Value: -10
