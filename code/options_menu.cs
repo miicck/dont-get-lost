@@ -108,10 +108,21 @@ public class options_menu : MonoBehaviour
     /// <summary> Set a boolean option. </summary>
     public static void set_bool(string name, bool value)
     {
-        switch(name)
+        UnityEngine.Rendering.HighDefinition.Exposure exposure;
+        if (!global_volume.profile.TryGet(out exposure))
+            throw new System.Exception("Global volume has no exposure override!");
+
+        switch (name)
         {
             case "water_reflections":
                 water_reflections.reflections_enabled = value;
+                break;
+
+            case "auto_exposure":
+                if (value)
+                    exposure.mode.value = UnityEngine.Rendering.HighDefinition.ExposureMode.Automatic;
+                else
+                    exposure.mode.value = UnityEngine.Rendering.HighDefinition.ExposureMode.Fixed;
                 break;
 
             default:

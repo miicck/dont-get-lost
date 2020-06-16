@@ -32,7 +32,7 @@ public class console : MonoBehaviour
         // Called when the player hits enter after typing a command
         input.onEndEdit.AddListener((string command) =>
         {
-            process_command(command);
+            if (command != "`") process_command(command);
             open = false;
             input.text = "";
         });
@@ -50,8 +50,8 @@ public class console : MonoBehaviour
     bool process_command(string command)
     {
         var args = command.Split(null);
-        
-        switch(args[0])
+
+        switch (args[0])
         {
             // Give the local player some items e.g [give 100 coin]
             case "give":
