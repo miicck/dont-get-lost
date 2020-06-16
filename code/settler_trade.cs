@@ -19,4 +19,18 @@ public class settler_trade : MonoBehaviour
         }
     }
     shop_slot _trade_slot;
+
+#if UNITY_EDITOR
+    [UnityEditor.CanEditMultipleObjects()]
+    [UnityEditor.CustomEditor(typeof(settler_trade))]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var st = (settler_trade)target;
+            st.item = utils.select_from_folder_dropdown("Item (dropdown)", "items", st.item);
+        }
+    }
+#endif
 }
