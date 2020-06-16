@@ -44,6 +44,11 @@ public class options_menu_float : options_menu_option
         slider.value = PlayerPrefs.GetFloat(option_name, default_value);
     }
 
+    private void OnEnable()
+    {
+        input.text = "" + slider.value;
+    }
+
     public override void initialize_option()
     {
         // Initialize the option to the saved value
