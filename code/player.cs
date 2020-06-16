@@ -707,9 +707,21 @@ public class player : networked_player
             color.colorFilter.value = value ? water.color : Color.white;
             chroma.intensity.value = value ? 1f : 0f;
             vignette.intensity.value = value ? 0.4f : 0f;
+
+
+            if (value && bubbles == null)
+            {
+                bubbles = Resources.Load<ParticleSystem>("particle_systems/bubbles").inst();
+                bubbles.transform.SetParent(transform);
+                bubbles.transform.localPosition = Vector3.zero;
+                bubbles.transform.localRotation = Quaternion.identity;
+            }
+
+            bubbles.gameObject.SetActive(value);
         }
     }
     bool _underwater;
+    ParticleSystem bubbles;
 
     void float_in_water()
     {
