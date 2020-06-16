@@ -26,5 +26,14 @@ public class workbench : MonoBehaviour, ILeftPlayerMenu
     RectTransform craft_menu;
 
     public void on_left_menu_open() { }
-    public void on_left_menu_close() { }
+
+    public void on_left_menu_close()
+    {
+        // Return contents to player inventory
+        var inv = craft_menu.GetComponentInChildren<inventory_section>();
+        var contents = inv.contents();
+        foreach (var kv in contents)
+            if (player.current.inventory.add(kv.Key, kv.Value))
+                inv.remove(kv.Key, kv.Value);
+    }
 }

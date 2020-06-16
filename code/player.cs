@@ -160,7 +160,7 @@ public class player : networked_player
             if (use_result.allows_look) mouse_look();
         }
 
-        if (use_result.allows_move)
+        if (use_result.allows_move && left_menu == null)
         {
             move();
             float_in_water();
