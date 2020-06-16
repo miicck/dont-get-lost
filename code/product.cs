@@ -26,9 +26,9 @@ public class product : MonoBehaviour
     public int max_count = 1;
 
     /// <summary> The display name of this product. </summary>
-    public string product_name()
+    public virtual string product_name()
     {
-        switch(mode)
+        switch (mode)
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
@@ -36,11 +36,11 @@ public class product : MonoBehaviour
 
             default:
                 throw new System.Exception("Unkown product mode!");
-        }      
+        }
     }
 
     /// <summary> The display name of this product, pluralized. </summary>
-    public string product_name_plural()
+    public virtual string product_name_plural()
     {
         switch (mode)
         {
@@ -54,7 +54,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public void create_in_inventory(inventory_section inv)
+    public virtual void create_in_inventory(inventory_section inv)
     {
         switch (mode)
         {
@@ -65,11 +65,11 @@ public class product : MonoBehaviour
 
             default:
                 throw new System.Exception("Unkown product mode!");
-        }     
+        }
     }
 
     /// <summary> A sprite representing the product. </summary>
-    public Sprite sprite()
+    public virtual Sprite sprite()
     {
         switch (mode)
         {
@@ -177,4 +177,24 @@ public class product : MonoBehaviour
         }
     }
 #endif
+}
+
+/// <summary> A product loaded from the biome information. </summary>
+public class terrain_product : product
+{
+    new public const string mode = "TERRAIN_PRODUCT";
+
+    new item item
+    {
+        get
+        {
+            // Load the item from the player biome.point information
+            return Resources.Load<item>("items/" + player.current.point.terrain_product);
+        }
+    }
+
+    public override string product_name() { return item.display_name; }
+    public override string product_name_plural() { return item.plural; }
+    public override Sprite sprite() { return item.sprite; }
+    public override void create_in_inventory(inventory_section inv) { inv.add(item.name, 1); }
 }

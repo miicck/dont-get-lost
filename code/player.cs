@@ -41,6 +41,7 @@ public class player : networked_player
     //#################//
 
     public biome biome { get; private set; }
+    public biome.point point { get; private set; }
 
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
@@ -55,9 +56,9 @@ public class player : networked_player
         biome = biome.at(transform.position);
         if (biome != null)
         {
-            var point_at = biome.blended_point(transform.position);
-            target_sky_color = point_at.sky_color;
-            water.color = point_at.water_color;
+            point = biome.blended_point(transform.position);
+            target_sky_color = point.sky_color;
+            water.color = point.water_color;
         }
 
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);

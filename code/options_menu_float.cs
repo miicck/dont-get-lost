@@ -16,8 +16,7 @@ public class options_menu_float : options_menu_option
         // The input field sets the slider value
         input.onValueChanged.AddListener((s) =>
         {
-            float val;
-            if (float.TryParse(s, out val))
+            if (float.TryParse(s, out float val))
             {
                 // Successfulyl parsed a float, clamp it
                 // to the slider range and set the slider value
@@ -26,7 +25,7 @@ public class options_menu_float : options_menu_option
                 options_menu.set_float(option_name, val);
                 slider.value = val;
             }
-            else 
+            else
                 // Failed to parse a float, reset the text to
                 // the slider value.
                 input.text = "" + slider.value;

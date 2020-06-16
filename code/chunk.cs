@@ -188,6 +188,14 @@ public class chunk : MonoBehaviour
         terrain.heightmapPixelError = 16f;
         terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
+        // Create the terrain harvesting mechanic
+        var terrain_tool = terrain.gameObject.AddComponent<item_requirement>();
+        terrain_tool.mode = item_requirement.MODE.TOOL_QUALITY;
+        terrain_tool.tool_type = tool.TYPE.PICKAXE;
+        terrain_tool.tool_quality = tool.QUALITY.TERRIBLE;
+        var terrain_product = terrain.gameObject.AddComponent<terrain_product>();
+        var terrain_harvest = terrain.gameObject.AddComponent<harvestable>();
+
         // Start the gradual chunk generator
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
         generator.transform.SetParent(transform);

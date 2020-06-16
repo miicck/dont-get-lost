@@ -410,6 +410,7 @@ public abstract class biome : MonoBehaviour
         public float altitude;
         public Color water_color = water_colors.cyan;
         public Color terrain_color = terrain_colors.grass;
+        public string terrain_product = "dirt";
         public Color sky_color = sky_colors.light_blue;
         public world_object object_to_generate;
         public object gen_info;
@@ -461,6 +462,7 @@ public abstract class biome : MonoBehaviour
             {
                 ret.object_to_generate = pts[max_i].object_to_generate;
                 ret.gen_info = pts[max_i].gen_info;
+                ret.terrain_product = pts[max_i].terrain_product;
             }
 
             return ret;
