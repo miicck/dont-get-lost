@@ -234,35 +234,7 @@ public class game : MonoBehaviour
             player.info() + "\n";
 
         debug_text = debug_text.Trim();
-
-        // Allign all of the :'s precceded by a space
-        int max_found = 0;
-        foreach (var line in debug_text.Split('\n'))
-        {
-            int found = line.IndexOf(':');
-            if (found > max_found)
-            {
-                if (line[found - 1] != ' ') continue;
-                max_found = found;
-            }
-        }
-
-        string padded = "";
-        foreach (var line in debug_text.Split('\n'))
-        {
-            int found = line.IndexOf(':');
-            string padded_line = line;
-            if (found > 0)
-            {
-                padded_line = line.Substring(0, found);
-                for (int i = 0; i < max_found - found; ++i)
-                    padded_line += " ";
-                padded_line += line.Substring(found);
-            }
-            padded += padded_line + "\n";
-        }
-
-        this.debug_text.text = padded;
+        this.debug_text.text = utils.allign_colons(debug_text);
     }
 
     void OnApplicationQuit()

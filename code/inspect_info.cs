@@ -17,21 +17,29 @@ public class inspect_info : MonoBehaviour
             IInspectable inspect = null;
             if (value)
             {
-                // Raycast for the nearest collider, and search that for IInspectable
-                // objects (raycast for collider, rather than IInspectable so that 
-                // you can't get IInspectables from behind stuff).
-                RaycastHit hit;
-                float range;
-                var ray = player.current.camera_ray(INSPECT_RANGE, out range);
-                var col = utils.raycast_for_closest<Collider>(ray, out hit, range,
-                    (c) => !c.transform.IsChildOf(player.current.transform));
+                if (Cursor.visible)
+                {
+                    // Raycast for a ui element
+                    inspect = utils.raycast_ui_under_mouse<IInspectable>();
+                }
+                else
+                {
+                    // Raycast for the nearest collider, and search that for IInspectable
+                    // objects (raycast for collider, rather than IInspectable so that 
+                    // you can't get IInspectables from behind stuff).
+                    RaycastHit hit;
+                    float range;
+                    var ray = player.current.camera_ray(INSPECT_RANGE, out range);
+                    var col = utils.raycast_for_closest<Collider>(ray, out hit, range,
+                        (c) => !c.transform.IsChildOf(player.current.transform));
 
-                if (col != null)
-                    inspect = col.gameObject.GetComponentInParent<IInspectable>();
+                    if (col != null)
+                        inspect = col.gameObject.GetComponentInParent<IInspectable>();
+                }
 
                 if (inspect != null)
                 {
-                    info_text.text = inspect.inspect_info();
+                    info_text.text = inspect.inspect_info().capitalize();
                     Sprite main = inspect.main_sprite();
                     Sprite secondary = inspect.secondary_sprite();
 

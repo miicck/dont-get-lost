@@ -6,6 +6,7 @@ public class water_reflections : MonoBehaviour
 {
     UnityEngine.Rendering.HighDefinition.PlanarReflectionProbe probe;
     Renderer water_renderer;
+    Renderer water_underside_renderer;
 
     /// <summary> The water quad is centred this distance from the player, so that
     /// it appears behind transparent objects that are nearer. </summary>
@@ -56,7 +57,7 @@ public class water_reflections : MonoBehaviour
         water_underside.transform.SetParent(water.transform);
         water_underside.transform.localPosition = new Vector3(0, 0, -0.00001f);
         water_underside.transform.Rotate(180, 0, 0);
-        var water_underside_renderer = water_underside.GetComponent<MeshRenderer>();
+        water_underside_renderer = water_underside.GetComponent<MeshRenderer>();
         water_underside_renderer.material = Resources.Load<Material>("materials/standard_shader/water_underside");
 
         // Needs to be fiddled with on startup to work for some reason
@@ -71,6 +72,9 @@ public class water_reflections : MonoBehaviour
 
     void Update()
     {
+        water_underside_renderer.enabled =
+            player.current.camera.transform.position.y < world.SEA_LEVEL;
+
         // Workaround to stop the reflections from just randomly disapearing
         // if the player moves too far.
         if ((last_fiddled - player.current.transform.position).magnitude >

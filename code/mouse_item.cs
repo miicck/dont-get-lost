@@ -25,7 +25,7 @@ public class mouse_item : MonoBehaviour
         {
             _count = value;
             if (_count < 1) Destroy(gameObject);
-            else item_count_text.text = _count > 1 ? "" + _count : "";
+            else item_count_text.text = _count > 1 ? "" + _count.qs() : "";
         }
     }
 

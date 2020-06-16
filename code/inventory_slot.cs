@@ -36,7 +36,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
     }
 }
 
-public class inventory_slot : MonoBehaviour
+public class inventory_slot : MonoBehaviour, IInspectable
 {
     protected inventory_section[] sections_belonging_to { get => GetComponentsInParent<inventory_section>(true); }
 
@@ -117,6 +117,57 @@ public class inventory_slot : MonoBehaviour
 
         // Ensure images etc are loaded correctly
         set_item_count(item, count);
+    }
+
+    //##############//
+    // IInspectable //
+    //##############//
+
+    public string inspect_info()
+    {
+        if (item == null) return "Empty slot";
+        var itm = Resources.Load<item>("items/" + item);
+
+        // Titlle
+        string info = (count < 2 ? itm.display_name : 
+            (utils.int_to_comma_string(count) + " " + itm.plural)) + "\n";
+
+        // Value
+        if (count > 1)
+            info += "  Value : " + (itm.value * count).qs() + " (" + itm.value.qs() + " each)\n";
+        else
+            info += "  Value : " + itm.value.qs() + "\n";
+
+        // Tool type + quality
+        if (itm is tool)
+        {
+            var t = (tool)itm;
+            info += "  Tool type : " + tool.type_to_name(t.type) + "\n";
+            info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
+        }
+
+        // Fuel value
+        if (itm.fuel_value > 0)
+        {
+            if (count > 1)
+                info += "  Fuel value : " + (itm.fuel_value * count).qs() + " (" + itm.fuel_value.qs() + " each)\n";
+            else
+                info += "  Fuel value : " + itm.fuel_value.qs() + "\n";
+        }
+
+        return utils.allign_colons(info);
+    }
+
+    public Sprite main_sprite()
+    {
+        if (item == null) return null;
+        return Resources.Load<item>("items/" + item).main_sprite();
+    }
+
+    public Sprite secondary_sprite()
+    {
+        if (item == null) return null;
+        return Resources.Load<item>("items/" + item).secondary_sprite();
     }
 
 #if UNITY_EDITOR

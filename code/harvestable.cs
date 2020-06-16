@@ -25,7 +25,7 @@ public class harvestable : accepts_item_impact, IInspectable
     public string inspect_info()
     {
         return product.product_list(products) + " can be harvested with " +
-               utils.a_or_an(tool.display_name) + " " + tool.display_name;
+               utils.a_or_an(tool.display_name) + " " + tool.display_name + ".";
     }
 
     public Sprite main_sprite()

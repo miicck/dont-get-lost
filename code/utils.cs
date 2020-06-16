@@ -86,6 +86,35 @@ public static class utils
         return ret;
     }
 
+    /// <summary> Raycast for a <typeparamref name="T"/> under the mouse. </summary>
+    public static T raycast_ui_under_mouse<T>()
+    {
+        // Setup the raycast
+        var event_system = UnityEngine.EventSystems.EventSystem.current;
+        var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)
+        {
+            position = Input.mousePosition
+        };
+
+        var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+
+        // This never seems to work, but I guess it might as well stay
+        event_system.RaycastAll(pointer_data, hits);
+
+        // Find the graphic raycaster and use it to find ui elements below the pointer
+        var raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
+        raycaster.Raycast(pointer_data, hits);
+
+        // Find an object with the given component type
+        foreach (var h in hits)
+        {
+            var t = h.gameObject.GetComponentInChildren<T>();
+            if (t != null) return t;
+        }
+
+        return default;
+    }
+
     // Find the object in to_search that minimizes the given function
     public delegate float float_func<T>(T t);
     public static T find_to_min<T>(IEnumerable<T> to_search, float_func<T> objective)
@@ -205,6 +234,29 @@ public static class utils
         }
         float mils = i / 1000000f;
         return "" + System.Math.Round(mils, 2) + "M";
+    }
+
+    /// <summary> Conver an integer into a quantity string. </summary>
+    public static string qs(this int i)
+    {
+        return int_to_quantity_string(i);
+    }
+
+    public static string int_to_comma_string(int i)
+    {
+        string str = "" + i;
+        List<char> chars = new List<char>();
+        int count = 0;
+        for (int n = str.Length - 1; n >= 0; --n)
+        {
+            count++;
+            chars.Add(str[n]);
+
+            if (count % 3 == 0 && n != 0)
+                chars.Add(',');
+        }
+        chars.Reverse();
+        return new string(chars.ToArray());
     }
 
     public static string capitalize(this string s)
@@ -332,6 +384,39 @@ public static class utils
         var new_index = UnityEditor.EditorGUILayout.Popup(
             label, index, option_names.ToArray());
         return options[new_index];
+    }
+
+    /// <summary> Allign all of the :'s (preceded by a space) on each line of s. </summary>
+    public static string allign_colons(string s)
+    {
+        // Allign all of the :'s precceded by a space
+        int max_found = 0;
+        foreach (var line in s.Split('\n'))
+        {
+            int found = line.IndexOf(':');
+            if (found > max_found)
+            {
+                if (line[found - 1] != ' ') continue;
+                max_found = found;
+            }
+        }
+
+        string padded = "";
+        foreach (var line in s.Split('\n'))
+        {
+            int found = line.IndexOf(':');
+            string padded_line = line;
+            if (found > 0)
+            {
+                padded_line = line.Substring(0, found);
+                for (int i = 0; i < max_found - found; ++i)
+                    padded_line += " ";
+                padded_line += line.Substring(found);
+            }
+            padded += padded_line + "\n";
+        }
+
+        return padded;
     }
 }
 
