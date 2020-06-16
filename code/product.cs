@@ -196,5 +196,12 @@ public class terrain_product : product
     public override string product_name() { return item.display_name; }
     public override string product_name_plural() { return item.plural; }
     public override Sprite sprite() { return item.sprite; }
-    public override void create_in_inventory(inventory_section inv) { inv.add(item.name, 1); }
+
+    public override void create_in_inventory(inventory_section inv)
+    {
+        inv.add(item.name, 1);
+
+        if (Random.Range(0, 5) == 0)
+            inv.add("flint", 1);
+    }
 }

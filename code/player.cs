@@ -266,7 +266,7 @@ public class player : networked_player
         set
         {
             if (inventory == null) return;
-            inventory.ui_open = value; 
+            inventory.ui_open = value;
         }
     }
 
@@ -674,13 +674,50 @@ public class player : networked_player
         controller.Move(move);
     }
 
+    public bool underwater
+    {
+        get => _underwater;
+        private set
+        {
+            if (value == _underwater)
+                return; // No change
+
+            _underwater = value;
+
+            if (!options_menu.global_volume.profile.TryGet(
+                out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
+                throw new System.Exception("No ColorAdjustments override on global volume!");
+
+            if (!options_menu.global_volume.profile.TryGet(
+                out UnityEngine.Rendering.HighDefinition.ChromaticAberration chroma))
+                throw new System.Exception("No ChromaticAberration override on global volume!");
+
+            if (!options_menu.global_volume.profile.TryGet(
+                out UnityEngine.Rendering.HighDefinition.Vignette vignette))
+                throw new System.Exception("No Vigentte override on global volume!");
+
+            if (!options_menu.global_volume.profile.TryGet(
+                out UnityEngine.Rendering.HighDefinition.DepthOfField dof))
+                throw new System.Exception("No DepthOfField override on global volume!");
+
+            dof.focusMode.value = value ? 
+                UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Manual : 
+                UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Off;
+
+            color.colorFilter.value = value ? water.color : Color.white;
+            chroma.intensity.value = value ? 1f : 0f;
+            vignette.intensity.value = value ? 0.4f : 0f;
+        }
+    }
+    bool _underwater;
+
     void float_in_water()
     {
         // We're underwater if the bottom of the screen is underwater
         var ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, 0, 0));
         float dis = camera.nearClipPlane / Vector3.Dot(ray.direction, -camera.transform.up);
         float eff_eye_y = (ray.origin + ray.direction * dis).y;
-        underwater_screen.SetActive(eff_eye_y < world.SEA_LEVEL && !map_open);
+        underwater = eff_eye_y < world.SEA_LEVEL && !map_open;
 
         float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
@@ -718,7 +755,6 @@ public class player : networked_player
     // Objects used to obscure player view
     GameObject obscurer;
     GameObject map_obscurer;
-    GameObject underwater_screen;
 
     Color target_sky_color;
 
@@ -969,17 +1005,6 @@ public class player : networked_player
         Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
         Vector3 tr_corner_point = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, usd));
         Vector3 delta = tr_corner_point - bl_corner_point;
-
-        // Setup the underwater screen so it exactly covers the screen
-        underwater_screen = Resources.Load<GameObject>("misc/underwater_screen").inst();
-        underwater_screen.transform.SetParent(camera.transform);
-        underwater_screen.transform.localPosition = Vector3.forward * usd;
-        underwater_screen.transform.localScale = new Vector3(
-            Vector3.Dot(delta, camera.transform.right),
-            Vector3.Dot(delta, camera.transform.up),
-            1f
-        ) * 1.01f; // 1.01f factor to ensure that it covers the screen
-        underwater_screen.transform.forward = camera.transform.forward;
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();

@@ -52,6 +52,13 @@ public class water_reflections : MonoBehaviour
         water_renderer.material = Resources.Load<Material>("materials/standard_shader/water_reflective");
         water_renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
+        var water_underside = water.inst();
+        water_underside.transform.SetParent(water.transform);
+        water_underside.transform.localPosition = new Vector3(0, 0, -0.00001f);
+        water_underside.transform.Rotate(180, 0, 0);
+        var water_underside_renderer = water_underside.GetComponent<MeshRenderer>();
+        water_underside_renderer.material = Resources.Load<Material>("materials/standard_shader/water_underside");
+
         // Needs to be fiddled with on startup to work for some reason
         fiddle_needed = true;
         last_fiddled = player.current.transform.position;

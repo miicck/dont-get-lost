@@ -41,7 +41,7 @@ public class options_menu : MonoBehaviour
 
     /// <summary> This is a useful thing to have access to here, 
     /// as many graphics settings are controlled by this. </summary>
-    static UnityEngine.Rendering.Volume global_volume
+    public static UnityEngine.Rendering.Volume global_volume
     {
         get
         {
