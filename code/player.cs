@@ -1077,6 +1077,7 @@ public class player : networked_player
         Destroy(init_pos.gameObject);
         init_hand_plane = hand_centre.localPosition.z;
 
+        // The currently-equipped quickbar slot number
         slot_equipped = new networked_variables.net_int();
         slot_equipped.on_change = () =>
         {
@@ -1084,13 +1085,15 @@ public class player : networked_player
             else equipped = Resources.Load<item>("items/" + quickbar_slot(slot_equipped.value)?.item);
         };
 
+        // y_rotation is the rotation of the player around the global y axis
         y_rotation = new networked_variables.net_float(resolution: 5f);
         y_rotation.on_change = () =>
         {
             transform.rotation = Quaternion.Euler(0, y_rotation.value, 0);
         };
 
-        x_rotation = new networked_variables.net_float(resolution: 5f);
+        // x_rotation is the rotation of the eyes around their x axis and is clamped.
+        x_rotation = new networked_variables.net_float(resolution: 5f, min_value: 0f, max_value: 160f);
         x_rotation.on_change = () =>
         {
             eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);

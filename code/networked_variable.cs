@@ -43,6 +43,9 @@ public abstract class networked_variable<T> : networked_variable
         get => _value;
         set
         {
+            // Before we do anything, validate the value
+            value = validate(value);
+
             if (_value == default)
             {
                 if (value == default)
@@ -74,6 +77,11 @@ public abstract class networked_variable<T> : networked_variable
     {
         _value = default_value();
     }
+
+    /// <summary> Checks <paramref name="new_value"/> for validity, 
+    /// should return the nearest valid T. By default, just returns
+    /// <paramref name="new_value"/>. </summary>
+    protected virtual T validate(T new_value) { return new_value; }
 
     /// <summary> Function called every time the variable changes value. </summary>
     public on_change_func on_change;
@@ -175,11 +183,24 @@ namespace networked_variables
 
         float lerp_speed;
         float resolution;
+        float max_value;
+        float min_value;
 
-        public net_float(float lerp_speed = 5f, float resolution = 0f)
+        public net_float(float lerp_speed = 5f, float resolution = 0f, 
+            float max_value = float.PositiveInfinity, 
+            float min_value = float.NegativeInfinity)
         {
             this.lerp_speed = lerp_speed;
             this.resolution = resolution;
+            this.min_value = min_value;
+            this.max_value = max_value;
+        }
+
+        protected override float validate(float new_value)
+        {
+            if (new_value > max_value) return max_value;
+            if (new_value < min_value) return min_value;
+            return new_value;
         }
 
         public override byte[] serialization()
