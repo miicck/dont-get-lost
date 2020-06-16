@@ -11,11 +11,11 @@ public class item_requirement : MonoBehaviour
         SPECIFIC_ITEM,
         TOOL_QUALITY,
     }
-    public MODE mode;
+    public MODE mode = MODE.TOOL_QUALITY;
 
     public item item;
-    public tool.TYPE tool_type;
-    public tool.QUALITY tool_quality;
+    public tool.TYPE tool_type = tool.TYPE.AXE;
+    public tool.QUALITY tool_quality = tool.QUALITY.TERRIBLE;
 
     /// <summary> Returns true if the test passes. </summary>
     public bool satisfied(item item)

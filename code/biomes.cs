@@ -527,7 +527,10 @@ public class rock_stacks : biome
                                 grid[i2, j2].object_to_generate = null;
 
                         // Add the rocks
-                        p.object_to_generate = world_object.load("rock_stacks_1");
+                        if (random.range(0, 2) == 0)
+                            p.object_to_generate = world_object.load("rock_stacks_1");
+                        else
+                            p.object_to_generate = world_object.load("rock_plateau_1");
                     }
                 }
             }
@@ -547,8 +550,10 @@ public class jungle : biome
                 p.sky_color = sky_colors.jungle_green;
                 p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
 
-                if (random.range(0, 200) == 0)
+                if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("jungle_tree_1");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("jungle_tree_2");
                 else if (random.range(0, 50) == 0)
                 {
                     if (random.range(0, 2) == 0)
@@ -600,6 +605,51 @@ public class caves : biome
 
                 if (i % 5 == 0 && j % 5 == 0 && random.range(0, 10) == 0)
                     p.object_to_generate = world_object.load("rock_pillar_1");
+            }
+    }
+}
+
+public class rocky_plains : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.sky_color = sky_colors.light_blue;
+                p.terrain_color = terrain_colors.grass;
+
+                float alt = Mathf.PerlinNoise(i / 64f, j / 64f);
+                if (alt < 0.3f) alt = (alt - 0.3f) * 4f;
+                else if (alt < 0.5f) alt = 0f;
+                else alt = procmath.maps.end_smoothed_linear(2 * (alt - 0.5f), 0.25f);
+                p.altitude = point.BEACH_END + 16f * alt;
+
+                float bush_amt = Mathf.PerlinNoise(i / 32f, j / 32f);
+
+                if (alt < 1e-4)
+                {
+                    if (random.range(0, 800) == 0)
+                        p.object_to_generate = world_object.load("flat_top_tree");
+                    else if (random.range(0, 300) == 0)
+                        p.object_to_generate = world_object.load("layered_hill");
+                    else if (bush_amt > 0.7f && random.range(0, 5) == 0)
+                    {
+                        if (random.range(0, 4) == 0)
+                            p.object_to_generate = world_object.load("rhododendron");
+                        else
+                            p.object_to_generate = world_object.load("bush");
+                    }
+                    else if (bush_amt > (0.7f + random.range(0, 0.3f)) && random.range(0, 4) == 0)
+                        p.object_to_generate = world_object.load("foxglove");
+                }
+                else
+                {
+                    if (random.range(0, 400) == 0)
+                        p.object_to_generate = world_object.load("layered_mountain");
+                }
             }
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop_slot : MonoBehaviour
+public class shop_slot : MonoBehaviour, IInspectable
 {
     public UnityEngine.UI.Text count_text;
     public UnityEngine.UI.Text buy_price_text;
@@ -126,6 +126,14 @@ public class shop_slot : MonoBehaviour
     {
         setup();
     }
+
+    public string inspect_info()
+    {
+        return inventory_slot.item_quantity_info(item, 1);
+    }
+
+    public Sprite main_sprite() { return item.sprite; }
+    public Sprite secondary_sprite() { return null; }
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(shop_slot))]

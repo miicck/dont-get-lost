@@ -123,39 +123,43 @@ public class inventory_slot : MonoBehaviour, IInspectable
     // IInspectable //
     //##############//
 
-    public string inspect_info()
+    public static string item_quantity_info(item item, int quantity)
     {
-        if (item == null) return "Empty slot";
-        var itm = Resources.Load<item>("items/" + item);
-
         // Titlle
-        string info = (count < 2 ? itm.display_name : 
-            (utils.int_to_comma_string(count) + " " + itm.plural)) + "\n";
+        string info = (quantity < 2 ? item.display_name :
+            (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";
 
         // Value
-        if (count > 1)
-            info += "  Value : " + (itm.value * count).qs() + " (" + itm.value.qs() + " each)\n";
+        if (quantity > 1)
+            info += "  Value : " + (item.value * quantity).qs() + " (" + item.value.qs() + " each)\n";
         else
-            info += "  Value : " + itm.value.qs() + "\n";
+            info += "  Value : " + item.value.qs() + "\n";
 
         // Tool type + quality
-        if (itm is tool)
+        if (item is tool)
         {
-            var t = (tool)itm;
+            var t = (tool)item;
             info += "  Tool type : " + tool.type_to_name(t.type) + "\n";
             info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
         }
 
         // Fuel value
-        if (itm.fuel_value > 0)
+        if (item.fuel_value > 0)
         {
-            if (count > 1)
-                info += "  Fuel value : " + (itm.fuel_value * count).qs() + " (" + itm.fuel_value.qs() + " each)\n";
+            if (quantity > 1)
+                info += "  Fuel value : " + (item.fuel_value * quantity).qs() + " (" + item.fuel_value.qs() + " each)\n";
             else
-                info += "  Fuel value : " + itm.fuel_value.qs() + "\n";
+                info += "  Fuel value : " + item.fuel_value.qs() + "\n";
         }
 
         return utils.allign_colons(info);
+    }
+
+    public string inspect_info()
+    {
+        if (item == null) return "Empty slot";
+        var itm = Resources.Load<item>("items/" + item);
+        return item_quantity_info(itm, count);
     }
 
     public Sprite main_sprite()
