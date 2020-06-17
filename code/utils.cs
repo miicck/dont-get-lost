@@ -356,36 +356,6 @@ public static class utils
         Gizmos.matrix = Matrix4x4.identity;
     }
 
-    public static T select_from_resources_folder<T>(string folder) where T : Object
-    {
-        var selected = UnityEditor.EditorUtility.OpenFilePanel("Select " + typeof(T).Name,
-            Application.dataPath + "/resources/" + folder, "prefab");
-
-        selected = System.IO.Path.GetFileName(selected).Replace(".prefab", "");
-        return Resources.Load<T>(folder + "/" + selected);
-    }
-
-    public static T select_from_folder_dropdown<T>(string label, string folder, T selected) where T : Object
-    {
-        var options = Resources.LoadAll<T>(folder);
-
-        int index = 0;
-        for (int i = 0; i < options.Length; ++i)
-            if (options[i] == selected)
-            {
-                index = i;
-                break;
-            }
-
-        List<string> option_names = new List<string>();
-        foreach (var o in options)
-            option_names.Add(o.name);
-
-        var new_index = UnityEditor.EditorGUILayout.Popup(
-            label, index, option_names.ToArray());
-        return options[new_index];
-    }
-
     /// <summary> Allign all of the :'s (preceded by a space) on each line of s. </summary>
     public static string allign_colons(string s)
     {
@@ -418,6 +388,40 @@ public static class utils
 
         return padded;
     }
+
+#if UNITY_EDITOR // Unity edtor utilities
+
+    public static T select_from_resources_folder<T>(string folder) where T : Object
+    {
+        var selected = UnityEditor.EditorUtility.OpenFilePanel("Select " + typeof(T).Name,
+            Application.dataPath + "/resources/" + folder, "prefab");
+
+        selected = System.IO.Path.GetFileName(selected).Replace(".prefab", "");
+        return Resources.Load<T>(folder + "/" + selected);
+    }
+
+    public static T select_from_folder_dropdown<T>(string label, string folder, T selected) where T : Object
+    {
+        var options = Resources.LoadAll<T>(folder);
+
+        int index = 0;
+        for (int i = 0; i < options.Length; ++i)
+            if (options[i] == selected)
+            {
+                index = i;
+                break;
+            }
+
+        List<string> option_names = new List<string>();
+        foreach (var o in options)
+            option_names.Add(o.name);
+
+        var new_index = UnityEditor.EditorGUILayout.Popup(
+            label, index, option_names.ToArray());
+        return options[new_index];
+    }
+
+#endif // UNITY_EDITOR
 }
 
 /// <summary> A dictionary with two keys. </summary>
