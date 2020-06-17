@@ -186,8 +186,8 @@ namespace networked_variables
         float max_value;
         float min_value;
 
-        public net_float(float lerp_speed = 5f, float resolution = 0f, 
-            float max_value = float.PositiveInfinity, 
+        public net_float(float lerp_speed = 5f, float resolution = 0f,
+            float max_value = float.PositiveInfinity,
             float min_value = float.NegativeInfinity)
         {
             this.lerp_speed = lerp_speed;
@@ -285,7 +285,7 @@ namespace networked_variables
         {
             List<byte> serial = new List<byte>();
 
-            foreach(var slot in value)
+            foreach (var slot in value)
             {
                 var slot_number = slot.Key;
                 var name = slot.Value.Key;
@@ -301,11 +301,11 @@ namespace networked_variables
         protected override Dictionary<int, KeyValuePair<string, int>> deserialize(
             byte[] buffer, int offset, int length)
         {
-            Dictionary<int, KeyValuePair<string, int>> ret = 
+            Dictionary<int, KeyValuePair<string, int>> ret =
                 new Dictionary<int, KeyValuePair<string, int>>();
 
             int end = offset + length;
-            while(offset < end)
+            while (offset < end)
             {
                 var slot_number = network_utils.decode_int(buffer, ref offset);
                 var name = network_utils.decode_string(buffer, ref offset);
@@ -320,5 +320,75 @@ namespace networked_variables
         {
             return new Dictionary<int, KeyValuePair<string, int>>();
         }
+    }
+
+    public class net_string_counts_v2 : networked_variable, IEnumerable<KeyValuePair<string, int>>
+    {
+        Dictionary<string, int> dict = new Dictionary<string, int>();
+        public IEnumerator<KeyValuePair<string, int>> GetEnumerator() { return dict.GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+        public int this[string s]
+        {
+            get
+            {
+                // A key not present => 0
+                if (!dict.TryGetValue(s, out int count)) return 0;
+                return count;
+            }
+
+            set
+            {
+                // Check if we've actually modified the dictionary
+                if (dict.TryGetValue(s, out int count))
+                {
+                    if (count == value)
+                        return; // No change, count is the same
+                }
+                else if (value == 0)
+                    return; // No change, still not present
+
+                // Modify the dictionary + schedue network update
+                if (value == 0) dict.Remove(s);
+                else dict[s] = value;
+                queued_serial = serialization();
+                on_change?.Invoke();
+            }
+        }
+
+        public override byte[] serialization()
+        {
+            // Serialize the dictionary
+            List<byte> serial = new List<byte>();
+            foreach (var kv in dict)
+            {
+                serial.AddRange(network_utils.encode_string(kv.Key));
+                serial.AddRange(network_utils.encode_int(kv.Value));
+            }
+            return serial.ToArray();
+        }
+
+        protected override void process_serialization(byte[] buffer, int offset, int length)
+        {
+            // Deserialize a dictionary
+            var new_dict = new Dictionary<string, int>();
+            int end = offset + length;
+            while (offset < end)
+            {
+                string key = network_utils.decode_string(buffer, ref offset);
+                int value = network_utils.decode_int(buffer, ref offset);
+                new_dict[key] = value;
+            }
+
+            // Check if the dictionary has changed
+            if (!utils.compare_dictionaries(new_dict, dict))
+            {
+                dict = new_dict;
+                on_change?.Invoke();
+            }
+        }
+
+        public delegate void on_change_func();
+        public on_change_func on_change;
     }
 }

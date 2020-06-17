@@ -30,8 +30,11 @@ public class shop_slot : MonoBehaviour, IInspectable
         set
         {
             if (value < 0) value = 0;
+            if (_stock == value)
+                return; // No change
             _stock = value;
             count_text.text = utils.int_to_quantity_string(value);
+            on_change();
         }
     }
     int _stock = 0;
@@ -74,7 +77,6 @@ public class shop_slot : MonoBehaviour, IInspectable
 
         image.sprite = item.sprite;
         image.enabled = true;
-        stock = 1;
 
         buy_price = Mathf.CeilToInt(item.value * (1 + markup));
         sell_price = Mathf.FloorToInt(item.value * (1 - markup));
@@ -120,6 +122,20 @@ public class shop_slot : MonoBehaviour, IInspectable
                 popup_message.create(msg);
             }
         });
+    }
+
+    public delegate void on_change_func();
+    List<on_change_func> on_change_listeners = new List<on_change_func>();
+
+    public void add_on_change_listener(on_change_func f)
+    {
+        if (f == null) return;
+        on_change_listeners.Add(f);
+    }
+
+    void on_change()
+    {
+        foreach (var f in on_change_listeners) f();
     }
 
     private void OnValidate()

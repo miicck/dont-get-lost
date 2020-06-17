@@ -222,7 +222,7 @@ public class player : networked_player
     public inventory inventory { get => GetComponentInChildren<inventory>(); }
 
     /// <summary> The menu that appears to the left of the inventory. </summary>
-    ILeftPlayerMenu left_menu
+    public ILeftPlayerMenu left_menu
     {
         get => _left_menu;
         set

@@ -98,7 +98,7 @@ public class pathfinding_agent : networked
     }
 
     /// <summary> Run the pathfinding agent. </summary>
-    private void Update()
+    protected virtual void Update()
     {
         // Nothing to do
         if (path == null)

@@ -389,6 +389,27 @@ public static class utils
         return padded;
     }
 
+    /// <summary> Returns true if the dictionaries <paramref name="a"/> 
+    /// and <paramref name="b"/> contain the same key-value pairs. </summary>
+    public static bool compare_dictionaries<T, K>(Dictionary<T, K> a, Dictionary<T, K> b)
+    {
+        // Check all the keys in a are in b
+        foreach (var kv in a)
+        {
+            if (!b.TryGetValue(kv.Key, out K val)) return false;
+            if (!kv.Value.Equals(val)) return false;
+        }
+
+        // Check all the keys in b are in a
+        foreach (var kv in b)
+        {
+            if (!a.TryGetValue(kv.Key, out K val)) return false;
+            if (!kv.Value.Equals(val)) return false;
+        }
+
+        return true;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object

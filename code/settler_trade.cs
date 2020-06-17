@@ -5,8 +5,20 @@ using UnityEngine;
 public class settler_trade : MonoBehaviour
 {
     public item item;
+    public float stock_replenish_per_minute = 0;
+    public int stock_replenish_target = 10;
 
-    public shop_slot trade_slot
+    public void run_stock_updates()
+    {
+        if (slot.stock < stock_replenish_target)
+        {
+            float prob = Time.deltaTime * stock_replenish_per_minute / 60f;
+            if (Random.Range(0, 1f) < prob)
+                slot.stock += 1;
+        }
+    }
+
+    public shop_slot slot
     {
         get
         {
