@@ -17,6 +17,8 @@ public class character : networked
     public float height = 2f;
     public float agro_range = 5f;
     public float reach = 0.5f;
+    public float melee_cooldown = 1f;
+    public int melee_damage = 10;
     public FRIENDLINESS friendliness;
     public bool can_walk = true;
     public bool can_swim = false;
@@ -278,7 +280,8 @@ public class character : networked
             {
                 if (delta.magnitude > reach)
                     move_towards(chasing.position, run_speed);
-
+                else
+                    melee_attack(chasing);
                 return;
             }
 
@@ -288,6 +291,17 @@ public class character : networked
                 idle_walk();
         }
         else move_along_path(run_speed);
+    }
+
+    float last_attacked = 0;
+
+    void melee_attack(Transform attacking)
+    {
+        if (Time.realtimeSinceStartup - last_attacked > melee_cooldown)
+        {
+            last_attacked = Time.realtimeSinceStartup;
+            attacking.GetComponent<player>()?.take_damage(melee_damage);         
+        }
     }
 
     //#################//

@@ -40,12 +40,10 @@ public class player : networked_player
     // UNITY CALLBACKS //
     //#################//
 
-    public biome biome { get; private set; }
-    public biome.point point { get; private set; }
-
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
     {
+        // If the options menu isn't open don't do anything else
         if (options_menu.open) return;
 
         inspect_info.visible = Input.GetKey(KeyCode.Tab);
@@ -700,8 +698,8 @@ public class player : networked_player
                 out UnityEngine.Rendering.HighDefinition.DepthOfField dof))
                 throw new System.Exception("No DepthOfField override on global volume!");
 
-            dof.focusMode.value = value ? 
-                UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Manual : 
+            dof.focusMode.value = value ?
+                UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Manual :
                 UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Off;
 
             color.colorFilter.value = value ? water.color : Color.white;
@@ -968,28 +966,56 @@ public class player : networked_player
         return new Ray(ray.origin + interval[0] * ray.direction, ray.direction);
     }
 
-    //#################//
-    // PLAYER CREATION //
-    //#################//
+    //########//
+    // HEALTH //
+    //########//
 
-    Vector3 eye_centre { get => transform.position + Vector3.up * (HEIGHT - WIDTH / 2f) + transform.forward * 0.25f; }
+    public biome biome { get; private set; }
+    public biome.point point { get; private set; }
 
+    public int max_health { get => 100; }
+
+    void heal_one_point()
+    {
+        heal(1);
+    }
+
+    public void take_damage(int damage)
+    {
+        health.value = Mathf.Max(0, health.value - damage);
+    }
+
+    public void heal(int amount)
+    {
+        health.value = Mathf.Min(max_health, health.value + amount);
+    }
+
+    //############//
+    // NETWORKING //
+    //############//
+
+    networked_variables.net_int health;
+    networked_variables.net_int slot_equipped;
+    networked_variables.net_float y_rotation;
+    networked_variables.net_float x_rotation;
+    networked_variables.net_string username;
+
+    public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
     arm right_arm;
     arm left_arm;
     water_reflections water;
+    player_healthbar healthbar;
 
     public override void on_loose_authority()
     {
         throw new System.Exception("Authority should not be lost for players!");
     }
 
-    bool first_gain_auth = true;
     public override void on_gain_authority()
     {
-        if (!first_gain_auth)
+        if (camera != null)
             throw new System.Exception("Players should not gain authority more than once!");
-        first_gain_auth = false;
 
         // Setup the player camera
         camera = FindObjectOfType<Camera>();
@@ -1047,16 +1073,11 @@ public class player : networked_player
         // Start looking to add the player controller
         Invoke("add_controller", 0.1f);
 
+        // Start passive healing
+        InvokeRepeating("heal_one_point", 1f, 1f);
+
         // This is the local player
         current = this;
-    }
-
-    public player_body body { get; private set; }
-
-    public override void on_first_create()
-    {
-        // Create the inventory
-        client.create(transform.position, "misc/player_inventory", parent: this);
     }
 
     void add_controller()
@@ -1080,14 +1101,11 @@ public class player : networked_player
         controller.slopeLimit = 60f;
     }
 
-    //############//
-    // NETWORKING //
-    //############//
-
-    networked_variables.net_int slot_equipped;
-    networked_variables.net_float y_rotation;
-    networked_variables.net_float x_rotation;
-    public networked_variables.net_string username;
+    public override void on_first_create()
+    {
+        // Create the inventory
+        client.create(transform.position, "misc/player_inventory", parent: this);
+    }
 
     public override void on_init_network_variables()
     {
@@ -1100,7 +1118,8 @@ public class player : networked_player
         // Scale the player body so the eyes are at the correct height
         eye_transform = body.eye_centre;
         float eye_y = (eye_transform.transform.position - transform.position).y;
-        body.transform.localScale *= (eye_centre - transform.position).magnitude / eye_y;
+        //var eye_centre = transform.position + Vector3.up * (HEIGHT - WIDTH / 2f) + transform.forward * 0.25f;
+        body.transform.localScale *= (HEIGHT - WIDTH / 2f) / eye_y;
 
         // Get references to the arms
         right_arm = body.right_arm;
@@ -1114,6 +1133,16 @@ public class player : networked_player
         hand_centre.transform.position = init_pos.position;
         Destroy(init_pos.gameObject);
         init_hand_plane = hand_centre.localPosition.z;
+
+        // Find the healthbar
+        healthbar = FindObjectOfType<player_healthbar>();
+
+        // The players remaining health
+        health = new networked_variables.net_int();
+        health.on_change = () =>
+        {
+            healthbar.set(health.value, max_health);
+        };
 
         // The currently-equipped quickbar slot number
         slot_equipped = new networked_variables.net_int();

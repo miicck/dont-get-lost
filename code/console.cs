@@ -56,7 +56,16 @@ public class console : MonoBehaviour
             // Give the local player some items e.g [give 100 coin]
             case "give":
 
-                if (args.Length < 3) return console_error("Not enough arguments!");
+                if (args.Length < 2) return console_error("Not enough arguments!");
+
+                if (args.Length < 3)
+                {
+                    // If only two arguments given, assume count = 1
+                    if (Resources.Load<item>("items/" + args[1]) == null)
+                        return console_error("Could not identify item " + args[1]);
+                    player.current.inventory.add(args[1], 1);
+                    return true;
+                }
 
                 if (!int.TryParse(args[1], out int count))
                     return console_error("Could not parse quantity from " + args[1]);
@@ -65,6 +74,28 @@ public class console : MonoBehaviour
                     return console_error("Could not identify item " + args[2]);
 
                 player.current.inventory.add(args[2], count);
+                return true;
+
+            // Damage myself e.g [damage 10]
+            case "damage":
+
+                if (args.Length < 2) return console_error("Not enough arguments!");
+
+                if (!int.TryParse(args[1], out int damage))
+                    return console_error("Could not parse damage from " + args[1]);
+
+                player.current.take_damage(damage);
+                return true;
+
+            // Heal myself e.g [heal 10]
+            case "heal":
+
+                if (args.Length < 2) return console_error("Not enough arguments!");
+
+                if (!int.TryParse(args[1], out int heal))
+                    return console_error("Could not parse heal amount from " + args[1]);
+
+                player.current.heal(heal);
                 return true;
 
             default:
