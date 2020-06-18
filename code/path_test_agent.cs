@@ -32,10 +32,7 @@ public class path_test_agent : MonoBehaviour
 
     bool valid_move(Vector3 a, Vector3 b)
     {
-        return pathfinding_utils.capsulecast_move_validate_with_grounding(a, b, agent_width, agent_height, ground_clearance);
-        return pathfinding_utils.capsulecast_move_validate(a, b, agent_width, agent_height, ground_clearance);
-        return pathfinding_utils.linecast_move_validate(a, b, ground_clearance);
-        return pathfinding_utils.boxcast_move_validate(a, b, resoultion, ground_clearance);
+        return pathfinding_utils.validate_move(a, b, agent_width, agent_height, ground_clearance);
     }
 
     private void Start()
@@ -75,7 +72,7 @@ public class path_test_agent : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         _path?.draw_gizmos();
     }

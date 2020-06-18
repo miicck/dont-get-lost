@@ -530,25 +530,30 @@ public static class pathfinding_utils
         return hit.point;
     }
 
-    public static bool boxcast_move_validate(Vector3 a, Vector3 b, float resolution, float ground_clearance)
-    {
-        Vector3 size = Vector3.one * resolution;
-        Vector3 local_centre = (size.y + ground_clearance / 2f) * Vector3.up / 2f;
-        size.y -= ground_clearance;
-        Vector3 start = a + local_centre;
-        Vector3 end = b + local_centre;
-        Vector3 move = end - start;
-
-        return !Physics.BoxCast(start, size / 2f, move.normalized,
-            out RaycastHit hit, Quaternion.identity, move.magnitude);
-    }
-
     public static bool linecast_move_validate(Vector3 a, Vector3 b, float ground_clearance)
     {
         Vector3 start = a + ground_clearance * Vector3.up;
         Vector3 end = b + ground_clearance * Vector3.up;
         Vector3 delta = end - start;
         return !Physics.Raycast(start, delta.normalized, delta.magnitude);
+    }
+
+    public static bool boxcast_move_validate(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance)
+    {
+        Vector3 size = new Vector3(width, height, width);
+        Vector3 local_centre = (size.y / 2f + ground_clearance / 2f) * Vector3.up;
+        size.y -= ground_clearance;
+        Vector3 start = a + local_centre;
+        Vector3 end = b + local_centre;
+        Vector3 move = end - start;
+
+        Vector3 forward = move;
+        forward.y = 0;
+        Quaternion rotation = Quaternion.LookRotation(forward, Vector3.up);
+
+        return !Physics.BoxCast(start, size / 2f, move.normalized,
+            out RaycastHit hit, rotation, move.magnitude);
     }
 
     public static bool capsulecast_move_validate(Vector3 a, Vector3 b,
@@ -567,11 +572,9 @@ public static class pathfinding_utils
         return !Physics.CapsuleCast(start_p1, start_p2, radius, move, move.magnitude);
     }
 
-    public static bool capsulecast_move_validate_with_grounding(Vector3 a, Vector3 b,
-    float width, float height, float ground_clearance)
+    public static bool validate_move_grounding(Vector3 a, Vector3 b,
+        float width, float ground_clearance)
     {
-        if (!capsulecast_move_validate(a, b, width, height, ground_clearance)) return false;
-
         Vector3 delta = b - a;
         for (float p = 0; p <= delta.magnitude; p += width)
         {
@@ -584,6 +587,41 @@ public static class pathfinding_utils
         }
 
         return true;
+    }
+
+    public static bool validate_move_overlap(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance)
+    {
+        Vector3 delta = b - a;
+        Vector3 centre = a + delta / 2f + Vector3.up * (height/2 + ground_clearance/2);
+        Vector3 size = new Vector3(width, height - ground_clearance, delta.magnitude);
+
+        Vector3 forward = delta.normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 up = Vector3.Cross(right, forward);
+        Quaternion orientation = Quaternion.LookRotation(forward, up);
+
+        return Physics.OverlapBox(centre, size / 2f, orientation).Length == 0;
+    }
+
+    public static bool validate_move(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance)
+    {
+        /*
+        if (width < height - ground_clearance)
+        {
+            return capsulecast_move_validate(a, b, width, height, ground_clearance) &&
+                   validate_move_grounding(a, b, width, ground_clearance);
+        }
+        */
+
+        //return validate_move_overlap(a, b, width, height, ground_clearance);
+
+        return linecast_move_validate(a, b, ground_clearance) &&
+               boxcast_move_validate(a, b, 0.1f, height, ground_clearance) &&
+               boxcast_move_validate(a, b, width, 0.1f, ground_clearance) &&
+               boxcast_move_validate(a, b, width, height, ground_clearance) &&
+               validate_move_grounding(a, b, width, ground_clearance);
     }
 }
 
