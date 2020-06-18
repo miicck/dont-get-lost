@@ -452,6 +452,17 @@ public class Dictionary<K1, K2, V>
     Dictionary<K1, Dictionary<K2, V>> dict =
         new Dictionary<K1, Dictionary<K2, V>>();
 
+    public int count
+    {
+        get
+        {
+            int c = 0;
+            foreach (var kv in dict)
+                c += kv.Value.Count;
+            return c;
+        }
+    }
+
     /// <summary> Set the value <paramref name="v"/> associated with
     /// the keys <paramref name="k1"/> and <paramref name="k2"/>. </summary>
     public void set(K1 k1, K2 k2, V v)
@@ -516,6 +527,17 @@ public class Dictionary<K1, K2, K3, V>
     // The underlying datastructure is a two-key dictionary
     Dictionary<K1, Dictionary<K2, K3, V>> dict =
         new Dictionary<K1, Dictionary<K2, K3, V>>();
+
+    public int count
+    {
+        get
+        {
+            int count = 0;
+            foreach (var kv in dict)
+                count += kv.Value.count;
+            return count;
+        }
+    }
 
     /// <summary> Set the value <paramref name="v"/> 
     /// associated with the keys <paramref name="k1"/>, 
