@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class pathfinding_agent : networked
+public class pathfinding_agent : networked, IPathingAgent
 {
     public float agent_height = 1.5f;
     public float agent_resolution = 0.5f;
@@ -92,8 +92,7 @@ public class pathfinding_agent : networked
         this.on_move = on_move;
         this.on_search = on_search;
 
-        path = new path(transform.position, target, transform,
-            agent_height, agent_resolution, constraint: path_constriant);
+        path = new astar_path(transform.position, target, this);
         path_progress = 0;
     }
 
@@ -137,6 +136,25 @@ public class pathfinding_agent : networked
     {
         if (path != null) path.draw_gizmos();
     }
+
+    //###############//
+    // IPathingAgent //
+    //###############//
+
+    public Vector3 validate_position(Vector3 v, out bool valid)
+    {
+        Vector3 pos = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        if (!path_constriant(pos)) valid = false;
+        return pos;
+    }
+
+    public bool validate_move(Vector3 a, Vector3 b)
+    {
+        return pathfinding_utils.validate_walking_move(a, b,
+            resolution, agent_height, resolution / 2f);
+    }
+
+    public float resolution { get => agent_resolution; }
 
     //############//
     // NETWORKING //

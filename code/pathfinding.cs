@@ -4,1250 +4,135 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-public class path
+/// <summary> An object that specifies settings for pathfinding. </summary>
+public interface IPathingAgent
 {
-    // Variables specifying how to
-    // carry out the pathfinding
-    Vector3 start;
-    Vector3 goal;
-    float agent_height;
-    float resolution;
-    float max_incline;
-    float ground_clearance;
-    constraint_func constraint;
-    int max_iterations;
-    Transform ignore_collisions_with;
+    /// <summary> Should return the nearest valid path position
+    /// to <paramref name="pos"/> that is within a distance of
+    /// <see cref="resolution"/>. If no such point could be found, 
+    /// <paramref name="valid"/> should be set to false. </summary>
+    Vector3 validate_position(Vector3 pos, out bool valid);
 
-    // Pathfinding state variables
-    int iteration_count = 0;
-    waypoint start_waypoint;
-    waypoint goal_waypoint;
-    waypoint current;
-    List<waypoint> path_found;
-    Dictionary<int, int, int, waypoint> open_set = new Dictionary<int, int, int, waypoint>();
-    Dictionary<int, int, int, waypoint> closed_set = new Dictionary<int, int, int, waypoint>();
+    /// <summary> Should returns true if it is possible to move 
+    /// between the vectors a and b (which will be nearer than
+    /// <see cref="resolution"/> from each other). </summary>
+    bool validate_move(Vector3 a, Vector3 b);
 
-    /// <summary> Get the i^th vector in the path. </summary>
-    public Vector3 this[int i]
-    {
-        get
-        {
-            if (i == 0) return start;
-            if (i - 1 < path_found.Count)
-                return path_found[i - 1].grounding;
-
-            if (path_found.Count > 0)
-            {
-                var last = path_found[path_found.Count - 1].grounding;
-                Vector3 delta = goal - last;
-                if (delta.magnitude < resolution) return goal;
-                return last;
-            }
-            else
-            {
-                Vector3 delta = goal - start;
-                if (delta.magnitude < resolution) return goal;
-                return start;
-            }
-        }
-    }
-
-    /// <summary> Return the number of vectors in the path.
-    /// This is the waypoints + the start and the end. </summary>
-    public int length
-    {
-        get
-        {
-            if (path_found == null) return 0;
-            return path_found.Count + 2;
-        }
-    }
-
-    /// <summary> Describes a stage of pathfinding. </summary>
-    public enum STATE
-    {
-        FAILED,
-        SEARCHING,
-        COMPLETE
-    }
-
-    /// <summary> The stage of pathfinding we're at. </summary>
-    public STATE state
-    {
-        get => _state;
-        private set
-        {
-            _state = value;
-            if (value == STATE.FAILED && failure_reason == FAILURE_REASON.NONE)
-                throw new System.Exception("Failed without a reason!");
-
-            if (value != STATE.SEARCHING)
-            {
-#               if PATH_DEBUG
-                // Don't free memory immediately in debug mode
-#               else
-                // Free memory used by pathfinding stuff
-                open_set = null;
-                closed_set = null;
-                current = null;
-                start_waypoint = null;
-                goal_waypoint = null;
-#               endif
-            }
-        }
-    }
-    STATE _state;
-
-    public enum FAILURE_REASON
-    {
-        NONE,
-        NO_PATH,
-        MAX_ITER_HIT,
-        INVALID_START,
-        INVALID_END,
-    }
-    public FAILURE_REASON failure_reason { get; private set; }
-
-    /// <summary> An intermediate point along the path. </summary>
-    class waypoint
-    {
-        public int x;
-        public int y;
-        public int z;
-        public bool open;
-        public Vector3 grounding;
-        public float fscore = float.PositiveInfinity;
-        public float gscore = float.PositiveInfinity;
-        public waypoint came_from;
-    }
-
-    /// <summary> Find a grounding point within the 
-    /// waypoint box with coordinates x, y, z. </summary>
-    bool find_grounding(int x, int y, int z, out RaycastHit grounding)
-    {
-        Vector3 top = new Vector3(x, y + 0.5f, z) * resolution + start;
-
-        // Raycast from each of these points on the top of the box
-        // downward to the bottom of the box to find a grounding point
-        Vector3[] cast_starts = new Vector3[]
-        {
-            top,
-            top + new Vector3(0.5f, 0, 0.5f) * resolution,
-            top + new Vector3(-0.5f, 0, 0.5f) * resolution,
-            top + new Vector3(0.5f, 0, -0.5f) * resolution,
-            top + new Vector3(-0.5f, 0, -0.5f) * resolution
-        };
-
-        foreach (var v in cast_starts)
-            foreach (var hit in Physics.RaycastAll(v, Vector3.down, resolution))
-                if (!hit.transform.IsChildOf(ignore_collisions_with))
-                {
-                    grounding = hit;
-                    return true;
-                }
-
-        grounding = default;
-        return false;
-    }
-
-    /// <summary> Returns true if we can move between the given
-    /// waypoints without hitting any geometry. </summary>
-    bool can_move_between(waypoint a, waypoint b)
-    {
-        // Apply the ground clearance
-        Vector3 ag = a.grounding + Vector3.up * ground_clearance;
-        Vector3 bg = b.grounding + Vector3.up * ground_clearance;
-        Vector3 delta = bg - ag;
-
-        Vector3 box_size = new Vector3(
-            0.1f,
-            agent_height - ground_clearance,
-            0.1f);
-
-        Vector3 start = ag + (ground_clearance + agent_height * 0.5f) * Vector3.up;
-
-        foreach (var hit in Physics.BoxCastAll(
-            start,                // Start of box cast
-            box_size * 0.5f,      // Half-extent of box to cast
-            delta.normalized,     // Direction to cast
-            Quaternion.identity,  // Rotation of box to cast
-            delta.magnitude       // Distance to cast
-            ))
-        {
-            if (!hit.transform.IsChildOf(ignore_collisions_with))
-                return false;
-        }
-
-        return true;
-    }
-
-    /// <summary> Load a waypoint from the open/closed set. If not 
-    /// found, attempt to create a new waypoint. The new waypoint
-    /// will be added to the open set if it is pathable or the closed 
-    /// set if it is not pathable. </summary>
-    waypoint load(int x, int y, int z, waypoint parent = null)
-    {
-        // Attempt to load from the open set
-        var found = open_set.get(x, y, z);
-        if (found != null)
-        {
-            found.open = true;
-            return found;
-        }
-
-        // Attempt to load from the closed set
-        found = closed_set.get(x, y, z);
-        if (found != null)
-        {
-            found.open = false;
-            return found;
-        }
-
-        // Create a new waypoint
-        var wp = new waypoint
-        {
-            x = x,
-            y = y,
-            z = z
-        };
-
-        // This is the centre of the waypoint box
-        Vector3 centre = start + new Vector3(x, y, z) * resolution;
-
-        // Attempt to find grounding within the waypoint box
-        if (!find_grounding(x, y, z, out RaycastHit hit))
-        {
-            // Waypoint doesn't have grounding, add to closed set
-            wp.open = false;
-            closed_set.set(x, y, z, wp);
-            return wp;
-        }
-
-        // Record the grounding point
-        wp.grounding = hit.point;
-
-        // Check the grounding point satisfies the constraint
-        if (!constraint(wp.grounding))
-        {
-            wp.open = false;
-            closed_set.set(x, y, z, wp);
-            return wp;
-        }
-
-        float angle = Vector3.Angle(Vector3.up, hit.normal);
-        if (angle > max_incline)
-        {
-            // Ground is too steep here, add to the closed set
-            wp.open = false;
-            closed_set.set(x, y, z, wp);
-            return wp;
-        }
-
-        // Check that we can access this waypoint from the parent
-        if (parent != null && !can_move_between(parent, wp))
-        {
-            // Reject ths waypoint, but don't add it to the 
-            // closed set as we might be able to access it
-            // from another direction.
-            return null;
-        }
-
-        // This waypoint is fine, add to the open set
-        wp.open = true;
-        open_set.set(x, y, z, wp);
-        return wp;
-    }
-
-    /// <summary> Overlaod of <see cref="load(int, int, int)"/> 
-    /// for a position, rather than coordinates. Searches
-    /// outward from the grid point closest to v until a 
-    /// valid grid point is found. </summary>
-    waypoint load(Vector3 v)
-    {
-        Vector3 d = v - start;
-        int x0 = Mathf.RoundToInt(d.x / resolution);
-        int y0 = Mathf.RoundToInt(d.y / resolution);
-        int z0 = Mathf.RoundToInt(d.z / resolution);
-
-        Vector3 distance = goal - start;
-        int max = (int)(distance.magnitude / resolution);
-        if (max < 2) max = 2;
-
-        // Find the nearest valid waypoint
-        waypoint found = null;
-        utils.search_outward(x0, y0, z0, max, (x, y, z) =>
-        {
-            found = load(x, y, z);
-            return found.open;
-        });
-
-        return found;
-    }
-
-    /// <summary> Heuristic used to guide pathfinding. </summary>
-    float heuristic(waypoint a, waypoint b)
-    {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
-    }
-
-    public delegate bool constraint_func(Vector3 v);
-
-    public path(
-        Vector3 start,
-        Vector3 goal,
-        Transform ignore_collisions_with,
-        float agent_height,
-        float resolution,
-        float max_incline = 60f,
-        float ground_clearance = -1,
-        constraint_func constraint = null,
-        int max_iterations = 1000)
-    {
-        // Default: work out ground clearance as
-        // fraction of agent height
-        if (ground_clearance < 0)
-            ground_clearance = agent_height / 4f;
-
-        // null constraint => no constraint
-        if (constraint == null)
-            constraint = (v) => true;
-
-        this.start = start;
-        this.goal = goal;
-        this.agent_height = agent_height;
-        this.resolution = resolution;
-        this.max_incline = max_incline;
-        this.ground_clearance = ground_clearance;
-        this.constraint = constraint;
-        this.max_iterations = max_iterations;
-        this.ignore_collisions_with = ignore_collisions_with;
-
-        start_waypoint = load(start);
-        if (!start_waypoint.open)
-        {
-            // Start point was invalid
-            failure_reason = FAILURE_REASON.INVALID_START;
-            state = STATE.FAILED;
-            return;
-        }
-
-        goal_waypoint = load(goal);
-        if (!goal_waypoint.open)
-        {
-            // Goal point was invalid
-            failure_reason = FAILURE_REASON.INVALID_END;
-            state = STATE.FAILED;
-            return;
-        }
-
-        start_waypoint.gscore = 0;
-        start_waypoint.fscore = heuristic(start_waypoint, goal_waypoint);
-        state = STATE.SEARCHING;
-    }
-
-    /// <summary> Run <paramref name="iterations"/> pathfinding 
-    /// iterations. </summary>
-    public void pathfind(int iterations)
-    {
-        if (state != STATE.SEARCHING)
-            return; // Not searching
-
-        for (int i = 0; i < iterations; ++i)
-        {
-            if (++iteration_count >= max_iterations)
-            {
-                // Max iterations hit
-                failure_reason = FAILURE_REASON.MAX_ITER_HIT;
-                state = STATE.FAILED;
-                return;
-            }
-
-            // Find the waypoint in the open set with the lowest f-score
-            float min_fscore = float.PositiveInfinity;
-            current = null;
-            open_set.iterate((x, y, z, w) =>
-            {
-                if (w.fscore < min_fscore || current == null)
-                {
-                    current = w;
-                    min_fscore = w.fscore;
-                }
-            });
-
-            // Check for success
-            if (current == goal_waypoint)
-            {
-                if (current.came_from == null)
-                {
-                    // We haven't actually found a way to
-                    // the target, it was simply the only
-                    // remaining waypoint in the open set.
-                    failure_reason = FAILURE_REASON.NO_PATH;
-                    state = STATE.FAILED;
-                    return;
-                }
-
-                // Reconstruct the path (backwards)
-                path_found = new List<waypoint>();
-                while (current.came_from != null)
-                {
-                    path_found.Add(current.came_from);
-                    current = current.came_from;
-                }
-                path_found.Reverse();
-                state = STATE.COMPLETE;
-                return;
-            }
-
-            if (current == null)
-            {
-                // Open set was empty => pathfinding failed
-                failure_reason = FAILURE_REASON.NO_PATH;
-                state = STATE.FAILED;
-                return;
-            }
-
-            if (current.fscore > float.MaxValue)
-                throw new System.Exception("Infinite score encountered!");
-
-            // Remove current from the open set, add to the closed set
-            open_set.clear(current.x, current.y, current.z);
-            closed_set.set(current.x, current.y, current.z, current);
-
-            // Loop over neighbours of current
-            for (int n = 0; n < utils.neighbouring_dxs_3d.Length; ++n)
-            {
-                int dx = utils.neighbouring_dxs_3d[n];
-                int dy = utils.neighbouring_dys_3d[n];
-                int dz = utils.neighbouring_dzs_3d[n];
-
-                var neighbour = load(current.x + dx, current.y + dy, current.z + dz, parent: current);
-                if (neighbour == null) continue; // This neihbour was inaccessable
-                float tgs = current.gscore + 1;
-
-                if (tgs < neighbour.gscore)
-                {
-                    // This is a shorter path to neighbour, record it
-                    neighbour.gscore = tgs;
-                    neighbour.fscore = tgs + heuristic(neighbour, goal_waypoint);
-                    neighbour.came_from = current;
-                }
-            }
-        }
-    }
-
-    /// <summary> Returns information about the 
-    /// setup of this path instance. </summary>
-    public string info()
-    {
-        string fail_string = "";
-        if (failure_reason != FAILURE_REASON.NONE)
-            fail_string = "Failure mode " + failure_reason + "\n";
-
-        return
-        "Status " + state + "\n" + fail_string +
-        "Start " + start + "\n" +
-        "Goal " + goal + "\n" +
-        "Agent height " + agent_height + "\n" +
-        "Resoulution " + resolution + "\n" +
-        "Max incline " + max_incline + "\n" +
-        "Ground clearance " + ground_clearance;
-    }
-
-    public void draw_gizmos()
-    {
-        // Draw the start and end points
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(start, 0.2f);
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(goal, 0.2f);
-
-        // This function will be called on all waypoints
-        Dictionary<int, int, int, waypoint>.iter_func draw = (x, y, z, w) =>
-        {
-            if (w.fscore > float.MaxValue)
-            {
-                // This is an infinite score waypoint
-                // highlight it with a cube (this should
-                // only be allowed to happen at the goal
-                // point).
-                Gizmos.DrawWireCube(
-                    new Vector3(x, y, z) * resolution + start,
-                    Vector3.one * resolution);
-                return;
-            }
-
-            // If this waypoint didn't come from anywhere,
-            // don't draw the line leading to it
-            waypoint came_from = w.came_from;
-            if (came_from == null)
-                return;
-
-            // If this waypoint does't have a grounding point,
-            // don't draw the line leading to it
-            if (w.grounding == default || came_from.grounding == default)
-                return;
-
-            // Draw line from parent to this waypoint
-            Gizmos.DrawLine(w.grounding, came_from.grounding);
-        };
-
-        // Closed waypoints are dark blue
-        Gizmos.color = Color.blue;
-        closed_set?.iterate(draw);
-
-        // Open waypoints are cyan
-        Gizmos.color = Color.cyan;
-        open_set?.iterate(draw);
-
-        // The current waypoint is highlighted red
-        if (current != null)
-        {
-            Gizmos.color = Color.red;
-            draw(current.x, current.y, current.z, current);
-        }
-
-        // Draw the path 
-        Gizmos.color = Color.green;
-        for (int i = 1; i < length; ++i)
-            Gizmos.DrawLine(this[i - 1], this[i]);
-    }
+    /// <summary> The scale of the smallest geomtry that we 
+    /// wish to be able to naviage. </summary>
+    float resolution { get; }
 }
 
-public static class pathfinding_utils
+/// <summary> Base type for all paths. </summary>
+public abstract class path
 {
-    static Vector3 boxcast_position_validate(Vector3 centre, float resolution, out bool valid)
-    {
-        Vector3 size = Vector3.one * resolution;
-        Vector3 start_pos = centre + Vector3.up * resolution;
-        Vector3 end_pos = centre;
+    /// <summary> The start of the path. </summary>
+    public Vector3 start { get; private set; }
 
-        Vector3 move = end_pos - start_pos;
-        valid = Physics.BoxCast(start_pos, size / 2f, move.normalized,
-            out RaycastHit hit, Quaternion.identity, move.magnitude);
+    /// <summary> The target endpoint of the path. </summary>
+    public Vector3 goal { get; private set; }
 
-        if (!valid) return centre;
-        return hit.point + Vector3.up / 100f;
-    }
+    /// <summary> The agent that will move along the path. </summary>
+    public IPathingAgent agent { get; private set; }
 
-    static bool linecast_move_validate(Vector3 a, Vector3 b, float ground_clearance)
-    {
-        Vector3 start = a + ground_clearance * Vector3.up;
-        Vector3 end = b + ground_clearance * Vector3.up;
-        Vector3 delta = end - start;
-        return !Physics.Raycast(start, delta.normalized, delta.magnitude);
-    }
-
-    static bool boxcast_move_validate(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
-    {
-        Vector3 size = new Vector3(width, height, width);
-        Vector3 local_centre = (size.y / 2f + ground_clearance / 2f) * Vector3.up;
-        size.y -= ground_clearance;
-        Vector3 start = a + local_centre;
-        Vector3 end = b + local_centre;
-        Vector3 move = end - start;
-
-        Vector3 forward = move;
-        forward.y = 0;
-        Quaternion rotation = Quaternion.LookRotation(forward, Vector3.up);
-
-        return !Physics.BoxCast(start, size / 2f, move.normalized,
-            out RaycastHit hit, rotation, move.magnitude);
-    }
-
-    static bool capsulecast_move_validate(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
-    {
-        float eff_height = height - ground_clearance;
-        if (width > eff_height)
-            throw new System.Exception("Width > height in capsule!");
-
-        float radius = width / 2f;
-
-        Vector3 start_p1 = a + (radius + ground_clearance) * Vector3.up;
-        Vector3 start_p2 = a + (eff_height - radius) * Vector3.up;
-        Vector3 move = b - a;
-
-        return !Physics.CapsuleCast(start_p1, start_p2, radius, move, move.magnitude);
-    }
-
-    static bool validate_move_grounding(Vector3 a, Vector3 b,
-        float width, float ground_clearance)
-    {
-        Vector3 delta = b - a;
-        for (float p = 0; p <= delta.magnitude; p += width)
-        {
-            Vector3 middle = a + delta.normalized * p;
-            Vector3 start = middle + Vector3.up * ground_clearance;
-            Vector3 end = middle - Vector3.up * ground_clearance;
-            Vector3 delta_ray = end - start;
-            if (!Physics.Raycast(start, delta_ray.normalized, delta_ray.magnitude))
-                return false;
-        }
-
-        return true;
-    }
-
-    static bool validate_move_overlap(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
-    {
-        Vector3 delta = b - a;
-        Vector3 centre = a + delta / 2f + Vector3.up * (height / 2 + ground_clearance / 2);
-        Vector3 size = new Vector3(width, height - ground_clearance, delta.magnitude);
-
-        Vector3 forward = delta.normalized;
-        Vector3 right = Vector3.Cross(Vector3.up, forward);
-        Vector3 up = Vector3.Cross(right, forward);
-        Quaternion orientation = Quaternion.LookRotation(forward, up);
-
-        return Physics.OverlapBox(centre, size / 2f, orientation).Length == 0;
-    }
-
-    public static bool validate_move_dictpath(Vector3 a, Vector3 b,
-         float width, float height, float ground_clearance, out Vector3[] subpath, int max_depth, int depth = 0)
-    {
-        // Try normal move validation
-        if (validate_move(a, b, width, height, ground_clearance, out subpath))
-            return true;
-
-        depth += 1;
-        if (depth > max_depth)
-        {
-            subpath = null;
-            return false;
-        }
-
-        Vector3 delta = b - a;
-        float sub_res = delta.magnitude / 4f;
-
-        generic_path.position_validator pos_val =
-            (Vector3 v, out bool valid) => validate_position(v, sub_res, out valid);
-
-        generic_path.move_validator move_val = (Vector3 from, Vector3 to, out Vector3[] sub_subpath)
-            => validate_move_dictpath(from, to, width, height, ground_clearance,
-                                      out sub_subpath, max_depth, depth: depth + 1);
-
-        var dp = new dict_path(a, b, sub_res, 10, pos_val, move_val);
-        dp.pathfind(int.MaxValue);
-
-        switch (dp.state)
-        {
-            case generic_path.STATE.COMPLETE:
-                subpath = new Vector3[dp.length];
-                for (int i = 0; i < dp.length; ++i)
-                    subpath[i] = dp[i];
-                return true;
-
-            case generic_path.STATE.FAILED:
-                subpath = null;
-                return false;
-
-            case generic_path.STATE.SEARCHING:
-                throw new System.Exception("This should not be possible!");
-
-            default:
-                throw new System.Exception("Unkown path state!");
-        }
-    }
-
-    public static bool validate_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance, out Vector3[] subpath)
-    {
-        subpath = null;
-        return validate_move_overlap(a, b, width, height, ground_clearance) &&
-               validate_move_grounding(a, b, width, ground_clearance);
-    }
-
-    public static Vector3 validate_position(Vector3 v, float resolution, out bool valid)
-    {
-        return boxcast_position_validate(v, resolution, out valid);
-    }
-}
-
-public abstract class generic_path
-{
+    /// <summary> Carry out <paramref name="iterations"/> pathfinding iterations. </summary>
     public abstract void pathfind(int iterations);
 
+    /// <summary> Return the <paramref name="i"/> th point along the path. </summary>
     public abstract Vector3 this[int i] { get; }
+
+    /// <summary> Return the length of the path (or 0 if still searching or failed). </summary>
     public abstract int length { get; }
 
+    /// <summary> Draw information about the path. </summary>
+    public virtual void draw_gizmos() { }
+
+    /// <summary> Return information about the path. </summary>
+    public virtual string info_text()
+    {
+        return "A path of type " + GetType().Name + "\n" +
+               "State = " + state;
+    }
+
+    /// <summary> Possible path states. </summary>
     public enum STATE
     {
         SEARCHING,
         FAILED,
         COMPLETE
     }
+
+    /// <summary> The current state of the path. </summary>
     public STATE state { get; protected set; }
 
-    public virtual void draw_gizmos() { }
-    public virtual string info_text() { return "Path of type " + GetType().Name; }
-
-    /// <summary> A position validator returns the nearest valid grounding position
-    /// to v. If valid = false, no such position was found. </summary>
-    public delegate Vector3 position_validator(Vector3 v, out bool valid);
-    protected position_validator validate_position;
-
-    /// <summary> A move validator returns true if it is possible to move between the
-    /// (nearby) vectors a and b. If subpath = null, then the route is simply
-    /// a -> b, otherwise it is a -> subpath[0] -> subpath[1] ... etc ... -> b. </summary>
-    public delegate bool move_validator(Vector3 a, Vector3 b, out Vector3[] subpath);
-    protected move_validator validate_move;
-
-    protected Vector3 start;
-    protected Vector3 goal;
-
-    public generic_path(Vector3 start, Vector3 goal,
-        position_validator validate_position, move_validator validate_move)
+    public path(Vector3 start, Vector3 goal, IPathingAgent agent)
     {
-        this.validate_position = validate_position;
-        this.validate_move = validate_move;
         this.start = start;
         this.goal = goal;
-    }
-}
-
-public class dict_path : generic_path
-{
-    // Variables specifying how to
-    // carry out the pathfinding
-    float resolution;
-    int max_iterations;
-
-    // Pathfinding state variables
-    int iteration_count = 0;
-    waypoint start_waypoint;
-    waypoint goal_waypoint;
-    waypoint current;
-    List<Vector3> path_found;
-    Dictionary<int, int, int, waypoint> open_set = new Dictionary<int, int, int, waypoint>();
-    Dictionary<int, int, int, waypoint> closed_set = new Dictionary<int, int, int, waypoint>();
-    Dictionary<int, int, int, waypoint> invalid_set = new Dictionary<int, int, int, waypoint>();
-
-    /// <summary> Get the i^th vector in the path. </summary>
-    public override Vector3 this[int i]
-    {
-        get
-        {
-            if (i == 0) return start;
-            if (i - 1 < path_found.Count)
-                return path_found[i - 1];
-
-            if (path_found.Count > 0)
-            {
-                var last = path_found[path_found.Count - 1];
-                Vector3 delta = goal - last;
-                if (delta.magnitude < resolution) return goal;
-                return last;
-            }
-            else
-            {
-                Vector3 delta = goal - start;
-                if (delta.magnitude < resolution) return goal;
-                return start;
-            }
-        }
-    }
-
-    /// <summary> Return the number of vectors in the path.
-    /// This is the waypoints + the start and the end. </summary>
-    public override int length
-    {
-        get
-        {
-            if (path_found == null) return 0;
-            return path_found.Count + 2;
-        }
-    }
-
-    /// <summary> The possible modes of failure of pathfinding. </summary>
-    public enum FAILURE_REASON
-    {
-        NONE,
-        NO_PATH,
-        MAX_ITER_HIT,
-        INVALID_START,
-        INVALID_END,
-    }
-    public FAILURE_REASON failure_reason { get; private set; }
-
-    /// <summary> An intermediate point along the path. </summary>
-    class waypoint
-    {
-        public enum TYPE
-        {
-            OPEN,
-            CLOSED,
-            INVALID
-        }
-
-        public int x;
-        public int y;
-        public int z;
-        public TYPE type;
-        public Vector3 grounding;
-        public Vector3[] subpath;
-        public float fscore => heuristic + gscore;
-        public float heuristic = float.PositiveInfinity;
-        public float gscore = float.PositiveInfinity;
-        public waypoint came_from;
-    }
-
-    /// <summary> Load a waypoint from the open/closed set. If not 
-    /// found, attempt to create a new waypoint. The new waypoint
-    /// will be added to the open set if it is pathable or the invalid 
-    /// set if it is not pathable. If invalid or not accesible from
-    /// the given parent, will return null. </summary>
-    waypoint load(int x, int y, int z, out Vector3[] subpath, waypoint parent = null)
-    {
-        subpath = null;
-
-        // Attempt to load from the open set
-        var found = open_set.get(x, y, z);
-        if (found != null)
-        {
-            found.type = waypoint.TYPE.OPEN;
-            return found;
-        }
-
-        // Attempt to load from the closed set
-        found = closed_set.get(x, y, z);
-        if (found != null)
-        {
-            found.type = waypoint.TYPE.CLOSED;
-            return found;
-        }
-
-        found = invalid_set.get(x, y, z);
-        if (found != null)
-            return null;
-
-        // Create a new waypoint
-        var wp = new waypoint
-        {
-            x = x,
-            y = y,
-            z = z
-        };
-
-        // This is the centre of the waypoint box
-        wp.grounding = start + new Vector3(x, y, z) * resolution;
-
-        // Attempt to find grounding within the waypoint box
-        wp.grounding = validate_position(wp.grounding, out bool valid);
-        if (!valid)
-        {
-            // Waypoint position invalid, add to the invalid set
-            wp.type = waypoint.TYPE.INVALID;
-            invalid_set.set(x, y, z, wp);
-            return wp;
-        }
-
-        // Check that we can access this waypoint from the parent
-        if (parent != null && !validate_move(parent.grounding, wp.grounding, out subpath))
-        {
-            // Reject ths waypoint, but don't add it to the 
-            // closed set as we might be able to access it
-            // from another direction.
-            return null;
-        }
-
-        // This waypoint is fine, add to the open set
-        wp.type = waypoint.TYPE.OPEN;
-        open_set.set(x, y, z, wp);
-        return wp;
-    }
-
-    /// <summary> Overlaod of <see cref="load(int, int, int)"/> 
-    /// for a position, rather than coordinates. Searches
-    /// outward from the grid point closest to v until a 
-    /// valid grid point is found. </summary>
-    waypoint load(Vector3 v)
-    {
-        Vector3 d = v - start;
-        int x0 = Mathf.RoundToInt(d.x / resolution);
-        int y0 = Mathf.RoundToInt(d.y / resolution);
-        int z0 = Mathf.RoundToInt(d.z / resolution);
-
-        Vector3 distance = goal - start;
-        int max = (int)(distance.magnitude / resolution);
-        if (max < 2) max = 2;
-
-        // Find the nearest open waypoint
-        waypoint found = null;
-        utils.search_outward(x0, y0, z0, max, (x, y, z) =>
-        {
-            found = load(x, y, z, out Vector3[] subpath);
-            if (found == null) return false;
-            return found.type == waypoint.TYPE.OPEN;
-        });
-
-        return found;
-    }
-
-    /// <summary> Heuristic used to guide pathfinding. </summary>
-    float heuristic(waypoint a, waypoint b)
-    {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
-    }
-
-    public dict_path(Vector3 start, Vector3 goal, float resolution, int max_iterations,
-        position_validator validate_position, move_validator validate_move) :
-        base(start, goal, validate_position, validate_move)
-    {
-        this.resolution = resolution;
-        this.max_iterations = max_iterations;
-
-        start_waypoint = load(start);
-        if (start_waypoint?.type != waypoint.TYPE.OPEN)
-        {
-            // Start point was invalid
-            failure_reason = FAILURE_REASON.INVALID_START;
-            state = STATE.FAILED;
-            return;
-        }
-
-        goal_waypoint = load(goal);
-        if (goal_waypoint?.type != waypoint.TYPE.OPEN)
-        {
-            // Goal point was invalid
-            failure_reason = FAILURE_REASON.INVALID_END;
-            state = STATE.FAILED;
-            return;
-        }
-
-        start_waypoint.gscore = 0;
-        start_waypoint.heuristic = heuristic(start_waypoint, goal_waypoint);
+        this.agent = agent;
         state = STATE.SEARCHING;
     }
-
-    /// <summary> Run <paramref name="iterations"/> pathfinding 
-    /// iterations. </summary>
-    public override void pathfind(int iterations)
-    {
-        if (state != STATE.SEARCHING)
-            return; // Not searching
-
-        for (int i = 0; i < iterations; ++i)
-        {
-            if (++iteration_count >= max_iterations)
-            {
-                // Max iterations hit
-                failure_reason = FAILURE_REASON.MAX_ITER_HIT;
-                state = STATE.FAILED;
-                return;
-            }
-
-            // Find the waypoint in the open set with the lowest f-score
-            float min_score = float.PositiveInfinity;
-            current = null;
-            open_set.iterate((x, y, z, w) =>
-            {
-                float score = w.heuristic;
-
-                if (score < min_score || current == null)
-                {
-                    current = w;
-                    min_score = score;
-                }
-            });
-
-            // Check for success
-            if (current == goal_waypoint)
-            {
-                if (current.came_from == null)
-                {
-                    // We haven't actually found a way to
-                    // the target, it was simply the only
-                    // remaining waypoint in the open set.
-                    failure_reason = FAILURE_REASON.NO_PATH;
-                    state = STATE.FAILED;
-                    return;
-                }
-
-                // Reconstruct the path (backwards)
-                path_found = new List<Vector3>() { current.grounding };
-                while (current.came_from != null)
-                {
-                    // Add the subpath connecting current to current.came_from
-                    if (current.subpath != null)
-                        for (int s = current.subpath.Length - 1; s >= 0; --s)
-                            path_found.Add(current.subpath[s]);
-
-                    // Move to came_from + add it's grounding
-                    current = current.came_from;
-                    path_found.Add(current.grounding);
-                }
-                path_found.Reverse();
-                state = STATE.COMPLETE;
-                return;
-            }
-
-            if (current == null)
-            {
-                // Open set was empty => pathfinding failed
-                failure_reason = FAILURE_REASON.NO_PATH;
-                state = STATE.FAILED;
-                return;
-            }
-
-            if (current.fscore > float.MaxValue)
-                throw new System.Exception("Infinite score encountered!");
-
-            // Remove current from the open set, add to the closed set
-            open_set.clear(current.x, current.y, current.z);
-            closed_set.set(current.x, current.y, current.z, current);
-            current.type = waypoint.TYPE.CLOSED;
-
-            // Loop over neighbours of current
-            for (int n = 0; n < utils.neighbouring_dxs_3d.Length; ++n)
-            {
-                int dx = utils.neighbouring_dxs_3d[n];
-                int dy = utils.neighbouring_dys_3d[n];
-                int dz = utils.neighbouring_dzs_3d[n];
-
-                var neighbour = load(
-                    current.x + dx, current.y + dy, current.z + dz,
-                    out Vector3[] subpath, parent: current);
-
-                if (neighbour == null) continue; // Invalid, or inaccessable
-                float tgs = current.gscore + 1;
-
-                if (tgs < neighbour.gscore)
-                {
-                    // This is a shorter path to neighbour, record it
-                    neighbour.gscore = tgs;
-                    neighbour.heuristic = heuristic(neighbour, goal_waypoint);
-                    neighbour.came_from = current;
-                    neighbour.subpath = subpath;
-                }
-            }
-        }
-    }
-
-    /// <summary> Returns information about the 
-    /// setup of this path instance. </summary>
-    public override string info_text()
-    {
-        string fail_string = "";
-        if (failure_reason != FAILURE_REASON.NONE)
-            fail_string = "Failure mode " + failure_reason + "\n";
-
-        return
-        "Status " + state + "\n" + fail_string +
-        "Start " + start + "\n" +
-        "Goal " + goal + "\n" +
-        "Open set size " + open_set.count + "\n" +
-        "Closed set size " + closed_set.count + "\n";
-    }
-
-    public override void draw_gizmos()
-    {
-        // Draw the start and end points
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(start, 0.2f);
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(goal, 0.2f);
-
-        // This function will be called on all waypoints
-        Dictionary<int, int, int, waypoint>.iter_func draw = (x, y, z, w) =>
-        {
-            if (w.fscore > float.MaxValue)
-            {
-                // This is an infinite score waypoint
-                // highlight it with a cube (this should
-                // only be allowed to happen at the goal
-                // point).
-                Gizmos.DrawWireCube(
-                    new Vector3(x, y, z) * resolution + start,
-                    Vector3.one * resolution);
-                return;
-            }
-
-            // If this waypoint didn't come from anywhere,
-            // don't draw the line leading to it
-            waypoint came_from = w.came_from;
-            if (came_from == null)
-                return;
-
-            // If this waypoint does't have a grounding point,
-            // don't draw the line leading to it
-            if (w.grounding == default || came_from.grounding == default)
-                return;
-
-            // Draw line from parent to this waypoint
-            Gizmos.DrawLine(w.grounding, came_from.grounding);
-        };
-
-        // Closed waypoints are dark blue
-        Gizmos.color = Color.blue;
-        closed_set?.iterate(draw);
-
-        // Open waypoints are cyan
-        Gizmos.color = Color.cyan;
-        open_set?.iterate(draw);
-
-        // The current waypoint is highlighted red
-        if (current != null)
-        {
-            Gizmos.color = Color.red;
-            draw(current.x, current.y, current.z, current);
-        }
-
-        // Draw the path 
-        Gizmos.color = Color.green;
-        for (int i = 1; i < length; ++i)
-            Gizmos.DrawLine(this[i - 1], this[i]);
-    }
 }
 
-public abstract class generic_grid_path : generic_path
+/// <summary> Carry out pathfinding using the A* algorithm. </summary>
+public class astar_path : path
 {
-    public generic_grid_path(Vector3 start, Vector3 goal, float resolution,
-        position_validator validate_position, move_validator validate_move)
-        : base(start, goal, validate_position, validate_move)
-    {
-        this.resolution = resolution;
-    }
-
-    protected float resolution;
-
-    protected class waypoint
-    {
-        public int x { get; private set; }
-        public int y { get; private set; }
-        public int z { get; private set; }
-
-        public int manhattan_heuristic(waypoint other)
-        {
-            return Mathf.Abs(x - other.x) + Mathf.Abs(y - other.y) + Mathf.Abs(z - other.z);
-        }
-
-        public waypoint(int x, int y, int z)
-        {
-            this.x = x; this.y = y; this.z = z;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is waypoint)
-            {
-                var w = (waypoint)obj;
-                return w.x == x && w.y == y && w.z == z;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            // Return a hash code that increases as 
-            // we move further away from the origin.
-            int xh = x >= 0 ? 2 * x : 2 * (-x) - 1;
-            int yh = y >= 0 ? 2 * y : 2 * (-y) - 1;
-            int zh = z >= 0 ? 2 * z : 2 * (-z) - 1;
-            int m = Mathf.Max(xh, yh, zh);
-            int mxy = Mathf.Max(xh, yh);
-            int s = m * m * m;
-            if (xh == m || yh == m)
-                return s + xh + (m - yh) + (2 * m + 1) * z;
-            else
-                return s + (m + 1) * (m + 1) + m * (m + 1) + (mxy + 1) * (mxy + 1) - xh - (mxy + 1 - yh);
-
-            //int xyh = (xh + yh) * (xh + yh + 1) / 2 + yh;
-            //return (xyh + zh) * (xyh + xh + 1) / 2 + zh;
-        }
-
-        public delegate void iter_func(int x, int y, int z);
-        public void iterate_neighbours(iter_func f)
-        {
-            for (int i = 0; i < utils.neighbouring_dxs_3d.Length; ++i)
-                f(x + utils.neighbouring_dxs_3d[i],
-                  y + utils.neighbouring_dys_3d[i],
-                  z + utils.neighbouring_dzs_3d[i]);
-        }
-    }
-
-    protected void coordinates(Vector3 pos, out int x, out int y, out int z)
-    {
-        x = Mathf.RoundToInt((pos - goal).x / resolution);
-        y = Mathf.RoundToInt((pos - goal).y / resolution);
-        z = Mathf.RoundToInt((pos - goal).z / resolution);
-    }
-
-    protected Vector3 centre(int x, int y, int z)
-    {
-        return goal + new Vector3(x, y, z) * resolution;
-    }
-
-    protected delegate T waypoint_builder<T>(int x, int y, int z, Vector3 v);
-
-    protected T closest_valid<T>(Vector3 pos, waypoint_builder<T> builder) where T : waypoint
-    {
-        T ret = default;
-        coordinates(pos, out int x0, out int y0, out int z0);
-        utils.search_outward(x0, y0, z0, 32, (x, y, z) =>
-        {
-            Vector3 c = centre(x, y, z);
-            c = validate_position(c, out bool valid);
-            if (!valid) return false;
-            ret = builder(x, y, z, c);
-            return true;
-        });
-        return ret;
-    }
-}
-
-public class astar_path : generic_grid_path
-{
-    new protected class waypoint : generic_grid_path.waypoint
-    {
-        public int g_score = int.MaxValue;
-
-        public waypoint came_from;
-        public Vector3 entrypoint;
-
-        public waypoint(int x, int y, int z) : base(x, y, z) { }
-    }
-
-    protected class waypoint_comp : IComparer<waypoint>
-    {
-        public int Compare(waypoint a, waypoint b) { return a.GetHashCode().CompareTo(b.GetHashCode()); }
-    }
-
-    waypoint start_waypoint;
-    waypoint goal_waypoint;
     SortedDictionary<waypoint, waypoint> open_set;
     HashSet<waypoint> closed_set;
-    List<Vector3> path;
+    waypoint start_waypoint;
+    waypoint goal_waypoint;
+    int endpoint_search_stage = 0;
+    int max_iterations;
+    int total_iterations = 0;
 
-    public override int length => path.Count;
-    public override Vector3 this[int i] => path[i];
+    /// <summary> The path found. </summary>
+    public List<Vector3> path;
+    public override int length => path == null ? 0 : path.Count;
+    public override Vector3 this[int i] => path == null ? default : path[i];
 
-    public astar_path(Vector3 start, Vector3 goal, float resolution, int max_iterations,
-        position_validator validate_position, move_validator validate_move) :
-        base(start, goal, resolution, validate_position, validate_move)
+    /// <summary> The stages of a* pathfinding. </summary>
+    enum STAGE : byte
     {
-        start_waypoint = closest_valid(start, (x, y, z, v) => new waypoint(x, y, z)
-        {
-            entrypoint = v,
-            g_score = 0
-        });
+        START_SEARCH = 0, // Searching for a start point
+        GOAL_SEARCH = 1,  // Searching for a goal point
+        PATHFIND = 2      // Pathfinding between points
+    }
 
-        goal_waypoint = closest_valid(goal, (x, y, z, v) => new waypoint(x, y, z)
-        {
-            entrypoint = v
-        });
+    /// <summary> The current pathfinding stage. </summary>
+    STAGE stage;
 
+    public astar_path(Vector3 start, Vector3 goal, IPathingAgent agent, int max_iterations = 1000)
+        : base(start, goal, agent)
+    {
+        this.max_iterations = max_iterations;
         open_set = new SortedDictionary<waypoint, waypoint>(new waypoint_comp());
-        open_set[start_waypoint] = start_waypoint;
         closed_set = new HashSet<waypoint>();
-        state = STATE.SEARCHING;
+        stage = STAGE.START_SEARCH;
     }
 
     public override void pathfind(int iterations)
     {
+        // Check we are supposed to be searching
+        if (state != STATE.SEARCHING)
+            return;
+
+        // Carry out search for endpoints
+        if (stage < STAGE.PATHFIND)
+        {
+            search_for_endpoints(iterations);
+            if (iterations < 0 || iterations >= int.MaxValue)
+                pathfind(iterations);
+            return;
+        }
+
         for (int i = 0; i < iterations; ++i)
         {
+            if (++total_iterations > max_iterations)
+            {
+                state = STATE.FAILED;
+                return;
+            }
+
             if (open_set.Count == 0)
             {
                 state = STATE.FAILED;
@@ -1255,7 +140,7 @@ public class astar_path : generic_grid_path
             }
 
             // Find the lowest heuristic in the open set
-            var current = open_set.First().Value;
+            waypoint current = open_set.First().Value;
 
             // Check for success
             if (current.Equals(goal_waypoint))
@@ -1275,64 +160,311 @@ public class astar_path : generic_grid_path
             open_set.Remove(current);
             closed_set.Add(current);
 
-            current.iterate_neighbours((x, y, z) =>
+            for (int j = 0; j < utils.neighbouring_dxs_3d.Length; ++j)
             {
                 // Attempt to find neighbour if they alreaddy exist
-                var n = new waypoint(x, y, z);
+                waypoint n = new waypoint(
+                    current.x + utils.neighbouring_dxs_3d[j],
+                    current.y + utils.neighbouring_dys_3d[j],
+                    current.z + utils.neighbouring_dzs_3d[j]
+                );
 
                 // Neighbour already closed
-                if (closed_set.Contains(n)) return;
+                if (closed_set.Contains(n)) continue;
 
                 // See if the neighbour already exists, if load them instead
                 if (open_set.TryGetValue(n, out waypoint already_present))
                     n = already_present;
 
                 // Check if this is potentially a better route to the neighbour
-                int tgs = current.g_score + 1;
-                if (tgs < n.g_score)
+                int tentative_distance = current.best_distance_to_start + 1;
+                if (tentative_distance < n.best_distance_to_start)
                 {
-                    var bounds = new Bounds(centre(n.x, n.y, n.z), Vector3.one * resolution);
-                    var entrypoint = validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
-                    if (!valid) return; // Could not find a valid entrypoint
+                    // Find a suitable entrypoint to the neighbour n from current
+                    Bounds bounds = new Bounds(grid_centre(n.x, n.y, n.z), Vector3.one * agent.resolution);
+                    Vector3 entrypoint = agent.validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
+                    if (!valid) continue; // Could not find a valid entrypoint
 
                     // Not a valid move, skip
-                    if (!validate_move(current.entrypoint, entrypoint, out Vector3[] subpath)) return;
+                    if (!agent.validate_move(current.entrypoint, entrypoint)) continue;
 
                     // Update the path to n
                     n.entrypoint = entrypoint;
                     n.came_from = current;
-                    n.g_score = tgs;
+                    n.best_distance_to_start = tentative_distance;
 
                     // Re-open n
                     open_set[n] = n;
                 }
-            });
+            }
         }
     }
 
+    void search_for_endpoints(int iterations)
+    {
+        // Check if we've already found the endpoints
+        if (stage > STAGE.GOAL_SEARCH)
+            return;
+
+        // Check if we've searched too far
+        if (endpoint_search_stage > 32)
+        {
+            state = STATE.FAILED;
+            return;
+        }
+
+        // The nearest gridpoint to the endpoint
+        int x0 = 0;
+        int y0 = 0;
+        int z0 = 0;
+        if (stage == STAGE.START_SEARCH)
+            get_coordinates(start, out x0, out y0, out z0);
+
+        // Search outward in the grid for a suitable endpoint
+        for (int m = endpoint_search_stage; m <= endpoint_search_stage + iterations; ++m)
+            for (int xm = 0; xm <= m; ++xm)
+                for (int ym = 0; ym <= m - xm; ++ym)
+                {
+                    int zm = m - ym - xm;
+
+                    // Search all combinations of x, y and z signs
+                    for (int xs = -1; xs < 2; xs += 2)
+                        for (int ys = -1; ys < 2; ys += 2)
+                            for (int zs = -1; zs < 2; zs += 2)
+                            {
+                                // The grid coordinates to check
+                                int x = x0 + xm * xs;
+                                int y = y0 + ym * ys;
+                                int z = z0 + zm * zs;
+
+                                // Check if this grid point is valid
+                                Vector3 centre = grid_centre(x, y, z);
+                                centre = agent.validate_position(centre, out bool valid);
+
+                                if (!valid) continue;
+
+                                // Found a valid point, move to the next pathfinding stage
+                                endpoint_search_stage = 0;
+                                if (stage == STAGE.START_SEARCH)
+                                {
+                                    start_waypoint = new waypoint(x, y, z)
+                                    {
+                                        entrypoint = centre,
+                                        best_distance_to_start = 0
+                                    };
+                                    open_set[start_waypoint] = start_waypoint;
+                                    stage = STAGE.GOAL_SEARCH;
+                                }
+                                else if (stage == STAGE.GOAL_SEARCH)
+                                {
+                                    goal_waypoint = new waypoint(x, y, z) { entrypoint = centre };
+                                    stage = STAGE.PATHFIND;
+                                }
+                                return;
+                            }
+                }
+
+        // Increase the range to search
+        endpoint_search_stage += iterations;
+    }
+
+    /// <summary> Convert the position <paramref name="pos"/> into gridpoint coordinates
+    /// <paramref name="x"/>, <paramref name="y"/> and <paramref name="z"/>. </summary>
+    protected void get_coordinates(Vector3 pos, out int x, out int y, out int z)
+    {
+        x = Mathf.RoundToInt((pos - goal).x / agent.resolution);
+        y = Mathf.RoundToInt((pos - goal).y / agent.resolution);
+        z = Mathf.RoundToInt((pos - goal).z / agent.resolution);
+    }
+
+    /// <summary> Get the location of the centre of the gridpoint at 
+    /// <paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>. </summary>
+    protected Vector3 grid_centre(int x, int y, int z)
+    {
+        return goal + new Vector3(x, y, z) * agent.resolution;
+    }
+
+    /// <summary> Contains information about a gridpoint location. </summary>
+    class waypoint
+    {
+        public int x { get; private set; }
+        public int y { get; private set; }
+        public int z { get; private set; }
+
+        public Vector3 entrypoint;
+        public waypoint came_from;
+        public int best_distance_to_start = int.MaxValue;
+
+        /// <summary> Construct a waypoint with the given coordinates. </summary>
+        public waypoint(int x, int y, int z)
+        {
+            this.x = x; this.y = y; this.z = z;
+        }
+
+        /// <summary> Returns true if the given waypoint is
+        /// at the same location as this waypoint. </summary>
+        public override bool Equals(object obj)
+        {
+            if (obj is waypoint w)
+                return w.x == x && w.y == y && w.z == z;
+            return false;
+        }
+
+        /// <summary> A unique hash code that increases as we move away 
+        /// from the origin. This means that it can be used as both a 
+        /// heuristic and as a location in a hash table. </summary>
+        public override int GetHashCode()
+        {
+            int xh = x >= 0 ? 2 * x : 2 * (-x) - 1;
+            int yh = y >= 0 ? 2 * y : 2 * (-y) - 1;
+            int zh = z >= 0 ? 2 * z : 2 * (-z) - 1;
+            int mxy = xh > yh ? xh : yh;
+            int m = mxy > zh ? mxy : zh;
+            int s = m * m * m;
+            if (mxy == m) return s + xh + (m - yh) + (2 * m + 1) * z;
+            else return s + (2 * m + 1) * (m + 1) + mxy * (mxy + 1) + yh - xh;
+        }
+    }
+
+    /// <summary> Class to compare two waypoints by their hash code. </summary>
+    class waypoint_comp : IComparer<waypoint>
+    {
+        public int Compare(waypoint a, waypoint b) { return a.GetHashCode().CompareTo(b.GetHashCode()); }
+    }
+
+    /// <summary> Draw information about the path. </summary>
     public override void draw_gizmos()
     {
-        Gizmos.color = Color.cyan;
-        foreach (var kv in open_set)
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(start, 0.1f);
+        Gizmos.DrawSphere(goal, 0.1f);
+        if (start_waypoint != null) Gizmos.DrawWireSphere(start_waypoint.entrypoint, 0.1f);
+        if (goal_waypoint != null) Gizmos.DrawWireSphere(goal_waypoint.entrypoint, 0.1f);
+
+        if (length > 0)
         {
-            var w = kv.Value;
-            //Gizmos.DrawWireCube(centre(w.x, w.y, w.z), Vector3.one * resolution);
+            Gizmos.color = Color.green;
+            for (int i = 1; i < length; ++i)
+                Gizmos.DrawLine(this[i], this[i - 1]);
+            return;
+        }
+
+        Gizmos.color = Color.cyan;
+        foreach (KeyValuePair<waypoint, waypoint> kv in open_set)
+        {
+            waypoint w = kv.Value;
             if (w.came_from != null)
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
 
         Gizmos.color = Color.blue;
-        foreach (var w in closed_set)
-        {
-            //Gizmos.DrawWireCube(centre(w.x, w.y, w.z), Vector3.one * resolution);
+        foreach (waypoint w in closed_set)
             if (w.came_from != null)
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
-        }
     }
 
+    /// <summary> Get information about the current path. </summary>
     public override string info_text()
     {
-        return "Open set size = " + open_set.Count + "\n" +
-               "Closed set size = " + closed_set.Count + "\n";
+        return "A* path\n" +
+               "Open set size = " + open_set.Count + "\n" +
+               "Closed set size = " + closed_set.Count + "\n" +
+               "State = " + state + "\n" +
+               "Stage = " + stage + "\n" +
+               "Iterations = " + total_iterations + "/" + max_iterations + "\n";
+    }
+}
+
+/// <summary> Tools to use in pathfinding. </summary>
+public static class pathfinding_utils
+{
+    /// <summary> Find a valid position for a walking agent operating on
+    /// a grid of the given resolution, by using a box cast to check
+    /// for grounding within the gridpoint with the given 
+    /// <paramref name="centre"/>. </summary>
+    static Vector3 boxcast_position_validate(Vector3 centre, float resolution, out bool valid)
+    {
+        Vector3 size = Vector3.one * resolution;
+        Vector3 start_pos = centre + Vector3.up * resolution;
+        Vector3 end_pos = centre;
+
+        Vector3 move = end_pos - start_pos;
+        valid = Physics.BoxCast(start_pos, size / 2f, move.normalized,
+            out RaycastHit hit, Quaternion.identity, move.magnitude);
+
+        if (!valid) return centre;
+        return hit.point + Vector3.up / 100f;
+    }
+
+    /// <summary> The same as <see cref="boxcast_position_validate(Vector3, float, out bool)"/>, 
+    /// but using an overlap box instead of a boxcast. </summary>
+    static Vector3 overap_box_position_validate(Vector3 centre, float resolution, out bool valid)
+    {
+        foreach (var c in Physics.OverlapBox(centre, Vector3.one * resolution / 2f))
+        {
+            valid = true;
+            return c.ClosestPoint(centre);
+        }
+
+        valid = false;
+        return centre;
+    }
+
+    /// <summary> Check that, during the course of a move from <paramref name="a"/> 
+    /// to <paramref name="b"/> a walking agent of the given <paramref name="width"/>
+    /// will always have sufficient grounding. </summary>
+    static bool validate_move_grounding(Vector3 a, Vector3 b,
+        float width, float ground_clearance)
+    {
+        Vector3 delta = b - a;
+        for (float p = 0; p <= delta.magnitude; p += width)
+        {
+            Vector3 middle = a + delta.normalized * p;
+            Vector3 start = middle + Vector3.up * ground_clearance;
+            Vector3 end = middle - Vector3.up * ground_clearance;
+            Vector3 delta_ray = end - start;
+            if (!Physics.Raycast(start, delta_ray.normalized, delta_ray.magnitude))
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary> Check that nothing is in the way on a from <paramref name="a"/> 
+    /// to <paramref name="b"/> for an agent of the given <paramref name="width"/>,
+    /// <paramref name="height"/> and <paramref name="ground_clearance"/>, by 
+    /// checking if anythging overlaps an appropriately-shaped box. </summary>
+    static bool validate_move_overlap(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance)
+    {
+        Vector3 delta = b - a;
+        if (delta.magnitude < 1e-4) return true;
+
+        Vector3 centre = a + delta / 2f + Vector3.up * (height / 2 + ground_clearance / 2);
+        Vector3 size = new Vector3(width, height - ground_clearance, delta.magnitude);
+
+        Vector3 forward = delta.normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 up = Vector3.Cross(right, forward);
+        if (up.magnitude < 1e-4) up = Vector3.up;
+        Quaternion orientation = Quaternion.LookRotation(forward, up);
+
+        return Physics.OverlapBox(centre, size / 2f, orientation).Length == 0;
+    }
+
+    /// <summary> Validate a move from <paramref name="a"/> to <paramref name="b"/> for an
+    /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
+    /// <paramref name="ground_clearance"/> walking. </summary>
+    public static bool validate_walking_move(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance)
+    {
+        return validate_move_overlap(a, b, width, height, ground_clearance) &&
+               validate_move_grounding(a, b, width, ground_clearance);
+    }
+
+    /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>
+    public static Vector3 validate_walking_position(Vector3 v, float resolution, out bool valid)
+    {
+        return boxcast_position_validate(v, resolution, out valid);
     }
 }

@@ -2,40 +2,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class path_test_agent : MonoBehaviour
+public class path_test_agent : MonoBehaviour, IPathingAgent
 {
     public Transform target;
     public int max_iter = 1000;
     public int iter_per_frame = 1;
     public int max_depth = 2;
     public bool run_once_and_time = false;
-    public float resoultion = 1f;
+    public float path_resolution = 1f;
     public float agent_height = 2f;
     public float agent_width = 1f;
     public float ground_clearance = 0.25f;
 
-    generic_path path
+    path path
     {
         get
         {
             if (_path == null)
-                _path = new astar_path(transform.position, target.position, resoultion,
-                max_iter, validate_position, valid_move);
+                _path = new astar_path(transform.position, target.position, this);
             return _path;
         }
     }
-    generic_path _path;
-
-    Vector3 validate_position(Vector3 v, out bool valid)
-    {
-        return pathfinding_utils.validate_position(v, resoultion, out valid);
-    }
-
-    bool valid_move(Vector3 a, Vector3 b, out Vector3[] subpath)
-    {
-        return pathfinding_utils.validate_move(a, b, agent_width, 
-            agent_height, ground_clearance, out subpath);
-    }
+    path _path;
 
     private void Start()
     {
@@ -56,12 +44,12 @@ public class path_test_agent : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
             path.pathfind(1);
 
-        if (path.state == generic_path.STATE.COMPLETE)
+        if (path.state == path.STATE.COMPLETE)
         {
             if (i_progresss < path.length)
             {
                 Vector3 delta = path[i_progresss] - transform.position;
-                if (delta.magnitude < resoultion / 2f)
+                if (delta.magnitude < resolution / 2f)
                     i_progresss += 1;
 
                 transform.position += delta.normalized * Time.deltaTime * 10;
@@ -79,6 +67,22 @@ public class path_test_agent : MonoBehaviour
 
         _path?.draw_gizmos();
     }
+
+    //###############//
+    // IPathingAgent //
+    //###############//
+
+    public Vector3 validate_position(Vector3 v, out bool valid)
+    {
+        return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+    }
+
+    public bool validate_move(Vector3 a, Vector3 b)
+    {
+        return pathfinding_utils.validate_walking_move(a, b, agent_width, agent_height, ground_clearance);
+    }
+
+    public float resolution { get => path_resolution; }
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(path_test_agent))]

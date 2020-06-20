@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(character_hitbox))]
-public class character : networked
+public class character : networked, IPathingAgent
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -46,6 +46,10 @@ public class character : networked
     }
     character_spawner _spawned_by;
 
+    //###############//
+    // IPathingAgent //
+    //###############//
+
     bool is_allowed_at(Vector3 v)
     {
         // Check we're in the right medium
@@ -57,6 +61,21 @@ public class character : networked
 
         return true;
     }
+
+    public Vector3 validate_position(Vector3 v, out bool valid)
+    {
+        Vector3 ret = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        if (!is_allowed_at(ret)) valid = false;
+        return ret;
+    }
+
+    public bool validate_move(Vector3 a, Vector3 b)
+    {
+        return pathfinding_utils.validate_walking_move(a, b,
+            resolution, height, resolution / 2f);
+    }
+
+    public float resolution { get => pathfinding_resolution; }
 
     //########//
     // SOUNDS //
@@ -154,11 +173,7 @@ public class character : networked
 
     void get_path(Vector3 target)
     {
-        path = new path(
-            transform.position, target, transform,
-            height, pathfinding_resolution,
-            constraint: is_allowed_at
-        );
+        path = new astar_path(transform.position, target, this);
     }
 
     bool move_towards(Vector3 point, float speed)
@@ -300,7 +315,7 @@ public class character : networked
         if (Time.realtimeSinceStartup - last_attacked > melee_cooldown)
         {
             last_attacked = Time.realtimeSinceStartup;
-            attacking.GetComponent<player>()?.take_damage(melee_damage);         
+            attacking.GetComponent<player>()?.take_damage(melee_damage);
         }
     }
 
@@ -449,7 +464,7 @@ public class character : networked
             base.OnInspectorGUI();
             var c = (character)target;
             if (c.path != null)
-                last_path = "Last path info\n" + c.path.info();
+                last_path = "Last path info\n" + c.path.info_text();
             UnityEditor.EditorGUILayout.TextArea(last_path);
         }
     }
