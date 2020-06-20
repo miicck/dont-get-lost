@@ -7,6 +7,7 @@ public class path_test_agent : MonoBehaviour
     public Transform target;
     public int max_iter = 1000;
     public int iter_per_frame = 1;
+    public int max_depth = 2;
     public bool run_once_and_time = false;
     public float resoultion = 1f;
     public float agent_height = 2f;
@@ -18,7 +19,7 @@ public class path_test_agent : MonoBehaviour
         get
         {
             if (_path == null)
-                _path = new dict_path(transform.position, target.position, resoultion,
+                _path = new astar_path(transform.position, target.position, resoultion,
                 max_iter, validate_position, valid_move);
             return _path;
         }
@@ -27,21 +28,17 @@ public class path_test_agent : MonoBehaviour
 
     Vector3 validate_position(Vector3 v, out bool valid)
     {
-        return pathfinding_utils.boxcast_position_validate(v, resoultion, out valid);
+        return pathfinding_utils.validate_position(v, resoultion, out valid);
     }
 
-    bool valid_move(Vector3 a, Vector3 b)
+    bool valid_move(Vector3 a, Vector3 b, out Vector3[] subpath)
     {
-        return pathfinding_utils.validate_move(a, b, agent_width, agent_height, ground_clearance);
+        return pathfinding_utils.validate_move(a, b, agent_width, 
+            agent_height, ground_clearance, out subpath);
     }
 
     private void Start()
     {
-        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        body.transform.SetParent(transform);
-        body.transform.localScale = new Vector3(agent_width, agent_height / 2f, agent_width);
-        body.transform.localPosition = Vector3.up * agent_height / 2f;
-
         if (run_once_and_time)
         {
             System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
@@ -74,6 +71,12 @@ public class path_test_agent : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        Gizmos.color = Color.blue;
+        Vector3 size = new Vector3(agent_width, agent_height, agent_width);
+        Gizmos.matrix = transform.localToWorldMatrix;
+        Gizmos.DrawCube(Vector3.up * agent_height / 2, size);
+        Gizmos.matrix = Matrix4x4.identity;
+
         _path?.draw_gizmos();
     }
 

@@ -516,7 +516,7 @@ public class path
 
 public static class pathfinding_utils
 {
-    public static Vector3 boxcast_position_validate(Vector3 centre, float resolution, out bool valid)
+    static Vector3 boxcast_position_validate(Vector3 centre, float resolution, out bool valid)
     {
         Vector3 size = Vector3.one * resolution;
         Vector3 start_pos = centre + Vector3.up * resolution;
@@ -527,10 +527,10 @@ public static class pathfinding_utils
             out RaycastHit hit, Quaternion.identity, move.magnitude);
 
         if (!valid) return centre;
-        return hit.point;
+        return hit.point + Vector3.up / 100f;
     }
 
-    public static bool linecast_move_validate(Vector3 a, Vector3 b, float ground_clearance)
+    static bool linecast_move_validate(Vector3 a, Vector3 b, float ground_clearance)
     {
         Vector3 start = a + ground_clearance * Vector3.up;
         Vector3 end = b + ground_clearance * Vector3.up;
@@ -538,7 +538,7 @@ public static class pathfinding_utils
         return !Physics.Raycast(start, delta.normalized, delta.magnitude);
     }
 
-    public static bool boxcast_move_validate(Vector3 a, Vector3 b,
+    static bool boxcast_move_validate(Vector3 a, Vector3 b,
         float width, float height, float ground_clearance)
     {
         Vector3 size = new Vector3(width, height, width);
@@ -556,7 +556,7 @@ public static class pathfinding_utils
             out RaycastHit hit, rotation, move.magnitude);
     }
 
-    public static bool capsulecast_move_validate(Vector3 a, Vector3 b,
+    static bool capsulecast_move_validate(Vector3 a, Vector3 b,
         float width, float height, float ground_clearance)
     {
         float eff_height = height - ground_clearance;
@@ -572,7 +572,7 @@ public static class pathfinding_utils
         return !Physics.CapsuleCast(start_p1, start_p2, radius, move, move.magnitude);
     }
 
-    public static bool validate_move_grounding(Vector3 a, Vector3 b,
+    static bool validate_move_grounding(Vector3 a, Vector3 b,
         float width, float ground_clearance)
     {
         Vector3 delta = b - a;
@@ -589,11 +589,11 @@ public static class pathfinding_utils
         return true;
     }
 
-    public static bool validate_move_overlap(Vector3 a, Vector3 b,
+    static bool validate_move_overlap(Vector3 a, Vector3 b,
         float width, float height, float ground_clearance)
     {
         Vector3 delta = b - a;
-        Vector3 centre = a + delta / 2f + Vector3.up * (height/2 + ground_clearance/2);
+        Vector3 centre = a + delta / 2f + Vector3.up * (height / 2 + ground_clearance / 2);
         Vector3 size = new Vector3(width, height - ground_clearance, delta.magnitude);
 
         Vector3 forward = delta.normalized;
@@ -604,24 +604,64 @@ public static class pathfinding_utils
         return Physics.OverlapBox(centre, size / 2f, orientation).Length == 0;
     }
 
-    public static bool validate_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
+    public static bool validate_move_dictpath(Vector3 a, Vector3 b,
+         float width, float height, float ground_clearance, out Vector3[] subpath, int max_depth, int depth = 0)
     {
-        /*
-        if (width < height - ground_clearance)
+        // Try normal move validation
+        if (validate_move(a, b, width, height, ground_clearance, out subpath))
+            return true;
+
+        depth += 1;
+        if (depth > max_depth)
         {
-            return capsulecast_move_validate(a, b, width, height, ground_clearance) &&
-                   validate_move_grounding(a, b, width, ground_clearance);
+            subpath = null;
+            return false;
         }
-        */
 
-        //return validate_move_overlap(a, b, width, height, ground_clearance);
+        Vector3 delta = b - a;
+        float sub_res = delta.magnitude / 4f;
 
-        return linecast_move_validate(a, b, ground_clearance) &&
-               boxcast_move_validate(a, b, 0.1f, height, ground_clearance) &&
-               boxcast_move_validate(a, b, width, 0.1f, ground_clearance) &&
-               boxcast_move_validate(a, b, width, height, ground_clearance) &&
+        generic_path.position_validator pos_val =
+            (Vector3 v, out bool valid) => validate_position(v, sub_res, out valid);
+
+        generic_path.move_validator move_val = (Vector3 from, Vector3 to, out Vector3[] sub_subpath)
+            => validate_move_dictpath(from, to, width, height, ground_clearance,
+                                      out sub_subpath, max_depth, depth: depth + 1);
+
+        var dp = new dict_path(a, b, sub_res, 10, pos_val, move_val);
+        dp.pathfind(int.MaxValue);
+
+        switch (dp.state)
+        {
+            case generic_path.STATE.COMPLETE:
+                subpath = new Vector3[dp.length];
+                for (int i = 0; i < dp.length; ++i)
+                    subpath[i] = dp[i];
+                return true;
+
+            case generic_path.STATE.FAILED:
+                subpath = null;
+                return false;
+
+            case generic_path.STATE.SEARCHING:
+                throw new System.Exception("This should not be possible!");
+
+            default:
+                throw new System.Exception("Unkown path state!");
+        }
+    }
+
+    public static bool validate_move(Vector3 a, Vector3 b,
+        float width, float height, float ground_clearance, out Vector3[] subpath)
+    {
+        subpath = null;
+        return validate_move_overlap(a, b, width, height, ground_clearance) &&
                validate_move_grounding(a, b, width, ground_clearance);
+    }
+
+    public static Vector3 validate_position(Vector3 v, float resolution, out bool valid)
+    {
+        return boxcast_position_validate(v, resolution, out valid);
     }
 }
 
@@ -643,10 +683,15 @@ public abstract class generic_path
     public virtual void draw_gizmos() { }
     public virtual string info_text() { return "Path of type " + GetType().Name; }
 
+    /// <summary> A position validator returns the nearest valid grounding position
+    /// to v. If valid = false, no such position was found. </summary>
     public delegate Vector3 position_validator(Vector3 v, out bool valid);
     protected position_validator validate_position;
 
-    public delegate bool move_validator(Vector3 a, Vector3 b);
+    /// <summary> A move validator returns true if it is possible to move between the
+    /// (nearby) vectors a and b. If subpath = null, then the route is simply
+    /// a -> b, otherwise it is a -> subpath[0] -> subpath[1] ... etc ... -> b. </summary>
+    public delegate bool move_validator(Vector3 a, Vector3 b, out Vector3[] subpath);
     protected move_validator validate_move;
 
     protected Vector3 start;
@@ -674,7 +719,7 @@ public class dict_path : generic_path
     waypoint start_waypoint;
     waypoint goal_waypoint;
     waypoint current;
-    List<waypoint> path_found;
+    List<Vector3> path_found;
     Dictionary<int, int, int, waypoint> open_set = new Dictionary<int, int, int, waypoint>();
     Dictionary<int, int, int, waypoint> closed_set = new Dictionary<int, int, int, waypoint>();
     Dictionary<int, int, int, waypoint> invalid_set = new Dictionary<int, int, int, waypoint>();
@@ -686,11 +731,11 @@ public class dict_path : generic_path
         {
             if (i == 0) return start;
             if (i - 1 < path_found.Count)
-                return path_found[i - 1].grounding;
+                return path_found[i - 1];
 
             if (path_found.Count > 0)
             {
-                var last = path_found[path_found.Count - 1].grounding;
+                var last = path_found[path_found.Count - 1];
                 Vector3 delta = goal - last;
                 if (delta.magnitude < resolution) return goal;
                 return last;
@@ -741,7 +786,9 @@ public class dict_path : generic_path
         public int z;
         public TYPE type;
         public Vector3 grounding;
-        public float fscore = float.PositiveInfinity;
+        public Vector3[] subpath;
+        public float fscore => heuristic + gscore;
+        public float heuristic = float.PositiveInfinity;
         public float gscore = float.PositiveInfinity;
         public waypoint came_from;
     }
@@ -751,8 +798,10 @@ public class dict_path : generic_path
     /// will be added to the open set if it is pathable or the invalid 
     /// set if it is not pathable. If invalid or not accesible from
     /// the given parent, will return null. </summary>
-    waypoint load(int x, int y, int z, waypoint parent = null)
+    waypoint load(int x, int y, int z, out Vector3[] subpath, waypoint parent = null)
     {
+        subpath = null;
+
         // Attempt to load from the open set
         var found = open_set.get(x, y, z);
         if (found != null)
@@ -795,7 +844,7 @@ public class dict_path : generic_path
         }
 
         // Check that we can access this waypoint from the parent
-        if (parent != null && !validate_move(parent.grounding, wp.grounding))
+        if (parent != null && !validate_move(parent.grounding, wp.grounding, out subpath))
         {
             // Reject ths waypoint, but don't add it to the 
             // closed set as we might be able to access it
@@ -828,7 +877,7 @@ public class dict_path : generic_path
         waypoint found = null;
         utils.search_outward(x0, y0, z0, max, (x, y, z) =>
         {
-            found = load(x, y, z);
+            found = load(x, y, z, out Vector3[] subpath);
             if (found == null) return false;
             return found.type == waypoint.TYPE.OPEN;
         });
@@ -850,7 +899,7 @@ public class dict_path : generic_path
         this.max_iterations = max_iterations;
 
         start_waypoint = load(start);
-        if (start_waypoint.type != waypoint.TYPE.OPEN)
+        if (start_waypoint?.type != waypoint.TYPE.OPEN)
         {
             // Start point was invalid
             failure_reason = FAILURE_REASON.INVALID_START;
@@ -859,7 +908,7 @@ public class dict_path : generic_path
         }
 
         goal_waypoint = load(goal);
-        if (goal_waypoint.type != waypoint.TYPE.OPEN)
+        if (goal_waypoint?.type != waypoint.TYPE.OPEN)
         {
             // Goal point was invalid
             failure_reason = FAILURE_REASON.INVALID_END;
@@ -868,7 +917,7 @@ public class dict_path : generic_path
         }
 
         start_waypoint.gscore = 0;
-        start_waypoint.fscore = heuristic(start_waypoint, goal_waypoint);
+        start_waypoint.heuristic = heuristic(start_waypoint, goal_waypoint);
         state = STATE.SEARCHING;
     }
 
@@ -890,14 +939,16 @@ public class dict_path : generic_path
             }
 
             // Find the waypoint in the open set with the lowest f-score
-            float min_fscore = float.PositiveInfinity;
+            float min_score = float.PositiveInfinity;
             current = null;
             open_set.iterate((x, y, z, w) =>
             {
-                if (w.fscore < min_fscore || current == null)
+                float score = w.heuristic;
+
+                if (score < min_score || current == null)
                 {
                     current = w;
-                    min_fscore = w.fscore;
+                    min_score = score;
                 }
             });
 
@@ -915,11 +966,17 @@ public class dict_path : generic_path
                 }
 
                 // Reconstruct the path (backwards)
-                path_found = new List<waypoint>();
+                path_found = new List<Vector3>() { current.grounding };
                 while (current.came_from != null)
                 {
-                    path_found.Add(current.came_from);
+                    // Add the subpath connecting current to current.came_from
+                    if (current.subpath != null)
+                        for (int s = current.subpath.Length - 1; s >= 0; --s)
+                            path_found.Add(current.subpath[s]);
+
+                    // Move to came_from + add it's grounding
                     current = current.came_from;
+                    path_found.Add(current.grounding);
                 }
                 path_found.Reverse();
                 state = STATE.COMPLETE;
@@ -949,7 +1006,10 @@ public class dict_path : generic_path
                 int dy = utils.neighbouring_dys_3d[n];
                 int dz = utils.neighbouring_dzs_3d[n];
 
-                var neighbour = load(current.x + dx, current.y + dy, current.z + dz, parent: current);
+                var neighbour = load(
+                    current.x + dx, current.y + dy, current.z + dz,
+                    out Vector3[] subpath, parent: current);
+
                 if (neighbour == null) continue; // Invalid, or inaccessable
                 float tgs = current.gscore + 1;
 
@@ -957,8 +1017,9 @@ public class dict_path : generic_path
                 {
                     // This is a shorter path to neighbour, record it
                     neighbour.gscore = tgs;
-                    neighbour.fscore = tgs + heuristic(neighbour, goal_waypoint);
+                    neighbour.heuristic = heuristic(neighbour, goal_waypoint);
                     neighbour.came_from = current;
+                    neighbour.subpath = subpath;
                 }
             }
         }
@@ -1079,11 +1140,21 @@ public abstract class generic_grid_path : generic_path
 
         public override int GetHashCode()
         {
+            // Return a hash code that increases as 
+            // we move further away from the origin.
             int xh = x >= 0 ? 2 * x : 2 * (-x) - 1;
             int yh = y >= 0 ? 2 * y : 2 * (-y) - 1;
             int zh = z >= 0 ? 2 * z : 2 * (-z) - 1;
-            int xyh = (xh + yh) * (xh + yh + 1) / 2 + yh;
-            return (xyh + zh) * (xyh + xh + 1) / 2 + zh;
+            int m = Mathf.Max(xh, yh, zh);
+            int mxy = Mathf.Max(xh, yh);
+            int s = m * m * m;
+            if (xh == m || yh == m)
+                return s + xh + (m - yh) + (2 * m + 1) * z;
+            else
+                return s + (m + 1) * (m + 1) + m * (m + 1) + (mxy + 1) * (mxy + 1) - xh - (mxy + 1 - yh);
+
+            //int xyh = (xh + yh) * (xh + yh + 1) / 2 + yh;
+            //return (xyh + zh) * (xyh + xh + 1) / 2 + zh;
         }
 
         public delegate void iter_func(int x, int y, int z);
@@ -1098,14 +1169,14 @@ public abstract class generic_grid_path : generic_path
 
     protected void coordinates(Vector3 pos, out int x, out int y, out int z)
     {
-        x = Mathf.RoundToInt((pos - start).x / resolution);
-        y = Mathf.RoundToInt((pos - start).y / resolution);
-        z = Mathf.RoundToInt((pos - start).z / resolution);
+        x = Mathf.RoundToInt((pos - goal).x / resolution);
+        y = Mathf.RoundToInt((pos - goal).y / resolution);
+        z = Mathf.RoundToInt((pos - goal).z / resolution);
     }
 
     protected Vector3 centre(int x, int y, int z)
     {
-        return start + new Vector3(x, y, z) * resolution;
+        return goal + new Vector3(x, y, z) * resolution;
     }
 
     protected delegate T waypoint_builder<T>(int x, int y, int z, Vector3 v);
@@ -1130,26 +1201,23 @@ public class astar_path : generic_grid_path
 {
     new protected class waypoint : generic_grid_path.waypoint
     {
-        public int heuristic;
         public int g_score = int.MaxValue;
-        public int f_score { get => g_score + heuristic; }
 
         public waypoint came_from;
-        public Vector3 point;
+        public Vector3 entrypoint;
 
         public waypoint(int x, int y, int z) : base(x, y, z) { }
     }
 
     protected class waypoint_comp : IComparer<waypoint>
     {
-        public int Compare(waypoint a, waypoint b) { return a.heuristic.CompareTo(b.heuristic); }
+        public int Compare(waypoint a, waypoint b) { return a.GetHashCode().CompareTo(b.GetHashCode()); }
     }
 
     waypoint start_waypoint;
     waypoint goal_waypoint;
     SortedDictionary<waypoint, waypoint> open_set;
     HashSet<waypoint> closed_set;
-    HashSet<waypoint> invalid_set;
     List<Vector3> path;
 
     public override int length => path.Count;
@@ -1161,21 +1229,18 @@ public class astar_path : generic_grid_path
     {
         start_waypoint = closest_valid(start, (x, y, z, v) => new waypoint(x, y, z)
         {
-            point = v,
+            entrypoint = v,
             g_score = 0
         });
 
         goal_waypoint = closest_valid(goal, (x, y, z, v) => new waypoint(x, y, z)
         {
-            point = v
+            entrypoint = v
         });
-
-        start_waypoint.heuristic = start_waypoint.manhattan_heuristic(goal_waypoint);
 
         open_set = new SortedDictionary<waypoint, waypoint>(new waypoint_comp());
         open_set[start_waypoint] = start_waypoint;
         closed_set = new HashSet<waypoint>();
-        invalid_set = new HashSet<waypoint>();
         state = STATE.SEARCHING;
     }
 
@@ -1183,14 +1248,22 @@ public class astar_path : generic_grid_path
     {
         for (int i = 0; i < iterations; ++i)
         {
+            if (open_set.Count == 0)
+            {
+                state = STATE.FAILED;
+                return;
+            }
+
+            // Find the lowest heuristic in the open set
             var current = open_set.First().Value;
 
+            // Check for success
             if (current.Equals(goal_waypoint))
             {
                 path = new List<Vector3>();
                 while (current.came_from != null)
                 {
-                    path.Add(current.point);
+                    path.Add(current.entrypoint);
                     current = current.came_from;
                 }
                 path.Reverse();
@@ -1198,6 +1271,7 @@ public class astar_path : generic_grid_path
                 return;
             }
 
+            // Move current to closed set
             open_set.Remove(current);
             closed_set.Add(current);
 
@@ -1208,41 +1282,29 @@ public class astar_path : generic_grid_path
 
                 // Neighbour already closed
                 if (closed_set.Contains(n)) return;
-                if (invalid_set.Contains(n)) return;
 
+                // See if the neighbour already exists, if load them instead
                 if (open_set.TryGetValue(n, out waypoint already_present))
-                {
                     n = already_present;
-                }
-                else
-                {
-                    // Create the neighbour if they don't already exist
-                    n.point = centre(x, y, z);
-                    n.point = validate_position(n.point, out bool valid);
-                    n.heuristic = n.manhattan_heuristic(goal_waypoint);
-
-                    if (!valid)
-                    {
-                        n.came_from = current;
-                        invalid_set.Add(n);
-                        return;
-                    }
-                }
 
                 // Check if this is potentially a better route to the neighbour
                 int tgs = current.g_score + 1;
                 if (tgs < n.g_score)
                 {
+                    var bounds = new Bounds(centre(n.x, n.y, n.z), Vector3.one * resolution);
+                    var entrypoint = validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
+                    if (!valid) return; // Could not find a valid entrypoint
+
                     // Not a valid move, skip
-                    if (!validate_move(current.point, n.point)) return;
+                    if (!validate_move(current.entrypoint, entrypoint, out Vector3[] subpath)) return;
 
                     // Update the path to n
+                    n.entrypoint = entrypoint;
                     n.came_from = current;
                     n.g_score = tgs;
 
                     // Re-open n
-                    if (!open_set.ContainsKey(n))
-                        open_set[n] = n;
+                    open_set[n] = n;
                 }
             });
         }
@@ -1254,14 +1316,18 @@ public class astar_path : generic_grid_path
         foreach (var kv in open_set)
         {
             var w = kv.Value;
+            //Gizmos.DrawWireCube(centre(w.x, w.y, w.z), Vector3.one * resolution);
             if (w.came_from != null)
-                Gizmos.DrawLine(w.point, w.came_from.point);
+                Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
 
         Gizmos.color = Color.blue;
-        foreach (var c in closed_set)
-            if (c.came_from != null)
-                Gizmos.DrawLine(c.point, c.came_from.point);
+        foreach (var w in closed_set)
+        {
+            //Gizmos.DrawWireCube(centre(w.x, w.y, w.z), Vector3.one * resolution);
+            if (w.came_from != null)
+                Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
+        }
     }
 
     public override string info_text()
