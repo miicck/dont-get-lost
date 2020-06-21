@@ -297,6 +297,7 @@ MonoBehaviour:
     xrSettings:
       singlePass: 1
       occlusionMesh: 1
+      cameraJitter: 0
     postProcessQualitySettings:
       NearBlurSampleCount: 030000000500000008000000
       NearBlurMaxRadius:
@@ -345,8 +346,7 @@ MonoBehaviour:
   m_DefaultMaterialQualityLevel: 4
   diffusionProfileSettings: {fileID: 0}
   diffusionProfileSettingsList:
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 5edb77401406151cd95fbccae0f3f738, type: 2}
   beforeTransparentCustomPostProcesses: []
   beforePostProcessCustomPostProcesses: []
   afterPostProcessCustomPostProcesses: []
