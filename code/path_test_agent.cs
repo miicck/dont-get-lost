@@ -19,15 +19,32 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
         get
         {
             if (_path == null)
-                _path = new astar_path(transform.position,    
-                    target.position, this, max_iterations: max_iter);
+            {
+                _path = new random_path(transform.position, 10, this);
+                //_path = new astar_path(transform.position,
+                //    target.position, this, max_iterations: max_iter);
+            }
             return _path;
+        }
+        set
+        {
+            _path = value;
+            path_progress = 0;
         }
     }
     path _path;
+    int path_progress = 0;
 
     private void Start()
     {
+        if (transform.childCount == 0) // Allows duplicating without cube buildup
+        {
+            var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.transform.localScale = 0.99f * new Vector3(agent_width, agent_height, agent_width);
+            body.transform.SetParent(transform);
+            body.transform.localPosition = Vector3.up * agent_height / 2f;
+        }
+
         if (run_once_and_time)
         {
             System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
@@ -36,25 +53,36 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
         }
     }
 
-    int i_progresss = 0;
     private void Update()
     {
-        if (iter_per_frame > 0)
-            path.pathfind(iter_per_frame);
-
-        if (Input.GetKeyDown(KeyCode.Space))
-            path.pathfind(1);
-
-        if (path.state == path.STATE.COMPLETE)
+        switch (path.state)
         {
-            if (i_progresss < path.length)
-            {
-                Vector3 delta = path[i_progresss] - transform.position;
-                if (delta.magnitude < resolution / 2f)
-                    i_progresss += 1;
+            case path.STATE.SEARCHING:
+                if (iter_per_frame > 0)
+                    path.pathfind(iter_per_frame);
 
-                transform.position += delta.normalized * Time.deltaTime * 10;
-            }
+                if (Input.GetKeyDown(KeyCode.Space))
+                    path.pathfind(1);
+                break;
+
+            case path.STATE.COMPLETE:
+                if (path_progress < path.length)
+                {
+                    Vector3 delta = path[path_progress] - transform.position;
+                    if (delta.magnitude < resolution / 2f)
+                        path_progress += 1;
+
+                    transform.position += delta.normalized * Time.deltaTime * 10;
+                }
+                else path = null;
+                break;
+
+            case path.STATE.FAILED:
+                path = null;
+                break;
+
+            default:
+                throw new System.Exception("Unkown path state!");
         }
     }
 
@@ -75,12 +103,12 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
 
     public Vector3 validate_position(Vector3 v, out bool valid)
     {
-        return pathfinding_utils.validate_walking_position(v, resolution, out valid, transform);
+        return pathfinding_utils.validate_walking_position(v, resolution, out valid);
     }
 
     public bool validate_move(Vector3 a, Vector3 b)
     {
-        return pathfinding_utils.validate_walking_move(a, b, agent_width, agent_height, ground_clearance, transform);
+        return pathfinding_utils.validate_walking_move(a, b, agent_width, agent_height, ground_clearance);
     }
 
     public float resolution { get => path_resolution; }

@@ -144,7 +144,7 @@ public class pathfinding_agent : networked, IPathingAgent
 
     public Vector3 validate_position(Vector3 v, out bool valid)
     {
-        Vector3 pos = pathfinding_utils.validate_walking_position(v, resolution, out valid, transform);
+        Vector3 pos = pathfinding_utils.validate_walking_position(v, resolution, out valid);
         if (!path_constriant(pos)) valid = false;
         return pos;
     }
@@ -152,7 +152,7 @@ public class pathfinding_agent : networked, IPathingAgent
     public bool validate_move(Vector3 a, Vector3 b)
     {
         return pathfinding_utils.validate_walking_move(a, b,
-            agent_width, agent_height, agent_ground_clearance, transform);
+            agent_width, agent_height, agent_ground_clearance);
     }
 
     public float resolution { get => Mathf.Min(agent_width, agent_height); }

@@ -52,9 +52,28 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
         return (v - bed.transform.position).magnitude < MAX_DISTANCE_FROM_BED;
     }
 
+    int next_target = 0;
     void idle()
     {
-        go_to(random_target(5f), on_fail: idle, on_arrive: idle);
+        Vector3 targ = transform.position;
+        if (next_target < bed.fixture_count)
+        {
+            targ = bed[next_target].settler_stands_here.position;
+            ++next_target;
+        }
+        else if (next_target == bed.fixture_count)
+        {
+            targ = bed.transform.position;
+            ++next_target;
+        }
+        else
+        {
+            targ = random_target(5f);
+            next_target = 0;
+        }
+
+
+        go_to(targ, on_fail: idle, on_arrive: idle);
     }
 
     public override void on_gain_authority()

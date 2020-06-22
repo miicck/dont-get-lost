@@ -7,6 +7,7 @@ using UnityEngine;
 /// a house. </summary>
 public class fixture : building_material, IInspectable
 {
+    public Transform settler_stands_here;
     public bed bed { get => GetComponentInParent<bed>(); }
 
     new public string inspect_info()

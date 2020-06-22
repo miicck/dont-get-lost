@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Linq;
 
 /// <summary> An object that specifies settings for pathfinding. </summary>
-public interface IPathingAgent
+public interface IPathingAgent : INotPathBlocking
 {
     /// <summary> Should return the nearest valid path position
     /// to <paramref name="pos"/> that is within a distance of
@@ -27,10 +27,10 @@ public interface IPathingAgent
 public abstract class path
 {
     /// <summary> The start of the path. </summary>
-    public Vector3 start { get; private set; }
+    public Vector3 start { get; protected set; }
 
     /// <summary> The target endpoint of the path. </summary>
-    public Vector3 goal { get; private set; }
+    public Vector3 goal { get; protected set; }
 
     /// <summary> The agent that will move along the path. </summary>
     public IPathingAgent agent { get; private set; }
@@ -77,21 +77,21 @@ public abstract class path
 /// <summary> Carry out pathfinding using the A* algorithm. </summary>
 public class astar_path : path
 {
-    SortedDictionary<waypoint, waypoint> open_set;
-    HashSet<waypoint> closed_set;
-    waypoint start_waypoint;
-    waypoint goal_waypoint;
-    int endpoint_search_stage = 0;
-    int max_iterations;
-    int total_iterations = 0;
+    protected SortedDictionary<waypoint, waypoint> open_set;
+    protected HashSet<waypoint> closed_set;
+    protected waypoint start_waypoint;
+    protected waypoint goal_waypoint;
+    protected int endpoint_search_stage = 0;
+    protected int max_iterations;
+    protected int total_iterations = 0;
 
     /// <summary> The path found. </summary>
-    public List<Vector3> path;
+    protected List<Vector3> path;
     public override int length => path == null ? 0 : path.Count;
     public override Vector3 this[int i] => path == null ? default : path[i];
 
     /// <summary> The stages of a* pathfinding. </summary>
-    enum STAGE : byte
+    protected enum STAGE : byte
     {
         START_SEARCH = 0, // Searching for a start point
         GOAL_SEARCH = 1,  // Searching for a goal point
@@ -99,15 +99,34 @@ public class astar_path : path
     }
 
     /// <summary> The current pathfinding stage. </summary>
-    STAGE stage;
+    protected STAGE stage;
 
     public astar_path(Vector3 start, Vector3 goal, IPathingAgent agent, int max_iterations = 1000)
         : base(start, goal, agent)
     {
         this.max_iterations = max_iterations;
-        open_set = new SortedDictionary<waypoint, waypoint>(new waypoint_comp());
+        open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
         closed_set = new HashSet<waypoint>();
         stage = STAGE.START_SEARCH;
+    }
+
+    protected void reconstruct_path(waypoint end)
+    {
+        if (end == null)
+        {
+            state = STATE.FAILED;
+            return;
+        }
+
+        path = new List<Vector3> { end.entrypoint };
+        while (end.came_from != null)
+        {
+            end = end.came_from;
+            path.Add(end.entrypoint);
+        }
+        path.Reverse();
+        state = STATE.COMPLETE;
+        return;
     }
 
     public override void pathfind(int iterations)
@@ -145,14 +164,7 @@ public class astar_path : path
             // Check for success
             if (current.Equals(goal_waypoint))
             {
-                path = new List<Vector3>();
-                while (current.came_from != null)
-                {
-                    path.Add(current.entrypoint);
-                    current = current.came_from;
-                }
-                path.Reverse();
-                state = STATE.COMPLETE;
+                reconstruct_path(current);
                 return;
             }
 
@@ -200,7 +212,7 @@ public class astar_path : path
         }
     }
 
-    void search_for_endpoints(int iterations)
+    protected void search_for_endpoints(int iterations)
     {
         // Check if we've already found the endpoints
         if (stage > STAGE.GOAL_SEARCH)
@@ -285,7 +297,7 @@ public class astar_path : path
     }
 
     /// <summary> Contains information about a gridpoint location. </summary>
-    class waypoint
+    protected class waypoint
     {
         public int x { get; private set; }
         public int y { get; private set; }
@@ -326,8 +338,8 @@ public class astar_path : path
         }
     }
 
-    /// <summary> Class to compare two waypoints by their hash code. </summary>
-    class waypoint_comp : IComparer<waypoint>
+    /// <summary> Class to order waypoints by their hash code. </summary>
+    class increasing_hash_code : IComparer<waypoint>
     {
         public int Compare(waypoint a, waypoint b) { return a.GetHashCode().CompareTo(b.GetHashCode()); }
     }
@@ -375,6 +387,107 @@ public class astar_path : path
     }
 }
 
+public class random_path : astar_path
+{
+    protected waypoint current;
+    float target_distance;
+
+    public random_path(Vector3 start, float target_distance, IPathingAgent agent) : base(start, start, agent)
+    {
+        // Give the start/goal a litte random boost, so we don't get stuck in  loops
+        Vector3 rnd = Random.insideUnitSphere * agent.resolution;
+        start += rnd;
+        goal += rnd;
+
+        // Sort by decreasing distance from goal (which is set to start)
+        // so that we are attempting to maximize distance from start.
+        open_set = new SortedDictionary<waypoint, waypoint>(new decreasing_hash_code());
+        this.target_distance = target_distance;
+    }
+
+    /// <summary> Class to order waypoints by the negative of their hash code. </summary>
+    class decreasing_hash_code : IComparer<waypoint>
+    {
+        public int Compare(waypoint a, waypoint b) { return b.GetHashCode().CompareTo(a.GetHashCode()); }
+    }
+
+    public override void pathfind(int iterations)
+    {
+        if (state != STATE.SEARCHING)
+            return;
+
+        if (stage == STAGE.START_SEARCH)
+        {
+            // Search for start point
+            search_for_endpoints(iterations);
+            return;
+        }
+        else if (stage == STAGE.GOAL_SEARCH)
+            stage = STAGE.PATHFIND; // No goal to search for
+
+        // Expand the path
+        for (int i = 0; i < iterations; ++i)
+        {
+            if (open_set.Count == 0)
+            {
+                state = STATE.FAILED;
+                return;
+            }
+            else if (open_set.Count <= utils.neighbouring_dxs_3d.Length)
+            {
+                // Randomize the starting direction
+                current = open_set.ElementAt(Random.Range(0, open_set.Count)).Value;
+            }
+            else
+                current = open_set.First().Value;
+
+            if ((current.entrypoint - start_waypoint.entrypoint).magnitude > target_distance)
+            {
+                reconstruct_path(current);
+                return;
+            }
+
+            // Move current to closed set
+            open_set.Remove(current);
+            closed_set.Add(current);
+
+            for (int j = 0; j < utils.neighbouring_dxs_3d.Length; ++j)
+            {
+                // Attempt to find neighbour if they alreaddy exist
+                waypoint n = new waypoint(
+                    current.x + utils.neighbouring_dxs_3d[j],
+                    current.y + utils.neighbouring_dys_3d[j],
+                    current.z + utils.neighbouring_dzs_3d[j]
+                );
+
+                // Already explored
+                if (closed_set.Contains(n)) continue;
+
+                // Already open
+                if (open_set.ContainsKey(n)) continue;
+
+                // Find a suitable entrypoint to the neighbour n from current
+                Bounds bounds = new Bounds(grid_centre(n.x, n.y, n.z), Vector3.one * agent.resolution);
+                Vector3 entrypoint = agent.validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
+                if (!valid) continue; // Could not find a valid entrypoint
+
+                // Not a valid move, skip
+                if (!agent.validate_move(current.entrypoint, entrypoint)) continue;
+
+                // Update the path to n
+                n.entrypoint = entrypoint;
+                n.came_from = current;
+
+                // Re-open n
+                open_set[n] = n;
+            }
+        }
+    }
+}
+
+/// <summary> This object, or it's children, do not block paths. </summary>
+public interface INotPathBlocking { }
+
 /// <summary> Tools to use in pathfinding. </summary>
 public static class pathfinding_utils
 {
@@ -383,7 +496,7 @@ public static class pathfinding_utils
     /// for grounding within the gridpoint with the given 
     /// <paramref name="centre"/>. </summary>
     static Vector3 boxcast_position_validate(Vector3 centre, float resolution,
-        out bool valid, Transform ignore_collisions_with)
+        out bool valid)
     {
         Vector3 size = Vector3.one * resolution;
         Vector3 start_pos = centre + Vector3.up * resolution;
@@ -391,13 +504,13 @@ public static class pathfinding_utils
 
         Vector3 move = end_pos - start_pos;
         foreach (var h in Physics.BoxCastAll(start_pos, size / 2f,
-           move.normalized,Quaternion.identity, move.magnitude))
-        {
-            if (h.transform.IsChildOf(ignore_collisions_with)) continue;
-            valid = true;
-            if (h.point == default) return centre;
-            return h.point;
-        }
+           move.normalized, Quaternion.identity, move.magnitude))
+            if (h.transform.GetComponentInParent<INotPathBlocking>() == null)
+            {
+                valid = true;
+                if (h.point == default) return centre;
+                return h.point;
+            }
 
         valid = false;
         return centre;
@@ -406,14 +519,14 @@ public static class pathfinding_utils
     /// <summary> The same as <see cref="boxcast_position_validate(Vector3, float, out bool)"/>, 
     /// but using an overlap box instead of a boxcast. </summary>
     static Vector3 overap_box_position_validate(Vector3 centre, float resolution,
-        out bool valid, Transform ignore_collisions_with)
+        out bool valid)
     {
         foreach (var c in Physics.OverlapBox(centre, Vector3.one * resolution / 2f))
-        {
-            if (c.transform.IsChildOf(ignore_collisions_with)) continue;
-            valid = true;
-            return c.ClosestPoint(centre);
-        }
+            if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
+            {
+                valid = true;
+                return c.ClosestPoint(centre);
+            }
 
         valid = false;
         return centre;
@@ -423,7 +536,7 @@ public static class pathfinding_utils
     /// to <paramref name="b"/> a walking agent of the given <paramref name="width"/>
     /// will always have sufficient grounding. </summary>
     static bool validate_move_grounding(Vector3 a, Vector3 b,
-        float width, float ground_clearance, Transform ignore_collisions_with)
+        float width, float ground_clearance)
     {
         Vector3 delta = b - a;
         for (float p = 0; p <= delta.magnitude; p += width)
@@ -435,10 +548,8 @@ public static class pathfinding_utils
 
             bool grounding_found = false;
             foreach (var h in Physics.RaycastAll(start, delta_ray.normalized, delta_ray.magnitude))
-            {
-                if (h.transform.IsChildOf(ignore_collisions_with)) continue;
-                grounding_found = true;
-            }
+                if (h.transform.GetComponentInParent<INotPathBlocking>() == null)
+                    grounding_found = true;
 
             if (!grounding_found)
                 return false;
@@ -450,7 +561,7 @@ public static class pathfinding_utils
     /// <summary> Same as <see cref="validate_move_grounding(Vector3, Vector3, float, float, Transform)"/>,
     /// but using overlap boxes rather than raycasts. </summary>
     static bool validate_move_grounding_overlap(Vector3 a, Vector3 b,
-        float width, float ground_clearance, Transform ignore_collisions_with)
+        float width, float ground_clearance)
     {
         Vector3 delta = b - a;
         if (delta.magnitude < 1e-4) return true;
@@ -466,7 +577,7 @@ public static class pathfinding_utils
             Vector3 centre = a + delta.normalized * (p + width / 2f) + Vector3.up * ground_clearance;
             Vector3 size = new Vector3(width, 2 * ground_clearance, width);
             foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
-                if (!c.transform.IsChildOf(ignore_collisions_with))
+                if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
                     return true;
         }
 
@@ -478,8 +589,7 @@ public static class pathfinding_utils
     /// <paramref name="height"/> and <paramref name="ground_clearance"/>, by 
     /// checking if anythging overlaps an appropriately-shaped box. </summary>
     static bool validate_move_overlap(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance,
-        Transform ignore_collisions_with)
+        float width, float height, float ground_clearance)
     {
         Vector3 delta = b - a;
         if (delta.magnitude < 1e-4) return true;
@@ -494,7 +604,7 @@ public static class pathfinding_utils
         Quaternion orientation = Quaternion.LookRotation(forward, up);
 
         foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
-            if (!c.transform.IsChildOf(ignore_collisions_with))
+            if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
                 return false;
 
         return true;
@@ -504,16 +614,16 @@ public static class pathfinding_utils
     /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
     /// <paramref name="ground_clearance"/> walking. </summary>
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance, Transform ignore_collisions_with)
+        float width, float height, float ground_clearance)
     {
-        return validate_move_overlap(a, b, width, height, ground_clearance, ignore_collisions_with) &&
-               validate_move_grounding(a, b, width, ground_clearance, ignore_collisions_with);
+        return validate_move_overlap(a, b, width, height, ground_clearance) &&
+               validate_move_grounding(a, b, width, ground_clearance);
     }
 
     /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>
     public static Vector3 validate_walking_position(Vector3 v, float resolution,
-        out bool valid, Transform ignore_collisions_with)
+        out bool valid)
     {
-        return boxcast_position_validate(v, resolution, out valid, ignore_collisions_with);
+        return boxcast_position_validate(v, resolution, out valid);
     }
 }

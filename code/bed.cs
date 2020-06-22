@@ -23,6 +23,9 @@ public class bed : building_material, IInspectable
         return fixtures[Random.Range(0, fixtures.Count)];
     }
 
+    public int fixture_count => fixtures.Count;
+    public fixture this[int i] => fixtures[i];
+
     List<fixture> fixtures = new List<fixture>();
     settler occupant;
     bool fixtures_dirty = false;
