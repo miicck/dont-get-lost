@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary> A memeber of a settlment. </summary>
 public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
 {
+    const float MAX_DISTANCE_FROM_BED = 10;
+
     public bed bed { get => GetComponentInParent<bed>(); }
     settler_trade[] trades { get => GetComponentsInChildren<settler_trade>(); }
     item_requirement[] requirements { get => GetComponents<item_requirement>(); }
@@ -47,7 +49,7 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
 
     protected override bool path_constriant(Vector3 v)
     {
-        return (v - bed.transform.position).magnitude < 5f;
+        return (v - bed.transform.position).magnitude < MAX_DISTANCE_FROM_BED;
     }
 
     void idle()
@@ -73,6 +75,13 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
             foreach (var t in trades)
                 t.run_stock_updates();
         }
+    }
+
+    protected override void OnDrawGizmosSelected()
+    {
+        base.OnDrawGizmosSelected();
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(bed.transform.position, MAX_DISTANCE_FROM_BED);
     }
 
     //############//

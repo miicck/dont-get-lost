@@ -19,7 +19,8 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
         get
         {
             if (_path == null)
-                _path = new astar_path(transform.position, target.position, this);
+                _path = new astar_path(transform.position,    
+                    target.position, this, max_iterations: max_iter);
             return _path;
         }
     }
@@ -74,12 +75,12 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
 
     public Vector3 validate_position(Vector3 v, out bool valid)
     {
-        return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        return pathfinding_utils.validate_walking_position(v, resolution, out valid, transform);
     }
 
     public bool validate_move(Vector3 a, Vector3 b)
     {
-        return pathfinding_utils.validate_walking_move(a, b, agent_width, agent_height, ground_clearance);
+        return pathfinding_utils.validate_walking_move(a, b, agent_width, agent_height, ground_clearance, transform);
     }
 
     public float resolution { get => path_resolution; }

@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class pathfinding_agent : networked, IPathingAgent
 {
+    public float agent_width = 1f;
     public float agent_height = 1.5f;
-    public float agent_resolution = 0.5f;
+    public float agent_ground_clearance = 0.5f; 
     public float base_speed = 5f;
 
     protected delegate void callback();
@@ -132,7 +133,7 @@ public class pathfinding_agent : networked, IPathingAgent
         }
     }
 
-    private void OnDrawGizmosSelected()
+    protected virtual void OnDrawGizmosSelected()
     {
         if (path != null) path.draw_gizmos();
     }
@@ -143,7 +144,7 @@ public class pathfinding_agent : networked, IPathingAgent
 
     public Vector3 validate_position(Vector3 v, out bool valid)
     {
-        Vector3 pos = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        Vector3 pos = pathfinding_utils.validate_walking_position(v, resolution, out valid, transform);
         if (!path_constriant(pos)) valid = false;
         return pos;
     }
@@ -151,10 +152,10 @@ public class pathfinding_agent : networked, IPathingAgent
     public bool validate_move(Vector3 a, Vector3 b)
     {
         return pathfinding_utils.validate_walking_move(a, b,
-            resolution, agent_height, resolution / 2f);
+            agent_width, agent_height, agent_ground_clearance, transform);
     }
 
-    public float resolution { get => agent_resolution; }
+    public float resolution { get => Mathf.Min(agent_width, agent_height); }
 
     //############//
     // NETWORKING //
@@ -181,4 +182,17 @@ public class pathfinding_agent : networked, IPathingAgent
         networked_position = transform.position;
         y_rotation.value = transform.rotation.eulerAngles.y;
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(pathfinding_agent), true)]
+    new class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var agent = (pathfinding_agent)target;
+            UnityEditor.EditorGUILayout.TextArea(agent.path?.info_text());
+        }
+    }
+#endif
 }

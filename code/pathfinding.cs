@@ -382,26 +382,35 @@ public static class pathfinding_utils
     /// a grid of the given resolution, by using a box cast to check
     /// for grounding within the gridpoint with the given 
     /// <paramref name="centre"/>. </summary>
-    static Vector3 boxcast_position_validate(Vector3 centre, float resolution, out bool valid)
+    static Vector3 boxcast_position_validate(Vector3 centre, float resolution,
+        out bool valid, Transform ignore_collisions_with)
     {
         Vector3 size = Vector3.one * resolution;
         Vector3 start_pos = centre + Vector3.up * resolution;
         Vector3 end_pos = centre;
 
         Vector3 move = end_pos - start_pos;
-        valid = Physics.BoxCast(start_pos, size / 2f, move.normalized,
-            out RaycastHit hit, Quaternion.identity, move.magnitude);
+        foreach (var h in Physics.BoxCastAll(start_pos, size / 2f,
+           move.normalized,Quaternion.identity, move.magnitude))
+        {
+            if (h.transform.IsChildOf(ignore_collisions_with)) continue;
+            valid = true;
+            if (h.point == default) return centre;
+            return h.point;
+        }
 
-        if (!valid) return centre;
-        return hit.point + Vector3.up / 100f;
+        valid = false;
+        return centre;
     }
 
     /// <summary> The same as <see cref="boxcast_position_validate(Vector3, float, out bool)"/>, 
     /// but using an overlap box instead of a boxcast. </summary>
-    static Vector3 overap_box_position_validate(Vector3 centre, float resolution, out bool valid)
+    static Vector3 overap_box_position_validate(Vector3 centre, float resolution,
+        out bool valid, Transform ignore_collisions_with)
     {
         foreach (var c in Physics.OverlapBox(centre, Vector3.one * resolution / 2f))
         {
+            if (c.transform.IsChildOf(ignore_collisions_with)) continue;
             valid = true;
             return c.ClosestPoint(centre);
         }
@@ -414,7 +423,7 @@ public static class pathfinding_utils
     /// to <paramref name="b"/> a walking agent of the given <paramref name="width"/>
     /// will always have sufficient grounding. </summary>
     static bool validate_move_grounding(Vector3 a, Vector3 b,
-        float width, float ground_clearance)
+        float width, float ground_clearance, Transform ignore_collisions_with)
     {
         Vector3 delta = b - a;
         for (float p = 0; p <= delta.magnitude; p += width)
@@ -423,11 +432,45 @@ public static class pathfinding_utils
             Vector3 start = middle + Vector3.up * ground_clearance;
             Vector3 end = middle - Vector3.up * ground_clearance;
             Vector3 delta_ray = end - start;
-            if (!Physics.Raycast(start, delta_ray.normalized, delta_ray.magnitude))
+
+            bool grounding_found = false;
+            foreach (var h in Physics.RaycastAll(start, delta_ray.normalized, delta_ray.magnitude))
+            {
+                if (h.transform.IsChildOf(ignore_collisions_with)) continue;
+                grounding_found = true;
+            }
+
+            if (!grounding_found)
                 return false;
         }
 
         return true;
+    }
+
+    /// <summary> Same as <see cref="validate_move_grounding(Vector3, Vector3, float, float, Transform)"/>,
+    /// but using overlap boxes rather than raycasts. </summary>
+    static bool validate_move_grounding_overlap(Vector3 a, Vector3 b,
+        float width, float ground_clearance, Transform ignore_collisions_with)
+    {
+        Vector3 delta = b - a;
+        if (delta.magnitude < 1e-4) return true;
+
+        Vector3 forward = delta.normalized;
+        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 up = Vector3.Cross(right, forward);
+        if (up.magnitude < 1e-4) up = Vector3.up;
+        Quaternion orientation = Quaternion.LookRotation(forward, up);
+
+        for (float p = 0; p <= delta.magnitude; p += width)
+        {
+            Vector3 centre = a + delta.normalized * (p + width / 2f) + Vector3.up * ground_clearance;
+            Vector3 size = new Vector3(width, 2 * ground_clearance, width);
+            foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
+                if (!c.transform.IsChildOf(ignore_collisions_with))
+                    return true;
+        }
+
+        return false;
     }
 
     /// <summary> Check that nothing is in the way on a from <paramref name="a"/> 
@@ -435,7 +478,8 @@ public static class pathfinding_utils
     /// <paramref name="height"/> and <paramref name="ground_clearance"/>, by 
     /// checking if anythging overlaps an appropriately-shaped box. </summary>
     static bool validate_move_overlap(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
+        float width, float height, float ground_clearance,
+        Transform ignore_collisions_with)
     {
         Vector3 delta = b - a;
         if (delta.magnitude < 1e-4) return true;
@@ -449,22 +493,27 @@ public static class pathfinding_utils
         if (up.magnitude < 1e-4) up = Vector3.up;
         Quaternion orientation = Quaternion.LookRotation(forward, up);
 
-        return Physics.OverlapBox(centre, size / 2f, orientation).Length == 0;
+        foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
+            if (!c.transform.IsChildOf(ignore_collisions_with))
+                return false;
+
+        return true;
     }
 
     /// <summary> Validate a move from <paramref name="a"/> to <paramref name="b"/> for an
     /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
     /// <paramref name="ground_clearance"/> walking. </summary>
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
+        float width, float height, float ground_clearance, Transform ignore_collisions_with)
     {
-        return validate_move_overlap(a, b, width, height, ground_clearance) &&
-               validate_move_grounding(a, b, width, ground_clearance);
+        return validate_move_overlap(a, b, width, height, ground_clearance, ignore_collisions_with) &&
+               validate_move_grounding(a, b, width, ground_clearance, ignore_collisions_with);
     }
 
     /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>
-    public static Vector3 validate_walking_position(Vector3 v, float resolution, out bool valid)
+    public static Vector3 validate_walking_position(Vector3 v, float resolution,
+        out bool valid, Transform ignore_collisions_with)
     {
-        return boxcast_position_validate(v, resolution, out valid);
+        return boxcast_position_validate(v, resolution, out valid, ignore_collisions_with);
     }
 }
