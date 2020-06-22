@@ -483,6 +483,11 @@ public class random_path : astar_path
             }
         }
     }
+
+    public override string info_text()
+    {
+        return "RANDOM PATH\n" + base.info_text();
+    }
 }
 
 /// <summary> This object, or it's children, do not block paths. </summary>

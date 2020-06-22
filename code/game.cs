@@ -190,6 +190,9 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        // Update load balancing info
+        load_balancing.update();
+
         // Toggle the console using the caret
         if (Input.GetKeyDown(KeyCode.BackQuote))
             console.open = !console.open;
@@ -231,7 +234,9 @@ public class game : MonoBehaviour
             "\nCLIENT\n" +
             client.info() + "\n" +
             "\nPLAYER\n" +
-            player.info() + "\n";
+            player.info() + "\n" +
+            "\nLOAD BALANCER\n" +
+            load_balancing.info() + "\n";
 
         debug_text = debug_text.Trim();
         this.debug_text.text = utils.allign_colons(debug_text);

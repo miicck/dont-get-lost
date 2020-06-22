@@ -384,22 +384,12 @@ public class chunk : MonoBehaviour
     class gradual_chunk_generator : MonoBehaviour
     {
         public chunk chunk;
-        static int steps_per_frame = 1;
 
         private void Update()
         {
-            // Do more generation steps if the framerate is
-            // acceptably high
-            int framerate = (int)(1 / Time.deltaTime);
-            if (framerate < 60) --steps_per_frame;
-            else ++steps_per_frame;
-
-            // Generation must always progress
-            if (steps_per_frame < 1) steps_per_frame = 1;
-
             // Generate every frame until
             // we need not generate any more
-            for (int step = 0; step < steps_per_frame; ++step)
+            for (int step = 0; step < load_balancing.iter; ++step)
                 if (chunk.continue_generation())
                 {
                     // Generation complete

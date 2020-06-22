@@ -11,8 +11,18 @@ public class pathfinding_agent : networked, IPathingAgent
 
     protected delegate void callback();
 
-    path path;
+    path path
+    {
+        get => _path;
+        set
+        {
+            _path = value;
+            path_progress = 0;
+        }
+    }
+    path _path;
     int path_progress;
+
     Vector3 target;
     callback on_fail;
     callback on_arrive;
@@ -22,7 +32,7 @@ public class pathfinding_agent : networked, IPathingAgent
     // Overridable methods
     protected virtual float speed() { return base_speed; }
     protected virtual float arrive_distance() { return 0.25f; }
-    protected virtual int pathfind_iters_per_frame() { return 1; }
+    protected virtual int pathfind_iters_per_frame() { return load_balancing.iter; }
     protected virtual bool path_constriant(Vector3 v) { return true; }
 
     /// <summary> Move agent towards <paramref name="v"/>, returns true if
@@ -94,7 +104,12 @@ public class pathfinding_agent : networked, IPathingAgent
         this.on_search = on_search;
 
         path = new astar_path(transform.position, target, this);
-        path_progress = 0;
+    }
+
+    /// <summary> Called to carry out a random walk from my current location. </summary>
+    protected void random_walk(float target_range, callback on_fail, callback on_arrive)
+    {
+        path = new random_path(transform.position, target_range, this);
     }
 
     /// <summary> Run the pathfinding agent. </summary>

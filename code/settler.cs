@@ -5,8 +5,6 @@ using UnityEngine;
 /// <summary> A memeber of a settlment. </summary>
 public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
 {
-    const float MAX_DISTANCE_FROM_BED = 10;
-
     public bed bed { get => GetComponentInParent<bed>(); }
     settler_trade[] trades { get => GetComponentsInChildren<settler_trade>(); }
     item_requirement[] requirements { get => GetComponents<item_requirement>(); }
@@ -49,31 +47,49 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
 
     protected override bool path_constriant(Vector3 v)
     {
-        return (v - bed.transform.position).magnitude < MAX_DISTANCE_FROM_BED;
+        if (v.y < world.SEA_LEVEL) return false;
+        return true;
+    }
+
+    int path_fail_count = 0;
+    void on_path_fail()
+    {
+        if (++path_fail_count > 5)
+        {
+            path_fail_count = 0;
+            transform.position = bed.transform.position;
+        }
     }
 
     int next_target = 0;
     void idle()
     {
-        Vector3 targ = transform.position;
         if (next_target < bed.fixture_count)
         {
-            targ = bed[next_target].settler_stands_here.position;
+            go_to(bed[next_target].settler_stands_here.position, on_arrive: idle, on_fail: () =>
+            {
+                on_path_fail();
+                idle();
+            });
             ++next_target;
         }
         else if (next_target == bed.fixture_count)
         {
-            targ = bed.transform.position;
+            go_to(bed.transform.position, on_arrive: idle, on_fail: () =>
+            {
+                on_path_fail();
+                idle();
+            });
             ++next_target;
         }
         else
         {
-            targ = random_target(5f);
+            random_walk(10f, on_fail: idle, on_arrive: idle);
             next_target = 0;
+            return;
         }
 
 
-        go_to(targ, on_fail: idle, on_arrive: idle);
     }
 
     public override void on_gain_authority()
@@ -94,13 +110,6 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
             foreach (var t in trades)
                 t.run_stock_updates();
         }
-    }
-
-    protected override void OnDrawGizmosSelected()
-    {
-        base.OnDrawGizmosSelected();
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(bed.transform.position, MAX_DISTANCE_FROM_BED);
     }
 
     //############//
