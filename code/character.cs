@@ -252,15 +252,7 @@ public class character : networked, IPathingAgent
     void idle_walk()
     {
         if (path == null)
-        {
-            // Search for a new walk target
-            Vector3 location = spawned_by.transform.position +
-                Random.insideUnitSphere * spawned_by.max_range;
-
-            RaycastHit hit;
-            if (Physics.Raycast(location, -Vector3.up, out hit, 10f))
-                get_path(hit.point);
-        }
+            path = new random_path(transform.position, spawned_by.max_range, this);
         else move_along_path(walk_speed);
     }
 
