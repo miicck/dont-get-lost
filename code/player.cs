@@ -40,11 +40,27 @@ public class player : networked_player
     // UNITY CALLBACKS //
     //#################//
 
+    bool recipe_book_open
+    {
+        get => recipe.recipe_book.gameObject.activeInHierarchy;
+        set
+        {
+            recipe.recipe_book.gameObject.SetActive(value);
+            Cursor.visible = value;
+            Cursor.lockState = value ? CursorLockMode.None : CursorLockMode.Locked;
+        }
+    }
+
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
     {
         // If the options menu isn't open don't do anything else
         if (options_menu.open) return;
+
+        // Toggle the recipe book
+        if (Input.GetKeyDown(KeyCode.R))
+            recipe_book_open = !recipe_book_open;
+        if (recipe_book_open) return;
 
         inspect_info.visible = Input.GetKey(KeyCode.Tab);
 

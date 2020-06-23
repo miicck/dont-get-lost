@@ -13,17 +13,18 @@ public class recipe : MonoBehaviour
     {
         var ce = crafting_entry.create();
         ce.image.sprite = products[0].sprite();
-        ce.text.text = "";
-
-        foreach (var i in ingredients)
-            ce.text.text += i.str() + " + ";
-        ce.text.text = ce.text.text.Substring(0, ce.text.text.Length - 2);
-
-        ce.text.text += "> ";
-
-        ce.text.text += product.product_list(products);
-
+        ce.text.text = craft_string();
         return ce;
+    }
+
+    string craft_string()
+    {
+        string ret = "";
+        foreach (var i in ingredients)
+            ret += i.str() + " + ";
+        ret = ret.Substring(0, ret.Length - 2);
+        ret += "> " + product.product_list(products);
+        return ret;
     }
 
     public bool can_craft(inventory_section i)
@@ -45,6 +46,49 @@ public class recipe : MonoBehaviour
         foreach (var p in products)
             p.create_in_inventory(to);
     }
+
+    static List<KeyValuePair<string, recipe[]>> all_recipies()
+    {
+        List<KeyValuePair<string, recipe[]>> ret = new List<KeyValuePair<string, recipe[]>>();
+        ret.Add(new KeyValuePair<string, recipe[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
+        string workbench_dir = Application.dataPath + "/resources/recipes/workbenches";
+
+        foreach (var dir in System.IO.Directory.GetDirectories(workbench_dir))
+        {
+            var spl = dir.Split('/', '\\');
+            string wb_name = spl[spl.Length - 1];
+            ret.Add(new KeyValuePair<string, recipe[]>(wb_name,
+                Resources.LoadAll<recipe>("recipes/workbenches/" + wb_name)));
+        }
+
+        return ret;
+    }
+
+    public static RectTransform recipe_book
+    {
+        get
+        {
+            if (_recipe_book == null)
+            {
+                string text = "Recipes\n";
+
+                foreach (var kv in all_recipies())
+                {
+                    text += "\n" + kv.Key + "\n";
+                    foreach (var r in kv.Value)
+                        text += r.craft_string() + "\n";
+                }
+
+                _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();
+                _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>().text = text;
+                _recipe_book.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                _recipe_book.anchoredPosition = Vector2.zero; // Middle of screen
+                _recipe_book.gameObject.SetActive(false); // Recipe book starts closed
+            }
+            return _recipe_book;
+        }
+    }
+    static RectTransform _recipe_book;
 }
 
 public abstract class ingredient : MonoBehaviour
