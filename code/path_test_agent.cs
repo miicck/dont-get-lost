@@ -20,7 +20,8 @@ public class path_test_agent : MonoBehaviour, IPathingAgent
         {
             if (_path == null)
             {
-                _path = new random_path(transform.position, 10, this);
+                random_path.success_func f = (v) => (v - transform.position).magnitude > 10f;
+                _path = new random_path(transform.position, f, f, this);
                 //_path = new astar_path(transform.position,
                 //    target.position, this, max_iterations: max_iter);
             }

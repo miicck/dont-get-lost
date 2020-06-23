@@ -52,6 +52,10 @@ public class networked : MonoBehaviour
     /// <summary> Called the first time this object reccives a positive id. </summary>
     public virtual void on_first_register() { }
 
+    /// <summary> Should return true if this object should persist 
+    /// between loads/if they go out of range. </summary>
+    public virtual bool persistant() { return true; }
+
     //#####################//
     // NETWORKED VARIABLES //
     //#####################//

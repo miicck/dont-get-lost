@@ -390,9 +390,14 @@ public class astar_path : path
 public class random_path : astar_path
 {
     protected waypoint current;
-    float target_distance;
 
-    public random_path(Vector3 start, float target_distance, IPathingAgent agent) : base(start, start, agent)
+    public delegate bool success_func(Vector3 v);
+    success_func endpoint_successful;
+    success_func midpoint_successful;
+
+    public random_path(Vector3 start,
+        success_func midpoint_successful, success_func endpoint_successful,
+        IPathingAgent agent) : base(start, start, agent)
     {
         // Give the start/goal a litte random boost, so we don't get stuck in  loops
         Vector3 rnd = Random.insideUnitSphere * agent.resolution;
@@ -402,7 +407,8 @@ public class random_path : astar_path
         // Sort by decreasing distance from goal (which is set to start)
         // so that we are attempting to maximize distance from start.
         open_set = new SortedDictionary<waypoint, waypoint>(new decreasing_hash_code());
-        this.target_distance = target_distance;
+        this.endpoint_successful = endpoint_successful;
+        this.midpoint_successful = midpoint_successful;
     }
 
     /// <summary> Class to order waypoints by the negative of their hash code. </summary>
@@ -430,7 +436,10 @@ public class random_path : astar_path
         {
             if (open_set.Count == 0)
             {
-                state = STATE.FAILED;
+                if (current != null && endpoint_successful(current.entrypoint))
+                    reconstruct_path(current);
+                else
+                    state = STATE.FAILED;
                 return;
             }
             else if (open_set.Count <= utils.neighbouring_dxs_3d.Length)
@@ -441,7 +450,7 @@ public class random_path : astar_path
             else
                 current = open_set.First().Value;
 
-            if ((current.entrypoint - start_waypoint.entrypoint).magnitude > target_distance)
+            if (midpoint_successful(current.entrypoint))
             {
                 reconstruct_path(current);
                 return;

@@ -256,6 +256,35 @@ public static class server
         }
         client _authority;
 
+        /// <summary> Remove the representation from the server, and  any corresponding objects from 
+        /// clients. </summary>
+        /// <param name="issued_from">The client that issed the delete, null if it was the server.</param>
+        /// <param name="response_requested">True if the client that issued the delete wanted a response.</param>
+        /// <param name="check_clients">True if the clients should be checked for objects to delete. This
+        /// should only be false if it is guaranteed that no clients have the object loaded.</param>
+        public void delete(client issued_from = null, bool response_requested = false, 
+            bool check_clients = true)
+        {
+            // Unload from all clients + the server (children 
+            // will automatically be unloaded by the client).
+            if (check_clients)
+                foreach (var c in connected_clients)
+                    if (c.has_loaded(this))
+                        c.unload(this, true, already_removed: c == issued_from);
+
+            // Move to inactive whilst deleting.
+            transform.SetParent(inactive_representations);
+
+            // Remove/destroy the representation + all children
+            network_utils.top_down<representation>(transform,
+                (rep) => representations.Remove(rep.network_id));
+            Destroy(gameObject);
+
+            // Delete successful. If the client requested a response, send one.
+            if (response_requested)
+                message_senders[MESSAGE.DELETE_SUCCESS](issued_from, network_id);
+        }
+
         public void on_load_on(client client)
         {
             // If I was loaded and don't have authority
@@ -282,6 +311,12 @@ public static class server
                         authority = c;
                         break;
                     }
+            }
+
+            if (_authority == null && !persistant)
+            {
+                // Not loaded on any clients, and should not persist => should be deleted.
+                delete(check_clients: false);
             }
         }
 
@@ -341,20 +376,25 @@ public static class server
         }
         int _network_id;
 
-        // The prefab to create on new clients
+        /// <summary> The prefab to create on new clients. </summary>
         public string prefab
         {
             get => _prefab;
             private set
             {
                 _prefab = value;
-                radius = networked.look_up(value).network_radius();
+                var nw = networked.look_up(value);
+                radius = nw.network_radius();
+                persistant = nw.persistant();
             }
         }
         string _prefab;
 
-        // Needed for proximity tests
+        /// <summary> Needed for proximity tests. </summary>
         public float radius { get; private set; }
+
+        /// <summary> Should this representation persist when unloaded from all clients? </summary>
+        public bool persistant { get; private set; }
 
         /// <summary> Serialize this representation into a form that can 
         /// be sent over the network, or saved to disk. </summary>
@@ -657,24 +697,8 @@ public static class server
                     return;
                 }
 
-                // Unload the object with the above network_id 
-                // from all clients + the server (children will
-                // also be unloaded by the client).
-                foreach (var c in connected_clients)
-                    if (c.has_loaded(deleting))
-                        c.unload(deleting, true, already_removed: c == client);
-
-                // Move to inactive whilst deleting.
-                deleting.transform.SetParent(inactive_representations);
-
-                // Remove/destroy the representation + all children
-                network_utils.top_down<representation>(deleting.transform,
-                    (rep) => representations.Remove(rep.network_id));
-                Object.Destroy(deleting.gameObject);
-
-                // Delete successful. If the client requested a response, send one.
-                if (response)
-                    message_senders[MESSAGE.DELETE_SUCCESS](client, network_id);
+                // Delete the representation
+                deleting.delete(issued_from: client, response_requested: response);
             }
         };
 
@@ -862,7 +886,7 @@ public static class server
         Debug.Log("Loading: " + fullpath);
 
         using (var file = System.IO.File.OpenRead(fullpath))
-        using (var decompress = new System.IO.Compression.GZipStream(file, 
+        using (var decompress = new System.IO.Compression.GZipStream(file,
             System.IO.Compression.CompressionMode.Decompress))
         using (var buffer = new System.IO.MemoryStream())
         {

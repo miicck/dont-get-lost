@@ -28,11 +28,11 @@ public class character_spawner : spawned_by_world_object
         if (network_id < 0)
             return; // Wait until registered
 
-        int to_sapwn = max_to_spawn - spawned.Length;
-        if (to_sapwn <= 0)
+        int to_spawn = max_to_spawn - spawned.Length;
+        if (to_spawn <= 0)
             return; // None left to spawn
 
-        for (int i = 0; i < to_sapwn; ++i)
+        for (int i = 0; i < to_spawn; ++i)
             client.create(transform.position, character_to_spawn, parent: this);
     }
 
@@ -61,7 +61,10 @@ public class character_spawner : spawned_by_world_object
 
         chunk_generated = true;
         foreach (var s in spawned)
+        {
             s.gameObject.SetActive(true);
+            s.on_spawn(this);
+        }
     }
 
     private void OnDrawGizmosSelected()

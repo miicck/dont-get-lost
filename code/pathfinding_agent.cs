@@ -6,7 +6,7 @@ public class pathfinding_agent : networked, IPathingAgent
 {
     public float agent_width = 1f;
     public float agent_height = 1.5f;
-    public float agent_ground_clearance = 0.5f; 
+    public float agent_ground_clearance = 0.5f;
     public float base_speed = 5f;
 
     protected delegate void callback();
@@ -109,7 +109,8 @@ public class pathfinding_agent : networked, IPathingAgent
     /// <summary> Called to carry out a random walk from my current location. </summary>
     protected void random_walk(float target_range, callback on_fail, callback on_arrive)
     {
-        path = new random_path(transform.position, target_range, this);
+        random_path.success_func f = (v) => (transform.position - v).magnitude > target_range;
+        path = new random_path(transform.position, f, f, this);
     }
 
     /// <summary> Run the pathfinding agent. </summary>

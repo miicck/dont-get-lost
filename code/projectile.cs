@@ -8,6 +8,12 @@ public class projectile : item
     public float start_distance = 1f;
     string got_stuck_in;
 
+    public override bool persistant()
+    {
+        // Projectiles despawn
+        return false;
+    }
+
     public override float position_lerp_speed()
     {
         // Lerp faster so it looks more like a projectile

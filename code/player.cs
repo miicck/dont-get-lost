@@ -970,7 +970,20 @@ public class player : networked_player
     // HEALTH //
     //########//
 
-    public biome biome { get; private set; }
+    public biome biome
+    {
+        get => _biome;
+        private set
+        {
+            if (_biome == value)
+                return; // No change
+            _biome = value;
+            enemies.biome = value;
+        }
+    }
+    biome _biome;
+
+
     public biome.point point { get; private set; }
 
     public int max_health { get => 100; }

@@ -108,6 +108,14 @@ public class desert : biome
             }
     }
 
+    public override Dictionary<string, float> character_densities()
+    {
+        return new Dictionary<string, float>
+        {
+            ["chicken"] = 1 / (32f * 32f)
+        };
+    }
+
     protected override void generate_grid()
     {
         float[,] alt = new float[SIZE, SIZE];

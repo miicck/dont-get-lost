@@ -209,6 +209,9 @@ public class game : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
         if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
+
+        // Spawn enemies
+        enemies.update();
     }
 
     void network_update()
@@ -236,10 +239,17 @@ public class game : MonoBehaviour
             "\nPLAYER\n" +
             player.info() + "\n" +
             "\nLOAD BALANCER\n" +
-            load_balancing.info() + "\n";
+            load_balancing.info() + "\n" +
+            "\nENEMY SPAWNING\n" +
+            enemies.info() + "\n";
 
         debug_text = debug_text.Trim();
         this.debug_text.text = utils.allign_colons(debug_text);
+    }
+
+    private void OnDrawGizmos()
+    {
+        enemies.draw_gizmos();
     }
 
     void OnApplicationQuit()

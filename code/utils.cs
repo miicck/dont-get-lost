@@ -591,3 +591,31 @@ public class Dictionary<K1, K2, K3, V>
         }
     }
 }
+
+public class int_rect
+{
+    public int_rect(int left, int right, int bottom, int top)
+    {
+        this.left = left;
+        this.right = right;
+        this.bottom = bottom;
+        this.top = top;
+    }
+
+    public int left { get; protected set; }
+    public int bottom { get; protected set; }
+    public int right { get; protected set; }
+    public int top { get; protected set; }
+    public int width { get => right - left; }
+    public int height { get => top - bottom; }
+    public int centre_x { get => (right + left) / 2; }
+    public int centre_z { get => (top + bottom) / 2; }
+
+    public bool is_edge(int edge_width, int x, int z)
+    {
+        return x > right - edge_width ||
+               x < left + edge_width ||
+               z > top - edge_width ||
+               z < bottom + edge_width;
+    }
+}

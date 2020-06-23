@@ -8,28 +8,36 @@ using UnityEngine;
 // scales, such as the terrain.
 public abstract class biome : MonoBehaviour
 {
-    // Set the blend distance to slightly less than a chunk 
-    // so we only need blend the outermost chunks in a biome
+    /// <summary> The distance at the edge of a biome that is blended.
+    /// Set to slightly less than a chunk so we only need blend the 
+    /// outermost chunks in a biome. </summary>
     public const int BLEND_DISTANCE = chunk.SIZE - 1;
 
-    // The biome coordinates
+    /// <summary> Biome x coordinate in the world. </summary>
     public int x { get; private set; }
+
+    /// <summary> Biome z coordinate in the world. </summary>
     public int z { get; private set; }
 
-    // The random number generator specific to this biome
+    /// <summary> The random number generator specific to this biome. </summary>
     public System.Random random { get; private set; }
 
-    // The grid of points defining the biome
+    /// <summary> The grid of points defining the biome. </summary>
     protected point[,] grid = new point[SIZE, SIZE];
     protected abstract void generate_grid();
+
+    /// <summary> The target densities (per area) for various characters in this biome. </summary>
+    public virtual Dictionary<string, float> character_densities() { return null; }
 
     //#####################//
     // NEIGHBOURING BIOMES //
     //#####################//
 
-    // My neighbouring biomes, if they don't exist already
-    // we will generate them.
-    biome[,] _neihbours = new biome[3, 3];
+    /// <summary> Get a neighbouring biome with biome coorindates 
+    /// <see cref="x"/>+<paramref name="dx"/>,
+    /// <see cref="z"/>+<paramref name="dz"/>. </summary>
+    /// <param name="generate_if_needed">True if we should generate 
+    /// the neighbouring biome if it doesn't already exist.</param>
     biome get_neighbour(int dx, int dz, bool generate_if_needed = true)
     {
         if (dx == 0 && dz == 0) return this;
@@ -50,12 +58,13 @@ public abstract class biome : MonoBehaviour
 
         return _neihbours[i, j];
     }
+    biome[,] _neihbours = new biome[3, 3];
 
     //##################//
     // COORDINATE TOOLS //
     //##################//
 
-    // Get the biome coords at a given location
+    /// <summary> Get the biome coords at a given world location. </summary>
     public static int[] coords(Vector3 location)
     {
         return new int[]
@@ -65,16 +74,17 @@ public abstract class biome : MonoBehaviour
         };
     }
 
-    // Returns the chunk at the given location
+    /// <summary> Returns the chunk at the given location, if it has 
+    /// been generated. Null otherwise. </summary>
     public static biome at(Vector3 location)
     {
         var c = coords(location);
         return generated_biomes?.get(c[0], c[1]);
     }
 
-    // Check if the biome at x, z is within render range
-    // (essentially testing if the render range circle 
-    //  intersects the biome square)
+    /// <summary> Check if the biome at x, z is within render range
+    /// (essentially testing if the render range circle 
+    ///  intersects the biome square). </summary>
     static bool in_range(int x, int z)
     {
         Vector2 player_xz = new Vector2(
@@ -104,14 +114,17 @@ public abstract class biome : MonoBehaviour
     // CHUNK GRID MANIPULATION //
     //#########################//
 
-    // The size of a biome in chunks per side
+    /// <summary> The size of a biome in chunks per side. </summary>
     public const int CHUNKS_PER_SIDE = 3;
+
+    /// <summary> The size of a biome in meters. </summary>
     public const int SIZE = CHUNKS_PER_SIDE * chunk.SIZE;
 
-    // The grid of chunks within the biome
+    /// <summary> The grid of chunks within the biome. </summary>
     chunk[,] chunk_grid = new chunk[CHUNKS_PER_SIDE, CHUNKS_PER_SIDE];
 
-    // Extend the chunk grid indicies to include neighbouring biomes
+    /// <summary> The grid of chunks with coordinates 
+    /// extended to include neighbouring biomes. </summary>
     chunk extended_chunk_grid(int i, int j, bool generate_if_needed = true)
     {
         // Convert i, j to i, j coordinates in the (dx, dz)^th neighbour
@@ -128,8 +141,8 @@ public abstract class biome : MonoBehaviour
         return b.chunk_grid[i, j];
     }
 
-    // Update the chunk neighbours in this biome, including
-    // neighbours from neighbouring biomes (if they exist)
+    /// <summary> Update the chunk neighbours in this biome, including
+    /// neighbours from neighbouring biomes (if they exist). </summary>
     public void update_chunk_neighbours(bool also_neighboring_biomes = true)
     {
         if (also_neighboring_biomes)
@@ -150,8 +163,9 @@ public abstract class biome : MonoBehaviour
                 }
     }
 
-    // Returns true if this biome contains a chunk which
-    // is active (i.e within render range)
+
+    /// <summary> Returns true if this biome contains a chunk which
+    /// is active (i.e within render range). </summary>
     public bool contains_enabled_chunk()
     {
         for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
@@ -235,9 +249,9 @@ public abstract class biome : MonoBehaviour
         return point.blend(points, weights);
     }
 
-    // Get a particular point in the biome grid in world
-    // coordinates. Clamps the biome point values
-    // outside the range of the biome.
+    /// <summary> Get a particular point in the biome grid in world
+    /// coordinates. Clamps the biome point values
+    /// outside the range of the biome. </summary>
     point clamped_grid(Vector3 world_position)
     {
         int i = Mathf.FloorToInt(world_position.x) - SIZE * x;
@@ -289,7 +303,7 @@ public abstract class biome : MonoBehaviour
     static Dictionary<int, int, biome> generated_biomes;
     static List<MethodInfo> biome_list;
 
-    // Initialize biomes for generation
+    /// <summary> Initialize static information ready for world generation. </summary>
     public static void initialize()
     {
         // Initialize static variables
@@ -331,7 +345,7 @@ public abstract class biome : MonoBehaviour
         }
     }
 
-    // Generates the biome at x, z
+    /// <summary> Generates the biome with the given biome coordinates. </summary>
     public static biome generate(int x, int z)
     {
         // Create the biome random number generator, seeded 
@@ -345,7 +359,7 @@ public abstract class biome : MonoBehaviour
         return b;
     }
 
-    // Create a biome of the given type
+    /// <summary> Generate a biome of the given type + coordinates. </summary>
     static T generate<T>(int x, int z, System.Random random) where T : biome
     {
         var b = new GameObject("biome_" + x + "_" + z).AddComponent<T>();
@@ -380,7 +394,7 @@ public abstract class biome : MonoBehaviour
     // BIOME DISPOSAL //
     //################//
 
-    // Check if this biome is no longer required in-game
+    /// <summary> Check if this biome is no longer required in game. </summary>
     bool no_longer_needed()
     {
         // If biome is in range, it's definately needed
@@ -401,7 +415,7 @@ public abstract class biome : MonoBehaviour
     // BIOME.POINT //
     //#############//
 
-    // Describes a particular point in the biome
+    /// <summary> Describes a particular point within a biome. </summary>
     public class point
     {
         public const float BEACH_START = world.SEA_LEVEL + 1f;
@@ -413,9 +427,8 @@ public abstract class biome : MonoBehaviour
         public string terrain_product = "dirt";
         public Color sky_color = sky_colors.light_blue;
         public world_object object_to_generate;
-        public object gen_info;
 
-        // Compute a weighted average of a list of points
+        /// <summary> Compute a weighted average of a list of points. </summary>
         public static point blend(point[] pts, float[] wts)
         {
             point ret = new point
@@ -461,13 +474,14 @@ public abstract class biome : MonoBehaviour
             if (pts[max_i] != null)
             {
                 ret.object_to_generate = pts[max_i].object_to_generate;
-                ret.gen_info = pts[max_i].gen_info;
                 ret.terrain_product = pts[max_i].terrain_product;
             }
 
             return ret;
         }
 
+        /// <summary> These rules will be applied to points just 
+        /// before they are used in chunk generation. </summary>
         public void apply_global_rules()
         {
             // Enforce beach color
@@ -493,7 +507,7 @@ public abstract class biome : MonoBehaviour
     }
 }
 
-// Attribute info for biomes
+/// <summary> Attribute info for biomes. </summary>
 public class biome_info : System.Attribute
 {
     public bool generation_enabled { get; private set; }
@@ -501,41 +515,5 @@ public class biome_info : System.Attribute
     public biome_info(bool generation_enabled = true)
     {
         this.generation_enabled = generation_enabled;
-    }
-}
-
-public enum COMPASS_DIRECTION
-{
-    NORTH,
-    SOUTH,
-    EAST,
-    WEST
-}
-
-public class int_rect
-{
-    public int_rect(int left, int right, int bottom, int top)
-    {
-        this.left = left;
-        this.right = right;
-        this.bottom = bottom;
-        this.top = top;
-    }
-
-    public int left { get; protected set; }
-    public int bottom { get; protected set; }
-    public int right { get; protected set; }
-    public int top { get; protected set; }
-    public int width { get => right - left; }
-    public int height { get => top - bottom; }
-    public int centre_x { get => (right + left) / 2; }
-    public int centre_z { get => (top + bottom) / 2; }
-
-    public bool is_edge(int edge_width, int x, int z)
-    {
-        return x > right - edge_width ||
-               x < left + edge_width ||
-               z > top - edge_width ||
-               z < bottom + edge_width;
     }
 }

@@ -30,21 +30,13 @@ public class character : networked, IPathingAgent
         AFRAID
     }
 
-    // The character spawner that spawned me
-    character_spawner spawned_by
+    // The character spawner that spawned me (if that is how I was spawned)
+    public character_spawner spawned_by { get; private set; }
+
+    public void on_spawn(character_spawner spawner)
     {
-        get
-        {
-            if (_spawned_by == null)
-            {
-                _spawned_by = transform.parent.GetComponent<character_spawner>();
-                if (_spawned_by == null)
-                    throw new System.Exception("Character parent is not a character spawner!");
-            }
-            return _spawned_by;
-        }
+        spawned_by = spawner;
     }
-    character_spawner _spawned_by;
 
     //###############//
     // IPathingAgent //
@@ -57,7 +49,9 @@ public class character : networked, IPathingAgent
         if (!can_walk && v.y > world.SEA_LEVEL) return false;
 
         // Can't get too far from spawner
-        if ((v - spawned_by.transform.position).magnitude > spawned_by.max_range) return false;
+        if (spawned_by != null)
+            if ((v - spawned_by.transform.position).magnitude > spawned_by.max_range)
+                return false;
 
         return true;
     }
@@ -252,7 +246,10 @@ public class character : networked, IPathingAgent
     void idle_walk()
     {
         if (path == null)
-            path = new random_path(transform.position, spawned_by.max_range, this);
+        {
+            random_path.success_func f = (v) => (v - transform.position).magnitude > 10f;
+            path = new random_path(transform.position, f, f, this);
+        }
         else move_along_path(walk_speed);
     }
 
@@ -319,6 +316,7 @@ public class character : networked, IPathingAgent
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
+        enemies.register_character(this);
     }
 
     void slow_update()
@@ -328,7 +326,11 @@ public class character : networked, IPathingAgent
 
     private void Update()
     {
+        // Characters are controlled by the authority client
         if (!has_authority) return;
+
+        // Don't do anyting unless the chunk is generated
+        if (chunk.at(transform.position, true) == null) return;
 
         if ((transform.position - player.current.transform.position).magnitude < agro_range)
         {
@@ -378,6 +380,11 @@ public class character : networked, IPathingAgent
     //############//
     // NETWORKING //
     //############//
+
+    public override bool persistant()
+    {
+        return false;
+    }
 
     networked_variables.net_float y_rotation;
     networked_variables.net_int health;
