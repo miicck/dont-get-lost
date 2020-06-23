@@ -9,8 +9,7 @@ public static class server
     // CONSTANTS //
     //###########//
 
-    /// <summary> Clients that take longer than this (in seconds) to respond to a sent 
-    /// message (i.e two times the ping) should be disconnected. </summary>
+    /// <summary> Clients that have been silent for longer than this are disconnected </summary>
     public const float CLIENT_TIMEOUT = 6f;
 
     /// <summary> How often a client should send a heartbeat 
