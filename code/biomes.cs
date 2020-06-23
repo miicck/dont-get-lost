@@ -108,14 +108,6 @@ public class desert : biome
             }
     }
 
-    public override Dictionary<string, float> character_densities()
-    {
-        return new Dictionary<string, float>
-        {
-            ["chicken"] = 1 / (32f * 32f)
-        };
-    }
-
     protected override void generate_grid()
     {
         float[,] alt = new float[SIZE, SIZE];
@@ -342,6 +334,14 @@ public class mountains : biome
 
 public class flat_forest : biome
 {
+    public override Dictionary<string, float> character_densities()
+    {
+        return new Dictionary<string, float>
+        {
+            ["chicken"] = 1 / (32f * 32f)
+        };
+    }
+
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
@@ -361,8 +361,6 @@ public class flat_forest : biome
                     p.object_to_generate = world_object.load("bush");
                 else if (random.range(0, 500) == 0)
                     p.object_to_generate = world_object.load("flint_piece");
-                else if (random.range(0, 1000) == 0)
-                    p.object_to_generate = world_object.load("chicken_nest");
 
                 grid[i, j] = p;
             }
