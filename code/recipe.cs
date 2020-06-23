@@ -76,7 +76,7 @@ public class recipe : MonoBehaviour
                 {
                     text += "\n" + kv.Key + "\n";
                     foreach (var r in kv.Value)
-                        text += r.craft_string() + "\n";
+                        text += "  " + r.craft_string() + "\n";
                 }
 
                 _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();

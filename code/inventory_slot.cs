@@ -143,6 +143,10 @@ public class inventory_slot : MonoBehaviour, IInspectable
             info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
         }
 
+        // Can this item be built with
+        if (item is building_material)
+            info += "  Can be used for building\n";
+
         // Fuel value
         if (item.fuel_value > 0)
         {
