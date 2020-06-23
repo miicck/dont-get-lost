@@ -272,10 +272,12 @@ MonoBehaviour:
   walk_speed: 4
   run_speed: 8
   max_health: 10
-  pathfinding_resolution: 2
+  pathfinding_resolution: 1
   height: 1
   agro_range: 15
   reach: 0.5
+  melee_cooldown: 1
+  melee_damage: 10
   friendliness: 0
   can_walk: 1
   can_swim: 0

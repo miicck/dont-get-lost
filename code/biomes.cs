@@ -599,6 +599,14 @@ public class swamp : biome
 
 public class caves : biome
 {
+    public override Dictionary<string, float> character_densities()
+    {
+        return new Dictionary<string, float>
+        {
+            ["smoke_spider"] = 1 / (64f * 64f)
+        };
+    }
+
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
