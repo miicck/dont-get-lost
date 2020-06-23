@@ -138,22 +138,6 @@ public class player : networked_player
                 if (!use_result.underway) current_item_use = USE_TYPE.NOT_USING;
             }
 
-            // Throw equiped on T
-            if (use_result.allows_throw)
-                if (Input.GetKeyDown(KeyCode.T))
-                    if (equipped != null)
-                    {
-                        inventory.remove(equipped.name, 1);
-                        var spawned = item.create(
-                            equipped.name,
-                            equipped.transform.position,
-                            equipped.transform.rotation,
-                            kinematic: false,
-                            networked: true);
-                        spawned.rigidbody.velocity += camera.transform.forward * THROW_VELOCITY;
-                        validate_equip();
-                    }
-
             // Look around
             if (use_result.allows_look) mouse_look();
         }
@@ -180,13 +164,15 @@ public class player : networked_player
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, game.render_range);
-
-        Gizmos.color = Color.green;
-        float dis;
-        var r = camera_ray(INTERACTION_RANGE, out dis);
-        Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
+        if (camera != null)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, game.render_range);
+            Gizmos.color = Color.green;
+            float dis;
+            var r = camera_ray(INTERACTION_RANGE, out dis);
+            Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
+        }
     }
 
     //###########//
@@ -1068,6 +1054,9 @@ public class player : networked_player
         crt.anchoredPosition = Vector2.zero;
         cursor = "default_cursor";
 
+        // Find the healthbar
+        healthbar = FindObjectOfType<player_healthbar>();
+
         // Add the water
         water = new GameObject("water").AddComponent<water_reflections>();
         water.transform.SetParent(transform);
@@ -1147,14 +1136,11 @@ public class player : networked_player
         Destroy(init_pos.gameObject);
         init_hand_plane = hand_centre.localPosition.z;
 
-        // Find the healthbar
-        healthbar = FindObjectOfType<player_healthbar>();
-
         // The players remaining health
         health = new networked_variables.net_int();
         health.on_change = () =>
         {
-            healthbar.set(health.value, max_health);
+            healthbar?.set(health.value, max_health);
         };
 
         // The currently-equipped quickbar slot number
