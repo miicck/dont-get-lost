@@ -1122,7 +1122,7 @@ public class player : networked_player
     public override void on_first_create()
     {
         // Create the inventory
-        client.create(transform.position, "misc/player_inventory", parent: this);
+        client.create(transform.position, "inventories/player_inventory", parent: this);
     }
 
     public override void on_init_network_variables()

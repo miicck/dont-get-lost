@@ -51,15 +51,9 @@ public class recipe : MonoBehaviour
     {
         List<KeyValuePair<string, recipe[]>> ret = new List<KeyValuePair<string, recipe[]>>();
         ret.Add(new KeyValuePair<string, recipe[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
-        string workbench_dir = Application.dataPath + "/resources/recipes/workbenches";
 
-        foreach (var dir in System.IO.Directory.GetDirectories(workbench_dir))
-        {
-            var spl = dir.Split('/', '\\');
-            string wb_name = spl[spl.Length - 1];
-            ret.Add(new KeyValuePair<string, recipe[]>(wb_name,
-                Resources.LoadAll<recipe>("recipes/workbenches/" + wb_name)));
-        }
+        foreach (var wb in Resources.LoadAll<workbench>("items"))
+            ret.Add(new KeyValuePair<string, recipe[]>(wb.name, Resources.LoadAll<recipe>("recipes/workbenches/" + wb.name)));
 
         return ret;
     }

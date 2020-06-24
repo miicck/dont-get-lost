@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class workbench : MonoBehaviour, ILeftPlayerMenu
 {
-    public string load_recipies_from;
-
     //#################//
     // ILeftPlayerMenu //
     //#################//
@@ -17,7 +15,7 @@ public class workbench : MonoBehaviour, ILeftPlayerMenu
             craft_menu = Resources.Load<RectTransform>("ui/workbench").inst();
             craft_menu.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().display_name.capitalize();
             var crafting_input = craft_menu.GetComponentInChildren<crafting_input>();
-            crafting_input.load_recipies(load_recipies_from);
+            crafting_input.load_recipies("recipes/workbenches/"+name);
             crafting_input.craft_to = player.current.inventory.contents;
         }
 

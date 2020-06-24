@@ -320,6 +320,45 @@ namespace networked_variables
         {
             return new Dictionary<int, KeyValuePair<string, int>>();
         }
+
+        bool updating_from_network;
+
+        public static net_inventory new_linked_to(inventory_section section)
+        {
+            var net_inventory = new net_inventory();
+
+            section.add_on_change_listener(() =>
+            {
+                if (net_inventory.updating_from_network) return;
+
+                // Keep the network up up to date with changes
+                var new_values = new Dictionary<int, KeyValuePair<string, int>>();
+                for (int i = 0; i < section.slots.Length; ++i)
+                    if (section.slots[i].item != null)
+                        new_values[i] = new KeyValuePair<string, int>(
+                            section.slots[i].item, section.slots[i].count);
+
+                net_inventory.value = new_values;
+            });
+
+            net_inventory.on_change = () =>
+            {
+                net_inventory.updating_from_network = true;
+
+                // Update the slot contents from the network
+                for (int i = 0; i < section.slots.Length; ++i)
+                {
+                    if (net_inventory.value.TryGetValue(i, out KeyValuePair<string, int> name_contents))
+                        section.slots[i].set_item_count(name_contents.Key, name_contents.Value);
+                    else
+                        section.slots[i].clear();
+                }
+
+                net_inventory.updating_from_network = false;
+            };
+
+            return net_inventory;
+        }
     }
 
     public class net_string_counts_v2 : networked_variable, IEnumerable<KeyValuePair<string, int>>
