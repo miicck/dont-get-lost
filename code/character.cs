@@ -398,7 +398,7 @@ public class character : networked, IPathingAgent
         if (health.value < 0)
         {
             foreach (var p in GetComponents<product>())
-                p.create_in_inventory(player.current.inventory.contents);
+                p.create_in_inventory(player.current.inventory);
             delete();
         }
     }

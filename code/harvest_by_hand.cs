@@ -54,7 +54,7 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
         // Create the product in the player inventory
         foreach (var p in products)
-            p.create_in_inventory(player.current.inventory.contents);
+            p.create_in_inventory(player.current.inventory);
     }
 
     //##############//

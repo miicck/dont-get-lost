@@ -83,13 +83,13 @@ public class player : networked_player
             // Toggle inventory on E
             if (Input.GetKeyDown(KeyCode.E))
             {
-                inventory_open = !inventory_open;
-                crosshairs.enabled = !inventory_open;
-                Cursor.visible = inventory_open;
-                Cursor.lockState = inventory_open ? CursorLockMode.None : CursorLockMode.Locked;
+                inventory.open = !inventory.open;
+                crosshairs.enabled = !inventory.open;
+                Cursor.visible = inventory.open;
+                Cursor.lockState = inventory.open ? CursorLockMode.None : CursorLockMode.Locked;
 
                 // Open/close the left menu
-                if (inventory_open)
+                if (inventory.open)
                 {
                     var ray = camera_ray(INTERACTION_RANGE, out float dist);
                     left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
@@ -99,7 +99,7 @@ public class player : networked_player
         }
 
         // Run the quickbar equip shortcuts
-        if (current_item_use == USE_TYPE.NOT_USING && !inventory_open && !map_open)
+        if (current_item_use == USE_TYPE.NOT_USING && !inventory.open && !map_open)
             run_quickbar_shortcuts();
 
         // Toggle the map view on M
@@ -120,7 +120,7 @@ public class player : networked_player
 
         // Use items if the inventory/map aren't open
         item.use_result use_result = item.use_result.complete;
-        if (!inventory_open && !map_open)
+        if (!inventory.open && !map_open)
         {
             if (current_item_use == USE_TYPE.NOT_USING)
             {
@@ -219,7 +219,7 @@ public class player : networked_player
 
     const int QUICKBAR_SLOTS_COUNT = 8;
 
-    public inventory inventory { get => GetComponentInChildren<inventory>(); }
+    public inventory inventory => GetComponent<inventory>();
 
     /// <summary> The menu that appears to the left of the inventory. </summary>
     public ILeftPlayerMenu left_menu
@@ -237,7 +237,8 @@ public class player : networked_player
                 // the player inventory
                 var rt = value.left_menu_transform();
                 rt.gameObject.SetActive(true);
-                rt.SetParent(inventory.contents.left_expansion_point);
+                var attach_point = inventory.ui.GetComponentInChildren<left_menu_attach_point>();
+                rt.SetParent(attach_point.transform);
                 rt.anchoredPosition = Vector2.zero;
                 rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 value.on_left_menu_open();
@@ -255,32 +256,15 @@ public class player : networked_player
     }
     ILeftPlayerMenu _left_menu;
 
-    /// <summary> True if the inventory is open, false otherwise. </summary>
-    bool inventory_open
-    {
-        get
-        {
-            if (inventory == null) return false;
-            return inventory.ui_open;
-        }
-        set
-        {
-            if (inventory == null) return;
-            inventory.ui_open = value;
-        }
-    }
-
     public inventory_slot quickbar_slot(int n)
     {
-        n -= 1; // Move to zero-offset array
-        if (inventory?.slots == null) return null;
-        if (n < 0 || n >= inventory.slots.Length) return null;
-        return inventory.slots[n];
+        // Move to zero-offset array
+        return inventory.nth_slot(n - 1);
     }
 
     public void close_all_ui()
     {
-        if (inventory != null) inventory_open = false;
+        if (inventory != null) inventory.open = false;
         left_menu = null;
     }
 
@@ -413,15 +397,7 @@ public class player : networked_player
             else
             {
                 // Ensure we actually have one of these in my inventory
-                bool have = false;
-                foreach (var s in inventory.slots)
-                    if (s.item == value.name)
-                    {
-                        have = true;
-                        break;
-                    }
-
-                if (have)
+                if (inventory.contains(value))
                 {
                     // Create an equipped-type copy of the item
                     _equipped = item.create(value.name, transform.position, transform.rotation);
@@ -459,7 +435,7 @@ public class player : networked_player
     public void validate_equip()
     {
         // Unequip if item is no more
-        if (equipped?.name != quickbar_slot(slot_equipped.value)?.item)
+        if (equipped?.name != quickbar_slot(slot_equipped.value)?.item?.name)
             slot_equipped.value = 0;
     }
 
@@ -1119,12 +1095,6 @@ public class player : networked_player
         controller.slopeLimit = 60f;
     }
 
-    public override void on_first_create()
-    {
-        // Create the inventory
-        client.create(transform.position, "inventories/player_inventory", parent: this);
-    }
-
     public override void on_init_network_variables()
     {
         // Load the player body
@@ -1163,8 +1133,7 @@ public class player : networked_player
         slot_equipped = new networked_variables.net_int();
         slot_equipped.on_change = () =>
         {
-            if (slot_equipped.value < 1) equipped = null;
-            else equipped = Resources.Load<item>("items/" + quickbar_slot(slot_equipped.value)?.item);
+            equipped = quickbar_slot(slot_equipped.value)?.item;
         };
 
         // y_rotation is the rotation of the player around the global y axis
@@ -1182,21 +1151,6 @@ public class player : networked_player
         };
 
         username = new networked_variables.net_string();
-    }
-
-    public override void on_add_networked_child(networked child)
-    {
-        // Let the inventory know it belongs to this player
-        if (child is inventory)
-        {
-            var inv = (inventory)child;
-            inv.contents.belongs_to = this;
-
-            inv.contents.add_on_change_listener(() =>
-            {
-                validate_equip();
-            });
-        }
     }
 
     //################//

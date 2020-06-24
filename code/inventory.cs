@@ -2,50 +2,70 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> An in-game collection of items, linked to the UI element <see cref="contents"/>. </summary>
-public class inventory : networked
+[RequireComponent(typeof(networked))]
+public class inventory : inventory_section
 {
-    public inventory_slot[] slots { get => contents.slots; }
+    public RectTransform ui_prefab;
 
-    public inventory_section ui_prefab;
-
-    /// <summary> The UI object that has the inventory slots. </summary>
-    public inventory_section contents { get; private set; }
-
-    /// <summary> Returns the number of a given item in the inventory. </summary>
-    public int count(string item)
+    protected override inventory_slot[] load_slots()
     {
-        var cts = contents.contents();
-        if (!cts.TryGetValue(item, out int ret))
-            ret = 0;
-        return ret;
+        return ui.GetComponentsInChildren<inventory_slot>();
     }
 
-    public bool add(string item, int count)
+    /// <summary> The ui element that contains the inventory slots. </summary>
+    public RectTransform ui
     {
-        bool ret = contents.add(item, count);
-        return ret;
+        get
+        {
+            if (_ui == null)
+            {
+                // Create the ui element and link it's slots to this
+                _ui = ui_prefab.inst();
+                _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                _ui.anchoredPosition = Vector2.zero;
+                load();
+
+                // Ui starts closed
+                open = false;
+            }
+            return _ui;
+        }
+    }
+    RectTransform _ui;
+
+    void load()
+    {
+        for(int i=0; i<slots.Length; ++i)
+        {
+            var s = slots[i];
+            s.index = i;
+            s.inventory = this;
+            s.update_ui(s.item, s.count);
+        }
+
+        // Sync the ui with the networked values
+        foreach (var nw in GetComponentsInChildren<inventory_slot_networked>())
+        {
+            var s = slots[nw.index];
+            s.networked = nw;
+            s.set_item_count(nw.item, nw.count);
+            s.update_ui(nw.item, nw.count);
+        }
     }
 
-    public void remove(string item, int count) { contents.remove(item, count); }
-
-    /// <summary> The networked collection of items in the inventory. </summary>
-    public networked_variables.net_inventory net_inventory;
-
-    public override void on_init_network_variables()
+    public bool open
     {
-        // Create the UI
-        contents = ui_prefab.inst();
-        contents.transform.SetParent(FindObjectOfType<Canvas>().transform);
-        contents.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-        ui_open = false; // Starts closed
-
-        net_inventory = networked_variables.net_inventory.new_linked_to(contents);
+        get => ui.gameObject.activeInHierarchy;
+        set
+        {
+            load();
+            ui.gameObject.SetActive(value);
+        }
     }
 
-    public bool ui_open
+    public inventory_slot nth_slot(int n)
     {
-        get => contents.gameObject.activeInHierarchy;
-        set => contents.gameObject.SetActive(value);
+        if (slots.Length <= n || n < 0) return null;
+        return slots[n];
     }
 }

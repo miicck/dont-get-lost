@@ -6,12 +6,12 @@ using UnityEngine.UI;
 public class mouse_item : MonoBehaviour
 {
     item _item;
-    public string item
+    public item item
     {
-        get { return _item.name; }
+        get { return _item; }
         set
         {
-            _item = value == null ? null : Resources.Load<item>("items/" + value);
+            _item = value;
             if (_item == null) Destroy(gameObject);
             else item_image.sprite = _item.sprite;
         }
@@ -47,7 +47,7 @@ public class mouse_item : MonoBehaviour
         transform.position = Input.mousePosition;
     }
 
-    public static mouse_item create(string item, int count, inventory_slot origin)
+    public static mouse_item create(item item, int count, inventory_slot origin)
     {
         var ret = Resources.Load<mouse_item>("ui/mouse_item").inst();
         ret.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);

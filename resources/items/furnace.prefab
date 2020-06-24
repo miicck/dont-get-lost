@@ -213,6 +213,7 @@ GameObject:
   - component: {fileID: 1445706630756015600}
   - component: {fileID: -7572213448333294000}
   - component: {fileID: -5169961100938236186}
+  - component: {fileID: 3737438815450476426}
   m_Layer: 0
   m_Name: furnace
   m_TagString: Untagged
@@ -278,7 +279,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  load_recipies_from: recipes/workbenches/furnace
+--- !u!114 &3737438815450476426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2644593030741331233}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ui_prefab: {fileID: 7122046191683077136, guid: f8bfa59740317d54b8d7eb83eb633ce5,
+    type: 3}
 --- !u!1 &2868603861710057958
 GameObject:
   m_ObjectHideFlags: 0

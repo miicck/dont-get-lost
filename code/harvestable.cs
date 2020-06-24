@@ -16,7 +16,7 @@ public class harvestable : accepts_item_impact, IInspectable
         if (tool.satisfied(i))
         {
             foreach (var p in products)
-                p.create_in_inventory(player.current.inventory.contents);
+                p.create_in_inventory(player.current.inventory);
             return true;
         }
         return false;

@@ -27,10 +27,7 @@ public class item_ingredient : ingredient
             return false;
         }
 
-        foreach (var s in i.slots)
-            if (s.item == item.name && s.count >= count)
-                return true;
-        return false;
+        return i.contains(item, count);
     }
 
     public override void on_craft(inventory_section i)

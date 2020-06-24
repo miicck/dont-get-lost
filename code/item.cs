@@ -195,4 +195,40 @@ public class item : networked, IInspectable
 
         return item;
     }
+
+    public static string item_quantity_info(item item, int quantity)
+    {
+        // Titlle
+        string info = (quantity < 2 ? item.display_name :
+            (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";
+
+        // Value
+        if (quantity > 1)
+            info += "  Value : " + (item.value * quantity).qs() + " (" + item.value.qs() + " each)\n";
+        else
+            info += "  Value : " + item.value.qs() + "\n";
+
+        // Tool type + quality
+        if (item is tool)
+        {
+            var t = (tool)item;
+            info += "  Tool type : " + tool.type_to_name(t.type) + "\n";
+            info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
+        }
+
+        // Can this item be built with
+        if (item is building_material)
+            info += "  Can be used for building\n";
+
+        // Fuel value
+        if (item.fuel_value > 0)
+        {
+            if (quantity > 1)
+                info += "  Fuel value : " + (item.fuel_value * quantity).qs() + " (" + item.fuel_value.qs() + " each)\n";
+            else
+                info += "  Fuel value : " + item.fuel_value.qs() + "\n";
+        }
+
+        return utils.allign_colons(info);
+    }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(inventory))]
 public class workbench : MonoBehaviour, ILeftPlayerMenu
 {
     //#################//
@@ -12,11 +13,11 @@ public class workbench : MonoBehaviour, ILeftPlayerMenu
     {
         if (craft_menu == null)
         {
-            craft_menu = Resources.Load<RectTransform>("ui/workbench").inst();
+            craft_menu = GetComponent<inventory>().ui;
             craft_menu.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().display_name.capitalize();
             var crafting_input = craft_menu.GetComponentInChildren<crafting_input>();
             crafting_input.load_recipies("recipes/workbenches/"+name);
-            crafting_input.craft_to = player.current.inventory.contents;
+            crafting_input.craft_to = player.current.inventory;
         }
 
         return craft_menu;
@@ -27,11 +28,13 @@ public class workbench : MonoBehaviour, ILeftPlayerMenu
 
     public void on_left_menu_close()
     {
+        /*
         // Return contents to player inventory
         var inv = craft_menu.GetComponentInChildren<inventory_section>();
         var contents = inv.contents();
         foreach (var kv in contents)
             if (player.current.inventory.add(kv.Key, kv.Value))
                 inv.remove(kv.Key, kv.Value);
+                */
     }
 }

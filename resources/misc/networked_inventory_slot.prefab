@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3666728069341659213
+--- !u!1 &6989421418002102285
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3189644589653209137}
-  - component: {fileID: -5731727421337840146}
+  - component: {fileID: 3040326647965824279}
+  - component: {fileID: 5080374414502822033}
   m_Layer: 0
-  m_Name: farming_patch
+  m_Name: networked_inventory_slot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3189644589653209137
+--- !u!4 &3040326647965824279
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3666728069341659213}
+  m_GameObject: {fileID: 6989421418002102285}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -31,17 +31,15 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-5731727421337840146
+--- !u!114 &5080374414502822033
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3666728069341659213}
+  m_GameObject: {fileID: 6989421418002102285}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
+  m_Script: {fileID: 11500000, guid: 177448fb0e088be439ecd2ec1adf5b87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ui_prefab: {fileID: 2601138228866978738, guid: f4c4b095cb7072f45a8f1cc6c3f51655,
-    type: 3}

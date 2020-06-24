@@ -92,7 +92,7 @@ public class shop_slot : MonoBehaviour, IInspectable
                 return;
             }
 
-            if (player.current.inventory.count("coin") >= buy_price)
+            if (player.current.inventory.contains("coin", buy_price))
             {
                 player.current.inventory.remove("coin", buy_price);
                 player.current.inventory.add(item.name, 1);
@@ -108,7 +108,7 @@ public class shop_slot : MonoBehaviour, IInspectable
 
         sell_button.onClick.AddListener(() =>
         {
-            if (player.current.inventory.count(item.name) > 0)
+            if (player.current.inventory.contains(item))
             {
                 player.current.inventory.remove(item.name, 1);
                 player.current.inventory.add("coin", sell_price);
@@ -145,7 +145,7 @@ public class shop_slot : MonoBehaviour, IInspectable
 
     public string inspect_info()
     {
-        return inventory_slot.item_quantity_info(item, 1);
+        return item.item_quantity_info(item, 1);
     }
 
     public Sprite main_sprite() { return item.sprite; }

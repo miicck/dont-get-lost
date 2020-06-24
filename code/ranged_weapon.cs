@@ -13,7 +13,7 @@ public class ranged_weapon : equip_in_hand
         item ammo_found = null;
 
         // Search for ammunition in the player inventory
-        foreach (var kv in player.current.inventory.contents.contents())
+        foreach (var kv in player.current.inventory.contents())
         {
             item i = Resources.Load<item>("items/" + kv.Key);
             if (ammunition.satisfied(i))
@@ -29,7 +29,7 @@ public class ranged_weapon : equip_in_hand
             return;
         }
 
-        player.current.inventory.contents.remove(ammo_found.name, 1);
+        player.current.inventory.remove(ammo_found.name, 1);
         Vector3 fired_position =
             player.current.hand_centre.position +
             player.current.hand_centre.forward *

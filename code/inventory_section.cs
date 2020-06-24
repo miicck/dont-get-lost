@@ -2,145 +2,104 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> A UI inventory. Allows manipulation of child inventory slots. </summary>
+/// <summary> Allows manipuation of a collection of inventory_slots, as well
+/// as seperating an inventory into multiple sections. </summary>
 public class inventory_section : MonoBehaviour
 {
-    public inventory_slot[] slots
-    { get => GetComponentsInChildren<inventory_slot>(true); }
-
-    /// <summary> The point at which sub-menus attach on the left. </summary>
-    public RectTransform left_expansion_point;
-
-    /// <summary> If this is a player inventory, this will be set to that player. Otherwise null. </summary>
-    public player belongs_to;
-
-    /// <summary> Add the given number of a particular item to the inventory. </summary>
-    public bool add(string item, int count)
+    protected inventory_slot[] slots
     {
-        if (count == 0)
-            return true;
-
-        inventory_slot slot_found = null;
-        foreach (var s in slots)
+        get
         {
-            if (s.item == null && slot_found == null)
-                slot_found = s;
-
-            if (s.item == item)
-            {
-                slot_found = s;
-                break;
-            }
+            if (_slots == null)
+                _slots = load_slots();
+            return _slots;
         }
+    }
+    inventory_slot[] _slots;
 
-        if (slot_found == null)
-        {
-            popup_message.create("Could not add item " + item + " to inventory " + name + "!");
-            return false;
-        }
-
-        slot_found.set_item_count(item, slot_found.count + count);
-
-        if (belongs_to != null && belongs_to.has_authority)
-        {
-            item itm = Resources.Load<item>("items/" + item);
-            string msg = "+ " + count + " " + (count > 1 ? itm.plural : itm.display_name);
-            msg += " (" + contents()[item] + ")";
-            popup_message.create(msg);
-        }
-
-        return true;
+    protected virtual inventory_slot[] load_slots()
+    {
+        return GetComponentsInChildren<inventory_slot>();
     }
 
-    /// <summary> Remove the given number of a particular item from the inventory. </summary>
+    public bool add(string item, int count)
+    {
+        // Load the item that we're adding
+        var i = Resources.Load<item>("items/" + item);
+        if (i == null) return false;
+
+        // First attempt to find a matching slot
+        foreach (var s in slots)
+            if (s.item?.name == item)
+            {
+                if (s.accepts(i))
+                {
+                    s.set_item_count(i, s.count + count);
+                    return true;
+                }
+            }
+
+        // Then settle for any compatible slot
+        foreach (var s in slots)
+            if (s.accepts(i))
+            {
+                s.set_item_count(i, s.count + count);
+                return true;
+            }
+
+        return false;
+    }
+
     public void remove(string item, int count)
     {
-        if (count == 0)
-            return;
-
-        int total_removed = 0;
+        // Remove this many items from the slots
         foreach (var s in slots)
-            if (s.item == item)
+            if (s.item?.name == item)
             {
                 int to_remove = Mathf.Min(count, s.count);
                 s.set_item_count(s.item, s.count - to_remove);
-                total_removed += to_remove;
-                if (total_removed >= count)
-                    return;
+                count -= to_remove;
+                if (count <= 0)
+                    break;
             }
+
+        if (count > 0)
+            Debug.LogWarning("Did not remove the requested number of items!");
     }
 
-    /// <summary> Set the number of a particular item in this inventory. </summary>
-    public void set(string item, int count)
+    /// <summary> Check if this section contains the given
+    /// item (and at least the given quantity). </summary>
+    public bool contains(item item, int count=1)
     {
-        int total = 0;
-        foreach (var s in slots)
-            if (s.item == item)
-                total += s.count;
-
-        if (total > count)
-            remove(item, total - count);
-        else if (total < count)
-            add(item, count - total);
+        return contains(item.name, count);
     }
 
-    /// <summary> Consolodate the slots of this inventory. </summary>
-    public void sort()
+    public bool contains(string item, int count=1)
     {
-        Dictionary<string, int> contents = new Dictionary<string, int>();
+        var c = contents();
+        if (c.TryGetValue(item, out int found))
+            return found >= count;
+        return false;
+    }
 
+    /// <summary> Return a dictionary containing all of the items
+    /// in my slots and their total quantities. </summary>
+    public Dictionary<string, int> contents()
+    {
+        Dictionary<string, int> ret = new Dictionary<string, int>();
         foreach (var s in slots)
         {
-            if (s.item == null || s.count == 0) continue;
-            if (!contents.ContainsKey(s.item))
-                contents[s.item] = 0;
-            contents[s.item] += s.count;
-        }
-
-        foreach (var s in slots)
-            s.clear();
-
-        int i = 0;
-        foreach (var kv in contents)
-        {
-            var s = slots[i];
-            s.set_item_count(kv.Key, kv.Value);
-            ++i;
-        }
-    }
-
-    public void transfer_all_to(inventory_section other)
-    {
-        foreach (var s in slots)
-            if (other.add(s.item, s.count))
-                s.clear();
-    }
-
-    /// <summary> The contents of this inventory, keyed by item name. </summary>
-    public SortedDictionary<string, int> contents()
-    {
-        var ret = new SortedDictionary<string, int>();
-        foreach (var s in slots)
-        {
-            if (s.item == null || s.count == 0) continue;
-            if (!ret.ContainsKey(s.item)) ret[s.item] = s.count;
-            else ret[s.item] += s.count;
+            if (s.item == null) continue;
+            if (!ret.ContainsKey(s.item.name)) ret[s.item.name] = s.count;
+            else ret[s.item.name] += s.count;
         }
         return ret;
     }
 
-    /// <summary> Called by slots when their value changes. </summary>
-    public void on_change()
+    /// <summary> Add a listener to all of my slots. </summary>
+    public void add_on_change_listener(inventory_slot.func f)
     {
-        // Call implementation specific listeners
-        foreach (var f in on_change_listeners) f();
-    }
-
-    public delegate void on_change_func();
-    List<on_change_func> on_change_listeners = new List<on_change_func>();
-
-    public void add_on_change_listener(on_change_func f)
-    {
-        on_change_listeners.Add(f);
+        foreach (var s in slots)
+            s.add_on_change_listener(f);
     }
 }

@@ -13,31 +13,20 @@ public class armour_slot : inventory_slot
 
     /// <summary> The player that this armour slot belongs to. Will attempt
     /// to identify that player if not yet identified. </summary>
-    player belongs_to
-    {
-        get
-        {
-            if (_belongs_to == null)
-                foreach (var sec in sections_belonging_to)
-                    if (sec.belongs_to != null)
-                    {
-                        _belongs_to = sec.belongs_to;
-                        break;
-                    }
-
-            return _belongs_to;
-        }
-    }
-    player _belongs_to;
+    player belongs_to => inventory.GetComponent<player>();
 
     /// <summary> Returns true if this armour slot 
     /// accepts the item with the given name. </summary>
-    public override bool accepts(string item_name)
+    public override bool accepts(item item)
     {
-        var itm = Resources.Load<armour_piece>("items/" + item_name);
-        if (itm == null) return false;
-        if (itm.location != location) return false;
-        return armour_piece.compatible_handedness(handedness, itm.handedness);
+        if (!base.accepts(item)) return false;
+        if (item is armour_piece)
+        {
+            var arm = (armour_piece)item;
+            if (arm.location != location) return false;
+            return armour_piece.compatible_handedness(handedness, arm.handedness);
+        }
+        return false;
     }
 
     delegate void update_func();
@@ -45,6 +34,8 @@ public class armour_slot : inventory_slot
 
     protected override void on_change()
     {
+        base.on_change();
+
         // When the item changes, we queue an update
         // to the players armour. We cannot do this
         // immediately, because belongs_to might not 
