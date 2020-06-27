@@ -223,7 +223,10 @@ public class networked : MonoBehaviour
             objects[value] = this;
             _network_id = value;
 
-            if (old_id <= 0 && _network_id > 0)
+            // If I have a negative ( => local) id, and I'm now being
+            // assigend a positive ( => global) id => I'm being registered
+            // for the first time.
+            if (old_id < 0 && _network_id > 0)
             {
                 on_first_register();
                 if (awaiting_delete != null)
@@ -234,7 +237,7 @@ public class networked : MonoBehaviour
             }
         }
     }
-    int _network_id;
+    int _network_id = 0;
 
     /// <summary> Does this client have unique authority over this object. </summary>
     public bool has_authority { get; private set; }

@@ -6,6 +6,8 @@ public class inventory : networked
 {
     public RectTransform ui_prefab;
 
+    inventory_slot[] slots;
+
     /// <summary> The ui element that contains the inventory slots. </summary>
     public RectTransform ui
     {
@@ -17,29 +19,37 @@ public class inventory : networked
                 _ui = ui_prefab.inst();
                 _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 _ui.anchoredPosition = Vector2.zero;
-                load();
+                slots = _ui.GetComponentsInChildren<inventory_slot>();
 
-                // Ui starts closed
-                open = false;
+                _ui.gameObject.SetActive(false); // UI starts closed
             }
+
+            // Make sure the ui is up-to-date
+            update_ui();
             return _ui;
         }
     }
     RectTransform _ui;
 
-    void load()
+    void update_ui()
     {
+        // Clear the ui
         for (int i = 0; i < slots.Length; ++i)
         {
             var s = slots[i];
             s.index = i;
             s.inventory = this;
-            s.update_ui(s.item, s.count);
+            s.update_ui(null, 0);
         }
 
         // Sync the ui with the networked values
-        foreach (var nw in GetComponentsInChildren<inventory_slot_networked>())
+        var networked_slots = GetComponentsInChildren<inventory_slot_networked>();
+        foreach (var nw in networked_slots)
         {
+            // Networked slots with no items are likely not initialized yet
+            if (nw.item == null || nw.count == 0)
+                continue;
+
             var s = slots[nw.index];
             s.networked = nw;
             s.set_item_count(nw.item, nw.count);
@@ -47,32 +57,32 @@ public class inventory : networked
         }
     }
 
+    public override void on_add_networked_child(networked child)
+    {
+        // Update the ui when the network state changes
+        base.on_add_networked_child(child);
+        update_ui();
+    }
+
+    public override void on_delete_networked_child(networked child)
+    {
+        // Update the ui when the network state changes
+        base.on_delete_networked_child(child);
+        update_ui();
+    }
+
     public bool open
     {
         get => ui.gameObject.activeInHierarchy;
-        set
-        {
-            load();
-            ui.gameObject.SetActive(value);
-        }
+        set => ui.gameObject.SetActive(value);
     }
 
     public inventory_slot nth_slot(int n)
     {
+        if (slots == null) return null;
         if (slots.Length <= n || n < 0) return null;
         return slots[n];
     }
-
-    protected inventory_slot[] slots
-    {
-        get
-        {
-            if (_slots == null)
-                _slots = ui.GetComponentsInChildren<inventory_slot>();
-            return _slots;
-        }
-    }
-    inventory_slot[] _slots;
 
     public bool add(string item, int count)
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> The in-game (rather than ui), networked component of an inventory slot. </summary>
 public class inventory_slot_networked : networked
 {
     public item item => Resources.Load<item>("items/" + net_item.value);
@@ -25,4 +26,21 @@ public class inventory_slot_networked : networked
         net_item.value = item.name;
         net_count.value = count;
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(inventory_slot_networked), true)]
+    new class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var isn = (inventory_slot_networked)target;
+            UnityEditor.EditorGUILayout.TextArea(
+                "Item = " + isn.item_name + "\n" +
+                "Count = " + isn.count + "\n" +
+                "Slot = " + isn.index
+            );
+        }
+    }
+#endif
 }
