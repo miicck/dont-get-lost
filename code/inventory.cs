@@ -225,6 +225,10 @@ public class inventory : networked
 
     public void on_slot_change(int slot_index, item item, int count)
     {
+        // Ensure the ui exists
+        if (ui == null)
+            throw new System.Exception("UI should create itself!");
+
         slots[slot_index].update(item, count, this);
         foreach (var f in listeners) f();
     }
