@@ -34,6 +34,7 @@ public class inventory : networked
                     var isb = slots[i].button.gameObject.AddComponent<inventory_slot_button>();
                     isb.index = i;
                     isb.inventory = this;
+                    slots[i].update(null, 0, this); // Initalize ui to empty
                 }
 
                 // UI starts closed, is opened using the "open" set method
@@ -68,7 +69,7 @@ public class inventory : networked
                 {
                     // Add the mouse item to the slot
                     if (isn.add(mi.item, mi.count)) mi.count = 0;
-                    slots[slot_index].update(isn.item, isn.count, this);
+                    on_slot_change(slot_index, isn.item, isn.count);
                     return;
                 }
                 else
@@ -87,12 +88,13 @@ public class inventory : networked
             var isn = (inventory_slot_networked)client.create(
                 transform.position, "misc/networked_inventory_slot", this);
             isn.set_item_count_index(mi.item, mi.count, slot_index);
-            slots[slot_index].update(mi.item, mi.count, this);
+            on_slot_change(slot_index, mi.item, mi.count);
             mi.count = 0;
         }
     }
 
     List<inventory_slot_networked> children_added = new List<inventory_slot_networked>();
+    List<inventory_slot_networked> children_removed = new List<inventory_slot_networked>();
 
     private void Update()
     {
@@ -101,15 +103,18 @@ public class inventory : networked
             throw new System.Exception("UI should create itself!");
 
         foreach (var slot in children_added)
-            slots[slot.index].update(slot.item, slot.count, this);
+            on_slot_change(slot.index, slot.item, slot.count);
         children_added.Clear();
+
+        foreach (var slot in children_removed)
+            on_slot_change(slot.index, null, 0);
+        children_removed.Clear();
     }
 
     public override void on_delete_networked_child(networked child)
     {
         base.on_delete_networked_child(child);
-        var removed = (inventory_slot_networked)child;
-        slots[removed.index].update(null, 0, this);
+        children_removed.Add((inventory_slot_networked)child);
     }
 
     public override void on_add_networked_child(networked child)
@@ -218,7 +223,7 @@ public class inventory : networked
     List<on_change_func> listeners = new List<on_change_func>();
     public void add_on_change_listener(on_change_func f) { listeners.Add(f); }
 
-    public void on_change(int slot_index, item item, int count)
+    public void on_slot_change(int slot_index, item item, int count)
     {
         slots[slot_index].update(item, count, this);
         foreach (var f in listeners) f();

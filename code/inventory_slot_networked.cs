@@ -31,7 +31,7 @@ public class inventory_slot_networked : networked
     void on_change()
     {
         if (net_index.value < 0) return;
-        inventory.on_change(index, item, count);
+        inventory.on_slot_change(index, item, count);
     }
 
     public void set_item_count_index(item item, int count, int index)
