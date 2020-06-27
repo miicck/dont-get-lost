@@ -27,7 +27,7 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
-    public bool can_craft(inventory_section i)
+    public bool can_craft(inventory i)
     {
         if (ingredients.Length == 0)
             throw new System.Exception("Recipies should have > 0 ingredients!");
@@ -38,7 +38,7 @@ public class recipe : MonoBehaviour
         return true;
     }
 
-    public void craft(inventory_section from, inventory_section to)
+    public void craft(inventory from, inventory to)
     {
         if (!can_craft(from)) return;
         foreach (var ing in ingredients)
@@ -88,6 +88,6 @@ public class recipe : MonoBehaviour
 public abstract class ingredient : MonoBehaviour
 {
     public abstract string str();
-    public abstract bool in_inventory(inventory_section i);
-    public abstract void on_craft(inventory_section i);
+    public abstract bool in_inventory(inventory i);
+    public abstract void on_craft(inventory i);
 }

@@ -181,9 +181,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7264410171171831994}
-  - component: {fileID: 8160425552160629829}
   - component: {fileID: 5871161957040132491}
-  - component: {fileID: 3284322840218162142}
   m_Layer: 0
   m_Name: anvil
   m_TagString: Untagged
@@ -211,27 +209,10 @@ Transform:
   - {fileID: 463282606152075687}
   - {fileID: 1930369181647623102}
   - {fileID: 7821942599556139177}
+  - {fileID: 8131418660382545889}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8160425552160629829
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4576969950555926830}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e47f965d8eb59f84dade127943bec96b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 3ae5fd98afc63b245bc9a08fee3ab930, type: 3}
-  plural: anvils
-  value: 0
-  fuel_value: 0
-  axes_scale: 1
-  settler_stands_here: {fileID: 0}
 --- !u!114 &5871161957040132491
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -244,20 +225,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3284322840218162142
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4576969950555926830}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ui_prefab: {fileID: 7122046191683077136, guid: f8bfa59740317d54b8d7eb83eb633ce5,
-    type: 3}
+  sprite: {fileID: 21300000, guid: 3ae5fd98afc63b245bc9a08fee3ab930, type: 3}
+  plural: anvils
+  value: 0
+  fuel_value: 0
+  axes_scale: 1
+  settler_stands_here: {fileID: 8131418660382545889}
 --- !u!1 &4698113465533711652
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,6 +403,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e74304430d37f44db24a79635b003be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &9024708817538340394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8131418660382545889}
+  m_Layer: 0
+  m_Name: character_stands_here
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8131418660382545889
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9024708817538340394}
+  m_LocalRotation: {x: -0, y: 0.70710677, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -0.5, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 7264410171171831994}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 90.00001, z: 0}
 --- !u!1001 &2001208333616303479
 PrefabInstance:
   m_ObjectHideFlags: 0

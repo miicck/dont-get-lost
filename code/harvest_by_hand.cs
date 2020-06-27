@@ -50,6 +50,8 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
         woh.x_in_chunk.value = wo.x_in_chunk;
         woh.z_in_chunk.value = wo.z_in_chunk;
+        woh.chunk_x.value = wo.chunk.x;
+        woh.chunk_z.value = wo.chunk.z;
         woh.timeout.value = regrow_time;
 
         // Create the product in the player inventory

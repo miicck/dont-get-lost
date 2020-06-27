@@ -81,9 +81,10 @@ public class player : networked_player
         if (current_item_use == USE_TYPE.NOT_USING && !map_open)
         {
             // Toggle inventory on E
-            if (Input.GetKeyDown(KeyCode.E))
+            if (Input.GetKeyDown(KeyCode.E) && inventory != null && crafting_menu != null)
             {
                 inventory.open = !inventory.open;
+                crafting_menu.open = inventory.open;
                 crosshairs.enabled = !inventory.open;
                 Cursor.visible = inventory.open;
                 Cursor.lockState = inventory.open ? CursorLockMode.None : CursorLockMode.Locked;
@@ -219,7 +220,8 @@ public class player : networked_player
 
     const int QUICKBAR_SLOTS_COUNT = 8;
 
-    public inventory inventory => GetComponent<inventory>();
+    public inventory inventory { get; private set; }
+    public inventory crafting_menu { get; private set; }
 
     /// <summary> The menu that appears to the left of the inventory. </summary>
     public ILeftPlayerMenu left_menu
@@ -236,12 +238,17 @@ public class player : networked_player
                 // but leave it parented to the canvas, rather than
                 // the player inventory
                 var rt = value.left_menu_transform();
-                rt.gameObject.SetActive(true);
-                var attach_point = inventory.ui.GetComponentInChildren<left_menu_attach_point>();
-                rt.SetParent(attach_point.transform);
-                rt.anchoredPosition = Vector2.zero;
-                rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                value.on_left_menu_open();
+                if (rt == null)
+                    value = null;
+                else
+                {
+                    rt.gameObject.SetActive(true);
+                    var attach_point = inventory.ui.GetComponentInChildren<left_menu_attach_point>();
+                    rt.SetParent(attach_point.transform);
+                    rt.anchoredPosition = Vector2.zero;
+                    rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                    value.on_left_menu_open();
+                }
             }
 
             if (_left_menu != null)
@@ -259,7 +266,7 @@ public class player : networked_player
     public inventory_slot quickbar_slot(int n)
     {
         // Move to zero-offset array
-        return inventory.nth_slot(n - 1);
+        return inventory?.nth_slot(n - 1);
     }
 
     public void close_all_ui()
@@ -1151,6 +1158,34 @@ public class player : networked_player
         };
 
         username = new networked_variables.net_string();
+    }
+
+    public override void on_first_create()
+    {
+        // Create the inventory object
+        client.create(transform.position, "inventories/player_inventory", this);
+        client.create(transform.position, "inventories/player_crafting_menu", this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        // Connect to the inventory object
+        if (child is inventory)
+        {
+            var inv = (inventory)child;
+            var crafting_input = inv.ui.GetComponentInChildren<crafting_input>();
+
+            if (crafting_input != null)
+            {
+                crafting_menu = inv;
+                if (inventory == null)
+                    throw new System.Exception("Inventory should be assigend before crafting menu!");
+
+                crafting_input.craft_from = crafting_menu;
+                crafting_input.craft_to = inventory;
+            }
+            else inventory = inv;
+        }
     }
 
     //################//

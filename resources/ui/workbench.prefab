@@ -24,7 +24,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 688278595477826133}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -36,7 +36,7 @@ RectTransform:
   - {fileID: 5278858728563923572}
   - {fileID: 5896252006515970243}
   - {fileID: 6450647055222110641}
-  m_Father: {fileID: 7122046191683077136}
+  m_Father: {fileID: 691244491131284869}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -417,6 +417,44 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &5756974984497285841
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 691244491131284869}
+  m_Layer: 5
+  m_Name: ui_size_position
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &691244491131284869
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5756974984497285841}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 3552660744550447439}
+  - {fileID: 6897525732296199067}
+  - {fileID: 1565255794411568811}
+  m_Father: {fileID: 7122046191683077136}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -8, y: 0}
+  m_SizeDelta: {x: 256, y: 576}
+  m_Pivot: {x: 1, y: 1}
 --- !u!1 &6998484798724770521
 GameObject:
   m_ObjectHideFlags: 0
@@ -427,7 +465,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7122046191683077136}
   - component: {fileID: 6170414130500368767}
-  - component: {fileID: 2601138228866978738}
   m_Layer: 5
   m_Name: workbench
   m_TagString: Untagged
@@ -446,9 +483,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 3552660744550447439}
-  - {fileID: 6897525732296199067}
-  - {fileID: 1565255794411568811}
+  - {fileID: 691244491131284869}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -470,23 +505,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   options_go_here: {fileID: 2452831592792151156}
-  craft_from: {fileID: 2601138228866978738}
+  craft_from: {fileID: 0}
   craft_to: {fileID: 0}
   default_recipes_folder: 
---- !u!114 &2601138228866978738
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6998484798724770521}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49832e23a34ec3644b1b07caed5f09ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  left_expansion_point: {fileID: 0}
-  belongs_to: {fileID: 0}
 --- !u!1 &7291632571666869604
 GameObject:
   m_ObjectHideFlags: 0
@@ -512,12 +533,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7291632571666869604}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8202458276753038992}
-  m_Father: {fileID: 7122046191683077136}
+  m_Father: {fileID: 691244491131284869}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -590,7 +611,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 7298196301199424634}
-  m_Father: {fileID: 7122046191683077136}
+  m_Father: {fileID: 691244491131284869}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}

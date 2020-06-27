@@ -53,4 +53,17 @@ public abstract class world_object : MonoBehaviour
         return _library[name];
     }
     static Dictionary<string, world_object> _library;
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(world_object), true)]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            world_object wo = (world_object)target;
+            UnityEditor.EditorGUILayout.TextField("Chunk coords: " + wo.x_in_chunk + ", " + wo.z_in_chunk);
+        }
+    }
+#endif
 }

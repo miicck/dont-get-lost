@@ -94,6 +94,11 @@ public class inventory_slot : MonoBehaviour, IInspectable
     {
         item_image.sprite = item == null ? empty_sprite() : item.sprite;
         count_text.text = item == null || count == 0 ? "" : "" + count;
+
+        // Make the image transparent if the image is null
+        var col = item_image.color;
+        col.a = item_image.sprite == null ? 0f : 1f;
+        item_image.color = col;
     }
 
     protected virtual Sprite empty_sprite()

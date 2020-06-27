@@ -13,7 +13,7 @@ public class armour_slot : inventory_slot
 
     /// <summary> The player that this armour slot belongs to. Will attempt
     /// to identify that player if not yet identified. </summary>
-    player belongs_to => inventory.GetComponent<player>();
+    player belongs_to => inventory.GetComponentInParent<player>();
 
     /// <summary> Returns true if this armour slot 
     /// accepts the item with the given name. </summary>
@@ -43,19 +43,12 @@ public class armour_slot : inventory_slot
         // network loads the inventory for the first time).
         if (item == null)
         {
-            pending_update = () =>
-            {
-                belongs_to.clear_armour(location, handedness);
-            };
+            pending_update = () => belongs_to.clear_armour(location, handedness);
             InvokeRepeating("run_pending", 0.1f, 0.1f);
             return;
         }
 
-        pending_update = () =>
-        {
-            var itm = Resources.Load<armour_piece>("items/" + item);
-            belongs_to.set_armour(itm, handedness);
-        };
+        pending_update = () => belongs_to.set_armour((armour_piece)item, handedness);
         InvokeRepeating("run_pending", 0.1f, 0.1f);
     }
 

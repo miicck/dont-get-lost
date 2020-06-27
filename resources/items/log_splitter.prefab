@@ -86,6 +86,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e74304430d37f44db24a79635b003be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &2166494770441490429
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1677613775113476381}
+  m_Layer: 0
+  m_Name: character_stands_here
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1677613775113476381
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2166494770441490429}
+  m_LocalRotation: {x: -0, y: 0.70710677, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -0.5, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 5192738509367497942}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 90.00001, z: 0}
 --- !u!1 &2603488351748063424
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,9 +211,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5192738509367497942}
-  - component: {fileID: 7834596815681828916}
   - component: {fileID: 7998994355157131141}
-  - component: {fileID: 9119899900755113436}
   m_Layer: 0
   m_Name: log_splitter
   m_TagString: Untagged
@@ -207,26 +235,10 @@ Transform:
   - {fileID: 1967673898161807050}
   - {fileID: 3684611843717757120}
   - {fileID: 5566159512120717663}
+  - {fileID: 1677613775113476381}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7834596815681828916
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7597031973728366753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 685d1eaa4cb95b84e94ce2956507bc2c, type: 3}
-  plural: log splitters
-  value: 5
-  fuel_value: 0
-  axes_scale: 1
 --- !u!114 &7998994355157131141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -239,20 +251,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &9119899900755113436
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7597031973728366753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ui_prefab: {fileID: 7122046191683077136, guid: f8bfa59740317d54b8d7eb83eb633ce5,
-    type: 3}
+  sprite: {fileID: 21300000, guid: 685d1eaa4cb95b84e94ce2956507bc2c, type: 3}
+  plural: log splitters
+  value: 5
+  fuel_value: 0
+  axes_scale: 1
+  settler_stands_here: {fileID: 1677613775113476381}
 --- !u!1001 &342327459957259401
 PrefabInstance:
   m_ObjectHideFlags: 0

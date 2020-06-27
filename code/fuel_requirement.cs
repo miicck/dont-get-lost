@@ -11,7 +11,7 @@ public class fuel_requirement : ingredient
     /// given total fuel requirement, return a dictionary of string:int of items
     /// and quantities needed to satisfy that requirement. Otherwise return
     /// null. </summary>
-    Dictionary<string, int> find_in_inventory(int fuel_total, inventory_section i)
+    Dictionary<string, int> find_in_inventory(int fuel_total, inventory i)
     {
         Dictionary<string, int> found = new Dictionary<string, int>();
 
@@ -50,12 +50,12 @@ public class fuel_requirement : ingredient
         return null;
     }
 
-    public override bool in_inventory(inventory_section i)
+    public override bool in_inventory(inventory i)
     {
         return find_in_inventory(fuel_required, i) != null;
     }
 
-    public override void on_craft(inventory_section i)
+    public override void on_craft(inventory i)
     {
         var found = find_in_inventory(fuel_required, i);
         if (found == null)

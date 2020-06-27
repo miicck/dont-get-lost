@@ -5,8 +5,8 @@ using UnityEngine;
 public class crafting_input : MonoBehaviour
 {
     public Transform options_go_here;
-    public inventory_section craft_from;
-    public inventory_section craft_to;
+    public inventory craft_from;
+    public inventory craft_to;
     public string default_recipes_folder;
     recipe[] recipes;
 

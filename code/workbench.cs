@@ -2,27 +2,45 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(inventory))]
-public class workbench : MonoBehaviour, ILeftPlayerMenu
+public class workbench : fixture, ILeftPlayerMenu
 {
+    public inventory inventory { get; private set; }
+
+    public override void on_first_register()
+    {
+        base.on_first_register();
+        client.create(transform.position, "inventories/workbench", this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+        if (child is inventory)
+            inventory = (inventory)child;
+    }
+
+    crafting_input crafting;
+
     //#################//
     // ILeftPlayerMenu //
     //#################//
 
     public RectTransform left_menu_transform()
     {
-        if (craft_menu == null)
+        if (inventory == null)
+            return null;
+
+        if (crafting == null)
         {
-            craft_menu = GetComponent<inventory>().ui;
-            craft_menu.GetComponentInChildren<UnityEngine.UI.Text>().text = GetComponent<item>().display_name.capitalize();
-            var crafting_input = craft_menu.GetComponentInChildren<crafting_input>();
-            crafting_input.load_recipies("recipes/workbenches/"+name);
-            crafting_input.craft_to = player.current.inventory;
+            crafting = inventory.ui.GetComponentInChildren<crafting_input>();
+            inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.capitalize();
+            crafting.load_recipies("recipes/workbenches/"+name);
+            crafting.craft_from = inventory;
+            crafting.craft_to = player.current.inventory;
         }
 
-        return craft_menu;
+        return inventory.ui;
     }
-    RectTransform craft_menu;
 
     public void on_left_menu_open() { }
 
@@ -30,7 +48,7 @@ public class workbench : MonoBehaviour, ILeftPlayerMenu
     {
         /*
         // Return contents to player inventory
-        var inv = craft_menu.GetComponentInChildren<inventory_section>();
+        var inv = craft_menu.GetComponentInChildren<inventory>();
         var contents = inv.contents();
         foreach (var kv in contents)
             if (player.current.inventory.add(kv.Key, kv.Value))

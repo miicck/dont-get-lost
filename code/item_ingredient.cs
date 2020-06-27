@@ -19,7 +19,7 @@ public class item_ingredient : ingredient
         return item.display_name;
     }
 
-    public override bool in_inventory(inventory_section i)
+    public override bool in_inventory(inventory i)
     {
         if (item == null)
         {
@@ -30,7 +30,7 @@ public class item_ingredient : ingredient
         return i.contains(item, count);
     }
 
-    public override void on_craft(inventory_section i)
+    public override void on_craft(inventory i)
     {
         if (item == null)
         {
