@@ -182,7 +182,7 @@ public class inventory : networked
         }
 
         if (count != 0)
-            Debug.LogWarning("Items not removed properly!");
+            throw new System.Exception("Items not removed properly!");
     }
 
     public bool contains(string item, int count = 1)

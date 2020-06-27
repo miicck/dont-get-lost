@@ -51,6 +51,8 @@ public class inventory_slot_networked : networked
         return false;
     }
 
+    /// <summary> Remove at most <paramref name="count"/> of the given
+    /// item from the inventory. Returns the amount removed. </summary>
     public int remove(item item, int count)
     {
         if (item.name == item_name)
@@ -59,9 +61,10 @@ public class inventory_slot_networked : networked
             {
                 // Remove all of the items in this slot
                 // (by deleting the slot)
+                int removed = net_count.value;
                 net_count.value = 0;
                 delete();
-                return net_count.value;
+                return removed;
             }
             else
             {
