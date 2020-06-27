@@ -261,7 +261,7 @@ public static class server
         /// <param name="response_requested">True if the client that issued the delete wanted a response.</param>
         /// <param name="check_clients">True if the clients should be checked for objects to delete. This
         /// should only be false if it is guaranteed that no clients have the object loaded.</param>
-        public void delete(client issued_from = null, bool response_requested = false, 
+        public void delete(client issued_from = null, bool response_requested = false,
             bool check_clients = true)
         {
             // Unload from all clients + the server (children 
@@ -275,8 +275,13 @@ public static class server
             transform.SetParent(inactive_representations);
 
             // Remove/destroy the representation + all children
-            network_utils.top_down<representation>(transform,
-                (rep) => representations.Remove(rep.network_id));
+            network_utils.top_down<representation>(transform, (rep) =>
+            {
+                // Move the id to the recently deleted collection
+                representations.Remove(rep.network_id);
+                recently_deleted[rep.network_id] = Time.realtimeSinceStartup;
+            });
+
             Destroy(gameObject);
 
             // Delete successful. If the client requested a response, send one.
@@ -516,6 +521,9 @@ public static class server
     /// <summary> Representations on the server, keyed by network id. </summary>
     static Dictionary<int, representation> representations;
 
+    /// <summary> Representations that were recently deleted on the server. </summary>
+    static Dictionary<int, float> recently_deleted;
+
     /// <summary> Player representations on the server, keyed by username. </summary>
     static Dictionary<string, representation> player_representations;
 
@@ -539,6 +547,24 @@ public static class server
     static network_utils.traffic_monitor traffic_up;
 
     // END STATE VARIABLES //
+
+    static representation try_get_rep(int id, bool error_on_fail = false, bool allow_recently_deleted = true)
+    {
+        if (!representations.TryGetValue(id, out representation rep))
+        {
+            // Don't flag a warning if this was recently deleted
+            if (allow_recently_deleted && recently_deleted.ContainsKey(id))
+                return null;
+
+            // Couldn't find and wasn't recently deleted, throw an error/warning
+            string msg = "Could not find the representation with id " + rep;
+            if (error_on_fail) throw new System.Exception(msg);
+            else Debug.LogWarning(msg);
+            return null;
+        }
+
+        return rep;
+    }
 
 
     /// <summary> A server message waiting to be sent. </summary>
@@ -567,6 +593,7 @@ public static class server
         traffic_down = new network_utils.traffic_monitor();
         connected_clients = new HashSet<client>();
         representations = new Dictionary<int, representation>();
+        recently_deleted = new Dictionary<int, float>();
         player_representations = new Dictionary<string, representation>();
         message_queues = new Dictionary<client, Queue<pending_message>>();
         transform = new GameObject("server").transform;
@@ -634,7 +661,7 @@ public static class server
                 int serial_length = length - (offset - start);
                 byte[] serialization = new byte[serial_length];
                 System.Buffer.BlockCopy(bytes, offset, serialization, 0, serial_length);
-                representations[id].on_network_variable_change(client, index, serialization);
+                try_get_rep(id)?.on_network_variable_change(client, index, serialization);
             },
 
             [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
@@ -1026,6 +1053,15 @@ public static class server
     {
         if (!started) return;
 
+        // Timout recently-deleted id's
+        HashSet<int> to_remove = new HashSet<int>();
+        foreach (var kv in recently_deleted)
+            if (Time.realtimeSinceStartup - kv.Value > CLIENT_TIMEOUT)
+                to_remove.Add(kv.Key);
+
+        foreach (var i in to_remove)
+            recently_deleted.Remove(i);
+
         // Connect new clients
         while (tcp.Pending())
             connected_clients.Add(new client(tcp.AcceptTcpClient()));
@@ -1171,10 +1207,11 @@ public static class server
     {
         if (!started) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
-               "    Connected clients : " + connected_clients.Count + "\n" +
-               "    Representations   : " + representations.Count + "\n" +
-               "    Upload            : " + traffic_up.usage() + "\n" +
-               "    Download          : " + traffic_down.usage();
+               "    Connected clients  : " + connected_clients.Count + "\n" +
+               "    Representations    : " + representations.Count + "\n" +
+               "    Recently deleted   : " + recently_deleted.Count + "\n" +
+               "    Upload             : " + traffic_up.usage() + "\n" +
+               "    Download           : " + traffic_down.usage();
     }
 
     public enum MESSAGE : byte
