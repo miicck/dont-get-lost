@@ -11,15 +11,15 @@ public class fuel_requirement : ingredient
     /// given total fuel requirement, return a dictionary of string:int of items
     /// and quantities needed to satisfy that requirement. Otherwise return
     /// null. </summary>
-    Dictionary<string, int> find_in_inventory(int fuel_total, inventory i)
+    Dictionary<item, int> find_in_inventory(int fuel_total, inventory i)
     {
-        Dictionary<string, int> found = new Dictionary<string, int>();
+        Dictionary<item, int> found = new Dictionary<item, int>();
 
         int remaining = fuel_total;
         foreach (var kv in i.contents())
         {
             // See if the item is fuel
-            var itm = Resources.Load<item>("items/" + kv.Key);
+            var itm = kv.Key;
             if (itm == null) continue;
 
             if (itm.fuel_value > 0)
@@ -31,13 +31,13 @@ public class fuel_requirement : ingredient
                 if (kv.Value <= required)
                 {
                     // Use up all of this item
-                    found[kv.Key] = kv.Value;
+                    found[itm] = kv.Value;
                     remaining -= itm.fuel_value * kv.Value;
                 }
                 else
                 {
                     // Only use up the required amount of this item
-                    found[kv.Key] = required;
+                    found[itm] = required;
                     remaining -= itm.fuel_value * required;
                 }
 

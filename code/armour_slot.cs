@@ -11,10 +11,6 @@ public class armour_slot : inventory_slot
     /// <summary> The side of the body that this armour slot corresponds to. </summary>
     public armour_piece.HANDEDNESS handedness = armour_piece.HANDEDNESS.EITHER;
 
-    /// <summary> The player that this armour slot belongs to. Will attempt
-    /// to identify that player if not yet identified. </summary>
-    player belongs_to => inventory.GetComponentInParent<player>();
-
     /// <summary> Returns true if this armour slot 
     /// accepts the item with the given name. </summary>
     public override bool accepts(item item)
@@ -32,41 +28,21 @@ public class armour_slot : inventory_slot
     delegate void update_func();
     update_func pending_update;
 
-    protected override void on_change()
+    public override void update(item item, int count, inventory inventory)
     {
-        base.on_change();
+        base.update(item, count, inventory);
 
-        // When the item changes, we queue an update
-        // to the players armour. We cannot do this
-        // immediately, because belongs_to might not 
-        // yet have been set (for example when the 
-        // network loads the inventory for the first time).
-        if (item == null)
-        {
-            pending_update = () => belongs_to.clear_armour(location, handedness);
-            InvokeRepeating("run_pending", 0.1f, 0.1f);
-            return;
-        }
+        // Find the player that this slot belongs to
+        player player = inventory.GetComponentInParent<player>();
+        if (player == null)
+            throw new System.Exception("Armour slot doesn't belong to a player!");
 
-        pending_update = () => belongs_to.set_armour((armour_piece)item, handedness);
-        InvokeRepeating("run_pending", 0.1f, 0.1f);
+        // Update the player armour
+        if (item == null) player.clear_armour(location, handedness);
+        else  player.set_armour((armour_piece)item, handedness);
     }
 
-    /// <summary> Run pending armour updates. </summary>
-    void run_pending()
-    {
-        if (pending_update == null) return;
-        if (belongs_to != null)
-        {
-            // Player has been found, run the armour update
-            // and cancel the pending updates.
-            pending_update();
-            pending_update = null;
-            CancelInvoke("run_pending");
-        }
-    }
-
-    protected override Sprite empty_sprite()
+    public override Sprite empty_sprite()
     {
         // Don't display anything when the armour
         // slot is unoccupied, so that we can see

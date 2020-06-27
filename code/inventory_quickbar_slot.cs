@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class inventory_quickbar_slot : inventory_slot
 {
-    protected override void on_change()
+    public override void update(item item, int count, inventory inventory)
     {
-        base.on_change();
-        player.current.validate_equip();
+        base.update(item, count, inventory);
+        inventory.GetComponentInParent<player>()?.validate_equip();
     }
 }

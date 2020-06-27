@@ -321,7 +321,7 @@ public class building_material : item
             building_material found_same = utils.raycast_for_closest<building_material>(
                 camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
             if (found_same != null)
-                if (player.current.inventory.add(name, 1))
+                if (player.current.inventory.add(this, 1))
                     found_same.delete();
             return use_result.complete;
         }
@@ -380,7 +380,7 @@ public class building_material : item
         if (spawned != null)
         {
             // Remove the object we're building from the inventory
-            player.current.inventory.remove(spawned.name, 1);
+            player.current.inventory.remove(spawned, 1);
 
             // Create a proper, networked version of the spawned object
             var created = (building_material)create(spawned.name,

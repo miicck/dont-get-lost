@@ -263,7 +263,7 @@ public class player : networked_player
     }
     ILeftPlayerMenu _left_menu;
 
-    public inventory_slot quickbar_slot(int n)
+    public inventory_slot_networked quickbar_slot(int n)
     {
         // Move to zero-offset array
         return inventory?.nth_slot(n - 1);

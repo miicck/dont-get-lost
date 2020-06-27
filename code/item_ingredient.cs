@@ -38,6 +38,6 @@ public class item_ingredient : ingredient
             return;
         }
 
-        i.remove(item.name, count);
+        i.remove(item, count);
     }
 }

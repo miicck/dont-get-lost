@@ -56,24 +56,27 @@ public class console : MonoBehaviour
             // Give the local player some items e.g [give 100 coin]
             case "give":
 
+                item item = null;
                 if (args.Length < 2) return console_error("Not enough arguments!");
 
                 if (args.Length < 3)
                 {
                     // If only two arguments given, assume count = 1
-                    if (Resources.Load<item>("items/" + args[1]) == null)
+                    item = Resources.Load<item>("items/" + args[1]);
+                    if (item == null)
                         return console_error("Could not identify item " + args[1]);
-                    player.current.inventory.add(args[1], 1);
+                    player.current.inventory.add(item, 1);
                     return true;
                 }
 
                 if (!int.TryParse(args[1], out int count))
                     return console_error("Could not parse quantity from " + args[1]);
 
-                if (Resources.Load<item>("items/" + args[2]) == null)
+                item = Resources.Load<item>("items/" + args[2]);
+                if (item == null)
                     return console_error("Could not identify item " + args[2]);
 
-                player.current.inventory.add(args[2], count);
+                player.current.inventory.add(item, count);
                 return true;
 
             // Damage myself e.g [damage 10]

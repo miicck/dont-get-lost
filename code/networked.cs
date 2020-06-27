@@ -283,9 +283,10 @@ public class networked : MonoBehaviour
     /// response is recived, callback will be called. </summary>
     public void delete(delete_success_callback callback = null)
     {
-        // Deactivate the object immediately, but
-        // delete only once we have a positive network ID
+        // Deactivate the object/move to deleted pile immediately, 
+        // but delete only once we have a positive network ID
         gameObject.SetActive(false);
+        gameObject.transform.SetParent(deleted_network_objects);
 
         if (network_id < 0)
         {
@@ -335,6 +336,10 @@ public class networked : MonoBehaviour
 
     // STATE VARIABLES //
 
+    /// <summary> Networked objects that have been deleted will be moved 
+    /// to here whilst they are awaiting server confirmation. </summary>
+    static Transform deleted_network_objects;
+
     /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
     static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
 
@@ -362,6 +367,7 @@ public class networked : MonoBehaviour
         objects = new Dictionary<int, networked>();
         recently_forgotten = new Dictionary<int, float>();
         delete_callbacks = new Dictionary<int, delete_success_callback>();
+        deleted_network_objects = new GameObject("deleted_network_objects").transform;
     }
 
     /// <summary> Look up a networked prefab from the prefab path. </summary>

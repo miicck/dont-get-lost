@@ -67,7 +67,7 @@ public abstract class networked_variable<T> : networked_variable
             initialized = true;
         }
     }
-    T _value;
+    protected T _value;
 
     /// <summary> The last value that was sent. </summary>
     T last_queued_value;
@@ -130,6 +130,11 @@ namespace networked_variables
     /// <summary> A simple networked integer. </summary>
     public class net_int : networked_variable<int>
     {
+        public net_int(int default_value=0) : base()
+        {
+            _value = default_value;
+        }
+
         public override byte[] serialization()
         {
             return network_utils.encode_int(value);

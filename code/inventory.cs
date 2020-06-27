@@ -8,164 +8,219 @@ public class inventory : networked
 
     inventory_slot[] slots;
 
-    /// <summary> The ui element that contains the inventory slots. </summary>
+    public inventory_slot_networked nth_slot(int n)
+    {
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+            if (isn.index == n)
+                return isn;
+        return null;
+    }
+
     public RectTransform ui
     {
         get
         {
             if (_ui == null)
             {
-                // Create the ui element and link it's slots to this
+                // Create the ui element
                 _ui = ui_prefab.inst();
                 _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 _ui.anchoredPosition = Vector2.zero;
-                slots = _ui.GetComponentsInChildren<inventory_slot>();
 
-                _ui.gameObject.SetActive(false); // UI starts closed
+                // Setup the ui slots to link to this inventory
+                slots = _ui.GetComponentsInChildren<inventory_slot>();
+                for (int i = 0; i < slots.Length; ++i)
+                {
+                    var isb = slots[i].button.gameObject.AddComponent<inventory_slot_button>();
+                    isb.index = i;
+                    isb.inventory = this;
+                }
+
+                // UI starts closed, is opened using the "open" set method
+                _ui.gameObject.SetActive(false);
             }
 
-            // Make sure the ui is up-to-date
-            update_ui();
             return _ui;
         }
     }
     RectTransform _ui;
 
-    void update_ui()
-    {
-        // Clear the ui
-        for (int i = 0; i < slots.Length; ++i)
-        {
-            var s = slots[i];
-            s.index = i;
-            s.inventory = this;
-            s.update_ui(null, 0);
-        }
-
-        // Sync the ui with the networked values
-        var networked_slots = GetComponentsInChildren<inventory_slot_networked>();
-        foreach (var nw in networked_slots)
-        {
-            // Networked slots with no items are likely not initialized yet
-            if (nw.item == null || nw.count == 0)
-                continue;
-
-            var s = slots[nw.index];
-            s.networked = nw;
-            s.set_item_count(nw.item, nw.count);
-            s.update_ui(nw.item, nw.count);
-        }
-    }
-
-    public override void on_add_networked_child(networked child)
-    {
-        // Update the ui when the network state changes
-        base.on_add_networked_child(child);
-        update_ui();
-    }
-
-    public override void on_delete_networked_child(networked child)
-    {
-        // Update the ui when the network state changes
-        base.on_delete_networked_child(child);
-        update_ui();
-    }
-
+    /// <summary> Is the ui element currently active? </summary>
     public bool open
     {
         get => ui.gameObject.activeInHierarchy;
         set => ui.gameObject.SetActive(value);
     }
 
-    public inventory_slot nth_slot(int n)
+    /// <summary> Forward a click to the appropriate network slot. </summary>
+    public void click_slot(int slot_index, bool right_click)
     {
-        if (slots == null) return null;
-        if (slots.Length <= n || n < 0) return null;
-        return slots[n];
+        // Ensure the ui exists
+        if (ui == null)
+            throw new System.Exception("UI should create itself!");
+
+        var mi = FindObjectOfType<mouse_item>();
+
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+            if (isn.index == slot_index)
+            {
+                if (mi != null)
+                {
+                    // Add the mouse item to the slot
+                    if (isn.add(mi.item, mi.count)) mi.count = 0;
+                    slots[slot_index].update(isn.item, isn.count, this);
+                    return;
+                }
+                else
+                {
+                    // Pickup the mouse item from the slot
+                    isn.pickup(right_click);
+                    return;
+                }
+            }
+
+        // If we've got here => the slot is not yet networked => it's empty
+        if (mi != null && slots[slot_index].accepts(mi.item))
+        {
+            // We're putting the item(s) in this slot
+            // Create a networked slot with the corresponding info
+            var isn = (inventory_slot_networked)client.create(
+                transform.position, "misc/networked_inventory_slot", this);
+            isn.set_item_count_index(mi.item, mi.count, slot_index);
+            slots[slot_index].update(mi.item, mi.count, this);
+            mi.count = 0;
+        }
+    }
+
+    List<inventory_slot_networked> children_added = new List<inventory_slot_networked>();
+
+    private void Update()
+    {
+        // Ensure the ui exists
+        if (ui == null)
+            throw new System.Exception("UI should create itself!");
+
+        foreach (var slot in children_added)
+            slots[slot.index].update(slot.item, slot.count, this);
+        children_added.Clear();
+    }
+
+    public override void on_delete_networked_child(networked child)
+    {
+        base.on_delete_networked_child(child);
+        var removed = (inventory_slot_networked)child;
+        slots[removed.index].update(null, 0, this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+        children_added.Add((inventory_slot_networked)child);
     }
 
     public bool add(string item, int count)
     {
-        // Load the item that we're adding
-        var i = Resources.Load<item>("items/" + item);
-        if (i == null) return false;
+        var to_add = Resources.Load<item>("items/" + item);
+        if (to_add == null) throw new System.Exception("Could not find the item " + item);
+        return add(to_add, count);
+    }
 
-        // Popup message when adding stuff to local player inventory
-        if (this == player.current?.inventory)
-            popup_message.create("+ " + count + " " + (count > 1 ? i.plural : i.display_name));
+    public bool add(item item, int count)
+    {
+        // Ensure the ui exists
+        if (ui == null)
+            throw new System.Exception("UI should create itself!");
 
-        // First attempt to find a matching slot
-        foreach (var s in slots)
-            if (s.item?.name == item)
+        // Attempt to add the item to existing networked slots
+        var networked_slots = new HashSet<int>();
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        {
+            if (isn.add(item, count))
+                return true;
+            networked_slots.Add(isn.index);
+        }
+
+        // Find an empty slot to add the item to
+        for (int i = 0; i < slots.Length; ++i)
+        {
+            if (networked_slots.Contains(i)) continue; // This slot is taken
+            if (slots[i].accepts(item))
             {
-                if (s.accepts(i))
-                {
-                    s.set_item_count(i, s.count + count);
-                    return true;
-                }
-            }
-
-        // Then settle for any compatible slot
-        foreach (var s in slots)
-            if (s.accepts(i))
-            {
-                s.set_item_count(i, s.count + count);
+                // Create a networked slot with the corresponding info
+                var isn = (inventory_slot_networked)client.create(
+                    transform.position, "misc/networked_inventory_slot", this);
+                isn.set_item_count_index(item, count, i);
                 return true;
             }
+        }
 
         return false;
     }
 
     public void remove(string item, int count)
     {
-        // Remove this many items from the slots
-        foreach (var s in slots)
-            if (s.item?.name == item)
-            {
-                int to_remove = Mathf.Min(count, s.count);
-                s.set_item_count(s.item, s.count - to_remove);
-                count -= to_remove;
-                if (count <= 0)
-                    break;
-            }
-
-        if (count > 0)
-            Debug.LogWarning("Did not remove the requested number of items!");
+        var to_remove = Resources.Load<item>("items/" + item);
+        if (to_remove == null) throw new System.Exception("Could not find the item " + item);
+        remove(to_remove, count);
     }
 
-    /// <summary> Check if this section contains the given
-    /// item (and at least the given quantity). </summary>
-    public bool contains(item item, int count = 1)
+    public void remove(item item, int count)
     {
-        return contains(item.name, count);
+        if (item == null || count == 0)
+            return;
+
+        // Run over the occupied (networked) slots, and remove count items
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        {
+            count -= isn.remove(item, count);
+            if (count <= 0) break;
+        }
+
+        if (count != 0)
+            Debug.LogWarning("Items not removed properly!");
     }
 
     public bool contains(string item, int count = 1)
     {
-        var c = contents();
-        if (c.TryGetValue(item, out int found))
-            return found >= count;
+        var to_test = Resources.Load<item>("items/" + item);
+        if (to_test == null) throw new System.Exception("Could not find the item " + item);
+        return contains(to_test, count);
+    }
+
+    public bool contains(item item, int count = 1)
+    {
+        // Count the amount of item we have in occupied 
+        // (networked) slots and see if that is >= count
+        int found = 0;
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+            if (isn.item_name == item.name)
+            {
+                found += isn.count;
+                if (found >= count)
+                    return true;
+            }
+
         return false;
     }
 
-    /// <summary> Return a dictionary containing all of the items
-    /// in my slots and their total quantities. </summary>
-    public Dictionary<string, int> contents()
+    public Dictionary<item, int> contents()
     {
-        Dictionary<string, int> ret = new Dictionary<string, int>();
-        foreach (var s in slots)
+        Dictionary<item, int> ret = new Dictionary<item, int>();
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
         {
-            if (s.item == null) continue;
-            if (!ret.ContainsKey(s.item.name)) ret[s.item.name] = s.count;
-            else ret[s.item.name] += s.count;
+            if (!ret.ContainsKey(isn.item)) ret[isn.item] = isn.count;
+            else ret[isn.item] += isn.count;
         }
         return ret;
     }
 
-    /// <summary> Add a listener to all of my slots. </summary>
-    public void add_on_change_listener(inventory_slot.func f)
+    public delegate void on_change_func();
+    List<on_change_func> listeners = new List<on_change_func>();
+    public void add_on_change_listener(on_change_func f) { listeners.Add(f); }
+
+    public void on_change(int slot_index, item item, int count)
     {
-        foreach (var s in slots)
-            s.add_on_change_listener(f);
+        slots[slot_index].update(item, count, this);
+        foreach (var f in listeners) f();
     }
 }

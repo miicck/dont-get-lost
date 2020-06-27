@@ -25,29 +25,26 @@ public class mouse_item : MonoBehaviour
         {
             _count = value;
             if (_count < 1) Destroy(gameObject);
-            else item_count_text.text = _count > 1 ? "" + _count.qs() : "";
+            else item_count_text.text = _count.qs();
         }
     }
 
     public Text item_count_text;
     public Image item_image;
-    inventory_slot origin;
+    inventory origin;
 
     private void Update()
     {
         if (!Cursor.visible)
         {
-            if (origin.item != null && origin.item != item)
-                Debug.LogError("Origin item has changed, I don't know what to do!");
-
-            origin.set_item_count(item, origin.count + count);
+            origin.add(item, count);
             count = 0;
         }
 
         transform.position = Input.mousePosition;
     }
 
-    public static mouse_item create(item item, int count, inventory_slot origin)
+    public static mouse_item create(item item, int count, inventory origin)
     {
         var ret = Resources.Load<mouse_item>("ui/mouse_item").inst();
         ret.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
