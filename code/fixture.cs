@@ -12,8 +12,10 @@ public class fixture : building_material, IInspectable
 
     new public string inspect_info()
     {
-        if (bed == null) return "Fixture has no associated bed.";
-        return "Fixture is associated to " + bed.display_name + ".";
+        string info = display_name + "\n";
+        if (bed == null) info += "Fixture has no associated bed.";
+        else info += "Fixture is associated to " + bed.display_name + ".";
+        return info;
     }
 
     new public Sprite main_sprite()

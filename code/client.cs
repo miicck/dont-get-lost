@@ -16,8 +16,12 @@ public static class client
     static Queue<pending_creation_message> pending_creation_messages;
     static disconnect_func on_disconnect;
     static TcpClient tcp;
+    static int last_server_time;
+    static int last_server_time_local;
 
     // END STATE VARIABLES //
+
+    public static int server_time => ((int)Time.realtimeSinceStartup - last_server_time_local) + last_server_time;
 
     /// <summary> Called when the client disconnects. </summary>
     /// <param name="message">The message from the server, if it 
@@ -319,6 +323,9 @@ public static class client
             [server.MESSAGE.HEARTBEAT] = (buffer, offset, length) =>
             {
                 int heartbeat_key = network_utils.decode_int(buffer, ref offset);
+                last_server_time = network_utils.decode_int(buffer, ref offset);
+                last_server_time_local = (int)Time.realtimeSinceStartup;
+
                 if (last_heartbeat.Key == heartbeat_key)
                 {
                     // Record the ping
@@ -570,7 +577,9 @@ public static class client
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage() + "\n" +
-               "    Effective ping     : " + ping;
+               "    Effective ping     : " + ping + "\n" +
+               "    Server time        : " + server_time + " (last = " + last_server_time + ")\n";
+
     }
 
     public enum MESSAGE : byte

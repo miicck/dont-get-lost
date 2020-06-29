@@ -886,7 +886,13 @@ public static class server
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 int heartbeat_key = (int)args[0];
-                send(client, MESSAGE.HEARTBEAT, network_utils.encode_int(heartbeat_key));
+                var dt = System.DateTime.UtcNow.Subtract(new System.DateTime(1970, 1, 1, 0, 0, 0, 0));
+                int seconds_since_epoch = (int)dt.TotalSeconds; // See you in 2038!
+
+                send(client, MESSAGE.HEARTBEAT, network_utils.concat_buffers(
+                    network_utils.encode_int(heartbeat_key),
+                    network_utils.encode_int(seconds_since_epoch)
+                ));
             },
 
             [MESSAGE.DISCONNECT] = (client, args) =>

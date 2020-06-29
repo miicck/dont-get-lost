@@ -132,6 +132,9 @@ public class inventory : networked
 
     public bool add(item item, int count)
     {
+        if (item == null || count == 0)
+            return true;
+
         // Ensure the ui exists
         if (ui == null)
             throw new System.Exception("UI should create itself!");
@@ -236,10 +239,25 @@ public class inventory : networked
         Dictionary<item, int> ret = new Dictionary<item, int>();
         foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
         {
+            if (isn.item == null) continue;
             if (!ret.ContainsKey(isn.item)) ret[isn.item] = isn.count;
             else ret[isn.item] += isn.count;
         }
         return ret;
+    }
+
+    public int count(string item)
+    {
+        return count(Resources.Load<item>("items/" + item));
+    }
+
+    public int count(item item)
+    {
+        item = Resources.Load<item>("items/" + item?.name);
+        if (item == null) throw new System.Exception("Could not find the item " + item?.name);
+        if (contents().TryGetValue(item, out int count))
+            return count;
+        return 0;
     }
 
     public delegate void on_change_func();

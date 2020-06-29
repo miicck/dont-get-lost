@@ -472,6 +472,15 @@ public class rock_stacks : biome
     public const float WIGGLE_PERIOD = 16f;
     public const float WIGGLE_AMP = HILL_SIZE;
 
+    public override Dictionary<string, float> character_densities()
+    {
+        return new Dictionary<string, float>
+        {
+            ["chicken"] = 1f / (32f * 32f),
+            ["smoke_spider"] = 1 / (32f * 32f)
+        };
+    }
+
     protected override void generate_grid()
     {
         // Derived constants

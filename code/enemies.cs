@@ -95,9 +95,12 @@ public static class enemies
         // Create a random path for the next_spawn character, starting at the player
         // with a length between min_spawn_range and target_spawn_range
         if (spawn_path == null)
+        {
+            generate_next_spawn();
             spawn_path = new random_path(player.current.transform.position,
                 (v) => (v - player.current.transform.position).magnitude > target_spawn_range,
                 (v) => (v - player.current.transform.position).magnitude > min_spawn_range, next_spawn);
+        }
 
         else switch (spawn_path.state)
             {

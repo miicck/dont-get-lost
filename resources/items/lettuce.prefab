@@ -47,6 +47,7 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: 44ca1e175c29af6479386d5f6144d3a1, type: 3}
   plural: lettuces
   value: 1
+  fuel_value: 0
 --- !u!135 &1720107364616188029
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -75,12 +76,12 @@ PrefabInstance:
     - target: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.099
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63,
         type: 3}

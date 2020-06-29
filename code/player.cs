@@ -454,6 +454,21 @@ public class player : networked_player
 
     void run_quickbar_shortcuts()
     {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dist);
+            var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
+            if (itm != null)
+            {
+                for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
+                    if (quickbar_slot(i)?.item?.name == itm.name)
+                    {
+                        slot_equipped.value = i;
+                        return;
+                    }
+            }
+        }
+
         // Select quickbar item using keyboard shortcut
         if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(1);
         else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(2);
