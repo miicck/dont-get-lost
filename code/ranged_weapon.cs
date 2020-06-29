@@ -14,14 +14,11 @@ public class ranged_weapon : equip_in_hand
 
         // Search for ammunition in the player inventory
         foreach (var kv in player.current.inventory.contents())
-        {
-            item i = Resources.Load<item>("items/" + kv.Key);
-            if (ammunition.satisfied(i))
+            if (ammunition.satisfied(kv.Key))
             {
-                ammo_found = i;
+                ammo_found = kv.Key;
                 break;
             }
-        }
 
         if (ammo_found == null)
         {
