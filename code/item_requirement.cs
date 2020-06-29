@@ -20,6 +20,7 @@ public class item_requirement : MonoBehaviour
     /// <summary> Returns true if the test passes. </summary>
     public bool satisfied(item item)
     {
+        if (item == null) return false;
         switch (mode)
         {
             case MODE.SPECIFIC_ITEM:

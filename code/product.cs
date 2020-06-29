@@ -11,6 +11,7 @@ public class product : MonoBehaviour
     {
         SIMPLE,
         RANDOM_AMOUNT,
+        PROBABILITY
     }
 
     /// <summary> The way this product is created. </summary>
@@ -25,6 +26,9 @@ public class product : MonoBehaviour
     /// <summary> The maximum count of this product to be produced. </summary>
     public int max_count = 1;
 
+    /// <summary> The expected number of attempts to obtain this product. </summary>
+    public int one_in_chance = 1;
+
     /// <summary> The display name of this product. </summary>
     public virtual string product_name()
     {
@@ -32,6 +36,7 @@ public class product : MonoBehaviour
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
+            case MODE.PROBABILITY:
                 return item.display_name;
 
             default:
@@ -46,6 +51,7 @@ public class product : MonoBehaviour
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
+            case MODE.PROBABILITY:
                 return item.plural;
 
             default:
@@ -60,7 +66,13 @@ public class product : MonoBehaviour
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
-                inv.add(item.name, Random.Range(min_count, max_count + 1));
+                inv.add(item, Random.Range(min_count, max_count + 1));
+                break;
+
+            case MODE.PROBABILITY:
+                float prob = 1f / one_in_chance;
+                if (Random.Range(0, 1f) < prob)
+                    inv.add(item, Random.Range(min_count, max_count + 1));
                 break;
 
             default:
@@ -75,6 +87,7 @@ public class product : MonoBehaviour
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
+            case MODE.PROBABILITY:
                 return item.sprite;
 
             default:
@@ -151,6 +164,7 @@ public class product : MonoBehaviour
                     break;
 
                 case MODE.RANDOM_AMOUNT:
+                case MODE.PROBABILITY:
                     select_mode(p);
                     select_item(p);
 
@@ -167,6 +181,16 @@ public class product : MonoBehaviour
                     {
                         p.max_count = new_max;
                         UnityEditor.EditorUtility.SetDirty(p);
+                    }
+
+                    if (p.mode == MODE.PROBABILITY)
+                    {
+                        int new_one_in_chance = UnityEditor.EditorGUILayout.IntField("one in x prob", p.one_in_chance);
+                        if (p.one_in_chance != new_one_in_chance)
+                        {
+                            p.one_in_chance = new_one_in_chance;
+                            UnityEditor.EditorUtility.SetDirty(p);
+                        }
                     }
 
                     break;
