@@ -136,30 +136,50 @@ public class inventory : networked
         if (ui == null)
             throw new System.Exception("UI should create itself!");
 
+        // Ensure we're adding the prefab version of the item
+        item = Resources.Load<item>("items/" + item.name);
+
+        bool added = false;
+
         // Attempt to add the item to existing networked slots
         var networked_slots = new HashSet<int>();
         foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
         {
             if (isn.add(item, count))
-                return true;
+            {
+                added = true;
+                break;
+            }
             networked_slots.Add(isn.index);
         }
 
-        // Find an empty slot to add the item to
-        for (int i = 0; i < slots.Length; ++i)
+        if (!added)
         {
-            if (networked_slots.Contains(i)) continue; // This slot is taken
-            if (slots[i].accepts(item))
+            // Find an empty slot to add the item to
+            for (int i = 0; i < slots.Length; ++i)
             {
-                // Create a networked slot with the corresponding info
-                var isn = (inventory_slot_networked)client.create(
-                    transform.position, "misc/networked_inventory_slot", this);
-                isn.set_item_count_index(item, count, i);
-                return true;
+                if (networked_slots.Contains(i)) continue; // This slot is taken
+                if (slots[i].accepts(item))
+                {
+                    // Create a networked slot with the corresponding info
+                    var isn = (inventory_slot_networked)client.create(
+                        transform.position, "misc/networked_inventory_slot", this);
+                    isn.set_item_count_index(item, count, i);
+                    added = true;
+                    break;
+                }
             }
         }
 
-        return false;
+        // If this is the local player inventory, display a message on success
+        if (added && GetComponentInParent<player>() == player.current)
+        {
+            string msg = "+ " + count.qs() + " " + (count > 1 ? item.plural : item.display_name) +
+                         " (" + contents()[item] + ")";
+            popup_message.create(msg);
+        }
+
+        return added;
     }
 
     public void remove(string item, int count)
@@ -173,6 +193,9 @@ public class inventory : networked
     {
         if (item == null || count == 0)
             return;
+
+        // Ensure we're removing the prefab version of the item
+        item = Resources.Load<item>("items/" + item.name);
 
         // Run over the occupied (networked) slots, and remove count items
         foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
