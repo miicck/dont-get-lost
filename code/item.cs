@@ -198,6 +198,9 @@ public class item : networked, IInspectable
 
     public static string item_quantity_info(item item, int quantity)
     {
+        if (item == null || quantity == 0)
+            return "No item.";
+
         // Titlle
         string info = (quantity < 2 ? item.display_name :
             (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";

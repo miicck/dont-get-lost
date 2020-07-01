@@ -18,11 +18,14 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
     }
 }
 
-public class inventory_slot : MonoBehaviour
+public class inventory_slot : MonoBehaviour, IInspectable
 {
     public Image item_image;
     public Button button;
     public Text count_text;
+
+    item item;
+    int count;
 
     public virtual void update(item item, int count, inventory inventory)
     {
@@ -43,6 +46,9 @@ public class inventory_slot : MonoBehaviour
         var col = item_image.color;
         col.a = item_image.sprite == null ? 0f : 1f;
         item_image.color = col;
+
+        this.item = item;
+        this.count = count;
     }
 
     /// <summary> The sprite used in <see cref="item_image"/> when the slot is empty. </summary>
@@ -50,4 +56,8 @@ public class inventory_slot : MonoBehaviour
 
     /// <summary> Returns true if <paramref name="item"/> can be put in this slot. </summary>
     public virtual bool accepts(item item) { return true; }
+
+    public string inspect_info() { return item.item_quantity_info(item, count); }
+    public Sprite main_sprite() { return item_image.sprite; }
+    public Sprite secondary_sprite() { return null; }
 }

@@ -74,6 +74,23 @@ public class inventory : networked
                 }
                 else
                 {
+                    // Shift moves the contents of the slot directly into the player inventory
+                    if (Input.GetKey(KeyCode.LeftShift))
+                    {
+                        // Copies for lambda function
+                        item transfer_item = isn.item;
+                        int transfer_count = isn.count;
+                        int transfer_slot = slot_index;
+
+                        isn.delete(() =>
+                        {
+                            player.current.inventory.add(transfer_item, transfer_count);
+                            on_slot_change(transfer_slot, null, 0);
+                        });
+
+                        return;
+                    }
+
                     // Pickup the mouse item from the slot
                     isn.pickup(right_click);
                     return;
