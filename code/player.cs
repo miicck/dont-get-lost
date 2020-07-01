@@ -1254,11 +1254,16 @@ public class popup_message : MonoBehaviour
         var m = new GameObject("message").AddComponent<popup_message>();
         m.text = m.gameObject.AddComponent<UnityEngine.UI.Text>();
 
+        var canv = FindObjectOfType<game>().main_canvas;
+
         m.transform = m.GetComponent<RectTransform>();
-        m.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        m.transform.SetParent(canv.transform);
         m.transform.anchorMin = new Vector2(0.5f, 0.25f);
         m.transform.anchorMax = new Vector2(0.5f, 0.25f);
         m.transform.anchoredPosition = Vector2.zero;
+
+        m.transform.anchoredPosition -= 
+            Vector2.up * 32f * canv.GetComponentsInChildren<popup_message>().Length;
 
         m.text.font = Resources.Load<Font>("fonts/monospace");
         m.text.text = message;

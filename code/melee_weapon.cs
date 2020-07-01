@@ -10,8 +10,8 @@ public abstract class equip_in_hand : item
 public class melee_weapon : equip_in_hand
 {
     public int damage = 1;
-    public float swing_time = 0.25f;
-    public float swing_length = 0.5f;
+    public float swing_time = 0.5f;
+    public float swing_length = 0.15f;
     public float max_forward_in_up = 5f;
     public AudioSource swing_audio;
     float swing_progress = 0;
@@ -26,6 +26,15 @@ public class melee_weapon : equip_in_hand
         // Only allow left click
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
+
+        if (swing_audio == null)
+        {
+            // Default audio
+            swing_audio = gameObject.AddComponent<AudioSource>();
+            swing_audio.spatialBlend = 1.0f; // 3D
+            swing_audio.clip = Resources.Load<AudioClip>("sounds/woosh_1");
+            swing_audio.volume = 0.5f;
+        }
 
         swing_audio.Play();
         swing_progress = 0;

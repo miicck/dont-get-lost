@@ -6,8 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(ingredient))]
 public class recipe : MonoBehaviour
 {
-    product[] products { get => GetComponents<product>(); }
-    ingredient[] ingredients { get => GetComponents<ingredient>(); }
+    public product[] products { get => GetComponents<product>(); }
+    public ingredient[] ingredients { get => GetComponents<ingredient>(); }
 
     public crafting_entry get_entry()
     {
