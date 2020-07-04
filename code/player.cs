@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player
+public class player : networked_player, INotPathBlocking
 {
     //###########//
     // CONSTANTS //

@@ -38,6 +38,13 @@ public abstract class path
     /// <summary> Carry out <paramref name="iterations"/> pathfinding iterations. </summary>
     public abstract void pathfind(int iterations);
 
+    /// <summary> Perform the given number of valudation iterations, returns false if
+    /// the path was found to be no longer valid. </summary>
+    public abstract bool validate(int iterations);
+
+    /// <summary> Optimize a path, to make it more visually appealing. </summary>
+    public virtual void optimize(int iterations) { }
+
     /// <summary> Return the <paramref name="i"/> th point along the path. </summary>
     public abstract Vector3 this[int i] { get; }
 
@@ -74,6 +81,8 @@ public abstract class path
     }
 }
 
+
+
 /// <summary> Carry out pathfinding using the A* algorithm. </summary>
 public class astar_path : path
 {
@@ -84,6 +93,8 @@ public class astar_path : path
     protected int endpoint_search_stage = 0;
     protected int max_iterations;
     protected int total_iterations = 0;
+    protected int last_validate_step = 0;
+    protected int last_optimize_step = 0;
 
     /// <summary> The path found. </summary>
     protected List<Vector3> path;
@@ -192,13 +203,8 @@ public class astar_path : path
                 int tentative_distance = current.best_distance_to_start + 1;
                 if (tentative_distance < n.best_distance_to_start)
                 {
-                    // Find a suitable entrypoint to the neighbour n from current
-                    Bounds bounds = new Bounds(grid_centre(n.x, n.y, n.z), Vector3.one * agent.resolution);
-                    Vector3 entrypoint = agent.validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
-                    if (!valid) continue; // Could not find a valid entrypoint
-
-                    // Not a valid move, skip
-                    if (!agent.validate_move(current.entrypoint, entrypoint)) continue;
+                    if (!can_link(current, n, out Vector3 entrypoint))
+                        continue;
 
                     // Update the path to n
                     n.entrypoint = entrypoint;
@@ -209,6 +215,79 @@ public class astar_path : path
                     open_set[n] = n;
                 }
             }
+        }
+    }
+
+    protected bool can_link(waypoint current, waypoint neighbour, out Vector3 neighbour_entrypoint)
+    {
+        // Find a suitable entrypoint to the neighbour n from current
+        if (neighbour.entrypoint == default) // Only look for an entrypoint if we don't have one already
+        {
+            Bounds bounds = new Bounds(grid_centre(neighbour.x, neighbour.y, neighbour.z), Vector3.one * agent.resolution);
+            neighbour_entrypoint = bounds.ClosestPoint(current.entrypoint);
+            neighbour_entrypoint = agent.validate_position(neighbour_entrypoint, out bool valid);
+            if (!valid) return false; // Could not find a valid entrypoint
+        }
+        else neighbour_entrypoint = neighbour.entrypoint;
+
+        // Not a valid move, skip
+        if (!agent.validate_move(current.entrypoint, neighbour_entrypoint)) return false;
+
+        // Update the path to n
+        return true;
+    }
+
+    public override bool validate(int iterations)
+    {
+        switch (state)
+        {
+            case STATE.COMPLETE:
+
+                if (length < 2) return true; // Nothing to validate
+                last_validate_step = last_validate_step % (length - 1); // Stay in-range
+                for (int i = 0; i < iterations; ++i)
+                {
+                    Vector3 a = this[last_validate_step];
+                    Vector3 b = this[last_validate_step + 1];
+
+                    // Note, in validation mode, we don't update the positions a and b
+                    // to the return value of agent.validate_position as we only care if
+                    // the positions saved to the path are still valid.
+                    agent.validate_position(a, out bool valid);
+                    if (!valid) return false;
+                    agent.validate_position(b, out valid);
+                    if (!valid) return false;
+                    if (!agent.validate_move(a, b)) return false;
+
+                    last_validate_step = (last_validate_step + 1) % (length - 1);
+                }
+
+                return true;
+
+            case STATE.FAILED:
+            case STATE.SEARCHING:
+                return false;
+
+            default:
+                throw new System.Exception("Unkown path state!");
+        }
+    }
+
+    public override void optimize(int iterations)
+    {
+        if (length < 3) return; // Can't optimize a streight line
+        last_optimize_step = last_optimize_step % (length - 2); // Stay in-range
+
+        for (int i = 0; i < iterations; ++i)
+        {
+            Vector3 a = path[last_optimize_step];
+            Vector3 b = path[last_optimize_step + 2];
+
+            // Remove unneccassary middle point
+            if (agent.validate_move(a, b))
+                path.RemoveAt(last_optimize_step + 1);
+
+            last_optimize_step = (last_optimize_step + 1) % (length - 2);
         }
     }
 
@@ -475,13 +554,8 @@ public class random_path : astar_path
                 // Already open
                 if (open_set.ContainsKey(n)) continue;
 
-                // Find a suitable entrypoint to the neighbour n from current
-                Bounds bounds = new Bounds(grid_centre(n.x, n.y, n.z), Vector3.one * agent.resolution);
-                Vector3 entrypoint = agent.validate_position(bounds.ClosestPoint(current.entrypoint), out bool valid);
-                if (!valid) continue; // Could not find a valid entrypoint
-
-                // Not a valid move, skip
-                if (!agent.validate_move(current.entrypoint, entrypoint)) continue;
+                // Cant link current to this neighbour
+                if (!can_link(current, n, out Vector3 entrypoint)) continue;
 
                 // Update the path to n
                 n.entrypoint = entrypoint;
@@ -628,10 +702,31 @@ public static class pathfinding_utils
     /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
     /// <paramref name="ground_clearance"/> walking. </summary>
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
+        float width, float height, float ground_clearance, out string reason)
     {
-        return validate_move_overlap(a, b, width, height, ground_clearance) &&
-               validate_move_grounding(a, b, width, ground_clearance);
+        bool overlap_test = validate_move_overlap(a, b, width, height, ground_clearance);
+        if (!overlap_test)
+        {
+            reason = "Something blocking";
+            return false;
+        }
+
+        bool grounding = validate_move_grounding(a, b, width, ground_clearance);
+        if (!grounding)
+        {
+            reason = "No grounding";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
+
+    // Overload of the above without the reason
+    public static bool validate_walking_move(Vector3 a, Vector3 b,
+    float width, float height, float ground_clearance)
+    {
+        return validate_walking_move(a, b, width, height, ground_clearance, out string reason);
     }
 
     /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>
