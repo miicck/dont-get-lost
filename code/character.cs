@@ -10,7 +10,7 @@ public interface ICharacterController
 }
 
 [RequireComponent(typeof(character_hitbox))]
-public class character : networked
+public class character : networked, INotPathBlocking
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -49,6 +49,13 @@ public class character : networked
         AGRESSIVE,
         FRIENDLY,
         AFRAID
+    }
+
+    public void lerp_forward(Vector3 new_forward)
+    {
+        // Lerp forward look direction
+        new_forward = Vector3.Lerp(transform.forward, new_forward, run_speed * Time.deltaTime);
+        if (new_forward.magnitude > 10e-4) transform.forward = new_forward;
     }
 
     //########//

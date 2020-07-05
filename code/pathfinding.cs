@@ -677,8 +677,9 @@ public static class pathfinding_utils
     /// <paramref name="height"/> and <paramref name="ground_clearance"/>, by 
     /// checking if anythging overlaps an appropriately-shaped box. </summary>
     static bool validate_move_overlap(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance)
+        float width, float height, float ground_clearance, out string reason)
     {
+        reason = null;
         Vector3 delta = b - a;
         if (delta.magnitude < 1e-4) return true;
 
@@ -693,7 +694,10 @@ public static class pathfinding_utils
 
         foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
             if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
+            {
+                reason = "blocked by " + c.gameObject.name;
                 return false;
+            }
 
         return true;
     }
@@ -704,12 +708,8 @@ public static class pathfinding_utils
     public static bool validate_walking_move(Vector3 a, Vector3 b,
         float width, float height, float ground_clearance, out string reason)
     {
-        bool overlap_test = validate_move_overlap(a, b, width, height, ground_clearance);
-        if (!overlap_test)
-        {
-            reason = "Something blocking";
-            return false;
-        }
+        bool overlap_test = validate_move_overlap(a, b, width, height, ground_clearance, out reason);
+        if (!overlap_test) return false;
 
         bool grounding = validate_move_grounding(a, b, width, ground_clearance);
         if (!grounding)
@@ -717,8 +717,6 @@ public static class pathfinding_utils
             reason = "No grounding";
             return false;
         }
-
-        reason = null;
         return true;
     }
 

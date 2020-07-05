@@ -6,7 +6,7 @@ public class portal : building_material
 {
     public Transform path_start;
 
-    path path;
+    public path path { get; private set; }
 
     bool path_success(Vector3 end)
     {
@@ -20,6 +20,7 @@ public class portal : building_material
     private void Start()
     {
         InvokeRepeating("create_pulse", 0.2f, 0.2f);
+        InvokeRepeating("spawn_attacker", 5f, 5f);
     }
 
     private void Update()
@@ -46,9 +47,33 @@ public class portal : building_material
                     if (Time.frameCount % 2 == 0)
                         path.optimize(load_balancing.iter);
                     else if (!path.validate(load_balancing.iter))
+                    {
+                        Debug.Log("path failed validation: " + portal_pather.last_reason);
                         path = null;
+                    }
                     break;
             }
+        }
+    }
+
+    void spawn_attacker()
+    {
+        // Only spawn on authority client, when a path is available
+        if (!has_authority) return;
+        if (path == null || path.state != path.STATE.COMPLETE) return;
+
+        client.create(path[path.length - 1], "characters/smoke_spider", this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+
+        // Child characters are controlled by the portal
+        if (child is character)
+        {
+            var c = (character)child;
+            c.controller = new portal_character_control(this);
         }
     }
 
@@ -122,4 +147,42 @@ public class portal : building_material
             transform.position += delta;
         }
     }
+}
+
+/// <summary> Controlls characters attacking the portal. </summary>
+public class portal_character_control : ICharacterController
+{
+    portal portal;
+    character character;
+    int progress;
+
+    public portal_character_control(portal portal)
+    {
+        this.portal = portal;
+    }
+
+    public void control(character character)
+    {
+        this.character = character;
+
+        if (portal.path == null ||
+            portal.path.state != path.STATE.COMPLETE ||
+            progress >= portal.path.length)
+        {
+            character.delete();
+            return;
+        }
+
+        Vector3 next = portal.path[portal.path.length - 1 - progress];
+        Vector3 delta = next - character.transform.position;
+        if (delta.magnitude < character.ARRIVE_DISTANCE)
+            progress += 1;
+
+        delta = delta.clamp_magnitude(0, Time.deltaTime * character.walk_speed);
+        character.transform.position += delta;
+        character.lerp_forward(delta);
+    }
+
+    public void draw_gizmos() { }
+    public void draw_inspector_gui() { }
 }

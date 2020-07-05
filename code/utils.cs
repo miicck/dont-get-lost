@@ -410,6 +410,13 @@ public static class utils
         return true;
     }
 
+    public static Vector3 clamp_magnitude(this Vector3 v, float min_mag, float max_mag)
+    {
+        if (v.magnitude < min_mag) v = v.normalized * min_mag;
+        if (v.magnitude > max_mag) v = v.normalized * max_mag;
+        return v;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object

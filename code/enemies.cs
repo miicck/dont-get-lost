@@ -56,7 +56,8 @@ public static class enemies
 
     public static void register_character(character c)
     {
-        spawend.Add(c);
+        if (c.controller is default_character_control)
+            spawend.Add(c);
     }
 
     /// <summary> Choose the next character to spawn, weighted by target density. </summary>
@@ -88,6 +89,11 @@ public static class enemies
     {
         public Vector3 validate_position(Vector3 v, out bool valid)
         {
+            if (v.y < world.SEA_LEVEL)
+            {
+                valid = false;
+                return v;
+            }
             return pathfinding_utils.validate_walking_position(v, resolution, out valid);
         }
 

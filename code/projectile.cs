@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class projectile : item
+public class projectile : item, INotPathBlocking
 {
     public int damage = 4;
     public float start_distance = 1f;
