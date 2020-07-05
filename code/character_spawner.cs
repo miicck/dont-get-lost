@@ -63,7 +63,7 @@ public class character_spawner : spawned_by_world_object
         foreach (var s in spawned)
         {
             s.gameObject.SetActive(true);
-            s.on_spawn(this);
+            s.controller = new spawner_character_controller(this);
         }
     }
 
@@ -71,5 +71,22 @@ public class character_spawner : spawned_by_world_object
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, max_range);
+    }
+}
+
+/// <summary> Override the default character behaviour so the 
+/// character stays within a given range of the spawner. </summary>
+public class spawner_character_controller : default_character_control
+{
+    character_spawner spawner;
+
+    public spawner_character_controller(character_spawner spawner)
+    {
+        this.spawner = spawner;
+    }
+
+    protected override bool is_allowed_at(Vector3 v)
+    {
+        return base.is_allowed_at(v) && (v - spawner.transform.position).magnitude < spawner.max_range;
     }
 }

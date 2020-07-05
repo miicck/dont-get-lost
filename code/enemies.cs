@@ -50,9 +50,6 @@ public static class enemies
         // Remove deleted characters
         spawend.RemoveWhere((c) => c == null);
 
-        // Remove all characters controlled by a spawner
-        spawend.RemoveWhere((c) => c.spawned_by != null);
-
         // Keep the number of spawned characters up
         spawn_more();
     }
@@ -86,6 +83,23 @@ public static class enemies
         }
     }
 
+    /// <summary> Pathing agent used to test for spawning. </summary>
+    class spawn_test_agent : IPathingAgent
+    {
+        public Vector3 validate_position(Vector3 v, out bool valid)
+        {
+            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        }
+
+        public bool validate_move(Vector3 a, Vector3 b)
+        {
+            return pathfinding_utils.validate_walking_move(a, b,
+                resolution, 2f, resolution / 2f);
+        }
+
+        public float resolution { get => 1f; }
+    }
+
     static void spawn_more()
     {
         if (player.current == null) return;
@@ -99,7 +113,7 @@ public static class enemies
             generate_next_spawn();
             spawn_path = new random_path(player.current.transform.position,
                 (v) => (v - player.current.transform.position).magnitude > target_spawn_range,
-                (v) => (v - player.current.transform.position).magnitude > min_spawn_range, next_spawn);
+                (v) => (v - player.current.transform.position).magnitude > min_spawn_range, new spawn_test_agent());
         }
 
         else switch (spawn_path.state)
