@@ -114,8 +114,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2689756f46cb7954d8d13405da983faa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  agent_width: 1
   agent_height: 1.5
-  agent_resolution: 0.5
+  agent_ground_clearance: 0.5
   base_speed: 2
 --- !u!114 &-5279526894227948339
 MonoBehaviour:
@@ -130,7 +131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: -7572213448333294000, guid: 16eb9109f496e144c8e50ceeae24d2c3, type: 3}
+  item: {fileID: -5169961100938236186, guid: 16eb9109f496e144c8e50ceeae24d2c3, type: 3}
   tool_type: 0
   tool_quality: 0
 --- !u!114 &6806714342890296975
@@ -325,7 +326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07aa4c11de4f4a24b939df6d105abd52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 8160425552160629829, guid: 9949fafe6c2a5d94f9d082c9962db564, type: 3}
+  item: {fileID: 5871161957040132491, guid: 9949fafe6c2a5d94f9d082c9962db564, type: 3}
   stock_replenish_per_minute: 0
   stock_replenish_target: 10
 --- !u!114 &1062199824889052593
