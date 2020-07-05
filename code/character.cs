@@ -205,7 +205,7 @@ public class character : networked, INotPathBlocking
     {
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;
-        if (health.value < 0)
+        if (health.value <= 0)
         {
             foreach (var p in GetComponents<product>())
                 p.create_in_inventory(player.current.inventory);
