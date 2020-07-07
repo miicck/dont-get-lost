@@ -226,6 +226,7 @@ MonoBehaviour:
   value: 2
   fuel_value: 0
   axes_scale: 1
+  settler_stands_here: {fileID: 7716196934694846020}
 --- !u!65 &3520222411503524960
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -129,12 +129,20 @@ public class astar_path : path
             return;
         }
 
-        path = new List<Vector3> { end.entrypoint };
+        if (agent.validate_move(end.entrypoint, goal))
+            path = new List<Vector3> { goal, end.entrypoint };
+        else
+            path = new List<Vector3> { end.entrypoint };
+
         while (end.came_from != null)
         {
             end = end.came_from;
             path.Add(end.entrypoint);
         }
+
+        if (agent.validate_move(start, end.entrypoint))
+            path.Add(start);
+
         path.Reverse();
         state = STATE.COMPLETE;
         return;

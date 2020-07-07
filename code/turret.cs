@@ -9,6 +9,9 @@ public class turret : MonoBehaviour
     public int attack_damage = 5;
     public Transform projectile_start;
 
+    public GameObject ready_model;
+    public GameObject cooldown_model;
+
     float phase;
 
     portal defending
@@ -38,10 +41,23 @@ public class turret : MonoBehaviour
     }
     character _target;
 
+    bool on_cooldown
+    {
+        get => _on_cooldown;
+        set
+        {
+            ready_model.SetActive(!value);
+            cooldown_model.SetActive(value);
+            _on_cooldown = value;
+        }
+    }
+    bool _on_cooldown;
+
     private void Start()
     {
         phase = Random.Range(0, 1f);
         InvokeRepeating("aquire_target", fire_cooldown * phase, fire_cooldown);
+        on_cooldown = false;
     }
 
     void aquire_target()
@@ -72,8 +88,7 @@ public class turret : MonoBehaviour
         Vector3 target_forward = target.transform.position - transform.position;
         transform.forward = Vector3.Lerp(transform.forward, target_forward, Time.deltaTime * 10f);
 
-        if (Time.realtimeSinceStartup - last_fired > fire_cooldown &&
-            Vector3.Angle(transform.forward, target_forward) < 10f)
+        if (!on_cooldown && Vector3.Angle(transform.forward, target_forward) < 10f)
         {
             last_fired = Time.realtimeSinceStartup;
             var fired = Resources.Load<GameObject>("misc/projectile_trail").inst().AddComponent<projectile>();
@@ -82,6 +97,20 @@ public class turret : MonoBehaviour
             fired.damage = attack_damage;
             fired.speed = 50f;
         }
+    }
+
+    void Update()
+    {
+        on_cooldown = Time.realtimeSinceStartup - last_fired < fire_cooldown;
+
+        if (target == null) idle();
+        else attack();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, range);
     }
 
     class projectile : MonoBehaviour
@@ -114,17 +143,5 @@ public class turret : MonoBehaviour
             delta = delta.clamp_magnitude(0, Time.deltaTime * speed);
             transform.position += delta;
         }
-    }
-
-    void Update()
-    {
-        if (target == null) idle();
-        else attack();
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, range);
     }
 }

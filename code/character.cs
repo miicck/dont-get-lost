@@ -376,7 +376,13 @@ public class default_character_control : ICharacterController, IPathingAgent
     }
 
     public void draw_gizmos() { path?.draw_gizmos(); }
-    public void draw_inspector_gui() { }
+
+    public void draw_inspector_gui()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorGUILayout.TextArea(path?.info_text());
+#endif
+    }
 
     //###############//
     // IPathingAgent //
@@ -455,7 +461,6 @@ public class default_character_control : ICharacterController, IPathingAgent
     {
         switch (path.state)
         {
-
             case path.STATE.SEARCHING:
                 // Run pathfinding
                 path.pathfind(1);
