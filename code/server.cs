@@ -1026,7 +1026,7 @@ public static class server
             // Then save active representations
             network_utils.top_down<representation>(active_representations, (rep) =>
             {
-                if (saved.Contains(rep.network_id)) return;
+                if (saved.Contains(rep.network_id) || !rep.persistant) return;
                 compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
                 compressor.write_bytes_with_length(rep.serialize());
                 saved.Add(rep.network_id);
@@ -1035,7 +1035,7 @@ public static class server
             // Then save inactive representations
             network_utils.top_down<representation>(inactive_representations, (rep) =>
             {
-                if (saved.Contains(rep.network_id)) return;
+                if (saved.Contains(rep.network_id) || !rep.persistant) return;
                 compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
                 compressor.write_bytes_with_length(rep.serialize());
                 saved.Add(rep.network_id);
