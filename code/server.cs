@@ -160,8 +160,13 @@ public static class server
             // Check if we've timed out, if so disconnect, but with
             // a large timeout to send remaining messages, in the
             // off chance that the client will actually recive them.
+#if UNITY_EDITOR
+            // Don't time out clients if the server is the editor, so that
+            // we don't time people out if the editor is paused.
+#else
             if (time_since_last_message > CLIENT_TIMEOUT)
                 disconnect("Timed out", timeout: 10);
+#endif
         }
 
         /// <summary> Returns true if the given representation is loaded on this client. </summary>
@@ -477,7 +482,7 @@ public static class server
 
         public static int last_network_id_assigned = 0;
 
-#       if UNITY_EDITOR
+#if UNITY_EDITOR
 
         // The custom editor for server representations
         [UnityEditor.CustomEditor(typeof(representation), true)]
@@ -491,7 +496,7 @@ public static class server
             }
         }
 
-#       endif
+#endif
 
     }
 
