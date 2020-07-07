@@ -62,7 +62,10 @@ public class portal : building_material
         if (!has_authority) return;
         if (path == null || path.state != path.STATE.COMPLETE) return;
 
-        client.create(path[path.length - 1], "characters/smoke_spider", this);
+        if (Random.Range(0, 2) == 0)
+            client.create(path[path.length - 1], "characters/smoke_spider", this);
+        else
+            client.create(path[path.length - 1], "characters/chicken", this);
     }
 
     public override void on_add_networked_child(networked child)
