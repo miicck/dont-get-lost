@@ -7,6 +7,9 @@ public class turret : MonoBehaviour
     public float range = 10f;
     public float fire_cooldown = 2f;
     public int attack_damage = 5;
+    public Transform projectile_start;
+
+    float phase;
 
     portal defending
     {
@@ -37,7 +40,8 @@ public class turret : MonoBehaviour
 
     private void Start()
     {
-        InvokeRepeating("aquire_target", 4f, 4f);
+        phase = Random.Range(0, 1f);
+        InvokeRepeating("aquire_target", fire_cooldown * phase, fire_cooldown);
     }
 
     void aquire_target()
@@ -57,19 +61,58 @@ public class turret : MonoBehaviour
     void idle()
     {
         Vector3 euler = Quaternion.identity.eulerAngles;
-        euler.y = 90f * Mathf.Sin(Time.realtimeSinceStartup * Mathf.PI * 2f / 4f);
-        transform.localRotation = Quaternion.Euler(euler);
+        euler.y = 90f * Mathf.Sin((phase + Time.realtimeSinceStartup / 4f) * Mathf.PI * 2f);
+        transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(euler), Time.deltaTime * 10f);
     }
 
     float last_fired = 0;
 
     void attack()
     {
-        transform.LookAt(target.transform);
-        if (Time.realtimeSinceStartup - last_fired > fire_cooldown)
+        Vector3 target_forward = target.transform.position - transform.position;
+        transform.forward = Vector3.Lerp(transform.forward, target_forward, Time.deltaTime * 10f);
+
+        if (Time.realtimeSinceStartup - last_fired > fire_cooldown &&
+            Vector3.Angle(transform.forward, target_forward) < 10f)
         {
             last_fired = Time.realtimeSinceStartup;
-            target.take_damage(attack_damage);
+            var fired = Resources.Load<GameObject>("misc/projectile_trail").inst().AddComponent<projectile>();
+            fired.start = projectile_start.position;
+            fired.target = target;
+            fired.damage = attack_damage;
+            fired.speed = 50f;
+        }
+    }
+
+    class projectile : MonoBehaviour
+    {
+        public Vector3 start;
+        public character target;
+        public int damage;
+        public float speed;
+
+        private void Start()
+        {
+            transform.position = start;
+        }
+
+        private void Update()
+        {
+            if (target == null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Vector3 delta = target.projectile_target.position - transform.position;
+            if (delta.magnitude < 0.25f)
+            {
+                target.take_damage(damage);
+                target = null;
+            }
+
+            delta = delta.clamp_magnitude(0, Time.deltaTime * speed);
+            transform.position += delta;
         }
     }
 

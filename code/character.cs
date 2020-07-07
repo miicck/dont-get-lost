@@ -29,6 +29,7 @@ public class character : networked, INotPathBlocking
     public FRIENDLINESS friendliness;
     public bool can_walk = true;
     public bool can_swim = false;
+    public Transform projectile_target;
 
     /// <summary> The object currently controlling this character. </summary>
     public ICharacterController controller
