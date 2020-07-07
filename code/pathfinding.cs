@@ -40,7 +40,7 @@ public abstract class path
 
     /// <summary> Perform the given number of valudation iterations, returns false if
     /// the path was found to be no longer valid. </summary>
-    public abstract bool validate(int iterations);
+    public virtual bool validate(int iterations) { return true; }
 
     /// <summary> Optimize a path, to make it more visually appealing. </summary>
     public virtual void optimize(int iterations) { }
@@ -578,6 +578,85 @@ public class random_path : astar_path
     public override string info_text()
     {
         return "RANDOM PATH\n" + base.info_text();
+    }
+}
+
+public class chase_path : path
+{
+    astar_path base_path;
+    List<Vector3> follow_path;
+    Transform target;
+
+    public override int length
+    {
+        get
+        {
+            chase();
+            return base_path.length + follow_path.Count;
+        }
+    }
+
+    public override Vector3 this[int i]
+    {
+        get
+        {
+            chase();
+            if (i < base_path.length)
+                return base_path[i];
+
+            return follow_path[i - base_path.length];
+        }
+    }
+
+    void chase()
+    {
+        if (target == null)
+        {
+            state = STATE.FAILED;
+            return;
+        }
+
+        // See if the target has moved far enough to extend the path
+        Vector3 delta = target.position - follow_path[follow_path.Count - 1];
+        if (delta.magnitude > agent.resolution)
+            follow_path.Add(target.position);
+    }
+
+    public chase_path(Vector3 start, Transform target, IPathingAgent agent) : base(start, target.position, agent)
+    {
+        this.target = target;
+        base_path = new astar_path(start, target.position, agent);
+        follow_path = new List<Vector3> { target.position };
+        state = STATE.SEARCHING;
+    }
+
+    public override void pathfind(int iterations)
+    {
+        if (state != STATE.SEARCHING)
+            return;
+
+        if (target == null)
+        {
+            state = STATE.FAILED;
+            return;
+        }
+
+        base_path.pathfind(iterations);
+        state = base_path.state;
+    }
+
+    public override void draw_gizmos()
+    {
+        base_path?.draw_gizmos();
+
+        Gizmos.color = Color.cyan;
+        for (int i = 1; i < follow_path.Count; ++i)
+            Gizmos.DrawLine(follow_path[i], follow_path[i - 1]);
+    }
+
+    public override string info_text()
+    {
+        return base_path?.info_text();
     }
 }
 

@@ -424,11 +424,6 @@ public class default_character_control : ICharacterController, IPathingAgent
     }
     int path_progress = 0;
 
-    void get_path(Vector3 target)
-    {
-        path = new astar_path(character.transform.position, target, this);
-    }
-
     bool move_towards(Vector3 point, float speed)
     {
         // Work out how far to the point
@@ -522,9 +517,11 @@ public class default_character_control : ICharacterController, IPathingAgent
             Vector3 flee_to = character.transform.position + delta * 5f;
 
             if (is_allowed_at(flee_to))
-                get_path(flee_to); // Flee away
+                // Flee away
+                path = new astar_path(character.transform.position, flee_to, this); 
             else
-                get_path(fleeing_from.position - delta * 5f); // Flee back the way we came
+                // Flee back the way we came
+                path = new astar_path(character.transform.position, fleeing_from.position - delta * 5f, this);
         }
         else move_along_path(character.run_speed);
     }
@@ -535,8 +532,7 @@ public class default_character_control : ICharacterController, IPathingAgent
 
         if (path == null)
         {
-            Vector3 delta = chasing.position - character.transform.position;
-            Vector3 chase_to = character.transform.position + delta;
+            Vector3 delta = chasing.transform.position - character.transform.position;
 
             if (delta.magnitude < character.pathfinding_resolution)
             {
@@ -547,8 +543,8 @@ public class default_character_control : ICharacterController, IPathingAgent
                 return;
             }
 
-            if (is_allowed_at(chase_to))
-                get_path(chase_to);
+            if (is_allowed_at(chasing.position))
+                path = new chase_path(character.transform.position, chasing, this);
             else
                 idle_walk();
         }

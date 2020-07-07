@@ -54,6 +54,8 @@ public class player : networked_player, INotPathBlocking
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
     {
+        indicate_damage();
+
         // If the options menu isn't open don't do anything else
         if (options_menu.open) return;
 
@@ -988,6 +990,20 @@ public class player : networked_player, INotPathBlocking
 
     public int max_health { get => 100; }
 
+    float last_damaged_time = 0;
+
+    void indicate_damage()
+    {
+        if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
+            throw new System.Exception("No ColorAdjustments override on global volume!");
+
+        float time_since_damaged = Time.realtimeSinceStartup - last_damaged_time;
+
+        if (time_since_damaged < 1f)
+            color.colorFilter.value = Color.Lerp(Color.red, Color.white, time_since_damaged);
+        else color.colorFilter.value = Color.white;
+    }
+
     void heal_one_point()
     {
         heal(1);
@@ -996,6 +1012,7 @@ public class player : networked_player, INotPathBlocking
     public void take_damage(int damage)
     {
         health.value = Mathf.Max(0, health.value - damage);
+        last_damaged_time = Time.realtimeSinceStartup;
     }
 
     public void heal(int amount)
@@ -1262,7 +1279,7 @@ public class popup_message : MonoBehaviour
         m.transform.anchorMax = new Vector2(0.5f, 0.25f);
         m.transform.anchoredPosition = Vector2.zero;
 
-        m.transform.anchoredPosition -= 
+        m.transform.anchoredPosition -=
             Vector2.up * 32f * canv.GetComponentsInChildren<popup_message>().Length;
 
         m.text.font = Resources.Load<Font>("fonts/monospace");
