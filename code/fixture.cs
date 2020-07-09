@@ -39,6 +39,17 @@ public abstract class fixture_with_inventory : fixture
 {
     public inventory inventory { get; private set; }
 
+    protected override bool can_pick_up(out string message)
+    {
+        if (!inventory.empty)
+        {
+            message = "Inventory not empty!";
+            return false;
+        }
+
+        return base.can_pick_up(out message);
+    }
+
     protected abstract string inventory_prefab();
     protected virtual void on_set_inventory() { }
 

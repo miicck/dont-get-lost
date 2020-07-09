@@ -296,7 +296,7 @@ public class player : networked_player, INotPathBlocking
             return;
         }
 
-        // Then attempt to pick items by hand
+        // Then attempt to harvest by hand
         var pick_by_hand = utils.raycast_for_closest<harvest_by_hand>(ray, out hit, dis);
         if (pick_by_hand != null)
         {

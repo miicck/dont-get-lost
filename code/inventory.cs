@@ -251,6 +251,17 @@ public class inventory : networked
         return false;
     }
 
+    public bool empty
+    {
+        get
+        {
+            foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+                if (isn.item != null && isn.count > 0)
+                    return false;
+            return true;
+        }
+    }
+
     public Dictionary<item, int> contents()
     {
         Dictionary<item, int> ret = new Dictionary<item, int>();

@@ -321,8 +321,7 @@ public class building_material : item
             building_material found_same = utils.raycast_for_closest<building_material>(
                 camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
             if (found_same != null)
-                if (player.current.inventory.add(this, 1))
-                    found_same.delete();
+                found_same.pick_up();
             return use_result.complete;
         }
 

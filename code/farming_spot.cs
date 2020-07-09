@@ -40,9 +40,20 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
             int seeds_left = inventory.count(seed);
             int to_grow = Mathf.Min(seeds_left, target_products - in_inventory);
 
-            inventory.remove(seed, to_grow);
-            inventory.add(product, to_grow);
-            if (product != null) last_product = product.name;
+            // Nothing to grow
+            if (to_grow == 0)
+                return;
+
+            // Grow the product
+            if (product != null)
+            {
+                last_product = product.name;
+
+                // Add happens before remove, because if remove removes the last
+                // seed, then the product becomes null (in the inventory on_change method).
+                inventory.add(product, to_grow);
+                inventory.remove(seed, to_grow);
+            }
         }
     }
 

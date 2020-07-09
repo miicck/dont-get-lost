@@ -101,6 +101,12 @@ public class item : networked, IInspectable
 
     public void pick_up()
     {
+        if (!can_pick_up(out string message))
+        {
+            popup_message.create("Cannot pick up " + display_name + ": " + message);
+            return;
+        }
+
         // Delete the object on the network / add it to
         // inventory only if succesfully deleted on the
         // server. This stops two clients from simultaneously
@@ -111,6 +117,12 @@ public class item : networked, IInspectable
             foreach (var kv in to_pickup)
                 player.current.inventory.add(kv.Key, kv.Value);
         });
+    }
+
+    protected virtual bool can_pick_up(out string message)
+    {
+        message = null;
+        return true;
     }
 
     //#################//
