@@ -76,10 +76,13 @@ public abstract class biome : MonoBehaviour
 
     /// <summary> Returns the chunk at the given location, if it has 
     /// been generated. Null otherwise. </summary>
-    public static biome at(Vector3 location)
+    public static biome at(Vector3 location, bool generate = false)
     {
         var c = coords(location);
-        return generated_biomes?.get(c[0], c[1]);
+        var found = generated_biomes?.get(c[0], c[1]);
+        if (found != null) return found;
+        else if (!generate) return null;
+        return biome.generate(c[0], c[1]);
     }
 
     /// <summary> Check if the biome at x, z is within render range
@@ -300,6 +303,8 @@ public abstract class biome : MonoBehaviour
     // BIOME GENERATION //
     //##################//
 
+    public static bool initialized => generated_biomes != null;
+
     static Dictionary<int, int, biome> generated_biomes;
     static List<MethodInfo> biome_list;
 
@@ -348,6 +353,9 @@ public abstract class biome : MonoBehaviour
     /// <summary> Generates the biome with the given biome coordinates. </summary>
     public static biome generate(int x, int z)
     {
+        // Initialize, if not done so already
+        if (!initialized) initialize();
+
         // Create the biome random number generator, seeded 
         // by the biome x, z coords and the world seed
         System.Random rand = procmath.multiseed_random(x, z, world.seed);

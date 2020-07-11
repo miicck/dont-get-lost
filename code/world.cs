@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// The in-game world
+// Networked world information
 public class world : networked
 {
     // World-scale geograpical constants
@@ -18,37 +18,11 @@ public class world : networked
         return float.PositiveInfinity;
     }
 
-    bool generation_requested = false;
-
     public override void on_init_network_variables()
     {
         networked_seed = new networked_variables.net_int();
         networked_name = new networked_variables.net_string();
         static_world = this;
-        generation_requested = true;
-    }
-
-    private void attempt_start_generation()
-    {
-        if (player.current == null)
-        {
-            // Wait until the player is created before
-            // generating the map (we need to know where
-            // the player is to work out which bits of the
-            // map to generate).
-            return;
-        }
-
-        // We can start to generating the world
-        generation_requested = false;
-        biome.initialize();
-        var biome_coords = biome.coords(player.current.transform.position);
-        biome.generate(biome_coords[0], biome_coords[1]);
-    }
-
-    private void Update()
-    {
-        if (generation_requested) attempt_start_generation();
     }
 
     static world static_world;

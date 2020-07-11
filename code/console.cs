@@ -101,6 +101,18 @@ public class console : MonoBehaviour
                 player.current.heal(heal);
                 return true;
 
+            // Teleport to a location
+            case "teleport":
+
+                if (args.Length < 4) return console_error("Not enough arguments!");
+
+                if (!float.TryParse(args[1], out float x)) return console_error("Could not parse coordinate from " + args[1]);
+                if (!float.TryParse(args[2], out float y)) return console_error("Could not parse coordinate from " + args[2]);
+                if (!float.TryParse(args[3], out float z)) return console_error("Could not parse coordinate from " + args[3]);
+
+                player.current.teleport(new Vector3(x, y, z));
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
         }

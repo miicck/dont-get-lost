@@ -137,6 +137,8 @@ public class game : MonoBehaviour
                     var w = (world)client.create(Vector3.zero, "misc/world");
                     w.networked_seed.value = startup.world_seed;
                     w.networked_name.value = startup.world_name;
+
+                    var tp = (teleport_manager)client.create(Vector3.zero, "misc/teleport_manager");
                 }
 
                 break;

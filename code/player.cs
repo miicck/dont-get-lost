@@ -54,6 +54,15 @@ public class player : networked_player, INotPathBlocking
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
     {
+        // Load the world
+        biome = biome.at(transform.position, generate: true);
+        if (biome != null)
+        {
+            point = biome.blended_point(transform.position);
+            target_sky_color = point.sky_color;
+            water.color = point.water_color;
+        }
+
         indicate_damage();
 
         // If the options menu isn't open don't do anything else
@@ -68,14 +77,6 @@ public class player : networked_player, INotPathBlocking
 
         if (Input.GetKeyDown(KeyCode.F1))
             cinematic_mode = !cinematic_mode;
-
-        biome = biome.at(transform.position);
-        if (biome != null)
-        {
-            point = biome.blended_point(transform.position);
-            target_sky_color = point.sky_color;
-            water.color = point.water_color;
-        }
 
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
 
@@ -532,6 +533,19 @@ public class player : networked_player, INotPathBlocking
     CharacterController controller;
     Vector3 velocity = Vector3.zero;
 
+    public void teleport(Vector3 location)
+    {
+        Debug.Log("Teleporting to " + location);
+        controller.enabled = false;
+        networked_position = location;
+        Invoke("enable_controller", 1f);
+    }
+
+    void enable_controller()
+    {
+        controller.enabled = true;
+    }
+
     public float speed
     {
         get
@@ -595,6 +609,15 @@ public class player : networked_player, INotPathBlocking
     void move()
     {
         if (controller == null) return; // Controller hasn't started yet
+        if (!controller.enabled)
+        {
+            // Controller is disabled, probably so the
+            // player position can be controlled by something
+            // else (like a teleport). Keep the velocity = 0
+            // and don't move the character.
+            velocity = Vector3.zero;
+            return;
+        }
 
         if (Input.GetKeyDown(KeyCode.LeftShift)) crouched = true;
         if (Input.GetKeyUp(KeyCode.LeftShift)) crouched = false;
@@ -994,6 +1017,9 @@ public class player : networked_player, INotPathBlocking
 
     void indicate_damage()
     {
+        if (last_damaged_time == 0)
+            return;
+
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
             throw new System.Exception("No ColorAdjustments override on global volume!");
 
@@ -1001,7 +1027,11 @@ public class player : networked_player, INotPathBlocking
 
         if (time_since_damaged < 1f)
             color.colorFilter.value = Color.Lerp(Color.red, Color.white, time_since_damaged);
-        else color.colorFilter.value = Color.white;
+        else
+        {
+            color.colorFilter.value = Color.white;
+            last_damaged_time = 0;
+        }
     }
 
     void heal_one_point()
