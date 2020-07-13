@@ -46,9 +46,6 @@ public class networked : MonoBehaviour
     /// <summary> Called when this object is forgotten on a client. </summary>
     public virtual void on_forget(bool deleted) { }
 
-    /// <summary> Called on the client that deletes this object. </summary>
-    public virtual void on_delete() { }
-
     /// <summary> Called the first time this object reccives a positive id. </summary>
     public virtual void on_first_register() { }
 
@@ -199,7 +196,7 @@ public class networked : MonoBehaviour
     /// recives an updated serialization. </summary>
     public void variable_update(int index, byte[] buffer, int offset, int length)
     {
-        networked_variables[index].reccive_serialization(buffer, offset, length);
+        networked_variables[index].reccive_serialization(buffer, ref offset, length);
     }
 
     //###############//

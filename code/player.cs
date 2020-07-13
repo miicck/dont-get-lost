@@ -755,8 +755,8 @@ public class player : networked_player, INotPathBlocking
         underwater = eff_eye_y < world.SEA_LEVEL && !map_open;
 
         float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
-        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
         if (amt_submerged <= 0) return;
+        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
         // Bouyancy (sink if shift is held)
         if (!Input.GetKey(KeyCode.LeftShift))

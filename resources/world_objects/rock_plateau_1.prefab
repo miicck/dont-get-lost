@@ -32,6 +32,7 @@ MonoBehaviour:
   item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
   min_count: 1
   max_count: 1
+  one_in_chance: 1
 --- !u!114 &8470302984938734313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39,6 +40,51 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 977944217905177986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1041745454980239841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8273853953384535555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 3171103398846471838, guid: 22fdd20110e2240478eca20c2ccaaf85, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
+--- !u!114 &5570218758691519215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8273853953384535555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 1
+  tool_quality: 3
+--- !u!114 &5186732739806535285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8273853953384535555}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
@@ -117,6 +163,7 @@ MonoBehaviour:
   item: {fileID: 1963094263204736833, guid: 628bc2a1c33ae57458bfeee246d24b47, type: 3}
   min_count: 1
   max_count: 1
+  one_in_chance: 1
 --- !u!114 &4501487048769332726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,6 +306,12 @@ GameObject:
 --- !u!1 &9135634441785825270 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -516098083770646512, guid: 4167a831cf9b67c4fa7d934203373d88,
+    type: 3}
+  m_PrefabInstance: {fileID: 440852046327879654}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8273853953384535555 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8416272007918961125, guid: 4167a831cf9b67c4fa7d934203373d88,
     type: 3}
   m_PrefabInstance: {fileID: 440852046327879654}
   m_PrefabAsset: {fileID: 0}

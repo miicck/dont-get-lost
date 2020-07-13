@@ -20,9 +20,9 @@ public class engine_networked_variable : System.Attribute
 public abstract class networked_variable
 {
     /// <summary> Reccive a serialization from the server. </summary>
-    public void reccive_serialization(byte[] buffer, int offset, int length)
+    public void reccive_serialization(byte[] buffer, ref int offset, int length)
     {
-        process_serialization(buffer, offset, length);
+        process_serialization(buffer, ref offset, length);
     }
 
     /// <summary> Serialization bytes queued for sending to the server. </summary>
@@ -32,7 +32,7 @@ public abstract class networked_variable
     /// for sending over the network </summary>
     public abstract byte[] serialization();
 
-    protected abstract void process_serialization(byte[] buffer, int offset, int length);
+    protected abstract void process_serialization(byte[] buffer, ref int offset, int length);
 }
 
 /// <summary> A value serialized over the network. </summary>
@@ -93,17 +93,17 @@ public abstract class networked_variable<T> : networked_variable
     public bool initialized { get; private set; }
 
     /// <summary> Called when a serialization of this variable is reccived </summary>
-    protected override void process_serialization(byte[] buffer, int offset, int length)
+    protected override void process_serialization(byte[] buffer, ref int offset, int length)
     {
         // Set the value directly to avoid sending another update
         T old_value = _value;
-        _value = deserialize(buffer, offset, length);
+        _value = deserialize(buffer, ref offset, length);
         on_change?.Invoke();
         initialized = true;
     }
 
     /// <summary> Recover a value from its serialization. </summary>
-    protected abstract T deserialize(byte[] buffer, int offset, int length);
+    protected abstract T deserialize(byte[] buffer, ref int offset, int length);
 
     /// <summary> Returns true if the new value is different 
     /// enough from the last sent value to warrant sending. 
@@ -121,6 +121,92 @@ public abstract class networked_variable<T> : networked_variable
     protected virtual T default_value() { return default; }
 }
 
+public class networked_list<T> : networked_variable, IEnumerable<T>
+    where T : networked_variable, new()
+{
+    List<T> list = new List<T>();
+    public IEnumerator<T> GetEnumerator() { return list.GetEnumerator(); }
+    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+    public void add(T t)
+    {
+        list.Add(t);
+        queued_serial = serialization();
+    }
+
+    public bool remove(T t)
+    {
+        if (list.Remove(t))
+        {
+            queued_serial = serialization();
+            return true;
+        }
+        return false;
+    }
+
+    public void remove_at(int i)
+    {
+        list.RemoveAt(i);
+        queued_serial = serialization();
+    }
+
+    public T this[int i] => list[i];
+    public int length => list.Count;
+
+    protected override void process_serialization(byte[] buffer, ref int offset, int length)
+    {
+        int start = offset;
+        int list_length = network_utils.decode_int(buffer, ref offset);
+        list = new List<T>();
+
+        for (int i = 0; i < list_length; ++i)
+        {
+            var t = new T();
+            t.reccive_serialization(buffer, ref offset, length - (offset - start));
+            list.Add(t);
+        }
+    }
+
+    public override byte[] serialization()
+    {
+        List<byte> serial = new List<byte>();
+        serial.AddRange(network_utils.encode_int(list.Count));
+        foreach (var t in list) serial.AddRange(t.serialization());
+        return serial.ToArray();
+    }
+}
+
+public class networked_pair<T, K> : networked_variable
+    where T : networked_variable, new() where K : networked_variable, new()
+{
+    KeyValuePair<T, K> pair;
+    public T first => pair.Key;
+    public K second => pair.Value;
+
+    public networked_pair(T first, K second)
+    {
+        pair = new KeyValuePair<T, K>(first, second);
+    }
+
+    public networked_pair()
+    {
+        pair = new KeyValuePair<T, K>(new T(), new K());
+    }
+
+    protected override void process_serialization(byte[] buffer, ref int offset, int length)
+    {
+        int start = offset;
+        pair.Key.reccive_serialization(buffer, ref offset, length);
+        pair.Value.reccive_serialization(buffer, ref offset, length - (offset - start));
+    }
+
+    public override byte[] serialization()
+    {
+        return network_utils.concat_buffers(
+            pair.Key.serialization(), pair.Value.serialization());
+    }
+}
+
 //#################//
 // IMPLEMENTATIONS //
 //#################//
@@ -130,9 +216,11 @@ namespace networked_variables
     /// <summary> A simple networked integer. </summary>
     public class net_int : networked_variable<int>
     {
-        public net_int(int default_value=0) : base()
+        public net_int() { }
+
+        public net_int(int default_value = 0) : base()
         {
-            _value = default_value;
+            _value = default_value; // Should this be value rather than _value?
         }
 
         public override byte[] serialization()
@@ -140,7 +228,7 @@ namespace networked_variables
             return network_utils.encode_int(value);
         }
 
-        protected override int deserialize(byte[] buffer, int offset, int length)
+        protected override int deserialize(byte[] buffer, ref int offset, int length)
         {
             return network_utils.decode_int(buffer, ref offset);
         }
@@ -149,12 +237,19 @@ namespace networked_variables
     /// <summary> A networked string. </summary>
     public class net_string : networked_variable<string>
     {
+        public net_string(string init_value = "")
+        {
+            value = init_value;
+        }
+
+        public net_string() { }
+
         public override byte[] serialization()
         {
             return network_utils.encode_string(value);
         }
 
-        protected override string deserialize(byte[] buffer, int offset, int length)
+        protected override string deserialize(byte[] buffer, ref int offset, int length)
         {
             return network_utils.decode_string(buffer, ref offset);
         }
@@ -213,7 +308,7 @@ namespace networked_variables
             return network_utils.encode_float(value);
         }
 
-        protected override float deserialize(byte[] buffer, int offset, int length)
+        protected override float deserialize(byte[] buffer, ref int offset, int length)
         {
             return network_utils.decode_float(buffer, ref offset);
         }
@@ -222,6 +317,31 @@ namespace networked_variables
         {
             // Only send values that have changed by more than the resolution
             return Mathf.Abs(last_sent - new_value) > resolution;
+        }
+    }
+
+    /// <summary> A networked Vector3 </summary>
+    public class net_vector3 : networked_variable<Vector3>
+    {
+        public net_vector3() { }
+        public net_vector3(Vector3 value) { this.value = value; }
+
+        public override byte[] serialization()
+        {
+            return network_utils.concat_buffers(
+                network_utils.encode_float(value.x),
+                network_utils.encode_float(value.y),
+                network_utils.encode_float(value.z)
+            );
+        }
+
+        protected override Vector3 deserialize(byte[] buffer, ref int offset, int length)
+        {
+            return new Vector3(
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset)
+            );
         }
     }
 
@@ -238,7 +358,7 @@ namespace networked_variables
             );
         }
 
-        protected override Quaternion deserialize(byte[] buffer, int offset, int length)
+        protected override Quaternion deserialize(byte[] buffer, ref int offset, int length)
         {
             return new Quaternion(
                 network_utils.decode_float(buffer, ref offset),
@@ -263,7 +383,7 @@ namespace networked_variables
             return ret.ToArray();
         }
 
-        protected override SortedDictionary<string, int> deserialize(byte[] buffer, int offset, int length)
+        protected override SortedDictionary<string, int> deserialize(byte[] buffer, ref int offset, int length)
         {
             var new_dict = new SortedDictionary<string, int>();
 
@@ -330,7 +450,7 @@ namespace networked_variables
             return serial.ToArray();
         }
 
-        protected override void process_serialization(byte[] buffer, int offset, int length)
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
         {
             // Deserialize a dictionary
             var new_dict = new Dictionary<string, int>();

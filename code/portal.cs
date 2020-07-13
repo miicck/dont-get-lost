@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class portal : building_material
+public class portal : building_material, ILeftPlayerMenu
 {
     public Transform path_start;
 
@@ -12,6 +12,40 @@ public class portal : building_material
     {
         return (end - path_start.position).magnitude > 32f;
     }
+
+    //#################//
+    // ILeftPlayerMenu //
+    //#################//
+
+    RectTransform menu;
+
+    public RectTransform left_menu_transform()
+    {
+        if (menu == null)
+        {
+            // Create the menu
+            menu = Resources.Load<RectTransform>("ui/portal").inst();
+            menu.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        }
+        return menu;
+    }
+
+    public void on_left_menu_open()
+    {
+        var content = menu.gameObject.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+
+        // Destroy the old buttons
+        foreach (Transform c in content)
+        {
+            var b = c.GetComponent<UnityEngine.UI.Button>();
+            if (b != null) Destroy(b.gameObject);
+        }
+
+        // Load the new buttons
+        FindObjectOfType<teleport_manager>().create_buttons(content);
+    }
+
+    public void on_left_menu_close() { }
 
     //#################//
     // Unity callbacks //
@@ -78,6 +112,19 @@ public class portal : building_material
             var c = (character)child;
             c.controller = new portal_character_control(this);
         }
+    }
+
+    public override void on_first_create()
+    {
+        base.on_first_create();
+        FindObjectOfType<teleport_manager>().register_portal(this);
+    }
+
+    public override void on_forget(bool deleted)
+    {
+        base.on_forget(deleted);
+        if (deleted && has_authority)
+            FindObjectOfType<teleport_manager>().unregister_portal(this);
     }
 
     void create_pulse()
