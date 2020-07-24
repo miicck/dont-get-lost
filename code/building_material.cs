@@ -12,7 +12,7 @@ public class building_material : item
     //#########//
 
     // Points that welds snap to
-    snap_point[] snap_points { get { return GetComponentsInChildren<snap_point>(); } }
+    protected snap_point[] snap_points { get { return GetComponentsInChildren<snap_point>(); } }
 
     // A weld represents the fixture of an item via a pivot
     // to a particular weld point in space
