@@ -677,6 +677,7 @@ public class rocky_plains : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class test_biome : biome
 {
     protected override void generate_grid()
