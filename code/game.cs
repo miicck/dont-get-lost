@@ -138,7 +138,9 @@ public class game : MonoBehaviour
                     w.networked_seed.value = startup.world_seed;
                     w.networked_name.value = startup.world_name;
 
-                    var tp = (teleport_manager)client.create(Vector3.zero, "misc/teleport_manager");
+                    // Create the various always-loaded objects
+                    client.create(Vector3.zero, "misc/time_manager");
+                    client.create(Vector3.zero, "misc/teleport_manager");
                 }
 
                 break;
@@ -159,9 +161,6 @@ public class game : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Create the sky!
-        create_sky();
-
         //if (Application.isEditor)
         QualitySettings.vSyncCount = 0;
 
@@ -180,14 +179,6 @@ public class game : MonoBehaviour
 
         // Set the network updates going
         InvokeRepeating("network_update", 1f / 60f, 1f / 60f);
-    }
-
-    void create_sky()
-    {
-        // Create the sun
-        var sun = FindObjectOfType<Light>();
-        sun.transform.position = Vector3.zero;
-        sun.transform.LookAt(new Vector3(1, -2, 1));
     }
 
     void Update()
@@ -243,7 +234,9 @@ public class game : MonoBehaviour
             "\nLOAD BALANCER\n" +
             load_balancing.info() + "\n" +
             "\nENEMY SPAWNING\n" +
-            enemies.info() + "\n";
+            enemies.info() + "\n" +
+            "\nTIME OF DAY\n"+
+            time_manager.info() +"\n";
 
         debug_text = debug_text.Trim();
         this.debug_text.text = utils.allign_colons(debug_text);

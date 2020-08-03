@@ -106,11 +106,25 @@ public class console : MonoBehaviour
 
                 if (args.Length < 4) return console_error("Not enough arguments!");
 
-                if (!float.TryParse(args[1], out float x)) return console_error("Could not parse coordinate from " + args[1]);
-                if (!float.TryParse(args[2], out float y)) return console_error("Could not parse coordinate from " + args[2]);
-                if (!float.TryParse(args[3], out float z)) return console_error("Could not parse coordinate from " + args[3]);
+                if (!float.TryParse(args[1], out float x)) 
+                    return console_error("Could not parse coordinate from " + args[1]);
+                if (!float.TryParse(args[2], out float y)) 
+                    return console_error("Could not parse coordinate from " + args[2]);
+                if (!float.TryParse(args[3], out float z)) 
+                    return console_error("Could not parse coordinate from " + args[3]);
 
                 player.current.teleport(new Vector3(x, y, z));
+                return true;
+
+            // Set the time of day
+            case "time":    
+                
+                if (args.Length < 2) return console_error("Not enough arguments!");
+                if (!float.TryParse(args[1], out float t))
+                    return console_error("Could not parse time from "+args[1]);
+                if (t < 0 || t > 2f)
+                    return console_error("Time "+t+" out of range [0,2]!");
+                time_manager.set_time(t);
                 return true;
 
             default:

@@ -59,7 +59,7 @@ public class player : networked_player, INotPathBlocking
         if (biome != null)
         {
             point = biome.blended_point(transform.position);
-            target_sky_color = point.sky_color;
+            lighting.sky_color_daytime = point.sky_color;
             water.color = point.water_color;
         }
 
@@ -77,8 +77,6 @@ public class player : networked_player, INotPathBlocking
 
         if (Input.GetKeyDown(KeyCode.F1))
             cinematic_mode = !cinematic_mode;
-
-        sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
 
         // Toggle menus only if not using an item/the map isn't open
         if (current_item_use == USE_TYPE.NOT_USING && !map_open)
@@ -791,9 +789,7 @@ public class player : networked_player, INotPathBlocking
     GameObject obscurer;
     GameObject map_obscurer;
 
-    Color target_sky_color;
-
-    Color sky_color
+    public Color sky_color
     {
         get => utils.get_color(obscurer_renderer.material);
         set
