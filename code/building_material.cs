@@ -144,7 +144,43 @@ public class building_material : item
                 set_pivot_rotation(saved_rotation);
             }
 
-            if (Input.GetKeyDown(KeyCode.D))
+            if (Input.GetKey(KeyCode.LeftControl))
+            {
+                // Continuous rotation
+                if (Input.GetKey(KeyCode.D))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.Z);
+                }
+                else if (Input.GetKey(KeyCode.A))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, forward_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.Z);
+                }
+                else if (Input.GetKey(KeyCode.S))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, -right_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.X);
+                }
+                else if (Input.GetKey(KeyCode.W))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, right_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.X);
+                }
+                else if (Input.GetKey(KeyCode.Q))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, -up_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.Y);
+                }
+                else if (Input.GetKey(KeyCode.E))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, up_rot, Time.deltaTime * 15f);
+                    axes.highlight_axis(axes.AXIS.Y);
+                }
+            }
+
+            // Rotation by 45 degree increments
+            else if (Input.GetKeyDown(KeyCode.D))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
                 axes.highlight_axis(axes.AXIS.Z);
