@@ -46,7 +46,7 @@ public class product : MonoBehaviour
 
     /// <summary> The display name of this product, pluralized. </summary>
     public virtual string product_name_plural()
-    { 
+    {
         switch (mode)
         {
             case MODE.SIMPLE:
@@ -60,16 +60,16 @@ public class product : MonoBehaviour
     }
 
     /// <summary> The quantity and (appropriately pluralized) name. </summary>
-    public  virtual string product_quantity_name()
+    public virtual string product_quantity_name()
     {
         switch (mode)
         {
             case MODE.SIMPLE:
-                if (min_count < 2) return item.name;
+                if (min_count < 2) return item.display_name;
                 return min_count + " " + item.plural;
 
             case MODE.RANDOM_AMOUNT:
-                return "between " + min_count + " and " + 
+                return "between " + min_count + " and " +
                     max_count + " " + item.plural;
 
             case MODE.PROBABILITY:
@@ -81,7 +81,7 @@ public class product : MonoBehaviour
                 if (max_count > 1)
                     ret += " " + item.plural;
                 else
-                    ret += " " + item.name;
+                    ret += " " + item.display_name;
 
                 ret += " with a one in " + one_in_chance + " chance";
                 return ret;
@@ -251,6 +251,7 @@ public class terrain_product : product
 
     public override string product_name() { return item.display_name; }
     public override string product_name_plural() { return item.plural; }
+    public override string product_quantity_name() { return item.display_name; }
     public override Sprite sprite() { return item.sprite; }
 
     public override void create_in_inventory(inventory inv)
