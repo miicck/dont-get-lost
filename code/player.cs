@@ -651,6 +651,8 @@ public class player : networked_player, INotPathBlocking
                 {
                     climbing_ladder = true;
                     velocity.y = speed * LADDER_SPEED_MULT;
+                    if (Input.GetKeyDown(KeyCode.LeftShift))
+                        velocity.y = 0;
                 }
             }
 

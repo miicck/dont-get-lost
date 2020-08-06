@@ -212,7 +212,7 @@ public class item : networked, IInspectable
         if (item == null || quantity == 0)
             return "No item.";
 
-        // Titlle
+        // Title
         string info = (quantity < 2 ? item.display_name :
             (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";
 
@@ -228,6 +228,13 @@ public class item : networked, IInspectable
             var t = (tool)item;
             info += "  Tool type : " + tool.type_to_name(t.type) + "\n";
             info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
+        }
+
+        // Melee weapon info
+        if (item is melee_weapon)
+        {
+            var m = (melee_weapon)item;
+            info += "  Melee damage : " + m.damage + "\n";
         }
 
         // Can this item be built with
