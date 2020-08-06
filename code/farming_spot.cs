@@ -51,8 +51,8 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
 
                 // Add happens before remove, because if remove removes the last
                 // seed, then the product becomes null (in the inventory on_change method).
-                inventory.add(product, to_grow);
-                inventory.remove(seed, to_grow);
+                if (inventory.add(product, to_grow))
+                    inventory.remove(seed, to_grow);
             }
         }
     }
