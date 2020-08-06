@@ -51,38 +51,37 @@ public class item : networked, IInspectable
         public bool allows_move;
         public bool allows_throw;
 
-        public static use_result complete
+        public static use_result complete => new use_result()
         {
-            get => new use_result()
-            {
-                underway = false,
-                allows_look = true,
-                allows_move = true,
-                allows_throw = true
-            };
-        }
+            underway = false,
+            allows_look = true,
+            allows_move = true,
+            allows_throw = true
+        };
 
-        public static use_result underway_allows_none
+        public static use_result underway_allows_none => new use_result()
         {
-            get => new use_result()
-            {
-                underway = true,
-                allows_look = false,
-                allows_move = false,
-                allows_throw = false
-            };
-        }
+            underway = true,
+            allows_look = false,
+            allows_move = false,
+            allows_throw = false
+        };
 
-        public static use_result underway_allows_all
+        public static use_result underway_allows_all => new use_result()
         {
-            get => new use_result()
-            {
-                underway = true,
-                allows_look = true,
-                allows_move = true,
-                allows_throw = true
-            };
-        }
+            underway = true,
+            allows_look = true,
+            allows_move = true,
+            allows_throw = true
+        };
+
+        public static use_result underway_allows_look_only => new use_result()
+        {
+            underway = true,
+            allows_look = true,
+            allows_move = false,
+            allows_throw = false
+        };
     }
 
     // Use the equipped version of this item

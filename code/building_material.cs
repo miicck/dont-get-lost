@@ -383,7 +383,7 @@ public class building_material : item
         }
 
         // Move onto rotation stage if something was spawned
-        if (spawned != null) return use_result.underway_allows_none;
+        if (spawned != null) return use_result.underway_allows_look_only;
         return use_result.complete;
     }
 
@@ -403,7 +403,7 @@ public class building_material : item
 
         spawned.weld.key_rotate();
         last_time_placing_blueprint = Time.realtimeSinceStartup;
-        return use_result.underway_allows_none;
+        return use_result.underway_allows_look_only;
     }
 
     /// <summary> Returns the networked object to parent this 
