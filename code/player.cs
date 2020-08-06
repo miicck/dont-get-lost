@@ -640,7 +640,7 @@ public class player : networked_player, INotPathBlocking
 
         // Climb ladders
         bool climbing_ladder = false;
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.LeftShift))
             foreach (var hit in
             Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
                                     transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
@@ -651,7 +651,7 @@ public class player : networked_player, INotPathBlocking
                 {
                     climbing_ladder = true;
                     velocity.y = speed * LADDER_SPEED_MULT;
-                    if (Input.GetKeyDown(KeyCode.LeftShift))
+                    if (Input.GetKey(KeyCode.LeftShift))
                         velocity.y = 0;
                 }
             }
