@@ -365,10 +365,12 @@ public class building_material : item
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
 
-        // Find a building_material under cursor
-        RaycastHit hit;
-        var bm = utils.raycast_for_closest<building_material>(
-            camera_ray, out hit, raycast_distance);
+        // Find a building_material under cursor (unless control is held)
+        RaycastHit hit = default;
+        building_material bm = null;
+        if (!Input.GetKey(KeyCode.LeftControl))
+            bm = utils.raycast_for_closest<building_material>(
+                camera_ray, out hit, raycast_distance);
 
         // If a building material is found, fix new build to it
         // otherwise, just fix to any solid object
