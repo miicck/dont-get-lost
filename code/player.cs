@@ -22,6 +22,8 @@ public class player : networked_player, INotPathBlocking
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float THROW_VELOCITY = 6f;
+    public const float LADDER_TEST_DISTANCE = 0.25f;
+    public const float LADDER_SPEED_MULT = 0.5f;
 
     // Where does the hand appear
     public const float BASE_EYE_TO_HAND_DIS = 0.3f;
@@ -634,17 +636,43 @@ public class player : networked_player, INotPathBlocking
 
     void normal_move()
     {
+        Vector3 move = Vector3.zero;
+
+        // Climb ladders
+        bool climbing_ladder = false;
+        if (Input.GetKey(KeyCode.W))
+            foreach (var hit in
+            Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
+                                    transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
+                                    WIDTH / 2f, transform.forward, LADDER_TEST_DISTANCE))
+            {
+                var lad = hit.collider.GetComponentInParent<ladder>();
+                if (lad != null)
+                {
+                    climbing_ladder = true;
+                    velocity.y = speed * LADDER_SPEED_MULT;
+                }
+            }
+
         if (controller.isGrounded)
         {
+            // Jumping
             if (Input.GetKeyDown(KeyCode.Space))
                 velocity.y = JUMP_VEL;
         }
-        else velocity.y -= GRAVITY * Time.deltaTime;
+        else
+        {
+            // Gravity
+            if (!climbing_ladder)
+                velocity.y -= GRAVITY * Time.deltaTime;
+        }
 
+        // Control forward/back velocity
         if (Input.GetKey(KeyCode.W)) velocity += transform.forward * ACCELERATION * Time.deltaTime;
         else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
+        // Control left/right veloctiy
         if (map_open)
         {
             if (Input.GetKey(KeyCode.D)) y_rotation.value += ROTATION_SPEED * Time.deltaTime;
@@ -658,14 +686,15 @@ public class player : networked_player, INotPathBlocking
             else velocity -= Vector3.Project(velocity, camera.transform.right);
         }
 
+        move += velocity * Time.deltaTime;
+
+        // Ensure speed in x-z plane does not exceed movement speed
         float xz = new Vector3(velocity.x, 0, velocity.z).magnitude;
         if (xz > speed)
         {
             velocity.x *= speed / xz;
             velocity.z *= speed / xz;
         }
-
-        Vector3 move = velocity * Time.deltaTime;
 
         controller.Move(move);
         stay_above_terrain();

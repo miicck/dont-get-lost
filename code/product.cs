@@ -46,13 +46,45 @@ public class product : MonoBehaviour
 
     /// <summary> The display name of this product, pluralized. </summary>
     public virtual string product_name_plural()
-    {
+    { 
         switch (mode)
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
             case MODE.PROBABILITY:
                 return item.plural;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }
+    }
+
+    /// <summary> The quantity and (appropriately pluralized) name. </summary>
+    public  virtual string product_quantity_name()
+    {
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+                if (min_count < 2) return item.name;
+                return min_count + " " + item.plural;
+
+            case MODE.RANDOM_AMOUNT:
+                return "between " + min_count + " and " + 
+                    max_count + " " + item.plural;
+
+            case MODE.PROBABILITY:
+                string ret = null;
+                if (min_count != max_count)
+                    ret = "between " + min_count + " and " + max_count;
+                else
+                    ret = "" + min_count;
+                if (max_count > 1)
+                    ret += " " + item.plural;
+                else
+                    ret += " " + item.name;
+
+                ret += " with a one in " + one_in_chance + " chance";
+                return ret;
 
             default:
                 throw new System.Exception("Unkown product mode!");
@@ -100,14 +132,14 @@ public class product : MonoBehaviour
     {
         string ret = "";
         for (int i = 0; i < products.Count - 1; ++i)
-            ret += products[i].product_name_plural() + ", ";
+            ret += products[i].product_quantity_name() + ", ";
 
         if (products.Count > 1)
         {
             ret = ret.Substring(0, ret.Length - 2);
-            ret += " and " + products[products.Count - 1].product_name_plural();
+            ret += " and " + products[products.Count - 1].product_quantity_name();
         }
-        else ret = products[0].product_name_plural();
+        else ret = products[0].product_quantity_name();
 
         return ret;
     }
