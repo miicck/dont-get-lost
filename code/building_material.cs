@@ -339,6 +339,9 @@ public class building_material : item
     Ray camera_ray;
     public override use_result on_use_start(player.USE_TYPE use_type)
     {
+        if (snap_points.Length == 0)
+            throw new System.Exception("No snap points found on " + display_name + "!");
+
         // Get the ray to cast along, that stays within 
         // BUILD_RANGE of the player
         float raycast_distance = 0;

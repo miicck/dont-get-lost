@@ -172,6 +172,7 @@ public class game : MonoBehaviour
 
         // Initialize various things
         options_menu.initialize();
+        item_link_point.init_links();
         bed.initialize_beds();
 
         // Set the slow_update method going
