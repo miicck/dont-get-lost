@@ -57,11 +57,19 @@ public class item_link_point : MonoBehaviour
     }
 
     /// <summary> Drop the item I have. </summary>
-    void drop_item()
+    public void drop_item()
     {
         var tmp = item;
         _item = null;
         item_dropper.create(tmp, this);
+    }
+
+    /// <summary> Delete the item I have. </summary>
+    public void delete_item()
+    {
+        var tmp = item;
+        _item = null;
+        Destroy(tmp.gameObject);
     }
 
     public TYPE type;
@@ -203,7 +211,17 @@ public class item_link_point : MonoBehaviour
             Gizmos.DrawLine(position, position + delta / 2f);
         }
 
-        Gizmos.color = linked_to == null ? Color.red : Color.green;
+        if (type == TYPE.OUTPUT)
+        {
+            if (linked_to == null) Gizmos.color = Color.red;
+            else Gizmos.color = Color.green;
+        }
+        else if (type == TYPE.INPUT)
+        {
+            if (linked_to == null) Gizmos.color = new Color(1,0.5f,0);
+            else Gizmos.color = new Color(0,1,0.5f);
+        }
+
         Gizmos.DrawWireSphere(position, END_MATCH_DISTANCE);
     }
 
