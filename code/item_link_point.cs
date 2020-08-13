@@ -47,29 +47,32 @@ public class item_link_point : MonoBehaviour
 
     float time_got_item = 0;
 
-    /// <summary> Called when an item is transferred 
-    /// away from this link point. </summary>
-    public void transfer_item(item_link_point to)
+    /// <summary> Remove my item, and 
+    /// return a reference to it. </summary>
+    public item release_item()
     {
         var tmp = item;
         _item = null;
-        to.item = tmp;
+        return tmp;
+    }
+
+    /// <summary> Called when an item is transferred 
+    /// to a new link point. </summary>
+    public void transfer_item(item_link_point to)
+    {
+        to.item = release_item();
     }
 
     /// <summary> Drop the item I have. </summary>
     public void drop_item()
     {
-        var tmp = item;
-        _item = null;
-        item_dropper.create(tmp, this);
+        item_dropper.create(release_item(), this);
     }
 
     /// <summary> Delete the item I have. </summary>
     public void delete_item()
     {
-        var tmp = item;
-        _item = null;
-        Destroy(tmp.gameObject);
+        Destroy(release_item().gameObject);
     }
 
     public TYPE type;
@@ -98,6 +101,11 @@ public class item_link_point : MonoBehaviour
         {
             item.transform.position = position;
             drop_item();
+            return;
+        }
+        else if (linked_to.item != null)
+        {
+            // The next link isn't free => don't do anything
             return;
         }
 
