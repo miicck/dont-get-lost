@@ -81,26 +81,5 @@ public class item_gutter : item_proccessor
             items.Remove(to_output);
             output.item = to_output;
         }
-
-        /*
-        if (input.item == null)
-            return; // Nothing to do
-
-        // Move item along gutter
-        Vector3 delta = output.position - input.item.transform.position;
-
-        bool arrived = false;
-        float max_move = Time.deltaTime;
-        if (delta.magnitude > max_move)
-            delta = delta.normalized * max_move;
-        else arrived = true;
-
-        input.item.transform.position += delta;
-
-        // Transfer item to output link
-        if (arrived)
-            if (output.item == null)
-                input.transfer_item(output);
-        */
     }
 }
