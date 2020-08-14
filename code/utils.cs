@@ -417,6 +417,18 @@ public static class utils
         return v;
     }
 
+    public static bool move_towards(Transform t, Vector3 to, float max_move)
+    {
+        Vector3 delta = to - t.position;
+        bool arrived = false;
+        if (delta.magnitude > max_move)
+            delta = delta.normalized * max_move;
+        else
+            arrived = true;
+        t.position += delta;
+        return arrived;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object

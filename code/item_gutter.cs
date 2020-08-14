@@ -38,6 +38,14 @@ public class item_gutter : item_proccessor
         }
     }
 
+    void OnDestroy()
+    {
+        // Destroy my items along with me
+        foreach(var itm in items)
+            if (itm != null)
+                Destroy(itm.gameObject);
+    }
+
     bool can_accept_input()
     {
         // No items on gutter => free
@@ -48,11 +56,24 @@ public class item_gutter : item_proccessor
         return delta.magnitude > ITEM_SEPERATION;
     }
 
+    bool can_output()
+    {
+        // Can't output if output is already occupied
+        if (output.item != null) return false;
+
+        // Can assign to output if it is a dead end
+        if (output.linked_to == null) return true; 
+
+        // Can't assign to output if the output's output
+        // isn't free (as it is likely less than ITEM_SEPERATION away)
+        if (output.linked_to.item != null) return false;
+
+        // g2g
+        return true;
+    }
+
     private void Update()
     {
-        if (output.item != null)
-            return; // Output blocked up
-
         if (input.item != null)
         {
             // Take an item from the input
@@ -61,25 +82,51 @@ public class item_gutter : item_proccessor
                 items.Add(input.release_item());
         }
 
-        item to_output = null;
-        foreach (var itm in items)
+        for (int i=1; i<items.Count; ++i)
         {
-            // Move the items along the track
-            Vector3 delta = output.position - itm.transform.position;
-            float max_move = Time.deltaTime;
-            if (delta.magnitude > max_move)
-                delta = delta.normalized * max_move;
-            else
-                // Item has reached output
-                to_output = itm;
+            // Get direction towards next item
+            Vector3 delta = items[i-1].transform.position -
+                            items[i].transform.position;
 
-            itm.transform.position += delta;
+            // Only move towards the next
+            // item if we're far enough apart
+            if (delta.magnitude > ITEM_SEPERATION)
+            {
+                // Move up to ITEM_SEPERATION away from the next item
+                delta = delta.normalized * (delta.magnitude - ITEM_SEPERATION);
+                float max_move = Time.deltaTime;
+                if (delta.magnitude > max_move)
+                    delta = delta.normalized * max_move;
+                items[i].transform.position += delta;
+            }
         }
 
-        if (to_output != null)
+        if (items.Count > 0)
         {
-            items.Remove(to_output);
-            output.item = to_output;
+            // Move the item nearest the output
+            if (can_output())
+            {
+                // Move first item towards (unoccupied) output
+                if (utils.move_towards(items[0].transform, 
+                    output.position, Time.deltaTime))
+                {
+                    output.item = items[0];
+                    items.RemoveAt(0);
+                }
+            }
+            else
+            {
+                // Move up to ITEM_SEPERATION away from (occupied) output
+                Vector3 delta = output.position - items[0].transform.position;
+                if (delta.magnitude > ITEM_SEPERATION)
+                {
+                    delta = delta.normalized * (delta.magnitude - ITEM_SEPERATION);
+                    float max_move = Time.deltaTime;
+                    if (delta.magnitude > max_move)
+                        delta = delta.normalized * max_move;
+                    items[0].transform.position += delta;
+                }
+            }
         }
     }
 }
