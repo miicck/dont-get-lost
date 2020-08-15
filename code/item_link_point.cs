@@ -12,7 +12,7 @@ public abstract class item_proccessor : MonoBehaviour
         GetComponentsInChildren<item_link_point>();
 }
 
-/// <summary> A point where item_network_components link together. </summary>
+/// <summary> A point where item_processors link together. </summary>
 public class item_link_point : MonoBehaviour
 {
     const float END_MATCH_DISTANCE = 0.2f;
