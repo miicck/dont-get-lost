@@ -410,6 +410,8 @@ namespace networked_variables
         public IEnumerator<KeyValuePair<string, int>> GetEnumerator() { return dict.GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
+        public int item_types => dict.Count;
+
         public int this[string s]
         {
             get
@@ -433,9 +435,25 @@ namespace networked_variables
                 // Modify the dictionary + schedue network update
                 if (value == 0) dict.Remove(s);
                 else dict[s] = value;
+
                 queued_serial = serialization();
                 on_change?.Invoke();
             }
+        }
+
+        public void set(Dictionary<string, int> new_value)
+        {
+            if (utils.compare_dictionaries(dict, new_value))
+                return; // No change
+
+            // Set the entire dictionary in one operation
+            // (to avoid calling on_change/serialize for every key)
+            dict.Clear();
+            foreach (var kv in new_value)
+                dict[kv.Key] = kv.Value;
+
+            queued_serial = serialization();
+            on_change?.Invoke();
         }
 
         public override byte[] serialization()

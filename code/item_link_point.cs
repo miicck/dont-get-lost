@@ -78,15 +78,19 @@ public class item_link_point : MonoBehaviour
     public TYPE type;
     public Vector3 position => transform.position;
 
-    public item_proccessor proccessor => GetComponentInParent<item_proccessor>();
+    public building_material building => GetComponentInParent<building_material>();
     public item_link_point linked_to { get; private set; }
 
-    private void Start() { register_point(this); }
+    private void Start()
+    {
+        register_point(this);
+    }
 
     private void OnDestroy()
     {
         if (item != null)
             Destroy(item.gameObject);
+
         forget_point(this);
     }
 
@@ -226,8 +230,8 @@ public class item_link_point : MonoBehaviour
         }
         else if (type == TYPE.INPUT)
         {
-            if (linked_to == null) Gizmos.color = new Color(1,0.5f,0);
-            else Gizmos.color = new Color(0,1,0.5f);
+            if (linked_to == null) Gizmos.color = new Color(1, 0.5f, 0);
+            else Gizmos.color = new Color(0, 1, 0.5f);
         }
 
         Gizmos.DrawWireSphere(position, END_MATCH_DISTANCE);
@@ -248,9 +252,9 @@ public class item_link_point : MonoBehaviour
                 new Ray(transform.position, Vector3.down), out RaycastHit hit,
                 accept: (t) =>
                 {
-                    // Don't drop onto the processor I came 
+                    // Don't drop onto the building I came 
                     // from, or onto other items.
-                    if (t.IsChildOf(point.proccessor.transform)) return false;
+                    if (t.IsChildOf(point.building.transform)) return false;
                     if (t.GetComponentInParent<item>() != null) return false;
                     return true;
                 });

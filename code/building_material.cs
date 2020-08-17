@@ -280,9 +280,9 @@ public class building_material : item
         return ret;
     }
 
-    void make_placeholder()
+    void make_blueprint()
     {
-        // Create a transparent, non-colliding placeholder version of this object
+        // Create a blue, non-colliding placeholder version of this object
         rigidbody.detectCollisions = false;
         Destroy(rigidbody);
         foreach (var r in GetComponentsInChildren<Renderer>())
@@ -299,7 +299,7 @@ public class building_material : item
         Ray player_ray, float ray_distance)
     {
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
-        spawned.make_placeholder();
+        spawned.make_blueprint();
 
         snap_point snap_to = other.closest_to_ray(player_ray, ray_distance);
 
@@ -319,7 +319,7 @@ public class building_material : item
     building_material spawn_and_fix_at(RaycastHit hit)
     {
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
-        spawned.make_placeholder();
+        spawned.make_blueprint();
 
         spawned.weld = new weld_info(spawned,
             hit.point,

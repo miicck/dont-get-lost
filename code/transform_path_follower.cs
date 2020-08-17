@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class transform_path_follower : MonoBehaviour
 {
+    public float lerp_speed = 1f;
     public transform_path following;
     int path_index = 0;
 
@@ -52,8 +53,9 @@ public class transform_path_follower : MonoBehaviour
 
         float to_move = Time.deltaTime;
         while(move_towards_next(ref to_move))
-           path_index = (path_index + 1) % following.waypoint_count; 
+           path_index = (path_index + 1) % following.waypoint_count;
 
-        transform.rotation = following.waypoint(path_index).rotation;
+        transform.rotation = Quaternion.Lerp(transform.rotation,
+            following.waypoint(path_index).rotation, Time.deltaTime * lerp_speed);
     }
 }
