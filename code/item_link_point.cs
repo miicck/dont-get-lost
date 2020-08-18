@@ -81,6 +81,9 @@ public class item_link_point : MonoBehaviour
     public building_material building => GetComponentInParent<building_material>();
     public item_link_point linked_to { get; private set; }
 
+    public delegate void on_disconnect_function();
+    public on_disconnect_function on_disconnect = () => { };
+
     private void Start()
     {
         register_point(this);
@@ -303,6 +306,8 @@ public class item_link_point : MonoBehaviour
         // Break previous link
         if (p.linked_to != null)
         {
+            p.linked_to.on_disconnect();
+            p.on_disconnect();
             p.linked_to.linked_to = null;
             p.linked_to = null;
         }

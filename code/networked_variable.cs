@@ -456,6 +456,16 @@ namespace networked_variables
             on_change?.Invoke();
         }
 
+        public void clear()
+        {
+            // Clear the dictionary in one operation
+            // (to avoid calling on_change/serialize for every key)
+            dict.Clear();
+
+            queued_serial = serialization();
+            on_change?.Invoke();
+        }
+
         public override byte[] serialization()
         {
             // Serialize the dictionary

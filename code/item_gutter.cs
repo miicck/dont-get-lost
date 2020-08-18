@@ -82,6 +82,24 @@ public class item_gutter : building_material, IInspectable
         }
     }
 
+    public override void on_forget(bool deleted)
+    {
+        base.on_forget(deleted);
+        if (!deleted) return;
+
+        // If I've been deleted, reset the flow of anything that I output to
+        if (output.linked_to != null)
+        {
+            var gutter = output.linked_to.GetComponentInParent<item_gutter>();
+            if (gutter != null)
+            {
+                if (gutter.has_authority)
+                    gutter.item_flow.clear();
+                gutter.item_flow_float.Clear();
+            }
+        }
+    }
+
     void OnDestroy()
     {
         // Destroy my items along with me
