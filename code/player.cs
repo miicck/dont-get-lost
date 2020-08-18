@@ -16,9 +16,11 @@ public class player : networked_player, INotPathBlocking
     public const float WATER_DRAG = 1.5f;
 
     // Movement
-    public const float BASE_SPEED = 7f;
+    public const float BASE_SPEED = 4f;
     public const float ACCELERATION_TIME = 0.2f;
     public const float ACCELERATION = BASE_SPEED / ACCELERATION_TIME;
+    public const float CROUCH_SPEED_MOD = 0.25f;
+    public const float SLOW_WALK_SPEED_MOD = 0.05f;
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float THROW_VELOCITY = 6f;
@@ -558,8 +560,10 @@ public class player : networked_player, INotPathBlocking
         get
         {
             float s = BASE_SPEED;
-            if (crouched) s /= 2f;
-            else if (Input.GetKey(KeyCode.LeftControl)) s /= 10f;
+            if (crouched)
+                s *= CROUCH_SPEED_MOD;
+            else if (Input.GetKey(KeyCode.LeftControl))
+                s *= SLOW_WALK_SPEED_MOD;
 
             return s;
         }
