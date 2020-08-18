@@ -1118,51 +1118,44 @@ public static class server
             var client = kv.Key;
             var queue = kv.Value;
 
-            // The buffer to concatinate messages into
-            byte[] send_buffer = new byte[client.tcp.SendBufferSize];
-            int offset = 0;
-
-            while (queue.Count > 0)
+            try
             {
-                var msg = queue.Dequeue();
+                // The buffer to concatinate messages into
+                byte[] send_buffer = new byte[client.tcp.SendBufferSize];
+                int offset = 0;
 
-                if (msg.bytes.Length > send_buffer.Length)
-                    throw new System.Exception("Message too large!");
-
-                if (offset + msg.bytes.Length > send_buffer.Length)
+                while (queue.Count > 0)
                 {
-                    // Message would overrun buffer, send the buffer
-                    // and create a new one
-                    try
+                    var msg = queue.Dequeue();
+
+                    if (msg.bytes.Length > send_buffer.Length)
+                        throw new System.Exception("Message too large!");
+
+                    if (offset + msg.bytes.Length > send_buffer.Length)
                     {
+                        // Message would overrun buffer, send the buffer
+                        // and create a new one
                         traffic_up.log_bytes(offset);
                         client.stream.Write(send_buffer, 0, offset);
+                        send_buffer = new byte[client.tcp.SendBufferSize];
+                        offset = 0;
                     }
-                    catch
-                    {
-                        disconnected_during_write.Add(client);
-                    }
-                    send_buffer = new byte[client.tcp.SendBufferSize];
-                    offset = 0;
+
+                    // Copy the message into the send buffer
+                    System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+                    offset += msg.bytes.Length; // Move to next message
                 }
 
-                // Copy the message into the send buffer
-                System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
-                offset += msg.bytes.Length; // Move to next message
-            }
-
-            // Send the buffer
-            if (offset > 0)
-            {
-                try
+                // Send the buffer
+                if (offset > 0)
                 {
                     traffic_up.log_bytes(offset);
                     client.stream.Write(send_buffer, 0, offset);
                 }
-                catch
-                {
-                    disconnected_during_write.Add(client);
-                }
+            }
+            catch
+            {
+                disconnected_during_write.Add(client);
             }
         }
 
