@@ -218,7 +218,14 @@ public class player : networked_player, INotPathBlocking
     {
         foreach (var al in GetComponentsInChildren<armour_locator>())
             if (al.location == location && al.handedness == handedness)
+            {
                 al.equipped = null;
+                return;
+            }
+
+        string err = "Could not find armour_locator with the location ";
+        err += location + " and handedness " + handedness;
+        throw new System.Exception(err);
     }
 
     const int QUICKBAR_SLOTS_COUNT = 8;

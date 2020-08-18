@@ -86,6 +86,7 @@ public class inventory_slot_networked : networked
         int index = net_index.value;
         inventory inv = inventory;
 
+        if (remaining == 0) net_item.value = "";
         net_count.value = remaining;
 
         // Delete this inventory slot + replace it with the
