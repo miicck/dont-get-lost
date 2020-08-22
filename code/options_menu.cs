@@ -98,6 +98,13 @@ public class options_menu : MonoBehaviour
                 AudioListener.volume = val;
                 break;
 
+            case "field_of_view":
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.camera.fieldOfView = val;
+                });
+                break;
+
             default:
                 throw new System.Exception("Unkown float option: " + name);
         }

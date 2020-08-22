@@ -215,22 +215,7 @@ public class building_material : item
     }
 
     // The current weld
-    weld_info _weld;
-    public weld_info weld
-    {
-        get { return _weld; }
-        set
-        {
-            _weld = value;
-            if (value == null)
-            {
-                rigidbody.isKinematic = false;
-                return;
-            }
-
-            rigidbody.isKinematic = true;
-        }
-    }
+    public weld_info weld { get; private set; }
 
     //##########//
     // ITEM USE //
@@ -283,8 +268,6 @@ public class building_material : item
     void make_blueprint()
     {
         // Create a blue, non-colliding placeholder version of this object
-        rigidbody.detectCollisions = false;
-        Destroy(rigidbody);
         foreach (var r in GetComponentsInChildren<Renderer>())
             r.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
         foreach (var c in GetComponentsInChildren<Collider>())

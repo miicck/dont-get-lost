@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_lift : item_proccessor
+public class item_lift : MonoBehaviour
 {
     public item_link_point input { get; private set; }
     public item_link_point output { get; private set; }
@@ -10,7 +10,7 @@ public class item_lift : item_proccessor
     private void Start()
     {
         // Identify/Assign the input/output links
-        var pts = link_points;
+        var pts = GetComponentsInChildren<item_link_point>();
         if (pts.Length != 2)
             throw new System.Exception("An item lift must have exactly 2 links!");
 

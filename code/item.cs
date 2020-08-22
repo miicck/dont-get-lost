@@ -12,33 +12,13 @@ public class item : networked, IInspectable
     public string plural;
     public int value;
     public int fuel_value = 0;
+    public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
     public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
 
     public string display_name
     {
         get => name.Replace('_', ' ');
     }
-
-    /// <summary> The rigidbody controlling physics for this item 
-    /// (creates if it doesn't already exist). </summary>
-#if UNITY_EDITOR
-    new
-#endif
-    public Rigidbody rigidbody
-    {
-        get
-        {
-            if (_rigidbody == null)
-            {
-                // Rigidbody starts kinematic
-                _rigidbody = gameObject.AddComponent<Rigidbody>();
-                _rigidbody.isKinematic = true;
-            }
-            return _rigidbody;
-        }
-    }
-    Rigidbody _rigidbody;
-
 
     //############//
     // PLAYER USE //
@@ -124,20 +104,6 @@ public class item : networked, IInspectable
         return true;
     }
 
-    //#################//
-    // UNITY CALLBACKS //
-    //#################//
-
-    private void Update()
-    {
-        // Fallen through the map, return to sensible place
-        if (transform.position.y < -10f)
-        {
-            rigidbody.velocity = Vector3.zero;
-            transform.position = player.current.camera.transform.position;
-        }
-    }
-
     //############//
     // NETWORKING //
     //############//
@@ -172,7 +138,7 @@ public class item : networked, IInspectable
     // IInspectable //
     //##############//
 
-    public string inspect_info() { return display_name; }
+    public virtual string inspect_info() { return display_name; }
     public Sprite main_sprite() { return sprite; }
     public Sprite secondary_sprite() { return null; }
 

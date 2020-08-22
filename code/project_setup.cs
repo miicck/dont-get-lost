@@ -26,8 +26,8 @@ public class project_setup : MonoBehaviour
         UnityEditor.EditorSettings.serializationMode = UnityEditor.SerializationMode.ForceText;
         log += "Editor serializaton mode: " + UnityEditor.EditorSettings.serializationMode + "\n";
 
-        UnityEditor.EditorSettings.externalVersionControl = "Visible Meta Files";
-        log += "External version control: " + UnityEditor.EditorSettings.externalVersionControl + "\n";
+        UnityEditor.VersionControlSettings.mode = "Visible Meta Files";
+        log += "External version control: " + UnityEditor.VersionControlSettings.mode + "\n";
 
         var scenes = new List<UnityEditor.EditorBuildSettingsScene>();
         foreach (var s in scenes_in_build)

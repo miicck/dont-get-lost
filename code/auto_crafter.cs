@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_crafter : item_proccessor
+public class auto_crafter : MonoBehaviour
 {
     item_link_point[] inputs;
     item_link_point[] outputs;
@@ -14,7 +14,7 @@ public class auto_crafter : item_proccessor
         List<item_link_point> inputs = new List<item_link_point>();
         List<item_link_point> outputs = new List<item_link_point>();
 
-        foreach (var lp in link_points)
+        foreach (var lp in GetComponentsInChildren<item_link_point>())
         {
             if (lp.type == item_link_point.TYPE.INPUT)
                 inputs.Add(lp);

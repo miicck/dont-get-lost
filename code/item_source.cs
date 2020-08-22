@@ -2,15 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_source : item_proccessor
+public class item_source : MonoBehaviour
 {
     public item item;
     public float time_between_items = 1f;
+    item_link_point[] link_points;
 
     float last_create_time = 0;
 
+    private void Start()
+    {
+        link_points = GetComponentsInChildren<item_link_point>();
+        if (link_points.Length == 0)
+            throw new System.Exception("Item source has no link points!");
+    }
+
     private void Update()
     {
+        if (item == null) return;
         if (Time.time > last_create_time + time_between_items)
         {
             last_create_time = Time.time;

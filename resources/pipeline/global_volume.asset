@@ -217,7 +217,7 @@ MonoBehaviour:
     m_Value: 0
   intensity:
     m_OverrideState: 1
-    m_Value: 2.5
+    m_Value: 2
     min: 0
     max: 4
   directLightingStrength:
@@ -231,7 +231,7 @@ MonoBehaviour:
     min: 0.25
     max: 5
   temporalAccumulation:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   ghostingReduction:
     m_OverrideState: 1

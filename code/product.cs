@@ -29,6 +29,9 @@ public class product : MonoBehaviour
     /// <summary> The expected number of attempts to obtain this product. </summary>
     public int one_in_chance = 1;
 
+    /// <summary> The item created by an automatic harvester. </summary>
+    public virtual item auto_item => item;
+
     /// <summary> The display name of this product. </summary>
     public virtual string product_name()
     {
@@ -248,6 +251,8 @@ public class terrain_product : product
             return Resources.Load<item>("items/" + player.current.point.terrain_product);
         }
     }
+
+    public override item auto_item => item;
 
     public override string product_name() { return item.display_name; }
     public override string product_name_plural() { return item.plural; }

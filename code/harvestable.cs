@@ -8,8 +8,8 @@ using UnityEngine;
 [RequireComponent(typeof(item_requirement))]
 public class harvestable : accepts_item_impact, IInspectable
 {
-    product[] products { get => GetComponents<product>(); }
-    item_requirement tool { get => GetComponent<item_requirement>(); }
+    public product[] products { get => GetComponents<product>(); }
+    public item_requirement tool { get => GetComponent<item_requirement>(); }
 
     public override bool on_impact(item i)
     {

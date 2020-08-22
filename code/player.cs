@@ -1292,6 +1292,16 @@ public class player : networked_player, INotPathBlocking
     // STATIC METHODS //
     //################//
 
+    public delegate void callback();
+    private static callback waiting = () => { };
+
+    // Schedule a function to be called when the current player becomes available
+    public static void call_when_current_player_available(callback c)
+    {
+        if (current != null) c();
+        else waiting += c;
+    }
+
     // The current (local) player
     public static player current
     {
@@ -1302,6 +1312,8 @@ public class player : networked_player, INotPathBlocking
                 throw new System.Exception("Tried to overwrite player.current!");
             _player = value;
             _player.username.value = game.startup.username;
+            waiting();
+            waiting = () => { };
         }
     }
     static player _player;

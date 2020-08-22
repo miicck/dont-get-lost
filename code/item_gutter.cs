@@ -80,6 +80,8 @@ public class item_gutter : building_material, IInspectable
             links[1].type = item_link_point.TYPE.OUTPUT;
             output = links[1];
         }
+
+        InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
     }
 
     public override void on_forget(bool deleted)
@@ -134,6 +136,23 @@ public class item_gutter : building_material, IInspectable
         return true;
     }
 
+    void slow_update()
+    {
+        if (has_authority)
+        {
+            // Update the networked flow with the floored flow
+            Dictionary<string, int> floor_flows = new Dictionary<string, int>();
+            foreach (var kv in item_flow_float)
+            {
+                int fflow = Mathf.FloorToInt(kv.Value);
+                if (fflow > 0)
+                    floor_flows[kv.Key] = fflow;
+            }
+
+            item_flow.set(floor_flows);
+        }
+    }
+
     private void Update()
     {
         if (item_flow == null) return; // Wait for networked variables
@@ -152,6 +171,7 @@ public class item_gutter : building_material, IInspectable
             {
                 var to_add = input.release_item();
                 items.Add(to_add);
+                to_add.transform.forward = output.position - input.position;
 
                 // Bump the item flow by 1
                 if (item_flow_float.ContainsKey(to_add.name))
@@ -162,24 +182,7 @@ public class item_gutter : building_material, IInspectable
 
         // Asymptotically reduce the flow to 0
         foreach (var k in new List<string>(item_flow_float.Keys))
-        {
             item_flow_float[k] -= item_flow_float[k] * Time.deltaTime / ITEM_FLOW_TIMESPAN;
-            //if (item_flow_float[k] <= 1f)
-            //    item_flow_float.Remove(k);
-        }
-
-        if (has_authority)
-        {
-            // Update the networked flow with the floored flow
-            Dictionary<string, int> floor_flows = new Dictionary<string, int>();
-            foreach (var kv in item_flow_float)
-            {
-                int fflow = Mathf.FloorToInt(kv.Value);
-                if (fflow > 0)
-                    floor_flows[kv.Key] = fflow;
-            }
-            item_flow.set(floor_flows);
-        }
 
         for (int i = 1; i < items.Count; ++i)
         {

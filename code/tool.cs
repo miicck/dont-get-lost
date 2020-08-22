@@ -29,16 +29,16 @@ public class tool : melee_weapon
     /// <summary> How good a tool is at it's job. </summary>
     public enum QUALITY
     {
-        TERRIBLE,
-        POOR,
-        MEDIOCRE,
-        AVERAGE,
-        DECENT,
-        GOOD,
-        FINE,
-        EXCELLENT,
-        EXQUISITE,
-        LEGENDARY
+        TERRIBLE = 0,
+        POOR = 1,
+        MEDIOCRE = 2,
+        AVERAGE = 3,
+        DECENT = 4,
+        GOOD = 5,
+        FINE = 6,
+        EXCELLENT = 7,
+        EXQUISITE = 8,
+        LEGENDARY = 9
     }
 
     /// <summary> Convert a <see cref="tool.QUALITY"/> to a string. </summary>

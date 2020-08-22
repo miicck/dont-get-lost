@@ -2,16 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> An object which potentially processes items from 
-/// <see cref="item_link_point"/>s of INPUT type and potentially 
-/// outputs items from <see cref="item_link_point"/>s of OUTPUT type
-/// </summary>
-public abstract class item_proccessor : MonoBehaviour
-{
-    public item_link_point[] link_points =>
-        GetComponentsInChildren<item_link_point>();
-}
-
 /// <summary> A point where item_processors link together. </summary>
 public class item_link_point : MonoBehaviour
 {
