@@ -2,7 +2,99 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class inventory : networked
+public interface IItemCollection
+{
+    Dictionary<item, int> contents();
+    bool add(item i, int count);
+    bool remove(item i, int count);
+}
+
+// "Of course, that's the business we are in as a common language 
+// runtime, but we haven't got around to doing it for MI yet"
+public static class item_collection_extensions
+{
+    public static bool contains(this IItemCollection col, item i, int count = 1)
+    {
+        int found = 0;
+        foreach (var kv in col.contents())
+            if (kv.Key.name == i.name)
+            {
+                found += kv.Value;
+                if (found >= count)
+                    return true;
+            }
+
+        return false;
+    }
+
+    public static int count(this IItemCollection col, item i)
+    {
+        var cts = col.contents();
+        if (cts.TryGetValue(i, out int found))
+            return found;
+        return 0;
+    }
+
+    public static item remove_first(this IItemCollection col)
+    {
+        foreach (var kv in col.contents())
+        {
+            if (col.remove(kv.Key, 1))
+                return kv.Key;
+            return null;
+        }
+        return null;
+    }
+
+    public static void clear(this IItemCollection col)
+    {
+        var cts = col.contents();
+        foreach (var kv in cts)
+            col.remove(kv.Key, kv.Value);
+    }
+}
+
+/// <summary> A simple, dictionary-based
+/// implementation of an item collection. </summary>
+class simple_item_collection : IItemCollection
+{
+    Dictionary<string, int> items = new Dictionary<string, int>();
+
+    public Dictionary<item, int> contents()
+    {
+        Dictionary<item, int> ret = new Dictionary<item, int>();
+        foreach (var kv in items)
+            ret.Add(Resources.Load<item>("items/" + kv.Key), kv.Value);
+        return ret;
+    }
+
+    public bool add(item i, int count)
+    {
+        if (i == null || count == 0) return true;
+        if (items.ContainsKey(i.name))
+            items[i.name] += count;
+        else
+            items[i.name] = count;
+        return true;
+    }
+
+    public bool remove(item i, int count)
+    {
+        if (items.TryGetValue(i.name, out int found))
+        {
+            if (found > count)
+            {
+                items[i.name] -= count;
+                return true;
+            }
+            items.Remove(i.name);
+            return found == count;
+        }
+        else return false;
+    }
+}
+
+public class inventory : networked, IItemCollection
 {
     public RectTransform ui_prefab;
 
@@ -202,17 +294,17 @@ public class inventory : networked
         return added;
     }
 
-    public void remove(string item, int count)
+    public bool remove(string item, int count)
     {
         var to_remove = Resources.Load<item>("items/" + item);
         if (to_remove == null) throw new System.Exception("Could not find the item " + item);
-        remove(to_remove, count);
+        return remove(to_remove, count);
     }
 
-    public void remove(item item, int count)
+    public bool remove(item item, int count)
     {
         if (item == null || count == 0)
-            return;
+            return true;
 
         // Ensure we're removing the prefab version of the item
         item = Resources.Load<item>("items/" + item.name);
@@ -226,29 +318,15 @@ public class inventory : networked
 
         if (count != 0)
             throw new System.Exception("Items not removed properly!");
+
+        return true;
     }
 
     public bool contains(string item, int count = 1)
     {
         var to_test = Resources.Load<item>("items/" + item);
         if (to_test == null) throw new System.Exception("Could not find the item " + item);
-        return contains(to_test, count);
-    }
-
-    public bool contains(item item, int count = 1)
-    {
-        // Count the amount of item we have in occupied 
-        // (networked) slots and see if that is >= count
-        int found = 0;
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
-            if (isn.item_name == item.name)
-            {
-                found += isn.count;
-                if (found >= count)
-                    return true;
-            }
-
-        return false;
+        return item_collection_extensions.contains(this, to_test, count);
     }
 
     public bool empty
@@ -276,16 +354,8 @@ public class inventory : networked
 
     public int count(string item)
     {
-        return count(Resources.Load<item>("items/" + item));
-    }
-
-    public int count(item item)
-    {
-        item = Resources.Load<item>("items/" + item?.name);
-        if (item == null) throw new System.Exception("Could not find the item " + item?.name);
-        if (contents().TryGetValue(item, out int count))
-            return count;
-        return 0;
+        return item_collection_extensions.count(this, 
+            Resources.Load<item>("items/" + item));
     }
 
     public delegate void on_change_func();

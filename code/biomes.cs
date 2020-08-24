@@ -476,8 +476,7 @@ public class rock_stacks : biome
     {
         return new Dictionary<string, float>
         {
-            ["chicken"] = 1f / (32f * 32f),
-            ["smoke_spider"] = 1 / (32f * 32f)
+            ["chicken"] = 1f / (32f * 32f)
         };
     }
 

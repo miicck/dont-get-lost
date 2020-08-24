@@ -209,7 +209,7 @@ public class character : networked, INotPathBlocking
         if (health.value <= 0)
         {
             foreach (var p in GetComponents<product>())
-                p.create_in_inventory(player.current.inventory);
+                p.create_in(player.current.inventory);
             delete();
         }
     }

@@ -27,24 +27,24 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
-    public bool can_craft(inventory i)
+    public bool can_craft(IItemCollection i)
     {
         if (ingredients.Length == 0)
             throw new System.Exception("Recipies should have > 0 ingredients!");
 
         foreach (var ing in ingredients)
-            if (!ing.in_inventory(i))
+            if (!ing.in_collection(i))
                 return false;
         return true;
     }
 
-    public void craft(inventory from, inventory to)
+    public void craft(IItemCollection from, IItemCollection to)
     {
         if (!can_craft(from)) return;
         foreach (var ing in ingredients)
             ing.on_craft(from);
         foreach (var p in products)
-            p.create_in_inventory(to);
+            p.create_in(to);
     }
 
     static List<KeyValuePair<string, recipe[]>> all_recipies()
@@ -88,6 +88,6 @@ public class recipe : MonoBehaviour
 public abstract class ingredient : MonoBehaviour
 {
     public abstract string str();
-    public abstract bool in_inventory(inventory i);
-    public abstract void on_craft(inventory i);
+    public abstract bool in_collection(IItemCollection i);
+    public abstract void on_craft(IItemCollection i);
 }

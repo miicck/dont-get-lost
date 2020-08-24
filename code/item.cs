@@ -20,6 +20,12 @@ public class item : networked, IInspectable
         get => name.Replace('_', ' ');
     }
 
+    public string singular_or_plural(int count)
+    {
+        if (count == 1) return display_name;
+        return plural;
+    }
+
     //############//
     // PLAYER USE //
     //############//
@@ -139,8 +145,8 @@ public class item : networked, IInspectable
     //##############//
 
     public virtual string inspect_info() { return display_name; }
-    public Sprite main_sprite() { return sprite; }
-    public Sprite secondary_sprite() { return null; }
+    public virtual Sprite main_sprite() { return sprite; }
+    public virtual Sprite secondary_sprite() { return null; }
 
     //################//
     // STATIC METHODS //

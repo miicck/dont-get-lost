@@ -95,7 +95,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public virtual void create_in_inventory(inventory inv)
+    public virtual void create_in(IItemCollection inv)
     {
         switch (mode)
         {
@@ -259,11 +259,8 @@ public class terrain_product : product
     public override string product_quantity_name() { return item.display_name; }
     public override Sprite sprite() { return item.sprite; }
 
-    public override void create_in_inventory(inventory inv)
+    public override void create_in(IItemCollection inv)
     {
-        inv.add(item.name, 1);
-
-        if (Random.Range(0, 5) == 0)
-            inv.add("flint", 1);
+        inv.add(item, 1);
     }
 }

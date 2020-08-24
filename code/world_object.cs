@@ -24,6 +24,9 @@ public abstract class world_object : MonoBehaviour
         this.point = point;
         this.terrain_normal = terrain_normal;
         on_placement();
+
+        foreach (var sg in GetComponentsInChildren<sub_generator>())
+            sg.generate(point, chunk, x_in_chunk, z_in_chunk);
     }
 
     /// <summary> Should return false if this world object is incompatible 
@@ -53,6 +56,15 @@ public abstract class world_object : MonoBehaviour
         return _library[name];
     }
     static Dictionary<string, world_object> _library;
+
+    /// <summary> An object that is generated simultaneously
+    /// with a parent world_object. For example, an
+    /// ore seam. </summary>
+    public abstract class sub_generator : MonoBehaviour
+    {
+        public abstract void generate(biome.point point, 
+            chunk chunk, int x_in_chunk, int z_in_chunk);
+    }
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(world_object), true)]

@@ -2,11 +2,41 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_crafter : MonoBehaviour
+public class auto_crafter : building_material, IInspectable
 {
     item_link_point[] inputs;
     item_link_point[] outputs;
-    public item product;
+    recipe[] recipies => GetComponentsInChildren<recipe>();
+
+    simple_item_collection pending_inputs = new simple_item_collection();
+    simple_item_collection pending_outputs = new simple_item_collection();
+
+    public override string inspect_info()
+    {
+        string info = display_name + "\n";
+
+        var pi = pending_inputs.contents();
+        var po = pending_outputs.contents();
+
+        if (pi.Count > 0)
+        {
+            info += "Pending inputs:\n";
+            foreach (var kv in pi)
+                info += "    " + kv.Value + " " +
+                    kv.Key.singular_or_plural(kv.Value) + "\n";
+
+        }
+
+        if (po.Count > 0)
+        {
+            info += "Pending outputs:\n";
+            foreach (var kv in po)
+                info += "    " + kv.Value + " " +
+                    kv.Key.singular_or_plural(kv.Value) + "\n";
+        }
+
+        return info;
+    }
 
     void Start()
     {
@@ -30,24 +60,42 @@ public class auto_crafter : MonoBehaviour
 
     void Update()
     {
-        bool ready = true;
+        // Add inputs to the pending inputs collection
+        bool inputs_changed = false;
         foreach (var ip in inputs)
-            if (ip.item == null)
+            if (ip.item != null)
             {
-                ready = false;
-                break;
+                pending_inputs.add(ip.item, 1);
+                ip.delete_item();
+                inputs_changed = true;
             }
 
-        if (!ready) 
-            return;
+        // Output stuff from the pending outputs collection
+        bool outputs_free = true;
+        foreach (var op in outputs)
+        {
+            if (op.item == null)
+            {
+                var first = pending_outputs.remove_first();
+                if (first != null)
+                {
+                    op.item = first.inst();
+                    outputs_free = false;
+                }
+            }
+            else outputs_free = false;
+        }
 
-        // Drop all the inupt items
-        foreach(var ip in inputs)
-            ip.delete_item();
-
-        // Create the output item
-        var created = product.inst();
-        created.transform.position = outputs[0].position;
-        outputs[0].item = created;
+        if (inputs_changed && outputs_free)
+        {
+            // Attempt to craft something
+            foreach (var r in recipies)
+                if (r.can_craft(pending_inputs))
+                {
+                    r.craft(pending_inputs, pending_outputs);
+                    pending_inputs.clear();
+                    break;
+                }
+        }
     }
 }
