@@ -208,15 +208,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe028f0ae2ac20144844c30b796cd699, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: a47eb0215e9d3fe4d9be674c3510af6b, type: 3}
+  sprite: {fileID: 21300000, guid: 1cafe5fd1155f9e41995c2e229eb4c6a, type: 3}
   plural: autominers
   value: 0
   fuel_value: 0
+  logistics_scale: 1
   axes_scale: 1
   ray_start: {fileID: 91028742736544884}
   ray_length: 0.7
   tool_type: 1
   tool_quality: 9
+  time_between_harvests: 1
 --- !u!1001 &8496793663866212026
 PrefabInstance:
   m_ObjectHideFlags: 0

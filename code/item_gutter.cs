@@ -261,16 +261,19 @@ public class item_gutter : building_material, IInspectable
             base.OnInspectorGUI();
             item_gutter g = (item_gutter)target;
 
-            string text = g.inspect_info();
-            text += "\nLast mimic times:\n";
-            foreach (var kv in g.last_mimic_times)
-                text += "    " + kv.Key + ": " + kv.Value + "\n";
+            if (Application.isPlaying)
+            {
+                string text = g.inspect_info();
+                text += "\nLast mimic times:\n";
+                foreach (var kv in g.last_mimic_times)
+                    text += "    " + kv.Key + ": " + kv.Value + "\n";
 
-            text += "\nFloat flows:\n";
-            foreach (var kv in g.item_flow_float)
-                text += "    " + kv.Key + ": " + kv.Value + "\n";
+                text += "\nFloat flows:\n";
+                foreach (var kv in g.item_flow_float)
+                    text += "    " + kv.Key + ": " + kv.Value + "\n";
 
-            UnityEditor.EditorGUILayout.TextArea(text);
+                UnityEditor.EditorGUILayout.TextArea(text);
+            }
         }
     }
 #endif
