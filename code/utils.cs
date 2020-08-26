@@ -429,6 +429,37 @@ public static class utils
         return arrived;
     }
 
+    public static Vector3 axis(this Transform t, AXIS axis)
+    {
+        switch(axis)
+        {
+            case AXIS.X_AXIS: return t.right;
+            case AXIS.Y_AXIS: return t.up;
+            case AXIS.Z_AXIS: return t.forward;
+            default: throw new System.Exception("Unkown axis: " + axis);
+        }
+    }
+
+    public static void set_axis(this Transform t, AXIS axis, Vector3 val)
+    {
+        switch(axis)
+        {
+            case AXIS.X_AXIS:
+                t.right = val;
+                break;
+
+            case AXIS.Y_AXIS:
+                t.up = val;
+                break;
+
+            case AXIS.Z_AXIS:
+                t.forward = val;
+                break;
+
+            default: throw new System.Exception("Unkown axis: " + axis);
+        }
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object
@@ -462,6 +493,17 @@ public static class utils
     }
 
 #endif // UNITY_EDITOR
+}
+
+//####################################//
+// END UTILS - BEGIN TYPE DEFINITIONS //
+//####################################//
+
+public enum AXIS
+{
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS
 }
 
 /// <summary> A dictionary with two keys. </summary>

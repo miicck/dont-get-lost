@@ -48,7 +48,7 @@ MonoBehaviour:
   plural: gold ore
   value: 1
   fuel_value: 0
-  logistics_scale: 1
+  logistics_scale: 0.8
 --- !u!1001 &581380012422511553
 PrefabInstance:
   m_ObjectHideFlags: 0

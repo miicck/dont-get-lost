@@ -1,0 +1,2 @@
+- Item flow recording should be done on link points?
+- Allow item pickup from logistics system

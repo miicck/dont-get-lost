@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> A point where item_processors link together. </summary>
+/// <summary> A point where buildings link item flow together. </summary>
 public class item_link_point : MonoBehaviour
 {
     const float END_MATCH_DISTANCE = 0.2f;
@@ -30,7 +30,10 @@ public class item_link_point : MonoBehaviour
             time_got_item = Time.time;
 
             if (_item != null)
+            {
                 _item.transform.position = transform.position;
+                _item.transform.localScale = Vector3.one * _item.logistics_scale;
+            }
         }
     }
     item _item;
