@@ -1,2 +1,4 @@
 - Item flow recording should be done on link points?
 - Allow item pickup from logistics system
+- Figure out why items slide into one another on gutters
+- Get rid of settlers/all that goes with that (fixtures etc...)?

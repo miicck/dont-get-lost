@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8485547749737602874}
   - component: {fileID: 8132424253136401962}
   m_Layer: 0
-  m_Name: workbench
+  m_Name: chest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,4 +43,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c1b3eef9dd86cf4d82d5f4ded8ac013, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ui_prefab: {fileID: 7122046191683077136, guid: cca789a8be2f8fa4db193c555a75b2a3, type: 3}
+  ui_prefab: {fileID: 7122046191683077136, guid: f8bfa59740317d54b8d7eb83eb633ce5, type: 3}

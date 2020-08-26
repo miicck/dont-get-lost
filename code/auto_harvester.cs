@@ -58,9 +58,7 @@ public class auto_harvester : building_material, IInspectable
             var next_harvest = harvesting.products[current_product].auto_item;
 
             // Create output product
-            var new_item = next_harvest.inst();
-            new_item.transform.localScale *= new_item.logistics_scale;
-            output.item = new_item;
+            output.item = next_harvest.inst();
         }
     }
 

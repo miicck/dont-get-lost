@@ -50,9 +50,6 @@ public class item_splitter : building_material
             throw new System.Exception("No outputs to item splitter!");
     }
 
-    Vector3 ax_last;
-    Vector3 target_ax_last;
-
     bool move_selector_towards(Transform selector, item_link_point target,
         AXIS selector_axis, AXIS rotation_axis)
     {
@@ -77,14 +74,6 @@ public class item_splitter : building_material
         float rot_amt = Mathf.Min(angle, Time.deltaTime * 45);
         selector.Rotate(rot_axis, sign * rot_amt, Space.World);
         return false;
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(input_selector.position, input_selector.position + ax_last);
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(input_selector.position, input_selector.position + target_ax_last);
     }
 
     bool move_towards(Transform t, Vector3 v, float speed)
