@@ -174,6 +174,7 @@ public class game : MonoBehaviour
         options_menu.initialize();
         item_link_point.init_links();
         bed.initialize_beds();
+        biome.initialize();
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);

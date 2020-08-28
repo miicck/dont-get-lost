@@ -303,13 +303,17 @@ public abstract class biome : MonoBehaviour
     // BIOME GENERATION //
     //##################//
 
-    public static bool initialized => generated_biomes != null;
-
     static Dictionary<int, int, biome> generated_biomes;
     static List<MethodInfo> biome_list;
 
-    /// <summary> Initialize static information ready for world generation. </summary>
     public static void initialize()
+    {
+        // Ensure the biome list doesn't persist from previous game
+        biome_list = null;
+    }
+
+    /// <summary> Initialize static information ready for world generation. </summary>
+    public static void generate_biome_list()
     {
         // Initialize static variables
         generated_biomes = new Dictionary<int, int, biome>();
@@ -353,8 +357,9 @@ public abstract class biome : MonoBehaviour
     /// <summary> Generates the biome with the given biome coordinates. </summary>
     public static biome generate(int x, int z)
     {
-        // Initialize, if not done so already
-        if (!initialized) initialize();
+        // Ensure the biomes are loaded
+        if (biome_list == null)
+            generate_biome_list();
 
         // Create the biome random number generator, seeded 
         // by the biome x, z coords and the world seed
