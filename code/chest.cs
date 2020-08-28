@@ -26,7 +26,7 @@ public class chest : fixture_with_inventory, ILeftPlayerMenu
     {
         // Transfer input into chest inventory
         if (input.item == null) return;
-        if (has_authority) inventory.add(input.item, 1);
+        if (has_authority) inventory?.add(input.item, 1);
         input.delete_item();
     }
 

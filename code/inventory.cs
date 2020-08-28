@@ -169,32 +169,24 @@ public class inventory : networked, IItemCollection
                     // Shift moves the contents of the slot directly into the player inventory
                     // (or from the player inventory to the interacting inventory)
                     if (Input.GetKey(KeyCode.LeftShift))
-                    {          
+                    {
                         // Copies for lambda function
                         item transfer_item = isn.item;
                         int transfer_count = isn.count;
                         int transfer_slot = slot_index;
-                        bool into_player = !transform.IsChildOf(player.current.transform);
 
-                        isn.delete(() =>
-                        {
-                            if (into_player)
+                        // Transfer into player inventory, or out of player inventory
+                        inventory target = player.current.inventory;
+                        if (transform.IsChildOf(player.current.transform))
+                            target = player.current.left_menu?.editable_inventory();
+
+                        if (target != null)
+                            isn.delete(() =>
                             {
-                                // Transfer into player inventory
-                                player.current.inventory.add(transfer_item, transfer_count);
+                                // Transfer into target inventory
+                                target.add(transfer_item, transfer_count);
                                 on_slot_change(transfer_slot, null, 0);
-                            }
-                            else
-                            {
-                                // Transfer into interacting inventory
-                                var inv = player.current.left_menu?.editable_inventory();
-                                if (inv != null)
-                                {
-                                    inv.add(transfer_item, transfer_count);
-                                    on_slot_change(transfer_slot, null, 0);
-                                }
-                            }
-                        });
+                            });
 
                         return;
                     }
@@ -370,7 +362,7 @@ public class inventory : networked, IItemCollection
 
     public int count(string item)
     {
-        return item_collection_extensions.count(this, 
+        return item_collection_extensions.count(this,
             Resources.Load<item>("items/" + item));
     }
 
