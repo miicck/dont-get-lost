@@ -3428,7 +3428,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   option_name: field_of_view
-  default_value: 60
+  default_value: 90
   slider: {fileID: 343440497009471741}
   input: {fileID: 6630384748232803012}
 --- !u!1 &5232575999316389408
