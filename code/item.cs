@@ -155,22 +155,25 @@ public class item : networked, IInspectable
     /// <summary> Create an item. </summary>
     public static item create(string name,
         Vector3 position, Quaternion rotation,
-        bool kinematic = true, bool networked = false,
+        bool networked = false,
         networked network_parent = null)
     {
         item item = null;
 
         if (networked)
         {
+            // Create a networked version of the chosen item
             item = (item)client.create(position, "items/" + name,
                 rotation: rotation, parent: network_parent);
         }
         else
         {
+            // Create a client-side only version of the item
             item = Resources.Load<item>("items/" + name);
             if (item == null)
                 throw new System.Exception("Could not find the item: " + name);
             item = item.inst();
+            item.is_client_side = true;
             item.transform.position = position;
             item.transform.rotation = rotation;
             item.transform.SetParent(network_parent == null ? null : network_parent.transform);

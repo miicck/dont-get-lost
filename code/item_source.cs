@@ -41,9 +41,8 @@ public class item_source : MonoBehaviour
             return; // Output backed up, don't spawn anything
 
         // Spawn the new item
-        var spawned = item.inst();
-        spawned.transform.position = output_link.position;
-        output_link.item = spawned;
+        output_link.item = item.create(item.name, 
+            output_link.position, output_link.transform.rotation);
         ++items_created;
     }
 }

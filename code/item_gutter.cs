@@ -138,7 +138,7 @@ public class item_gutter : building_material, IInspectable
 
     void slow_update()
     {
-        if (has_authority)
+        if (has_authority && !is_client_side)
         {
             // Update the networked flow with the floored flow
             Dictionary<string, int> floor_flows = new Dictionary<string, int>();
@@ -156,6 +156,9 @@ public class item_gutter : building_material, IInspectable
     private void Update()
     {
         if (item_flow == null) return; // Wait for networked variables
+
+        // Forget about any deleted items
+        items.RemoveAll((i) => i == null);
 
         if (input.linked_to == null && item_flow.item_types > 0)
         {

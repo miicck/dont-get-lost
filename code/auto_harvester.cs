@@ -58,7 +58,8 @@ public class auto_harvester : building_material, IInspectable
             var next_harvest = harvesting.products[current_product].auto_item;
 
             // Create output product
-            output.item = next_harvest.inst();
+            output.item = create(next_harvest.name, 
+                output.position, output.transform.rotation);
         }
     }
 

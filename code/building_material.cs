@@ -408,7 +408,7 @@ public class building_material : item
             // Create a proper, networked version of the spawned object
             var created = (building_material)create(spawned.name,
                 spawned.transform.position, spawned.transform.rotation,
-                kinematic: true, networked: true, network_parent: parent_on_placement());
+                networked: true, network_parent: parent_on_placement());
 
             spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);

@@ -9,13 +9,13 @@ public class lighting : MonoBehaviour
     public static Color sky_color
     {
         get
-        {   
+        {
             if (player.current == null)
                 return Color.black;
             return player.current.sky_color;
         }
 
-        set 
+        set
         {
             if (player.current == null)
                 return;
@@ -37,9 +37,19 @@ public class lighting : MonoBehaviour
 
     void Update()
     {
-        float b = brightness_from_time(time_manager.get_time());
+        float t = time_manager.get_time();
+        float b = brightness_from_time(t);
         sun.enabled = b != 0f;
-        sun.color = new Color(b,b,b);
+        sun.color = new Color(b, b, b);
+
+        /*
+        // Sun moves in sky - looks kinda fast/does wierd things to the shadows
+        sun.transform.forward = new Vector3(
+            Mathf.Cos(Mathf.PI * t),
+            -Mathf.Sin(Mathf.PI * t) - 0.5f,
+            0
+        );
+        */
 
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))
@@ -52,7 +62,7 @@ public class lighting : MonoBehaviour
         target_sky_color.r *= b;
         target_sky_color.g *= b;
         target_sky_color.b *= b;
-        sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime*5f);
+        sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
     }
 
     float brightness_from_time(float time)
@@ -62,7 +72,7 @@ public class lighting : MonoBehaviour
 
         // Dawn (end of night)
         if (time > 2f - DAWN_FRACTION)
-            return 1f - (2f - time)/DAWN_FRACTION;
+            return 1f - (2f - time) / DAWN_FRACTION;
 
         // Night
         if (time > 1f)
@@ -70,7 +80,7 @@ public class lighting : MonoBehaviour
 
         // Dusk (end of day)
         if (time > 1f - DUSK_FRACTION)
-            return (1f - time)/DUSK_FRACTION;
+            return (1f - time) / DUSK_FRACTION;
 
         // Day
         return 1f;

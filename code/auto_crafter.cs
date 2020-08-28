@@ -79,7 +79,9 @@ public class auto_crafter : building_material, IInspectable
                 var first = pending_outputs.remove_first();
                 if (first != null)
                 {
-                    op.item = first.inst();
+                    // Create a client-side version of the product
+                    op.item = create(first.name,
+                        op.position, op.transform.rotation);
                     outputs_free = false;
                 }
             }

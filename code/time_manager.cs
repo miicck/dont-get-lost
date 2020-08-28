@@ -6,9 +6,9 @@ using UnityEngine;
 /// time, the day/night cycle etc. </summary>
 public class time_manager : networked
 {
-    public const float DAY_LENGTH = 60f;
-    public const float NIGHT_LENGTH = 30f;
-        
+    public const float DAY_LENGTH = 60f * 5;
+    public const float NIGHT_LENGTH = 60f * 2;
+
     /// <summary> The time of day in [0,2). Values in [0,1] correspond to
     /// daytime, values in [1,2) correspond to nighttime. </summary>
     networked_variables.net_float time_of_day;
@@ -30,7 +30,7 @@ public class time_manager : networked
         if (!has_authority) return;
 
         // Increment time
-        if (time_of_day.value < 1f) 
+        if (time_of_day.value < 1f)
             time_of_day.value += Time.deltaTime / DAY_LENGTH;
         else if (time_of_day.value < 2f)
             time_of_day.value += Time.deltaTime / NIGHT_LENGTH;
@@ -74,6 +74,6 @@ public class time_manager : networked
 
     public static string info()
     {
-        return "    Day "+get_day()+" time "+get_time();
+        return "    Day " + get_day() + " time " + get_time();
     }
 }

@@ -57,9 +57,14 @@ public class networked : MonoBehaviour
     // NETWORKED VARIABLES //
     //#####################//
 
+    /// <summary> Set to true if networking should be disabled for this object. </summary>
+    public bool is_client_side = false;
+
     /// <summary> Called just before we create this object. </summary>
     public void init_network_variables()
     {
+        if (is_client_side) return;
+
         x_local = new networked_variables.net_float(
             lerp_speed: position_lerp_speed(), resolution: position_resolution());
 
@@ -132,6 +137,8 @@ public class networked : MonoBehaviour
     /// <summary> Called every time client.update is called. </summary>
     public void network_update()
     {
+        if (is_client_side) return;
+
         if (!has_authority)
         {
             // Not controlled by this => LERP my position to networked position
@@ -169,10 +176,12 @@ public class networked : MonoBehaviour
     /// <summary> My position as stored by the network. </summary>
     public Vector3 networked_position
     {
-        get => new Vector3(x_local.value, y_local.value, z_local.value);
+        get => is_client_side ? transform.position :
+            transform.TransformPoint(x_local.value, y_local.value, z_local.value);
         set
         {
             transform.position = value;
+            if (is_client_side) return;
             x_local.value = transform.localPosition.x;
             y_local.value = transform.localPosition.y;
             z_local.value = transform.localPosition.z;
@@ -182,6 +191,9 @@ public class networked : MonoBehaviour
     /// <summary> Serailize all of my network variables into a single byte array. </summary>
     public byte[] serialize_networked_variables()
     {
+        if (is_client_side)
+            throw new System.Exception("Should not serialize client side objects!");
+
         List<byte> serial = new List<byte>();
         for (int i = 0; i < networked_variables.Count; ++i)
         {
@@ -196,6 +208,8 @@ public class networked : MonoBehaviour
     /// recives an updated serialization. </summary>
     public void variable_update(int index, byte[] buffer, int offset, int length)
     {
+        if (is_client_side)
+            throw new System.Exception("Client side objects should not recive variable updates!");
         networked_variables[index].reccive_serialization(buffer, ref offset, length);
     }
 
@@ -237,7 +251,12 @@ public class networked : MonoBehaviour
     int _network_id = 0;
 
     /// <summary> Does this client have unique authority over this object. </summary>
-    public bool has_authority { get; private set; }
+    public bool has_authority
+    {
+        get => is_client_side || _has_authority;
+        private set => _has_authority = value;
+    }
+    bool _has_authority;
 
     public void gain_authority()
     {
@@ -262,7 +281,7 @@ public class networked : MonoBehaviour
     {
         on_forget(deleting);
         on_forget(this);
-        if (deleting)
+        if (deleting && !is_client_side)
             transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
         Destroy(gameObject);
     }
@@ -280,6 +299,15 @@ public class networked : MonoBehaviour
     /// response is recived, callback will be called. </summary>
     public void delete(delete_success_callback callback = null)
     {
+        if (is_client_side)
+        {
+            // Client side objects are deleted immediately
+            // without involving the server
+            callback();
+            forget(true);
+            return;
+        }
+
         // Deactivate the object/move to deleted pile immediately, 
         // but delete only once we have a positive network ID
         gameObject.SetActive(false);
@@ -443,6 +471,9 @@ public class networked : MonoBehaviour
     /// forgotten or deleted on this client. </summary>
     static void on_forget(networked forgetting)
     {
+        if (forgetting.is_client_side)
+            return;
+
         // Remove all child networked objects from the objecst dictionary
         // and record the time that they were removed
         network_utils.top_down<networked>(forgetting.transform, (nw) =>
