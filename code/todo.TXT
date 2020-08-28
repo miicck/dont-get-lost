@@ -2,4 +2,3 @@
 - Figure out why items slide into one another on gutters
 - Get rid of settlers/all that goes with that (fixtures etc...)?
 - Create unique sprites for everything (ongoing)
-- Make shift-click put items in chests etc.

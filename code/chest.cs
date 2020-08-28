@@ -37,4 +37,5 @@ public class chest : fixture_with_inventory, ILeftPlayerMenu
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
+    public inventory editable_inventory() { return inventory; }
 }

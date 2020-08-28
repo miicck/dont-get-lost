@@ -106,6 +106,7 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     // ILeftPlayerMenu //
     //#################//
 
+    public inventory editable_inventory() { return inventory; } 
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { update_growth(); }
     public void on_left_menu_close() { }

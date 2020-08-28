@@ -175,6 +175,7 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
     public RectTransform left_menu_transform() { return trade_window.GetComponent<RectTransform>(); }
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
+    public inventory editable_inventory() { return null; }
 
     //##############//
     // IInspectable //

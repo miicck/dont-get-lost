@@ -30,4 +30,5 @@ public class workbench : fixture_with_inventory, ILeftPlayerMenu
 
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
+    public inventory editable_inventory() { return inventory; }
 }

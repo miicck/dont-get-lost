@@ -1390,7 +1390,17 @@ public class popup_message : MonoBehaviour
 
 public interface ILeftPlayerMenu
 {
+    /// <summary> An inventory associated with this menu, that a 
+    /// player can take/put items at will. </summary>
+    inventory editable_inventory();
+
+    /// <summary> The UI element associated with this menu (should create
+    /// if it does not already exist). </summary>
     RectTransform left_menu_transform();
+
+    /// <summary> Called when the player closes the left menu. </summary>
     void on_left_menu_close();
+
+    /// <summary> Called when the player opens the left menu. </summary>
     void on_left_menu_open();
 }

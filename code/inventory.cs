@@ -167,17 +167,33 @@ public class inventory : networked, IItemCollection
                 else
                 {
                     // Shift moves the contents of the slot directly into the player inventory
+                    // (or from the player inventory to the interacting inventory)
                     if (Input.GetKey(KeyCode.LeftShift))
-                    {
+                    {          
                         // Copies for lambda function
                         item transfer_item = isn.item;
                         int transfer_count = isn.count;
                         int transfer_slot = slot_index;
+                        bool into_player = !transform.IsChildOf(player.current.transform);
 
                         isn.delete(() =>
                         {
-                            player.current.inventory.add(transfer_item, transfer_count);
-                            on_slot_change(transfer_slot, null, 0);
+                            if (into_player)
+                            {
+                                // Transfer into player inventory
+                                player.current.inventory.add(transfer_item, transfer_count);
+                                on_slot_change(transfer_slot, null, 0);
+                            }
+                            else
+                            {
+                                // Transfer into interacting inventory
+                                var inv = player.current.left_menu?.editable_inventory();
+                                if (inv != null)
+                                {
+                                    inv.add(transfer_item, transfer_count);
+                                    on_slot_change(transfer_slot, null, 0);
+                                }
+                            }
                         });
 
                         return;
