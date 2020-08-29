@@ -1098,22 +1098,28 @@ public static class server
                     truncated_read_messages.Remove(c);
                 }
 
-                int offset = 0;
+                // Read new bytes into the buffer
                 int bytes_read = c.stream.Read(buffer, buffer_start, 
                     buffer.Length - buffer_start);
                 traffic_down.log_bytes(bytes_read);
+
+                // Work out how much data is in the buffer (including data
+                // potentially copied from a previous truncation) and
+                // initialze reading at the beginning.
+                int data_bytes = bytes_read + buffer_start;
+                int offset = 0;
 
                 // Variables for dealing with truncations
                 int last_message_start = 0;
                 bool truncated = false;
 
-                while (offset < bytes_read)
+                while (offset < data_bytes)
                 {
                     // Record the message start, in case of truncation
                     last_message_start = offset;
 
                     // Check the payload length is in the buffer
-                    if (offset + sizeof(int) > buffer.Length)
+                    if (offset + sizeof(int) > data_bytes)
                     {
                         truncated = true;
                         break;
@@ -1123,7 +1129,7 @@ public static class server
                     int payload_length = network_utils.decode_int(buffer, ref offset);
 
                     // Check the whole message is in the buffer
-                    if (offset + payload_length + 1 > buffer.Length)
+                    if (offset + payload_length + 1 > data_bytes)
                     {
                         truncated = true;
                         break;
@@ -1145,7 +1151,7 @@ public static class server
                 if (truncated)
                 {
                     // This shouldn't happen. If it does, I haven't understood something.
-                    if (bytes_read < buffer.Length)
+                    if (data_bytes != buffer.Length)
                         throw new System.Exception("Found a truncated message in a non-full buffer!");
 
                     byte[] to_save = new byte[buffer.Length - last_message_start];
