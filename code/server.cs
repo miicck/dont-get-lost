@@ -22,7 +22,6 @@ public static class server
     /// <summary> The default port to listen on. </summary>
     public const int DEFAULT_PORT = 6969;
 
-
     //########//
     // CLIENT //
     //########//
@@ -547,6 +546,11 @@ public static class server
     /// <summary> Messages that are yet to be sent. </summary>
     static Dictionary<client, Queue<pending_message>> message_queues;
 
+    /// <summary> Bytes of truncated messages from clients that appeared 
+    /// at the end of a read buffer, ready to be glued to the start of the 
+    /// next buffer. </summary>
+    static Dictionary<client, byte[]> truncated_read_messages;
+
     // Traffic monitors
     static network_utils.traffic_monitor traffic_down;
     static network_utils.traffic_monitor traffic_up;
@@ -604,6 +608,7 @@ public static class server
         transform = new GameObject("server").transform;
         active_representations = new GameObject("active").transform;
         inactive_representations = new GameObject("inactive").transform;
+        truncated_read_messages = new Dictionary<client, byte[]>();
 
         // Tidy up the heirarcy a bit
         active_representations.SetParent(transform);
@@ -1083,14 +1088,46 @@ public static class server
             byte[] buffer = new byte[c.tcp.ReceiveBufferSize];
             while (c.stream.CanRead && c.stream.DataAvailable)
             {
-                int bytes_read = c.stream.Read(buffer, 0, buffer.Length);
+                int buffer_start = 0;
+
+                if (truncated_read_messages.TryGetValue(c, out byte[] trunc))
+                {
+                    // Glue a truncated message onto the start of the buffer
+                    System.Buffer.BlockCopy(trunc, 0, buffer, 0, trunc.Length);
+                    buffer_start = trunc.Length;
+                    truncated_read_messages.Remove(c);
+                }
+
                 int offset = 0;
+                int bytes_read = c.stream.Read(buffer, buffer_start, 
+                    buffer.Length - buffer_start);
                 traffic_down.log_bytes(bytes_read);
+
+                // Variables for dealing with truncations
+                int last_message_start = 0;
+                bool truncated = false;
 
                 while (offset < bytes_read)
                 {
+                    // Record the message start, in case of truncation
+                    last_message_start = offset;
+
+                    // Check the payload length is in the buffer
+                    if (offset + sizeof(int) > buffer.Length)
+                    {
+                        truncated = true;
+                        break;
+                    }
+
                     // Parse message length
                     int payload_length = network_utils.decode_int(buffer, ref offset);
+
+                    // Check the whole message is in the buffer
+                    if (offset + payload_length + 1 > buffer.Length)
+                    {
+                        truncated = true;
+                        break;
+                    }
 
                     // Parse message type
                     var msg_type = (global::client.MESSAGE)buffer[offset];
@@ -1103,6 +1140,18 @@ public static class server
                     c.last_message_time = Time.realtimeSinceStartup;
                     parser(c, buffer, offset, payload_length);
                     offset += payload_length;
+                }
+
+                if (truncated)
+                {
+                    // This shouldn't happen. If it does, I haven't understood something.
+                    if (bytes_read < buffer.Length)
+                        throw new System.Exception("Found a truncated message in a non-full buffer!");
+
+                    byte[] to_save = new byte[buffer.Length - last_message_start];
+                    System.Buffer.BlockCopy(buffer, last_message_start, 
+                        to_save, 0, to_save.Length);
+                    truncated_read_messages[c] = to_save;
                 }
             }
         }

@@ -53,9 +53,9 @@ public class portal : building_material, ILeftPlayerMenu
     //#################//
 
     private void Start()
-    {
-        InvokeRepeating("create_pulse", 0.2f, 0.2f);
-        InvokeRepeating("spawn_attacker", 1f, 1f);
+    {      
+        //InvokeRepeating("create_pulse", 0.2f, 0.2f);
+        //InvokeRepeating("spawn_attacker", 1f, 1f);
     }
 
     private void Update()

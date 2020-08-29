@@ -19,6 +19,10 @@ public static class client
     static int last_server_time;
     static int last_server_time_local;
 
+    /// <summary> Any bytes of a partial message from the server that appeared at the
+    /// end of a buffer, to be glued to the start of the next buffer. </summary>
+    static byte[] truncated_read_message;
+
     // END STATE VARIABLES //
 
     public static int server_time => ((int)Time.realtimeSinceStartup - last_server_time_local) + last_server_time;
@@ -505,21 +509,55 @@ public static class client
         if (!connected) return;
 
         // Get the tcp stream
-        var stream = tcp.GetStream();
-        int offset = 0;
+        var stream = tcp.GetStream();   
 
         // Read messages to the client
         while (stream.DataAvailable)
         {
             byte[] buffer = new byte[tcp.ReceiveBufferSize];
-            int bytes_read = stream.Read(buffer, 0, buffer.Length);
+
+            // The start point in the buffer where new messages should be read into
+            int buffer_start = 0;
+
+            if (truncated_read_message != null)
+            {
+                // Glue a truncated message onto the start of the buffer
+                System.Buffer.BlockCopy(truncated_read_message, 0, 
+                    buffer, 0, truncated_read_message.Length);
+                buffer_start = truncated_read_message.Length;
+                truncated_read_message = null;
+            }
+
+            int offset = 0;
+            int bytes_read = stream.Read(buffer, buffer_start, 
+                buffer.Length - buffer_start);
             traffic_down.log_bytes(bytes_read);
 
-            offset = 0;
+            // Variables for dealing with truncations
+            int last_message_start = 0;
+            bool truncated = false;
+
             while (offset < bytes_read)
             {
+                // Record the message start, in case we get truncated
+                last_message_start = offset;
+
+                // Check the payload length is in the buffer
+                if (offset + sizeof(int) > buffer.Length)
+                {
+                    truncated = true;
+                    break;
+                }
+
                 // Parse payload length
                 int payload_length = network_utils.decode_int(buffer, ref offset);
+
+                // Check the whole message is in the buffer
+                if (offset + payload_length + 1 > buffer.Length)
+                {
+                    truncated = true;
+                    break;
+                }
 
                 // Parse message type
                 var msg_type = (server.MESSAGE)buffer[offset];
@@ -533,6 +571,20 @@ public static class client
                 // should stop immedately as we can no longer send
                 // messages to the server.
                 if (!connected) return;
+            }
+
+            // Save the truncated part of the message, to glue onto the
+            // start of the next buffer
+            if (truncated)
+            {
+                // This shouldn't happen. If it does, I haven't understood something.
+                if (bytes_read < buffer.Length)
+                    throw new System.Exception("Found a truncated message in a non-full buffer!");
+
+                // Save the truncated message to be glued at the start of the next buffer.
+                truncated_read_message = new byte[buffer.Length - last_message_start];
+                System.Buffer.BlockCopy(buffer, last_message_start,
+                    truncated_read_message, 0, truncated_read_message.Length);
             }
         }
 
