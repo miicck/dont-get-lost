@@ -398,6 +398,9 @@ public class building_material : item
     /// building material to when it is placed. </summary>
     protected virtual networked parent_on_placement() { return null; }
 
+    /// <summary> Called when the object is built. </summary>
+    protected virtual void on_build() { }
+
     public override void on_use_end(player.USE_TYPE use_type)
     {
         if (spawned != null)
@@ -409,6 +412,8 @@ public class building_material : item
             var created = (building_material)create(spawned.name,
                 spawned.transform.position, spawned.transform.rotation,
                 networked: true, network_parent: parent_on_placement());
+
+            created.on_build();
 
             spawned.weld.display_axes = false;
             Destroy(spawned.gameObject);

@@ -21,8 +21,10 @@ public class auto_harvester : building_material, IInspectable
 
     item_link_point output;
 
-    private void Start()
+    public override void on_create()
     {
+        base.on_create();
+
         // Assign the output link
         foreach (var lp in GetComponentsInChildren<item_link_point>())
             if (lp.type == item_link_point.TYPE.OUTPUT)
