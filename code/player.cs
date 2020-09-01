@@ -44,6 +44,104 @@ public class player : networked_player, INotPathBlocking
     // UNITY CALLBACKS //
     //#################//
 
+    /// <summary> Run the world generator around the current player position. </summary>
+    void run_world_generator()
+    {
+        biome = biome.at(transform.position, generate: true);
+        if (biome != null)
+        {
+            point = biome.blended_point(transform.position);
+            lighting.sky_color_daytime = point.sky_color;
+            lighting.fog_distance = point.fog_distance;
+            water.color = point.water_color;
+        }
+    }
+
+    /// <summary> Update function that is only called on the local client. </summary>
+    void local_update()
+    {
+        indicate_damage();
+        run_world_generator();
+        run_recipe_book();
+        run_inspect_info();
+        run_inventory();
+        run_quickbar_shortcuts();
+        run_map();
+        run_first_third_person();
+        run_item_use();
+        run_mouse_look();
+        run_movement();
+        run_crosshairs();
+    }
+
+    void Update()
+    {
+        // Don't do anything if the console is open
+        if (console.open) return;
+
+        // Call the local update function
+        if (has_authority) local_update();
+
+        set_hand_position();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (camera == null) return;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, game.render_range);
+        Gizmos.color = Color.green;
+        float dis;
+        var r = camera_ray(INTERACTION_RANGE, out dis);
+        Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
+    }
+
+    //###########//
+    // INVENTORY //
+    //###########//
+
+    void run_inventory()
+    {
+        // Things that mean we can't use the inventory
+        if (current_item_use != USE_TYPE.NOT_USING) return;
+        if (map_open) return;
+        if (cinematic_mode) return;
+        if (inventory == null) return;
+        if (crafting_menu == null) return;
+
+        // Ensure inventory is closed when the opions menu is
+        if (options_menu.open)
+        {
+            inventory.open = false;
+            crafting_menu.open = false;
+            return;
+        }
+
+        // Toggle inventory on E
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            inventory.open = !inventory.open;
+            crafting_menu.open = inventory.open;
+            Cursor.visible = inventory.open;
+            Cursor.lockState = inventory.open ? CursorLockMode.None : CursorLockMode.Locked;
+
+            // Open/close the left menu
+            if (inventory.open)
+            {
+                var ray = camera_ray(INTERACTION_RANGE, out float dist);
+                left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
+            }
+            else left_menu = null;
+        }
+    }
+
+    void run_recipe_book()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+            recipe_book_open = !recipe_book_open;
+    }
+
     bool recipe_book_open
     {
         get => recipe.recipe_book.gameObject.activeInHierarchy;
@@ -54,152 +152,6 @@ public class player : networked_player, INotPathBlocking
             Cursor.lockState = value ? CursorLockMode.None : CursorLockMode.Locked;
         }
     }
-
-    /// <summary> Update function that is only called on the local client. </summary>
-    void local_update()
-    {
-        // Load the world
-        biome = biome.at(transform.position, generate: true);
-        if (biome != null)
-        {
-            point = biome.blended_point(transform.position);
-            lighting.sky_color_daytime = point.sky_color;
-            water.color = point.water_color;
-        }
-
-        indicate_damage();
-
-        // If the options menu isn't open don't do anything else
-        if (options_menu.open) return;
-
-        // Toggle the recipe book
-        if (Input.GetKeyDown(KeyCode.R))
-            recipe_book_open = !recipe_book_open;
-        if (recipe_book_open) return;
-
-        inspect_info.visible = Input.GetKey(KeyCode.Tab);
-
-        if (Input.GetKeyDown(KeyCode.F1))
-            cinematic_mode = !cinematic_mode;
-
-        // Toggle menus only if not using an item/the map isn't open
-        if (current_item_use == USE_TYPE.NOT_USING && !map_open)
-        {
-            // Toggle inventory on E
-            if (Input.GetKeyDown(KeyCode.E) && inventory != null && crafting_menu != null)
-            {
-                inventory.open = !inventory.open;
-                crafting_menu.open = inventory.open;
-                crosshairs.enabled = !inventory.open;
-                Cursor.visible = inventory.open;
-                Cursor.lockState = inventory.open ? CursorLockMode.None : CursorLockMode.Locked;
-
-                // Open/close the left menu
-                if (inventory.open)
-                {
-                    var ray = camera_ray(INTERACTION_RANGE, out float dist);
-                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
-                }
-                else left_menu = null;
-            }
-        }
-
-        // Run the quickbar equip shortcuts
-        if (current_item_use == USE_TYPE.NOT_USING && !inventory.open && !map_open)
-            run_quickbar_shortcuts();
-
-        // Toggle the map view on M
-        if (current_item_use == USE_TYPE.NOT_USING)
-            if (Input.GetKeyDown(KeyCode.M))
-                map_open = !map_open;
-
-        if (map_open)
-        {
-            // Zoom the map
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0) game.render_range_target /= 1.2f;
-            else if (scroll < 0) game.render_range_target *= 1.2f;
-            camera.orthographicSize = game.render_range;
-        }
-        else if (Input.GetKeyDown(KeyCode.V))
-            first_person = !first_person;
-
-        // Use items if the inventory/map aren't open
-        item.use_result use_result = item.use_result.complete;
-        if (!inventory.open && !map_open)
-        {
-            if (current_item_use == USE_TYPE.NOT_USING)
-            {
-                bool left_click = Input.GetMouseButtonDown(0) ||
-                    (equipped == null ? false :
-                     equipped.allow_left_click_held_down() &&
-                     Input.GetMouseButton(0));
-
-                bool right_click = Input.GetMouseButtonDown(1) ||
-                    (equipped == null ? false :
-                     equipped.allow_right_click_held_down() &&
-                     Input.GetMouseButton(1));
-
-                // Start a new use type
-                if (left_click)
-                {
-                    if (equipped == null) left_click_with_hand();
-                    else current_item_use = USE_TYPE.USING_LEFT_CLICK;
-                }
-                else if (right_click)
-                {
-                    if (equipped == null) right_click_with_hand();
-                    else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
-                }
-            }
-            else
-            {
-                // Continue item use
-                if (equipped == null) use_result = item.use_result.complete;
-                else use_result = equipped.on_use_continue(current_item_use);
-                if (!use_result.underway) current_item_use = USE_TYPE.NOT_USING;
-            }
-
-            // Look around
-            if (use_result.allows_look) mouse_look();
-        }
-
-        if (use_result.allows_move && left_menu == null)
-        {
-            move();
-            float_in_water();
-        }
-    }
-
-    void Update()
-    {
-        // Don't do anything if the console is open
-        if (console.open)
-            return;
-
-        // Call the local update function
-        if (has_authority)
-            local_update();
-
-        set_hand_position();
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (camera != null)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, game.render_range);
-            Gizmos.color = Color.green;
-            float dis;
-            var r = camera_ray(INTERACTION_RANGE, out dis);
-            Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
-        }
-    }
-
-    //###########//
-    // INVENTORY //
-    //###########//
 
     public armour_piece get_armour(armour_piece.LOCATION location)
     {
@@ -290,6 +242,8 @@ public class player : networked_player, INotPathBlocking
     //##########//
     // ITEM USE //
     //##########//
+
+
 
     // Called on a left click when no item is equipped
     public void left_click_with_hand()
@@ -396,6 +350,50 @@ public class player : networked_player, INotPathBlocking
         }
     }
 
+    item.use_result current_item_use_result;
+
+    void run_item_use()
+    {
+        // Things that disallow item use
+        if (options_menu.open) return;
+        if (inventory.open) return;
+        if (map_open) return;
+
+        // Use items if the inventory/map aren't open
+        current_item_use_result = item.use_result.complete;
+        if (current_item_use == USE_TYPE.NOT_USING)
+        {
+            bool left_click = Input.GetMouseButtonDown(0) ||
+                (equipped == null ? false :
+                    equipped.allow_left_click_held_down() &&
+                    Input.GetMouseButton(0));
+
+            bool right_click = Input.GetMouseButtonDown(1) ||
+                (equipped == null ? false :
+                    equipped.allow_right_click_held_down() &&
+                    Input.GetMouseButton(1));
+
+            // Start a new use type
+            if (left_click)
+            {
+                if (equipped == null) left_click_with_hand();
+                else current_item_use = USE_TYPE.USING_LEFT_CLICK;
+            }
+            else if (right_click)
+            {
+                if (equipped == null) right_click_with_hand();
+                else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
+            }
+        }
+        else
+        {
+            // Continue item use
+            if (equipped == null) current_item_use_result = item.use_result.complete;
+            else current_item_use_result = equipped.on_use_continue(current_item_use);
+            if (!current_item_use_result.underway) current_item_use = USE_TYPE.NOT_USING;
+        }
+    }
+
     // The current equipped item
     item _equipped;
     public item equipped
@@ -466,6 +464,14 @@ public class player : networked_player, INotPathBlocking
 
     void run_quickbar_shortcuts()
     {
+        // Things that mean we can't use the quickbar shortcuts
+        if (Cursor.visible) return;
+        if (cinematic_mode) return;
+        if (map_open) return;
+        if (current_item_use != USE_TYPE.NOT_USING) return;
+        if (inventory == null) return;
+
+        // Select something in the world from the quickbar
         if (Input.GetKeyDown(KeyCode.Q))
         {
             var ray = camera_ray(INTERACTION_RANGE, out float dist);
@@ -518,6 +524,11 @@ public class player : networked_player, INotPathBlocking
     // INSPECTION //
     //############//
 
+    void run_inspect_info()
+    {
+        inspect_info.visible = Input.GetKey(KeyCode.Tab);
+    }
+
     inspect_info inspect_info
     {
         get
@@ -539,83 +550,15 @@ public class player : networked_player, INotPathBlocking
     //  MOVEMENT //
     //###########//
 
-    CharacterController controller;
-    Vector3 velocity = Vector3.zero;
-
-    public void teleport(Vector3 location)
+    void run_movement()
     {
-        Debug.Log("Teleporting to " + location);
-        controller.enabled = false;
-        networked_position = location;
-        Invoke("enable_controller", 1f);
+        // Things that disallow movement
+        if (left_menu != null) return;
+        if (!current_item_use_result.allows_move) return;
+
+        move();
+        float_in_water();
     }
-
-    void enable_controller()
-    {
-        controller.enabled = true;
-    }
-
-    public float speed
-    {
-        get
-        {
-            float s = BASE_SPEED;
-            if (crouched)
-                s *= CROUCH_SPEED_MOD;
-            else if (Input.GetKey(KeyCode.LeftControl))
-                s *= SLOW_WALK_SPEED_MOD;
-
-            return s;
-        }
-    }
-
-    public bool crouched
-    {
-        get => _crouched;
-        private set
-        {
-            // Can't crouch in cinematic mode
-            if (cinematic_mode) value = false;
-
-            _crouched = value;
-            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
-            else body.transform.localPosition = Vector3.zero;
-        }
-    }
-    bool _crouched;
-
-    bool cinematic_mode
-    {
-        get => _cinematic_mode;
-        set
-        {
-            _cinematic_mode = value;
-
-            fly_velocity = Vector3.zero;
-            mouse_look_velocity = Vector2.zero;
-
-            if (value)
-            {
-                close_all_ui();
-                cursor = null;
-            }
-            else
-            {
-                cursor = cursors.DEFAULT;
-            }
-
-            // Make the player (in)visible
-            foreach (var r in GetComponentsInChildren<Renderer>(true))
-            {
-                // Doesn't affect the obscurers/water
-                if (r.transform.IsChildOf(obscurer.transform)) continue;
-                if (r.transform.IsChildOf(map_obscurer.transform)) continue;
-                if (r.transform.IsChildOf(water.transform)) continue;
-                r.enabled = !value;
-            }
-        }
-    }
-    bool _cinematic_mode;
 
     void move()
     {
@@ -643,6 +586,26 @@ public class player : networked_player, INotPathBlocking
             velocity.y = -1f;
 
         networked_position = transform.position;
+    }
+
+    void float_in_water()
+    {
+        // We're underwater if the bottom of the screen is underwater
+        var ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, 0, 0));
+        float dis = camera.nearClipPlane / Vector3.Dot(ray.direction, -camera.transform.up);
+        float eff_eye_y = (ray.origin + ray.direction * dis).y;
+        underwater = eff_eye_y < world.SEA_LEVEL && !map_open;
+
+        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
+        if (amt_submerged <= 0) return;
+        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
+
+        // Bouyancy (sink if shift is held)
+        if (!Input.GetKey(KeyCode.LeftShift))
+            velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
+
+        // Drag
+        velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
     }
 
     void normal_move()
@@ -710,7 +673,14 @@ public class player : networked_player, INotPathBlocking
         }
 
         controller.Move(move);
-        stay_above_terrain();
+
+        // Ensure we stay above the terrain
+        Vector3 pos = transform.position;
+        pos.y = world.MAX_ALTITUDE;
+        RaycastHit terra_hit;
+        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out terra_hit);
+        if (terra_hit.point.y > transform.position.y)
+            transform.position = terra_hit.point;
     }
 
     Vector3 fly_velocity = Vector3.zero;
@@ -736,6 +706,85 @@ public class player : networked_player, INotPathBlocking
         Vector3 move = fly_velocity * Time.deltaTime;
         controller.Move(move);
     }
+
+    CharacterController controller;
+    Vector3 velocity = Vector3.zero;
+
+    public void teleport(Vector3 location)
+    {
+        if (controller == null)
+            return;
+
+        Debug.Log("Teleporting to " + location);
+        controller.enabled = false;
+        networked_position = location;
+        chunk.add_generation_listener(location, () =>
+        {
+            controller.enabled = true;
+        });
+    }
+
+    public float speed
+    {
+        get
+        {
+            float s = BASE_SPEED;
+            if (crouched)
+                s *= CROUCH_SPEED_MOD;
+            else if (Input.GetKey(KeyCode.LeftControl))
+                s *= SLOW_WALK_SPEED_MOD;
+
+            return s;
+        }
+    }
+
+    public bool crouched
+    {
+        get => _crouched;
+        private set
+        {
+            // Can't crouch in cinematic mode
+            if (cinematic_mode) value = false;
+
+            _crouched = value;
+            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
+            else body.transform.localPosition = Vector3.zero;
+        }
+    }
+    bool _crouched;
+
+    public bool cinematic_mode
+    {
+        get => _cinematic_mode;
+        set
+        {
+            _cinematic_mode = value;
+
+            fly_velocity = Vector3.zero;
+            mouse_look_velocity = Vector2.zero;
+
+            if (value)
+            {
+                close_all_ui();
+                cursor = null;
+            }
+            else
+            {
+                cursor = cursors.DEFAULT;
+            }
+
+            // Make the player (in)visible
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+            {
+                // Doesn't affect the obscurers/water
+                if (r.transform.IsChildOf(obscurer.transform)) continue;
+                if (r.transform.IsChildOf(map_obscurer.transform)) continue;
+                if (r.transform.IsChildOf(water.transform)) continue;
+                r.enabled = !value;
+            }
+        }
+    }
+    bool _cinematic_mode;
 
     public bool underwater
     {
@@ -786,39 +835,75 @@ public class player : networked_player, INotPathBlocking
     bool _underwater;
     ParticleSystem bubbles;
 
-    void float_in_water()
-    {
-        // We're underwater if the bottom of the screen is underwater
-        var ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, 0, 0));
-        float dis = camera.nearClipPlane / Vector3.Dot(ray.direction, -camera.transform.up);
-        float eff_eye_y = (ray.origin + ray.direction * dis).y;
-        underwater = eff_eye_y < world.SEA_LEVEL && !map_open;
-
-        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
-        if (amt_submerged <= 0) return;
-        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
-
-        // Bouyancy (sink if shift is held)
-        if (!Input.GetKey(KeyCode.LeftShift))
-            velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
-
-        // Drag
-        velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
-    }
-
-    void stay_above_terrain()
-    {
-        Vector3 pos = transform.position;
-        pos.y = world.MAX_ALTITUDE;
-        RaycastHit hit;
-        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out hit);
-        if (hit.point.y > transform.position.y)
-            transform.position = hit.point;
-    }
-
     //#####################//
     // VIEW/CAMERA CONTROL //
     //#####################//
+
+    void run_first_third_person()
+    {
+        if (map_open) return;
+
+        if (Input.GetKeyDown(KeyCode.V))
+            first_person = !first_person;
+    }
+
+    void run_mouse_look()
+    {
+        // Things that disallow camera movement
+        if (Cursor.visible) return;
+        if (!current_item_use_result.allows_look) return;
+
+        if (cinematic_mode) mouse_look_fly();
+        else mouse_look_normal();
+    }
+
+    void run_map()
+    {
+        // Things that don't allow interation with the map
+        if (current_item_use != USE_TYPE.NOT_USING) return;
+
+        // Toggle the map view on M
+        if (Input.GetKeyDown(KeyCode.M))
+            map_open = !map_open;
+
+        if (map_open)
+        {
+            // Zoom the map
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0) game.render_range_target /= 1.2f;
+            else if (scroll < 0) game.render_range_target *= 1.2f;
+            camera.orthographicSize = game.render_range;
+        }
+    }
+
+    void run_crosshairs()
+    {
+        crosshairs.enabled = !Cursor.visible;
+    }
+
+    void mouse_look_normal()
+    {
+        // Rotate the player view
+        y_rotation.value += Input.GetAxis("Mouse X") * 5f;
+        x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
+    }
+
+    Vector2 mouse_look_velocity = Vector2.zero;
+    void mouse_look_fly()
+    {
+        // Smooth mouse look for fly mode
+        mouse_look_velocity.x += Input.GetAxis("Mouse X");
+        mouse_look_velocity.y += Input.GetAxis("Mouse Y");
+
+        float deccel = Time.deltaTime * 10f;
+        if (mouse_look_velocity.magnitude < deccel)
+            mouse_look_velocity = Vector2.zero;
+        else
+            mouse_look_velocity -= mouse_look_velocity.normalized * deccel;
+
+        y_rotation.value += mouse_look_velocity.x * Time.deltaTime;
+        eye_transform.Rotate(-mouse_look_velocity.y * Time.deltaTime * 5f, 0, 0);
+    }
 
     /// <summary> The player camera. </summary>
 #if UNITY_EDITOR
@@ -874,13 +959,6 @@ public class player : networked_player, INotPathBlocking
     /// along the camera.forward direction. </summary>
     float init_hand_plane;
 
-    void mouse_look_normal()
-    {
-        // Rotate the player view
-        y_rotation.value += Input.GetAxis("Mouse X") * 5f;
-        x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
-    }
-
     void set_hand_position()
     {
         // Move the hand away from the eye if we're looking down
@@ -896,31 +974,6 @@ public class player : networked_player, INotPathBlocking
 
         // Allign the arm with the hand
         right_arm.to_grab = equipped?.transform;
-    }
-
-    Vector2 mouse_look_velocity = Vector2.zero;
-    void mouse_look_fly()
-    {
-        // Smooth mouse look for fly mode
-        mouse_look_velocity.x += Input.GetAxis("Mouse X");
-        mouse_look_velocity.y += Input.GetAxis("Mouse Y");
-
-        float deccel = Time.deltaTime * 10f;
-        if (mouse_look_velocity.magnitude < deccel)
-            mouse_look_velocity = Vector2.zero;
-        else
-            mouse_look_velocity -= mouse_look_velocity.normalized * deccel;
-
-        y_rotation.value += mouse_look_velocity.x * Time.deltaTime;
-        eye_transform.Rotate(-mouse_look_velocity.y * Time.deltaTime * 5f, 0, 0);
-    }
-
-    void mouse_look()
-    {
-        if (cinematic_mode)
-            mouse_look_fly();
-        else
-            mouse_look_normal();
     }
 
     // Called when the render range changes

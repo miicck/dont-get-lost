@@ -45,7 +45,8 @@ public class world : networked
         return "World " + name + "\n" +
                "    Seed         : " + seed + "\n" +
                "    Biome        : " + player.current.biome.GetType().Name + "\n" +
-               "    Render range : " + game.render_range;
+               "    Render range : " + game.render_range + "\n" +
+               "    Fog distance : " + lighting.fog_distance;
     }
 
 #if UNITY_EDITOR

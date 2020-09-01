@@ -26,6 +26,7 @@ public class mangroves : biome
                     xrand + i / ISLAND_SIZE, zrand + j / ISLAND_SIZE);
                 p.terrain_color = terrain_colors.grass;
                 p.sky_color = sky_colors.light_blue;
+                p.fog_distance = fog_distances.CLOSE;
 
                 // Work out mangrove amount, starts slightly below sea
                 // level so mangroves go into water
@@ -143,6 +144,7 @@ public class desert : biome
                 var p = new point();
                 p.altitude = alt[i, j] + point.BEACH_END;
                 p.sky_color = sky_colors.light_blue;
+                p.fog_distance = fog_distances.OFF;
 
                 // Rockyness amount decreases with altitiude
                 float rockyness = Mathf.Exp(-alt[i, j] / ROCKYNESS_DECAY_HEIGHT);
@@ -203,7 +205,8 @@ public class ocean : biome
                 {
                     terrain_color = terrain_colors.sand,
                     sky_color = sky_colors.light_blue,
-                    altitude = alt
+                    altitude = alt,
+                    fog_distance = fog_distances.FAR
                 };
 
                 if (p.altitude > world.SEA_LEVEL)
@@ -279,7 +282,8 @@ public class mountains : biome
                 {
                     altitude = alt[i, j],
                     terrain_color = terrain_colors.grass,
-                    sky_color = sky_colors.light_blue
+                    sky_color = sky_colors.light_blue,
+                    fog_distance = fog_distances.MEDIUM
                 };
 
                 // Choose terrain color based on altitiude
@@ -351,6 +355,8 @@ public class flat_forest : biome
                 p.altitude = point.BEACH_END;
                 p.terrain_color = terrain_colors.grass;
                 p.sky_color = sky_colors.light_blue;
+                p.fog_distance = fog_distances.MEDIUM;
+
                 if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("tree");
                 else if (random.range(0, 40) == 0)
@@ -433,6 +439,7 @@ public class charred_forest : biome
                 p.altitude = point.BEACH_END + altitude;
                 p.terrain_color = terrain_colors.charred_earth;
                 p.sky_color = sky_colors.smoke_grey;
+                p.fog_distance = fog_distances.VERY_CLOSE;
 
                 grid[i, j] = p;
             }
@@ -453,6 +460,7 @@ public class ice_ocean : biome
                 p.terrain_color = terrain_colors.snow;
                 p.sky_color = sky_colors.light_blue;
                 p.altitude = 0;
+                p.fog_distance = fog_distances.OFF;
 
                 if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("ice_sheet");
@@ -494,6 +502,7 @@ public class rock_stacks : biome
                 var p = grid[i, j] = new point();
                 p.terrain_color = terrain_colors.grass;
                 p.sky_color = sky_colors.light_blue;
+                p.fog_distance = fog_distances.FAR;
 
                 // Generate the altitude using some perlin noise (where the coordinates
                 // have been wiggled with another perlin noise)
@@ -563,6 +572,7 @@ public class jungle : biome
                 p.terrain_color = terrain_colors.jungle_moss;
                 p.sky_color = sky_colors.jungle_green;
                 p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
+                p.fog_distance = fog_distances.CLOSE;
 
                 if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("jungle_tree_1");
@@ -594,6 +604,7 @@ public class swamp : biome
                 p.altitude = world.SEA_LEVEL + 0.1f - 0.5f * Mathf.PerlinNoise(i / 16f, j / 16f);
                 p.water_color = water_colors.swampy_green;
                 p.sky_color = sky_colors.jungle_green;
+                p.fog_distance = fog_distances.VERY_CLOSE;
 
                 if (random.range(0, 50) == 0)
                     p.object_to_generate = world_object.load("spiky_tree_stump");
@@ -624,6 +635,7 @@ public class caves : biome
                 var p = grid[i, j] = new point();
                 p.altitude = world.SEA_LEVEL - 2f;
                 p.sky_color = sky_colors.underground_darkness;
+                p.fog_distance = fog_distances.CLOSE;
 
                 if (i % 5 == 0 && j % 5 == 0 && random.range(0, 10) == 0)
                     p.object_to_generate = world_object.load("rock_pillar_1");
@@ -642,6 +654,7 @@ public class rocky_plains : biome
                 var p = grid[i, j] = new point();
                 p.sky_color = sky_colors.light_blue;
                 p.terrain_color = terrain_colors.grass;
+                p.fog_distance = fog_distances.VERY_FAR;
 
                 float alt = Mathf.PerlinNoise(i / 64f, j / 64f);
                 if (alt < 0.3f) alt = (alt - 0.3f) * 4f;

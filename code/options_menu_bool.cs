@@ -9,6 +9,7 @@ public class options_menu_bool : options_menu_option
     public string option_name = "water_reflections";
     public bool default_value = true;
     public UnityEngine.UI.Toggle toggle;
+    public GameObject suboptions;
 
     private void Start()
     {
@@ -16,6 +17,8 @@ public class options_menu_bool : options_menu_option
         toggle.onValueChanged.AddListener((b) =>
         {
             options_menu.set_bool(option_name, b);
+            if (suboptions != null)
+                suboptions.gameObject.SetActive(b);
         });
 
         // Initialize the toggle to the saved value

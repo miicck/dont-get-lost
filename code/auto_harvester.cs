@@ -36,6 +36,7 @@ public class auto_harvester : building_material, IInspectable
         // Once the map has generated, figure out what we're harvesting
         chunk.add_generation_listener(transform.position, () =>
         {
+            if (this == null) return;
             harvesting = utils.raycast_for_closest<harvestable>(
                 new Ray(ray_start.position, ray_start.forward),
                 out RaycastHit hit, ray_length, (h) =>

@@ -3,4 +3,4 @@
 - Get rid of settlers/all that goes with that (fixtures etc...)?
 - Create unique sprites for everything (ongoing)
 - Fix farming spots so that they display properly
-- Implement teleport-to-player
+- Implement teleport-to-player/teleport-to-portal/portal naming

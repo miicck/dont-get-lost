@@ -2,6 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public static class fog_distances
+{
+    public const float EXTEREMELY_CLOSE = 1f;
+    public const float VERY_CLOSE = 3f;
+    public const float CLOSE = 8f;
+    public const float MEDIUM = 20f;
+    public const float FAR = 50f;
+    public const float VERY_FAR = 100f;
+    public const float OFF = 5000f;
+}
+
 public class lighting : MonoBehaviour
 {
     public Light sun;
@@ -24,6 +35,7 @@ public class lighting : MonoBehaviour
     }
 
     public static Color sky_color_daytime;
+    public static float fog_distance;
 
     void Start()
     {
@@ -63,6 +75,18 @@ public class lighting : MonoBehaviour
         target_sky_color.g *= b;
         target_sky_color.b *= b;
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
+
+
+        if (options_menu.get_bool("fog"))
+        {
+            UnityEngine.Rendering.HighDefinition.Fog fog;
+            if (options_menu.global_volume.profile.TryGet(out fog))
+            {
+                fog.color.value = sky_color;
+                fog.albedo.value = sky_color;
+                fog.meanFreePath.value = fog_distance;
+            }
+        }
     }
 
     float brightness_from_time(float time)

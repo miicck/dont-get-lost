@@ -112,12 +112,21 @@ public class options_menu : MonoBehaviour
         PlayerPrefs.SetFloat(name, val);
     }
 
+    public static float get_float(string name)
+    {
+        return PlayerPrefs.GetFloat(name);
+    }
+
     /// <summary> Set a boolean option. </summary>
     public static void set_bool(string name, bool value)
     {
         UnityEngine.Rendering.HighDefinition.Exposure exposure;
         if (!global_volume.profile.TryGet(out exposure))
             throw new System.Exception("Global volume has no exposure override!");
+
+        UnityEngine.Rendering.HighDefinition.Fog fog;
+        if (!global_volume.profile.TryGet(out fog))
+            throw new System.Exception("Global volume has no fog override!");
 
         switch (name)
         {
@@ -132,11 +141,24 @@ public class options_menu : MonoBehaviour
                     exposure.mode.value = UnityEngine.Rendering.HighDefinition.ExposureMode.Fixed;
                 break;
 
+            case "fog":
+                fog.enabled.value = value;
+                break;
+
+            case "volumetric_fog":
+                fog.enableVolumetricFog.value = value;
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }
 
         PlayerPrefs.SetInt(name, value ? 1 : 0);
+    }
+
+    public static bool get_bool(string name)
+    {
+        return PlayerPrefs.GetInt(name) > 0;
     }
 
     /// <summary> Is the options menu currently open? </summary>

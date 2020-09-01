@@ -435,6 +435,7 @@ public abstract class biome : MonoBehaviour
         public const float BEACH_END = world.SEA_LEVEL + 2f;
 
         public float altitude;
+        public float fog_distance;
         public Color water_color = water_colors.cyan;
         public Color terrain_color = terrain_colors.grass;
         public string terrain_product = "dirt";
@@ -464,6 +465,7 @@ public abstract class biome : MonoBehaviour
                 if (p == null) continue;
 
                 ret.altitude += p.altitude * w;
+                ret.fog_distance += p.fog_distance * w;
 
                 ret.terrain_color.r += p.terrain_color.r * w;
                 ret.terrain_color.g += p.terrain_color.g * w;
