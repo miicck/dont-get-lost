@@ -2,11 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> Ensures everything to do with water
+/// reflections stays up to date. </summary>
 public class water_reflections : MonoBehaviour
 {
     UnityEngine.Rendering.HighDefinition.PlanarReflectionProbe probe;
-    Renderer water_renderer;
-    Renderer water_underside_renderer;
+    static HashSet<Renderer> waters = new HashSet<Renderer>();
+    static HashSet<Renderer> water_undersides = new HashSet<Renderer>();
+
+    public static void register_water(Renderer water)
+    {
+        waters.Add(water);
+        update_water(water);
+    }
+
+    public static void register_water_underside(Renderer water_underside)
+    {
+        water_undersides.Add(water_underside);
+    }
 
     /// <summary> The water quad is centred this distance from the player, so that
     /// it appears behind transparent objects that are nearer. </summary>
@@ -40,26 +53,6 @@ public class water_reflections : MonoBehaviour
             WATER_BLEND_RANGE, 0.005f, WATER_BLEND_RANGE
         );
 
-        // Create the water
-        var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        Destroy(water.GetComponent<Collider>());
-        water.transform.SetParent(transform);
-
-        water.transform.localRotation = Quaternion.identity;
-        water.transform.localPosition = new Vector3(0, 0, WATER_CENTRE_OFFSET);
-        water.transform.rotation = Quaternion.LookRotation(Vector3.down, transform.right);
-
-        water_renderer = water.gameObject.GetComponent<MeshRenderer>();
-        water_renderer.material = Resources.Load<Material>("materials/standard_shader/water_reflective");
-        water_renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-
-        var water_underside = water.inst();
-        water_underside.transform.SetParent(water.transform);
-        water_underside.transform.localPosition = new Vector3(0, 0, -0.00001f);
-        water_underside.transform.Rotate(180, 0, 0);
-        water_underside_renderer = water_underside.GetComponent<MeshRenderer>();
-        water_underside_renderer.material = Resources.Load<Material>("materials/standard_shader/water_underside");
-
         // Needs to be fiddled with on startup to work for some reason
         fiddle_needed = true;
         last_fiddled = player.current.transform.position;
@@ -72,8 +65,12 @@ public class water_reflections : MonoBehaviour
 
     void Update()
     {
-        water_underside_renderer.enabled =
-            player.current.camera.transform.position.y < world.SEA_LEVEL;
+
+        water_undersides.RemoveWhere((u) => u == null);
+        waters.RemoveWhere((w) => w == null);
+
+        foreach (var wu in water_undersides)
+            wu.enabled = player.current.camera.transform.position.y < world.SEA_LEVEL;
 
         // Workaround to stop the reflections from just randomly disapearing
         // if the player moves too far.
@@ -84,8 +81,6 @@ public class water_reflections : MonoBehaviour
             last_fiddled = player.current.transform.position;
         }
 
-        bool should_reflect = reflections_enabled && !player.current.map_open;
-
         if (fiddle_needed)
         {
             fiddle_needed = false;
@@ -95,25 +90,31 @@ public class water_reflections : MonoBehaviour
         if (probe.enabled != should_reflect)
         {
             probe.enabled = should_reflect;
-            water_renderer.material = Resources.Load<Material>(
-                should_reflect ?
-                "materials/standard_shader/water_reflective" :
-                "materials/standard_shader/water_normal"
-                );
+            foreach (var w in waters)
+                update_water(w);
         }
 
         color.a = probe.enabled ? 0.84f : 0.31f;
-        utils.set_color(water_renderer.material, color);
+
+        foreach (var w in waters)
+            utils.set_color(w.material, color);
 
         // Ensure probe stays at water level
         Vector3 pos = transform.position;
         pos.y = world.SEA_LEVEL;
         transform.position = pos;
+    }
 
-        water_renderer.transform.localScale = Vector3.one *
-            (water_range + WATER_CENTRE_OFFSET) * 2f;
+    static void update_water(Renderer water)
+    {
+        water.material = Resources.Load<Material>(
+                    should_reflect ?
+                    "materials/standard_shader/water_reflective" :
+                    "materials/standard_shader/water_normal"
+                    );
     }
 
     public static float water_range = 256;
     public static bool reflections_enabled = true;
+    static bool should_reflect => reflections_enabled && !player.current.map_open;
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class game : MonoBehaviour
 {
-    public const float MIN_RENDER_RANGE = 0f;
+    public const float MIN_RENDER_RANGE = 4f;
     public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
 

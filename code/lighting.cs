@@ -47,6 +47,8 @@ public class lighting : MonoBehaviour
         sun.transform.LookAt(new Vector3(1, -2, 1));
     }
 
+    static float saved_ambient_occlusion_intensity = -1;
+
     void Update()
     {
         float t = time_manager.get_time();
@@ -64,6 +66,7 @@ public class lighting : MonoBehaviour
         else
             sun.transform.rotation = Quaternion.Euler(50, -30, 0);
 
+        // Set the ambient brightness according to the desired sky color
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))
         {
@@ -77,15 +80,34 @@ public class lighting : MonoBehaviour
         target_sky_color.b *= b;
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
 
-
+        // Enable/disable fog
         if (options_menu.get_bool("fog"))
         {
             UnityEngine.Rendering.HighDefinition.Fog fog;
             if (options_menu.global_volume.profile.TryGet(out fog))
             {
+                // Disable fog in map view
+                if (player.current != null)
+                    fog.enabled.value = !player.current.map_open;
+
+                // Keep fog color/distance up to date
                 fog.color.value = sky_color;
                 fog.albedo.value = sky_color;
                 fog.meanFreePath.value = fog_distance;
+            }
+        }
+
+        // Keep ambient occlusion up-to-date
+        UnityEngine.Rendering.HighDefinition.AmbientOcclusion ao;
+        if (options_menu.global_volume.profile.TryGet(out ao))
+        {
+            if (player.current != null)
+            {
+                // Turn off ambient occlusion in map view
+                if (saved_ambient_occlusion_intensity < 0)
+                    saved_ambient_occlusion_intensity = ao.intensity.value;
+                ao.intensity.value = player.current.map_open ?
+                    0f : saved_ambient_occlusion_intensity;
             }
         }
     }

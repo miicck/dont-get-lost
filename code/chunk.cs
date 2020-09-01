@@ -197,6 +197,29 @@ public class chunk : MonoBehaviour
     // Trigger the generation of this chunk
     void begin_generation()
     {
+        // Create the water level
+        var water = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        Destroy(water.GetComponent<Collider>());
+        water.transform.SetParent(transform);
+        water.transform.localPosition = new Vector3(
+            SIZE / 2, world.SEA_LEVEL, SIZE / 2);
+        water.transform.localScale = Vector3.one * SIZE;
+        water.transform.forward = -Vector3.up;
+        var ren = water.gameObject.GetComponent<MeshRenderer>();
+        ren.material = Resources.Load<Material>("materials/standard_shader/water");
+        ren.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        water_reflections.register_water(ren);
+
+        // Create the underside of the water
+        var water_bottom = water.inst();
+        Destroy(water_bottom.GetComponent<Collider>());
+        water_bottom.transform.SetParent(water.transform);
+        water_bottom.transform.localPosition = Vector3.zero;
+        water_bottom.transform.forward = Vector3.up;
+        var ren_under = water_bottom.GetComponent<MeshRenderer>();
+        ren_under.material = Resources.Load<Material>("materials/standard_shader/water_underside");
+        water_reflections.register_water_underside(ren_under);
+
         // Create the terrain object, collider and datastructure
         terrain = new GameObject("terrain").AddComponent<Terrain>();
         var tc = terrain.gameObject.AddComponent<TerrainCollider>();
@@ -239,10 +262,10 @@ public class chunk : MonoBehaviour
             // Create the generation stages
             gen_todo = new gen_func[]
             {
-                continue_set_points,
-                continue_set_alphamaps,
-                continue_apply_heights,
-                continue_gen_objects
+                 continue_set_points,
+                 continue_set_alphamaps,
+                 continue_apply_heights,
+                 continue_gen_objects
             };
             gen_sw = System.Diagnostics.Stopwatch.StartNew();
         }

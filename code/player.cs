@@ -37,8 +37,6 @@ public class player : networked_player, INotPathBlocking
 
     // Map camera setup
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
-    public const float MAP_CAMERA_CLIP = world.MAX_ALTITUDE * 3;
-    public const float MAP_SHADOW_DISTANCE = world.MAX_ALTITUDE * 3;
 
     //#################//
     // UNITY CALLBACKS //
@@ -649,18 +647,9 @@ public class player : networked_player, INotPathBlocking
         else velocity -= Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
-        if (map_open)
-        {
-            if (Input.GetKey(KeyCode.D)) y_rotation.value += ROTATION_SPEED * Time.deltaTime;
-            else if (Input.GetKey(KeyCode.A)) y_rotation.value -= ROTATION_SPEED * Time.deltaTime;
-            else velocity -= Vector3.Project(velocity, camera.transform.right);
-        }
-        else
-        {
-            if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
-            else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
-            else velocity -= Vector3.Project(velocity, camera.transform.right);
-        }
+        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
+        else velocity -= Vector3.Project(velocity, camera.transform.right);
 
         move += velocity * Time.deltaTime;
 
@@ -778,7 +767,6 @@ public class player : networked_player, INotPathBlocking
             {
                 // Doesn't affect the obscurers/water
                 if (r.transform.IsChildOf(obscurer.transform)) continue;
-                if (r.transform.IsChildOf(map_obscurer.transform)) continue;
                 if (r.transform.IsChildOf(water.transform)) continue;
                 r.enabled = !value;
             }
@@ -872,7 +860,16 @@ public class player : networked_player, INotPathBlocking
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (scroll > 0) game.render_range_target /= 1.2f;
             else if (scroll < 0) game.render_range_target *= 1.2f;
+
             camera.orthographicSize = game.render_range;
+
+            // Scale camera clipping plane/shadow distance to work
+            // with map-view render rangeas
+            float eff_render_range = 
+                (camera.transform.position - transform.position).magnitude + 
+                game.render_range;
+            camera.farClipPlane = eff_render_range * 1.5f;
+            QualitySettings.shadowDistance = eff_render_range;
         }
     }
 
@@ -885,7 +882,16 @@ public class player : networked_player, INotPathBlocking
     {
         // Rotate the player view
         y_rotation.value += Input.GetAxis("Mouse X") * 5f;
-        x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
+        if (!map_open)
+            x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
+        else
+        {
+            // In map, so up/down rotation isn't networked    
+            float eye_x = eye_transform.localRotation.eulerAngles.x;
+            eye_x -= Input.GetAxis("Mouse Y") * 5f;
+            eye_x = Mathf.Clamp(eye_x, 0, 90);
+            eye_transform.localRotation = Quaternion.Euler(eye_x, 0, 0);
+        }
     }
 
     Vector2 mouse_look_velocity = Vector2.zero;
@@ -912,9 +918,8 @@ public class player : networked_player, INotPathBlocking
     public Camera camera
     { get; private set; }
 
-    // Objects used to obscure player view
+    // Object used to obscure player view
     GameObject obscurer;
-    GameObject map_obscurer;
 
     public Color sky_color
     {
@@ -923,11 +928,9 @@ public class player : networked_player, INotPathBlocking
         {
             camera.backgroundColor = value;
             utils.set_color(obscurer_renderer.material, value);
-            utils.set_color(map_obscurer_renderer.material, value);
         }
     }
     Renderer obscurer_renderer;
-    Renderer map_obscurer_renderer;
 
     /// <summary> Are we in first, or third person? </summary>
     public bool first_person
@@ -984,7 +987,6 @@ public class player : networked_player, INotPathBlocking
 
         // Set the obscurer size to the render range
         obscurer.transform.localScale = Vector3.one * game.render_range * 0.99f;
-        map_obscurer.transform.localScale = Vector3.one * game.render_range;
 
         if (!map_open)
         {
@@ -1004,9 +1006,7 @@ public class player : networked_player, INotPathBlocking
         get { return camera.orthographic; }
         set
         {
-            // Use the appropriate obscurer for
-            // the map or 3D views
-            map_obscurer.SetActive(value);
+            // Turn off the obscurer in map view
             obscurer.SetActive(!value);
 
             // Set the camera orthograpic if in 
@@ -1018,6 +1018,9 @@ public class player : networked_player, INotPathBlocking
                 // Save camera rotation to restore later
                 saved_camera_rotation = camera.transform.localRotation;
 
+                // Eyes start in horizontal plane in map view
+                x_rotation.value = 90;
+
                 // Setup the camera in map mode/position   
                 camera.orthographicSize = game.render_range;
                 camera.transform.position = eye_transform.transform.position +
@@ -1025,10 +1028,6 @@ public class player : networked_player, INotPathBlocking
                 camera.transform.rotation = Quaternion.LookRotation(
                     Vector3.down, transform.forward
                     );
-                camera.farClipPlane = MAP_CAMERA_CLIP;
-
-                // Render shadows further in map view
-                QualitySettings.shadowDistance = MAP_SHADOW_DISTANCE;
             }
             else
             {
@@ -1182,12 +1181,6 @@ public class player : networked_player, INotPathBlocking
         obscurer.transform.SetParent(transform);
         obscurer.transform.localPosition = Vector3.zero;
         obscurer_renderer = obscurer.GetComponentInChildren<Renderer>();
-
-        map_obscurer = Resources.Load<GameObject>("misc/map_obscurer").inst();
-        map_obscurer.transform.SetParent(camera.transform);
-        map_obscurer.transform.localRotation = Quaternion.identity;
-        map_obscurer.transform.localPosition = Vector3.forward;
-        map_obscurer_renderer = map_obscurer.GetComponentInChildren<Renderer>();
 
         // The distance to the underwater screen, just past the near clipping plane
         float usd = camera.nearClipPlane * 1.1f;
