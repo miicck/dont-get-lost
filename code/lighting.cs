@@ -54,14 +54,15 @@ public class lighting : MonoBehaviour
         sun.enabled = b != 0f;
         sun.color = new Color(b, b, b);
 
-        /*
         // Sun moves in sky - looks kinda fast/does wierd things to the shadows
-        sun.transform.forward = new Vector3(
-            Mathf.Cos(Mathf.PI * t),
-            -Mathf.Sin(Mathf.PI * t) - 0.5f,
-            0
-        );
-        */
+        if (options_menu.get_bool("moving_sun"))
+            sun.transform.forward = new Vector3(
+                Mathf.Cos(Mathf.PI * t),
+                -Mathf.Sin(Mathf.PI * t) - 0.5f,
+                0
+            );
+        else
+            sun.transform.rotation = Quaternion.Euler(50, -30, 0);
 
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))

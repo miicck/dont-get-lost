@@ -149,6 +149,9 @@ public class options_menu : MonoBehaviour
                 fog.enableVolumetricFog.value = value;
                 break;
 
+            case "moving_sun":
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }
