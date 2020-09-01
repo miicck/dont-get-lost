@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class auto_crafter : building_material, IInspectable
 {
+    public string recipes_folder;
     item_link_point[] inputs;
     item_link_point[] outputs;
-    recipe[] recipies => GetComponentsInChildren<recipe>();
+    recipe[] recipies;
 
     simple_item_collection pending_inputs = new simple_item_collection();
     simple_item_collection pending_outputs = new simple_item_collection();
@@ -43,6 +44,7 @@ public class auto_crafter : building_material, IInspectable
         // Get references to input/output link points
         List<item_link_point> inputs = new List<item_link_point>();
         List<item_link_point> outputs = new List<item_link_point>();
+        recipies = Resources.LoadAll<recipe>(recipes_folder);
 
         foreach (var lp in GetComponentsInChildren<item_link_point>())
         {

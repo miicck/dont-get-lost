@@ -119,7 +119,9 @@ public class item_splitter : building_material
         // Move output selector item along the output selector
         if (output_selector_item != null)
             if (move_towards(output_selector_item.transform,
-                output_selector_end.position, 1f) && output_alligned)
+                output_selector_end.position, 1f) && 
+                output_alligned && 
+                output.item == null)
             {
                 // Drop off item
                 output_selector_item.transform.SetParent(null);
