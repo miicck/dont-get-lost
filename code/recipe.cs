@@ -23,7 +23,7 @@ public class recipe : MonoBehaviour
         foreach (var i in ingredients)
             ret += i.str() + " + ";
         ret = ret.Substring(0, ret.Length - 2);
-        ret += "> " + product.product_list(products);
+        ret += "> " + product.product_quantities_list(products);
         return ret;
     }
 

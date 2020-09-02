@@ -21,37 +21,17 @@ public class water_reflections : MonoBehaviour
         water_undersides.Add(water_underside);
     }
 
-    /// <summary> The water quad is centred this distance from the player, so that
-    /// it appears behind transparent objects that are nearer. </summary>
-    const float WATER_CENTRE_OFFSET = 64f;
-
-    const float WATER_REFLECTION_RANGE = 64f;
-    const float WATER_BLEND_RANGE = WATER_REFLECTION_RANGE / 2f;
-
     void Start()
     {
         // Create the water reflection probe
         probe = Resources.Load
             <UnityEngine.Rendering.HighDefinition.PlanarReflectionProbe>
             ("misc/water_reflection_probe").inst();
-        probe.transform.position = transform.position + transform.forward * 16f;
+        probe.transform.position = transform.position;
         probe.transform.rotation = transform.rotation;
         probe.transform.SetParent(transform);
-
-        /*
         probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Sphere;
-        probe.influenceVolume.sphereRadius = WATER_REFLECTION_RANGE;
-        probe.influenceVolume.sphereBlendDistance = WATER_BLEND_RANGE;
-        */
-
-        probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Box;
-        probe.influenceVolume.boxSize = new Vector3(WATER_REFLECTION_RANGE, 0.01f, WATER_REFLECTION_RANGE);
-        probe.influenceVolume.boxBlendDistanceNegative = new Vector3(
-            WATER_BLEND_RANGE, 0.005f, WATER_BLEND_RANGE
-        );
-        probe.influenceVolume.boxBlendDistancePositive = new Vector3(
-            WATER_BLEND_RANGE, 0.005f, WATER_BLEND_RANGE
-        );
+        probe.influenceVolume.sphereBlendDistance = 0f;
 
         // Needs to be fiddled with on startup to work for some reason
         fiddle_needed = true;
@@ -65,12 +45,15 @@ public class water_reflections : MonoBehaviour
 
     void Update()
     {
-
+        // Get rid of deleted water
         water_undersides.RemoveWhere((u) => u == null);
         waters.RemoveWhere((w) => w == null);
 
+        // Enable water underside only when the player is underwater
         foreach (var wu in water_undersides)
             wu.enabled = player.current.camera.transform.position.y < world.SEA_LEVEL;
+
+        probe.influenceVolume.sphereRadius = game.render_range;
 
         // Workaround to stop the reflections from just randomly disapearing
         // if the player moves too far.
@@ -83,8 +66,10 @@ public class water_reflections : MonoBehaviour
 
         if (fiddle_needed)
         {
+            /*
             fiddle_needed = false;
             probe.enabled = false;
+            */
         }
 
         if (probe.enabled != should_reflect)
@@ -94,10 +79,13 @@ public class water_reflections : MonoBehaviour
                 update_water(w);
         }
 
+        // Set the water alpha color
         color.a = probe.enabled ? 0.84f : 0.31f;
-
         foreach (var w in waters)
             utils.set_color(w.material, color);
+
+        // Set clear color to sky color (doesn't seem to work?)
+        probe.settingsRaw.cameraSettings.bufferClearing.backgroundColorHDR = lighting.sky_color;
 
         // Ensure probe stays at water level
         Vector3 pos = transform.position;

@@ -10,7 +10,7 @@ public static class fog_distances
     public const float MEDIUM = 20f;
     public const float FAR = 50f;
     public const float VERY_FAR = 100f;
-    public const float OFF = 5000f;
+    public const float OFF = 500f;
 }
 
 public class lighting : MonoBehaviour
@@ -53,8 +53,10 @@ public class lighting : MonoBehaviour
     {
         float t = time_manager.get_time();
         float b = brightness_from_time(t);
-        sun.enabled = b != 0f;
-        sun.color = new Color(b, b, b);
+
+        // Work out the sun brightness from the raw brightness
+        float sb = b * 0.75f + 0.25f;
+        sun.color = new Color(sb, sb, sb);
 
         // Sun moves in sky - looks kinda fast/does wierd things to the shadows
         if (options_menu.get_bool("moving_sun"))
@@ -70,8 +72,15 @@ public class lighting : MonoBehaviour
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))
         {
-            sky.multiplier.value = b * 0.2f + 0.1f;
-            options_menu.global_volume.profile.isDirty = true;
+            // Work out ambient brightness as a function of raw brightness
+
+            float tb = b * 0.015f; // Top brightness (low in daytime - mostly provided by sun, zero at night)
+            float mb = b * 0.15f; // Middle brightness (medium in daytime, zero at night)
+            float bb = b * 0.26f + 0.04f; // Bottom brightness (bright in daytime, non-zero at night - so we can see)
+
+            sky.top.value = new Color(tb, tb, tb);
+            sky.middle.value = new Color(mb, mb, mb);
+            sky.bottom.value = new Color(bb, bb, bb);
         }
 
         Color target_sky_color = sky_color_daytime;
@@ -110,6 +119,9 @@ public class lighting : MonoBehaviour
                     0f : saved_ambient_occlusion_intensity;
             }
         }
+
+        // Let the volume system know that it needs updating
+        options_menu.global_volume.profile.isDirty = true;
     }
 
     float brightness_from_time(float time)

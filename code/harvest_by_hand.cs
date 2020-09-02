@@ -16,6 +16,29 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
     AudioSource source;
 
+    /// <summary> Raycast for a harvest_by_hand object. </summary>
+    public static harvest_by_hand raycast(Ray ray,
+        out RaycastHit hit, float max_distance)
+    {
+        harvest_by_hand found = null;
+        hit = default;
+        float min_dis = Mathf.Infinity;
+
+        foreach (var h in Physics.RaycastAll(ray, max_distance))
+        {
+            var hbh = h.transform.GetComponentInParent<harvest_by_hand>();
+            float dis = (h.point - ray.origin).magnitude;
+            if (dis < min_dis)
+            {
+                min_dis = dis;
+                found = hbh;
+                hit = h;
+            }
+        }
+
+        return found;
+    }
+
     public void on_pick()
     {
         if (source == null)
@@ -65,7 +88,7 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
     public string inspect_info()
     {
-        return product.product_list(products) + " can bn harvested by hand";
+        return product.product_quantities_list(products) + " can bn harvested by hand";
     }
 
     public Sprite main_sprite()

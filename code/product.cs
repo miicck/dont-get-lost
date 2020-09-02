@@ -63,7 +63,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> The quantity and (appropriately pluralized) name. </summary>
-    public virtual string product_quantity_name()
+    public virtual string product_name_quantity()
     {
         switch (mode)
         {
@@ -131,18 +131,34 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Convert a list of products to a string describing that list. </summary>
-    public static string product_list(IList<product> products)
+    public static string product_quantities_list(IList<product> products)
     {
         string ret = "";
         for (int i = 0; i < products.Count - 1; ++i)
-            ret += products[i].product_quantity_name() + ", ";
+            ret += products[i].product_name_quantity() + ", ";
 
         if (products.Count > 1)
         {
             ret = ret.Substring(0, ret.Length - 2);
-            ret += " and " + products[products.Count - 1].product_quantity_name();
+            ret += " and " + products[products.Count - 1].product_name_quantity();
         }
-        else ret = products[0].product_quantity_name();
+        else ret = products[0].product_name_quantity();
+
+        return ret;
+    }
+
+    public static string product_plurals_list(IList<product> products)
+    {
+        string ret = "";
+        for (int i = 0; i < products.Count - 1; ++i)
+            ret += products[i].product_name_plural() + ", ";
+
+        if (products.Count > 1)
+        {
+            ret = ret.Substring(0, ret.Length - 2);
+            ret += " and " + products[products.Count - 1].product_name_plural();
+        }
+        else ret = products[0].product_name_plural();
 
         return ret;
     }
@@ -256,7 +272,7 @@ public class terrain_product : product
 
     public override string product_name() { return item.display_name; }
     public override string product_name_plural() { return item.plural; }
-    public override string product_quantity_name() { return item.display_name; }
+    public override string product_name_quantity() { return item.display_name; }
     public override Sprite sprite() { return item.sprite; }
 
     public override void create_in(IItemCollection inv)

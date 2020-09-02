@@ -58,8 +58,6 @@ public class mangroves : biome
                     // Generate flint
                     if (random.range(0, 100) == 0)
                         p.object_to_generate = world_object.load("flint");
-                    else if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("flint_piece");
                 }
 
                 grid[i, j] = p;
@@ -103,8 +101,6 @@ public class desert : biome
                         grid[i, j].object_to_generate = world_object.load("palm_tree");
                     else if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("mossy_log");
-                    else if (random.range(0, 50) == 0)
-                        grid[i, j].object_to_generate = world_object.load("flint_piece");
                 }
             }
     }
@@ -365,8 +361,6 @@ public class flat_forest : biome
                     p.object_to_generate = world_object.load("mossy_log");
                 else if (random.range(0, 200) == 0)
                     p.object_to_generate = world_object.load("bush");
-                else if (random.range(0, 500) == 0)
-                    p.object_to_generate = world_object.load("flint_piece");
 
                 grid[i, j] = p;
             }
@@ -512,8 +506,7 @@ public class rock_stacks : biome
 
                 if (p.altitude < world.SEA_LEVEL + 0.1f)
                 {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("flint_piece");
+
                 }
                 else if (hill_amt > 0.3f)
                 {
