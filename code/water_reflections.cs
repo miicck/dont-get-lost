@@ -32,14 +32,7 @@ public class water_reflections : MonoBehaviour
         probe.transform.SetParent(transform);
         probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Sphere;
         probe.influenceVolume.sphereBlendDistance = 0f;
-
-        // Needs to be fiddled with on startup to work for some reason
-        fiddle_needed = true;
-        last_fiddled = player.current.transform.position;
     }
-
-    bool fiddle_needed = false;
-    Vector3 last_fiddled;
 
     public Color color = water_colors.cyan;
 
@@ -49,35 +42,12 @@ public class water_reflections : MonoBehaviour
         water_undersides.RemoveWhere((u) => u == null);
         waters.RemoveWhere((w) => w == null);
 
+        // Set reflection radius to render range
+        probe.influenceVolume.sphereRadius = game.render_range;
+
         // Enable water underside only when the player is underwater
         foreach (var wu in water_undersides)
             wu.enabled = player.current.camera.transform.position.y < world.SEA_LEVEL;
-
-        probe.influenceVolume.sphereRadius = game.render_range;
-
-        // Workaround to stop the reflections from just randomly disapearing
-        // if the player moves too far.
-        if ((last_fiddled - player.current.transform.position).magnitude >
-             probe.influenceVolume.sphereRadius)
-        {
-            fiddle_needed = true;
-            last_fiddled = player.current.transform.position;
-        }
-
-        if (fiddle_needed)
-        {
-            /*
-            fiddle_needed = false;
-            probe.enabled = false;
-            */
-        }
-
-        if (probe.enabled != should_reflect)
-        {
-            probe.enabled = should_reflect;
-            foreach (var w in waters)
-                update_water(w);
-        }
 
         // Set the water alpha color
         color.a = probe.enabled ? 0.84f : 0.31f;
@@ -91,6 +61,14 @@ public class water_reflections : MonoBehaviour
         Vector3 pos = transform.position;
         pos.y = world.SEA_LEVEL;
         transform.position = pos;
+
+        // Ensure probe enabled state is correct
+        if (probe.enabled != should_reflect)
+        {
+            probe.enabled = should_reflect;
+            foreach (var w in waters)
+                update_water(w);
+        }
     }
 
     static void update_water(Renderer water)
