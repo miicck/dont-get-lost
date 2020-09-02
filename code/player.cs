@@ -765,7 +765,7 @@ public class player : networked_player, INotPathBlocking
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
-                // Doesn't affect the obscurers/water
+                // Doesn't affect the obscurer/water
                 if (r.transform.IsChildOf(obscurer.transform)) continue;
                 if (r.transform.IsChildOf(water.transform)) continue;
                 r.enabled = !value;
@@ -931,6 +931,12 @@ public class player : networked_player, INotPathBlocking
         }
     }
     Renderer obscurer_renderer;
+
+    public bool obscurer_enabed
+    {
+        get => obscurer_renderer.enabled;
+        set => obscurer_renderer.enabled = value;
+    }
 
     /// <summary> Are we in first, or third person? </summary>
     public bool first_person

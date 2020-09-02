@@ -152,6 +152,13 @@ public class options_menu : MonoBehaviour
             case "moving_sun":
                 break;
 
+            case "obscurer_enabled":
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.obscurer_enabed = value;
+                });
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }

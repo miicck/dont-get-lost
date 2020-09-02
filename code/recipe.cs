@@ -27,6 +27,16 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
+    string recipe_book_string()
+    {
+        string ret = product.product_quantities_list(products);
+        ret += " < ";
+        foreach (var i in ingredients)
+            ret += i.str() + " + ";
+        ret = ret.Substring(0, ret.Length - 2);
+        return ret;
+    }
+
     public bool can_craft(IItemCollection i)
     {
         if (ingredients.Length == 0)
@@ -68,9 +78,9 @@ public class recipe : MonoBehaviour
 
                 foreach (var kv in all_recipies())
                 {
-                    text += "\n" + kv.Key + "\n";
+                    text += "\n" + kv.Key.Replace('_',' ').capitalize() + "\n";
                     foreach (var r in kv.Value)
-                        text += "  " + r.craft_string() + "\n";
+                        text += "  " + r.recipe_book_string() + "\n";
                 }
 
                 _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();
