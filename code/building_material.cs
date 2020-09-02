@@ -147,7 +147,7 @@ public class building_material : item
             if (controls.key_down(controls.binds.fine_rotation))
             {
                 // Continuous rotation
-                if (controls.key_down(controls.binds.rotate_clockwise_around_forward))
+                if (controls.key_down(controls.binds.rotate_anticlockwise_around_forward))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.Z);
@@ -180,7 +180,7 @@ public class building_material : item
             }
 
             // Rotation by 45 degree increments
-            else if (controls.key_press(controls.binds.rotate_clockwise_around_forward))
+            else if (controls.key_press(controls.binds.rotate_anticlockwise_around_forward))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
                 axes.highlight_axis(axes.AXIS.Z);
