@@ -11,58 +11,51 @@ public class fuel_requirement : ingredient
     /// given total fuel requirement, return a dictionary of string:int of items
     /// and quantities needed to satisfy that requirement. Otherwise return
     /// null. </summary>
-    Dictionary<item, int> find_in_inventory(int fuel_total, IItemCollection i)
+    public override bool find(
+        IItemCollection i, 
+        ref Dictionary<string, int> in_use)
     {
-        Dictionary<item, int> found = new Dictionary<item, int>();
-
-        int remaining = fuel_total;
+        int remaining = fuel_required;
         foreach (var kv in i.contents())
         {
-            // See if the item is fuel
+            // Ensure the item is fuel
             var itm = kv.Key;
             if (itm == null) continue;
+            if (itm.fuel_value <= 0) continue;
 
-            if (itm.fuel_value > 0)
+            // The amount of this item that would be
+            // needed to satisfy the remaining fuel requirement
+            int required = remaining / itm.fuel_value;
+
+            // The amount of this item that is already in use
+            // and how much is available to use as fuel
+            if (!in_use.TryGetValue(itm.name, out int already_in_use))
+                already_in_use = 0;
+            int available = kv.Value - already_in_use;
+
+            if (available <= 0)
             {
-                // The amount of this item that would be
-                // needed to satisfy the remaining fuel requirement
-                int required = remaining / itm.fuel_value;
-
-                if (kv.Value <= required)
-                {
-                    // Use up all of this item
-                    found[itm] = kv.Value;
-                    remaining -= itm.fuel_value * kv.Value;
-                }
-                else
-                {
-                    // Only use up the required amount of this item
-                    found[itm] = required;
-                    remaining -= itm.fuel_value * required;
-                }
-
-                if (remaining <= 0)
-                    break;
+                // This item is already fully in use
+                continue;
             }
+            else if (available <= required)
+            {
+                // Use up all of this item
+                remaining -= itm.fuel_value * available;
+                in_use[itm.name] = kv.Value;
+            }
+            else
+            {
+                // Only use up the required amount of this item
+                remaining -= itm.fuel_value * required;
+                in_use[itm.name] = required + already_in_use;
+            }
+
+            if (remaining <= 0)
+                break;
         }
 
-        if (remaining <= 0) return found;
-        return null;
-    }
-
-    public override bool in_collection(IItemCollection i)
-    {
-        return find_in_inventory(fuel_required, i) != null;
-    }
-
-    public override void on_craft(IItemCollection i)
-    {
-        var found = find_in_inventory(fuel_required, i);
-        if (found == null)
-            throw new System.Exception("Tried to burn non-existant fuel!");
-
-        foreach (var kv in found)
-            i.remove(kv.Key, kv.Value);
+        return remaining <= 0;
     }
 
     public override string str()

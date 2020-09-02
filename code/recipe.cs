@@ -37,24 +37,30 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
-    public bool can_craft(IItemCollection i)
+    public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use)
     {
         if (ingredients.Length == 0)
             throw new System.Exception("Recipies should have > 0 ingredients!");
 
+        to_use = new Dictionary<string, int>();
         foreach (var ing in ingredients)
-            if (!ing.in_collection(i))
+            if (!ing.find(i, ref to_use))
                 return false;
+
         return true;
     }
 
-    public void craft(IItemCollection from, IItemCollection to)
+    public bool can_craft(IItemCollection i)
     {
-        if (!can_craft(from)) return;
-        foreach (var ing in ingredients)
-            ing.on_craft(from);
-        foreach (var p in products)
-            p.create_in(to);
+        return can_craft(i, out Dictionary<string, int> ignored);
+    }
+
+    public bool craft(IItemCollection from, IItemCollection to)
+    {
+        if (!can_craft(from, out Dictionary<string, int> to_use)) return false;
+        foreach (var kv in to_use) from.remove(kv.Key, kv.Value);
+        foreach (var p in products) p.create_in(to);
+        return true;
     }
 
     static List<KeyValuePair<string, recipe[]>> all_recipies()
@@ -78,7 +84,7 @@ public class recipe : MonoBehaviour
 
                 foreach (var kv in all_recipies())
                 {
-                    text += "\n" + kv.Key.Replace('_',' ').capitalize() + "\n";
+                    text += "\n" + kv.Key.Replace('_', ' ').capitalize() + "\n";
                     foreach (var r in kv.Value)
                         text += "  " + r.recipe_book_string() + "\n";
                 }
@@ -98,6 +104,5 @@ public class recipe : MonoBehaviour
 public abstract class ingredient : MonoBehaviour
 {
     public abstract string str();
-    public abstract bool in_collection(IItemCollection i);
-    public abstract void on_craft(IItemCollection i);
+    public abstract bool find(IItemCollection i, ref Dictionary<string, int> in_use);
 }

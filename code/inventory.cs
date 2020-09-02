@@ -27,6 +27,16 @@ public static class item_collection_extensions
         return false;
     }
 
+    public static bool remove(this IItemCollection col, string item_name, int count)
+    {
+        return col.remove(Resources.Load<item>("items/" + item_name), count);
+    }
+
+    public static bool add(this IItemCollection col, string item_name, int count)
+    {
+        return col.add(Resources.Load<item>("items/" + item_name), count);
+    }
+
     public static int count(this IItemCollection col, item i)
     {
         var cts = col.contents();

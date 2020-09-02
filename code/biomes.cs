@@ -107,6 +107,8 @@ public class desert : biome
                         grid[i, j].object_to_generate = world_object.load("palm_tree");
                     else if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("mossy_log");
+                    else if (random.range(0, 100) == 0)
+                        grid[i, j].object_to_generate = world_object.load("flint");
                 }
             }
     }

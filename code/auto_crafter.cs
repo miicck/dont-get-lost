@@ -94,9 +94,8 @@ public class auto_crafter : building_material, IInspectable
         {
             // Attempt to craft something
             foreach (var r in recipies)
-                if (r.can_craft(pending_inputs))
+                if (r.craft(pending_inputs, pending_outputs))
                 {
-                    r.craft(pending_inputs, pending_outputs);
                     pending_inputs.clear();
                     break;
                 }
