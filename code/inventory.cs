@@ -176,9 +176,9 @@ public class inventory : networked, IItemCollection
                 }
                 else
                 {
-                    // Shift moves the contents of the slot directly into the player inventory
+                    // Move the contents of the slot directly into the player inventory
                     // (or from the player inventory to the interacting inventory)
-                    if (Input.GetKey(KeyCode.LeftShift))
+                    if (controls.key_down(controls.binds.quick_item_transfer))
                     {
                         // Copies for lambda function
                         item transfer_item = isn.item;

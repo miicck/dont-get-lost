@@ -12,8 +12,8 @@ public class global_controls : MonoBehaviour
 
     void Update()
     {
-        // Toggle fullscreen modes on F11
-        if (Input.GetKeyDown(KeyCode.F11))
+        // Cycle fullscreen modes
+        if (controls.key_press(controls.binds.cycle_fullscreen_modes))
         {
             switch (Screen.fullScreenMode)
             {

@@ -55,6 +55,16 @@ public class player : networked_player, INotPathBlocking
         }
     }
 
+    void run_teleports()
+    {
+        if (controls.key_press(controls.binds.home_teleport))
+        {
+            var tm = FindObjectOfType<teleport_manager>();
+            if (tm != null)
+                teleport(tm.nearest_teleport_destination(transform.position));
+        }
+    }
+
     /// <summary> Update function that is only called on the local client. </summary>
     void local_update()
     {
@@ -70,6 +80,7 @@ public class player : networked_player, INotPathBlocking
         run_mouse_look();
         run_movement();
         run_crosshairs();
+        run_teleports();
     }
 
     void Update()
@@ -116,8 +127,8 @@ public class player : networked_player, INotPathBlocking
             return;
         }
 
-        // Toggle inventory on E
-        if (Input.GetKeyDown(KeyCode.E))
+        // Toggle inventory
+        if (controls.key_press(controls.binds.open_inventory))
         {
             inventory.open = !inventory.open;
             crafting_menu.open = inventory.open;
@@ -136,7 +147,7 @@ public class player : networked_player, INotPathBlocking
 
     void run_recipe_book()
     {
-        if (Input.GetKeyDown(KeyCode.R))
+        if (controls.key_press(controls.binds.open_recipe_book))
             recipe_book_open = !recipe_book_open;
     }
 
@@ -361,15 +372,15 @@ public class player : networked_player, INotPathBlocking
         current_item_use_result = item.use_result.complete;
         if (current_item_use == USE_TYPE.NOT_USING)
         {
-            bool left_click = Input.GetMouseButtonDown(0) ||
+            bool left_click = controls.mouse_click(controls.MOUSE_BUTTON.LEFT) ||
                 (equipped == null ? false :
                     equipped.allow_left_click_held_down() &&
-                    Input.GetMouseButton(0));
+                    controls.mouse_down(controls.MOUSE_BUTTON.LEFT));
 
-            bool right_click = Input.GetMouseButtonDown(1) ||
+            bool right_click = controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) ||
                 (equipped == null ? false :
                     equipped.allow_right_click_held_down() &&
-                    Input.GetMouseButton(1));
+                    controls.mouse_down(controls.MOUSE_BUTTON.RIGHT));
 
             // Start a new use type
             if (left_click)
@@ -470,7 +481,7 @@ public class player : networked_player, INotPathBlocking
         if (inventory == null) return;
 
         // Select something in the world from the quickbar
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (controls.key_press(controls.binds.select_item_from_world))
         {
             var ray = camera_ray(INTERACTION_RANGE, out float dist);
             var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
@@ -486,17 +497,18 @@ public class player : networked_player, INotPathBlocking
         }
 
         // Select quickbar item using keyboard shortcut
-        if (Input.GetKeyDown(KeyCode.Alpha1)) toggle_equip(1);
-        else if (Input.GetKeyDown(KeyCode.Alpha2)) toggle_equip(2);
-        else if (Input.GetKeyDown(KeyCode.Alpha3)) toggle_equip(3);
-        else if (Input.GetKeyDown(KeyCode.Alpha4)) toggle_equip(4);
-        else if (Input.GetKeyDown(KeyCode.Alpha5)) toggle_equip(5);
-        else if (Input.GetKeyDown(KeyCode.Alpha6)) toggle_equip(6);
-        else if (Input.GetKeyDown(KeyCode.Alpha7)) toggle_equip(7);
-        else if (Input.GetKeyDown(KeyCode.Alpha8)) toggle_equip(8);
+
+        if (controls.key_press(controls.binds.quickbar_1)) toggle_equip(1);
+        else if (controls.key_press(controls.binds.quickbar_2)) toggle_equip(2);
+        else if (controls.key_press(controls.binds.quickbar_3)) toggle_equip(3);
+        else if (controls.key_press(controls.binds.quickbar_4)) toggle_equip(4);
+        else if (controls.key_press(controls.binds.quickbar_5)) toggle_equip(5);
+        else if (controls.key_press(controls.binds.quickbar_6)) toggle_equip(6);
+        else if (controls.key_press(controls.binds.quickbar_7)) toggle_equip(7);
+        else if (controls.key_press(controls.binds.quickbar_8)) toggle_equip(8);
 
         // Scroll through quickbar items
-        float sw = Input.GetAxis("Mouse ScrollWheel");
+        float sw = controls.get_axis("Mouse ScrollWheel");
 
         if (sw != 0)
         {
@@ -524,7 +536,7 @@ public class player : networked_player, INotPathBlocking
 
     void run_inspect_info()
     {
-        inspect_info.visible = Input.GetKey(KeyCode.Tab);
+        inspect_info.visible = controls.key_down(controls.binds.inspect);
     }
 
     inspect_info inspect_info
@@ -571,8 +583,7 @@ public class player : networked_player, INotPathBlocking
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftShift)) crouched = true;
-        if (Input.GetKeyUp(KeyCode.LeftShift)) crouched = false;
+        crouched = controls.key_down(controls.binds.crouch);
 
         if (cinematic_mode)
             fly_move();
@@ -599,7 +610,7 @@ public class player : networked_player, INotPathBlocking
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
         // Bouyancy (sink if shift is held)
-        if (!Input.GetKey(KeyCode.LeftShift))
+        if (!controls.key_down(controls.binds.sink))
             velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
         // Drag
@@ -612,7 +623,8 @@ public class player : networked_player, INotPathBlocking
 
         // Climb ladders
         bool climbing_ladder = false;
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.LeftShift))
+        if (controls.key_down(controls.binds.walk_forward) || 
+            controls.key_down(controls.binds.pause_on_ladder))
             foreach (var hit in
             Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
                                     transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
@@ -623,7 +635,7 @@ public class player : networked_player, INotPathBlocking
                 {
                     climbing_ladder = true;
                     velocity.y = speed * LADDER_SPEED_MULT;
-                    if (Input.GetKey(KeyCode.LeftShift))
+                    if (controls.key_down(controls.binds.pause_on_ladder))
                         velocity.y = 0;
                 }
             }
@@ -631,7 +643,7 @@ public class player : networked_player, INotPathBlocking
         if (controller.isGrounded)
         {
             // Jumping
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (controls.key_press(controls.binds.jump))
                 velocity.y = JUMP_VEL;
         }
         else
@@ -642,13 +654,17 @@ public class player : networked_player, INotPathBlocking
         }
 
         // Control forward/back velocity
-        if (Input.GetKey(KeyCode.W)) velocity += transform.forward * ACCELERATION * Time.deltaTime;
-        else if (Input.GetKey(KeyCode.S)) velocity -= transform.forward * ACCELERATION * Time.deltaTime;
+        if (controls.key_down(controls.binds.walk_forward))
+            velocity += transform.forward * ACCELERATION * Time.deltaTime;
+        else if (controls.key_down(controls.binds.walk_backward))
+            velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
-        if (Input.GetKey(KeyCode.D)) velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
-        else if (Input.GetKey(KeyCode.A)) velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
+        if (controls.key_down(controls.binds.strafe_right))
+            velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+        else if (controls.key_down(controls.binds.strafe_left))
+            velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, camera.transform.right);
 
         move += velocity * Time.deltaTime;
@@ -680,12 +696,12 @@ public class player : networked_player, INotPathBlocking
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
 
-        if (Input.GetKey(KeyCode.W)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.S)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.D)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.A)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.Space)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
-        if (Input.GetKey(KeyCode.LeftShift)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.walk_forward)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.walk_backward)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.strafe_right)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.strafe_left)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.fly_up)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.binds.fly_down)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
 
         if (fly_velocity.magnitude > FLY_ACCEL * Time.deltaTime)
             fly_velocity -= fly_velocity.normalized * FLY_ACCEL * Time.deltaTime;
@@ -720,7 +736,7 @@ public class player : networked_player, INotPathBlocking
             float s = BASE_SPEED;
             if (crouched)
                 s *= CROUCH_SPEED_MOD;
-            else if (Input.GetKey(KeyCode.LeftControl))
+            else if (controls.key_down(controls.binds.slow_walk))
                 s *= SLOW_WALK_SPEED_MOD;
 
             return s;
@@ -831,7 +847,7 @@ public class player : networked_player, INotPathBlocking
     {
         if (map_open) return;
 
-        if (Input.GetKeyDown(KeyCode.V))
+        if (controls.key_press(controls.binds.toggle_third_person))
             first_person = !first_person;
     }
 
@@ -851,13 +867,13 @@ public class player : networked_player, INotPathBlocking
         if (current_item_use != USE_TYPE.NOT_USING) return;
 
         // Toggle the map view on M
-        if (Input.GetKeyDown(KeyCode.M))
+        if (controls.key_press(controls.binds.toggle_map))
             map_open = !map_open;
 
         if (map_open)
         {
             // Zoom the map
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            float scroll = controls.get_axis("Mouse ScrollWheel");
             if (scroll > 0) game.render_range_target /= 1.2f;
             else if (scroll < 0) game.render_range_target *= 1.2f;
 
@@ -865,8 +881,8 @@ public class player : networked_player, INotPathBlocking
 
             // Scale camera clipping plane/shadow distance to work
             // with map-view render rangeas
-            float eff_render_range = 
-                (camera.transform.position - transform.position).magnitude + 
+            float eff_render_range =
+                (camera.transform.position - transform.position).magnitude +
                 game.render_range;
             camera.farClipPlane = eff_render_range * 1.5f;
             QualitySettings.shadowDistance = eff_render_range;
@@ -881,14 +897,14 @@ public class player : networked_player, INotPathBlocking
     void mouse_look_normal()
     {
         // Rotate the player view
-        y_rotation.value += Input.GetAxis("Mouse X") * 5f;
+        y_rotation.value += controls.get_axis("Mouse X") * 5f;
         if (!map_open)
-            x_rotation.value -= Input.GetAxis("Mouse Y") * 5f;
+            x_rotation.value -= controls.get_axis("Mouse Y") * 5f;
         else
         {
             // In map, so up/down rotation isn't networked    
             float eye_x = eye_transform.localRotation.eulerAngles.x;
-            eye_x -= Input.GetAxis("Mouse Y") * 5f;
+            eye_x -= controls.get_axis("Mouse Y") * 5f;
             eye_x = Mathf.Clamp(eye_x, 0, 90);
             eye_transform.localRotation = Quaternion.Euler(eye_x, 0, 0);
         }
@@ -898,8 +914,8 @@ public class player : networked_player, INotPathBlocking
     void mouse_look_fly()
     {
         // Smooth mouse look for fly mode
-        mouse_look_velocity.x += Input.GetAxis("Mouse X");
-        mouse_look_velocity.y += Input.GetAxis("Mouse Y");
+        mouse_look_velocity.x += controls.get_axis("Mouse X");
+        mouse_look_velocity.y += controls.get_axis("Mouse Y");
 
         float deccel = Time.deltaTime * 10f;
         if (mouse_look_velocity.magnitude < deccel)

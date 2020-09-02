@@ -188,21 +188,21 @@ public class game : MonoBehaviour
         // Update load balancing info
         load_balancing.update();
 
-        // Toggle the console using the caret
-        if (Input.GetKeyDown(KeyCode.BackQuote))
+        // Toggle the console
+        if (controls.key_press(controls.binds.toggle_console))
             console.open = !console.open;
 
-        // Toggle options on escape key
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // Toggle options
+        if (controls.key_press(controls.binds.toggle_options))
             options_menu.open = !options_menu.open;
 
-        // Toggle the debug panel on F3
-        if (Input.GetKeyDown(KeyCode.F3))
+        // Toggle the debug panel
+        if (controls.key_press(controls.binds.toggle_debug_info))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
-        // Increase/Decrease render range on equals/minus keys
-        if (Input.GetKeyDown(KeyCode.Equals)) render_range_target += 10f;
-        if (Input.GetKeyDown(KeyCode.Minus)) render_range_target -= 10f;
+        // Increase/Decrease render ranges
+        if (controls.key_press(controls.binds.increase_render_range)) render_range_target += 10f;
+        if (controls.key_press(controls.binds.decrease_render_range)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
 
         // Spawn enemies

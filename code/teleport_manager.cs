@@ -6,7 +6,8 @@ using networked_variables;
 public class teleport_manager : networked
 {
     // The list of teleport destinations (saved over the network)
-    networked_list<networked_pair<net_string, net_vector3>> destinations = new networked_list<networked_pair<net_string, net_vector3>>();
+    networked_list<networked_pair<net_string, net_vector3>> destinations = 
+        new networked_list<networked_pair<net_string, net_vector3>>();
 
     public void register_portal(portal p)
     {
@@ -51,6 +52,23 @@ public class teleport_manager : networked
     {
         // The teleport manager is always loaded
         return float.PositiveInfinity;
+    }
+
+    public Vector3 nearest_teleport_destination(Vector3 v)
+    {
+        float min_dis = Mathf.Infinity;
+        Vector3 found = v;
+        foreach (var d in destinations)
+        {
+            float dis = (d.second.value - v).magnitude;
+            if (dis < min_dis)
+            {
+                min_dis = dis;
+                found = d.second.value;
+            }
+        }
+
+        return found;
     }
 
 #if UNITY_EDITOR

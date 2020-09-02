@@ -6,3 +6,4 @@
 - Implement teleport-to-player/teleport-to-portal/portal naming
 - Wait to generate chunk locations until they 
   are within render range (difficult without fucking up determinism)
+- Implement ctrl-f in recipe book

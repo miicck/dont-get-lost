@@ -134,8 +134,8 @@ public class building_material : item
 
         public void key_rotate()
         {
-            float pivot_change_dir = Input.GetAxis("Mouse ScrollWheel");
-            if (Input.GetKeyDown(KeyCode.C)) pivot_change_dir = 1f;
+            float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
+            if (controls.key_press(controls.binds.change_pivot)) pivot_change_dir = 1f;
             if (pivot_change_dir != 0)
             {
                 // Change the pivot
@@ -144,35 +144,35 @@ public class building_material : item
                 set_pivot_rotation(saved_rotation);
             }
 
-            if (Input.GetKey(KeyCode.LeftControl))
+            if (controls.key_down(controls.binds.fine_rotation))
             {
                 // Continuous rotation
-                if (Input.GetKey(KeyCode.D))
+                if (controls.key_down(controls.binds.rotate_clockwise_around_forward))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (Input.GetKey(KeyCode.A))
+                else if (controls.key_down(controls.binds.rotate_clockwise_around_forward))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, forward_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (Input.GetKey(KeyCode.S))
+                else if (controls.key_down(controls.binds.rotate_anticlockwise_around_right))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -right_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (Input.GetKey(KeyCode.W))
+                else if (controls.key_down(controls.binds.rotate_clockwise_around_right))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, right_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (Input.GetKey(KeyCode.Q))
+                else if (controls.key_down(controls.binds.rotate_anticlockwise_around_up))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -up_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.Y);
                 }
-                else if (Input.GetKey(KeyCode.E))
+                else if (controls.key_down(controls.binds.rotate_clockwise_around_up))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, up_rot, Time.deltaTime * 15f);
                     axes.highlight_axis(axes.AXIS.Y);
@@ -180,32 +180,32 @@ public class building_material : item
             }
 
             // Rotation by 45 degree increments
-            else if (Input.GetKeyDown(KeyCode.D))
+            else if (controls.key_press(controls.binds.rotate_clockwise_around_forward))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
                 axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (Input.GetKeyDown(KeyCode.A))
+            else if (controls.key_press(controls.binds.rotate_clockwise_around_forward))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, forward_rot, 45);
                 axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (Input.GetKeyDown(KeyCode.S))
+            else if (controls.key_press(controls.binds.rotate_anticlockwise_around_right))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -right_rot, 45);
                 axes.highlight_axis(axes.AXIS.X);
             }
-            else if (Input.GetKeyDown(KeyCode.W))
+            else if (controls.key_press(controls.binds.rotate_clockwise_around_right))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, right_rot, 45);
                 axes.highlight_axis(axes.AXIS.X);
             }
-            else if (Input.GetKeyDown(KeyCode.Q))
+            else if (controls.key_press(controls.binds.rotate_anticlockwise_around_up))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -up_rot, 45);
                 axes.highlight_axis(axes.AXIS.Y);
             }
-            else if (Input.GetKeyDown(KeyCode.E))
+            else if (controls.key_press(controls.binds.rotate_clockwise_around_up))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, up_rot, 45);
                 axes.highlight_axis(axes.AXIS.Y);
@@ -351,10 +351,11 @@ public class building_material : item
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
 
-        // Find a building_material under cursor (unless control is held)
+        // Find a building_material/snap_point under cursor 
+        // (unless ignore_snap_points is held)
         RaycastHit hit = default;
         building_material bm = null;
-        if (!Input.GetKey(KeyCode.LeftControl))
+        if (!controls.key_down(controls.binds.ignore_snap_points))
             bm = utils.raycast_for_closest<building_material>(
                 camera_ray, out hit, raycast_distance);
 
@@ -377,10 +378,10 @@ public class building_material : item
 
     public override use_result on_use_continue(player.USE_TYPE use_type)
     {
-        if (spawned == null || Input.GetMouseButtonDown(0))
+        if (spawned == null || controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
             return use_result.complete;
 
-        if (Input.GetMouseButtonDown(1))
+        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
         {
             // Cancel build on right click
             spawned.weld.display_axes = false;

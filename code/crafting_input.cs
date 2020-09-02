@@ -35,7 +35,7 @@ public class crafting_input : MonoBehaviour
                 entry.transform.SetParent(options_go_here);
                 entry.button.onClick.AddListener(() =>
                 {
-                    int to_craft = Input.GetKey(KeyCode.LeftShift) ? 5 : 1;
+                    int to_craft = controls.key_down(controls.binds.craft_five) ? 5 : 1;
                     for (int n = 0; n < to_craft; ++n)
                         rec.craft(craft_from, craft_to);
                 });
