@@ -492,6 +492,7 @@ public abstract class biome : MonoBehaviour
                 ret.terrain_product = pts[max_i].terrain_product;
             }
 
+            ret.terrain_color.a = 0f;
             return ret;
         }
 

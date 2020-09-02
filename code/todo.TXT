@@ -4,6 +4,5 @@
 - Create unique sprites for everything (ongoing)
 - Fix farming spots so that they display properly
 - Implement teleport-to-player/teleport-to-portal/portal naming
-- Lerp fog distance/lighting settings
 - Wait to generate chunk locations until they 
   are within render range (difficult without fucking up determinism)

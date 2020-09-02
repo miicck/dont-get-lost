@@ -102,7 +102,8 @@ public class lighting : MonoBehaviour
                 // Keep fog color/distance up to date
                 fog.color.value = sky_color;
                 fog.albedo.value = sky_color;
-                fog.meanFreePath.value = fog_distance;
+                fog.meanFreePath.value = Mathf.Lerp(
+                    fog.meanFreePath.value, fog_distance, Time.deltaTime * 5f);
             }
         }
 

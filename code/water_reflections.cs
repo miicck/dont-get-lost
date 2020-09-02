@@ -30,8 +30,7 @@ public class water_reflections : MonoBehaviour
         probe.transform.position = transform.position;
         probe.transform.rotation = transform.rotation;
         probe.transform.SetParent(transform);
-        probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Sphere;
-        probe.influenceVolume.sphereBlendDistance = 0f;
+        probe.influenceVolume.shape = UnityEngine.Rendering.HighDefinition.InfluenceShape.Box;
     }
 
     public Color color = water_colors.cyan;
@@ -42,8 +41,10 @@ public class water_reflections : MonoBehaviour
         water_undersides.RemoveWhere((u) => u == null);
         waters.RemoveWhere((w) => w == null);
 
-        // Set reflection radius to render range
-        probe.influenceVolume.sphereRadius = game.render_range;
+        // Set reflection size to render range
+        probe.influenceVolume.boxSize = new Vector3(
+            game.render_range * 2f, 0.01f, 
+            game.render_range * 2f);
 
         // Enable water underside only when the player is underwater
         foreach (var wu in water_undersides)
