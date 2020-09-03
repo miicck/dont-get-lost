@@ -6,7 +6,7 @@ using networked_variables;
 public class teleport_manager : networked
 {
     // The list of teleport destinations (saved over the network)
-    networked_list<networked_pair<net_string, net_vector3>> destinations = 
+    networked_list<networked_pair<net_string, net_vector3>> destinations =
         new networked_list<networked_pair<net_string, net_vector3>>();
 
     public void register_portal(portal p)
@@ -28,6 +28,31 @@ public class teleport_manager : networked
 
         if (to_remove < 0) throw new System.Exception("Could not find the portal to unregister!");
         destinations.remove_at(to_remove);
+    }
+
+    public string attempt_rename_portal(portal p, string new_name)
+    {
+        var nearest = utils.find_to_min(destinations,
+            (d) => (d.second.value - p.path_start.position).magnitude);
+
+        float dis = (nearest.second.value - p.path_start.position).magnitude;
+        if (dis > 0.1f)
+            throw new System.Exception("Portal moved, or not registered?");
+
+        nearest.first.value = new_name;
+        destinations.set_dirty();
+        return nearest.first.value;
+    }
+
+    public string get_portal_name(portal p)
+    {
+        var nearest = utils.find_to_min(destinations,
+            (d) => (d.second.value - p.path_start.position).magnitude);
+
+        float dis = (nearest.second.value - p.path_start.position).magnitude;
+        if (dis > 0.1f)
+            throw new System.Exception("Portal moved, or not registered?");
+        return nearest.first.value;
     }
 
     public void create_buttons(RectTransform parent)

@@ -165,7 +165,7 @@ public class settler : pathfinding_agent, IInspectable, ILeftPlayerMenu
     {
         // Close the trade window
         if (this == (Object)player.current.left_menu)
-            player.current.left_menu = null;
+            player.current.ui_state = player.UI_STATE.ALL_CLOSED;
     }
 
     //#################//

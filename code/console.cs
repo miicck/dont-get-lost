@@ -137,7 +137,7 @@ public class console : MonoBehaviour
 
             // Enter fly (cinematic) mode
             case "fly":
-                player.current.cinematic_mode = !player.current.cinematic_mode;
+                player.current.fly_mode = !player.current.fly_mode;
                 return true;
         }
     }

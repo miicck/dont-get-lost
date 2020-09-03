@@ -123,7 +123,12 @@ public class portal : building_material, ILeftPlayerMenu
 
     public string attempt_rename(string new_name)
     {
-        throw new System.NotImplementedException();
+        return FindObjectOfType<teleport_manager>().attempt_rename_portal(this, new_name);
+    }
+
+    public string teleport_name()
+    {
+        return FindObjectOfType<teleport_manager>().get_portal_name(this);
     }
 
     public override void on_forget(bool deleted)

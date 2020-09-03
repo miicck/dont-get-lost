@@ -192,10 +192,6 @@ public class game : MonoBehaviour
         if (controls.key_press(controls.BIND.TOGGLE_CONSOLE))
             console.open = !console.open;
 
-        // Toggle options
-        if (controls.key_press(controls.BIND.TOGGLE_OPTIONS))
-            options_menu.open = !options_menu.open;
-
         // Toggle the debug panel
         if (controls.key_press(controls.BIND.TOGGLE_DEBUG_INFO))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);

@@ -131,14 +131,14 @@ public class networked_list<T> : networked_variable, IEnumerable<T>
     public void add(T t)
     {
         list.Add(t);
-        queued_serial = serialization();
+        set_dirty();
     }
 
     public bool remove(T t)
     {
         if (list.Remove(t))
         {
-            queued_serial = serialization();
+            set_dirty();
             return true;
         }
         return false;
@@ -147,7 +147,7 @@ public class networked_list<T> : networked_variable, IEnumerable<T>
     public void remove_at(int i)
     {
         list.RemoveAt(i);
-        queued_serial = serialization();
+        set_dirty();
     }
 
     public T this[int i] => list[i];
@@ -173,6 +173,11 @@ public class networked_list<T> : networked_variable, IEnumerable<T>
         serial.AddRange(network_utils.encode_int(list.Count));
         foreach (var t in list) serial.AddRange(t.serialization());
         return serial.ToArray();
+    }
+
+    public void set_dirty()
+    {
+        queued_serial = serialization();
     }
 }
 

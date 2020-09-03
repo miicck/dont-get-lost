@@ -3784,7 +3784,7 @@ GameObject:
   - component: {fileID: 2282695170566817697}
   - component: {fileID: 4883006064867912279}
   m_Layer: 5
-  m_Name: obscurer_enabled
+  m_Name: physical_sky
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3823,7 +3823,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c2f8b7a85dd927418a056cd65d23634, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  option_name: obscurer_enabled
+  option_name: physical_sky
   default_value: 1
   toggle: {fileID: 1005009912432820677}
   suboptions: {fileID: 0}

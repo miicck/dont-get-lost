@@ -152,10 +152,10 @@ public class options_menu : MonoBehaviour
             case "moving_sun":
                 break;
 
-            case "obscurer_enabled":
+            case "physical_sky":
                 player.call_when_current_player_available(() =>
                 {
-                    player.current.obscurer_enabed = value;
+                    player.current.physical_sky_enabled = value;
                 });
                 break;
 
@@ -183,16 +183,11 @@ public class options_menu : MonoBehaviour
                 _menu.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 _menu.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 _menu.change_content(_menu.main_menu);
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
-                player.current.close_all_ui();
             }
-            else if (!value)
+            else if (_menu != null && !value)
             {
                 Destroy(_menu.gameObject);
                 _menu = null;
-                Cursor.visible = false;
-                Cursor.lockState = CursorLockMode.Locked;
             }
         }
     }

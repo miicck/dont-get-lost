@@ -4,14 +4,10 @@ using UnityEngine;
 
 public class portal_renamer : MonoBehaviour
 {
-    UnityEngine.UI.InputField field;
+    public UnityEngine.UI.InputField field;
 
     private void Start()
     {
-        field = GetComponent<UnityEngine.UI.InputField>();
-        if (field == null)
-            throw new System.Exception("No input field on portal renamer!");
-
         field.onValueChanged.AddListener((new_val) =>
         {
             var lm = player.current.left_menu;
@@ -20,7 +16,24 @@ public class portal_renamer : MonoBehaviour
                 var p = (portal)lm;
                 field.text = p.attempt_rename(new_val);
             }
-            else throw new System.Exception("Could not find the portal to rename!");
         });
+
+        field.onEndEdit.AddListener((final_val) =>
+        {
+            // Refresh UI
+            player.current.ui_state = player.UI_STATE.ALL_CLOSED;
+            player.current.ui_state = player.UI_STATE.INVENTORY_OPEN;
+        });
+    }
+
+    private void OnEnable()
+    {
+        var lm = player.current.left_menu;
+        if (lm is portal)
+        {
+            var p = (portal)lm;
+            field.text = p.teleport_name();
+        }
+        else field.text = "";
     }
 }

@@ -38,68 +38,129 @@ public class player : networked_player, INotPathBlocking
     // Map camera setup
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
 
+    //##########//
+    // UI STATE //
+    //##########//
+
+    public enum UI_STATE
+    {
+        ALL_CLOSED = 0,
+        INVENTORY_OPEN,
+        MAP_OPEN,
+        RECIPE_BOOK_OPEN,
+        OPTIONS_MENU_OPEN
+    }
+
+    /// <summary> Which UI windows are currently open 
+    /// (excluding the inspection window, which can be 
+    /// open alongside any UI) </summary>
+    public UI_STATE ui_state
+    {
+        get => _ui_state;
+        set
+        {
+            // If we're using an item, we can't change the UI state
+            if (current_item_use != USE_TYPE.NOT_USING) return;
+
+            // Cinematic mode enforces ALL_CLOSED
+            if (fly_mode) value = UI_STATE.ALL_CLOSED;
+
+            _ui_state = value;
+            switch (_ui_state)
+            {
+                case UI_STATE.ALL_CLOSED:
+                    map_open = false;
+                    if (inventory != null) inventory.open = false;
+                    if (crafting_menu != null) crafting_menu.open = false;
+                    left_menu = null;
+                    options_menu.open = false;
+                    recipe.recipe_book.gameObject.SetActive(false);
+                    Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.Locked;
+                    break;
+
+                case UI_STATE.INVENTORY_OPEN:
+                    map_open = false;
+                    if (inventory != null) inventory.open = true;
+                    if (crafting_menu != null) crafting_menu.open = true;
+                    options_menu.open = false;
+                    recipe.recipe_book.gameObject.SetActive(false);
+                    Cursor.visible = true;
+                    Cursor.lockState = CursorLockMode.None;
+
+                    // Attempt also to open the left menu
+                    var ray = camera_ray(INTERACTION_RANGE, out float dist);
+                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
+                    break;
+
+                case UI_STATE.MAP_OPEN:
+                    map_open = true;
+                    if (inventory != null) inventory.open = false;
+                    if (crafting_menu != null) crafting_menu.open = false;
+                    left_menu = null;
+                    options_menu.open = false;
+                    recipe.recipe_book.gameObject.SetActive(false);
+                    Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.Locked;
+                    break;
+
+                case UI_STATE.RECIPE_BOOK_OPEN:
+                    map_open = false;
+                    if (inventory != null) inventory.open = false;
+                    if (crafting_menu != null) crafting_menu.open = false;
+                    left_menu = null;
+                    options_menu.open = false;
+                    recipe.recipe_book.gameObject.SetActive(true);
+                    Cursor.visible = true;
+                    Cursor.lockState = CursorLockMode.None;
+                    break;
+
+                case UI_STATE.OPTIONS_MENU_OPEN:
+                    map_open = false;
+                    if (inventory != null) inventory.open = false;
+                    if (crafting_menu != null) crafting_menu.open = false;
+                    left_menu = null;
+                    options_menu.open = true;
+                    recipe.recipe_book.gameObject.SetActive(false);
+                    Cursor.visible = true;
+                    Cursor.lockState = CursorLockMode.None;
+                    break;
+
+                default:
+                    throw new System.Exception("Unkown UI_STATE!");
+            }
+
+            // We can see the crosshairs if we cant see the mouse
+            crosshairs.enabled = !Cursor.visible;
+        }
+    }
+    UI_STATE _ui_state;
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
 
-    /// <summary> Run the world generator around the current player position. </summary>
-    void run_world_generator()
-    {
-        biome = biome.at(transform.position, generate: true);
-        if (biome != null)
-        {
-            point = biome.blended_point(transform.position);
-            lighting.sky_color_daytime = point.sky_color;
-            lighting.fog_distance = point.fog_distance;
-            water.color = point.water_color;
-        }
-    }
-
-    void run_teleports()
-    {
-        if (controls.key_press(controls.BIND.HOME_TELEPORT))
-        {
-            var tm = FindObjectOfType<teleport_manager>();
-            if (tm != null)
-                teleport(tm.nearest_teleport_destination(transform.position));
-        }
-    }
-
-    /// <summary> Update function that is only called on the local client. </summary>
-    void local_update()
-    {
-        indicate_damage();
-        run_world_generator();
-        run_recipe_book();
-        run_inspect_info();
-        run_inventory();
-        run_quickbar_shortcuts();
-        run_map();
-        run_first_third_person();
-        run_item_use();
-        run_mouse_look();
-        run_movement();
-        run_crosshairs();
-        run_teleports();
-    }
-
     void Update()
     {
-        // Call the local update function
-        if (has_authority) local_update();
+        // Most things require authority to run
+        if (has_authority)
+        {
+            indicate_damage();
+            run_world_generator();
+            run_recipe_book();
+            run_inspect_info();
+            run_inventory();
+            run_options();
+            run_quickbar_shortcuts();
+            run_map();
+            run_first_third_person();
+            run_item_use();
+            run_mouse_look();
+            run_movement();
+            run_teleports();
+        }
+
         set_hand_position();
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (camera == null) return;
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, game.render_range);
-        Gizmos.color = Color.green;
-        float dis;
-        var r = camera_ray(INTERACTION_RANGE, out dis);
-        Gizmos.DrawLine(r.origin, r.origin + r.direction * dis);
     }
 
     //###########//
@@ -108,53 +169,21 @@ public class player : networked_player, INotPathBlocking
 
     void run_inventory()
     {
-        // Things that mean we can't use the inventory
-        if (current_item_use != USE_TYPE.NOT_USING) return;
-        if (map_open) return;
-        if (cinematic_mode) return;
-        if (inventory == null) return;
-        if (crafting_menu == null) return;
-
-        // Ensure inventory is closed when the opions menu is
-        if (options_menu.open)
-        {
-            inventory.open = false;
-            crafting_menu.open = false;
-            return;
-        }
-
         // Toggle inventory
         if (controls.key_press(controls.BIND.OPEN_INVENTORY))
         {
-            inventory.open = !inventory.open;
-            crafting_menu.open = inventory.open;
-            Cursor.visible = inventory.open;
-            Cursor.lockState = inventory.open ? CursorLockMode.None : CursorLockMode.Locked;
-
-            // Open/close the left menu
-            if (inventory.open)
-            {
-                var ray = camera_ray(INTERACTION_RANGE, out float dist);
-                left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
-            }
-            else left_menu = null;
+            if (ui_state == UI_STATE.INVENTORY_OPEN) ui_state = UI_STATE.ALL_CLOSED;
+            else ui_state = UI_STATE.INVENTORY_OPEN;
         }
     }
 
     void run_recipe_book()
     {
+        // Toggle recipe book
         if (controls.key_press(controls.BIND.OPEN_RECIPE_BOOK))
-            recipe_book_open = !recipe_book_open;
-    }
-
-    bool recipe_book_open
-    {
-        get => recipe.recipe_book.gameObject.activeInHierarchy;
-        set
         {
-            recipe.recipe_book.gameObject.SetActive(value);
-            Cursor.visible = value;
-            Cursor.lockState = value ? CursorLockMode.None : CursorLockMode.Locked;
+            if (ui_state == UI_STATE.RECIPE_BOOK_OPEN) ui_state = UI_STATE.ALL_CLOSED;
+            else ui_state = UI_STATE.RECIPE_BOOK_OPEN;
         }
     }
 
@@ -187,8 +216,6 @@ public class player : networked_player, INotPathBlocking
         throw new System.Exception(err);
     }
 
-    const int QUICKBAR_SLOTS_COUNT = 8;
-
     public inventory inventory { get; private set; }
     public inventory crafting_menu { get; private set; }
 
@@ -196,19 +223,28 @@ public class player : networked_player, INotPathBlocking
     public ILeftPlayerMenu left_menu
     {
         get => _left_menu;
-        set
+        private set
         {
             if (_left_menu == value)
                 return; // No change
 
-            if (value != null)
+            // Deactivate the old menu
+            if (_left_menu != null)
+            {
+                _left_menu.on_left_menu_close();
+                _left_menu.left_menu_transform().gameObject.SetActive(false);
+            }
+
+            // Activate the new menu
+            _left_menu = value;
+            if (_left_menu != null)
             {
                 // Position the left menu at the left_expansion_point
                 // but leave it parented to the canvas, rather than
                 // the player inventory
-                var rt = value.left_menu_transform();
+                var rt = _left_menu.left_menu_transform();
                 if (rt == null)
-                    value = null;
+                    _left_menu = null;
                 else
                 {
                     rt.gameObject.SetActive(true);
@@ -216,18 +252,9 @@ public class player : networked_player, INotPathBlocking
                     rt.SetParent(attach_point.transform);
                     rt.anchoredPosition = Vector2.zero;
                     rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                    value.on_left_menu_open();
+                    _left_menu.on_left_menu_open();
                 }
             }
-
-            if (_left_menu != null)
-            {
-                // Deactivate the menu
-                _left_menu.on_left_menu_close();
-                _left_menu.left_menu_transform().gameObject.SetActive(false);
-            }
-
-            _left_menu = value;
         }
     }
     ILeftPlayerMenu _left_menu;
@@ -238,17 +265,9 @@ public class player : networked_player, INotPathBlocking
         return inventory?.nth_slot(n - 1);
     }
 
-    public void close_all_ui()
-    {
-        if (inventory != null) inventory.open = false;
-        left_menu = null;
-    }
-
     //##########//
     // ITEM USE //
     //##########//
-
-
 
     // Called on a left click when no item is equipped
     public void left_click_with_hand()
@@ -278,31 +297,6 @@ public class player : networked_player, INotPathBlocking
     public void right_click_with_hand()
     {
 
-    }
-
-    UnityEngine.UI.Image crosshairs;
-    public string cursor
-    {
-        get
-        {
-            if (crosshairs == null ||
-                crosshairs.sprite == null ||
-                !crosshairs.gameObject.activeInHierarchy) return null;
-            return crosshairs.sprite.name;
-        }
-        set
-        {
-            if (cursor == value) return;
-            if (value == null)
-            {
-                crosshairs.gameObject.SetActive(false);
-            }
-            else
-            {
-                crosshairs.gameObject.SetActive(true);
-                crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
-            }
-        }
     }
 
     // The ways that we can use an item
@@ -356,15 +350,12 @@ public class player : networked_player, INotPathBlocking
     }
 
     item.use_result current_item_use_result;
-
     void run_item_use()
     {
-        // Things that disallow item use
-        if (options_menu.open) return;
-        if (inventory.open) return;
-        if (map_open) return;
+        // Don't allow item use when in UI
+        if (ui_state != UI_STATE.ALL_CLOSED) return;
 
-        // Use items if the inventory/map aren't open
+        // Use items
         current_item_use_result = item.use_result.complete;
         if (current_item_use == USE_TYPE.NOT_USING)
         {
@@ -450,7 +441,7 @@ public class player : networked_player, INotPathBlocking
 
             // If this is the local player, set the cursor
             if (has_authority)
-                cursor = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
+                cursor_sprite = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
         }
     }
 
@@ -463,18 +454,17 @@ public class player : networked_player, INotPathBlocking
 
     void toggle_equip(int slot)
     {
+        // Toggle equipping the item in the given slot
         if (slot_equipped.value == slot) slot_equipped.value = 0;
         else slot_equipped.value = slot;
     }
 
     void run_quickbar_shortcuts()
     {
-        // Things that mean we can't use the quickbar shortcuts
-        if (Cursor.visible) return;
-        if (cinematic_mode) return;
-        if (map_open) return;
-        if (current_item_use != USE_TYPE.NOT_USING) return;
-        if (inventory == null) return;
+        // Can't use quickbar shortcuts from the UI
+        if (ui_state != UI_STATE.ALL_CLOSED) return;
+
+        const int QUICKBAR_SLOTS_COUNT = 8;
 
         // Select something in the world from the quickbar
         if (controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD))
@@ -482,18 +472,15 @@ public class player : networked_player, INotPathBlocking
             var ray = camera_ray(INTERACTION_RANGE, out float dist);
             var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
             if (itm != null)
-            {
                 for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
                     if (quickbar_slot(i)?.item?.name == itm.name)
                     {
                         slot_equipped.value = i;
                         return;
                     }
-            }
         }
 
         // Select quickbar item using keyboard shortcut
-
         if (controls.key_press(controls.BIND.QUICKBAR_1)) toggle_equip(1);
         else if (controls.key_press(controls.BIND.QUICKBAR_2)) toggle_equip(2);
         else if (controls.key_press(controls.BIND.QUICKBAR_3)) toggle_equip(3);
@@ -532,6 +519,8 @@ public class player : networked_player, INotPathBlocking
 
     void run_inspect_info()
     {
+        // Note that the inspection window can be 
+        // opened independently of the UI state
         inspect_info.visible = controls.key_down(controls.BIND.INSPECT);
     }
 
@@ -556,14 +545,30 @@ public class player : networked_player, INotPathBlocking
     //  MOVEMENT //
     //###########//
 
+    CharacterController controller;
+    Vector3 velocity = Vector3.zero;
+    Vector3 fly_velocity = Vector3.zero;
+
     void run_movement()
     {
         // Things that disallow movement
+        if (ui_state == UI_STATE.OPTIONS_MENU_OPEN) return;
         if (left_menu != null) return;
         if (!current_item_use_result.allows_move) return;
 
         move();
         float_in_water();
+    }
+
+    void run_teleports()
+    {
+        // Carry out home teleports
+        if (controls.key_press(controls.BIND.HOME_TELEPORT))
+        {
+            var tm = FindObjectOfType<teleport_manager>();
+            if (tm != null)
+                teleport(tm.nearest_teleport_destination(transform.position));
+        }
     }
 
     void move()
@@ -579,17 +584,10 @@ public class player : networked_player, INotPathBlocking
             return;
         }
 
-        crouched = controls.key_down(controls.BIND.CROUCH);
+        if (fly_mode) fly_move();
+        else normal_move();
 
-        if (cinematic_mode)
-            fly_move();
-        else
-            normal_move();
-
-        // Ensure we don't accumulate too much -ve y velocity
-        if (controller.isGrounded && velocity.y < -1f)
-            velocity.y = -1f;
-
+        // Update the network with our new position
         networked_position = transform.position;
     }
 
@@ -619,7 +617,7 @@ public class player : networked_player, INotPathBlocking
 
         // Climb ladders
         bool climbing_ladder = false;
-        if (controls.key_down(controls.BIND.WALK_FORWARD) || 
+        if (controls.key_down(controls.BIND.WALK_FORWARD) ||
             controls.key_down(controls.BIND.PAUSE_ON_LADDER))
             foreach (var hit in
             Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
@@ -636,17 +634,21 @@ public class player : networked_player, INotPathBlocking
                 }
             }
 
+        // Turn on/off crouch
+        crouched = !climbing_ladder && controls.key_down(controls.BIND.CROUCH);
+
         if (controller.isGrounded)
         {
             // Jumping
-            if (controls.key_press(controls.BIND.JUMP))
-                velocity.y = JUMP_VEL;
+            if (controls.key_press(controls.BIND.JUMP)) velocity.y = JUMP_VEL;
+
+            // Ensure we don't accumulate too much -ve y velocity
+            if (velocity.y < -1f) velocity.y = -1f;
         }
         else
         {
             // Gravity
-            if (!climbing_ladder)
-                velocity.y -= GRAVITY * Time.deltaTime;
+            if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
         }
 
         // Control forward/back velocity
@@ -684,11 +686,11 @@ public class player : networked_player, INotPathBlocking
             transform.position = terra_hit.point;
     }
 
-    Vector3 fly_velocity = Vector3.zero;
     void fly_move()
     {
         const float FLY_ACCEL = 10f;
 
+        crouched = false;
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
 
@@ -708,17 +710,15 @@ public class player : networked_player, INotPathBlocking
         controller.Move(move);
     }
 
-    CharacterController controller;
-    Vector3 velocity = Vector3.zero;
-
     public void teleport(Vector3 location)
     {
         if (controller == null)
             return;
 
-        Debug.Log("Teleporting to " + location);
+        ui_state = UI_STATE.ALL_CLOSED;
         controller.enabled = false;
         networked_position = location;
+
         chunk.add_generation_listener(location, () =>
         {
             controller.enabled = true;
@@ -745,7 +745,7 @@ public class player : networked_player, INotPathBlocking
         private set
         {
             // Can't crouch in cinematic mode
-            if (cinematic_mode) value = false;
+            if (fly_mode) value = false;
 
             _crouched = value;
             if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
@@ -754,37 +754,29 @@ public class player : networked_player, INotPathBlocking
     }
     bool _crouched;
 
-    public bool cinematic_mode
+    public bool fly_mode
     {
-        get => _cinematic_mode;
+        get => _fly_mode;
         set
         {
-            _cinematic_mode = value;
+            _fly_mode = value;
 
             fly_velocity = Vector3.zero;
             mouse_look_velocity = Vector2.zero;
-
-            if (value)
-            {
-                close_all_ui();
-                cursor = null;
-            }
-            else
-            {
-                cursor = cursors.DEFAULT;
-            }
+            ui_state = UI_STATE.ALL_CLOSED;
+            cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
-                // Doesn't affect the obscurer/water
-                if (r.transform.IsChildOf(obscurer.transform)) continue;
+                // Doesn't affect the sky/water
+                if (r.transform.IsChildOf(physical_sky.transform)) continue;
                 if (r.transform.IsChildOf(water.transform)) continue;
-                r.enabled = !value;
+                r.enabled = !_fly_mode;
             }
         }
     }
-    bool _cinematic_mode;
+    bool _fly_mode;
 
     public bool underwater
     {
@@ -796,6 +788,8 @@ public class player : networked_player, INotPathBlocking
 
             _underwater = value;
 
+            // Get the various postprocessing things we need
+            // to set to make the underwater effect.
             if (!options_menu.global_volume.profile.TryGet(
                 out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
                 throw new System.Exception("No ColorAdjustments override on global volume!");
@@ -812,24 +806,25 @@ public class player : networked_player, INotPathBlocking
                 out UnityEngine.Rendering.HighDefinition.DepthOfField dof))
                 throw new System.Exception("No DepthOfField override on global volume!");
 
-            dof.focusMode.value = value ?
+            // Create/remove the underwater effect
+            dof.focusMode.value = _underwater ?
                 UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Manual :
                 UnityEngine.Rendering.HighDefinition.DepthOfFieldMode.Off;
 
-            color.colorFilter.value = value ? water.color : Color.white;
-            chroma.intensity.value = value ? 1f : 0f;
-            vignette.intensity.value = value ? 0.4f : 0f;
+            color.colorFilter.value = _underwater ? water.color : Color.white;
+            chroma.intensity.value = _underwater ? 1f : 0f;
+            vignette.intensity.value = _underwater ? 0.4f : 0f;
 
-
-            if (value && bubbles == null)
+            if (_underwater && bubbles == null)
             {
+                // Create the bubbles if they don't already exist
                 bubbles = Resources.Load<ParticleSystem>("particle_systems/bubbles").inst();
                 bubbles.transform.SetParent(transform);
                 bubbles.transform.localPosition = Vector3.zero;
                 bubbles.transform.localRotation = Quaternion.identity;
             }
 
-            bubbles.gameObject.SetActive(value);
+            bubbles.gameObject.SetActive(_underwater);
         }
     }
     bool _underwater;
@@ -841,7 +836,8 @@ public class player : networked_player, INotPathBlocking
 
     void run_first_third_person()
     {
-        if (map_open) return;
+        // Only allow toggle first/third when no UI is open
+        if (ui_state != UI_STATE.ALL_CLOSED) return;
 
         if (controls.key_press(controls.BIND.TOGGLE_THIRD_PERSON))
             first_person = !first_person;
@@ -850,10 +846,11 @@ public class player : networked_player, INotPathBlocking
     void run_mouse_look()
     {
         // Things that disallow camera movement
-        if (Cursor.visible) return;
+        if (!(ui_state == UI_STATE.ALL_CLOSED || 
+              ui_state == UI_STATE.MAP_OPEN)) return;
         if (!current_item_use_result.allows_look) return;
 
-        if (cinematic_mode) mouse_look_fly();
+        if (fly_mode) mouse_look_fly();
         else mouse_look_normal();
     }
 
@@ -864,7 +861,10 @@ public class player : networked_player, INotPathBlocking
 
         // Toggle the map view on M
         if (controls.key_press(controls.BIND.TOGGLE_MAP))
-            map_open = !map_open;
+        {
+            if (ui_state == UI_STATE.MAP_OPEN) ui_state = UI_STATE.ALL_CLOSED;
+            else ui_state = UI_STATE.MAP_OPEN;
+        }
 
         if (map_open)
         {
@@ -885,10 +885,41 @@ public class player : networked_player, INotPathBlocking
         }
     }
 
-    void run_crosshairs()
+    void run_options()
     {
-        crosshairs.enabled = !Cursor.visible;
+        // Toggle options
+        if (controls.key_press(controls.BIND.TOGGLE_OPTIONS))
+        {
+            if (ui_state == UI_STATE.OPTIONS_MENU_OPEN) ui_state = UI_STATE.ALL_CLOSED;
+            else ui_state = UI_STATE.OPTIONS_MENU_OPEN;
+        }
     }
+
+    // The current cursor sprite
+    string cursor_sprite
+    {
+        get
+        {
+            if (crosshairs == null ||
+                crosshairs.sprite == null ||
+                !crosshairs.gameObject.activeInHierarchy) return null;
+            return crosshairs.sprite.name;
+        }
+        set
+        {
+            if (cursor_sprite == value) return;
+            if (value == null)
+            {
+                crosshairs.gameObject.SetActive(false);
+            }
+            else
+            {
+                crosshairs.gameObject.SetActive(true);
+                crosshairs.sprite = Resources.Load<Sprite>("sprites/" + value);
+            }
+        }
+    }
+    UnityEngine.UI.Image crosshairs;
 
     void mouse_look_normal()
     {
@@ -930,24 +961,28 @@ public class player : networked_player, INotPathBlocking
     public Camera camera
     { get; private set; }
 
-    // Object used to obscure player view
-    GameObject obscurer;
+    /// <summary> The in-game sky sphere. </summary>
+    Renderer physical_sky;
+    public bool physical_sky_enabled
+    {
+        get => physical_sky.enabled;
+        set => physical_sky.enabled = value;
+    }
 
     public Color sky_color
     {
-        get => utils.get_color(obscurer_renderer.material);
+        get => utils.get_color(physical_sky.material);
         set
         {
+            var hd_cam = camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+            if (hd_cam != null)
+            {
+                hd_cam.backgroundColorHDR = value;
+            }
+            camera.clearFlags = CameraClearFlags.Color;
             camera.backgroundColor = value;
-            utils.set_color(obscurer_renderer.material, value);
+            utils.set_color(physical_sky.material, value);
         }
-    }
-    Renderer obscurer_renderer;
-
-    public bool obscurer_enabed
-    {
-        get => obscurer_renderer.enabled;
-        set => obscurer_renderer.enabled = value;
     }
 
     /// <summary> Are we in first, or third person? </summary>
@@ -1003,8 +1038,8 @@ public class player : networked_player, INotPathBlocking
         // Let the network know
         render_range = game.render_range;
 
-        // Set the obscurer size to the render range
-        obscurer.transform.localScale = Vector3.one * game.render_range * 0.99f;
+        // Set the sky size to the render range
+        physical_sky.transform.localScale = Vector3.one * game.render_range * 0.99f;
 
         if (!map_open)
         {
@@ -1024,8 +1059,8 @@ public class player : networked_player, INotPathBlocking
         get { return camera.orthographic; }
         set
         {
-            // Turn off the obscurer in map view
-            obscurer.SetActive(!value);
+            // Turn off the physical sky in map view
+            physical_sky_enabled = !value && options_menu.get_bool("physical_sky");
 
             // Set the camera orthograpic if in 
             // map view, otherwise perspective
@@ -1099,9 +1134,22 @@ public class player : networked_player, INotPathBlocking
         return new Ray(ray.origin + interval[0] * ray.direction, ray.direction);
     }
 
-    //########//
-    // HEALTH //
-    //########//
+    //#####//
+    // MAP //
+    //#####//
+
+    /// <summary> Run the world generator around the current player position. </summary>
+    void run_world_generator()
+    {
+        biome = biome.at(transform.position, generate: true);
+        if (biome != null)
+        {
+            point = biome.blended_point(transform.position);
+            lighting.sky_color_daytime = point.sky_color;
+            lighting.fog_distance = point.fog_distance;
+            water.color = point.water_color;
+        }
+    }
 
     public biome biome
     {
@@ -1116,8 +1164,11 @@ public class player : networked_player, INotPathBlocking
     }
     biome _biome;
 
-
     public biome.point point { get; private set; }
+
+    //########//
+    // HEALTH //
+    //########//
 
     public int max_health { get => 100; }
 
@@ -1195,10 +1246,10 @@ public class player : networked_player, INotPathBlocking
         first_person = true; // Start with camera in 1st person position
 
         // Enforce the render limit with a sky-color object
-        obscurer = Resources.Load<GameObject>("misc/obscurer").inst();
-        obscurer.transform.SetParent(transform);
-        obscurer.transform.localPosition = Vector3.zero;
-        obscurer_renderer = obscurer.GetComponentInChildren<Renderer>();
+        var sky = Resources.Load<GameObject>("misc/physical_sky").inst();
+        sky.transform.SetParent(transform);
+        sky.transform.localPosition = Vector3.zero;
+        physical_sky = sky.GetComponentInChildren<Renderer>();
 
         // The distance to the underwater screen, just past the near clipping plane
         float usd = camera.nearClipPlane * 1.1f;
@@ -1215,7 +1266,7 @@ public class player : networked_player, INotPathBlocking
         crt.anchorMin = new Vector2(0.5f, 0.5f);
         crt.anchorMax = new Vector2(0.5f, 0.5f);
         crt.anchoredPosition = Vector2.zero;
-        cursor = "default_cursor";
+        cursor_sprite = "default_cursor";
 
         // Find the healthbar
         healthbar = FindObjectOfType<player_healthbar>();
