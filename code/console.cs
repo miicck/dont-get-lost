@@ -10,9 +10,14 @@ public class console : MonoBehaviour
     /// <summary> True if the console window is open/selected. </summary>
     public static bool open
     {
-        get => current.gameObject.activeInHierarchy;
+        get
+        {
+            if (current == null) return false;
+            return current.gameObject.activeInHierarchy;
+        }
         set
         {
+            if (current == null) return;
             current.gameObject.SetActive(value);
             if (value)
                 current.input.ActivateInputField();

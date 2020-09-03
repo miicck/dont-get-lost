@@ -121,6 +121,11 @@ public class portal : building_material, ILeftPlayerMenu
         FindObjectOfType<teleport_manager>().register_portal(this);
     }
 
+    public string attempt_rename(string new_name)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public override void on_forget(bool deleted)
     {
         base.on_forget(deleted);

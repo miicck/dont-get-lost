@@ -189,20 +189,20 @@ public class game : MonoBehaviour
         load_balancing.update();
 
         // Toggle the console
-        if (controls.key_press(controls.binds.toggle_console))
+        if (controls.key_press(controls.BIND.TOGGLE_CONSOLE))
             console.open = !console.open;
 
         // Toggle options
-        if (controls.key_press(controls.binds.toggle_options))
+        if (controls.key_press(controls.BIND.TOGGLE_OPTIONS))
             options_menu.open = !options_menu.open;
 
         // Toggle the debug panel
-        if (controls.key_press(controls.binds.toggle_debug_info))
+        if (controls.key_press(controls.BIND.TOGGLE_DEBUG_INFO))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
         // Increase/Decrease render ranges
-        if (controls.key_press(controls.binds.increase_render_range)) render_range_target += 10f;
-        if (controls.key_press(controls.binds.decrease_render_range)) render_range_target -= 10f;
+        if (controls.key_press(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
+        if (controls.key_press(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
 
         // Spawn enemies

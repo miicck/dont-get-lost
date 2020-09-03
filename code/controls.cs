@@ -10,77 +10,154 @@ public static class controls
         RIGHT = 1,
     }
 
-    public class keybinds
+    public enum BIND
     {
-        public KeyCode walk_forward = KeyCode.W;
-        public KeyCode walk_backward = KeyCode.S;
-        public KeyCode strafe_left = KeyCode.A;
-        public KeyCode strafe_right = KeyCode.D;
-        public KeyCode home_teleport = KeyCode.H;
-        public KeyCode open_inventory = KeyCode.E;
-        public KeyCode open_recipe_book = KeyCode.R;
-        public KeyCode select_item_from_world = KeyCode.Q;
-        public KeyCode quickbar_1 = KeyCode.Alpha1;
-        public KeyCode quickbar_2 = KeyCode.Alpha2;
-        public KeyCode quickbar_3 = KeyCode.Alpha3;
-        public KeyCode quickbar_4 = KeyCode.Alpha4;
-        public KeyCode quickbar_5 = KeyCode.Alpha5;
-        public KeyCode quickbar_6 = KeyCode.Alpha6;
-        public KeyCode quickbar_7 = KeyCode.Alpha7;
-        public KeyCode quickbar_8 = KeyCode.Alpha8;
-        public KeyCode inspect = KeyCode.Tab;
-        public KeyCode crouch = KeyCode.LeftShift;
-        public KeyCode sink = KeyCode.LeftShift;
-        public KeyCode pause_on_ladder = KeyCode.LeftShift;
-        public KeyCode jump = KeyCode.Space;
-        public KeyCode fly_up = KeyCode.Space;
-        public KeyCode fly_down = KeyCode.LeftShift;
-        public KeyCode slow_walk = KeyCode.LeftControl;
-        public KeyCode toggle_third_person = KeyCode.V;
-        public KeyCode toggle_map = KeyCode.M;
-        public KeyCode craft_five = KeyCode.LeftShift;
-        public KeyCode quick_item_transfer = KeyCode.LeftShift;
-        public KeyCode toggle_console = KeyCode.BackQuote;
-        public KeyCode toggle_options = KeyCode.Escape;
-        public KeyCode toggle_debug_info = KeyCode.F3;
-        public KeyCode increase_render_range = KeyCode.Equals;
-        public KeyCode decrease_render_range = KeyCode.Minus;
-        public KeyCode change_pivot = KeyCode.C;
-        public KeyCode fine_rotation = KeyCode.LeftControl;
-        public KeyCode rotate_anticlockwise_around_up = KeyCode.Q;
-        public KeyCode rotate_clockwise_around_up = KeyCode.E;
-        public KeyCode rotate_anticlockwise_around_right = KeyCode.S;
-        public KeyCode rotate_clockwise_around_right = KeyCode.W;
-        public KeyCode rotate_anticlockwise_around_forward = KeyCode.D;
-        public KeyCode rotate_clockwise_around_forward = KeyCode.A;
-        public KeyCode ignore_snap_points = KeyCode.LeftControl;
-        public KeyCode cycle_fullscreen_modes = KeyCode.F11;
+        WALK_FORWARD,
+        WALK_BACKWARD,
+        STRAFE_LEFT,
+        STRAFE_RIGHT,
+        HOME_TELEPORT,
+        OPEN_INVENTORY,
+        OPEN_RECIPE_BOOK,
+        SELECT_ITEM_FROM_WORLD,
+        QUICKBAR_1,
+        QUICKBAR_2,
+        QUICKBAR_3,
+        QUICKBAR_4,
+        QUICKBAR_5,
+        QUICKBAR_6,
+        QUICKBAR_7,
+        QUICKBAR_8,
+        INSPECT,
+        CROUCH,
+        SINK,
+        PAUSE_ON_LADDER,
+        JUMP,
+        FLY_UP,
+        FLY_DOWN,
+        SLOW_WALK,
+        TOGGLE_THIRD_PERSON,
+        TOGGLE_MAP,
+        CRAFT_FIVE,
+        QUICK_ITEM_TRANSFER,
+        TOGGLE_CONSOLE,
+        TOGGLE_OPTIONS,
+        TOGGLE_DEBUG_INFO,
+        INCREASE_RENDER_RANGE,
+        DECREASE_RENDER_RANGE,
+        CHANGE_PIVOT,
+        FINE_ROTATION,
+        ROTATE_ANTICLOCKWISE_AROUND_UP,
+        ROTATE_CLOCKWISE_AROUND_UP,
+        ROTATE_ANTICLOCKWISE_AROUND_RIGHT,
+        ROTATE_CLOCKWISE_AROUND_RIGHT,
+        ROTATE_ANTICLOCKWISE_AROUND_FORWARD,
+        ROTATE_CLOCKWISE_AROUND_FORWARD,
+        IGNORE_SNAP_POINTS,
+        CYCLE_FULLSCREEN_MODES
     }
 
-    public static keybinds binds = new keybinds();
-
-    public static bool key_press(KeyCode k)
+    static Dictionary<BIND, KeyCode> default_keybinds()
     {
-        return Input.GetKeyDown(k);
+        return new Dictionary<BIND, KeyCode>
+        {
+            [BIND.WALK_FORWARD] = KeyCode.W,
+            [BIND.WALK_BACKWARD] = KeyCode.S,
+            [BIND.STRAFE_LEFT] = KeyCode.A,
+            [BIND.STRAFE_RIGHT] = KeyCode.D,
+            [BIND.HOME_TELEPORT] = KeyCode.H,
+            [BIND.OPEN_INVENTORY] = KeyCode.E,
+            [BIND.OPEN_RECIPE_BOOK] = KeyCode.R,
+            [BIND.SELECT_ITEM_FROM_WORLD] = KeyCode.Q,
+            [BIND.QUICKBAR_1] = KeyCode.Alpha1,
+            [BIND.QUICKBAR_2] = KeyCode.Alpha2,
+            [BIND.QUICKBAR_3] = KeyCode.Alpha3,
+            [BIND.QUICKBAR_4] = KeyCode.Alpha4,
+            [BIND.QUICKBAR_5] = KeyCode.Alpha5,
+            [BIND.QUICKBAR_6] = KeyCode.Alpha6,
+            [BIND.QUICKBAR_7] = KeyCode.Alpha7,
+            [BIND.QUICKBAR_8] = KeyCode.Alpha8,
+            [BIND.INSPECT] = KeyCode.Tab,
+            [BIND.CROUCH] = KeyCode.LeftShift,
+            [BIND.SINK] = KeyCode.LeftShift,
+            [BIND.PAUSE_ON_LADDER] = KeyCode.LeftShift,
+            [BIND.JUMP] = KeyCode.Space,
+            [BIND.FLY_UP] = KeyCode.Space,
+            [BIND.FLY_DOWN] = KeyCode.LeftShift,
+            [BIND.SLOW_WALK] = KeyCode.LeftControl,
+            [BIND.TOGGLE_THIRD_PERSON] = KeyCode.V,
+            [BIND.TOGGLE_MAP] = KeyCode.M,
+            [BIND.CRAFT_FIVE] = KeyCode.LeftShift,
+            [BIND.QUICK_ITEM_TRANSFER] = KeyCode.LeftShift,
+            [BIND.TOGGLE_CONSOLE] = KeyCode.BackQuote,
+            [BIND.TOGGLE_OPTIONS] = KeyCode.Escape,
+            [BIND.TOGGLE_DEBUG_INFO] = KeyCode.F3,
+            [BIND.INCREASE_RENDER_RANGE] = KeyCode.Equals,
+            [BIND.DECREASE_RENDER_RANGE] = KeyCode.Minus,
+            [BIND.CHANGE_PIVOT] = KeyCode.C,
+            [BIND.FINE_ROTATION] = KeyCode.LeftControl,
+            [BIND.ROTATE_ANTICLOCKWISE_AROUND_UP] = KeyCode.Q,
+            [BIND.ROTATE_CLOCKWISE_AROUND_UP] = KeyCode.E,
+            [BIND.ROTATE_ANTICLOCKWISE_AROUND_RIGHT] = KeyCode.S,
+            [BIND.ROTATE_CLOCKWISE_AROUND_RIGHT] = KeyCode.W,
+            [BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD] = KeyCode.D,
+            [BIND.ROTATE_CLOCKWISE_AROUND_FORWARD] = KeyCode.A,
+            [BIND.IGNORE_SNAP_POINTS] = KeyCode.LeftControl,
+            [BIND.CYCLE_FULLSCREEN_MODES] = KeyCode.F11,
+        };
     }
 
-    public static bool key_down(KeyCode k)
+    static bool controls_enabled()
     {
-        return Input.GetKey(k);
+        if (ui_focus_disables_controls.controls_disabled) return false;
+        if (console.open) return false;
+        return true;
+    }
+
+    static bool bind_enabled(BIND b)
+    {
+        return controls_enabled();
+    }
+
+    static bool mouse_enabled(MOUSE_BUTTON b)
+    {
+        return controls_enabled();
+    }
+
+    static bool axis_enabled(string name)
+    {
+        return controls_enabled();
+    }
+
+    static Dictionary<BIND, KeyCode> keybinds = default_keybinds();
+
+    public static bool key_press(BIND k)
+    {
+        if (!bind_enabled(k)) return false;
+        return Input.GetKeyDown(keybinds[k]);
+    }
+
+    public static bool key_down(BIND k)
+    {
+        if (!bind_enabled(k)) return false;
+        return Input.GetKey(keybinds[k]);
     }
 
     public static bool mouse_click(MOUSE_BUTTON button)
     {
+        if (!mouse_enabled(button)) return false;
         return Input.GetMouseButtonDown((int)button);
     }
 
     public static bool mouse_down(MOUSE_BUTTON button)
     {
+        if (!mouse_enabled(button)) return false;
         return Input.GetMouseButton((int)button);
     }
 
     public static float get_axis(string name)
     {
+        if (!axis_enabled(name)) return 0;
         return Input.GetAxis(name);
     }
 }

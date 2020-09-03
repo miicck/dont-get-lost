@@ -13,7 +13,7 @@ public class global_controls : MonoBehaviour
     void Update()
     {
         // Cycle fullscreen modes
-        if (controls.key_press(controls.binds.cycle_fullscreen_modes))
+        if (controls.key_press(controls.BIND.CYCLE_FULLSCREEN_MODES))
         {
             switch (Screen.fullScreenMode)
             {

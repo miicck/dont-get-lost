@@ -57,7 +57,7 @@ public class player : networked_player, INotPathBlocking
 
     void run_teleports()
     {
-        if (controls.key_press(controls.binds.home_teleport))
+        if (controls.key_press(controls.BIND.HOME_TELEPORT))
         {
             var tm = FindObjectOfType<teleport_manager>();
             if (tm != null)
@@ -85,12 +85,8 @@ public class player : networked_player, INotPathBlocking
 
     void Update()
     {
-        // Don't do anything if the console is open
-        if (console.open) return;
-
         // Call the local update function
         if (has_authority) local_update();
-
         set_hand_position();
     }
 
@@ -128,7 +124,7 @@ public class player : networked_player, INotPathBlocking
         }
 
         // Toggle inventory
-        if (controls.key_press(controls.binds.open_inventory))
+        if (controls.key_press(controls.BIND.OPEN_INVENTORY))
         {
             inventory.open = !inventory.open;
             crafting_menu.open = inventory.open;
@@ -147,7 +143,7 @@ public class player : networked_player, INotPathBlocking
 
     void run_recipe_book()
     {
-        if (controls.key_press(controls.binds.open_recipe_book))
+        if (controls.key_press(controls.BIND.OPEN_RECIPE_BOOK))
             recipe_book_open = !recipe_book_open;
     }
 
@@ -481,7 +477,7 @@ public class player : networked_player, INotPathBlocking
         if (inventory == null) return;
 
         // Select something in the world from the quickbar
-        if (controls.key_press(controls.binds.select_item_from_world))
+        if (controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD))
         {
             var ray = camera_ray(INTERACTION_RANGE, out float dist);
             var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
@@ -498,14 +494,14 @@ public class player : networked_player, INotPathBlocking
 
         // Select quickbar item using keyboard shortcut
 
-        if (controls.key_press(controls.binds.quickbar_1)) toggle_equip(1);
-        else if (controls.key_press(controls.binds.quickbar_2)) toggle_equip(2);
-        else if (controls.key_press(controls.binds.quickbar_3)) toggle_equip(3);
-        else if (controls.key_press(controls.binds.quickbar_4)) toggle_equip(4);
-        else if (controls.key_press(controls.binds.quickbar_5)) toggle_equip(5);
-        else if (controls.key_press(controls.binds.quickbar_6)) toggle_equip(6);
-        else if (controls.key_press(controls.binds.quickbar_7)) toggle_equip(7);
-        else if (controls.key_press(controls.binds.quickbar_8)) toggle_equip(8);
+        if (controls.key_press(controls.BIND.QUICKBAR_1)) toggle_equip(1);
+        else if (controls.key_press(controls.BIND.QUICKBAR_2)) toggle_equip(2);
+        else if (controls.key_press(controls.BIND.QUICKBAR_3)) toggle_equip(3);
+        else if (controls.key_press(controls.BIND.QUICKBAR_4)) toggle_equip(4);
+        else if (controls.key_press(controls.BIND.QUICKBAR_5)) toggle_equip(5);
+        else if (controls.key_press(controls.BIND.QUICKBAR_6)) toggle_equip(6);
+        else if (controls.key_press(controls.BIND.QUICKBAR_7)) toggle_equip(7);
+        else if (controls.key_press(controls.BIND.QUICKBAR_8)) toggle_equip(8);
 
         // Scroll through quickbar items
         float sw = controls.get_axis("Mouse ScrollWheel");
@@ -536,7 +532,7 @@ public class player : networked_player, INotPathBlocking
 
     void run_inspect_info()
     {
-        inspect_info.visible = controls.key_down(controls.binds.inspect);
+        inspect_info.visible = controls.key_down(controls.BIND.INSPECT);
     }
 
     inspect_info inspect_info
@@ -583,7 +579,7 @@ public class player : networked_player, INotPathBlocking
             return;
         }
 
-        crouched = controls.key_down(controls.binds.crouch);
+        crouched = controls.key_down(controls.BIND.CROUCH);
 
         if (cinematic_mode)
             fly_move();
@@ -610,7 +606,7 @@ public class player : networked_player, INotPathBlocking
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
         // Bouyancy (sink if shift is held)
-        if (!controls.key_down(controls.binds.sink))
+        if (!controls.key_down(controls.BIND.SINK))
             velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
         // Drag
@@ -623,8 +619,8 @@ public class player : networked_player, INotPathBlocking
 
         // Climb ladders
         bool climbing_ladder = false;
-        if (controls.key_down(controls.binds.walk_forward) || 
-            controls.key_down(controls.binds.pause_on_ladder))
+        if (controls.key_down(controls.BIND.WALK_FORWARD) || 
+            controls.key_down(controls.BIND.PAUSE_ON_LADDER))
             foreach (var hit in
             Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
                                     transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
@@ -635,7 +631,7 @@ public class player : networked_player, INotPathBlocking
                 {
                     climbing_ladder = true;
                     velocity.y = speed * LADDER_SPEED_MULT;
-                    if (controls.key_down(controls.binds.pause_on_ladder))
+                    if (controls.key_down(controls.BIND.PAUSE_ON_LADDER))
                         velocity.y = 0;
                 }
             }
@@ -643,7 +639,7 @@ public class player : networked_player, INotPathBlocking
         if (controller.isGrounded)
         {
             // Jumping
-            if (controls.key_press(controls.binds.jump))
+            if (controls.key_press(controls.BIND.JUMP))
                 velocity.y = JUMP_VEL;
         }
         else
@@ -654,16 +650,16 @@ public class player : networked_player, INotPathBlocking
         }
 
         // Control forward/back velocity
-        if (controls.key_down(controls.binds.walk_forward))
+        if (controls.key_down(controls.BIND.WALK_FORWARD))
             velocity += transform.forward * ACCELERATION * Time.deltaTime;
-        else if (controls.key_down(controls.binds.walk_backward))
+        else if (controls.key_down(controls.BIND.WALK_BACKWARD))
             velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
-        if (controls.key_down(controls.binds.strafe_right))
+        if (controls.key_down(controls.BIND.STRAFE_RIGHT))
             velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
-        else if (controls.key_down(controls.binds.strafe_left))
+        else if (controls.key_down(controls.BIND.STRAFE_LEFT))
             velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
         else velocity -= Vector3.Project(velocity, camera.transform.right);
 
@@ -696,12 +692,12 @@ public class player : networked_player, INotPathBlocking
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
 
-        if (controls.key_down(controls.binds.walk_forward)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.binds.walk_backward)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.binds.strafe_right)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.binds.strafe_left)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.binds.fly_up)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.binds.fly_down)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.WALK_FORWARD)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.WALK_BACKWARD)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.STRAFE_RIGHT)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.STRAFE_LEFT)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.FLY_UP)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.FLY_DOWN)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
 
         if (fly_velocity.magnitude > FLY_ACCEL * Time.deltaTime)
             fly_velocity -= fly_velocity.normalized * FLY_ACCEL * Time.deltaTime;
@@ -736,7 +732,7 @@ public class player : networked_player, INotPathBlocking
             float s = BASE_SPEED;
             if (crouched)
                 s *= CROUCH_SPEED_MOD;
-            else if (controls.key_down(controls.binds.slow_walk))
+            else if (controls.key_down(controls.BIND.SLOW_WALK))
                 s *= SLOW_WALK_SPEED_MOD;
 
             return s;
@@ -847,7 +843,7 @@ public class player : networked_player, INotPathBlocking
     {
         if (map_open) return;
 
-        if (controls.key_press(controls.binds.toggle_third_person))
+        if (controls.key_press(controls.BIND.TOGGLE_THIRD_PERSON))
             first_person = !first_person;
     }
 
@@ -867,7 +863,7 @@ public class player : networked_player, INotPathBlocking
         if (current_item_use != USE_TYPE.NOT_USING) return;
 
         // Toggle the map view on M
-        if (controls.key_press(controls.binds.toggle_map))
+        if (controls.key_press(controls.BIND.TOGGLE_MAP))
             map_open = !map_open;
 
         if (map_open)
