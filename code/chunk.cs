@@ -133,10 +133,36 @@ public class chunk : MonoBehaviour
     // UNITY CALLBACKS //
     //#################//
 
+    private void Start()
+    {
+        InvokeRepeating("world_object_range_checks", Random.Range(0, 1f), 1f);
+    }
+
     private void Update()
     {
         // Enabled if the player is in range
         enabled = in_range();
+    }
+
+    void world_object_range_checks()
+    {
+        if (!enabled) return;
+        if (!options_menu.get_bool("clip_out_of_range")) return;
+
+        // Disable out-of-range world objects
+        objects_created.iterate((x, z, w) =>
+        {
+            float dis = (w.transform.position - player.current.transform.position).magnitude;
+            w.gameObject.SetActive(dis < game.render_range);
+        });
+    }
+
+    public static void on_clip_setting_change(bool clip_out_of_range)
+    {
+        // If out of range clipping has been disabled, re-enable everything
+        if (!clip_out_of_range)
+            generated_chunks.iterate((xc, zc, c) =>
+                c.objects_created.iterate((x, z, w) => w.gameObject.SetActive(true)));
     }
 
     // Highlight the chunk if enabled

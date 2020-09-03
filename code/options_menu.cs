@@ -159,6 +159,10 @@ public class options_menu : MonoBehaviour
                 });
                 break;
 
+            case "clip_out_of_range":
+                chunk.on_clip_setting_change(value);
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }

@@ -1087,6 +1087,7 @@ public class player : networked_player, INotPathBlocking
                 // Restore 3D camera view
                 camera.transform.localRotation = saved_camera_rotation;
                 first_person = first_person; // This is needed
+                x_rotation.on_change();
             }
         }
     }

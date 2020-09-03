@@ -3,7 +3,5 @@
 - Get rid of settlers/all that goes with that (fixtures etc...)?
 - Create unique sprites for everything (ongoing)
 - Fix farming spots so that they display properly
-- Implement teleport-to-player/teleport-to-portal/portal naming
-- Wait to generate chunk locations until they 
-  are within render range (difficult without fucking up determinism)
+- Implement teleport-to-player
 - Implement ctrl-f in recipe book
