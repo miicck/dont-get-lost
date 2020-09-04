@@ -105,6 +105,10 @@ public class options_menu : MonoBehaviour
                 });
                 break;
 
+            case "mouse_look_sensitivity":
+                controls.mouse_look_sensitivity = val;
+                break;
+
             default:
                 throw new System.Exception("Unkown float option: " + name);
         }

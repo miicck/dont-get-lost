@@ -925,14 +925,14 @@ public class player : networked_player, INotPathBlocking
     void mouse_look_normal()
     {
         // Rotate the player view
-        y_rotation.value += controls.get_axis("Mouse X") * 5f;
+        y_rotation.value += controls.get_axis("Mouse X") * controls.mouse_look_sensitivity;
         if (!map_open)
-            x_rotation.value -= controls.get_axis("Mouse Y") * 5f;
+            x_rotation.value -= controls.get_axis("Mouse Y") * controls.mouse_look_sensitivity;
         else
         {
             // In map, so up/down rotation isn't networked    
             float eye_x = eye_transform.localRotation.eulerAngles.x;
-            eye_x -= controls.get_axis("Mouse Y") * 5f;
+            eye_x -= controls.get_axis("Mouse Y") * controls.mouse_look_sensitivity;
             eye_x = Mathf.Clamp(eye_x, 0, 90);
             eye_transform.localRotation = Quaternion.Euler(eye_x, 0, 0);
         }

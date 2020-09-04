@@ -4,6 +4,8 @@ using UnityEngine;
 
 public static class controls
 {
+    public static float mouse_look_sensitivity = 1f;
+
     public enum MOUSE_BUTTON : int
     {
         LEFT = 0,

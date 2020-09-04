@@ -159,10 +159,11 @@ public class chunk : MonoBehaviour
 
     public static void on_clip_setting_change(bool clip_out_of_range)
     {
-        // If out of range clipping has been disabled, re-enable everything
+        // If out of range clipping has been disabled, 
+        // ensure everything has the correct enabled state
         if (!clip_out_of_range)
             generated_chunks.iterate((xc, zc, c) =>
-                c.objects_created.iterate((x, z, w) => w.gameObject.SetActive(true)));
+                c.objects_created.iterate((x, z, w) => w.gameObject.SetActive(c.enabled)));
     }
 
     // Highlight the chunk if enabled
