@@ -16,6 +16,10 @@ public static class fog_distances
 public class lighting : MonoBehaviour
 {
     public Light sun;
+    public Color day_sun_color;
+    public Color dawn_sun_color;
+    public Color dusk_sun_color;
+    public Color night_sun_color;
 
     public static Color sky_color
     {
@@ -51,32 +55,39 @@ public class lighting : MonoBehaviour
 
     void Update()
     {
-        float t = time_manager.get_time();
-        float b = brightness_from_time(t);
+        // Work out the sun color from the time of day
+        float day = time_manager.day_amount;
+        float da = time_manager.dawn_amount;
+        float ds = time_manager.dusk_amount;
+        float nt = time_manager.night_amount;
 
-        // Work out the sun brightness from the raw brightness
-        float sb = b * 0.75f + 0.25f;
-        sun.color = new Color(sb, sb, sb);
+        sun.color = new Color(
+            day_sun_color.r * day + dawn_sun_color.r * da + dusk_sun_color.r * ds + night_sun_color.r * nt,
+            day_sun_color.g * day + dawn_sun_color.g * da + dusk_sun_color.g * ds + night_sun_color.g * nt,
+            day_sun_color.b * day + dawn_sun_color.b * da + dusk_sun_color.b * ds + night_sun_color.b * nt
+        );
 
         // Sun moves in sky - looks kinda fast/does wierd things to the shadows
         if (options_menu.get_bool("moving_sun"))
             sun.transform.forward = new Vector3(
-                Mathf.Cos(Mathf.PI * t),
-                -Mathf.Sin(Mathf.PI * t) - 0.5f,
+                Mathf.Cos(Mathf.PI * time_manager.time),
+                -Mathf.Sin(Mathf.PI * time_manager.time) - 1.1f, // Always slightly downward
                 0
             );
         else
             sun.transform.rotation = Quaternion.Euler(50, -30, 0);
 
+        // Overall ambient brightness
+        float b = time_manager.time_to_brightness;
+
         // Set the ambient brightness according to the desired sky color
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))
         {
-            // Work out ambient brightness as a function of raw brightness
-
-            float tb = b * 0.015f; // Top brightness (low in daytime - mostly provided by sun, zero at night)
-            float mb = b * 0.15f; // Middle brightness (medium in daytime, zero at night)
-            float bb = b * 0.26f + 0.04f; // Bottom brightness (bright in daytime, non-zero at night - so we can see)
+            // Work out ambient brightness as a function of raw brightness            
+            float tb = b * 0.015f + 0.04f; // Top brightness (low in daytime - mostly provided by sun)
+            float mb = b * 0.15f; // Middle brightness (medium in daytime, zero at night - otherwise water looks weird)
+            float bb = b * 0.26f + 0.04f; // Bottom brightness (bright in daytime)
 
             sky.top.value = new Color(tb, tb, tb);
             sky.middle.value = new Color(mb, mb, mb);
@@ -88,6 +99,17 @@ public class lighting : MonoBehaviour
         target_sky_color.g *= b;
         target_sky_color.b *= b;
         sky_color = Color.Lerp(sky_color, target_sky_color, Time.deltaTime * 5f);
+
+        // Apply time-based color adjustments
+        UnityEngine.Rendering.HighDefinition.ColorAdjustments color;
+        if (options_menu.global_volume.profile.TryGet(out color))
+        {
+            // Reduce saturation at night
+            float max_saturation = options_menu.get_float("saturation");
+            max_saturation = (max_saturation + 100f) / 200f;
+            float sat = max_saturation * (0.5f + 0.5f * b);
+            color.saturation.value = sat * 200f - 100f;
+        }
 
         // Enable/disable fog
         if (options_menu.get_bool("fog"))
@@ -123,27 +145,6 @@ public class lighting : MonoBehaviour
 
         // Let the volume system know that it needs updating
         options_menu.global_volume.profile.isDirty = true;
-    }
-
-    float brightness_from_time(float time)
-    {
-        const float DAWN_FRACTION = 0.1f;
-        const float DUSK_FRACTION = 0.1f;
-
-        // Dawn (end of night)
-        if (time > 2f - DAWN_FRACTION)
-            return 1f - (2f - time) / DAWN_FRACTION;
-
-        // Night
-        if (time > 1f)
-            return 0f;
-
-        // Dusk (end of day)
-        if (time > 1f - DUSK_FRACTION)
-            return (1f - time) / DUSK_FRACTION;
-
-        // Day
-        return 1f;
     }
 
     //##################//

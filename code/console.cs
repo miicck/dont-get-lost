@@ -129,7 +129,7 @@ public class console : MonoBehaviour
                     return console_error("Could not parse time from " + args[1]);
                 if (t < 0 || t > 2f)
                     return console_error("Time " + t + " out of range [0,2]!");
-                time_manager.set_time(t);
+                time_manager.time = t;
                 return true;
 
             default:

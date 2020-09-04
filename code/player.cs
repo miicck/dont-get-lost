@@ -961,7 +961,7 @@ public class player : networked_player, INotPathBlocking
         mouse_look_velocity.x += controls.get_axis("Mouse X");
         mouse_look_velocity.y += controls.get_axis("Mouse Y");
 
-        float deccel = Time.deltaTime * 10f;
+        float deccel = Time.deltaTime * mouse_look_velocity.magnitude;
         if (mouse_look_velocity.magnitude < deccel)
             mouse_look_velocity = Vector2.zero;
         else
