@@ -78,13 +78,24 @@ public class game : MonoBehaviour
         return true;
     }
 
+    /// <summary> Returns true if the render range is allowed
+    /// to change in the given way. </summary>
+    static bool allow_render_range_change(float old_val, float new_val)
+    {
+        if (old_val == new_val) return false;
+        if (new_val < MIN_RENDER_RANGE) return false;
+        if (new_val > old_val && 
+            chunk.enabled_and_generating >= chunk.generating_limit) return false;
+        return true;
+    }
+
     /// <summary> The target render range, which the actual render range will lerp to. </summary>
     public static float render_range_target
     {
         get { return _render_range_target; }
         set
         {
-            if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
+            if (!allow_render_range_change(_render_range_target, value)) return;
             _render_range_target = value;
         }
     }
@@ -96,8 +107,7 @@ public class game : MonoBehaviour
         get { return _render_range; }
         private set
         {
-            if (_render_range == value) return;
-            if (value < MIN_RENDER_RANGE) value = MIN_RENDER_RANGE;
+            if (!allow_render_range_change(_render_range, value)) return;
             _render_range = value;
             player.current.update_render_range();
             water_reflections.water_range = value;
@@ -219,7 +229,7 @@ public class game : MonoBehaviour
             return;
 
         string debug_text = "" +
-            "\nVERSION\n"+
+            "\nVERSION\n" +
             version_control.info() + "\n" +
             "\nWORLD\n" +
             world.info() + "\n" +
@@ -235,8 +245,8 @@ public class game : MonoBehaviour
             load_balancing.info() + "\n" +
             "\nENEMY SPAWNING\n" +
             enemies.info() + "\n" +
-            "\nTIME OF DAY\n"+
-            time_manager.info() +"\n";
+            "\nTIME OF DAY\n" +
+            time_manager.info() + "\n";
 
         debug_text = debug_text.Trim();
         this.debug_text.text = utils.allign_colons(debug_text);

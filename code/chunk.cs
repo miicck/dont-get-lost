@@ -28,6 +28,26 @@ public class chunk : MonoBehaviour
     static Dictionary<int, int, chunk> generated_chunks =
         new Dictionary<int, int, chunk>();
 
+    static Dictionary<int, int, chunk> generating_chunks =
+        new Dictionary<int, int, chunk>();
+
+    public static int chunks_generating => generating_chunks.count;
+    public static int chunks_generated => generated_chunks.count;
+    public static int enabled_and_generating
+    {
+        get
+        {
+            int count = 0;
+            generating_chunks.iterate((x, z, c) =>
+            {
+                if (c.enabled) ++count;
+            });
+            return count;
+        }
+    }
+
+    public static int generating_limit => load_balancing.iter + (int)Mathf.Sqrt(chunks_generated);
+
     // Dictionary of functions to call once a chunk is generated
     public delegate void on_gen_func();
     static Dictionary<int, int, on_gen_func> on_gen_functions =
@@ -273,6 +293,9 @@ public class chunk : MonoBehaviour
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();
         generator.transform.SetParent(transform);
         generator.chunk = this;
+
+        // Add this chunk to the generating list
+        generating_chunks.set(x, z, this);
     }
 
     // Continue generation, bit by bit
@@ -447,7 +470,10 @@ public class chunk : MonoBehaviour
     // Called when the chunk has finished generating
     void on_generation_complete()
     {
+        // Move chunk to generated set
+        generating_chunks.clear(x, z);
         generated_chunks.set(x, z, this);
+
         biome.update_chunk_neighbours();
         on_gen_functions.get(x, z)?.Invoke();
     }

@@ -43,10 +43,14 @@ public class world : networked
     {
         if (static_world == null) return "No world";
         return "World " + name + "\n" +
-               "    Seed         : " + seed + "\n" +
-               "    Biome        : " + player.current.biome.GetType().Name + "\n" +
-               "    Render range : " + game.render_range + "\n" +
-               "    Fog distance : " + lighting.fog_distance;
+               "    Seed              : " + seed + "\n" +
+               "    Biome             : " + player.current.biome.GetType().Name + "\n" +
+               "    Render range      : " + game.render_range + "\n" +
+               "    Fog distance      : " + lighting.fog_distance + "\n" +
+               "    Generated chunks  : " + chunk.chunks_generated + "\n" +
+               "    Generating chunks : " + chunk.chunks_generating + " (" +
+                    chunk.enabled_and_generating + " enabled, limit render range at " +
+                    chunk.generating_limit + ")";
     }
 
 #if UNITY_EDITOR
