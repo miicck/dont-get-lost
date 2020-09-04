@@ -10,7 +10,7 @@ public interface ICharacterController
 }
 
 [RequireComponent(typeof(character_hitbox))]
-public class character : networked, INotPathBlocking
+public class character : networked, INotPathBlocking, IInspectable
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -58,6 +58,14 @@ public class character : networked, INotPathBlocking
         new_forward = Vector3.Lerp(transform.forward, new_forward, run_speed * Time.deltaTime);
         if (new_forward.magnitude > 10e-4) transform.forward = new_forward;
     }
+
+    //##############//
+    // IINspectable //
+    //##############//
+
+    public string inspect_info() { return name.capitalize(); }
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 
     //########//
     // SOUNDS //
