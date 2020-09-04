@@ -4,9 +4,12 @@ using UnityEngine;
 
 public class inventory_quickbar_slot : inventory_slot
 {
+    public int number;
+
     public override void update(item item, int count, inventory inventory)
     {
         base.update(item, count, inventory);
         inventory.GetComponentInParent<player>()?.validate_equip();
+        toolbar_display_slot.update(number, item, count);
     }
 }

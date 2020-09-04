@@ -1392,6 +1392,7 @@ public class player : networked_player, INotPathBlocking
         slot_equipped.on_change = () =>
         {
             equipped = quickbar_slot(slot_equipped.value)?.item;
+            toolbar_display_slot.update_selected(slot_equipped.value);
         };
 
         // y_rotation is the rotation of the player around the global y axis
