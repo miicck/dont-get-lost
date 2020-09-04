@@ -583,12 +583,8 @@ public static class client
             // start of the next buffer
             if (truncated)
             {
-                // This shouldn't happen. If it does, I haven't understood something.
-                if (data_bytes != buffer.Length)
-                    throw new System.Exception("Found a truncated message in a non-full buffer!");
-
                 // Save the truncated message to be glued at the start of the next buffer.
-                truncated_read_message = new byte[buffer.Length - last_message_start];
+                truncated_read_message = new byte[data_bytes - last_message_start];
                 System.Buffer.BlockCopy(buffer, last_message_start,
                     truncated_read_message, 0, truncated_read_message.Length);
             }

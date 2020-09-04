@@ -461,8 +461,9 @@ public class player : networked_player, INotPathBlocking
 
     void run_quickbar_shortcuts()
     {
-        // Can't use quickbar shortcuts from the UI
+        // Can't use quickbar shortcuts from the UI, or if we're using an item
         if (ui_state != UI_STATE.ALL_CLOSED) return;
+        if (current_item_use != USE_TYPE.NOT_USING) return;
 
         const int QUICKBAR_SLOTS_COUNT = 8;
 

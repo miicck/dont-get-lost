@@ -1150,11 +1150,8 @@ public static class server
 
                 if (truncated)
                 {
-                    // This shouldn't happen. If it does, I haven't understood something.
-                    if (data_bytes != buffer.Length)
-                        throw new System.Exception("Found a truncated message in a non-full buffer!");
-
-                    byte[] to_save = new byte[buffer.Length - last_message_start];
+                    // Save the truncated message for later
+                    byte[] to_save = new byte[data_bytes - last_message_start];
                     System.Buffer.BlockCopy(buffer, last_message_start, 
                         to_save, 0, to_save.Length);
                     truncated_read_messages[c] = to_save;

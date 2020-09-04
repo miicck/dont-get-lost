@@ -39,6 +39,7 @@ public static class utils
     static HashSet<string> opened = new HashSet<string>();
     public static void log(string s, string logfile)
     {
+        if (!Application.isEditor) return; // Only log in editor
         if (!server.started) return; // Only log on server
         string filename = Application.persistentDataPath + "/" + logfile + ".log";
 

@@ -12,7 +12,7 @@ public class teleport_manager : networked
     public void register_portal(portal p)
     {
         var net_name = new net_string("portal");
-        var net_pos = new net_vector3(p.path_start.position);
+        var net_pos = new net_vector3(p.teleport_location.position);
         destinations.add(new networked_pair<net_string, net_vector3>(net_name, net_pos));
     }
 
@@ -20,7 +20,7 @@ public class teleport_manager : networked
     {
         int to_remove = -1;
         for (int i = 0; i < destinations.length; ++i)
-            if ((destinations[i].second.value - p.path_start.position).magnitude < 10e-4)
+            if ((destinations[i].second.value - p.teleport_location.position).magnitude < 10e-4)
             {
                 to_remove = i;
                 break;
@@ -33,9 +33,9 @@ public class teleport_manager : networked
     public string attempt_rename_portal(portal p, string new_name)
     {
         var nearest = utils.find_to_min(destinations,
-            (d) => (d.second.value - p.path_start.position).magnitude);
+            (d) => (d.second.value - p.teleport_location.position).magnitude);
 
-        float dis = (nearest.second.value - p.path_start.position).magnitude;
+        float dis = (nearest.second.value - p.teleport_location.position).magnitude;
         if (dis > 0.1f)
             throw new System.Exception("Portal moved, or not registered?");
 
@@ -47,9 +47,9 @@ public class teleport_manager : networked
     public string get_portal_name(portal p)
     {
         var nearest = utils.find_to_min(destinations,
-            (d) => (d.second.value - p.path_start.position).magnitude);
+            (d) => (d.second.value - p.teleport_location.position).magnitude);
 
-        float dis = (nearest.second.value - p.path_start.position).magnitude;
+        float dis = (nearest.second.value - p.teleport_location.position).magnitude;
         if (dis > 0.1f)
             throw new System.Exception("Portal moved, or not registered?");
         return nearest.first.value;
