@@ -8,6 +8,7 @@ public class options_menu_float : options_menu_option
 {
     public string option_name = "contrast";
     public float default_value = 0;
+    public float optimized_value = 0;
     public UnityEngine.UI.Slider slider;
     public UnityEngine.UI.InputField input;
 
@@ -59,5 +60,10 @@ public class options_menu_float : options_menu_option
         // Set the slider (and therefore the option and input field text)
         // to the default value
         slider.value = default_value;
+    }
+
+    public override void load_optimized()
+    {
+        slider.value = optimized_value;
     }
 }

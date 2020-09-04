@@ -6,6 +6,7 @@ using UnityEngine;
 public abstract class options_menu_option : MonoBehaviour
 {
     public abstract void load_default();
+    public abstract void load_optimized();
     public abstract void initialize_option();
 }
 
@@ -33,6 +34,13 @@ public class options_menu : MonoBehaviour
     {
         foreach (var o in GetComponentsInChildren<options_menu_option>(true))
             o.load_default();
+    }
+
+    /// <summary> Set all the options to their optimized value. </summary>
+    public void restore_optimized_options()
+    {
+        foreach (var o in GetComponentsInChildren<options_menu_option>(true))
+            o.load_optimized();
     }
 
     //##############//

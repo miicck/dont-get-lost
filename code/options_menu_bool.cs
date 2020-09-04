@@ -8,6 +8,7 @@ public class options_menu_bool : options_menu_option
 {
     public string option_name = "water_reflections";
     public bool default_value = true;
+    public bool optimized_value = true;
     public UnityEngine.UI.Toggle toggle;
     public GameObject suboptions;
 
@@ -30,6 +31,11 @@ public class options_menu_bool : options_menu_option
         // Set the toggle (and therefore the option via the 
         // toggle.onValueChanged method) to the default value
         toggle.isOn = default_value;
+    }
+
+    public override void load_optimized()
+    {
+        toggle.isOn = optimized_value;
     }
 
     public override void initialize_option()
