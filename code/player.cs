@@ -676,6 +676,22 @@ public class player : networked_player, INotPathBlocking
             velocity.z *= speed / xz;
         }
 
+        // In water, allow climbing out
+        if (transform.position.y < world.SEA_LEVEL &&
+            controls.key_down(controls.BIND.WALK_FORWARD))
+        {
+            // Look for solid objects in front of player
+            foreach (var h in Physics.CapsuleCastAll(
+                transform.position + Vector3.up * controller.radius,
+                transform.position + Vector3.up * (controller.height - controller.radius),
+                controller.radius, transform.forward, controller.radius))
+            {
+                if (h.transform.IsChildOf(transform)) continue;
+                velocity.y += ACCELERATION * Time.deltaTime;
+                break;
+            }
+        }
+
         controller.Move(move);
 
         // Ensure we stay above the terrain
@@ -847,7 +863,7 @@ public class player : networked_player, INotPathBlocking
     void run_mouse_look()
     {
         // Things that disallow camera movement
-        if (!(ui_state == UI_STATE.ALL_CLOSED || 
+        if (!(ui_state == UI_STATE.ALL_CLOSED ||
               ui_state == UI_STATE.MAP_OPEN)) return;
         if (!current_item_use_result.allows_look) return;
 
