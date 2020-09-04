@@ -742,6 +742,14 @@ public class player : networked_player, INotPathBlocking
         if (controller == null)
             return;
 
+        // If we've teleported reasonably far, reduce render range 
+        // to reduce lagging out.
+        if ((location - networked_position).magnitude > game.render_range / 2f)
+        {
+            game.render_range = Mathf.Min(game.render_range, game.DEFAULT_RENDER_RANGE);
+            game.render_range_target = game.render_range;
+        }
+
         ui_state = UI_STATE.ALL_CLOSED;
         controller.enabled = false;
         networked_position = location;

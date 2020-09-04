@@ -89,6 +89,8 @@ public class game : MonoBehaviour
         return true;
     }
 
+    public const float DEFAULT_RENDER_RANGE = chunk.SIZE;
+
     /// <summary> The target render range, which the actual render range will lerp to. </summary>
     public static float render_range_target
     {
@@ -99,13 +101,13 @@ public class game : MonoBehaviour
             _render_range_target = value;
         }
     }
-    private static float _render_range_target = chunk.SIZE;
+    private static float _render_range_target = DEFAULT_RENDER_RANGE;
 
     /// <summary> How far the player can see. </summary>
     public static float render_range
     {
         get { return _render_range; }
-        private set
+        set
         {
             if (!allow_render_range_change(_render_range, value)) return;
             _render_range = value;
@@ -113,7 +115,7 @@ public class game : MonoBehaviour
             water_reflections.water_range = value;
         }
     }
-    private static float _render_range = chunk.SIZE;
+    private static float _render_range = DEFAULT_RENDER_RANGE;
 
     void on_client_disconnect(string message_from_server)
     {
