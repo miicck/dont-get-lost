@@ -169,9 +169,27 @@ public class inventory : networked, IItemCollection
             {
                 if (mi != null)
                 {
-                    // Add the mouse item to the slot
-                    if (isn.add(mi.item, mi.count)) mi.count = 0;
-                    on_slot_change(slot_index, isn.item, isn.count);
+                    if (isn.item_name == mi.item.name)
+                    {
+                        // Add the mouse item to the slot
+                        isn.add(mi.item, mi.count);
+                        mi.count = 0;
+                        on_slot_change(slot_index, isn.item, isn.count);
+                    }
+                    else
+                    {
+                        // Switch the mouse item with that in the slot
+                        if (slots[slot_index].accepts(mi.item))
+                        {
+                            item to_pickup = isn.item;
+                            int quantity = isn.count;
+                            isn.set_item_count_index(mi.item, mi.count, slot_index);
+                            mi.count = 0;
+                            mouse_item.create(to_pickup, quantity, this);
+                            on_slot_change(slot_index, isn.item, isn.count);
+                        }
+                    }
+
                     return;
                 }
                 else
