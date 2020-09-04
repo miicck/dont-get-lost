@@ -140,6 +140,10 @@ public class options_menu : MonoBehaviour
         if (!global_volume.profile.TryGet(out fog))
             throw new System.Exception("Global volume has no fog override!");
 
+        UnityEngine.Rendering.HighDefinition.AmbientOcclusion ao;
+        if (!global_volume.profile.TryGet(out ao))
+            throw new System.Exception("Global volume has no ambient occlusion override!");
+
         switch (name)
         {
             case "water_reflections":
@@ -173,6 +177,16 @@ public class options_menu : MonoBehaviour
 
             case "clip_out_of_range":
                 chunk.on_clip_setting_change(value);
+                break;
+
+            case "ambient_occlusion":
+                ao.active = value;
+                break;
+
+            case "shadows":
+                var light_data = FindObjectOfType<lighting>().sun.GetComponent<
+                    UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
+                light_data.EnableShadows(value);                
                 break;
 
             default:
