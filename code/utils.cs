@@ -432,7 +432,7 @@ public static class utils
 
     public static Vector3 axis(this Transform t, AXIS axis)
     {
-        switch(axis)
+        switch (axis)
         {
             case AXIS.X_AXIS: return t.right;
             case AXIS.Y_AXIS: return t.up;
@@ -443,7 +443,7 @@ public static class utils
 
     public static void set_axis(this Transform t, AXIS axis, Vector3 val)
     {
-        switch(axis)
+        switch (axis)
         {
             case AXIS.X_AXIS:
                 t.right = val;
@@ -459,6 +459,19 @@ public static class utils
 
             default: throw new System.Exception("Unkown axis: " + axis);
         }
+    }
+
+    public static string remove_special_characters(this string s, params char[] allow)
+    {
+        List<char> allow_list = new List<char>(allow);
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        foreach (char c in s)
+            if ((c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c >= 'a' && c <= 'z') ||
+                c == '.' || c == '_' || allow_list.Contains(c))
+                sb.Append(c);
+        return sb.ToString();
     }
 
 #if UNITY_EDITOR // Unity edtor utilities

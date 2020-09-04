@@ -6,6 +6,8 @@ public class global_controls : MonoBehaviour
 {
     void Start()
     {
+        version_control.on_startup();
+
         // Persistant through scene loads
         DontDestroyOnLoad(gameObject);
     }

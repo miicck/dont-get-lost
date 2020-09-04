@@ -219,6 +219,8 @@ public class game : MonoBehaviour
             return;
 
         string debug_text = "" +
+            "\nVERSION\n"+
+            version_control.info() + "\n" +
             "\nWORLD\n" +
             world.info() + "\n" +
             "\nGRAPHICS\n" +
