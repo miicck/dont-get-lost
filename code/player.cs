@@ -163,6 +163,16 @@ public class player : networked_player, INotPathBlocking
         set_hand_position();
     }
 
+    private void OnDrawGizmos()
+    {
+        if (controller != null)
+        {
+            Gizmos.color = controller.isGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(transform.position + controller.radius * Vector3.up,
+                                  controller.radius);
+        }
+    }
+
     //###########//
     // INVENTORY //
     //###########//
