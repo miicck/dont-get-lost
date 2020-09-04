@@ -55,6 +55,13 @@ public static class controls
         ROTATE_CLOCKWISE_AROUND_RIGHT,
         ROTATE_ANTICLOCKWISE_AROUND_FORWARD,
         ROTATE_CLOCKWISE_AROUND_FORWARD,
+        BUILDING_TRANSLATION,
+        TRANSLATE_RIGHT,
+        TRANSLATE_LEFT,
+        TRANSLATE_UP,
+        TRANSLATE_DOWN,
+        TRANSLATE_FORWARD,
+        TRANSLATE_BACK,
         IGNORE_SNAP_POINTS,
         CYCLE_FULLSCREEN_MODES
     }
@@ -104,6 +111,13 @@ public static class controls
             [BIND.ROTATE_CLOCKWISE_AROUND_RIGHT] = KeyCode.W,
             [BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD] = KeyCode.D,
             [BIND.ROTATE_CLOCKWISE_AROUND_FORWARD] = KeyCode.A,
+            [BIND.BUILDING_TRANSLATION] = KeyCode.LeftAlt,
+            [BIND.TRANSLATE_RIGHT] = KeyCode.D,
+            [BIND.TRANSLATE_LEFT] = KeyCode.A,
+            [BIND.TRANSLATE_FORWARD] = KeyCode.W,
+            [BIND.TRANSLATE_BACK] = KeyCode.S,
+            [BIND.TRANSLATE_UP] = KeyCode.E,
+            [BIND.TRANSLATE_DOWN] = KeyCode.Q,
             [BIND.IGNORE_SNAP_POINTS] = KeyCode.LeftControl,
             [BIND.CYCLE_FULLSCREEN_MODES] = KeyCode.F11,
         };

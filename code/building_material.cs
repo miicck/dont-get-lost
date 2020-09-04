@@ -132,6 +132,13 @@ public class building_material : item
         public Vector3 forward_rot { get; private set; }
         public Vector3 up_rot { get; private set; }
 
+        void translate(Vector3 direction)
+        {
+            direction *= Time.deltaTime / 2f;
+            to_weld.transform.position += direction;
+            axes.transform.position += direction;
+        }
+
         public void key_rotate()
         {
             float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
@@ -144,7 +151,18 @@ public class building_material : item
                 set_pivot_rotation(saved_rotation);
             }
 
-            if (controls.key_down(controls.BIND.FINE_ROTATION))
+            if (controls.key_down(controls.BIND.BUILDING_TRANSLATION))
+            {
+                // Translate, rather than rotate
+                if (controls.key_down(controls.BIND.TRANSLATE_RIGHT)) translate(right_rot);
+                else if(controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot);
+                else if(controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot);
+                else if(controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot);
+                else if (controls.key_down(controls.BIND.TRANSLATE_UP)) translate(up_rot);
+                else if (controls.key_down(controls.BIND.TRANSLATE_DOWN)) translate(-up_rot);
+            }
+
+            else if (controls.key_down(controls.BIND.FINE_ROTATION))
             {
                 // Continuous rotation
                 if (controls.key_down(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD))
