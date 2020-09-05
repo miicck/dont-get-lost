@@ -102,6 +102,10 @@ public static class server
             connected_clients.Remove(this);
             message_queues.Remove(this);
 
+            // Let the representations know that we're unloading them
+            foreach (var rep in loaded)
+                rep.on_unload_on(this);
+
             // Close with a timeout, so that any hanging messages
             // (in particular the DISCONNECT message) can be sent.
             stream.Close((int)(timeout * 1000));
