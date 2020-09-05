@@ -311,7 +311,7 @@ public static class server
             // new client that I am loaded on to take over. 
             // If there are no such clients set my authority 
             // to null.
-            if (authority == client)
+            if (authority == client || authority == null)
             {
                 // We don't need to send a LOSE_AUTH message to
                 // a client that has unloaded an object.
