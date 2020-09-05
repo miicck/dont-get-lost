@@ -84,6 +84,9 @@ public class world_menu : MonoBehaviour
 
         int world_count = world_files.Length;
 
+        // Restore saved username
+        username_input.text = PlayerPrefs.GetString("username");
+
         foreach (var wf in world_files)
         {
             var button = template_world_button.inst();
@@ -99,7 +102,11 @@ public class world_menu : MonoBehaviour
                 string username = username_input.text.Trim();
                 if (username.Length == 0)
                     error_highlighter.highlight(username_input.GetComponent<Image>());
-                else game.load_and_host_world(name, username);
+                else
+                {
+                    PlayerPrefs.SetString("username", username);
+                    game.load_and_host_world(name, username);
+                }
             });
 
             var delete_button = button.Find("delete").GetComponent<Button>();
