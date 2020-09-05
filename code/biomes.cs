@@ -586,8 +586,18 @@ public class jungle : biome
                     else
                         p.object_to_generate = world_object.load("tree_fern");
                 }
-                else if (random.range(0, 50) == 0)
+                else if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("mossy_log_jungle");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("jungle_cliffs");
+                else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
+                {
+                    // On the beach
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint");
+                    else if (random.range(0, 200) == 0)
+                        p.object_to_generate = world_object.load("flat_rock_outcrop");
+                }
 
             }
     }

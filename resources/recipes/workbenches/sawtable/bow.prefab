@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
   - component: {fileID: 37089541926742898}
+  - component: {fileID: 2069796506363519532}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
   m_Name: bow
@@ -59,6 +60,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
   count: 1
+--- !u!114 &2069796506363519532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 2857990679801850892, guid: 1e8b0b35a88f3c14fb5b46abdc08281e, type: 3}
+  count: 1
 --- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75,3 +90,4 @@ MonoBehaviour:
   item: {fileID: 3958291262290011337, guid: e93cce72a4815124896986956b3fec9a, type: 3}
   min_count: 1
   max_count: 1
+  one_in_chance: 1
