@@ -889,6 +889,14 @@ public class player : networked_player, INotPathBlocking
               ui_state == UI_STATE.MAP_OPEN)) return;
         if (!current_item_use_result.allows_look) return;
 
+        // Ping the map
+        if (controls.mouse_click(controls.MOUSE_BUTTON.MIDDLE))
+        {
+            var ray = camera_ray();
+            if (Physics.Raycast(ray, out RaycastHit hit))
+                client.create(hit.point, "misc/map_ping");
+        }
+
         if (fly_mode) mouse_look_fly();
         else mouse_look_normal();
     }
