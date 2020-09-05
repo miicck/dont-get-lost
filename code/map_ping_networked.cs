@@ -67,4 +67,11 @@ public class map_ping_networked : networked
         // Map pings are visible infinitely far away
         return Mathf.Infinity;
     }
+
+
+    public override bool persistant()
+    {
+        // Map pings aren't saved
+        return false;
+    }
 }
