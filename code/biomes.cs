@@ -691,7 +691,7 @@ public class rocky_plains : biome
 }
 
 [biome_info(generation_enabled: false)]
-public class test_biome : biome
+public class empty : biome
 {
     protected override void generate_grid()
     {
@@ -700,20 +700,7 @@ public class test_biome : biome
             {
                 // Point setup
                 var p = grid[i, j] = new point();
-
-                if (Mathf.Abs(32 * (i / 32) - i) < 2 || Mathf.Abs(32 * (j / 32) - j) < 2)
-                    p.terrain_color = terrain_colors.stone;
-
-                float alt = (i / 32) % 4 + (j / 32) % 4;
-                p.altitude = alt * 6f;
-
-                if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("s_shape_levels");
-                else if (p.altitude > world.SEA_LEVEL)
-                {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("tree");
-                }
+                p.altitude = world.SEA_LEVEL + 1;
             }
     }
 }
