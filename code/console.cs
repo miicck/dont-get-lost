@@ -132,6 +132,22 @@ public class console : MonoBehaviour
                 time_manager.time = t;
                 return true;
 
+            // Spawn a character
+            case "spawn":
+
+                if (args.Length < 2) return console_error("Not enough arguments!");
+                string character = "characters/" + args[1];
+                if (Resources.Load<character>(character) == null)
+                    return console_error("Unkown character: " + args[1]);
+
+                if (player.current == null) return true;
+
+                var ray = player.current.camera_ray();
+                if (Physics.Raycast(ray, out RaycastHit hit))
+                    client.create(hit.point, character);
+
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
 
