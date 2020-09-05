@@ -45,5 +45,10 @@ public class toolbar_display_slot : MonoBehaviour
     {
         slots[number] = this;
         default_background_alpha = background.color.a;
+
+        // Start empty
+        count_text.text = "";
+        sprite.sprite = null;
+        sprite.enabled = false;
     }
 }
