@@ -350,6 +350,33 @@ namespace networked_variables
         }
     }
 
+    /// <summary> A networked color. </summary>
+    public class net_color : networked_variable<Color>
+    {
+        public net_color() { }
+        public net_color(Color value) { this.value = value; }
+
+        public override byte[] serialization()
+        {
+            return network_utils.concat_buffers(
+                network_utils.encode_float(value.r),
+                network_utils.encode_float(value.g),
+                network_utils.encode_float(value.b),
+                network_utils.encode_float(value.a)
+            );
+        }
+
+        protected override Color deserialize(byte[] buffer, ref int offset, int length)
+        {
+            return new Color(
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset),
+                network_utils.decode_float(buffer, ref offset)
+            );
+        }
+    }
+
     /// <summary> A networked rotation. </summary>
     public class net_quaternion : networked_variable<Quaternion>
     {

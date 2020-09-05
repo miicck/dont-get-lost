@@ -7,6 +7,18 @@ public class map_ping_networked : networked
     public const float PING_TIMEOUT = 5f;
 
     ping_indicator ui;
+    networked_variables.net_color color;
+
+    public override void on_init_network_variables()
+    {
+        base.on_init_network_variables();
+        color = new networked_variables.net_color();
+        color.on_change = () =>
+        {
+            if (ui != null)
+                ui.GetComponent<UnityEngine.UI.Image>().color = color.value;
+        };
+    }
 
     public override void on_create()
     {
@@ -17,6 +29,17 @@ public class map_ping_networked : networked
         ui.pinged_position = transform.position;
         ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
         Invoke("timeout", PING_TIMEOUT);
+    }
+
+    public override void on_gain_authority()
+    {
+        base.on_gain_authority();
+
+        color.value = new Color(
+            Random.Range(0,1f),
+            Random.Range(0,1f),
+            Random.Range(0,1f)
+        );
     }
 
     public override void on_forget(bool deleted)
