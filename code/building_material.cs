@@ -155,9 +155,9 @@ public class building_material : item
             {
                 // Translate, rather than rotate
                 if (controls.key_down(controls.BIND.TRANSLATE_RIGHT)) translate(right_rot);
-                else if(controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot);
-                else if(controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot);
-                else if(controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot);
+                else if (controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot);
+                else if (controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot);
+                else if (controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot);
                 else if (controls.key_down(controls.BIND.TRANSLATE_UP)) translate(up_rot);
                 else if (controls.key_down(controls.BIND.TRANSLATE_DOWN)) translate(-up_rot);
             }
@@ -360,8 +360,7 @@ public class building_material : item
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
                 camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
-            if (found_same != null)
-                found_same.pick_up();
+            if (found_same != null) found_same.pick_up(register_undo: true);
             return use_result.complete;
         }
 
@@ -425,17 +424,18 @@ public class building_material : item
         if (spawned != null)
         {
             // Remove the object we're building from the inventory
-            player.current.inventory.remove(spawned, 1);
+            if (player.current.inventory.remove(spawned, 1))
+            {
+                // Create a proper, networked version of the spawned object
+                var created = (building_material)create(spawned.name,
+                    spawned.transform.position, spawned.transform.rotation,
+                    networked: true, network_parent: parent_on_placement(), 
+                    register_undo: true);
 
-            // Create a proper, networked version of the spawned object
-            var created = (building_material)create(spawned.name,
-                spawned.transform.position, spawned.transform.rotation,
-                networked: true, network_parent: parent_on_placement());
-
-            created.on_build();
-
-            spawned.weld.display_axes = false;
-            Destroy(spawned.gameObject);
+                created.on_build();
+                spawned.weld.display_axes = false;
+                Destroy(spawned.gameObject);
+            }
         }
 
         spawned = null;

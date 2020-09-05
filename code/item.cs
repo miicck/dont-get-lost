@@ -84,13 +84,17 @@ public class item : networked, IInspectable
         return ret;
     }
 
-    public void pick_up()
+    public void pick_up(bool register_undo = false)
     {
+        if (this == null) return;
+
         if (!can_pick_up(out string message))
         {
             popup_message.create("Cannot pick up " + display_name + ": " + message);
             return;
         }
+
+        var undo = pickup_undo();
 
         // Delete the object on the network / add it to
         // inventory only if succesfully deleted on the
@@ -99,9 +103,49 @@ public class item : networked, IInspectable
         var to_pickup = add_to_inventory_on_pickup();
         delete(() =>
         {
+            // Add the products from pickup into inventory
             foreach (var kv in to_pickup)
                 player.current.inventory.add(kv.Key, kv.Value);
+
+            if (register_undo)
+                undo_manager.register_undo_level(undo);
         });
+    }
+
+    public undo_manager.undo_action pickup_undo()
+    {
+        if (this == null) return null; // Destroyed
+
+        // Copies for lambda
+        var pickup_items = add_to_inventory_on_pickup();
+        string name_copy = string.Copy(name);
+        Vector3 pos = transform.position;
+        Quaternion rot = transform.rotation;
+        networked parent = transform.parent?.GetComponent<networked>();
+
+        return () =>
+        {
+            // Check we still have all of the products
+            foreach (var kv in pickup_items)
+                if (!player.current.inventory.contains(kv.Key, kv.Value))
+                    return null;
+
+            // Remove all of the products
+            foreach (var kv in pickup_items)
+                if (!player.current.inventory.remove(kv.Key, kv.Value))
+                    throw new System.Exception("Tried to remove non-existant item!");
+
+            // Recreate the building
+            var created = create(name_copy, pos, rot, networked: true, parent);
+
+            // Return the redo function
+            return () =>
+            {
+                // Redo the pickup, and return the redo-undo (yo, what)
+                created.pick_up();
+                return created.pickup_undo();
+            };
+        };
     }
 
     protected virtual bool can_pick_up(out string message)
@@ -156,7 +200,8 @@ public class item : networked, IInspectable
     public static item create(string name,
         Vector3 position, Quaternion rotation,
         bool networked = false,
-        networked network_parent = null)
+        networked network_parent = null,
+        bool register_undo = false)
     {
         item item = null;
 
@@ -165,6 +210,16 @@ public class item : networked, IInspectable
             // Create a networked version of the chosen item
             item = (item)client.create(position, "items/" + name,
                 rotation: rotation, parent: network_parent);
+
+            if (register_undo)
+                undo_manager.register_undo_level(() => {
+
+                    if (item == null) return null;
+                    var redo = item.pickup_undo();
+                    item.pick_up();
+                    return redo;
+                });
+        
         }
         else
         {
