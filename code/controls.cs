@@ -102,7 +102,7 @@ public static class controls
             [BIND.TOGGLE_MAP] = KeyCode.M,
             [BIND.CRAFT_FIVE] = KeyCode.LeftShift,
             [BIND.QUICK_ITEM_TRANSFER] = KeyCode.LeftShift,
-            [BIND.TOGGLE_CONSOLE] = KeyCode.BackQuote,
+            [BIND.TOGGLE_CONSOLE] = KeyCode.Slash,
             [BIND.TOGGLE_OPTIONS] = KeyCode.Escape,
             [BIND.TOGGLE_DEBUG_INFO] = KeyCode.F3,
             [BIND.INCREASE_RENDER_RANGE] = KeyCode.Equals,
