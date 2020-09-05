@@ -95,16 +95,18 @@ public static class server
         {
             Debug.Log("Client " + username + " disconnected, message: " + message);
 
+            // Unload representations (only top-level, lower level will
+            // be automatically unloaded using the unload function)
+            foreach (var rep in new HashSet<representation>(loaded))
+                if (rep.is_top_level)
+                    unload(rep, false);
+
             // Send the disconnect message
             if (message != null)
                 message_senders[MESSAGE.DISCONNECT](this, message);
 
             connected_clients.Remove(this);
             message_queues.Remove(this);
-
-            // Let the representations know that we're unloading them
-            foreach (var rep in loaded)
-                rep.on_unload_on(this);
 
             // Close with a timeout, so that any hanging messages
             // (in particular the DISCONNECT message) can be sent.
@@ -263,6 +265,11 @@ public static class server
         }
         client _authority;
 
+        /// <summary> Returns true if this is a top-level representation. </summary>
+        public bool is_top_level =>
+            transform.parent == active_representations ||
+            transform.parent == inactive_representations;
+
         /// <summary> Remove the representation from the server, and  any corresponding objects from 
         /// clients. </summary>
         /// <param name="issued_from">The client that issed the delete, null if it was the server.</param>
@@ -307,11 +314,15 @@ public static class server
 
         public void on_unload_on(client client)
         {
+            // Don't mess with player authority
+            if (this == client.player)
+                return;
+
             // If I was unloaded from my authority, find a 
             // new client that I am loaded on to take over. 
             // If there are no such clients set my authority 
             // to null.
-            if (authority == client || authority == null)
+            if (authority == client)
             {
                 // We don't need to send a LOSE_AUTH message to
                 // a client that has unloaded an object.
@@ -986,7 +997,7 @@ public static class server
                     case SAVE_TYPE.INACTIVE:
 
                         // If this is a top-level representation, move to inactive
-                        if (rep.transform == active_representations)
+                        if (rep.is_top_level)
                             rep.transform.SetParent(inactive_representations);
                         break;
 
@@ -1103,7 +1114,7 @@ public static class server
                 }
 
                 // Read new bytes into the buffer
-                int bytes_read = c.stream.Read(buffer, buffer_start, 
+                int bytes_read = c.stream.Read(buffer, buffer_start,
                     buffer.Length - buffer_start);
                 traffic_down.log_bytes(bytes_read);
 
@@ -1156,7 +1167,7 @@ public static class server
                 {
                     // Save the truncated message for later
                     byte[] to_save = new byte[data_bytes - last_message_start];
-                    System.Buffer.BlockCopy(buffer, last_message_start, 
+                    System.Buffer.BlockCopy(buffer, last_message_start,
                         to_save, 0, to_save.Length);
                     truncated_read_messages[c] = to_save;
                 }

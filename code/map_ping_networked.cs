@@ -11,12 +11,19 @@ public class map_ping_networked : networked
 
     public override void on_init_network_variables()
     {
+        // Create the ui ping thing (created here so it's guaranteed to
+        // exist for the color.on_change function). It will be in the
+        // wrong place until on_create() is called, so disable it for now.
+        ui = Resources.Load<ping_indicator>("ui/ping_indicator").inst();
+        ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        ui.gameObject.SetActive(false);
+        Invoke("timeout", PING_TIMEOUT);
+
         base.on_init_network_variables();
         color = new networked_variables.net_color();
         color.on_change = () =>
         {
-            if (ui != null)
-                ui.GetComponent<UnityEngine.UI.Image>().color = color.value;
+            ui.GetComponent<UnityEngine.UI.Image>().color = color.value;
         };
     }
 
@@ -24,17 +31,14 @@ public class map_ping_networked : networked
     {
         base.on_create();
 
-        // Create the ui ping thing
-        ui = Resources.Load<ping_indicator>("ui/ping_indicator").inst();
+        // Let the ui know where I was created
         ui.pinged_position = transform.position;
-        ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-        Invoke("timeout", PING_TIMEOUT);
+        ui.gameObject.SetActive(true);
     }
 
     public override void on_first_create()
     {
         base.on_first_create();
-
         color.value = new Color(
             Random.Range(0, 1f),
             Random.Range(0, 1f),
