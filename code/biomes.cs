@@ -300,24 +300,6 @@ public class mountains : biome
                 {
                     float r = procmath.maps.linear_turn_on(p.altitude, ROCK_START, ROCK_END);
                     p.terrain_color = Color.Lerp(terrain_colors.grass, terrain_colors.rock, r);
-
-                    if (p.altitude > ROCK_END)
-                        if (i > 0 && j > 0 && i < SIZE - 1 && j < SIZE - 1)
-                        {
-                            // Not at the edge, calculate the gradient
-                            float gradient = 0f;
-                            gradient += Mathf.Abs(alt[i + 1, j] - alt[i, j]);
-                            gradient += Mathf.Abs(alt[i, j] - alt[i - 1, j]);
-                            gradient += Mathf.Abs(alt[i, j + 1] - alt[i, j]);
-                            gradient += Mathf.Abs(alt[i, j] - alt[i, j - 1]);
-                            gradient /= 2f;
-
-                            if (gradient < 1f)
-                            {
-                                if (random.range(0, 2) == 0)
-                                    p.object_to_generate = world_object.load("slate");
-                            }
-                        }
                 }
 
                 // Generate these objects between sea-level and rock-level
@@ -333,6 +315,13 @@ public class mountains : biome
 
                     else if (random.range(0, 500) == 0)
                         p.object_to_generate = world_object.load("mossy_log");
+                }
+
+                // Generate beach stuff
+                if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
+                {
+                    if (random.range(0, 10) == 0)
+                        p.object_to_generate = world_object.load("slate");
                 }
 
                 grid[i, j] = p;
@@ -363,12 +352,16 @@ public class flat_forest : biome
 
                 if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("tree");
-                else if (random.range(0, 40) == 0)
+                else if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("flowers");
-                else if (random.range(0, 150) == 0)
+                else if (random.range(0, 300) == 0)
                     p.object_to_generate = world_object.load("mossy_log");
-                else if (random.range(0, 200) == 0)
+                else if (random.range(0, 300) == 0)
                     p.object_to_generate = world_object.load("bush");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("flint");
+                else if (random.range(0, 2000) == 0)
+                    p.object_to_generate = world_object.load("jutting_rock");
 
                 grid[i, j] = p;
             }
@@ -695,6 +688,41 @@ public class rocky_plains : biome
                 {
                     if (random.range(0, 400) == 0)
                         p.object_to_generate = world_object.load("layered_mountain");
+                }
+            }
+    }
+}
+
+public class spikey_mountains : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+
+                p.altitude = Mathf.PerlinNoise(i / 64f + x, j / 64f + z);
+                p.altitude = Mathf.Pow(p.altitude, 1.7f) * 64f;
+                p.fog_distance = fog_distances.VERY_CLOSE;
+
+                float tall_rock_density = Mathf.PerlinNoise(i / 45f + 0.5f, j / 45f + 0.7f);
+
+                if (tall_rock_density > 0.5f)
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("tall_rock");
+                }
+                else if (tall_rock_density > 0.4f)
+                {
+                    if (random.range(0, 300) == 0)
+                        p.object_to_generate = world_object.load("tall_rock");
+                }
+                else
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("tree");
                 }
             }
     }

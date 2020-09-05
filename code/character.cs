@@ -63,7 +63,7 @@ public class character : networked, INotPathBlocking, IInspectable
     // IINspectable //
     //##############//
 
-    public string inspect_info() { return name.capitalize(); }
+    public string inspect_info() { return name.Replace('_', ' ').capitalize(); }
     public Sprite main_sprite() { return null; }
     public Sprite secondary_sprite() { return null; }
 
@@ -526,7 +526,7 @@ public class default_character_control : ICharacterController, IPathingAgent
 
             if (is_allowed_at(flee_to))
                 // Flee away
-                path = new astar_path(character.transform.position, flee_to, this); 
+                path = new astar_path(character.transform.position, flee_to, this);
             else
                 // Flee back the way we came
                 path = new astar_path(character.transform.position, fleeing_from.position - delta * 5f, this);
