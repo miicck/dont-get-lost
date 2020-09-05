@@ -11,7 +11,7 @@ public static class version_control
     public static void on_startup()
     {
 #if UNITY_EDITOR
-        // Save version info to prefab
+        // Get version info from git repo
         commit_hash = run("git", "rev-parse HEAD").remove_special_characters();
         string date_command = @"show --no-patch --no-notes --pretty='%cd' " +
                               @"--date=format:'%Y.%m.%d.%H.%M.%S' " + commit_hash;
@@ -29,8 +29,27 @@ public static class version_control
         commit_hash = commit_hash.remove_special_characters();
         commit_date = commit_date.remove_special_characters(' ', ':', '/');
 
-        string asset_path = UnityEditor.AssetDatabase.GetAssetPath(Resources.Load("version_info"));
-        var version_prefab = UnityEditor.PrefabUtility.LoadPrefabContents(asset_path);
+        GameObject version_prefab;
+        string asset_path;
+
+        var found = Resources.Load("version_info");
+        if (found != null)
+        {
+            // Load version asset from resources
+            asset_path = UnityEditor.AssetDatabase.GetAssetPath(found);
+            version_prefab = UnityEditor.PrefabUtility.LoadPrefabContents(asset_path);
+        }
+        else
+        {
+            // Create version asset
+            asset_path = "Assets/resources/version_info.prefab";
+            version_prefab = new GameObject("version_info");
+            new GameObject("1").transform.SetParent(version_prefab.transform);
+            new GameObject("2").transform.SetParent(version_prefab.transform);
+            new GameObject("3").transform.SetParent(version_prefab.transform);
+        }
+
+        // Save new version asset as prefab (so it's hard-coded(ish) into the built game)
         version_prefab.transform.GetChild(0).name = version;
         version_prefab.transform.GetChild(1).name = commit_hash;
         version_prefab.transform.GetChild(2).name = commit_date;
@@ -38,9 +57,18 @@ public static class version_control
 #else
         // Get version info from prefab
         var go = Resources.Load<GameObject>("version_info");
-        version = go.transform.GetChild(0).name;
-        commit_hash = go.transform.GetChild(1).name;
-        commit_date = go.transform.GetChild(2).name;
+        if (go == null)
+        {
+            version = "UNKOWN";
+            commit_hash = "UNKNOWN";
+            commit_date = "UNKNOWN";
+        }
+        else
+        {
+            version = go.transform.GetChild(0).name;
+            commit_hash = go.transform.GetChild(1).name;
+            commit_date = go.transform.GetChild(2).name;
+        }
 #endif
     }
 
