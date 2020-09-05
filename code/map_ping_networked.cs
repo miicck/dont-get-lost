@@ -28,19 +28,18 @@ public class map_ping_networked : networked
         ui = Resources.Load<ping_indicator>("ui/ping_indicator").inst();
         ui.pinged_position = transform.position;
         ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        Invoke("timeout", PING_TIMEOUT);
     }
 
-    public override void on_gain_authority()
+    public override void on_first_create()
     {
-        base.on_gain_authority();
+        base.on_first_create();
 
         color.value = new Color(
             Random.Range(0, 1f),
             Random.Range(0, 1f),
             Random.Range(0, 1f)
         );
-
-        Invoke("timeout", PING_TIMEOUT);
     }
 
     public override void on_forget(bool deleted)
