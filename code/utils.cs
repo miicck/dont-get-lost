@@ -474,6 +474,37 @@ public static class utils
         return sb.ToString();
     }
 
+    public static float compass_angle(Vector3 look_direction)
+    {
+        const float DTR = 180 / Mathf.PI;
+
+        look_direction.Normalize();
+        float x = look_direction.x;
+        float z = look_direction.z;
+
+        if (x > 0 && z > 0)
+        {
+            if (x < 10e-3) return 90;
+            return Mathf.Atan(z / x) * DTR;
+        }
+        else if (x < 0 && z > 0)
+        {
+            if (z < 10e-3) return 180;
+            return 90 - Mathf.Atan(x / z) * DTR;
+        }
+        else if (x < 0 && z < 0)
+        {
+            if (-x < 10e-3) return 270;
+            return 180 + Mathf.Atan(z / x) * DTR;
+        }
+        else
+        {
+            if (-z < 10e-3) return 360;
+            return 270 - Mathf.Atan(x / z) * DTR;
+        }
+
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object

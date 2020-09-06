@@ -704,25 +704,47 @@ public class spikey_mountains : biome
                 var p = grid[i, j] = new point();
 
                 p.altitude = Mathf.PerlinNoise(i / 64f + x, j / 64f + z);
-                p.altitude = Mathf.Pow(p.altitude, 1.7f) * 64f;
+                p.altitude = Mathf.Pow(p.altitude, 1.5f) * 64f;
                 p.fog_distance = fog_distances.VERY_CLOSE;
 
-                float tall_rock_density = Mathf.PerlinNoise(i / 45f + 0.5f, j / 45f + 0.7f);
+                float tall_rock_density =
+                    Mathf.PerlinNoise(i / 45f + 0.5f, j / 45f + 0.7f);
 
-                if (tall_rock_density > 0.5f)
+                if (tall_rock_density > 0.4f)
                 {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("tall_rock");
+                    // High density of tall rocks
+                    if (i % 6 == 0 && j % 6 == 0)
+                    {
+                        if (random.range(0, 5) == 0)
+                            p.object_to_generate = world_object.load("tall_rock");
+                        else if (random.range(0, 5) == 0)
+                            p.object_to_generate = world_object.load("tiered_mountiains");
+                    }
                 }
-                else if (tall_rock_density > 0.4f)
+                else if (tall_rock_density > 0.3f)
                 {
-                    if (random.range(0, 300) == 0)
-                        p.object_to_generate = world_object.load("tall_rock");
+                    // Low density of tall rocks
+                    if (i % 6 == 0 && j % 6 == 0)
+                    {
+                        if (random.range(0, 15) == 0)
+                            p.object_to_generate = world_object.load("tall_rock");
+                        else if (random.range(0, 15) == 0)
+                            p.object_to_generate = world_object.load("tiered_mountiains");
+                    }
                 }
                 else
                 {
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("tree");
+                    // No tall rocks
+                    if (random.range(0, 25) == 0)
+                        p.object_to_generate = world_object.load("cherry_blossom");
+                    else if (random.range(0, 50) == 0)
+                        p.object_to_generate = world_object.load("apple_tree");
+                    else if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("bush");
+                    else if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint");
+                    else if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("mossy_log");
                 }
             }
     }
