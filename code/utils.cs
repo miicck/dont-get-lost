@@ -474,7 +474,7 @@ public static class utils
         return sb.ToString();
     }
 
-    public static float compass_angle(Vector3 look_direction)
+    public static float xz_angle(Vector3 look_direction)
     {
         const float DTR = 180 / Mathf.PI;
 
