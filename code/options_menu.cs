@@ -163,6 +163,10 @@ public class options_menu : MonoBehaviour
 
             case "volumetric_fog":
                 fog.enableVolumetricFog.value = value;
+
+                // Attempt to match the apparent thickness of 
+                // volumetric and non-volumetric fog
+                fog.maximumHeight.value = value ? 80 : 50; 
                 break;
 
             case "moving_sun":
