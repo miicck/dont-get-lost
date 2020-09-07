@@ -9,6 +9,22 @@ public static class enemies
 {
     public const float TIME_BETWEEN_SPAWNS = 5f;
 
+    public static bool enabled
+    {
+        get => _enabled;
+        set
+        {
+            _enabled = value;
+            if (!_enabled)
+            {
+                foreach (var c in spawend)
+                    Object.Destroy(c);
+                spawend.Clear();
+            }
+        }
+    }
+    static bool _enabled = true;
+
     static HashSet<character> spawend = new HashSet<character>();
     static Dictionary<string, float> character_densities;
     static float total_density = 0;
@@ -51,7 +67,8 @@ public static class enemies
         spawend.RemoveWhere((c) => c == null);
 
         // Keep the number of spawned characters up
-        spawn_more();
+        if (enabled)
+            spawn_more();
     }
 
     public static void register_character(character c)

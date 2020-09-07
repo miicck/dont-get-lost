@@ -5,8 +5,8 @@ using UnityEngine;
 /// <summary> A point where buildings link item flow together. </summary>
 public class item_link_point : MonoBehaviour
 {
-    const float END_MATCH_DISTANCE = 0.2f;
-    const float UPHILL_LINK_ALLOW = 0.1f;
+    public const float END_MATCH_DISTANCE = 0.2f;
+    public const float UPHILL_LINK_ALLOW = 0.1f;
 
     /// <summary> The item currently occupying this link point, it 
     /// will be automatically moved to the next link point (if one

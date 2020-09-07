@@ -155,6 +155,12 @@ public class console : MonoBehaviour
             case "fly":
                 player.current.fly_mode = !player.current.fly_mode;
                 return true;
+
+            // Turn on/off enemy spawning
+            case "enemies":
+                enemies.enabled = !enemies.enabled;
+                popup_message.create("Enemies " + (enemies.enabled ? "enabled" : "disabled"));
+                return true;
         }
     }
 }
