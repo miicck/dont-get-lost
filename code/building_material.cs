@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface INonBlueprintable { }
+
 public class building_material : item
 {
     public const float BUILD_RANGE = 5f;
@@ -285,13 +287,26 @@ public class building_material : item
 
     void make_blueprint()
     {
-        // Create a blue, non-colliding placeholder version of this object
-        foreach (var r in GetComponentsInChildren<Renderer>())
-            r.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
-        foreach (var c in GetComponentsInChildren<Collider>())
+        // Create a blue, placeholder version of this object
+        foreach (var comp in GetComponentsInChildren<Component>())
         {
-            c.enabled = false;
-            Destroy(c);
+            if (comp is Renderer)
+            {
+                var rend = (Renderer)comp;
+                rend.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
+                continue;
+            }
+
+            // Destroy colliders
+            if (comp is Collider)
+            {
+                Destroy(comp);
+                continue;
+            }
+
+            // Remove componenets tagged as INonBlueprintable
+            if (comp is INonBlueprintable)
+                Destroy(comp);
         }
     }
 
@@ -429,7 +444,7 @@ public class building_material : item
                 // Create a proper, networked version of the spawned object
                 var created = (building_material)create(spawned.name,
                     spawned.transform.position, spawned.transform.rotation,
-                    networked: true, network_parent: parent_on_placement(), 
+                    networked: true, network_parent: parent_on_placement(),
                     register_undo: true);
 
                 created.on_build();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A point where buildings link item flow together. </summary>
-public class item_link_point : MonoBehaviour
+public class item_link_point : MonoBehaviour, INonBlueprintable
 {
     public const float END_MATCH_DISTANCE = 0.2f;
     public const float UPHILL_LINK_ALLOW = 0.1f;
@@ -77,9 +77,11 @@ public class item_link_point : MonoBehaviour
     public delegate void on_disconnect_function();
     public on_disconnect_function on_disconnect = () => { };
 
+    bool start_called = false;
     private void Start()
     {
         register_point(this);
+        start_called = true;
     }
 
     private void OnDestroy()
@@ -87,7 +89,9 @@ public class item_link_point : MonoBehaviour
         if (item != null)
             Destroy(item.gameObject);
 
-        forget_point(this);
+        // Forget, but don't throw errors if start hasn't 
+        // been called and we can't forget.
+        forget_point(this, error_on_fail: start_called);
     }
 
     private void Update()
@@ -320,10 +324,11 @@ public class item_link_point : MonoBehaviour
         points.Add(p);
     }
 
-    static void forget_point(item_link_point p)
+    static void forget_point(item_link_point p, bool error_on_fail = true)
     {
         if (!points.Remove(p))
-            throw new System.Exception("Tried to remove unregisterd point!");
+            if (error_on_fail)
+                throw new System.Exception("Tried to remove unregisterd point!");
 
         // Check if any links have been freed up
         if (p.linked_to != null)

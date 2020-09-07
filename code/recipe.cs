@@ -74,27 +74,60 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
+    static string recipe_book_text(string find)
+    {
+        string text = "Recipes\n";
+
+        foreach (var kv in all_recipies())
+        {
+            string entry = "";
+            bool found = false;
+
+            entry += "\n" + kv.Key.Replace('_', ' ').capitalize() + "\n";
+            foreach (var r in kv.Value)
+            {
+                string line = r.recipe_book_string();
+                if (line.Contains(find))
+                {
+                    entry += "  " + line + "\n";
+                    found = true;
+                }
+            }
+
+            if (found)
+                text += entry;
+        }
+
+        return text;
+    }
+
     public static RectTransform recipe_book
     {
         get
         {
             if (_recipe_book == null)
             {
-                string text = "Recipes\n";
-
-                foreach (var kv in all_recipies())
-                {
-                    text += "\n" + kv.Key.Replace('_', ' ').capitalize() + "\n";
-                    foreach (var r in kv.Value)
-                        text += "  " + r.recipe_book_string() + "\n";
-                }
-
+                // Create the recipe book
                 _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();
-                _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>().text = text;
+                var text = _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>();
+
                 _recipe_book.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
                 _recipe_book.anchoredPosition = Vector2.zero; // Middle of screen
                 _recipe_book.gameObject.SetActive(false); // Recipe book starts closed
+
+                // Setup the find function
+                var find = _recipe_book.GetComponentInChildren<UnityEngine.UI.InputField>();
+                find.text = recipe_book_text("");
+                find.onValueChanged.AddListener((val) =>
+                {
+                    text.text = recipe_book_text(val);
+                });
             }
+
+            // Reset the search
+            var input = _recipe_book.GetComponentInChildren<UnityEngine.UI.InputField>();
+            input.text = "";
+
             return _recipe_book;
         }
     }

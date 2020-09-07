@@ -18,7 +18,7 @@ public static class enemies
             if (!_enabled)
             {
                 foreach (var c in spawend)
-                    Object.Destroy(c);
+                    c.delete();
                 spawend.Clear();
             }
         }

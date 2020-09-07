@@ -37,6 +37,7 @@ public class leg : MonoBehaviour
     AudioSource footstep_source;
     public AudioClip custom_footstep_sound;
     public float footstep_volume_multiplier = 1f;
+    public bool play_footsteps = true;
     public float min_footstep_pitch = 0.95f;
     public float max_footsetp_pitch = 1.05f;
 
@@ -271,18 +272,8 @@ public class leg : MonoBehaviour
         ankle.position += delta;
     }
 
-    void make_contact(Vector3 test_point)
+    void play_contact_sounds()
     {
-        // Find the grounding point
-        Vector3 delta = test_end - test_start;
-        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
-        {
-            if (h.transform.IsChildOf(character)) continue;
-            grounding = h.point;
-            contact_made_this_step = true;
-            break;
-        }
-
         bool underwater = foot_base.transform.position.y < world.SEA_LEVEL;
         if (underwater)
         {
@@ -327,7 +318,22 @@ public class leg : MonoBehaviour
             if (!footstep_source.isPlaying)
                 footstep_source.Play();
         }
+    }
 
+    void make_contact(Vector3 test_point)
+    {
+        // Find the grounding point
+        Vector3 delta = test_end - test_start;
+        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
+        {
+            if (h.transform.IsChildOf(character)) continue;
+            grounding = h.point;
+            contact_made_this_step = true;
+            break;
+        }
+
+        if (play_footsteps)
+            play_contact_sounds();
     }
 
     float flick_amount
