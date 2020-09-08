@@ -49,7 +49,7 @@ public class chunk : MonoBehaviour
     public static int generating_limit => load_balancing.iter + (int)Mathf.Sqrt(chunks_generated);
 
     // Dictionary of functions to call once a chunk is generated
-    public delegate void on_gen_func();
+    public delegate void on_gen_func(chunk c);
     static Dictionary<int, int, on_gen_func> on_gen_functions =
         new Dictionary<int, int, on_gen_func>();
 
@@ -57,18 +57,23 @@ public class chunk : MonoBehaviour
     public static void add_generation_listener(Vector3 position, on_gen_func f)
     {
         var c = coords(position);
+        add_generation_listener(c[0], c[1], f);
+    }
 
+    // Register a new listener to call when a chunk is generated
+    public static void add_generation_listener(int chunk_x, int chunk_z, on_gen_func f)
+    {
         // Call immediately if chunk is already generated
-        var chunk = at(c[0], c[1], true);
+        var chunk = at(chunk_x, chunk_z, true);
         if (chunk != null)
         {
-            f();
+            f(chunk);
             return;
         }
 
-        // Queue the callback
-        var callback = (on_gen_functions.get(c[0], c[1]) ?? (() => { })) + f;
-        on_gen_functions.set(c[0], c[1], callback);
+        // Queue the callback (append to any previous callbacks already registered)
+        var callback = (on_gen_functions.get(chunk_x, chunk_z) ?? ((c) => { })) + f;
+        on_gen_functions.set(chunk_x, chunk_z, callback);
     }
 
     //##################//
@@ -475,7 +480,7 @@ public class chunk : MonoBehaviour
         generated_chunks.set(x, z, this);
 
         biome.update_chunk_neighbours();
-        on_gen_functions.get(x, z)?.Invoke();
+        on_gen_functions.get(x, z)?.Invoke(this);
     }
 
     // This component is attached to a chunk that is

@@ -758,7 +758,7 @@ public class player : networked_player, INotPathBlocking
         controller.enabled = false;
         networked_position = location;
 
-        chunk.add_generation_listener(location, () =>
+        chunk.add_generation_listener(location, (c) =>
         {
             controller.enabled = true;
         });

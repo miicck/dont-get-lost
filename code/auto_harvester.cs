@@ -34,7 +34,7 @@ public class auto_harvester : building_material, IInspectable
             throw new System.Exception("Could not find autominer output!");
 
         // Once the map has generated, figure out what we're harvesting
-        chunk.add_generation_listener(transform.position, () =>
+        chunk.add_generation_listener(transform.position, (c) =>
         {
             if (this == null) return;
             harvesting = utils.raycast_for_closest<harvestable>(
