@@ -255,8 +255,13 @@ public static class client
         client.on_disconnect = on_disconnect;
         tcp = new TcpClient();
         var connector = tcp.BeginConnect(host, port, null, null);
+
+        // Connection timeout
         if (!connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
+        {
+            tcp = null;
             return false;
+        }
 
         // Initialize the networked object static state
         networked.client_initialize();
