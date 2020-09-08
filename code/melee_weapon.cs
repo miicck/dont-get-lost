@@ -14,6 +14,11 @@ public abstract class equip_in_hand : item
 
 public class melee_weapon : equip_in_hand
 {
+#if UNITY_EDITOR
+    new
+#endif
+    Rigidbody rigidbody;
+
     public int damage = 1;
     public float swing_time = 0.5f;
     public float swing_length = 0.15f;
@@ -21,7 +26,6 @@ public class melee_weapon : equip_in_hand
     public AudioSource swing_audio;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
-    new Rigidbody rigidbody;
     bool in_use = false;
 
     public override bool allow_left_click_held_down() { return true; }
