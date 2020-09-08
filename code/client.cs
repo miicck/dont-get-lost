@@ -5,6 +5,9 @@ using System.Net.Sockets;
 
 public static class client
 {
+    /// <summary> How many milliseconds to wait when attempting to connect. </summary>
+    public const int CONNECTION_TIMEOUT_MS = 2000;
+
     // STATE VARIABLES //
 
     static int last_local_id;
@@ -239,7 +242,7 @@ public static class client
     }
 
     /// <summary> Connect the client to a server. </summary>
-    public static void connect(string host, int port, string username, string password, disconnect_func on_disconnect)
+    public static bool connect(string host, int port, string username, string password, disconnect_func on_disconnect)
     {
         // Initialize client state
         last_local_id = 0;
@@ -250,7 +253,10 @@ public static class client
         message_queue = new Queue<pending_message>();
         pending_creation_messages = new Queue<pending_creation_message>();
         client.on_disconnect = on_disconnect;
-        tcp = new TcpClient(host, port);
+        tcp = new TcpClient();
+        var connector = tcp.BeginConnect(host, port, null, null);
+        if (!connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
+            return false;
 
         // Initialize the networked object static state
         networked.client_initialize();
@@ -475,6 +481,7 @@ public static class client
 
         // Send login message
         message_senders[MESSAGE.LOGIN](username, password);
+        return true;
     }
 
     public static void disconnect(bool initiated_by_client, string msg_from_server = null)
@@ -509,7 +516,7 @@ public static class client
         if (!connected) return;
 
         // Get the tcp stream
-        var stream = tcp.GetStream();   
+        var stream = tcp.GetStream();
 
         // Read messages to the client
         while (stream.DataAvailable)
@@ -522,14 +529,14 @@ public static class client
             if (truncated_read_message != null)
             {
                 // Glue a truncated message onto the start of the buffer
-                System.Buffer.BlockCopy(truncated_read_message, 0, 
+                System.Buffer.BlockCopy(truncated_read_message, 0,
                     buffer, 0, truncated_read_message.Length);
                 buffer_start = truncated_read_message.Length;
                 truncated_read_message = null;
             }
 
             // Read new bytes into the buffer
-            int bytes_read = stream.Read(buffer, buffer_start, 
+            int bytes_read = stream.Read(buffer, buffer_start,
                 buffer.Length - buffer_start);
             traffic_down.log_bytes(bytes_read);
 

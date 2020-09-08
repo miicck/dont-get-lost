@@ -1756,7 +1756,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: World seed (Leave blank for random seed)
+  m_Text: World seed (Leave blank for random)
 --- !u!222 &1032335689
 CanvasRenderer:
   m_ObjectHideFlags: 0

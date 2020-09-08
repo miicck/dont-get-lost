@@ -61,10 +61,11 @@ public class game : MonoBehaviour
     /// <summary> Join a world hosted on a server. </summary>
     public static bool join_world(string ip_port, string username)
     {
-        string ip = ip_port.Split(':')[0];
-        int port;
-        if (!int.TryParse(ip_port.Split(':')[1], out port))
-            return false;
+        var split = ip_port.Split(':');
+        if (split.Length != 2) return false;
+
+        string ip = split[0];
+        if (!int.TryParse(split[1], out int port)) return false;
 
         startup = new startup_info
         {
@@ -84,7 +85,7 @@ public class game : MonoBehaviour
     {
         if (old_val == new_val) return false;
         if (new_val < MIN_RENDER_RANGE) return false;
-        if (new_val > old_val && 
+        if (new_val > old_val &&
             chunk.enabled_and_generating >= chunk.generating_limit) return false;
         return true;
     }
@@ -160,8 +161,12 @@ public class game : MonoBehaviour
             case startup_info.MODE.JOIN:
 
                 // Join the server
-                client.connect(startup.hostname, startup.port,
-                    startup.username, "password", on_client_disconnect);
+                if (!client.connect(startup.hostname, startup.port,
+                    startup.username, "password", on_client_disconnect))
+                {
+                    on_client_disconnect("Couldn't connect to server!");
+                    return;
+                }
 
                 break;
 

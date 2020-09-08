@@ -143,7 +143,7 @@ public class world_menu : MonoBehaviour
             }
 
             string name = world_name_input.text.Trim();
-            if (server.save_exists(name))
+            if (name.Length == 0 || server.save_exists(name))
             {
                 error_highlighter.highlight(world_name_input.GetComponent<Image>());
                 return;
@@ -176,10 +176,15 @@ public class world_menu : MonoBehaviour
             if (username.Length == 0)
                 error_highlighter.highlight(username_input.GetComponent<Image>());
             else
-                game.join_world(ip_input.text, username);
+            {
+                PlayerPrefs.SetString("last_ip_joined", ip_input.text);
+                if (!game.join_world(ip_input.text, username))
+                    error_highlighter.highlight(ip_input.GetComponentInChildren<Image>());
+            }
         });
 
-        ip_input.text = network_utils.local_ip_address() + ":" + server.DEFAULT_PORT;
+        ip_input.text = PlayerPrefs.GetString("last_ip_joined",
+            network_utils.local_ip_address() + ":" + server.DEFAULT_PORT);
         ip_input.transform.SetAsLastSibling();
 
         var quit_header = template_header.inst();
