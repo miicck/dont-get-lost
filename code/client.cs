@@ -521,7 +521,16 @@ public static class client
         if (!connected) return;
 
         // Get the tcp stream
-        var stream = tcp.GetStream();
+        NetworkStream stream = null;
+        try
+        {
+            stream = tcp.GetStream();
+        }
+        catch (System.InvalidOperationException e)
+        {
+            disconnect(false, e.Message);
+            return;
+        }
 
         // Read messages to the client
         while (stream.DataAvailable)
