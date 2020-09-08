@@ -39,6 +39,7 @@ public class random_ore : world_object.sub_generator
 
     private void OnDrawGizmos()
     {
+        if (Application.isPlaying) return;
         Gizmos.color = Color.grey;
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.DrawCube(type_offset(), type_scale());

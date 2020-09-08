@@ -29,6 +29,7 @@ public class random_foliage : world_object.sub_generator
 
     private void OnDrawGizmos()
     {
+        if (Application.isPlaying) return;
         Gizmos.color = Color.green;
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.DrawSphere(Vector3.zero, 0.5f);
