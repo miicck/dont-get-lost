@@ -364,8 +364,8 @@ public class leg : MonoBehaviour
         if (velocity.magnitude < EPS_MAG)
         {
             // Essentially not moving, return to default position
-            move_foot_towards(step_centre.position);
-            solve_leg();
+            //move_foot_towards(step_centre.position);
+            //solve_leg();
             return;
         }
 
