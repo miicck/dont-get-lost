@@ -4,6 +4,5 @@
 - Create unique sprites for everything (ongoing)
 - Fix farming spots so that they display properly
 - Implement teleport-to-player
-- Implement ctrl-f in recipe book
-- Shift-click from crafting menu
 - Remove biome-based character spawning (revert to local spawners only)
+- Work out the exact swing-path of melee weapons in order to interpolate and detect collisions

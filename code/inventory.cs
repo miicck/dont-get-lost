@@ -205,8 +205,13 @@ public class inventory : networked, IItemCollection
 
                         // Transfer into player inventory, or out of player inventory
                         inventory target = player.current.inventory;
-                        if (transform.IsChildOf(player.current.transform))
+                        if (this == player.current.inventory)
+                        {
+                            // Transfer out of player inventory, prioritising
+                            // left_menu inventory, then the player crafting menu.
                             target = player.current.left_menu?.editable_inventory();
+                            if (target == null) target = player.current.crafting_menu;
+                        }
 
                         if (target != null)
                             isn.delete(() =>

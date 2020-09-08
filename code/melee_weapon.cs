@@ -83,9 +83,9 @@ public class melee_weapon : equip_in_hand
         transform.position = target_pos;
 
         // Work out/apply the swing rotation
-        Vector3 up = player.current.hand_centre.up + max_forward_in_up * player.current.hand_centre.forward * sin;
-        Vector3 fw = -Vector3.Cross(up,
-            player.current.hand_centre.right +
+        Vector3 up = player.current.hand_centre.up + 
+            max_forward_in_up * player.current.hand_centre.forward * sin;
+        Vector3 fw = -Vector3.Cross(up, player.current.hand_centre.right +
             player.current.hand_centre.forward * fw_amt / 2f);
         Quaternion target_rotation = Quaternion.LookRotation(fw, up);
 

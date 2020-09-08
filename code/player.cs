@@ -140,8 +140,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
     // UNITY CALLBACKS //
     //#################//
 
-    void Update()
-    {
+    private void Update()
+    {      
         if (has_authority)
         {
             // Most things require authority to run
