@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking
+public class player : networked_player, INotPathBlocking, IInspectable
 {
     //###########//
     // CONSTANTS //
@@ -536,25 +536,25 @@ public class player : networked_player, INotPathBlocking
     {
         // Note that the inspection window can be 
         // opened independently of the UI state
-        inspect_info.visible = controls.key_down(controls.BIND.INSPECT);
+        inspection_ui.visible = controls.key_down(controls.BIND.INSPECT);
     }
 
-    inspect_info inspect_info
+    inspect_info inspection_ui
     {
         get
         {
             // Create the inspect_info object if it doesn't already exist
-            if (_inspect_info == null)
+            if (_inspection_ui == null)
             {
-                _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst();
-                _inspect_info.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                _inspect_info.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                _inspection_ui = Resources.Load<inspect_info>("ui/inspect_info").inst();
+                _inspection_ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                _inspection_ui.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             }
 
-            return _inspect_info;
+            return _inspection_ui;
         }
     }
-    inspect_info _inspect_info;
+    inspect_info _inspection_ui;
 
     //###########//
     //  MOVEMENT //
@@ -1256,6 +1256,14 @@ public class player : networked_player, INotPathBlocking
     {
         health.value = Mathf.Min(max_health, health.value + amount);
     }
+
+    //##############//
+    // IINspectable //
+    //##############//
+
+    public string inspect_info() { return username.value; }
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 
     //############//
     // NETWORKING //
