@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public class accepts_item_impact : MonoBehaviour
+{
+    public virtual bool on_impact(item i) { return false; }
+}
+
 public abstract class equip_in_hand : item
 {
 
@@ -16,10 +21,17 @@ public class melee_weapon : equip_in_hand
     public AudioSource swing_audio;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
-
-    impact_test_point[] impact_points { get => GetComponentsInChildren<impact_test_point>(); }
+    new Rigidbody rigidbody;
+    bool in_use = false;
 
     public override bool allow_left_click_held_down() { return true; }
+
+    private void Start()
+    {
+        rigidbody = GetComponent<Rigidbody>();
+        if (rigidbody == null)
+            throw new System.Exception("Could not find rigidbody on melee weapon!");
+    }
 
     public override use_result on_use_start(player.USE_TYPE use_type)
     {
@@ -39,6 +51,7 @@ public class melee_weapon : equip_in_hand
         swing_audio.Play();
         swing_progress = 0;
         swing_progress_at_impact = -1f;
+        in_use = true;
         return use_result.underway_allows_all;
     }
 
@@ -56,36 +69,49 @@ public class melee_weapon : equip_in_hand
         float sin = -Mathf.Sin(Mathf.PI * 2f * arg);
 
         // Set the forward/back amount
-        transform.position = player.current.hand_centre.position +
+        Vector3 target_pos = player.current.hand_centre.position +
                              swing_length * player.current.hand_centre.forward * sin;
 
         // Remove some of the right/left component
         // so we strike in the middle
         float fw_amt = Mathf.Max(sin, 0);
-        transform.position -= fw_amt * Vector3.Project(
-            transform.position - player.current.transform.position,
+        target_pos -= fw_amt * Vector3.Project(
+            target_pos - player.current.transform.position,
             player.current.transform.right
         );
+
+        transform.position = target_pos;
 
         // Work out/apply the swing rotation
         Vector3 up = player.current.hand_centre.up + max_forward_in_up * player.current.hand_centre.forward * sin;
         Vector3 fw = -Vector3.Cross(up,
             player.current.hand_centre.right +
             player.current.hand_centre.forward * fw_amt / 2f);
-        transform.rotation = Quaternion.LookRotation(fw, up);
+        Quaternion target_rotation = Quaternion.LookRotation(fw, up);
 
-        // Check to see if we've hit something
-        if (swing_progress_at_impact < 0)
-            foreach (var ip in impact_points)
-                if (ip.test(this))
-                {
-                    swing_progress_at_impact = swing_progress;
-                    break;
-                }
+        transform.rotation = target_rotation;
 
         if (swing_progress_at_impact > 0) // We're stuck in something
             return use_result.underway_allows_none;
         return use_result.underway_allows_all; // We're still swinging
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!in_use) return;
+
+        // Ignore collisions with the player
+        if (other.transform.IsChildOf(player.current.transform))
+            return;
+
+        var rend = other.GetComponent<Renderer>();
+        if (rend != null)
+            material_sound.play(material_sound.TYPE.HIT, transform.position, rend.material);
+
+        var aii = other.GetComponentInParent<accepts_item_impact>();
+        aii?.on_impact(this);
+
+        swing_progress_at_impact = swing_progress;
     }
 
     public override void on_use_end(player.USE_TYPE use_type)
@@ -94,5 +120,6 @@ public class melee_weapon : equip_in_hand
         swing_progress_at_impact = -1f;
         transform.position = player.current.hand_centre.transform.position;
         transform.rotation = player.current.hand_centre.transform.rotation;
+        in_use = false;
     }
 }

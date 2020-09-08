@@ -273,7 +273,8 @@ public class game : MonoBehaviour
 
     public string graphics_info()
     {
-        return "    FPS             : " + System.Math.Round(1 / Time.deltaTime, 0) + "\n" +
+        return "    FPS             : " + System.Math.Round(1 / Time.deltaTime, 0) +
+                                   " (" + System.Math.Round(1 / Time.fixedDeltaTime, 0) + " physics)\n" +
                "    Fullscreen mode : " + Screen.fullScreenMode + "\n" +
                "    Resolution      : " + Screen.width + " x " + Screen.height;
     }

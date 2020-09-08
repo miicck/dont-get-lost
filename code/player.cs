@@ -449,7 +449,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
                     // Create an equipped-type copy of the item
                     _equipped = item.create(value.name, transform.position, transform.rotation);
                     foreach (var c in _equipped.GetComponentsInChildren<Collider>())
-                        c.enabled = false;
+                        if (!c.isTrigger)
+                            c.enabled = false;
 
                     if (_equipped is equip_in_hand)
                     {
