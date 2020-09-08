@@ -164,6 +164,13 @@ public class player : networked_player, INotPathBlocking, IInspectable
             // Lerp rotation
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.localRotation = Quaternion.Euler(x_rotation.lerped_value, 0, 0);
+
+            // Lerp equipment position
+            if (equipped != null)
+            {
+                equipped.transform.localPosition = equipped_local_pos.lerped_value;
+                equipped.transform.localRotation = equipped_local_rot.lerped_value;
+            }
         }
 
         set_hand_position();
@@ -407,6 +414,13 @@ public class player : networked_player, INotPathBlocking, IInspectable
             if (equipped == null) current_item_use_result = item.use_result.complete;
             else current_item_use_result = equipped.on_use_continue(current_item_use);
             if (!current_item_use_result.underway) current_item_use = USE_TYPE.NOT_USING;
+        }
+
+        if (equipped != null)
+        {
+            // Update the network with equipment position
+            equipped_local_pos.value = equipped.transform.localPosition;
+            equipped_local_rot.value = equipped.transform.localRotation;
         }
     }
 
@@ -1266,6 +1280,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
     networked_variables.net_float x_rotation;
     networked_variables.net_string username;
     networked_variables.net_bool crouched;
+    networked_variables.net_vector3 equipped_local_pos;
+    networked_variables.net_quaternion equipped_local_rot;
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
@@ -1392,6 +1408,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
         Destroy(init_pos.gameObject);
         init_hand_plane = hand_centre.localPosition.z;
 
+        // Network my username
+        username = new networked_variables.net_string();
+
         // The players remaining health
         health = new networked_variables.net_int();
         health.on_change = () =>
@@ -1424,6 +1443,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
         };
 
+        // Network the players crouch state
         crouched = new networked_variables.net_bool();
         crouched.on_change = () =>
         {
@@ -1434,25 +1454,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
             else body.transform.localPosition = Vector3.zero;
         };
 
-        username = new networked_variables.net_string();
+        // Network the equipped objects local position
+        equipped_local_pos = new networked_variables.net_vector3(lerp_speed: 20f);
+        equipped_local_rot = new networked_variables.net_quaternion(lerp_speed: 20f);
     }
-
-    /*
-    public bool crouched
-    {
-        get => _crouched;
-        private set
-        {
-            // Can't crouch in cinematic mode
-            if (fly_mode) value = false;
-
-            _crouched = value;
-            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
-            else body.transform.localPosition = Vector3.zero;
-        }
-    }
-    bool _crouched;
-    */
 
     public override void on_first_create()
     {

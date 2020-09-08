@@ -348,8 +348,31 @@ namespace networked_variables
     /// <summary> A networked Vector3 </summary>
     public class net_vector3 : networked_variable<Vector3>
     {
+        float lerp_speed = 5f;
+
+        public Vector3 lerped_value
+        {
+            get
+            {
+                _lerped_value = Vector3.Lerp(_lerped_value, value, Time.deltaTime * lerp_speed);
+                return _lerped_value;
+            }
+        }
+        Vector3 _lerped_value;
+
+        public void reset_lerp()
+        {
+            _lerped_value = value;
+        }
+
         public net_vector3() { }
-        public net_vector3(Vector3 value) { this.value = value; }
+
+        public net_vector3(float lerp_speed = 5f, Vector3 init_value = default)
+        {
+            this.lerp_speed = lerp_speed;
+            value = init_value;
+            _lerped_value = init_value;
+        }
 
         public override byte[] serialization()
         {
@@ -400,6 +423,30 @@ namespace networked_variables
     /// <summary> A networked rotation. </summary>
     public class net_quaternion : networked_variable<Quaternion>
     {
+        float lerp_speed = 5f;
+
+        public Quaternion lerped_value
+        {
+            get
+            {
+                _lerped_value = Quaternion.Lerp(_lerped_value, value, Time.deltaTime * lerp_speed);
+                return _lerped_value;
+            }
+        }
+        Quaternion _lerped_value = Quaternion.identity;
+
+        public net_quaternion() { }
+
+        public net_quaternion(float lerp_speed = 5f, Quaternion init = default)
+        {
+            this.lerp_speed = lerp_speed;
+            if (init.Equals(default))
+                init = Quaternion.identity;
+
+            _lerped_value = init;
+            value = init;
+        }
+
         public override byte[] serialization()
         {
             return network_utils.concat_buffers(

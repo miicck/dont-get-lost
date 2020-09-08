@@ -74,7 +74,7 @@ public class melee_weapon : equip_in_hand
             player.current.hand_centre.forward * fw_amt / 2f);
         transform.rotation = Quaternion.LookRotation(fw, up);
 
-        // Check to ee if we've hit something
+        // Check to see if we've hit something
         if (swing_progress_at_impact < 0)
             foreach (var ip in impact_points)
                 if (ip.test(this))
