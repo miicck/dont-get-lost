@@ -285,6 +285,7 @@ public class chunk : MonoBehaviour
         terrain.enabled = false;
         terrain.heightmapPixelError = 16f;
         terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        terrain.allowAutoConnect = true;
 
         // Create the terrain harvesting mechanic
         var terrain_tool = terrain.gameObject.AddComponent<item_requirement>();
@@ -478,8 +479,6 @@ public class chunk : MonoBehaviour
         // Move chunk to generated set
         generating_chunks.clear(x, z);
         generated_chunks.set(x, z, this);
-
-        biome.update_chunk_neighbours();
         on_gen_functions.get(x, z)?.Invoke(this);
     }
 

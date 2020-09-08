@@ -144,29 +144,6 @@ public abstract class biome : MonoBehaviour
         return b.chunk_grid[i, j];
     }
 
-    /// <summary> Update the chunk neighbours in this biome, including
-    /// neighbours from neighbouring biomes (if they exist). </summary>
-    public void update_chunk_neighbours(bool also_neighboring_biomes = true)
-    {
-        if (also_neighboring_biomes)
-            for (int dx = -1; dx < 2; ++dx)
-                for (int dz = -1; dz < 2; ++dz)
-                    get_neighbour(dx, dz, false)?.update_chunk_neighbours(false);
-
-        else
-            for (int i = 0; i < CHUNKS_PER_SIDE; ++i)
-                for (int j = 0; j < CHUNKS_PER_SIDE; ++j)
-                {
-                    chunk_grid[i, j]?.terrain?.SetNeighbors(
-                        extended_chunk_grid(i - 1, j, false)?.terrain,
-                        extended_chunk_grid(i, j + 1, false)?.terrain,
-                        extended_chunk_grid(i + 1, j, false)?.terrain,
-                        extended_chunk_grid(i, j - 1, false)?.terrain
-                    );
-                }
-    }
-
-
     /// <summary> Returns true if this biome contains a chunk which
     /// is active (i.e within render range). </summary>
     public bool contains_enabled_chunk()
