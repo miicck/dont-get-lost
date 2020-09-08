@@ -218,6 +218,26 @@ public class networked_pair<T, K> : networked_variable
 
 namespace networked_variables
 {
+    /// <summary> A networked boolean value. </summary>
+    public class net_bool : networked_variable<bool>
+    {
+        public net_bool() { }
+        public net_bool(bool init_value = false)
+        {
+            value = init_value;
+        }
+
+        public override byte[] serialization()
+        {
+            return network_utils.encode_bool(value);
+        }
+
+        protected override bool deserialize(byte[] buffer, ref int offset, int length)
+        {
+            return network_utils.decode_bool(buffer, ref offset);
+        }
+    }
+
     /// <summary> A simple networked integer. </summary>
     public class net_int : networked_variable<int>
     {

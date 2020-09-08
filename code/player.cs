@@ -650,7 +650,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
             }
 
         // Turn on/off crouch
-        crouched = !climbing_ladder && controls.key_down(controls.BIND.CROUCH);
+        crouched.value = !climbing_ladder && controls.key_down(controls.BIND.CROUCH);
 
         if (controller.isGrounded)
         {
@@ -721,7 +721,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     {
         const float FLY_ACCEL = 10f;
 
-        crouched = false;
+        crouched.value = false;
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
 
@@ -769,7 +769,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
         get
         {
             float s = BASE_SPEED;
-            if (crouched)
+            if (crouched.value)
                 s *= CROUCH_SPEED_MOD;
             else if (controls.key_down(controls.BIND.SLOW_WALK))
                 s *= SLOW_WALK_SPEED_MOD;
@@ -777,21 +777,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
             return s;
         }
     }
-
-    public bool crouched
-    {
-        get => _crouched;
-        private set
-        {
-            // Can't crouch in cinematic mode
-            if (fly_mode) value = false;
-
-            _crouched = value;
-            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
-            else body.transform.localPosition = Vector3.zero;
-        }
-    }
-    bool _crouched;
 
     public bool fly_mode
     {
@@ -1274,6 +1259,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     networked_variables.net_float y_rotation;
     networked_variables.net_float x_rotation;
     networked_variables.net_string username;
+    networked_variables.net_bool crouched;
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
@@ -1430,8 +1416,35 @@ public class player : networked_player, INotPathBlocking, IInspectable
             eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
         };
 
+        crouched = new networked_variables.net_bool();
+        crouched.on_change = () =>
+        {
+            // Can't crouch in fly mode
+            if (fly_mode && crouched.value) crouched.value = false;
+
+            if (crouched.value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
+            else body.transform.localPosition = Vector3.zero;
+        };
+
         username = new networked_variables.net_string();
     }
+
+    /*
+    public bool crouched
+    {
+        get => _crouched;
+        private set
+        {
+            // Can't crouch in cinematic mode
+            if (fly_mode) value = false;
+
+            _crouched = value;
+            if (value) body.transform.localPosition = new Vector3(0, -0.25f, 0);
+            else body.transform.localPosition = Vector3.zero;
+        }
+    }
+    bool _crouched;
+    */
 
     public override void on_first_create()
     {
