@@ -174,16 +174,6 @@ public class item : networked, IInspectable
         networked_rotation.value = transform.rotation;
     }
 
-    public override void on_network_update()
-    {
-        // Keep networked variables up to date
-        if (has_authority)
-        {
-            networked_position = transform.position;
-            networked_rotation.value = transform.rotation;
-        }
-    }
-
     //##############//
     // IInspectable //
     //##############//
