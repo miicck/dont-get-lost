@@ -142,9 +142,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     void Update()
     {
-        // Most things require authority to run
         if (has_authority)
         {
+            // Most things require authority to run
             indicate_damage();
             run_world_generator();
             run_recipe_book();
@@ -158,6 +158,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
             run_mouse_look();
             run_movement();
             run_teleports();
+        }
+        else
+        {
+            // Lerp rotation
+            transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
+            eye_transform.localRotation = Quaternion.Euler(x_rotation.lerped_value, 0, 0);
         }
 
         set_hand_position();
@@ -1406,14 +1412,16 @@ public class player : networked_player, INotPathBlocking, IInspectable
         y_rotation = new networked_variables.net_float(resolution: 5f);
         y_rotation.on_change = () =>
         {
-            transform.rotation = Quaternion.Euler(0, y_rotation.value, 0);
+            if (has_authority)
+                transform.rotation = Quaternion.Euler(0, y_rotation.value, 0);
         };
 
         // x_rotation is the rotation of the eyes around their x axis and is clamped.
         x_rotation = new networked_variables.net_float(resolution: 5f, min_value: 0f, max_value: 160f);
         x_rotation.on_change = () =>
         {
-            eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
+            if (has_authority)
+                eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
         };
 
         crouched = new networked_variables.net_bool();
