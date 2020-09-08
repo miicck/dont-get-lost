@@ -61,7 +61,7 @@ public class auto_harvester : building_material, IInspectable
             var next_harvest = harvesting.products[current_product].auto_item;
 
             // Create output product
-            output.item = create(next_harvest.name, 
+            output.item = create(next_harvest.name,
                 output.position, output.transform.rotation);
         }
     }
@@ -83,6 +83,8 @@ public class auto_harvester : building_material, IInspectable
 
         // Report what we are harvesting
         return display_name + "\n" +
-               "Harvesting : " + prod;
+               "Tool type    : " + tool.type_to_name(tool_type) + "\n" +
+               "Tool quality : " + tool.quality_to_name(tool_quality) + "\n" +
+               "Harvesting   : " + prod;
     }
 }

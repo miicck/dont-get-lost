@@ -300,7 +300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 1cafe5fd1155f9e41995c2e229eb4c6a, type: 3}
+  sprite: {fileID: 21300000, guid: eb1f003e2de50b04a98147dcb0d5ade3, type: 3}
   plural: autochoppers
   value: 0
   fuel_value: 0
