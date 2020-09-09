@@ -26,9 +26,6 @@ public abstract class biome : MonoBehaviour
     protected point[,] grid = new point[SIZE, SIZE];
     protected abstract void generate_grid();
 
-    /// <summary> The target densities (per area) for various characters in this biome. </summary>
-    public virtual Dictionary<string, float> character_densities() { return null; }
-
     //#####################//
     // NEIGHBOURING BIOMES //
     //#####################//

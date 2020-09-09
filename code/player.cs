@@ -1213,7 +1213,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
             if (_biome == value)
                 return; // No change
             _biome = value;
-            enemies.biome = value;
         }
     }
     biome _biome;

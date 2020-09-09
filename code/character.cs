@@ -156,7 +156,6 @@ public class character : networked, INotPathBlocking, IInspectable
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
-        enemies.register_character(this);
     }
 
     void slow_update()

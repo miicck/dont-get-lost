@@ -43,17 +43,8 @@ public class mangroves : biome
                 else if (random.range(0, 1f) < man_amt * BUSH_PROB)
                     p.object_to_generate = world_object.load("bush");
 
-                // Generate flowers
-                else if (random.range(0, 25) == 0)
-                    p.object_to_generate = world_object.load("flowers");
-
-                // Generate mossy logs
-                else if (random.range(0, 500) == 0)
-                    p.object_to_generate = world_object.load("mossy_log");
-
                 // On the beach
-                else if (p.altitude < point.BEACH_END &&
-                         p.altitude > world.SEA_LEVEL)
+                else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
                 {
                     // Generate rocks
                     if (random.range(0, 100) == 0)
@@ -64,6 +55,22 @@ public class mangroves : biome
                         p.object_to_generate = world_object.load("titanium_ore");
                     else if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("flat_rock_outcrop");
+                }
+                
+                // On land
+                else if (p.altitude > world.SEA_LEVEL)
+                {
+                    // Generate flowers
+                    if (random.range(0, 25) == 0)
+                        p.object_to_generate = world_object.load("flowers");
+
+                    // Generate mossy logs
+                    else if (random.range(0, 500) == 0)
+                        p.object_to_generate = world_object.load("mossy_log");
+
+                    else if (random.range(0, 1000) == 0)
+                        p.object_to_generate = world_object.load("chicken_nest");
+
                 }
 
                 grid[i, j] = p;
@@ -331,14 +338,6 @@ public class mountains : biome
 
 public class flat_forest : biome
 {
-    public override Dictionary<string, float> character_densities()
-    {
-        return new Dictionary<string, float>
-        {
-            ["chicken"] = 1 / (32f * 32f)
-        };
-    }
-
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)
@@ -360,6 +359,8 @@ public class flat_forest : biome
                     p.object_to_generate = world_object.load("bush");
                 else if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("flint");
+                else if (random.range(0, 1500) == 0)
+                    p.object_to_generate = world_object.load("chicken_nest");
                 else if (random.range(0, 2000) == 0)
                     p.object_to_generate = world_object.load("jutting_rock");
 
@@ -474,14 +475,6 @@ public class rock_stacks : biome
     public const float WATER_FRAC = 0.25f;
     public const float WIGGLE_PERIOD = 16f;
     public const float WIGGLE_AMP = HILL_SIZE;
-
-    public override Dictionary<string, float> character_densities()
-    {
-        return new Dictionary<string, float>
-        {
-            ["chicken"] = 1f / (32f * 32f)
-        };
-    }
 
     protected override void generate_grid()
     {
@@ -622,14 +615,6 @@ public class swamp : biome
 
 public class caves : biome
 {
-    public override Dictionary<string, float> character_densities()
-    {
-        return new Dictionary<string, float>
-        {
-            ["smoke_spider"] = 1 / (64f * 64f)
-        };
-    }
-
     protected override void generate_grid()
     {
         for (int i = 0; i < SIZE; ++i)

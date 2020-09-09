@@ -287,7 +287,7 @@ public static class server
                         c.unload(this, true, already_removed: c == issued_from);
 
             // Move to inactive whilst deleting.
-            transform.SetParent(inactive_representations);
+            transform.SetParent(deleted_representations);
 
             // Remove/destroy the representation + all children
             network_utils.top_down<representation>(transform, (rep) =>
@@ -558,6 +558,9 @@ public static class server
     /// (such as logged out players) </summary>
     static Transform inactive_representations;
 
+    /// <summary> Representations that are in the process of being deleted. </summary>
+    static Transform deleted_representations;
+
     /// <summary> Messages that are yet to be sent. </summary>
     static Dictionary<client, Queue<pending_message>> message_queues;
 
@@ -623,11 +626,13 @@ public static class server
         transform = new GameObject("server").transform;
         active_representations = new GameObject("active").transform;
         inactive_representations = new GameObject("inactive").transform;
+        deleted_representations = new GameObject("deleted").transform;
         truncated_read_messages = new Dictionary<client, byte[]>();
 
         // Tidy up the heirarcy a bit
         active_representations.SetParent(transform);
         inactive_representations.SetParent(transform);
+        deleted_representations.SetParent(transform);
 
         // Check that server configuration is valid
         if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))

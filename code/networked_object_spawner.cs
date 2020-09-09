@@ -98,7 +98,12 @@ public class spawned_by_world_object : networked
             spawned_by.created_from_network(this);
         }
         else
-            throw new System.Exception("World object found is not a networked_world_object!");
+        {
+            string warn = "World object found is not a networked_world_object. ";
+            warn += "This is not a problem if the world generation code has changed ";
+            warn += "since the map was last loaded.";
+            Debug.Log(warn);
+        }
     }
 
     public void set_spawner(networked_object_spawner spawner)

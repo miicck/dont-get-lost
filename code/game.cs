@@ -120,10 +120,6 @@ public class game : MonoBehaviour
 
     void on_client_disconnect(string message_from_server)
     {
-        // Stop the server if this was the host
-        if (server.started)
-            server.stop();
-
         // Go back to the world menu
         if (message_from_server != null)
             world_menu.message_to_display = "Disconnected: " + message_from_server;
@@ -217,9 +213,6 @@ public class game : MonoBehaviour
         if (controls.key_press(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
         if (controls.key_press(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
-
-        // Spawn enemies
-        enemies.update();
     }
 
     void network_update()
@@ -250,8 +243,6 @@ public class game : MonoBehaviour
             player.info() + "\n" +
             "\nLOAD BALANCER\n" +
             load_balancing.info() + "\n" +
-            "\nENEMY SPAWNING\n" +
-            enemies.info() + "\n" +
             "\nTIME OF DAY\n" +
             time_manager.info() + "\n";
 
@@ -259,12 +250,12 @@ public class game : MonoBehaviour
         this.debug_text.text = utils.allign_colons(debug_text);
     }
 
-    private void OnDrawGizmos()
+    void OnApplicationQuit()
     {
-        enemies.draw_gizmos();
+        save_and_quit();
     }
 
-    void OnApplicationQuit()
+    public static void save_and_quit()
     {
         // Disconnect from the network
         client.disconnect(true);

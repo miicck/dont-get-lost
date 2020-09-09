@@ -63,8 +63,7 @@ public class options_menu : MonoBehaviour
     /// <summary> Called when the player clicks on "save and quit". </summary>
     public void save_and_quit()
     {
-        client.disconnect(true);
-        server.stop();
+        game.save_and_quit();
     }
 
     /// <summary> Called to initialize the options from their saved values.
