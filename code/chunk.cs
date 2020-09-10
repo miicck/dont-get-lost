@@ -491,9 +491,12 @@ public class chunk : MonoBehaviour
 
         private void Update()
         {
-            // Generate every frame until
+            // Generate max_steps every frame until
             // we need not generate any more
-            for (int step = 0; step < load_balancing.iter; ++step)
+            int max_steps = load_balancing.iter;
+            if (chunks_generated == 0) max_steps *= 10;
+
+            for (int step = 0; step < max_steps; ++step)
                 if (chunk.continue_generation())
                 {
                     // Generation complete
