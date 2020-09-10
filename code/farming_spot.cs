@@ -9,8 +9,9 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     recipe growing;
     item seed => ((item_ingredient)growing?.ingredients[0])?.item;
     item product => growing?.products[0].item;
-
     GameObject grown;
+
+    int growth_time => 5;
 
     public override void on_init_network_variables()
     {
@@ -20,9 +21,11 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
 
     new public string inspect_info()
     {
-        return base.inspect_info() + "\n" +
-               (growing == null ? "Nothing growing." :
+        string ret = base.inspect_info() + "\n";
+        ret += (growing == null ? "Nothing growing." :
                 seed?.plural + " growing into " + product?.plural + ".");
+
+        return ret;
     }
 
     private void Start()
@@ -37,7 +40,8 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
 
         // Grow the product
         int delta_time = client.server_time - time_planted.value;
-        if (delta_time > 5)
+
+        if (delta_time > growth_time)
         {
             // Grow the product
             if (product != null)
