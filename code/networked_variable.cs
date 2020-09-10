@@ -98,7 +98,8 @@ public abstract class networked_variable<T> : networked_variable
         // Set the value directly to avoid sending another update
         T old_value = _value;
         _value = deserialize(buffer, ref offset, length);
-        on_change?.Invoke();
+        if (!initialized || !_value.Equals(old_value))
+            on_change?.Invoke();
         initialized = true;
     }
 
