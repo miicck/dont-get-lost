@@ -2261,7 +2261,7 @@ MonoBehaviour:
   day_sun_color: {r: 1, g: 1, b: 1, a: 0}
   dawn_sun_color: {r: 1, g: 0.60676116, b: 0.4575472, a: 0}
   dusk_sun_color: {r: 1, g: 0.5756964, b: 0.3915094, a: 0}
-  night_sun_color: {r: 0.122641504, g: 0.122641504, b: 0.122641504, a: 0}
+  night_sun_color: {r: 0.3962264, g: 0.3962264, b: 0.3962264, a: 0}
 --- !u!4 &954036884
 Transform:
   m_ObjectHideFlags: 0
