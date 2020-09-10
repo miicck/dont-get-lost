@@ -14,6 +14,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public const float GRAVITY = 10f;
     public const float BOUYANCY = 5f;
     public const float WATER_DRAG = 1.5f;
+    public const float MAX_FLOAT_VELOCTY = 2f;
 
     // Movement
     public const float BASE_SPEED = 4f;
@@ -141,7 +142,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     //#################//
 
     private void Update()
-    {      
+    {
         if (has_authority)
         {
             // Most things require authority to run
@@ -639,8 +640,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
         if (amt_submerged <= 0) return;
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
-        // Bouyancy (sink if shift is held)
-        if (!controls.key_down(controls.BIND.SINK))
+        // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
+        if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
             velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
         // Drag
