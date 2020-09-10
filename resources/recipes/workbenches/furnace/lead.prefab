@@ -89,4 +89,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c115349308b276345950de919ec67a3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fuel_required: 4
+  fuel_required: 2

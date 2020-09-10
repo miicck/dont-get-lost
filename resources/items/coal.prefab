@@ -44,11 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 903b1dc3e35740745b29ffa62f5abdb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  is_client_side: 0
   sprite: {fileID: 21300000, guid: 5890ddfa9590c464a868066e915fce92, type: 3}
   plural: coal
   value: 1
   fuel_value: 4
-  logistics_scale: 1
+  logistics_scale: 0.7
 --- !u!1001 &581380012422511553
 PrefabInstance:
   m_ObjectHideFlags: 0

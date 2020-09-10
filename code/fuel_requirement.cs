@@ -27,6 +27,10 @@ public class fuel_requirement : ingredient
             // needed to satisfy the remaining fuel requirement
             int required = remaining / itm.fuel_value;
 
+            // Less than itm.fuel_value required; use anyway
+            if (required == 0 && remaining > 0)
+                required = 1;
+
             // The amount of this item that is already in use
             // and how much is available to use as fuel
             if (!in_use.TryGetValue(itm.name, out int already_in_use))
