@@ -260,7 +260,7 @@ public class inventory : networked, IItemCollection
 
         // Networked slot deleted => An inventory slot was cleared
         var isn = (inventory_slot_networked)child;
-        on_slot_change(isn.index, isn.item, isn.count);
+        on_slot_change(isn.index, null, 0);
     }
 
     public bool can_add(string item, int count)
