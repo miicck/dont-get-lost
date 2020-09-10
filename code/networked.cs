@@ -281,8 +281,6 @@ public class networked : MonoBehaviour
     {
         on_forget(deleting);
         on_forget(this);
-        if (deleting && !is_client_side)
-            transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
         Destroy(gameObject);
     }
 
@@ -308,8 +306,11 @@ public class networked : MonoBehaviour
             return;
         }
 
-        // Deactivate the object/move to deleted pile immediately, 
-        // but delete only once we have a positive network ID
+        // Deactivate the object/move to deleted pile/trigger parent.on_delete_child
+        // immediately, but actually delete only once we have a positive network ID
+        // (so that we can tell the server which object was deleted)
+        if (!is_client_side)
+            transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
         gameObject.SetActive(false);
         gameObject.transform.SetParent(deleted_network_objects);
 

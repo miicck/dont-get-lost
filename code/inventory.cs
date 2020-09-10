@@ -151,9 +151,11 @@ public class inventory : networked, IItemCollection
     }
     inventory_slot[] _slots;
 
+    HashSet<inventory_slot_networked> networked_slots = new HashSet<inventory_slot_networked>();
+
     public inventory_slot_networked nth_slot(int n)
     {
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        foreach (var isn in networked_slots)
             if (isn.index == n)
                 return isn;
         return null;
@@ -175,7 +177,7 @@ public class inventory : networked, IItemCollection
 
         var mi = FindObjectOfType<mouse_item>();
 
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        foreach (var isn in networked_slots)
             if (isn.index == slot_index)
             {
                 if (mi != null)
@@ -254,12 +256,22 @@ public class inventory : networked, IItemCollection
         }
     }
 
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+
+        // Networked slot added, register it
+        var isn = (inventory_slot_networked)child;
+        networked_slots.Add(isn);
+    }
+
     public override void on_delete_networked_child(networked child)
     {
         base.on_delete_networked_child(child);
 
         // Networked slot deleted => An inventory slot was cleared
         var isn = (inventory_slot_networked)child;
+        networked_slots.Remove(isn);
         on_slot_change(isn.index, null, 0);
     }
 
@@ -279,17 +291,17 @@ public class inventory : networked, IItemCollection
         item = Resources.Load<item>("items/" + item.name);
 
         // See if a slot for this item already exists
-        var networked_slots = new HashSet<int>();
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        var networked_indicies = new HashSet<int>();
+        foreach (var isn in networked_slots)
         {
             if (isn.item_name == item.name) return true;
-            networked_slots.Add(isn.index);
+            networked_indicies.Add(isn.index);
         }
 
         // See if there is a free slot to put the item in
         for (int i = 0; i < slots.Length; ++i)
         {
-            if (networked_slots.Contains(i)) continue; // This slot is taken
+            if (networked_indicies.Contains(i)) continue; // This slot is taken
             if (slots[i].accepts(item))
                 return true;
         }
@@ -315,15 +327,15 @@ public class inventory : networked, IItemCollection
         bool added = false;
 
         // Attempt to add the item to existing networked slots
-        var networked_slots = new HashSet<int>();
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        var networked_indicies = new HashSet<int>();
+        foreach (var isn in networked_slots)
         {
             if (isn.add(item, count))
             {
                 added = true;
                 break;
             }
-            networked_slots.Add(isn.index);
+            networked_indicies.Add(isn.index);
         }
 
         if (!added)
@@ -331,7 +343,7 @@ public class inventory : networked, IItemCollection
             // Find an empty slot to add the item to
             for (int i = 0; i < slots.Length; ++i)
             {
-                if (networked_slots.Contains(i)) continue; // This slot is taken
+                if (networked_indicies.Contains(i)) continue; // This slot is taken
                 if (slots[i].accepts(item))
                 {
                     // Create a networked slot with the corresponding info
@@ -371,7 +383,7 @@ public class inventory : networked, IItemCollection
         item = Resources.Load<item>("items/" + item.name);
 
         // Run over the occupied (networked) slots, and remove count items
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        foreach (var isn in networked_slots)
         {
             count -= isn.remove(item, count);
             if (count <= 0) break;
@@ -394,7 +406,7 @@ public class inventory : networked, IItemCollection
     {
         get
         {
-            foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+            foreach (var isn in networked_slots)
                 if (isn.item != null && isn.count > 0)
                     return false;
             return true;
@@ -404,7 +416,7 @@ public class inventory : networked, IItemCollection
     public Dictionary<item, int> contents()
     {
         Dictionary<item, int> ret = new Dictionary<item, int>();
-        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        foreach (var isn in networked_slots)
         {
             if (isn == null) continue; // Destroyed
             if (isn.item == null) continue; // No item
