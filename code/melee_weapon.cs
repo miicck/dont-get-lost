@@ -94,10 +94,7 @@ public class melee_weapon : equip_in_hand
         Quaternion target_rotation = Quaternion.LookRotation(fw, up);
 
         transform.rotation = target_rotation;
-
-        if (swing_progress_at_impact > 0) // We're stuck in something
-            return use_result.underway_allows_none;
-        return use_result.underway_allows_all; // We're still swinging
+        return use_result.underway_allows_all;
     }
 
     private void OnTriggerEnter(Collider other)
