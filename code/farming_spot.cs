@@ -25,29 +25,27 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
                 seed?.plural + " growing into " + product?.plural + ".");
     }
 
+    private void Start()
+    {
+        InvokeRepeating("update_growth", 1, 1);
+    }
+
     void update_growth()
     {
+        if (grown != null) return;
         if (growing == null) return;
-        if (inventory.count(product) > 0) return;
 
+        // Grow the product
         int delta_time = client.server_time - time_planted.value;
-        if (delta_time > 1)
-        { 
+        if (delta_time > 5)
+        {
             // Grow the product
             if (product != null)
             {
                 // Add happens before remove, because if remove removes the last
                 // seed, then the product becomes null (in the inventory on_change method).
                 if (inventory.add(product, 1))
-                {
                     inventory.remove(seed, 1);
-
-                    // Create the representation of the grown product
-                    if (grown != null) Destroy(grown);
-                    grown = create(product.name, transform.position, transform.rotation).gameObject;
-                    grown.transform.SetParent(transform);
-                    Destroy(grown.GetComponent<item>());
-                }
             }
         }
     }
@@ -65,27 +63,36 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     {
         inventory.add_on_change_listener(() =>
         {
-            CancelInvoke("update_growth");
-
             // Update the recipe that we're growing
             growing = null;
             foreach (var r in Resources.LoadAll<recipe>("recipes/farming_spots/" + name))
                 if (r.can_craft(inventory))
                 {
                     growing = r;
+                    time_planted.value = client.server_time;
                     break;
                 }
 
             // Destroy the representation of the grown product if it has been removed
             if (grown != null)
                 if (inventory.count(Resources.Load<item>("items/" + grown.name)) < 1)
+                {
                     Destroy(grown);
+                    grown = null;
+                }
 
-            time_planted.value = client.server_time;
-            InvokeRepeating("update_growth", 1, 1);
+            // Create the representation of grown products
+            if (grown == null)
+                foreach (var kv in inventory.contents())
+                    if (kv.Key is growable_item)
+                    {
+                        grown = create(kv.Key.name, transform.position, transform.rotation).gameObject;
+                        grown.transform.SetParent(transform);
+                        Destroy(grown.GetComponent<item>());
+                        break;
+                    }
         });
     }
-
 
     //#################//
     // ILeftPlayerMenu //
