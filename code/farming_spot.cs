@@ -79,11 +79,15 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
 
             // Destroy the representation of the grown product if it has been removed
             if (grown != null)
-                if (inventory.count(Resources.Load<item>("items/" + grown.name)) < 1)
+            {
+                int grown_count = inventory.count(Resources.Load<item>("items/" + grown.name));
+                Debug.Log(grown_count);
+                if (grown_count < 1)
                 {
                     Destroy(grown);
                     grown = null;
                 }
+            }
 
             // Create the representation of grown products
             if (grown == null)

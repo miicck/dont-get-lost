@@ -18,6 +18,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
     }
 }
 
+/// <summary> The UI version of an inventory slot. </summary>
 public class inventory_slot : MonoBehaviour, IInspectable
 {
     public Image item_image;

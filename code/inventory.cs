@@ -108,7 +108,48 @@ public class inventory : networked, IItemCollection
 {
     public RectTransform ui_prefab;
 
-    inventory_slot[] slots;
+    void generate_ui()
+    {
+        // Create the ui element
+        _ui = ui_prefab.inst();
+        _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        _ui.anchoredPosition = Vector2.zero;
+
+        // Setup the ui slots to link to this inventory
+        _slots = _ui.GetComponentsInChildren<inventory_slot>();
+        for (int i = 0; i < _slots.Length; ++i)
+        {
+            var isb = _slots[i].button.gameObject.AddComponent<inventory_slot_button>();
+            isb.index = i;
+            isb.inventory = this;
+            _slots[i].update(null, 0, this); // Initalize ui to empty
+        }
+
+        // UI starts closed, is opened using the "open" set method
+        _ui.gameObject.SetActive(false);
+    }
+
+    /// <summary> The ui element representing this inventory. </summary>
+    public RectTransform ui
+    {
+        get
+        {
+            if (_ui == null) generate_ui();
+            return _ui;
+        }
+    }
+    RectTransform _ui;
+
+    /// <summary> The UI slots representing this inventory. </summary>
+    inventory_slot[] slots
+    {
+        get
+        {
+            if (_slots == null) generate_ui();
+            return _slots;
+        }
+    }
+    inventory_slot[] _slots;
 
     public inventory_slot_networked nth_slot(int n)
     {
@@ -117,36 +158,6 @@ public class inventory : networked, IItemCollection
                 return isn;
         return null;
     }
-
-    public RectTransform ui
-    {
-        get
-        {
-            if (_ui == null)
-            {
-                // Create the ui element
-                _ui = ui_prefab.inst();
-                _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                _ui.anchoredPosition = Vector2.zero;
-
-                // Setup the ui slots to link to this inventory
-                slots = _ui.GetComponentsInChildren<inventory_slot>();
-                for (int i = 0; i < slots.Length; ++i)
-                {
-                    var isb = slots[i].button.gameObject.AddComponent<inventory_slot_button>();
-                    isb.index = i;
-                    isb.inventory = this;
-                    slots[i].update(null, 0, this); // Initalize ui to empty
-                }
-
-                // UI starts closed, is opened using the "open" set method
-                _ui.gameObject.SetActive(false);
-            }
-
-            return _ui;
-        }
-    }
-    RectTransform _ui;
 
     /// <summary> Is the ui element currently active? </summary>
     public bool open
@@ -243,34 +254,13 @@ public class inventory : networked, IItemCollection
         }
     }
 
-    List<inventory_slot_networked> children_added = new List<inventory_slot_networked>();
-    List<inventory_slot_networked> children_removed = new List<inventory_slot_networked>();
-
-    private void Update()
-    {
-        // Ensure the ui exists
-        if (ui == null)
-            throw new System.Exception("UI should create itself!");
-
-        foreach (var slot in children_added)
-            on_slot_change(slot.index, slot.item, slot.count);
-        children_added.Clear();
-
-        foreach (var slot in children_removed)
-            on_slot_change(slot.index, null, 0);
-        children_removed.Clear();
-    }
-
     public override void on_delete_networked_child(networked child)
     {
         base.on_delete_networked_child(child);
-        children_removed.Add((inventory_slot_networked)child);
-    }
 
-    public override void on_add_networked_child(networked child)
-    {
-        base.on_add_networked_child(child);
-        children_added.Add((inventory_slot_networked)child);
+        // Networked slot deleted => An inventory slot was cleared
+        var isn = (inventory_slot_networked)child;
+        on_slot_change(isn.index, isn.item, isn.count);
     }
 
     public bool can_add(string item, int count)
@@ -416,7 +406,10 @@ public class inventory : networked, IItemCollection
         Dictionary<item, int> ret = new Dictionary<item, int>();
         foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
         {
-            if (isn.item == null) continue;
+            if (isn == null) continue; // Destroyed
+            if (isn.item == null) continue; // No item
+
+            // Add the contents to the dictionary
             if (!ret.ContainsKey(isn.item)) ret[isn.item] = isn.count;
             else ret[isn.item] += isn.count;
         }
