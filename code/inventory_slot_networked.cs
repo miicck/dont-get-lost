@@ -108,10 +108,7 @@ public class inventory_slot_networked : networked
                 // Create the replacement slot
                 var slot = (inventory_slot_networked)client.create(
                     inv.transform.position, "misc/networked_inventory_slot", inv);
-
-                slot.net_count.value = remaining;
-                slot.net_item.value = item_to_pickup.name;
-                slot.net_index.value = index;
+                slot.set_item_count_index(item_to_pickup, remaining, index);
             }
 
             // Update the ui to reflect that the object has been picked up

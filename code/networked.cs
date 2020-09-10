@@ -281,6 +281,7 @@ public class networked : MonoBehaviour
     {
         on_forget(deleting);
         on_forget(this);
+        transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
         Destroy(gameObject);
     }
 
@@ -294,7 +295,9 @@ public class networked : MonoBehaviour
     /// <summary> Remove a networked object from the server and all clients. 
     /// If <paramref name="callback"/> is not null, the server will be asked
     /// to respond when the object has been successfully deleted. When this
-    /// response is recived, callback will be called. </summary>
+    /// response is recived, callback will be called. Note that this function
+    /// is only called by the client side, not remotely (remote clients will 
+    /// recive a call to forget(deleting=true). </summary>
     public void delete(delete_success_callback callback = null)
     {
         if (is_client_side)
@@ -306,13 +309,10 @@ public class networked : MonoBehaviour
             return;
         }
 
-        // Deactivate the object/move to deleted pile/trigger parent.on_delete_child
-        // immediately, but actually delete only once we have a positive network ID
-        // (so that we can tell the server which object was deleted)
-        if (!is_client_side)
-            transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
+        // Deactivate the object immediately, but actually delete only 
+        // once we have a positive network ID.
+        // (so that we can tell the server exactly which object was deleted)
         gameObject.SetActive(false);
-        gameObject.transform.SetParent(deleted_network_objects);
 
         if (network_id < 0)
         {
@@ -362,10 +362,6 @@ public class networked : MonoBehaviour
 
     // STATE VARIABLES //
 
-    /// <summary> Networked objects that have been deleted will be moved 
-    /// to here whilst they are awaiting server confirmation. </summary>
-    static Transform deleted_network_objects;
-
     /// <summary> Contains all of the networked fields, keyed by networked type. </summary>
     static Dictionary<System.Type, List<System.Reflection.FieldInfo>> networked_fields;
 
@@ -393,7 +389,6 @@ public class networked : MonoBehaviour
         objects = new Dictionary<int, networked>();
         recently_forgotten = new Dictionary<int, float>();
         delete_callbacks = new Dictionary<int, delete_success_callback>();
-        deleted_network_objects = new GameObject("deleted_network_objects").transform;
     }
 
     /// <summary> Look up a networked prefab from the prefab path. </summary>
