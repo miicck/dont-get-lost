@@ -1,12 +1,11 @@
+Ongoing
+- Create unique sprites for everything
+
+Tasks
 - Item flow recording should be done on link points?
 - Figure out why items slide into one another on gutters
 - Get rid of settlers/all that goes with that (fixtures etc...)?
-- Create unique sprites for everything (ongoing)
 - Fix farming spots so that they display properly
 - Implement teleport-to-player
-- Remove biome-based character spawning (revert to local spawners only)
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Allow q to get items from bag?
-- Add input snap point to chest
-- Make outputs on autominers/choppers as high as possible
-- Increase scroll speed out crafting menu

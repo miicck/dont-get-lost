@@ -213,7 +213,7 @@ public class inventory : networked, IItemCollection
                             if (target == null) target = player.current.crafting_menu;
                         }
 
-                        if (target != null)
+                        if (target != null && target.can_add(transfer_item, transfer_count))
                             isn.delete(() =>
                             {
                                 // Transfer into target inventory
@@ -273,6 +273,40 @@ public class inventory : networked, IItemCollection
         children_added.Add((inventory_slot_networked)child);
     }
 
+    public bool can_add(string item, int count)
+    {
+        var to_add = Resources.Load<item>("items/" + item);
+        if (to_add == null) throw new System.Exception("Could not find the item " + item);
+        return can_add(to_add, count);
+    }
+
+    public bool can_add(item item, int count)
+    {
+        if (item == null || count == 0)
+            return true;
+
+        // Ensure we're adding the prefab version of this item
+        item = Resources.Load<item>("items/" + item.name);
+
+        // See if a slot for this item already exists
+        var networked_slots = new HashSet<int>();
+        foreach (var isn in GetComponentsInChildren<inventory_slot_networked>())
+        {
+            if (isn.item_name == item.name) return true;
+            networked_slots.Add(isn.index);
+        }
+
+        // See if there is a free slot to put the item in
+        for (int i = 0; i < slots.Length; ++i)
+        {
+            if (networked_slots.Contains(i)) continue; // This slot is taken
+            if (slots[i].accepts(item))
+                return true;
+        }
+
+        return false;
+    }
+
     public bool add(string item, int count)
     {
         var to_add = Resources.Load<item>("items/" + item);
@@ -284,10 +318,6 @@ public class inventory : networked, IItemCollection
     {
         if (item == null || count == 0)
             return true;
-
-        // Ensure the ui exists
-        if (ui == null)
-            throw new System.Exception("UI should create itself!");
 
         // Ensure we're adding the prefab version of the item
         item = Resources.Load<item>("items/" + item.name);
