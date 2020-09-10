@@ -10,7 +10,6 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     item seed => ((item_ingredient)growing?.ingredients[0])?.item;
     item product => growing?.products[0].item;
 
-    string last_product;
     GameObject grown;
 
     public override void on_init_network_variables()
@@ -23,36 +22,32 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     {
         return base.inspect_info() + "\n" +
                (growing == null ? "Nothing growing." :
-                seed?.plural + " growing into " + product?.plural + ".") + "\n" +
-                "Last product: " + last_product;
+                seed?.plural + " growing into " + product?.plural + ".");
     }
 
     void update_growth()
     {
         if (growing == null) return;
+        if (inventory.count(product) > 0) return;
 
         int delta_time = client.server_time - time_planted.value;
-        int target_products = delta_time / 2;
-        int in_inventory = inventory.count(product);
-
-        if (target_products > in_inventory)
-        {
-            int seeds_left = inventory.count(seed);
-            int to_grow = Mathf.Min(seeds_left, target_products - in_inventory);
-
-            // Nothing to grow
-            if (to_grow == 0)
-                return;
-
+        if (delta_time > 1)
+        { 
             // Grow the product
             if (product != null)
             {
-                last_product = product.name;
-
                 // Add happens before remove, because if remove removes the last
                 // seed, then the product becomes null (in the inventory on_change method).
-                if (inventory.add(product, to_grow))
-                    inventory.remove(seed, to_grow);
+                if (inventory.add(product, 1))
+                {
+                    inventory.remove(seed, 1);
+
+                    // Create the representation of the grown product
+                    if (grown != null) Destroy(grown);
+                    grown = create(product.name, transform.position, transform.rotation).gameObject;
+                    grown.transform.SetParent(transform);
+                    Destroy(grown.GetComponent<item>());
+                }
             }
         }
     }
@@ -81,20 +76,10 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
                     break;
                 }
 
-            // Create/remove the grown object
-            int grown_count = last_product == null ? 0 : inventory.count(last_product);
-            if (grown == null && grown_count > 0)
-            {
-                grown = Resources.Load<item>("items/" + last_product).inst().gameObject;
-                Destroy(grown.GetComponent<item>());
-                grown.transform.SetParent(transform);
-                grown.transform.localPosition = Vector3.zero;
-            }
-            else if (grown != null && grown_count == 0)
-            {
-                last_product = null;
-                Destroy(grown);
-            }
+            // Destroy the representation of the grown product if it has been removed
+            if (grown != null)
+                if (inventory.count(Resources.Load<item>("items/" + grown.name)) < 1)
+                    Destroy(grown);
 
             time_planted.value = client.server_time;
             InvokeRepeating("update_growth", 1, 1);
@@ -106,7 +91,7 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
     // ILeftPlayerMenu //
     //#################//
 
-    public inventory editable_inventory() { return inventory; } 
+    public inventory editable_inventory() { return inventory; }
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { update_growth(); }
     public void on_left_menu_close() { }
