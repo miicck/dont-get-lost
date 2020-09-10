@@ -4,8 +4,10 @@ using UnityEngine;
 
 /// <summary> Splits a multiple input item flows
 /// into multiple output item flows. </summary>
-public class item_splitter : building_material
+public class item_splitter : MonoBehaviour, INonBlueprintable
 {
+    public float selector_speed = 1f;
+
     List<item_link_point> inputs = new List<item_link_point>();
     List<item_link_point> outputs = new List<item_link_point>();
 
@@ -71,7 +73,7 @@ public class item_splitter : building_material
         float sign = Mathf.Sign(
             Vector3.Dot(Vector3.Cross(ax, target_ax), rot_axis));
 
-        float rot_amt = Mathf.Min(angle, Time.deltaTime * 45);
+        float rot_amt = Mathf.Min(angle, Time.deltaTime * 45 * selector_speed);
         selector.Rotate(rot_axis, sign * rot_amt, Space.World);
         return false;
     }

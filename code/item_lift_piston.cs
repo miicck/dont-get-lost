@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_lift_piston : MonoBehaviour
+public class item_lift_piston : MonoBehaviour, INonBlueprintable
 {
     public Transform bottom;
     public Transform top;

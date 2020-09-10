@@ -317,6 +317,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6105313062233208686}
   - component: {fileID: 6105313062233208685}
+  - component: {fileID: 7369570500567422332}
   m_Layer: 0
   m_Name: item_combiner
   m_TagString: Untagged
@@ -358,12 +359,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 943de83a18b1f79448aad351b45c729f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 3a75e701250141a4d9c11a67a3d3b8f0, type: 3}
-  plural: item combiners
-  value: 0
-  fuel_value: 0
-  logistics_scale: 1
-  axes_scale: 1
+  selector_speed: 2
   input_selector: {fileID: 7440353466475026601}
   input_selector_end: {fileID: 6823218136007708577}
   output_selector: {fileID: 4190982786792415175}
@@ -372,6 +368,25 @@ MonoBehaviour:
   output_selector_axis: 1
   input_rotation_axis: 1
   output_rotation_axis: 1
+--- !u!114 &7369570500567422332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6105313062233208684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  is_client_side: 0
+  sprite: {fileID: 21300000, guid: 3a75e701250141a4d9c11a67a3d3b8f0, type: 3}
+  plural: item  combiners
+  value: 0
+  fuel_value: 0
+  logistics_scale: 1
+  axes_scale: 1
 --- !u!1 &7414937531593024544
 GameObject:
   m_ObjectHideFlags: 0

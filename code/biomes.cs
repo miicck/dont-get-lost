@@ -52,8 +52,6 @@ public class mangroves : biome
                     else if (random.range(0, 100) == 0)
                         p.object_to_generate = world_object.load("iron_ore");
                     else if (random.range(0, 200) == 0)
-                        p.object_to_generate = world_object.load("titanium_ore");
-                    else if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("flat_rock_outcrop");
                 }
                 
