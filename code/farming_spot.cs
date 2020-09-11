@@ -81,7 +81,6 @@ public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectabl
             if (grown != null)
             {
                 int grown_count = inventory.count(Resources.Load<item>("items/" + grown.name));
-                Debug.Log(grown_count);
                 if (grown_count < 1)
                 {
                     Destroy(grown);
