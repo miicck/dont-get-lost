@@ -123,6 +123,7 @@ public class inventory_slot_networked : networked
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+            if (!Application.isPlaying) return;
             var isn = (inventory_slot_networked)target;
             UnityEditor.EditorGUILayout.TextArea(
                 "Item = " + isn.item_name + "\n" +

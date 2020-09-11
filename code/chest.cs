@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class chest : fixture_with_inventory, ILeftPlayerMenu
+public class chest : building_with_inventory, ILeftPlayerMenu
 {
     protected override string inventory_prefab()
     {

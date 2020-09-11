@@ -61,6 +61,7 @@ public class world : networked
         {
             base.OnInspectorGUI();
             world w = (world)target;
+            if (!Application.isPlaying) return;
             UnityEditor.EditorGUILayout.IntField("static seed", seed);
             UnityEditor.EditorGUILayout.IntField("network seed", w.networked_seed.value);
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class farming_spot : fixture_with_inventory, ILeftPlayerMenu, IInspectable
+public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectable
 {
     networked_variables.net_int time_planted;
 

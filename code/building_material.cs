@@ -462,3 +462,38 @@ public class building_material : item
         Gizmos.DrawLine(camera_ray.origin, camera_ray.origin + camera_ray.direction);
     }
 }
+
+public abstract class building_with_inventory : building_material
+{
+    public inventory inventory { get; private set; }
+
+    protected override bool can_pick_up(out string message)
+    {
+        if (!inventory.empty)
+        {
+            message = "Inventory not empty!";
+            return false;
+        }
+
+        return base.can_pick_up(out message);
+    }
+
+    protected abstract string inventory_prefab();
+    protected virtual void on_set_inventory() { }
+
+    public override void on_first_register()
+    {
+        base.on_first_register();
+        client.create(transform.position, inventory_prefab(), this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+        if (child is inventory)
+        {
+            inventory = (inventory)child;
+            on_set_inventory();
+        }
+    }
+}

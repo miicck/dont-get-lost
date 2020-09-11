@@ -88,7 +88,7 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
 
     public string inspect_info()
     {
-        return product.product_quantities_list(products) + " can bn harvested by hand";
+        return product.product_plurals_list(products) + " can bn harvested by hand";
     }
 
     public Sprite main_sprite()

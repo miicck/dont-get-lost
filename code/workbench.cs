@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class workbench : fixture_with_inventory, ILeftPlayerMenu
+public class workbench : building_with_inventory, ILeftPlayerMenu
 {
     protected override string inventory_prefab() { return "inventories/workbench"; }
     crafting_input crafting;
