@@ -9,7 +9,12 @@ public class accepts_item_impact : MonoBehaviour
 
 public abstract class equip_in_hand : item
 {
-
+    public override void make_equipped_version()
+    {
+        // Remove all colliders
+        foreach (var c in GetComponentsInChildren<Collider>())
+            c.enabled = false;
+    }
 }
 
 public class melee_weapon : equip_in_hand
@@ -35,6 +40,14 @@ public class melee_weapon : equip_in_hand
         rigidbody = GetComponent<Rigidbody>();
         if (rigidbody == null)
             throw new System.Exception("Could not find rigidbody on melee weapon!");
+    }
+
+    public override void make_equipped_version()
+    {
+        // Remove all non-trigger colliders
+        foreach (var c in GetComponentsInChildren<Collider>())
+            if (!c.isTrigger)
+                c.enabled = false;
     }
 
     public override use_result on_use_start(player.USE_TYPE use_type)
@@ -87,7 +100,7 @@ public class melee_weapon : equip_in_hand
         transform.position = target_pos;
 
         // Work out/apply the swing rotation
-        Vector3 up = player.current.hand_centre.up + 
+        Vector3 up = player.current.hand_centre.up +
             max_forward_in_up * player.current.hand_centre.forward * sin;
         Vector3 fw = -Vector3.Cross(up, player.current.hand_centre.right +
             player.current.hand_centre.forward * fw_amt / 2f);

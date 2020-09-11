@@ -446,23 +446,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
             {
                 // Ensure we actually have one of these in my inventory
                 if (inventory.contains(value))
-                {
+                {                
                     // Create an equipped-type copy of the item
                     _equipped = item.create(value.name, transform.position, transform.rotation);
-                    foreach (var c in _equipped.GetComponentsInChildren<Collider>())
-                        if (!c.isTrigger)
-                            c.enabled = false;
-
-                    if (_equipped is equip_in_hand)
-                    {
-                        // This item can be eqipped in my hand
-                    }
-                    else
-                    {
-                        // This item can't be equipped in my hand, make it invisible.
-                        foreach (var r in _equipped.GetComponentsInChildren<Renderer>())
-                            r.enabled = false;
-                    }
+                    _equipped.make_equipped_version();
                 }
                 else _equipped = null; // Don't have, equip null
             }

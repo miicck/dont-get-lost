@@ -77,6 +77,19 @@ public class item : networked, IInspectable
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 
+    /// <summary> Called when this item is equipped, to make it into the 
+    /// version that the player holds. </summary>
+    public virtual void make_equipped_version()
+    {
+        // Remove all colliders
+        foreach (var c in GetComponentsInChildren<Collider>())
+           c.enabled = false;
+
+        // Make it invisible.
+        foreach (var r in GetComponentsInChildren<Renderer>())
+            r.enabled = false;
+    }
+
     public virtual Dictionary<string, int> add_to_inventory_on_pickup()
     {
         var ret = new Dictionary<string, int>();
