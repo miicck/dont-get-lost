@@ -114,6 +114,9 @@ public class melee_weapon : equip_in_hand
     {
         if (!in_use) return;
 
+        // Only allow one impact per swing
+        if (swing_progress_at_impact > 0) return; 
+
         // Ignore collisions with the player
         if (other.transform.IsChildOf(player.current.transform))
             return;
