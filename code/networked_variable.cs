@@ -72,12 +72,6 @@ public abstract class networked_variable<T> : networked_variable
     /// <summary> The last value that was sent. </summary>
     T last_queued_value;
 
-    /// <summary> Constructor. </summary>
-    public networked_variable()
-    {
-        _value = default_value();
-    }
-
     /// <summary> Checks <paramref name="new_value"/> for validity, 
     /// should return the nearest valid T. By default, just returns
     /// <paramref name="new_value"/>. </summary>
@@ -117,9 +111,6 @@ public abstract class networked_variable<T> : networked_variable
 
         return !last_sent.Equals(new_value);
     }
-
-    /// <summary> The default value that the variable should take. </summary>
-    protected virtual T default_value() { return default; }
 }
 
 public class networked_list<T> : networked_variable, IEnumerable<T>
@@ -223,9 +214,9 @@ namespace networked_variables
     public class net_bool : networked_variable<bool>
     {
         public net_bool() { }
-        public net_bool(bool init_value = false)
+        public net_bool(bool default_value = false)
         {
-            value = init_value;
+            _value = default_value;
         }
 
         public override byte[] serialization()
@@ -246,7 +237,7 @@ namespace networked_variables
 
         public net_int(int default_value = 0) : base()
         {
-            _value = default_value; // Should this be value rather than _value?
+            _value = default_value;
         }
 
         public override byte[] serialization()
@@ -263,12 +254,15 @@ namespace networked_variables
     /// <summary> A networked string. </summary>
     public class net_string : networked_variable<string>
     {
-        public net_string(string init_value = "")
+        public net_string(string default_value)
         {
-            value = init_value;
+            _value = default_value;
         }
 
-        public net_string() { }
+        public net_string()
+        {
+            _value = "";
+        }
 
         public override byte[] serialization()
         {
@@ -278,11 +272,6 @@ namespace networked_variables
         protected override string deserialize(byte[] buffer, ref int offset, int length)
         {
             return network_utils.decode_string(buffer, ref offset);
-        }
-
-        protected override string default_value()
-        {
-            return ""; // Can't serialize null strings
         }
     }
 
@@ -368,11 +357,11 @@ namespace networked_variables
 
         public net_vector3() { }
 
-        public net_vector3(float lerp_speed = 5f, Vector3 init_value = default)
+        public net_vector3(float lerp_speed = 5f, Vector3 default_value = default)
         {
             this.lerp_speed = lerp_speed;
-            value = init_value;
-            _lerped_value = init_value;
+            _value = default_value;
+            _lerped_value = default_value;
         }
 
         public override byte[] serialization()
@@ -398,7 +387,7 @@ namespace networked_variables
     public class net_color : networked_variable<Color>
     {
         public net_color() { }
-        public net_color(Color value) { this.value = value; }
+        public net_color(Color default_value) { _value = default_value; }
 
         public override byte[] serialization()
         {
@@ -438,14 +427,14 @@ namespace networked_variables
 
         public net_quaternion() { }
 
-        public net_quaternion(float lerp_speed = 5f, Quaternion init = default)
+        public net_quaternion(float lerp_speed = 5f, Quaternion default_value = default)
         {
             this.lerp_speed = lerp_speed;
-            if (init.Equals(default))
-                init = Quaternion.identity;
+            if (default_value.Equals(default))
+                default_value = Quaternion.identity;
 
-            _lerped_value = init;
-            value = init;
+            _lerped_value = default_value;
+            _value = default_value;
         }
 
         public override byte[] serialization()
@@ -472,6 +461,11 @@ namespace networked_variables
     /// <summary> Represents a map from strings to ints. </summary>
     public class net_string_counts : networked_variable<SortedDictionary<string, int>>
     {
+        public net_string_counts()
+        {
+            _value = new SortedDictionary<string, int>();
+        }
+
         public override byte[] serialization()
         {
             List<byte> ret = new List<byte>();
@@ -496,11 +490,6 @@ namespace networked_variables
             }
 
             return new_dict;
-        }
-
-        protected override SortedDictionary<string, int> default_value()
-        {
-            return new SortedDictionary<string, int>();
         }
     }
 
