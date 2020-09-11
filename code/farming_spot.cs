@@ -7,11 +7,11 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
     networked_variables.net_int time_planted;
 
     recipe growing;
-    item seed => ((item_ingredient)growing?.ingredients[0])?.item;
+    seed seed => (seed)((item_ingredient)growing?.ingredients[0])?.item;
     item product => growing?.products[0].item;
     GameObject grown;
 
-    int growth_time => 5;
+    int growth_time => seed.growth_time;
 
     public override void on_init_network_variables()
     {
@@ -96,9 +96,17 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
                         grown = create(kv.Key.name, transform.position, transform.rotation).gameObject;
                         grown.transform.SetParent(transform);
                         Destroy(grown.GetComponent<item>());
+                        grown.AddComponent<farm_harvest_on_click>().spot = this;
                         break;
                     }
         });
+    }
+
+    public void harvest()
+    {
+        string to_harvest = grown.name;
+        if (inventory.remove(to_harvest, 1))
+            player.current.inventory.add(to_harvest, 1);
     }
 
     //#################//
@@ -109,4 +117,10 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { update_growth(); }
     public void on_left_menu_close() { }
+}
+
+public class farm_harvest_on_click : MonoBehaviour, IAcceptLeftClick
+{
+    public farming_spot spot;
+    public void on_left_click() { spot.harvest(); }
 }

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class scavangable : MonoBehaviour, IInspectable
+public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
 {
     product[] products => GetComponents<product>();
 
     scavange_timer timer;
 
-    public void start_scavange()
+    public void on_left_click()
     {
         if (timer != null) Destroy(timer.gameObject);
         timer = Resources.Load<scavange_timer>("ui/scavange_timer").inst();

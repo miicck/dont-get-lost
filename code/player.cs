@@ -296,33 +296,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
     // Called on a left click when no item is equipped
     public void left_click_with_hand()
     {
-        float dis;
-        var ray = camera_ray(INTERACTION_RANGE, out dis);
-
-        // First, attempt to pick up items
-        RaycastHit hit;
-        item clicked = utils.raycast_for_closest<item>(ray, out hit, dis);
-        if (clicked != null)
-        {
-            clicked.pick_up(register_undo: true);
-            return;
-        }
-
-        // Then attempt to harvest by hand
-        var pick_by_hand = harvest_by_hand.raycast(ray, out hit, dis);
-        if (pick_by_hand != null)
-        {
-            pick_by_hand.on_pick();
-            return;
-        }
-
-        // Then attempt to scavange
-        var scavange = utils.raycast_for_closest<scavangable>(ray, out hit, dis);
-        if (scavange != null)
-        {
-            scavange.start_scavange();
-            return;
-        }
+        var ray = camera_ray(INTERACTION_RANGE, out float dis);
+        var to_click = utils.raycast_for_closest<IAcceptLeftClick>(ray, out RaycastHit hit, dis);
+        to_click?.on_left_click();
     }
 
     // Called on a right click when no item is equipped
@@ -1601,4 +1577,11 @@ public interface ILeftPlayerMenu
 
     /// <summary> Called when the player opens the left menu. </summary>
     void on_left_menu_open();
+}
+
+/// <summary> Interfact for objects that can be 
+/// left-clicked with no item equipped. </summary>
+public interface IAcceptLeftClick
+{
+    void on_left_click();
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 /// to yield a product, and takes time to regrow. The part will
 /// be disabled until it regrows. </summary>
 [RequireComponent(typeof(product))]
-public class harvest_by_hand : MonoBehaviour, IInspectable
+public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
 {
     public AudioClip play_on_pick;
     public float regrow_time = 1f;
@@ -39,7 +39,7 @@ public class harvest_by_hand : MonoBehaviour, IInspectable
         return found;
     }
 
-    public void on_pick()
+    public void on_left_click()
     {
         if (source == null)
         {

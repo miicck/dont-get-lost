@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item : networked, IInspectable
+public class item : networked, IInspectable, IAcceptLeftClick
 {
     //###########//
     // VARIABLES //
@@ -83,12 +83,14 @@ public class item : networked, IInspectable
     {
         // Remove all colliders
         foreach (var c in GetComponentsInChildren<Collider>())
-           c.enabled = false;
+            c.enabled = false;
 
         // Make it invisible.
         foreach (var r in GetComponentsInChildren<Renderer>())
             r.enabled = false;
     }
+
+    public void on_left_click() { pick_up(register_undo: true); }
 
     public virtual Dictionary<string, int> add_to_inventory_on_pickup()
     {
@@ -215,14 +217,15 @@ public class item : networked, IInspectable
                 rotation: rotation, parent: network_parent);
 
             if (register_undo)
-                undo_manager.register_undo_level(() => {
+                undo_manager.register_undo_level(() =>
+                {
 
                     if (item == null) return null;
                     var redo = item.pickup_undo();
                     item.pick_up();
                     return redo;
                 });
-        
+
         }
         else
         {
