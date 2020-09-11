@@ -11,10 +11,14 @@ public class random_ore : world_object.sub_generator
     }
 
     public TYPE type;
+    public float probability = 1f;
 
     public override void generate(biome.point point,
         chunk chunk, int x_in_chunk, int z_in_chunk)
     {
+        if (chunk.random.range(0, 1f) > probability)
+            return;
+
         var options = Resources.LoadAll<GameObject>(directory());
         var chosen = options[chunk.random.Next() % options.Length].inst();
         chosen.transform.SetParent(transform);
