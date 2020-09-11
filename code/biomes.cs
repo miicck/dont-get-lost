@@ -54,7 +54,7 @@ public class mangroves : biome
                     else if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("flat_rock_outcrop");
                 }
-                
+
                 // On land
                 else if (p.altitude > world.SEA_LEVEL)
                 {
@@ -116,7 +116,7 @@ public class desert : biome
                     else if (random.range(0, 100) == 0)
                         grid[i, j].object_to_generate = world_object.load("flint");
                 }
-                else if (grid[i,j].altitude < world.SEA_LEVEL)
+                else if (grid[i, j].altitude < world.SEA_LEVEL)
                 {
                     // Underwater
                     if (random.range(0, 100) == 0)
@@ -194,8 +194,8 @@ public class desert : biome
             }
 
         for (int i = 0; i < 8; ++i)
-            create_oasis(random.range(0, SIZE), 
-                         random.range(0, SIZE), 
+            create_oasis(random.range(0, SIZE),
+                         random.range(0, SIZE),
                          random.range(16, 32));
     }
 }
@@ -565,31 +565,76 @@ public class jungle : biome
                 p.sky_color = sky_colors.jungle_green;
                 p.altitude = world.SEA_LEVEL + 16f * Mathf.PerlinNoise(i / 32f, j / 32f) - 8f;
                 p.fog_distance = fog_distances.CLOSE;
+                p.object_to_generate = get_object(p.altitude, random);
+            }
+    }
 
-                if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("jungle_tree_1");
-                else if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("jungle_tree_2");
-                else if (random.range(0, 50) == 0)
-                {
-                    if (random.range(0, 2) == 0)
-                        p.object_to_generate = world_object.load("tree_fern_bent");
-                    else
-                        p.object_to_generate = world_object.load("tree_fern");
-                }
-                else if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("mossy_log_jungle");
-                else if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("jungle_cliffs");
-                else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
-                {
-                    // On the beach
-                    if (random.range(0, 100) == 0)
-                        p.object_to_generate = world_object.load("flint");
-                    else if (random.range(0, 200) == 0)
-                        p.object_to_generate = world_object.load("flat_rock_outcrop");
-                }
+    public static world_object get_object(float altitude, System.Random random)
+    {
+        if (random.range(0, 400) == 0)
+            return world_object.load("jungle_tree_1");
 
+        if (random.range(0, 400) == 0)
+            return world_object.load("jungle_tree_2");
+
+        if (random.range(0, 50) == 0)
+        {
+            if (random.range(0, 2) == 0)
+                return world_object.load("tree_fern_bent");
+            else
+                return world_object.load("tree_fern");
+        }
+
+        if (random.range(0, 100) == 0)
+            return world_object.load("mossy_log_jungle");
+
+        if (random.range(0, 400) == 0)
+            return world_object.load("jungle_cliffs");
+
+        if (altitude < point.BEACH_END && altitude > world.SEA_LEVEL)
+        {
+            // On the beach
+            if (random.range(0, 100) == 0)
+                return world_object.load("flint");
+
+            if (random.range(0, 200) == 0)
+                return world_object.load("flat_rock_outcrop");
+        }
+
+        return null;
+    }
+}
+
+public class jungle_mountains : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                // Point setup
+                var p = grid[i, j] = new point();
+                p.terrain_color = terrain_colors.jungle_moss;
+                p.sky_color = sky_colors.jungle_green;
+                p.fog_distance = fog_distances.MEDIUM;
+
+                float alt = Mathf.PerlinNoise(
+                    i / 64f + x * 10f, j / 64f + z * 10f);
+
+                alt = (alt - 0.5f) * 2f;
+                if (alt < 0f) alt = 0f;
+                alt = Mathf.Pow(alt, 0.5f);
+                p.altitude = 64f * alt;
+
+                p.object_to_generate = jungle.get_object(p.altitude, random);
+
+                if (p.object_to_generate == null)
+                {
+                    if (p.altitude > world.SEA_LEVEL - 2 &&
+                        p.altitude < point.BEACH_END)
+                        if (i % 3 == 0 && j % 3 == 0)
+                            p.object_to_generate = world_object.load("flat_rock_outcrop");
+                }
             }
     }
 }
