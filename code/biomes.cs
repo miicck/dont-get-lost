@@ -108,12 +108,19 @@ public class desert : biome
                 if (grid[i, j].altitude < point.BEACH_END &&
                     grid[i, j].altitude > world.SEA_LEVEL)
                 {
+                    // On the beach
                     if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("palm_tree");
                     else if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("mossy_log");
                     else if (random.range(0, 100) == 0)
                         grid[i, j].object_to_generate = world_object.load("flint");
+                }
+                else if (grid[i,j].altitude < world.SEA_LEVEL)
+                {
+                    // Underwater
+                    if (random.range(0, 100) == 0)
+                        grid[i, j].object_to_generate = world_object.load("boulder");
                 }
             }
     }
@@ -187,9 +194,9 @@ public class desert : biome
             }
 
         for (int i = 0; i < 8; ++i)
-        {
-            create_oasis(random.range(0, SIZE), random.range(0, SIZE), random.range(16, 32));
-        }
+            create_oasis(random.range(0, SIZE), 
+                         random.range(0, SIZE), 
+                         random.range(16, 32));
     }
 }
 

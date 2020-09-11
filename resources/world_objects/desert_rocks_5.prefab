@@ -57,7 +57,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 1549696613817889605, guid: c82441ee93a845c4b83cf0f96128170d, type: 3}
+  item: {fileID: 3540979553756881724, guid: c82441ee93a845c4b83cf0f96128170d, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1

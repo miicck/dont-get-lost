@@ -446,7 +446,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
             {
                 // Ensure we actually have one of these in my inventory
                 if (inventory.contains(value))
-                {                
+                {
                     // Create an equipped-type copy of the item
                     _equipped = item.create(value.name, transform.position, transform.rotation);
                     _equipped.make_equipped_version();
@@ -659,7 +659,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
             }
 
         // Turn on/off crouch
-        crouched.value = !climbing_ladder && controls.key_down(controls.BIND.CROUCH);
+        if (ui_state != UI_STATE.ALL_CLOSED || climbing_ladder)
+            crouched.value = false;
+        else
+            crouched.value = controls.key_down(controls.BIND.CROUCH);
 
         if (controller.isGrounded)
         {

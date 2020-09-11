@@ -138,6 +138,10 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
 
     bool try_link_to(item_link_point other)
     {
+        // Don't overwrite links
+        if (other.linked_to != null)
+            return false;
+
         switch (type)
         {
             case TYPE.INPUT:
