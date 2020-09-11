@@ -315,6 +315,14 @@ public class player : networked_player, INotPathBlocking, IInspectable
             pick_by_hand.on_pick();
             return;
         }
+
+        // Then attempt to scavange
+        var scavange = utils.raycast_for_closest<scavangable>(ray, out hit, dis);
+        if (scavange != null)
+        {
+            scavange.start_scavange();
+            return;
+        }
     }
 
     // Called on a right click when no item is equipped

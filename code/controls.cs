@@ -128,8 +128,11 @@ public static class controls
         };
     }
 
+    public static bool disabled = false;
+
     static bool controls_enabled()
     {
+        if (disabled) return false;
         if (ui_focus_disables_controls.controls_disabled) return false;
         if (console.open) return false;
         return true;
@@ -168,6 +171,12 @@ public static class controls
     {
         if (!mouse_enabled(button)) return false;
         return Input.GetMouseButtonDown((int)button);
+    }
+
+    public static bool mouse_unclick(MOUSE_BUTTON button)
+    {
+        if (!mouse_enabled(button)) return false;
+        return Input.GetMouseButtonUp((int)button);
     }
 
     public static bool mouse_down(MOUSE_BUTTON button)
