@@ -23,12 +23,16 @@ public class character : networked, INotPathBlocking, IInspectable
     public float pathfinding_resolution = 0.5f;
     public float height = 2f;
     public float agro_range = 5f;
+    public float rotation_lerp_speed = 1f;
+    public float idle_walk_distance = 4f;
+    public float flee_distance = 4f;
     public float reach = 0.5f;
     public float melee_cooldown = 1f;
     public int melee_damage = 10;
     public FRIENDLINESS friendliness;
     public bool can_walk = true;
     public bool can_swim = false;
+    public bool align_to_terrain = false;
     public Transform projectile_target;
 
     /// <summary> The object currently controlling this character. </summary>
@@ -38,7 +42,7 @@ public class character : networked, INotPathBlocking, IInspectable
         {
             // Default control
             if (_controller == null)
-                _controller = new default_character_control();
+                _controller = new character_control_v2();
             return _controller;
         }
         set => _controller = value;
@@ -201,6 +205,7 @@ public class character : networked, INotPathBlocking, IInspectable
 
     public override bool persistant()
     {
+        // Characters despawn when not loaded
         return false;
     }
 
@@ -268,6 +273,20 @@ public class character : networked, INotPathBlocking, IInspectable
         {
             networked_position = transform.position;
             y_rotation.value = transform.rotation.eulerAngles.y;
+        }
+    }
+
+    //#########//
+    // CONTROL //
+    //#########//
+
+    float last_attack_time = 0;
+    public void melee_attack(player p)
+    {
+        if (Time.realtimeSinceStartup - last_attack_time > melee_cooldown)
+        {
+            p.take_damage(melee_damage);
+            last_attack_time = Time.realtimeSinceStartup;
         }
     }
 
@@ -361,6 +380,7 @@ public class default_character_control : ICharacterController, IPathingAgent
     {
         character = c;
 
+        // Within agro range
         if ((character.transform.position - player.current.transform.position).magnitude < character.agro_range)
         {
             switch (character.friendliness)
@@ -423,12 +443,16 @@ public class default_character_control : ICharacterController, IPathingAgent
     //#############//
 
     // The current path the character is walking
-    path _path;
     path path
     {
-        get { return _path; }
-        set { _path = value; path_progress = 0; }
+        get => _path;
+        set
+        {
+            _path = value;
+            path_progress = 0;
+        }
     }
+    path _path;
     int path_progress = 0;
 
     bool move_towards(Vector3 point, float speed)
@@ -451,7 +475,7 @@ public class default_character_control : ICharacterController, IPathingAgent
         {
             // Lerp forward look direction
             Vector3 new_forward = Vector3.Lerp(character.transform.forward,
-                delta.normalized, speed * Time.deltaTime);
+                delta.normalized, character.rotation_lerp_speed * speed * Time.deltaTime);
 
             if (new_forward.magnitude > 10e-4)
                 character.transform.forward = new_forward;
@@ -464,8 +488,9 @@ public class default_character_control : ICharacterController, IPathingAgent
         switch (path.state)
         {
             case path.STATE.SEARCHING:
-                // Run pathfinding
-                path.pathfind(1);
+                // Run pathfinding (walking back+forth along the last path
+                // whilst we do so)
+                path.pathfind(load_balancing.iter);
                 return;
 
             case path.STATE.FAILED:
@@ -507,7 +532,8 @@ public class default_character_control : ICharacterController, IPathingAgent
     {
         if (path == null)
         {
-            random_path.success_func f = (v) => (v - character.transform.position).magnitude > 10f;
+            random_path.success_func f = (v) =>
+                (v - character.transform.position).magnitude > character.idle_walk_distance;
             path = new random_path(character.transform.position, f, f, this);
         }
         else move_along_path(character.walk_speed);
@@ -521,14 +547,15 @@ public class default_character_control : ICharacterController, IPathingAgent
         if (path == null)
         {
             Vector3 delta = (character.transform.position - fleeing_from.position).normalized;
-            Vector3 flee_to = character.transform.position + delta * 5f;
+            Vector3 flee_to = character.transform.position + delta * character.flee_distance;
 
             if (is_allowed_at(flee_to))
                 // Flee away
                 path = new astar_path(character.transform.position, flee_to, this);
             else
                 // Flee back the way we came
-                path = new astar_path(character.transform.position, fleeing_from.position - delta * 5f, this);
+                path = new astar_path(character.transform.position,
+                    fleeing_from.position - delta * character.flee_distance, this);
         }
         else move_along_path(character.run_speed);
     }
@@ -544,7 +571,7 @@ public class default_character_control : ICharacterController, IPathingAgent
             if (delta.magnitude < character.pathfinding_resolution)
             {
                 if (delta.magnitude > character.reach)
-                    move_towards(chasing.position, character.run_speed);
+                    move_towards(chasing.position, delta.magnitude);
                 else
                     melee_attack(chasing);
                 return;
@@ -568,4 +595,263 @@ public class default_character_control : ICharacterController, IPathingAgent
             attacking.GetComponent<player>()?.take_damage(character.melee_damage);
         }
     }
+}
+
+public class character_control_v2 : ICharacterController, IPathingAgent
+{
+    // The character being controlled
+    character character
+    {
+        get => _character;
+        set
+        {
+            if (_character == null) _character = value;
+            if (_character != value)
+                throw new System.Exception("Tried to overwrite character!");
+        }
+    }
+    character _character;
+
+    // The path we walk along idly
+    path idle_path
+    {
+        get => _idle_path;
+        set
+        {
+            _idle_path = value;
+            idle_path_point = 0;
+            idle_path_direction = 1;
+        }
+    }
+    path _idle_path;
+    int idle_path_point = 0;
+    int idle_path_direction = 1;
+
+    // The path that we chase the player along
+    path chase_path
+    {
+        get => _chase_path;
+        set
+        {
+            _chase_path = value;
+            chase_path_progress = 0;
+        }
+    }
+    path _chase_path;
+    int chase_path_progress;
+
+    // Where, in the idle path, the chase path begins
+    int chase_path_idle_path_link = 0;
+
+    public void control(character c)
+    {
+        character = c;
+
+        if (idle_path == null)
+        {
+            random_path.success_func f = (v) =>
+                (v - character.transform.position).magnitude > character.idle_walk_distance;
+            idle_path = new random_path(character.transform.position, f, f, this);
+        }
+        else
+        {
+            // If we're not already chasing a player/a player is in agro range
+            // then chase the player
+            if (chase_path == null &&
+                (player.current.transform.position - c.transform.position).magnitude <
+                c.agro_range)
+            {
+                chase_path = new chase_path(idle_path[idle_path_point],
+                    player.current.transform, this,
+                    max_iterations: 100,
+                    goal_distance: character.reach * 0.8f);
+                chase_path_idle_path_link = idle_path_point;
+            }
+
+            if (chase_path != null)
+                switch (chase_path.state)
+                {
+                    // Chase path failed, reset to no chasing
+                    case path.STATE.FAILED:
+                        chase_path = null;
+                        break;
+
+                    // Continue chase pathfinding
+                    case path.STATE.SEARCHING:
+                        chase_path.pathfind(load_balancing.iter);
+                        break;
+
+                    // Chase the player
+                    case path.STATE.COMPLETE:
+
+                        if (idle_path_point != chase_path_idle_path_link)
+                        {
+                            // Get to the point in the idle path where the
+                            // chase path starts from
+                            if (move_towards(idle_path[idle_path_point],
+                                character.run_speed, out bool failed))
+                            {
+                                if (failed) chase_path = null;
+                                int dir = chase_path_idle_path_link - idle_path_point;
+                                if (dir > 0) idle_path_point += 1;
+                                else if (dir < 0) idle_path_point -= 1;
+                            }
+                        }
+                        else
+                        {
+                            float chase_speed = character.run_speed;
+                            if (chase_path_progress == chase_path.length - 1)
+                            {
+                                // Close to the player, slow down 
+                                // just enough to keep up
+                                chase_speed = Mathf.Min(
+                                    character.run_speed,
+                                    player.BASE_SPEED * 1.2f);
+                            }
+
+                            if (move_towards(chase_path[chase_path_progress],
+                                chase_speed, out bool failed))
+                            {
+                                if (failed) chase_path = null;
+                                chase_path_progress = Mathf.Min(
+                                    chase_path_progress + 1,
+                                    chase_path.length - 1);
+                            }
+
+                            // Attack the player if we're close enough
+                            if ((player.current.transform.position -
+                                character.transform.position).magnitude < character.reach)
+                                character.melee_attack(player.current);
+                        }
+                        return;
+
+                }
+
+            // Move around idly
+            switch (idle_path.state)
+            {
+                // Walk back and forth along the idle path
+                case path.STATE.COMPLETE:
+                    if (move_towards(idle_path[idle_path_point],
+                        character.walk_speed, out bool failed))
+                    {
+                        idle_path_point += idle_path_direction;
+                        if (idle_path_point < 0)
+                        {
+                            idle_path_point = 0;
+                            idle_path_direction = 1;
+                        }
+                        else if (idle_path_point >= idle_path.length)
+                        {
+                            idle_path_point = idle_path.length - 1;
+                            idle_path_direction = -1;
+                        }
+
+                    }
+                    if (failed) idle_path = null;
+                    return;
+
+                // Couldn't create an idle path, try again
+                case path.STATE.FAILED:
+                    idle_path = null;
+                    return;
+
+                // Continue idle pathfinding
+                case path.STATE.SEARCHING:
+                    idle_path.pathfind(load_balancing.iter);
+                    return;
+            }
+        }
+    }
+
+    bool move_towards(Vector3 point, float speed, out bool failed)
+    {
+        // Work out how far to the point
+        Vector3 delta = point - character.transform.position;
+        float dis = Time.deltaTime * speed;
+
+        Vector3 new_pos = character.transform.position;
+
+        if (delta.magnitude < dis) new_pos += delta;
+        else new_pos += delta.normalized * dis;
+
+        failed = false;
+        if (!is_allowed_at(new_pos))
+        {
+            failed = true;
+            return false;
+        }
+
+        // Move along to the new position
+        character.transform.position = new_pos;
+
+        // Look in the direction of travel
+        delta.y = 0;
+        if (delta.magnitude > 10e-4)
+        {
+            // Lerp forward look direction
+            Vector3 new_forward = Vector3.Lerp(
+                character.transform.forward,
+                delta.normalized,
+                character.rotation_lerp_speed * speed * Time.deltaTime
+            );
+
+            if (new_forward.magnitude > 10e-4)
+            {
+                // Set up direction with reference to legs
+                Vector3 up = Vector3.zero;
+                if (character.align_to_terrain)
+                    foreach (var l in character.GetComponentsInChildren<leg>())
+                        up += l.ground_normal;
+                else up = Vector3.up;
+
+                character.transform.rotation = Quaternion.LookRotation(
+                    new_forward,
+                    up.normalized
+                );
+            }
+        }
+
+        return (point - new_pos).magnitude < character.ARRIVE_DISTANCE;
+    }
+
+    public void draw_gizmos()
+    {
+        idle_path?.draw_gizmos();
+        chase_path?.draw_gizmos();
+    }
+
+    public void draw_inspector_gui()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorGUILayout.TextArea(idle_path?.info_text());
+#endif
+    }
+
+    //###############//
+    // IPathingAgent //
+    //###############//
+
+    protected virtual bool is_allowed_at(Vector3 v)
+    {
+        // Check we're in the right medium
+        if (!character.can_swim && v.y < world.SEA_LEVEL) return false;
+        if (!character.can_walk && v.y > world.SEA_LEVEL) return false;
+        return true;
+    }
+
+    public Vector3 validate_position(Vector3 v, out bool valid)
+    {
+        Vector3 ret = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        if (!is_allowed_at(ret)) valid = false;
+        return ret;
+    }
+
+    public bool validate_move(Vector3 a, Vector3 b)
+    {
+        return pathfinding_utils.validate_walking_move(a, b,
+            resolution, character.height, resolution / 2f);
+    }
+
+    public float resolution { get => character.pathfinding_resolution; }
 }

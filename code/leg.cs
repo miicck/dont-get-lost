@@ -23,6 +23,7 @@ public class leg : MonoBehaviour
 
     public Vector3 velocity { get; private set; }
     public float progress { get; private set; }
+    public Vector3 ground_normal { get; private set; }
     Transform step_centre;
     Vector3 position_last;
     bool contact_made_this_step;
@@ -328,6 +329,7 @@ public class leg : MonoBehaviour
         {
             if (h.transform.IsChildOf(character)) continue;
             grounding = h.point;
+            ground_normal = h.normal;
             contact_made_this_step = true;
             break;
         }
@@ -422,6 +424,7 @@ public class leg : MonoBehaviour
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(grounding, 0.05f);
+        Gizmos.DrawLine(grounding, grounding + ground_normal);
     }
 
 #if UNITY_EDITOR

@@ -136,7 +136,16 @@ public class console : MonoBehaviour
             case "spawn":
 
                 if (args.Length < 2) return console_error("Not enough arguments!");
+
                 string character = "characters/" + args[1];
+                count = 1;
+                if (args.Length > 2)
+                {
+                    character = "characters/" + args[2];
+                    if (!int.TryParse(args[1], out count))
+                        return console_error("Could not parse count from " + args[1]);
+                }
+
                 if (Resources.Load<character>(character) == null)
                     return console_error("Unkown character: " + args[1]);
 
@@ -144,17 +153,24 @@ public class console : MonoBehaviour
 
                 var ray = player.current.camera_ray();
                 if (Physics.Raycast(ray, out RaycastHit hit))
-                    client.create(hit.point, character);
+                    for (int i = 0; i < count; ++i)
+                        client.create(hit.point, character);
 
                 return true;
 
-            default:
-                return console_error("Unkown command " + args[0]);
+            // Kill all characters
+            case "kill_all":
+                foreach (var c in FindObjectsOfType<character>())
+                    c.delete();
+                return true;
 
             // Enter fly (cinematic) mode
             case "fly":
                 player.current.fly_mode = !player.current.fly_mode;
                 return true;
+
+            default:
+                return console_error("Unkown command " + args[0]);
         }
     }
 }

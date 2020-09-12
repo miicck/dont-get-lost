@@ -586,6 +586,7 @@ public class chase_path : path
     astar_path base_path;
     List<Vector3> follow_path;
     Transform target;
+    float goal_distance;
 
     public override int length
     {
@@ -618,14 +619,17 @@ public class chase_path : path
 
         // See if the target has moved far enough to extend the path
         Vector3 delta = target.position - follow_path[follow_path.Count - 1];
-        if (delta.magnitude > agent.resolution)
+        if (delta.magnitude > goal_distance)
             follow_path.Add(target.position);
     }
 
-    public chase_path(Vector3 start, Transform target, IPathingAgent agent) : base(start, target.position, agent)
+    public chase_path(Vector3 start, Transform target, IPathingAgent agent,
+        int max_iterations = 1000, float goal_distance = -1) : base(start, target.position, agent)
     {
         this.target = target;
-        base_path = new astar_path(start, target.position, agent);
+        if (goal_distance < 0) this.goal_distance = agent.resolution;
+        else this.goal_distance = goal_distance;
+        base_path = new astar_path(start, target.position, agent, max_iterations: max_iterations);
         follow_path = new List<Vector3> { target.position };
         state = STATE.SEARCHING;
     }
