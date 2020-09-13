@@ -285,6 +285,7 @@ public abstract class biome : MonoBehaviour
     {
         // Ensure the biome list doesn't persist from previous game
         biome_list = null;
+        modifier_list = null;
     }
 
     /// <summary> Initialize static information ready for world generation. </summary>
@@ -376,7 +377,7 @@ public abstract class biome : MonoBehaviour
         int i = rand.Next() % biome_list.Count;
         var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
 
-        // Apply a random modifier to the biome
+        // Use the above random number generator to pick a random biome modifier
         i = rand.Next() % modifier_list.Count;
         var m = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
 
@@ -384,7 +385,7 @@ public abstract class biome : MonoBehaviour
         m.modify(b);
 
         // Give the biome a discriptive name
-        b.name = "[" + b.x + ", " + b.z + "] " + b.GetType().Name + " + " + m.GetType().Name;
+        b.name = "[" + x + ", " + z + "] " + b.GetType().Name + " + " + m.GetType().Name;
 
         generated_biomes.set(x, z, b);
         return b;
