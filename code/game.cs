@@ -204,6 +204,10 @@ public class game : MonoBehaviour
         if (controls.key_press(controls.BIND.TOGGLE_CONSOLE))
             console.open = !console.open;
 
+        // Repeat the last console command
+        if (controls.key_press(controls.BIND.REPEAT_LAST_CONSOLE_COMMAND))
+            console.repeat_last_command();
+
         // Toggle the debug panel
         if (controls.key_press(controls.BIND.TOGGLE_DEBUG_INFO))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);

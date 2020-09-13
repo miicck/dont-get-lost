@@ -7,6 +7,7 @@ public class arm : MonoBehaviour
     public Transform shoulder;
     public Transform elbow;
     public Transform hand;
+    public Transform elbow_bend_direction_override;
 
     public leg following;
     public float swing_multiplier = 3f;
@@ -28,6 +29,9 @@ public class arm : MonoBehaviour
         // The direction the elbow sticks out
         Vector3 elbow_bend_dir = elbow.position - shoulder.position;
         elbow_bend_dir -= Vector3.Project(elbow_bend_dir, whole_arm);
+        if (elbow_bend_direction_override != null)
+            elbow_bend_dir = elbow_bend_direction_override.forward;
+
         Vector3 right = Vector3.Cross(elbow_bend_dir, -whole_arm);
 
         // Create a new shoulder object with

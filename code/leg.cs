@@ -463,6 +463,9 @@ public class leg : MonoBehaviour
                         else if (t.name.Contains("knee")) l.knee = t;
                         else if (t.name.Contains("hip")) l.hip = t;
                         else if (t.name.Contains("foot_base")) l.foot_base = t;
+                        else if (t.name.Contains("upper")) l.hip = t;
+                        else if (t.name.Contains("lower")) l.knee = t;
+                        else if (t.name.Contains("foot")) l.ankle = t;
                     }
                 }
             }

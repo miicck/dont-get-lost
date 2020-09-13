@@ -234,7 +234,7 @@ public class character : networked, INotPathBlocking, IInspectable
             {
                 _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
                 _healthbar.transform.SetParent(transform);
-                _healthbar.transform.position = transform.position + Vector3.up;
+                _healthbar.transform.position = transform.position + Vector3.up * height;
                 _healthbar.belongs_to = this;
             }
             return _healthbar;

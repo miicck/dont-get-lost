@@ -24,6 +24,12 @@ public class console : MonoBehaviour
         }
     }
 
+    public static void repeat_last_command()
+    {
+        if (current == null) return;
+        current.process_command(current.last_command);
+    }
+
     /// <summary> The input field where console commands are typed. </summary>
     UnityEngine.UI.InputField input;
 
@@ -51,9 +57,12 @@ public class console : MonoBehaviour
         return false;
     }
 
+    string last_command = "";
+
     /// <summary> Process the given console command. </summary>
     bool process_command(string command)
     {
+        last_command = command;
         var args = command.Split(null);
 
         switch (args[0])

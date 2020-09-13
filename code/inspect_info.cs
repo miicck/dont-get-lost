@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class inspect_info : MonoBehaviour
 {
-    public const float INSPECT_RANGE = 5f;
+    public const float INSPECT_RANGE = 2048f;
     public UnityEngine.UI.Text info_text;
     public UnityEngine.UI.Image image_upper;
     public UnityEngine.UI.Image image_lower;
