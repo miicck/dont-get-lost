@@ -809,6 +809,61 @@ public class spikey_mountains : biome
     }
 }
 
+public class reclaimed_city : biome_modifier
+{
+    int CITY_BLOCK_SIZE = 16;
+
+    public override void modify(biome b)
+    {
+        bool[,] is_building = new bool[
+             biome.SIZE / CITY_BLOCK_SIZE,
+             biome.SIZE / CITY_BLOCK_SIZE];
+
+        for (int i = 0; i < biome.SIZE / CITY_BLOCK_SIZE; ++i)
+            for (int j = 0; j < biome.SIZE / CITY_BLOCK_SIZE; ++j)
+                is_building[i, j] = b.random.range(0, 2) == 0;
+
+        for (int i = 0; i < biome.SIZE; ++i)
+            for (int j = 0; j < biome.SIZE; ++j)
+            {
+                var p = b.grid[i, j];
+
+                // Check what kind of city block we're in
+                if (is_building[i / CITY_BLOCK_SIZE, j / CITY_BLOCK_SIZE])
+                {
+                    // Clear surroundings 
+                    p.object_to_generate = null;
+
+                    // If were at the centre of a block, generate a building
+                    if (i % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2 &&
+                        j % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2)
+                    {
+                        switch (b.random.range(0, 6))
+                        {
+                            case 0:
+                                p.object_to_generate = world_object.load("tower_block");
+                                break;
+
+                            case 1:
+                                p.object_to_generate = world_object.load("tower_block_collapsed");
+                                break;
+
+                            case 2:
+                                p.object_to_generate = world_object.load("department_store");
+                                break;
+                        }
+                    }
+                }
+                else // Not a building
+                {
+                    if (p.object_to_generate == null)
+                        if (Random.Range(0, 500) == 0)
+                            p.object_to_generate = world_object.load("zombie_spawner");
+                }
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class empty : biome
 {

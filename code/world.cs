@@ -44,7 +44,7 @@ public class world : networked
         if (static_world == null) return "No world";
         return "World " + name + "\n" +
                "    Seed              : " + seed + "\n" +
-               "    Biome             : " + player.current.biome.GetType().Name + "\n" +
+               "    Biome             : " + player.current.biome.name + "\n" +
                "    Render range      : " + game.render_range + "\n" +
                "    Fog distance      : " + lighting.fog_distance + "\n" +
                "    Generated chunks  : " + chunk.chunks_generated + "\n" +

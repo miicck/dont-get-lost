@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// A biome represents the largest singly-generated area of the map
-// and is used to generate quantities that exist on the largest length
-// scales, such as the terrain.
+// A biome represents the largest singly-generated area of 
+// the map and is used to generate quantities that exist on 
+// the largest length scales, such as the terrain.
 public abstract class biome : MonoBehaviour
 {
     /// <summary> The distance at the edge of a biome that is blended.
@@ -23,7 +23,7 @@ public abstract class biome : MonoBehaviour
     public System.Random random { get; private set; }
 
     /// <summary> The grid of points defining the biome. </summary>
-    protected point[,] grid = new point[SIZE, SIZE];
+    public point[,] grid = new point[SIZE, SIZE];
     protected abstract void generate_grid();
 
     //#####################//
@@ -279,6 +279,7 @@ public abstract class biome : MonoBehaviour
 
     static Dictionary<int, int, biome> generated_biomes;
     static List<MethodInfo> biome_list;
+    static List<MethodInfo> modifier_list;
 
     public static void initialize()
     {
@@ -292,11 +293,23 @@ public abstract class biome : MonoBehaviour
         // Initialize static variables
         generated_biomes = new Dictionary<int, int, biome>();
         biome_list = new List<MethodInfo>();
+        modifier_list = new List<MethodInfo>();
 
-        // Find the biome types
         var asem = Assembly.GetAssembly(typeof(biome));
         var types = asem.GetTypes();
 
+        string biome_override = world.name;
+        string modifier_override = world.name;
+
+        if (world.name.Contains("+"))
+        {
+            biome_override = world.name.Split('+')[0];
+            modifier_override = world.name.Split('+')[1];
+        }
+
+        Debug.Log(biome_override + ", " + modifier_override);
+
+        // Generate the biome list
         foreach (var t in types)
         {
             // Check if this type is a valid biome
@@ -309,7 +322,7 @@ public abstract class biome : MonoBehaviour
 
             // If the world is named after a biome, only generate that biome
             // (useful for testing)
-            if (t.Name == world.name)
+            if (t.Name == biome_override)
             {
                 // Enforce the biome override
                 biome_list = new List<MethodInfo> { generate_method };
@@ -325,6 +338,26 @@ public abstract class biome : MonoBehaviour
             }
 
             biome_list.Add(generate_method);
+        }
+
+        // Generate the modifier list
+        foreach (var t in types)
+        {
+            if (!t.IsSubclassOf(typeof(biome_modifier))) continue;
+            if (t.IsAbstract) continue;
+
+            // Get the modifier construction method
+            var method = typeof(biome_modifier).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
+            var generate_method = method.MakeGenericMethod(t);
+
+            if (t.Name == modifier_override)
+            {
+                // Enforce the modifier override
+                modifier_list = new List<MethodInfo> { generate_method };
+                break;
+            }
+
+            modifier_list.Add(generate_method);
         }
     }
 
@@ -342,6 +375,17 @@ public abstract class biome : MonoBehaviour
         // Use the above random number generator to pick which biome to generate
         int i = rand.Next() % biome_list.Count;
         var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
+
+        // Apply a random modifier to the biome
+        i = rand.Next() % modifier_list.Count;
+        var m = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
+
+        // Apply the biome modification
+        m.modify(b);
+
+        // Give the biome a discriptive name
+        b.name = "[" + b.x + ", " + b.z + "] " + b.GetType().Name + " + " + m.GetType().Name;
+
         generated_biomes.set(x, z, b);
         return b;
     }
@@ -349,7 +393,7 @@ public abstract class biome : MonoBehaviour
     /// <summary> Generate a biome of the given type + coordinates. </summary>
     static T generate<T>(int x, int z, System.Random random) where T : biome
     {
-        var b = new GameObject("biome_" + x + "_" + z).AddComponent<T>();
+        var b = new GameObject().AddComponent<T>();
         b.transform.position = new Vector3(x, 0, z) * SIZE;
 
         b.random = random;
@@ -506,4 +550,22 @@ public class biome_info : System.Attribute
     {
         this.generation_enabled = generation_enabled;
     }
+}
+
+/// <summary> A class that is used to create a 
+/// modified version of a biome. </summary>
+public abstract class biome_modifier
+{
+    public abstract void modify(biome b);
+
+    static T generate<T>() where T : biome_modifier, new()
+    {
+        return new T();
+    }
+}
+
+/// <summary> A biome modifier that does nothing. </summary>
+public class no_modifier : biome_modifier
+{
+    public override void modify(biome b) { }
 }
