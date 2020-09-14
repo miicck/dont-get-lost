@@ -868,6 +868,29 @@ public class reclaimed_city : biome_modifier
     }
 }
 
+public class tangled_forest : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL +
+                    8f * Mathf.PerlinNoise(i / 32f, j / 32f) - 4f;
+                p.terrain_color = terrain_colors.grass;
+                p.fog_distance = fog_distances.CLOSE;
+
+                if (i % 5 == 0 && j % 5 == 0 && random.range(0, 3) == 0)
+                    p.object_to_generate = world_object.load("interpenetrating_mass");
+                else if (random.range(0, 300) == 0)
+                    p.object_to_generate = world_object.load("tree");
+                else if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load("ground_ore");
+            }
+    }
+}
+
 [biome_info(generation_enabled: false)]
 public class empty : biome
 {
@@ -876,7 +899,6 @@ public class empty : biome
         for (int i = 0; i < SIZE; ++i)
             for (int j = 0; j < SIZE; ++j)
             {
-                // Point setup
                 var p = grid[i, j] = new point();
                 p.altitude = world.SEA_LEVEL + 1;
             }

@@ -187,7 +187,9 @@ public class console : MonoBehaviour
                 {
                     typeof(world_object),
                     typeof(character),
-                    typeof(item)
+                    typeof(item),
+                    typeof(random_object),
+                    typeof(random_ore)
                 };
 
                 Dictionary<string, mesh_info> results = new Dictionary<string, mesh_info>();
