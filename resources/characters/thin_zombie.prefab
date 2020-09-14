@@ -47,7 +47,7 @@ MonoBehaviour:
   hand: {fileID: 4851294947845442624}
   elbow_bend_direction_override: {fileID: 2469296145804177660}
   following: {fileID: 8779789065611405591}
-  swing_multiplier: 1
+  swing_multiplier: 0.3
   to_grab: {fileID: 0}
   elbow_bends_backwards: 0
 --- !u!1 &4540856014604781863
@@ -146,8 +146,8 @@ MonoBehaviour:
   knees_bend_backward: 0
   following: {fileID: 8779789065611405591}
   following_phase: 1
-  min_step_length_boost: 0.1
-  max_step_length_boost: 1
+  min_step_length_boost: 0.5
+  max_step_length_boost: 2
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 0}
@@ -172,7 +172,7 @@ MonoBehaviour:
   hand: {fileID: 1275317354501947791}
   elbow_bend_direction_override: {fileID: 2469296145804177660}
   following: {fileID: 6228655880472847234}
-  swing_multiplier: 1
+  swing_multiplier: 0.3
   to_grab: {fileID: 0}
   elbow_bends_backwards: 0
 --- !u!114 &3521529536128628430
@@ -215,8 +215,8 @@ MonoBehaviour:
   knees_bend_backward: 0
   following: {fileID: 0}
   following_phase: 1
-  min_step_length_boost: 0.1
-  max_step_length_boost: 1
+  min_step_length_boost: 0.5
+  max_step_length_boost: 2
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 0}

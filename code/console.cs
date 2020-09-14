@@ -178,8 +178,68 @@ public class console : MonoBehaviour
                 player.current.fly_mode = !player.current.fly_mode;
                 return true;
 
+            // Get information on which meshes are contributing
+            // the most verticies to the scene
+            case "mesh_info":
+
+                // Report mesh info relative to these objects
+                var parent_types = new List<System.Type>
+                {
+                    typeof(world_object),
+                    typeof(character),
+                    typeof(item)
+                };
+
+                Dictionary<string, mesh_info> results = new Dictionary<string, mesh_info>();
+                foreach (var r in FindObjectsOfType<MeshFilter>())
+                {
+                    string name = r.name;
+                    foreach (var pt in parent_types)
+                    {
+                        var found = r.GetComponentInParent(pt);
+                        if (found == null) continue;
+                        name = found.name + " (" + pt.Name + ")";
+                        break;
+                    }
+
+                    if (results.ContainsKey(name))
+                    {
+                        var inf = results[name];
+                        inf.total_instances += 1;
+                        inf.total_verticies += r.mesh.vertexCount;
+                        results[name] = inf;
+                    }
+                    else
+                        results[name] = new mesh_info
+                        {
+                            total_verticies = r.mesh.vertexCount,
+                            total_instances = 1
+                        };
+                }
+
+                List<KeyValuePair<string, mesh_info>> list = new List<KeyValuePair<string, mesh_info>>(results);
+                list.Sort((a, b) => a.Value.total_verticies < b.Value.total_verticies ? 1 : -1);
+
+                string to_print = "";
+                foreach (var kv in list)
+                    to_print += kv.Key + " : " + kv.Value + "\n";
+
+                Debug.Log(to_print);
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
+        }
+    }
+
+    struct mesh_info
+    {
+        public int total_verticies;
+        public int total_instances;
+
+        public override string ToString()
+        {
+            return " Verticies " + total_verticies + " Instances " + total_instances;
         }
     }
 }

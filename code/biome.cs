@@ -308,8 +308,6 @@ public abstract class biome : MonoBehaviour
             modifier_override = world.name.Split('+')[1];
         }
 
-        Debug.Log(biome_override + ", " + modifier_override);
-
         // Generate the biome list
         foreach (var t in types)
         {

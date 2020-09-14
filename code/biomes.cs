@@ -821,7 +821,7 @@ public class reclaimed_city : biome_modifier
 
         for (int i = 0; i < biome.SIZE / CITY_BLOCK_SIZE; ++i)
             for (int j = 0; j < biome.SIZE / CITY_BLOCK_SIZE; ++j)
-                is_building[i, j] = b.random.range(0, 2) == 0;
+                is_building[i, j] = b.random.range(0, 3) == 0;
 
         for (int i = 0; i < biome.SIZE; ++i)
             for (int j = 0; j < biome.SIZE; ++j)
@@ -838,7 +838,7 @@ public class reclaimed_city : biome_modifier
                     if (i % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2 &&
                         j % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2)
                     {
-                        switch (b.random.range(0, 6))
+                        switch (b.random.range(0, 4))
                         {
                             case 0:
                                 p.object_to_generate = world_object.load("tower_block");
@@ -851,13 +851,17 @@ public class reclaimed_city : biome_modifier
                             case 2:
                                 p.object_to_generate = world_object.load("department_store");
                                 break;
+
+                            case 3:
+                                p.object_to_generate = world_object.load("building_shell");
+                                break;
                         }
                     }
                 }
                 else // Not a building
                 {
                     if (p.object_to_generate == null)
-                        if (Random.Range(0, 500) == 0)
+                        if (Random.Range(0, 1000) == 0)
                             p.object_to_generate = world_object.load("zombie_spawner");
                 }
             }
