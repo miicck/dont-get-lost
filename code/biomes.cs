@@ -858,12 +858,6 @@ public class reclaimed_city : biome_modifier
                         }
                     }
                 }
-                else // Not a building
-                {
-                    if (p.object_to_generate == null)
-                        if (Random.Range(0, 1000) == 0)
-                            p.object_to_generate = world_object.load("zombie_spawner");
-                }
             }
     }
 }

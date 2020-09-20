@@ -7,6 +7,7 @@ public class game : MonoBehaviour
     public const float MIN_RENDER_RANGE = 4f;
     public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
+    public const float CHARACTER_SPAWN_INTERVAL = 2f;
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
@@ -187,12 +188,19 @@ public class game : MonoBehaviour
         options_menu.initialize();
         item_link_point.init_links();
         biome.initialize();
+        character_spawn_point.initialize();
+        character.initialize();
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
 
+        // Set the character spawning going
+        InvokeRepeating("character_spawn_update",
+            CHARACTER_SPAWN_INTERVAL, CHARACTER_SPAWN_INTERVAL);
+
         // Set the network updates going
         InvokeRepeating("network_update", 1f / 60f, 1f / 60f);
+
     }
 
     void Update()
@@ -244,6 +252,8 @@ public class game : MonoBehaviour
             client.info() + "\n" +
             "\nPLAYER\n" +
             player.info() + "\n" +
+            "\nCHARACTERS\n" +
+            character.info() + "\n" +
             "\nLOAD BALANCER\n" +
             load_balancing.info() + "\n" +
             "\nTIME OF DAY\n" +
@@ -251,6 +261,11 @@ public class game : MonoBehaviour
 
         debug_text = debug_text.Trim();
         this.debug_text.text = utils.allign_colons(debug_text);
+    }
+
+    void character_spawn_update()
+    {
+        character.run_spawning();
     }
 
     void OnApplicationQuit()

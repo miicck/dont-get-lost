@@ -48,6 +48,50 @@ MonoBehaviour:
   max_scale: 1.4
   nothing_probability: 0.35
   random_y_rotation: 1
+--- !u!1 &167064059310813004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3885860864406873494}
+  - component: {fileID: 4283075267795016878}
+  m_Layer: 0
+  m_Name: zombie_spawner (9)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3885860864406873494
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167064059310813004}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.76, y: 0.33, z: 4.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4283075267795016878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167064059310813004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &209332409316916120
 GameObject:
   m_ObjectHideFlags: 0
@@ -234,6 +278,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &614347788812560547
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2578504289136279408}
+  - component: {fileID: 8188461272703402371}
+  m_Layer: 0
+  m_Name: zombie_spawner (7)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2578504289136279408
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614347788812560547}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6.54, y: 0.33, z: -4.95}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8188461272703402371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614347788812560547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &873099189675312167
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,6 +370,94 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &1059776515048531523
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4371935346339408585}
+  - component: {fileID: 1527553209886048150}
+  m_Layer: 0
+  m_Name: zombie_spawner (10)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4371935346339408585
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1059776515048531523}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.95, y: 4.687, z: 5.28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 10
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1527553209886048150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1059776515048531523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
+--- !u!1 &1349848823362052835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1553974462632799756}
+  - component: {fileID: 1456752087805389393}
+  m_Layer: 0
+  m_Name: zombie_spawner (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1553974462632799756
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349848823362052835}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.39, y: 22.87, z: 5.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1456752087805389393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349848823362052835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &1432719568222521081
 GameObject:
   m_ObjectHideFlags: 0
@@ -578,6 +754,50 @@ MonoBehaviour:
   max_scale: 1.4
   nothing_probability: 0.35
   random_y_rotation: 1
+--- !u!1 &2293508488730399599
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8823200447406197052}
+  - component: {fileID: 9201661624194002892}
+  m_Layer: 0
+  m_Name: zombie_spawner (16)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8823200447406197052
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2293508488730399599}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.53, y: 18.14, z: 3.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 16
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9201661624194002892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2293508488730399599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &2313437116421470681
 GameObject:
   m_ObjectHideFlags: 0
@@ -727,6 +947,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &2809941245537381731
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1808654463230726127}
+  - component: {fileID: 229952412054066160}
+  m_Layer: 0
+  m_Name: zombie_spawner (6)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1808654463230726127
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2809941245537381731}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.21, y: 31.86, z: -2.99}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &229952412054066160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2809941245537381731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &2966072191381569225
 GameObject:
   m_ObjectHideFlags: 0
@@ -820,6 +1084,94 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &3040848736190026226
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3091115127434704455}
+  - component: {fileID: 759154532254031204}
+  m_Layer: 0
+  m_Name: zombie_spawner (21)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3091115127434704455
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3040848736190026226}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.161, y: 31.86, z: 5.159}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 21
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &759154532254031204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3040848736190026226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
+--- !u!1 &3089335396036751174
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2803528428327604365}
+  - component: {fileID: 3320585874292680793}
+  m_Layer: 0
+  m_Name: zombie_spawner (22)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2803528428327604365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3089335396036751174}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.42, y: 31.86, z: -4.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 22
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3320585874292680793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3089335396036751174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &3275623415426878300
 GameObject:
   m_ObjectHideFlags: 0
@@ -955,6 +1307,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &3682482610186318851
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2024732306625735624}
+  - component: {fileID: 5198255402483091924}
+  m_Layer: 0
+  m_Name: zombie_spawner (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2024732306625735624
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3682482610186318851}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.991, y: 9.44, z: -3.328}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5198255402483091924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3682482610186318851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &3860643881877707357
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,6 +1396,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &3911676225412251079
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5231754573900049486}
+  - component: {fileID: 2262997038349788799}
+  m_Layer: 0
+  m_Name: zombie_spawner (5)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5231754573900049486
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911676225412251079}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.39, y: 27.37, z: -4.97}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2262997038349788799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3911676225412251079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &3915942978258223865
 GameObject:
   m_ObjectHideFlags: 0
@@ -1090,6 +1530,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &4122910285067081395
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 930058266808821661}
+  m_Layer: 0
+  m_Name: zombie_spawners
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &930058266808821661
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4122910285067081395}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 4763063967885177185}
+  - {fileID: 4694198042125321826}
+  - {fileID: 2024732306625735624}
+  - {fileID: 8910137640274195018}
+  - {fileID: 1553974462632799756}
+  - {fileID: 5231754573900049486}
+  - {fileID: 1808654463230726127}
+  - {fileID: 2578504289136279408}
+  - {fileID: 2601705534321705150}
+  - {fileID: 3885860864406873494}
+  - {fileID: 4371935346339408585}
+  - {fileID: 5225578351154211795}
+  - {fileID: 1838853101465695047}
+  - {fileID: 8117521514968263297}
+  - {fileID: 1776323719237880144}
+  - {fileID: 4772909500402876353}
+  - {fileID: 8823200447406197052}
+  - {fileID: 8844849847922868271}
+  - {fileID: 5027319340116680575}
+  - {fileID: 6297696378848599917}
+  - {fileID: 2512923224793035904}
+  - {fileID: 3091115127434704455}
+  - {fileID: 2803528428327604365}
+  m_Father: {fileID: 5969455860135966783}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4219907474296431614
 GameObject:
   m_ObjectHideFlags: 0
@@ -1135,6 +1628,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &4297237066034612863
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8910137640274195018}
+  - component: {fileID: 8735860147074473646}
+  m_Layer: 0
+  m_Name: zombie_spawner (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8910137640274195018
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297237066034612863}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.991, y: 18.14, z: 5.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8735860147074473646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297237066034612863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &4329249943697496757
 GameObject:
   m_ObjectHideFlags: 0
@@ -1231,6 +1768,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &4504496387392151354
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2601705534321705150}
+  - component: {fileID: 14034363551609054}
+  m_Layer: 0
+  m_Name: zombie_spawner (8)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2601705534321705150
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4504496387392151354}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6.13, y: 0.33, z: 6.11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 8
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &14034363551609054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4504496387392151354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &4925862514723191733
 GameObject:
   m_ObjectHideFlags: 0
@@ -1279,6 +1860,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &4959976301604178314
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4772909500402876353}
+  - component: {fileID: 8872752383727254271}
+  m_Layer: 0
+  m_Name: zombie_spawner (15)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4772909500402876353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4959976301604178314}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.522, y: 13.87, z: -4.683}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 15
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8872752383727254271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4959976301604178314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &4994467299218438048
 GameObject:
   m_ObjectHideFlags: 0
@@ -1372,6 +1997,94 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &5117753587012808282
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2512923224793035904}
+  - component: {fileID: 701896024769093156}
+  m_Layer: 0
+  m_Name: zombie_spawner (20)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2512923224793035904
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5117753587012808282}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.71, y: 27.37, z: -1.83}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 20
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &701896024769093156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5117753587012808282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
+--- !u!1 &5184575706419882161
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8117521514968263297}
+  - component: {fileID: 7595635693906391191}
+  m_Layer: 0
+  m_Name: zombie_spawner (13)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8117521514968263297
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5184575706419882161}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.79, y: 9.44, z: 6.55}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 13
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7595635693906391191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5184575706419882161}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &5197030420579804980
 GameObject:
   m_ObjectHideFlags: 0
@@ -1696,6 +2409,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &5692260098295481186
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4694198042125321826}
+  - component: {fileID: 3400816997161465053}
+  m_Layer: 0
+  m_Name: zombie_spawner (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4694198042125321826
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5692260098295481186}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.54, y: 4.687, z: 5.28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3400816997161465053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5692260098295481186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &5695049967338680711
 GameObject:
   m_ObjectHideFlags: 0
@@ -2009,6 +2766,7 @@ Transform:
   - {fileID: 2615544345618914261}
   - {fileID: 8465849934602281722}
   - {fileID: 6086115848213162940}
+  - {fileID: 930058266808821661}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2268,23 +3026,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
---- !u!114 &9052676757462622816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6372840790663740979}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mode: 0
-  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  min_count: 1
-  max_count: 1
-  one_in_chance: 1
 --- !u!114 &985964819943767313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2313,6 +3054,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &9052676757462622816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6372840790663740979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
 --- !u!1 &6401328720704982669
 GameObject:
   m_ObjectHideFlags: 0
@@ -2358,6 +3116,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &6448229590757037650
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8844849847922868271}
+  - component: {fileID: 2443498209063878661}
+  m_Layer: 0
+  m_Name: zombie_spawner (17)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8844849847922868271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6448229590757037650}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.51, y: 18.14, z: -6.99}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 17
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2443498209063878661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6448229590757037650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &6531295312382671177
 GameObject:
   m_ObjectHideFlags: 0
@@ -2402,6 +3204,50 @@ Transform:
   m_Father: {fileID: 5969455860135966783}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6588379948129515370
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1776323719237880144}
+  - component: {fileID: 5585490512935789434}
+  m_Layer: 0
+  m_Name: zombie_spawner (14)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1776323719237880144
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6588379948129515370}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.991, y: 13.87, z: 5.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 14
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5585490512935789434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6588379948129515370}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &6674953517727987221
 GameObject:
   m_ObjectHideFlags: 0
@@ -2654,6 +3500,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &7041411717636632728
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5225578351154211795}
+  - component: {fileID: 6334548771289413918}
+  m_Layer: 0
+  m_Name: zombie_spawner (11)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5225578351154211795
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7041411717636632728}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.25, y: 4.687, z: -5.57}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6334548771289413918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7041411717636632728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &7051686733463641964
 GameObject:
   m_ObjectHideFlags: 0
@@ -2795,6 +3685,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &7137478534393174458
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1838853101465695047}
+  - component: {fileID: 4192444241990575589}
+  m_Layer: 0
+  m_Name: zombie_spawner (12)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1838853101465695047
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7137478534393174458}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.55, y: 9.44, z: -5.47}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 12
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4192444241990575589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7137478534393174458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &7140632331614654857
 GameObject:
   m_ObjectHideFlags: 0
@@ -2933,6 +3867,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probability: 0.5
   material: {fileID: 2100000, guid: 782db2e0d9eb0694c8173e4722efc2f6, type: 2}
+--- !u!1 &7316481436927699114
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5027319340116680575}
+  - component: {fileID: 9175497012562926419}
+  m_Layer: 0
+  m_Name: zombie_spawner (18)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5027319340116680575
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7316481436927699114}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.33, y: 22.87, z: 5.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 18
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9175497012562926419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7316481436927699114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &7319874903942753029
 GameObject:
   m_ObjectHideFlags: 0
@@ -3074,6 +4052,50 @@ MonoBehaviour:
   max_scale: 1
   nothing_probability: 0.35
   random_y_rotation: 0
+--- !u!1 &7993785168015205908
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6297696378848599917}
+  - component: {fileID: 9186954099429765737}
+  m_Layer: 0
+  m_Name: zombie_spawner (19)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6297696378848599917
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7993785168015205908}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.62, y: 27.37, z: 6.35}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 19
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9186954099429765737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7993785168015205908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &8020266928084780745
 GameObject:
   m_ObjectHideFlags: 0
@@ -3356,6 +4378,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &8755582765930741724
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4763063967885177185}
+  - component: {fileID: 108620772106419446}
+  m_Layer: 0
+  m_Name: zombie_spawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4763063967885177185
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8755582765930741724}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.54, y: 0.33, z: -4.95}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 930058266808821661}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &108620772106419446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8755582765930741724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 3261361371971382002, guid: f76251f163b9cb44aa6aef85ab8f35e7, type: 3}
 --- !u!1 &8796300958931929844
 GameObject:
   m_ObjectHideFlags: 0

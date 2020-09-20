@@ -160,6 +160,12 @@ public class character : networked, INotPathBlocking, IInspectable
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
+        characters.Add(this);
+    }
+
+    private void OnDestroy()
+    {
+        characters.Remove(this);
     }
 
     void slow_update()
@@ -290,6 +296,44 @@ public class character : networked, INotPathBlocking, IInspectable
         }
     }
 
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    const int AREA_PER_CHARACTER = 32 * 32;
+
+    static HashSet<character> characters;
+
+    public static int target_character_count
+    {
+        get
+        {
+            return (int)(Mathf.PI * game.render_range * game.render_range /
+                AREA_PER_CHARACTER);
+        }
+    }
+
+    public static void initialize()
+    {
+        characters = new HashSet<character>();
+    }
+
+    public static void run_spawning()
+    {
+        if (characters.Count < target_character_count)
+            character_spawn_point.spawn();
+    }
+
+    public static string info()
+    {
+        return "    Total characters : " + characters.Count +
+                    "/" + target_character_count;
+    }
+
+    //########//
+    // EDITOR //
+    //########//
+
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(character), true)]
     new public class editor : networked.editor
@@ -303,6 +347,10 @@ public class character : networked, INotPathBlocking, IInspectable
     }
 #endif
 }
+
+//###########//
+// HEALTHBAR //
+//###########//
 
 class healthbar : MonoBehaviour
 {
@@ -361,6 +409,10 @@ class healthbar : MonoBehaviour
         );
     }
 }
+
+//###########################//
+// DEFAULT CHARACTER CONTROL //
+//###########################//
 
 public class default_character_control : ICharacterController, IPathingAgent
 {
@@ -597,6 +649,10 @@ public class default_character_control : ICharacterController, IPathingAgent
     }
 }
 
+//######################//
+// CHARACTER CONTROL V2 //
+//######################//
+
 public class character_control_v2 : ICharacterController, IPathingAgent
 {
     // The character being controlled
@@ -647,120 +703,120 @@ public class character_control_v2 : ICharacterController, IPathingAgent
     {
         character = c;
 
+        // Ensure we have an idle path to walk
         if (idle_path == null)
         {
             random_path.success_func f = (v) =>
                 (v - character.transform.position).magnitude > character.idle_walk_distance;
             idle_path = new random_path(character.transform.position, f, f, this);
+            return;
         }
-        else
+
+        // If we're not already chasing a player/a player is in agro range
+        // then chase the player
+        if (chase_path == null &&
+            (player.current.transform.position - c.transform.position).magnitude <
+            c.agro_range)
         {
-            // If we're not already chasing a player/a player is in agro range
-            // then chase the player
-            if (chase_path == null &&
-                (player.current.transform.position - c.transform.position).magnitude <
-                c.agro_range)
+            chase_path = new chase_path(idle_path[idle_path_point],
+                player.current.transform, this,
+                max_iterations: 100,
+                goal_distance: character.reach * 0.8f);
+            chase_path_idle_path_link = idle_path_point;
+        }
+
+        if (chase_path != null)
+            switch (chase_path.state)
             {
-                chase_path = new chase_path(idle_path[idle_path_point],
-                    player.current.transform, this,
-                    max_iterations: 100,
-                    goal_distance: character.reach * 0.8f);
-                chase_path_idle_path_link = idle_path_point;
+                // Chase path failed, reset to no chasing
+                case path.STATE.FAILED:
+                    chase_path = null;
+                    break;
+
+                // Continue chase pathfinding
+                case path.STATE.SEARCHING:
+                    chase_path.pathfind(load_balancing.iter);
+                    break;
+
+                // Chase the player
+                case path.STATE.COMPLETE:
+
+                    if (idle_path_point != chase_path_idle_path_link)
+                    {
+                        // Get to the point in the idle path where the
+                        // chase path starts from
+                        if (move_towards(idle_path[idle_path_point],
+                            character.run_speed, out bool failed))
+                        {
+                            if (failed) chase_path = null;
+                            int dir = chase_path_idle_path_link - idle_path_point;
+                            if (dir > 0) idle_path_point += 1;
+                            else if (dir < 0) idle_path_point -= 1;
+                        }
+                    }
+                    else
+                    {
+                        float chase_speed = character.run_speed;
+                        if (chase_path_progress == chase_path.length - 1)
+                        {
+                            // Close to the player, slow down 
+                            // just enough to keep up
+                            chase_speed = Mathf.Min(
+                                character.run_speed,
+                                player.BASE_SPEED * 1.2f);
+                        }
+
+                        if (move_towards(chase_path[chase_path_progress],
+                            chase_speed, out bool failed))
+                        {
+                            if (failed) chase_path = null;
+                            chase_path_progress = Mathf.Min(
+                                chase_path_progress + 1,
+                                chase_path.length - 1);
+                        }
+
+                        // Attack the player if we're close enough
+                        if ((player.current.transform.position -
+                            character.transform.position).magnitude < character.reach)
+                            character.melee_attack(player.current);
+                    }
+                    return;
+
             }
 
-            if (chase_path != null)
-                switch (chase_path.state)
+        // Move around idly
+        switch (idle_path.state)
+        {
+            // Walk back and forth along the idle path
+            case path.STATE.COMPLETE:
+                if (move_towards(idle_path[idle_path_point],
+                    character.walk_speed, out bool failed))
                 {
-                    // Chase path failed, reset to no chasing
-                    case path.STATE.FAILED:
-                        chase_path = null;
-                        break;
-
-                    // Continue chase pathfinding
-                    case path.STATE.SEARCHING:
-                        chase_path.pathfind(load_balancing.iter);
-                        break;
-
-                    // Chase the player
-                    case path.STATE.COMPLETE:
-
-                        if (idle_path_point != chase_path_idle_path_link)
-                        {
-                            // Get to the point in the idle path where the
-                            // chase path starts from
-                            if (move_towards(idle_path[idle_path_point],
-                                character.run_speed, out bool failed))
-                            {
-                                if (failed) chase_path = null;
-                                int dir = chase_path_idle_path_link - idle_path_point;
-                                if (dir > 0) idle_path_point += 1;
-                                else if (dir < 0) idle_path_point -= 1;
-                            }
-                        }
-                        else
-                        {
-                            float chase_speed = character.run_speed;
-                            if (chase_path_progress == chase_path.length - 1)
-                            {
-                                // Close to the player, slow down 
-                                // just enough to keep up
-                                chase_speed = Mathf.Min(
-                                    character.run_speed,
-                                    player.BASE_SPEED * 1.2f);
-                            }
-
-                            if (move_towards(chase_path[chase_path_progress],
-                                chase_speed, out bool failed))
-                            {
-                                if (failed) chase_path = null;
-                                chase_path_progress = Mathf.Min(
-                                    chase_path_progress + 1,
-                                    chase_path.length - 1);
-                            }
-
-                            // Attack the player if we're close enough
-                            if ((player.current.transform.position -
-                                character.transform.position).magnitude < character.reach)
-                                character.melee_attack(player.current);
-                        }
-                        return;
+                    idle_path_point += idle_path_direction;
+                    if (idle_path_point < 0)
+                    {
+                        idle_path_point = 0;
+                        idle_path_direction = 1;
+                    }
+                    else if (idle_path_point >= idle_path.length)
+                    {
+                        idle_path_point = idle_path.length - 1;
+                        idle_path_direction = -1;
+                    }
 
                 }
+                if (failed) idle_path = null;
+                return;
 
-            // Move around idly
-            switch (idle_path.state)
-            {
-                // Walk back and forth along the idle path
-                case path.STATE.COMPLETE:
-                    if (move_towards(idle_path[idle_path_point],
-                        character.walk_speed, out bool failed))
-                    {
-                        idle_path_point += idle_path_direction;
-                        if (idle_path_point < 0)
-                        {
-                            idle_path_point = 0;
-                            idle_path_direction = 1;
-                        }
-                        else if (idle_path_point >= idle_path.length)
-                        {
-                            idle_path_point = idle_path.length - 1;
-                            idle_path_direction = -1;
-                        }
+            // Couldn't create an idle path, try again
+            case path.STATE.FAILED:
+                idle_path = null;
+                return;
 
-                    }
-                    if (failed) idle_path = null;
-                    return;
-
-                // Couldn't create an idle path, try again
-                case path.STATE.FAILED:
-                    idle_path = null;
-                    return;
-
-                // Continue idle pathfinding
-                case path.STATE.SEARCHING:
-                    idle_path.pathfind(load_balancing.iter);
-                    return;
-            }
+            // Continue idle pathfinding
+            case path.STATE.SEARCHING:
+                idle_path.pathfind(load_balancing.iter);
+                return;
         }
     }
 
