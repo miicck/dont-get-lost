@@ -15,6 +15,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public const float BOUYANCY = 5f;
     public const float WATER_DRAG = 1.5f;
     public const float MAX_FLOAT_VELOCTY = 2f;
+    public const float FALL_DAMAGE_START_SPEED = 10f;
+    public const float FALL_DAMAGE_END_SPEED = 20f;
 
     // Movement
     public const float BASE_SPEED = 4f;
@@ -653,8 +655,20 @@ public class player : networked_player, INotPathBlocking, IInspectable
             // Jumping
             if (controls.key_press(controls.BIND.JUMP)) velocity.y = JUMP_VEL;
 
-            // Ensure we don't accumulate too much -ve y velocity
-            if (velocity.y < -1f) velocity.y = -1f;
+            if (velocity.y < -1f)
+            {
+                // Fall damage
+                if (velocity.y < -FALL_DAMAGE_START_SPEED)
+                {
+                    float fd = -velocity.y;
+                    fd -= FALL_DAMAGE_START_SPEED;
+                    fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
+                    take_damage((int)(fd * max_health));
+                }
+
+                // Ensure we don't accumulate too much -ve y velocity
+                velocity.y = -1f;
+            }
         }
         else
         {
