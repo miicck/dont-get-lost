@@ -736,6 +736,15 @@ public class character_control_v2 : ICharacterController, IPathingAgent
         }
 
         if (chase_path != null)
+        {
+            if (player.current == null || player.current.is_dead)
+            {
+                // Stop chasing
+                chase_path = null;
+                idle_path = null;
+                return;
+            }
+
             switch (chase_path.state)
             {
                 // Chase path failed, reset to no chasing
@@ -793,6 +802,7 @@ public class character_control_v2 : ICharacterController, IPathingAgent
                     return;
 
             }
+        }
 
         // Move around idly
         switch (idle_path.state)

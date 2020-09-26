@@ -1237,11 +1237,13 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     public int max_health { get => 100; }
 
+    public bool is_dead = false;
+
     float last_damaged_time = 0;
 
     void indicate_damage()
     {
-        if (last_damaged_time == 0)
+        if (last_damaged_time == 0 || is_dead)
             return;
 
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
@@ -1258,20 +1260,48 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
-    void heal_one_point()
+    void passive_heal()
     {
+        if (is_dead) return;
         heal(1);
     }
 
     public void take_damage(int damage)
     {
+        if (is_dead) return;
         health.value = Mathf.Max(0, health.value - damage);
         last_damaged_time = Time.realtimeSinceStartup;
     }
 
     public void heal(int amount)
     {
+        if (is_dead) return;
         health.value = Mathf.Min(max_health, health.value + amount);
+    }
+
+    void die()
+    {
+        var timer = Resources.Load<respawn_timer>("ui/respawn_timer").inst();
+        timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        timer.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
+        timer.to_respawn = this;
+        is_dead = true;
+
+        if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
+            throw new System.Exception("No ColorAdjustments override on global volume!");
+        color.colorFilter.value = Color.red;
+    }
+
+    public void respawn()
+    {
+        teleport(respawn_point.value);
+        is_dead = false;
+
+        heal(100);
+
+        if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
+            throw new System.Exception("No ColorAdjustments override on global volume!");
+        color.colorFilter.value = Color.white;
     }
 
     //##############//
@@ -1293,6 +1323,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     networked_variables.net_string username;
     networked_variables.net_bool crouched;
     networked_variables.net_vector3 equipped_local_pos;
+    networked_variables.net_vector3 respawn_point;
     networked_variables.net_quaternion equipped_local_rot;
 
     public player_body body { get; private set; }
@@ -1366,7 +1397,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
         Invoke("add_controller", 0.1f);
 
         // Start passive healing
-        InvokeRepeating("heal_one_point", 1f, 1f);
+        InvokeRepeating("passive_heal", 1f, 1f);
 
         // This is the local player
         current = this;
@@ -1423,11 +1454,16 @@ public class player : networked_player, INotPathBlocking, IInspectable
         // Network my username
         username = new networked_variables.net_string();
 
+        // The place where the player respawns
+        respawn_point = new networked_variables.net_vector3();
+
         // The players remaining health
-        health = new networked_variables.net_int();
+        health = new networked_variables.net_int(default_value: max_health);
         health.on_change = () =>
         {
             healthbar?.set(health.value, max_health);
+            if (health.value <= 0)
+                die();
         };
 
         // The currently-equipped quickbar slot number

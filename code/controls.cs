@@ -137,6 +137,7 @@ public static class controls
         if (disabled) return false;
         if (ui_focus_disables_controls.controls_disabled) return false;
         if (console.open) return false;
+        if (player.current != null && player.current.is_dead) return false;
         return true;
     }
 
