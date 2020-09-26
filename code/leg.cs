@@ -7,6 +7,7 @@ public class leg : MonoBehaviour
     const float EPS_MAG = 0.001f;
     const float MIN_FOOT_SPEED = 0.2f;
     const float MIN_STEP_SIZE = 0.01f;
+    const float SOUND_DISTANCE = 20f;
 
     public Transform character;
     public Transform hip;
@@ -26,6 +27,8 @@ public class leg : MonoBehaviour
     public Vector3 ground_normal { get; private set; }
     Transform step_centre;
     Vector3 position_last;
+    Vector3 step_direction;
+    float step_length;
     bool contact_made_this_step;
     Vector3 grounding;
     float thigh_length;
@@ -35,57 +38,16 @@ public class leg : MonoBehaviour
     float init_knee_scale;
     float test_up_amt;
     float test_down_amt;
+    float distance_from_player;
     AudioSource footstep_source;
     public AudioClip custom_footstep_sound;
     public float footstep_volume_multiplier = 1f;
     public bool play_footsteps = true;
     public float min_footstep_pitch = 0.95f;
     public float max_footsetp_pitch = 1.05f;
-
-    public float step_length_boost
-    {
-        get
-        {
-            float boost = velocity.magnitude / max_boost_at_speed;
-            if (boost > 1f) boost = 1f;
-            return min_step_length_boost + boost *
-                (max_step_length_boost - min_step_length_boost);
-        }
-    }
-
-    float step_length
-    {
-        get
-        {
-            float fw_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
-            float lr_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
-            float ud_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
-
-            float tot = fw_amt + lr_amt + ud_amt;
-            fw_amt /= tot;
-            lr_amt /= tot;
-            ud_amt /= tot;
-
-            float fw_length = shin_length + thigh_length + ankle_length;
-            float lr_length = shin_length;
-            float ud_length = shin_length + ankle_length + thigh_length / 2f;
-
-            float step = fw_amt * fw_length +
-                         lr_amt * lr_length +
-                         ud_amt * ud_length;
-
-            var ret = step * step_length_boost;
-            if (ret < MIN_STEP_SIZE) ret = MIN_STEP_SIZE;
-            return ret;
-        }
-    }
+    public float step_length_boost;
 
     bool grounded { get => (foot_base.position - grounding).magnitude < 0.25f; }
-
-    Vector3 step_direction
-    {
-        get => velocity.magnitude > EPS_MAG ? velocity.normalized : step_centre.forward;
-    }
 
     // The amount a body should bob up and down because of this leg
     public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f / following_phase); } }
@@ -103,6 +65,37 @@ public class leg : MonoBehaviour
 
     Vector3 test_start { get => step_front + Vector3.up * test_up_amt; }
     Vector3 test_end { get => step_front - Vector3.up * test_down_amt; }
+
+    // Update the various directions/lengths used to determine the step animations
+    void update_lengths_and_directions()
+    {
+        step_direction = velocity.magnitude > EPS_MAG ? velocity.normalized : step_centre.forward;
+
+        float fw_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
+        float lr_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
+        float ud_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
+
+        float tot = fw_amt + lr_amt + ud_amt;
+        fw_amt /= tot;
+        lr_amt /= tot;
+        ud_amt /= tot;
+
+        float fw_length = shin_length + thigh_length + ankle_length;
+        float lr_length = shin_length;
+        float ud_length = shin_length + ankle_length + thigh_length / 2f;
+
+        float step = fw_amt * fw_length +
+                     lr_amt * lr_length +
+                     ud_amt * ud_length;
+
+        step_length = step * step_length_boost;
+        if (step_length < MIN_STEP_SIZE) step_length = MIN_STEP_SIZE;
+
+        float boost = velocity.magnitude / max_boost_at_speed;
+        if (boost > 1f) boost = 1f;
+        step_length_boost = min_step_length_boost + boost *
+            (max_step_length_boost - min_step_length_boost);
+    }
 
     private void Start()
     {
@@ -275,6 +268,9 @@ public class leg : MonoBehaviour
 
     void play_contact_sounds()
     {
+        if (distance_from_player > SOUND_DISTANCE)
+            return; // No sounds in cheap mode
+
         bool underwater = foot_base.transform.position.y < world.SEA_LEVEL;
         if (underwater)
         {
@@ -349,9 +345,14 @@ public class leg : MonoBehaviour
 
     private void Update()
     {
+        if (player.current != null)
+            distance_from_player = (transform.position - player.current.transform.position).magnitude;
+
         Vector3 delta = step_centre.position - position_last;
         position_last = step_centre.position;
         velocity = delta / Time.deltaTime;
+
+        update_lengths_and_directions();
 
         if (following == null)
             // Increment progress in step_direction
@@ -365,9 +366,7 @@ public class leg : MonoBehaviour
 
         if (velocity.magnitude < EPS_MAG)
         {
-            // Essentially not moving, return to default position
-            //move_foot_towards(step_centre.position);
-            //solve_leg();
+            // Essentially not moving, stay as we are
             return;
         }
 
@@ -398,7 +397,9 @@ public class leg : MonoBehaviour
             move_foot_towards(line_point + amt_above_ground * Vector3.up);
         }
 
-        solve_leg();
+        // Only solve the leg if we're within the FOV
+        if (player.current.in_field_of_view(transform.position))
+            solve_leg();
     }
 
     private void OnDrawGizmos()

@@ -61,6 +61,7 @@ GameObject:
   - component: {fileID: 9189744706963915491}
   - component: {fileID: 4532342236082410570}
   - component: {fileID: 3261361371971382002}
+  - component: {fileID: 3755732905841746269}
   m_Layer: 0
   m_Name: thin_zombie
   m_TagString: Untagged
@@ -126,6 +127,23 @@ MonoBehaviour:
   can_swim: 0
   align_to_terrain: 0
   projectile_target: {fileID: 0}
+--- !u!114 &3755732905841746269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4540856014604781863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 854763886932084377, guid: 969d76f2b0f8bfc4e83f93dedc0d668c, type: 3}
+  min_count: 1
+  max_count: 2
+  one_in_chance: 1
 --- !u!114 &6228655880472847234
 MonoBehaviour:
   m_ObjectHideFlags: 0

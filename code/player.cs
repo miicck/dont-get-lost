@@ -1003,6 +1003,29 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public Camera camera
     { get; private set; }
 
+    /// <summary> Returns true if the given location is within the current viewport. </summary>
+    public bool in_field_of_view(Vector3 position)
+    {
+        // If it's within 5m of the camera, consider it in the FOV
+        if ((position - camera.transform.position).magnitude < 5f)
+            return true;
+
+        var vp = camera.WorldToViewportPoint(position);
+
+        // Below bottom-left of screen
+        if (vp.x < 0) return false;
+        if (vp.y < 0) return false;
+
+        // Above top-right of screen
+        if (vp.x > 1) return false;
+        if (vp.y > 1) return false;
+
+        // Behind camera
+        if (vp.z < 0) return false;
+
+        return true;
+    }
+
     /// <summary> The in-game sky sphere. </summary>
     Renderer physical_sky;
     public bool physical_sky_enabled

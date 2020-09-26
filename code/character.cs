@@ -818,8 +818,9 @@ public class character_control_v2 : ICharacterController, IPathingAgent
                 if (failed) idle_path = null;
                 return;
 
-            // Couldn't create an idle path, try again
+            // Couldn't create an idle path, delete the character
             case path.STATE.FAILED:
+                character.delete();
                 idle_path = null;
                 return;
 
