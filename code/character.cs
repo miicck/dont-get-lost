@@ -715,11 +715,24 @@ public class character_control_v2 : ICharacterController, IPathingAgent
             (player.current.transform.position - c.transform.position).magnitude <
             c.agro_range)
         {
-            chase_path = new chase_path(idle_path[idle_path_point],
+
+            // Find the nearest point along the idle path to the player
+            float min_dis = Mathf.Infinity;
+            for (int i = 0; i < idle_path.length; ++i)
+            {
+                float dis = (idle_path[i] - player.current.transform.position).magnitude;
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    chase_path_idle_path_link = i;
+                }
+            }
+
+            // Path from that point, to the player
+            chase_path = new chase_path(idle_path[chase_path_idle_path_link],
                 player.current.transform, this,
                 max_iterations: 100,
                 goal_distance: character.reach * 0.8f);
-            chase_path_idle_path_link = idle_path_point;
         }
 
         if (chase_path != null)
