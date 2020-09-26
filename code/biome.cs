@@ -414,9 +414,6 @@ public abstract class biome : MonoBehaviour
         // Generate the biome
         var sw = System.Diagnostics.Stopwatch.StartNew();
         b.generate_grid();
-        utils.log("Generated biome " + x + ", " + z +
-                  " (" + b.GetType().Name + ") in " +
-                  sw.ElapsedMilliseconds + " ms", "generation");
         return b;
     }
 

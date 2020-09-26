@@ -333,8 +333,6 @@ public class chunk : MonoBehaviour
         // Continue this generation stage
         if (gen_todo[gen_stage]())
         {
-            utils.log("Chunk " + x + "_" + z + " generation stage: " + gen_stage +
-                      " took " + gen_sw.ElapsedMilliseconds + " ms", "chunk_generation");
             // Advance generation stage
             gen_stage++;
         }

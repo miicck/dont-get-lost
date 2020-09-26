@@ -35,27 +35,6 @@ public static class utils
         return 0;
     }
 
-    // Log something to file
-    static HashSet<string> opened = new HashSet<string>();
-    public static void log(string s, string logfile)
-    {
-        if (!Application.isEditor) return; // Only log in editor
-        if (!server.started) return; // Only log on server
-        string filename = Application.persistentDataPath + "/" + logfile + ".log";
-
-        if (!opened.Contains(filename))
-        {
-            System.IO.File.Delete(filename);
-            opened.Add(filename);
-        }
-
-        using (var stream = System.IO.File.AppendText(filename))
-        {
-            stream.Write(s + "\n");
-            stream.Flush();
-        }
-    }
-
     // Raycast for the nearest object of the given type
     public delegate bool accept_func<T>(T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
