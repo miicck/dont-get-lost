@@ -300,16 +300,13 @@ public class character : networked, INotPathBlocking, IInspectable
     // STATIC STUFF //
     //##############//
 
-    const int AREA_PER_CHARACTER = 32 * 32;
-
     static HashSet<character> characters;
 
     public static int target_character_count
     {
         get
         {
-            return (int)(Mathf.PI * game.render_range * game.render_range /
-                AREA_PER_CHARACTER);
+            return character_spawn_point.spawn_point_count / 4;
         }
     }
 

@@ -28,6 +28,13 @@ public class character_spawn_point : world_object.sub_generator
 
     void OnDrawGizmos()
     {
+        if (Application.isPlaying) return;
+        Gizmos.color = active ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(transform.position, 0.5f);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
         Gizmos.color = active ? Color.green : Color.red;
         Gizmos.DrawWireSphere(transform.position, 0.5f);
     }
@@ -42,6 +49,8 @@ public class character_spawn_point : world_object.sub_generator
     //##############//
 
     static List<character_spawn_point> spawn_points;
+
+    public static int spawn_point_count => spawn_points.Count;
 
     public static void initialize()
     {

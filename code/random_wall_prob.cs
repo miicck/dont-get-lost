@@ -25,6 +25,7 @@ public class random_wall_prob : world_object.sub_generator
 
     private void OnDrawGizmos()
     {
+        if (Application.isPlaying) return;
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.DrawCube(Vector3.zero, Vector3.one);
     }
