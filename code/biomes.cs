@@ -862,6 +862,64 @@ public class reclaimed_city : biome_modifier
     }
 }
 
+public class craters : biome_modifier
+{
+    const int BURNT_BIT_SIZE = 32;
+
+    void add_burnt_bit(biome b)
+    {
+        int x = b.random.range(BURNT_BIT_SIZE / 2, biome.SIZE - BURNT_BIT_SIZE / 2);
+        int z = b.random.range(BURNT_BIT_SIZE / 2, biome.SIZE - BURNT_BIT_SIZE / 2);
+
+        for (int dx = -BURNT_BIT_SIZE / 2; dx < BURNT_BIT_SIZE / 2; ++dx)
+            for (int dz = -BURNT_BIT_SIZE / 2; dz < BURNT_BIT_SIZE / 2; ++dz)
+            {
+                var p = b.grid[x + dx, z + dz];
+
+                // Remove objects
+                p.object_to_generate = null;
+
+                // Lower terrain
+                float im = procmath.maps.maximum_in_middle(dx, -BURNT_BIT_SIZE / 2, BURNT_BIT_SIZE / 2);
+                float jm = procmath.maps.maximum_in_middle(dz, -BURNT_BIT_SIZE / 2, BURNT_BIT_SIZE / 2);
+                float amt = im * jm;
+                p.altitude -= amt * 8f;
+
+                p.terrain_color = p.terrain_color * (1f - amt) + Color.black * amt;
+
+                if (Random.Range(0, 16) == 0)
+                    p.object_to_generate = world_object.load("zombie_spawn_point");
+            }
+
+        b.grid[x, z].object_to_generate = world_object.load("random_wreckage");
+    }
+
+    public override void modify(biome b)
+    {
+        for (int i = 0; i < 8; ++i)
+            add_burnt_bit(b);
+    }
+}
+
+[biome_mod_info(generation_enabled: false)]
+public class spawn_biome : biome_modifier
+{
+    const int SPAWN_REGION_SIZE = 32;
+
+    public override void modify(biome b)
+    {
+        const int MIN = biome.SIZE / 2 - SPAWN_REGION_SIZE / 2;
+        const int MAX = biome.SIZE / 2 + SPAWN_REGION_SIZE / 2;
+        for (int i = MIN; i < MAX; ++i)
+            for (int j = MIN; j < MAX; ++j)
+            {
+                // Remove objects in spawn region
+                var p = b.grid[i, j];
+                p.object_to_generate = null;
+            }
+    }
+}
+
 public class tangled_forest : biome
 {
     protected override void generate_grid()

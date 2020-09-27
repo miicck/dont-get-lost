@@ -1512,6 +1512,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
         // Create the inventory object
         client.create(transform.position, "inventories/player_inventory", this);
         client.create(transform.position, "inventories/player_crafting_menu", this);
+
+        // Player starts in the middle of the first biome
+        respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL, biome.SIZE / 2);
+        networked_position = respawn_point.value;
     }
 
     public override void on_add_networked_child(networked child)

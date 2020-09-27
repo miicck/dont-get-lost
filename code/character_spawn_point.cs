@@ -61,6 +61,7 @@ public class character_spawn_point : world_object.sub_generator
     {
         if (spawn_points.Count == 0) return false;
         var sp = spawn_points[Random.Range(0, spawn_points.Count)];
+        if (sp == null) return false;
         sp.spawn_character();
         return true;
     }

@@ -356,6 +356,13 @@ public abstract class biome : MonoBehaviour
                 break;
             }
 
+            var bmi = (biome_mod_info)t.GetCustomAttribute(typeof(biome_mod_info));
+            if (bmi != null)
+            {
+                if (!bmi.generation_enabled)
+                    continue; // Skip allowing this modifier
+            }
+
             modifier_list.Add(generate_method);
         }
     }
@@ -378,6 +385,10 @@ public abstract class biome : MonoBehaviour
         // Use the above random number generator to pick a random biome modifier
         i = rand.Next() % modifier_list.Count;
         var m = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
+
+        // Set bime at 0, 0 to be the spawn biome
+        if (x == 0 && z == 0)
+            m = new spawn_biome();
 
         // Apply the biome modification
         m.modify(b);
@@ -543,6 +554,17 @@ public class biome_info : System.Attribute
     public bool generation_enabled { get; private set; }
 
     public biome_info(bool generation_enabled = true)
+    {
+        this.generation_enabled = generation_enabled;
+    }
+}
+
+/// <summary> Attribute info for biome modifiers. </summary>
+public class biome_mod_info : System.Attribute
+{
+    public bool generation_enabled { get; private set; }
+
+    public biome_mod_info(bool generation_enabled = true)
     {
         this.generation_enabled = generation_enabled;
     }
