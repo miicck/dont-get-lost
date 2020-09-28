@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4347658890408287021}
   - component: {fileID: 481459423868873903}
+  - component: {fileID: 8284150511639469628}
   m_Layer: 0
   m_Name: cabbage
   m_TagString: Untagged
@@ -49,7 +50,25 @@ MonoBehaviour:
   plural: cabbages
   value: 0
   fuel_value: 0
+  food_value: 5
   logistics_scale: 1
+--- !u!114 &8284150511639469628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3600898417947631214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 7406865997962695275, guid: b888fadbb959b5643974a37a1441db4c, type: 3}
+  min_count: 1
+  max_count: 2
+  one_in_chance: 1
 --- !u!135 &1720107364616188029
 SphereCollider:
   m_ObjectHideFlags: 0

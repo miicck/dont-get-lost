@@ -41,7 +41,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5929298084181680665}
-  - component: {fileID: 8759260168121123451}
+  - component: {fileID: 7262684899367947592}
+  - component: {fileID: 3350122091114274256}
   m_Layer: 0
   m_Name: chicken_nest
   m_TagString: Untagged
@@ -68,7 +69,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8759260168121123451
+--- !u!114 &7262684899367947592
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -77,7 +78,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6561522434548826453}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f03b631135b78ab46ab1d4f73d27e035, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1
@@ -93,7 +94,19 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
-  prefab_to_spawn: spawners/chicken_nest
+--- !u!114 &3350122091114274256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6561522434548826453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 1291796199, guid: 9df73ba79935f624598f4d09f24a359f, type: 3}
 --- !u!1001 &1490898404980789739
 PrefabInstance:
   m_ObjectHideFlags: 0

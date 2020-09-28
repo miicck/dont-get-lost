@@ -665,7 +665,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
                     float fd = -velocity.y;
                     fd -= FALL_DAMAGE_START_SPEED;
                     fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
-                    take_damage((int)(fd * max_health));
+                    take_damage((int)(fd * 100));
                 }
 
                 // Ensure we don't accumulate too much -ve y velocity
@@ -1237,8 +1237,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
     // HEALTH //
     //########//
 
-    public int max_health { get => 100; }
-
     public bool is_dead = false;
 
     float last_damaged_time = 0;
@@ -1262,10 +1260,17 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
-    void passive_heal()
+    int passive_effect_counter = 0;
+    void passive_effect_update()
     {
         if (is_dead) return;
-        heal(1);
+
+        ++passive_effect_counter;
+        if (hunger.value > 50) heal(1);
+        else if (hunger.value == 0) take_damage(1);
+
+        if (passive_effect_counter % 5 == 0)
+            modify_hunger(-1);
     }
 
     public void take_damage(int damage)
@@ -1278,7 +1283,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public void heal(int amount)
     {
         if (is_dead) return;
-        health.value = Mathf.Min(max_health, health.value + amount);
+        health.value = Mathf.Min(100, health.value + amount);
+    }
+
+    public void modify_hunger(int amount)
+    {
+        hunger.value = Mathf.Clamp(hunger.value + amount, 0, 100);
     }
 
     void die()
@@ -1326,6 +1336,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     //############//
 
     networked_variables.net_int health;
+    networked_variables.net_int hunger;
     networked_variables.net_int slot_equipped;
     networked_variables.net_float y_rotation;
     networked_variables.net_float x_rotation;
@@ -1337,10 +1348,20 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
+    AudioSource sound_source;
     arm right_arm;
     arm left_arm;
     water_reflections water;
     player_healthbar healthbar;
+    player_healthbar foodbar;
+
+    public void play_sound(string sound,
+        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
+    {
+        sound_source.Stop();
+        sound_source.pitch = Random.Range(min_pitch, max_pitch);
+        sound_source.PlayOneShot(Resources.Load<AudioClip>(sound), volume);
+    }
 
     public override void on_loose_authority()
     {
@@ -1384,8 +1405,25 @@ public class player : networked_player, INotPathBlocking, IInspectable
         crt.anchoredPosition = Vector2.zero;
         cursor_sprite = "default_cursor";
 
-        // Find the healthbar
-        healthbar = FindObjectOfType<player_healthbar>();
+        // Find the healthbars
+        foreach (var hb in FindObjectsOfType<player_healthbar>())
+        {
+            switch (hb.type)
+            {
+                case player_healthbar.TYPE.HEALTH:
+                    healthbar = hb;
+                    healthbar.set(health.value, 100);
+                    break;
+
+                case player_healthbar.TYPE.FOOD:
+                    foodbar = hb;
+                    foodbar.set(hunger.value, 100);
+                    break;
+
+                default:
+                    throw new System.Exception("Unkown healthbar type!");
+            }
+        }
 
         // Add the water
         water = new GameObject("water").AddComponent<water_reflections>();
@@ -1405,8 +1443,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
         // Start looking to add the player controller
         Invoke("add_controller", 0.1f);
 
-        // Start passive healing
-        InvokeRepeating("passive_heal", 1f, 1f);
+        // Set the passive effect tick going
+        InvokeRepeating("passive_effect_update", 1f, 1f);
 
         // This is the local player
         current = this;
@@ -1460,6 +1498,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
         Destroy(init_pos.gameObject);
         init_hand_plane = hand_centre.localPosition.z;
 
+        // Create my sound source
+        sound_source = new GameObject("sound_source").AddComponent<AudioSource>();
+        sound_source.transform.SetParent(transform);
+        sound_source.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, WIDTH / 2f);
+        sound_source.spatialBlend = 0f;
+
         // Network my username
         username = new networked_variables.net_string();
 
@@ -1467,12 +1511,19 @@ public class player : networked_player, INotPathBlocking, IInspectable
         respawn_point = new networked_variables.net_vector3();
 
         // The players remaining health
-        health = new networked_variables.net_int(default_value: max_health);
+        health = new networked_variables.net_int(default_value: 100);
         health.on_change = () =>
         {
-            healthbar?.set(health.value, max_health);
+            healthbar?.set(health.value, 100);
             if (health.value <= 0)
                 die();
+        };
+
+        // How fed the player is
+        hunger = new networked_variables.net_int(default_value: 100);
+        hunger.on_change = () =>
+        {
+            foodbar?.set(hunger.value, 100);
         };
 
         // The currently-equipped quickbar slot number

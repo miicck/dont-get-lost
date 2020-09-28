@@ -60,9 +60,9 @@ public class melee_weapon : equip_in_hand
         {
             // Default audio
             swing_audio = gameObject.AddComponent<AudioSource>();
-            swing_audio.spatialBlend = 1.0f; // 3D
-            swing_audio.clip = Resources.Load<AudioClip>("sounds/woosh_1");
-            swing_audio.volume = 0.5f;
+            swing_audio.spatialBlend = 0.75f; // 3D amount
+            swing_audio.clip = Resources.Load<AudioClip>("sounds/swoosh_1");
+            swing_audio.volume = 0.35f;
         }
 
         swing_audio.Play();

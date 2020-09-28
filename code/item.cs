@@ -12,6 +12,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public string plural;
     public int value;
     public int fuel_value = 0;
+    public int food_value = 0;
     public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
     public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
 
@@ -71,7 +72,20 @@ public class item : networked, IInspectable, IAcceptLeftClick
     }
 
     // Use the equipped version of this item
-    public virtual use_result on_use_start(player.USE_TYPE use_type) { return use_result.complete; }
+    public virtual use_result on_use_start(player.USE_TYPE use_type)
+    {
+        if (food_value > 0)
+        {
+            // Eat
+            player.current.inventory.remove(this, 1);
+            player.current.modify_hunger(food_value);
+            player.current.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
+            foreach (var p in GetComponents<product>())
+                p.create_in(player.current.inventory);
+        }
+        return use_result.complete;
+    }
+
     public virtual use_result on_use_continue(player.USE_TYPE use_type) { return use_result.complete; }
     public virtual void on_use_end(player.USE_TYPE use_type) { }
     public virtual bool allow_left_click_held_down() { return false; }
@@ -284,6 +298,15 @@ public class item : networked, IInspectable, IAcceptLeftClick
                 info += "  Fuel value : " + (item.fuel_value * quantity).qs() + " (" + item.fuel_value.qs() + " each)\n";
             else
                 info += "  Fuel value : " + item.fuel_value.qs() + "\n";
+        }
+
+        // Food value
+        if (item.food_value > 0)
+        {
+            if (quantity > 1)
+                info += "  Food value : " + (item.food_value * quantity).qs() + "(" + item.food_value.qs() + " each)\n";
+            else
+                info += "  Food value : " + item.fuel_value.qs() + "\n";
         }
 
         return utils.allign_colons(info);

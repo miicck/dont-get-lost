@@ -4,6 +4,13 @@ using UnityEngine;
 
 public class player_healthbar : MonoBehaviour
 {
+    public enum TYPE
+    {
+        HEALTH,
+        FOOD,
+    }
+
+    public TYPE type;
     public UnityEngine.UI.Image red;
     public UnityEngine.UI.Image green;
     public UnityEngine.UI.Text text;
