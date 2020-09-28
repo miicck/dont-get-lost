@@ -511,10 +511,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 if (sw > 0) ++new_slot;
                 else if (sw < 0) --new_slot;
 
-                if (new_slot < 1) new_slot = QUICKBAR_SLOTS_COUNT;
-                if (new_slot > QUICKBAR_SLOTS_COUNT) new_slot = 1;
+                if (new_slot < 0) new_slot = QUICKBAR_SLOTS_COUNT;
+                if (new_slot > QUICKBAR_SLOTS_COUNT) new_slot = 0;
 
-                if (quickbar_slot(new_slot)?.item != null)
+                // Stop if we've hit a slot with an item, or if we've scrolled
+                // off the end (in which case we will equip nothing)
+                if (quickbar_slot(new_slot)?.item != null || new_slot == 0)
                 {
                     slot_equipped.value = new_slot;
                     break;
