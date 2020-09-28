@@ -62,6 +62,14 @@ public static class item_collection_extensions
         foreach (var kv in cts)
             col.remove(kv.Key, kv.Value);
     }
+
+    public static bool is_empty(this IItemCollection col)
+    {
+        foreach (var kv in col.contents())
+            if (kv.Key != null && kv.Value > 0)
+                return false;
+        return true;
+    }
 }
 
 /// <summary> A simple, dictionary-based
@@ -383,7 +391,7 @@ public class inventory : networked, IItemCollection
         item = Resources.Load<item>("items/" + item.name);
 
         // Run over the occupied (networked) slots, and remove count items
-        foreach (var isn in networked_slots)
+        foreach (var isn in new List<inventory_slot_networked>(networked_slots))
         {
             count -= isn.remove(item, count);
             if (count <= 0) break;

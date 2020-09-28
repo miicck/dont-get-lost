@@ -246,6 +246,9 @@ public class networked : MonoBehaviour
                     awaiting_delete();
                     awaiting_delete = null;
                 }
+
+                on_register_callback?.Invoke();
+                on_register_callback = null;
             }
         }
     }
@@ -270,6 +273,15 @@ public class networked : MonoBehaviour
         has_authority = false;
         on_loose_authority();
     }
+
+    /// <summary> A callback method. </summary>
+    public delegate void callback();
+
+    /// <summary> Callback to call when first registered. </summary>
+    callback on_register_callback = () => { };
+
+    /// <summary> Add a callback to call when first registered. </summary>
+    public void add_register_listener(callback c) { on_register_callback += c; }
 
     //##########################//
     // TERMINATION OF EXISTANCE //

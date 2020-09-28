@@ -1281,12 +1281,19 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     void die()
     {
+        // Create the sack containing my inventory
+        var inv_contents = inventory.contents();
+        inventory.clear();
+        sack.create(transform.position, inv_contents, username.value + "'s remains");
+
+        // Create the respawn timer
         var timer = Resources.Load<respawn_timer>("ui/respawn_timer").inst();
         timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
         timer.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
         timer.to_respawn = this;
         is_dead = true;
 
+        // Add the red tint
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
             throw new System.Exception("No ColorAdjustments override on global volume!");
         color.colorFilter.value = Color.red;
@@ -1543,7 +1550,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
     // STATIC METHODS //
     //################//
 
-    public delegate void callback();
     private static callback waiting = () => { };
 
     // Schedule a function to be called when the current player becomes available
