@@ -290,11 +290,22 @@ public class building_material : item
         // Create a blue, placeholder version of this object
         foreach (var comp in GetComponentsInChildren<Component>())
         {
+            // Replace all materials with the building placeholder material
             if (comp is Renderer)
             {
                 var rend = (Renderer)comp;
                 rend.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
                 continue;
+            }
+
+            // Highlight the snap points
+            if (comp is snap_point)
+            {
+                var sp = (snap_point)comp;
+                var hl = Resources.Load<GameObject>("misc/snap_point_highlight").inst();
+                hl.transform.SetParent(sp.transform);
+                hl.transform.localPosition = Vector3.zero;
+                hl.transform.localRotation = Quaternion.identity;
             }
 
             // Destroy colliders
