@@ -253,30 +253,3 @@ public class product : MonoBehaviour
     }
 #endif
 }
-
-/// <summary> A product loaded from the biome information. </summary>
-public class terrain_product : product
-{
-    new public const string mode = "TERRAIN_PRODUCT";
-
-    new item item
-    {
-        get
-        {
-            // Load the item from the player biome.point information
-            return Resources.Load<item>("items/" + player.current.point.terrain_product);
-        }
-    }
-
-    public override item auto_item => item;
-
-    public override string product_name() { return item.display_name; }
-    public override string product_name_plural() { return item.plural; }
-    public override string product_name_quantity() { return item.display_name; }
-    public override Sprite sprite() { return item.sprite; }
-
-    public override void create_in(IItemCollection inv)
-    {
-        inv.add(item, 1);
-    }
-}

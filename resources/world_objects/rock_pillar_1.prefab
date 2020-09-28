@@ -66,7 +66,7 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
---- !u!114 &4024181161864650177
+--- !u!114 &4772489551963427709
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -75,25 +75,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 471876622432347187}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  item: {fileID: 0}
-  tool_type: 1
-  tool_quality: 0
---- !u!114 &5516009759953459699
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 471876622432347187}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  item: {fileID: 293668860053935267, guid: 5b0d1a0d073312c4195f95d950e57339, type: 3}
+  min_count: 1
+  max_count: 2
+  one_in_chance: 1
 --- !u!114 &6472158060045277067
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,11 +95,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
+  mode: 1
   item: {fileID: 1963094263204736833, guid: 628bc2a1c33ae57458bfeee246d24b47, type: 3}
   min_count: 1
-  max_count: 1
+  max_count: 2
   one_in_chance: 1
+--- !u!114 &8624461043185945272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471876622432347187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f451eb843474847b1ca8620189a3b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &838705376845751418
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,6 +246,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 1
+  probability: 1
 --- !u!1 &6060366157036844314
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,6 +291,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
+  probability: 1
 --- !u!1 &7162098369495919786
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,6 +336,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
+  probability: 1
 --- !u!114 &1468091244812506746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -445,7 +449,8 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1.5463
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7059699699005977248, guid: ffc72ae654c9f01459ff0c03c2dcf32e, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: ffc72ae654c9f01459ff0c03c2dcf32e, type: 3}
 --- !u!4 &8967199030534155634 stripped
 Transform:
@@ -681,7 +686,8 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1.7481
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7059699699005977248, guid: d89c777952b034c4aa582b4c3ba088df, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: d89c777952b034c4aa582b4c3ba088df, type: 3}
 --- !u!4 &1412556798878302494 stripped
 Transform:

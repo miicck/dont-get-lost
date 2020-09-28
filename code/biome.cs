@@ -463,7 +463,6 @@ public abstract class biome : MonoBehaviour
         public float fog_distance;
         public Color water_color = water_colors.cyan;
         public Color terrain_color = terrain_colors.grass;
-        public string terrain_product = "dirt";
         public Color sky_color = sky_colors.light_blue;
         public world_object object_to_generate;
 
@@ -512,10 +511,7 @@ public abstract class biome : MonoBehaviour
             }
 
             if (pts[max_i] != null)
-            {
                 ret.object_to_generate = pts[max_i].object_to_generate;
-                ret.terrain_product = pts[max_i].terrain_product;
-            }
 
             ret.terrain_color.a = 0f;
             return ret;
