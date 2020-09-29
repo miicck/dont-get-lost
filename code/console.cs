@@ -229,6 +229,16 @@ public class console : MonoBehaviour
                 Debug.Log(to_print);
                 return true;
 
+            // Increase, or decrease hunger
+            case "hunger":
+
+                if (args.Length < 2) return console_error("Too few arguments specified!");
+                if (!int.TryParse(args[1], out int hunger))
+                    return console_error("Could not parse an integer from the arguement " + args[1]);
+
+                player.current.modify_hunger(hunger);
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
         }

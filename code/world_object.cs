@@ -57,6 +57,13 @@ public abstract class world_object : MonoBehaviour
     }
     static Dictionary<string, world_object> _library;
 
+    /// <summary> Load a random object from the list. </summary>
+    public static world_object load(System.Random rand, params string[] names)
+    {
+        if (names.Length == 0) return null;
+        return load(names[rand.Next() % names.Length]);
+    }
+
     /// <summary> An object that is generated simultaneously
     /// with a parent world_object. For example, an
     /// ore seam. </summary>

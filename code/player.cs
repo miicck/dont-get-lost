@@ -299,8 +299,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public void left_click_with_hand()
     {
         var ray = camera_ray(INTERACTION_RANGE, out float dis);
-        var to_click = utils.raycast_for_closest<IAcceptLeftClick>(ray, out RaycastHit hit, dis);
-        to_click?.on_left_click();
+        if (Physics.Raycast(ray, out RaycastHit hit, dis))
+            hit.collider.gameObject.GetComponentInParent<IAcceptLeftClick>()?.on_left_click();
     }
 
     // Called on a right click when no item is equipped
@@ -1524,6 +1524,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
         hunger.on_change = () =>
         {
             foodbar?.set(hunger.value, 100);
+            if (hunger.value <= 0 && this == current)
+                popup_message.create("You are starving!");
         };
 
         // The currently-equipped quickbar slot number

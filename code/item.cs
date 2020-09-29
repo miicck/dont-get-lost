@@ -306,7 +306,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
             if (quantity > 1)
                 info += "  Food value : " + (item.food_value * quantity).qs() + "(" + item.food_value.qs() + " each)\n";
             else
-                info += "  Food value : " + item.fuel_value.qs() + "\n";
+                info += "  Food value : " + item.food_value.qs() + "\n";
         }
 
         return utils.allign_colons(info);

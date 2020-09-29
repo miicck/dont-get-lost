@@ -64,7 +64,7 @@ public class mangroves : biome
 
                     // Generate mossy logs
                     else if (random.range(0, 500) == 0)
-                        p.object_to_generate = world_object.load("mossy_log");
+                        p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
 
                     else if (random.range(0, 1000) == 0)
                         p.object_to_generate = world_object.load("chicken_nest");
@@ -112,7 +112,7 @@ public class desert : biome
                     if (random.range(0, 50) == 0)
                         grid[i, j].object_to_generate = world_object.load("palm_tree");
                     else if (random.range(0, 50) == 0)
-                        grid[i, j].object_to_generate = world_object.load("mossy_log");
+                        grid[i, j].object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
                     else if (random.range(0, 100) == 0)
                         grid[i, j].object_to_generate = world_object.load("flint");
                 }
@@ -326,7 +326,7 @@ public class mountains : biome
                         p.object_to_generate = world_object.load("flowers");
 
                     else if (random.range(0, 500) == 0)
-                        p.object_to_generate = world_object.load("mossy_log");
+                        p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
                 }
 
                 // Generate beach stuff
@@ -359,7 +359,7 @@ public class flat_forest : biome
                 else if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("flowers");
                 else if (random.range(0, 300) == 0)
-                    p.object_to_generate = world_object.load("mossy_log");
+                    p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
                 else if (random.range(0, 300) == 0)
                     p.object_to_generate = world_object.load("bush");
                 else if (random.range(0, 400) == 0)
@@ -515,7 +515,7 @@ public class rock_stacks : biome
                         p.object_to_generate = world_object.load("tree");
 
                         if (random.range(0, 5) == 0 && i > 2 && j > 2)
-                            grid[i - 2, j - 2].object_to_generate = world_object.load("mossy_log");
+                            grid[i - 2, j - 2].object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
                     }
 
                     // Generate bushes
@@ -586,7 +586,7 @@ public class jungle : biome
         }
 
         if (random.range(0, 100) == 0)
-            return world_object.load("mossy_log_jungle");
+            return world_object.load(random, "mossy_log_jungle", "mossy_log_jungle_mushroom");
 
         if (random.range(0, 400) == 0)
             return world_object.load("jungle_cliffs");
