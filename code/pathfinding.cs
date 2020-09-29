@@ -121,6 +121,11 @@ public class astar_path : path
         stage = STAGE.START_SEARCH;
     }
 
+    protected virtual bool success(waypoint found)
+    {
+        return found.Equals(goal_waypoint);
+    }
+
     protected void reconstruct_path(waypoint end)
     {
         if (end == null)
@@ -181,7 +186,7 @@ public class astar_path : path
             waypoint current = open_set.First().Value;
 
             // Check for success
-            if (current.Equals(goal_waypoint))
+            if (success(current))
             {
                 reconstruct_path(current);
                 return;
@@ -661,6 +666,26 @@ public class chase_path : path
     public override string info_text()
     {
         return base_path?.info_text();
+    }
+}
+
+public class flee_path : astar_path
+{
+    public flee_path(Vector3 start, Transform fleeing, IPathingAgent agent, int max_iterations = 1000)
+         : base(start, fleeing.position, agent, max_iterations: max_iterations)
+    {
+        open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
+    }
+
+    protected override bool success(waypoint found)
+    {
+        return found.best_distance_to_start > 10;
+    }
+
+    /// <summary> Class to order waypoints by their hash code. </summary>
+    class increasing_hash_code : IComparer<waypoint>
+    {
+        public int Compare(waypoint a, waypoint b) { return b.GetHashCode().CompareTo(a.GetHashCode()); }
     }
 }
 

@@ -41,6 +41,12 @@ public class toolbar_display_slot : MonoBehaviour
         }
     }
 
+    public static bool toolbar_active
+    {
+        get => slots[1].transform.parent.gameObject.activeInHierarchy;
+        set => slots[1].transform.parent.gameObject.SetActive(value);
+    }
+
     void Start()
     {
         slots[number] = this;

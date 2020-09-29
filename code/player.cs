@@ -802,6 +802,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
             ui_state = UI_STATE.ALL_CLOSED;
             cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
+            // Disable (or re-enable) ui things
+            healthbar.gameObject.SetActive(!_fly_mode);
+            foodbar.gameObject.SetActive(!_fly_mode);
+            toolbar_display_slot.toolbar_active = !_fly_mode;
+            compass.active = !_fly_mode;
+
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {

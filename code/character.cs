@@ -680,21 +680,19 @@ public class character_control_v2 : ICharacterController, IPathingAgent
     int idle_path_point = 0;
     int idle_path_direction = 1;
 
-    // The path that we chase the player along
-    path chase_path
+    // The path that we're chasing/fleeing from the player
+    path agro_path
     {
-        get => _chase_path;
+        get => _agro_path;
         set
         {
-            _chase_path = value;
-            chase_path_progress = 0;
+            _agro_path = value;
+            agro_path_progress = 0;
         }
     }
-    path _chase_path;
-    int chase_path_progress;
-
-    // Where, in the idle path, the chase path begins
-    int chase_path_idle_path_link = 0;
+    path _agro_path;
+    int agro_path_progress;
+    int agro_path_idle_link = 0; // Where, in the idle path, the agro path begins
 
     public void control(character c)
     {
@@ -709,89 +707,127 @@ public class character_control_v2 : ICharacterController, IPathingAgent
             return;
         }
 
-        // If we're not already chasing a player/a player is in agro range
-        // then chase the player
-        if (chase_path == null &&
+        // If we're not already agro to a player/a player is in agro range
+        if (agro_path == null &&
             (player.current.transform.position - c.transform.position).magnitude <
             c.agro_range)
         {
 
-            // Find the nearest point along the idle path to the player
-            float min_dis = Mathf.Infinity;
-            for (int i = 0; i < idle_path.length; ++i)
+            switch (character.friendliness)
             {
-                float dis = (idle_path[i] - player.current.transform.position).magnitude;
-                if (dis < min_dis)
-                {
-                    min_dis = dis;
-                    chase_path_idle_path_link = i;
-                }
-            }
 
-            // Path from that point, to the player
-            chase_path = new chase_path(idle_path[chase_path_idle_path_link],
-                player.current.transform, this,
-                max_iterations: 100,
-                goal_distance: character.reach * 0.8f);
+                case character.FRIENDLINESS.AGRESSIVE:
+
+                    // Find the nearest point along the idle path to the player
+                    float min_dis = Mathf.Infinity;
+                    for (int i = 0; i < idle_path.length; ++i)
+                    {
+                        float dis = (idle_path[i] - player.current.transform.position).magnitude;
+                        if (dis < min_dis)
+                        {
+                            min_dis = dis;
+                            agro_path_idle_link = i;
+                        }
+                    }
+
+                    // Path from that point, to the player
+                    agro_path = new chase_path(idle_path[agro_path_idle_link],
+                        player.current.transform, this,
+                        max_iterations: 100,
+                        goal_distance: character.reach * 0.8f);
+
+                    break;
+
+                case character.FRIENDLINESS.AFRAID:
+
+                    // Find the furthest point along the idle path to the player
+                    float max_dis = Mathf.Infinity;
+                    for (int i = 0; i < idle_path.length; ++i)
+                    {
+                        float dis = (idle_path[i] - player.current.transform.position).magnitude;
+                        if (dis > max_dis)
+                        {
+                            max_dis = dis;
+                            agro_path_idle_link = i;
+                        }
+                    }
+
+                    // Path from that point, away from the player
+                    agro_path = new flee_path(character.transform.position, player.current.transform, this);
+
+                    break;
+
+            }
         }
 
-        if (chase_path != null)
+        if (agro_path != null)
         {
             if (player.current == null || player.current.is_dead)
             {
                 // Stop chasing
-                chase_path = null;
+                agro_path = null;
                 idle_path = null;
                 return;
             }
 
-            switch (chase_path.state)
+            switch (agro_path.state)
             {
                 // Chase path failed, reset to no chasing
                 case path.STATE.FAILED:
-                    chase_path = null;
+                    agro_path = null;
                     break;
 
                 // Continue chase pathfinding
                 case path.STATE.SEARCHING:
-                    chase_path.pathfind(load_balancing.iter);
+                    agro_path.pathfind(load_balancing.iter);
                     break;
 
                 // Chase the player
                 case path.STATE.COMPLETE:
 
-                    if (idle_path_point != chase_path_idle_path_link)
+                    if (idle_path_point != agro_path_idle_link)
                     {
                         // Get to the point in the idle path where the
                         // chase path starts from
                         if (move_towards(idle_path[idle_path_point],
                             character.run_speed, out bool failed))
                         {
-                            if (failed) chase_path = null;
-                            int dir = chase_path_idle_path_link - idle_path_point;
+                            if (failed) agro_path = null;
+                            int dir = agro_path_idle_link - idle_path_point;
                             if (dir > 0) idle_path_point += 1;
                             else if (dir < 0) idle_path_point -= 1;
                         }
                     }
                     else
                     {
-                        float chase_speed = character.run_speed;
-                        if (chase_path_progress == chase_path.length - 1)
+                        float agro_path_speed = character.run_speed;
+                        if (agro_path_progress == agro_path.length - 1)
                         {
-                            // Close to the player, slow down 
-                            // just enough to keep up
-                            chase_speed = Mathf.Min(
-                                character.run_speed,
-                                player.BASE_SPEED * 1.2f);
+                            // Got to the end of the path             
+                            switch (character.friendliness)
+                            {
+                                case character.FRIENDLINESS.AGRESSIVE:
+                                    // Close to the player, slow down 
+                                    // just enough to keep up
+                                    agro_path_speed = Mathf.Min(
+                                        character.run_speed,
+                                        player.BASE_SPEED * 1.2f);
+                                    break;
+
+                                case character.FRIENDLINESS.AFRAID:
+                                    // Keep fleeing
+                                    agro_path = new flee_path(character.transform.position, player.current.transform, this);
+                                    return;
+                            }
                         }
 
-                        if (move_towards(chase_path[chase_path_progress],
-                            chase_speed, out bool failed))
+                        if (move_towards(agro_path[agro_path_progress],
+                            agro_path_speed, out bool failed))
                         {
-                            if (failed) chase_path = null;
-                            chase_path_progress = Mathf.Min(
-                                chase_path_progress + 1,
-                                chase_path.length - 1);
+                            if (failed) agro_path = null;
+                            agro_path_progress = Mathf.Min(
+                                agro_path_progress + 1,
+                                agro_path.length - 1);
                         }
 
                         // Attack the player if we're close enough
@@ -895,7 +931,7 @@ public class character_control_v2 : ICharacterController, IPathingAgent
     public void draw_gizmos()
     {
         idle_path?.draw_gizmos();
-        chase_path?.draw_gizmos();
+        agro_path?.draw_gizmos();
     }
 
     public void draw_inspector_gui()

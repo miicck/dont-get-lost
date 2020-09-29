@@ -677,12 +677,14 @@ public class swamp : biome
                 p.sky_color = sky_colors.jungle_green;
                 p.fog_distance = fog_distances.VERY_CLOSE;
 
-                if (random.range(0, 50) == 0)
+                if (random.range(0, 10) == 0)
+                    p.object_to_generate = world_object.load("lillypad");
+                else if (random.range(0, 50) == 0)
                     p.object_to_generate = world_object.load("spiky_tree_stump");
                 else if (random.range(0, 50) == 0)
                     p.object_to_generate = world_object.load("swampy_tree");
-                else if (random.range(0, 10) == 0)
-                    p.object_to_generate = world_object.load("lillypad");
+                else if (random.range(0, 100) == 0)
+                    p.object_to_generate = world_object.load(random, "mossy_log_jungle", "mossy_log_jungle_mushroom");
             }
     }
 }

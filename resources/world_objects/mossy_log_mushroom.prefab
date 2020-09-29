@@ -95,7 +95,7 @@ MonoBehaviour:
   min_scale: 0.6
   max_scale: 2
   seperate_xz_scale: 0
-  min_altitude: 16
+  min_altitude: 15
   max_altitude: 128
   max_terrain_angle: 45
   min_terrain_angle: 0

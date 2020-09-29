@@ -26,4 +26,10 @@ public class compass : MonoBehaviour
         while (z.Length < 10) z = z + " ";
         coords_text.text = x + " | " + z;
     }
+
+    public static bool active
+    {
+        get => FindObjectOfType<compass>(true).gameObject.activeInHierarchy;
+        set => FindObjectOfType<compass>(true).gameObject.SetActive(value);
+    }
 }

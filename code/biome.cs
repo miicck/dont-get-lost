@@ -484,9 +484,9 @@ public abstract class biome : MonoBehaviour
             float max_w = 0;
             for (int i = 0; i < wts.Length; ++i)
             {
-                float w = wts[i] / total_weight;
                 var p = pts[i];
                 if (p == null) continue;
+                float w = wts[i] / total_weight;
 
                 ret.altitude += p.altitude * w;
                 ret.fog_distance += p.fog_distance * w;
