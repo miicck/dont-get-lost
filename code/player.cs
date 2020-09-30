@@ -611,19 +611,19 @@ public class player : networked_player, INotPathBlocking, IInspectable
         float eff_eye_y = (ray.origin + ray.direction * dis).y;
         underwater = eff_eye_y < world.SEA_LEVEL && !map_open && eff_eye_y > world.UNDERGROUND_ROOF;
 
-        if (underwater)
-        {
-            float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
-            if (amt_submerged <= 0) return;
-            if (amt_submerged > 1.0f) amt_submerged = 1.0f;
+        // Don't float underground
+        if (eff_eye_y < world.UNDERGROUND_ROOF) return;
 
-            // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
-            if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
-                velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
+        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
+        if (amt_submerged <= 0) return;
+        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
-            // Drag
-            velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
-        }
+        // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
+        if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
+            velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
+
+        // Drag
+        velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
     }
 
     void normal_move()
@@ -707,7 +707,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
         // In water, allow climbing out
         if (transform.position.y < world.SEA_LEVEL &&
-            transform.position.y > world.UNDERGROUND_ROOF && 
+            transform.position.y > world.UNDERGROUND_ROOF &&
             controls.key_down(controls.BIND.WALK_FORWARD))
         {
             // Look for solid objects in front of player
@@ -1156,11 +1156,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
                 // Setup the camera in map mode/position   
                 camera.orthographicSize = game.render_range;
-                camera.transform.position = eye_transform.transform.position +
-                    Vector3.up * (MAP_CAMERA_ALT - transform.position.y);
-                camera.transform.rotation = Quaternion.LookRotation(
-                    Vector3.down, transform.forward
-                    );
+                camera.transform.position = eye_transform.transform.position + Vector3.up * MAP_CAMERA_ALT;
+                camera.transform.rotation = Quaternion.LookRotation(Vector3.down, transform.forward);
             }
             else
             {
@@ -1529,7 +1526,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
         {
             healthbar?.set(health.value, 100);
             if (health.value <= 0)
-                die();
+            {
+                if (this == current) die();
+                popup_message.create(username.value + " has died!");
+            }
         };
 
         // How fed the player is

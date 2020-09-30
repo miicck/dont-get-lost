@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class cave_system_teleporter : MonoBehaviour, IAcceptLeftClick
 {
-    public bool is_underground;
-
+    public bool is_underground => transform.position.y < world.UNDERGROUND_ROOF;
+    public Transform teleport_spot;
+  
     public void on_left_click()
     {
         var target = utils.find_to_min(FindObjectsOfType<cave_system_teleporter>(), (t) =>
@@ -26,6 +27,6 @@ public class cave_system_teleporter : MonoBehaviour, IAcceptLeftClick
             return;
         }
 
-        player.current.teleport(target.transform.position);
+        player.current.teleport(target.teleport_spot.position);
     }
 }

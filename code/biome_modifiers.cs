@@ -106,7 +106,7 @@ public class craters : biome_modifier
 
                 p.terrain_color = p.terrain_color * (1f - amt) + Color.black * amt;
 
-                if (Random.Range(0, 16) == 0)
+                if (Random.Range(0, 50) == 0)
                     p.object_to_generate = world_object.load("zombie_spawn_point");
             }
 
