@@ -609,18 +609,21 @@ public class player : networked_player, INotPathBlocking, IInspectable
         var ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, 0, 0));
         float dis = camera.nearClipPlane / Vector3.Dot(ray.direction, -camera.transform.up);
         float eff_eye_y = (ray.origin + ray.direction * dis).y;
-        underwater = eff_eye_y < world.SEA_LEVEL && !map_open;
+        underwater = eff_eye_y < world.SEA_LEVEL && !map_open && eff_eye_y > world.UNDERGROUND_ROOF;
 
-        float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
-        if (amt_submerged <= 0) return;
-        if (amt_submerged > 1.0f) amt_submerged = 1.0f;
+        if (underwater)
+        {
+            float amt_submerged = (world.SEA_LEVEL - transform.position.y) / HEIGHT;
+            if (amt_submerged <= 0) return;
+            if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
-        // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
-        if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
-            velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
+            // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
+            if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
+                velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
-        // Drag
-        velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
+            // Drag
+            velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
+        }
     }
 
     void normal_move()
@@ -704,6 +707,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
         // In water, allow climbing out
         if (transform.position.y < world.SEA_LEVEL &&
+            transform.position.y > world.UNDERGROUND_ROOF && 
             controls.key_down(controls.BIND.WALK_FORWARD))
         {
             // Look for solid objects in front of player
@@ -720,13 +724,16 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
         controller.Move(move);
 
-        // Ensure we stay above the terrain
-        Vector3 pos = transform.position;
-        pos.y = world.MAX_ALTITUDE;
-        RaycastHit terra_hit;
-        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out terra_hit);
-        if (terra_hit.point.y > transform.position.y)
-            transform.position = terra_hit.point;
+        // Ensure we stay above the terrain (unless we're underground)
+        if (transform.position.y > world.UNDERGROUND_ROOF)
+        {
+            Vector3 pos = transform.position;
+            pos.y = world.MAX_ALTITUDE;
+            RaycastHit terra_hit;
+            var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(pos, Vector3.down), out terra_hit);
+            if (terra_hit.point.y > transform.position.y)
+                transform.position = terra_hit.point;
+        }
     }
 
     void fly_move()

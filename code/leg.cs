@@ -271,7 +271,8 @@ public class leg : MonoBehaviour
         if (distance_from_player > SOUND_DISTANCE)
             return; // No sounds in cheap mode
 
-        bool underwater = foot_base.transform.position.y < world.SEA_LEVEL;
+        bool underwater = foot_base.transform.position.y < world.SEA_LEVEL &&
+                          foot_base.transform.position.y > world.UNDERGROUND_ROOF;
         if (underwater)
         {
             footstep_source.clip = Resources.Load<AudioClip>("sounds/water_step");

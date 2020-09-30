@@ -2,6 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[biome_info(generation_enabled: false)]
+public class empty : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + 1;
+            }
+    }
+}
+
 public class mangroves : biome
 {
     public const float ISLAND_SIZE = 27.2f;
@@ -222,12 +236,19 @@ public class ocean : biome
                     terrain_color = terrain_colors.sand,
                     sky_color = sky_colors.light_blue,
                     altitude = alt,
-                    fog_distance = fog_distances.FAR
+                    fog_distance = fog_distances.FAR,
                 };
 
+                if (p.altitude < world.SEA_LEVEL + 0.5f &&
+                    p.altitude > world.SEA_LEVEL - 0.5f &&
+                    random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("driftwood");
+
                 if (p.altitude > world.SEA_LEVEL)
+                {
                     if (random.range(0, 100) == 0)
                         p.object_to_generate = world_object.load("palm_tree");
+                }
 
                 grid[i, j] = p;
             }
@@ -811,117 +832,6 @@ public class spikey_mountains : biome
     }
 }
 
-public class reclaimed_city : biome_modifier
-{
-    int CITY_BLOCK_SIZE = 16;
-
-    public override void modify(biome b)
-    {
-        bool[,] is_building = new bool[
-             biome.SIZE / CITY_BLOCK_SIZE,
-             biome.SIZE / CITY_BLOCK_SIZE];
-
-        for (int i = 0; i < biome.SIZE / CITY_BLOCK_SIZE; ++i)
-            for (int j = 0; j < biome.SIZE / CITY_BLOCK_SIZE; ++j)
-                is_building[i, j] = b.random.range(0, 3) == 0;
-
-        for (int i = 0; i < biome.SIZE; ++i)
-            for (int j = 0; j < biome.SIZE; ++j)
-            {
-                var p = b.grid[i, j];
-
-                // Check what kind of city block we're in
-                if (is_building[i / CITY_BLOCK_SIZE, j / CITY_BLOCK_SIZE])
-                {
-                    // Clear surroundings 
-                    p.object_to_generate = null;
-
-                    // If were at the centre of a block, generate a building
-                    if (i % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2 &&
-                        j % CITY_BLOCK_SIZE == CITY_BLOCK_SIZE / 2)
-                    {
-                        switch (b.random.range(0, 4))
-                        {
-                            case 0:
-                                p.object_to_generate = world_object.load("tower_block");
-                                break;
-
-                            case 1:
-                                p.object_to_generate = world_object.load("tower_block_collapsed");
-                                break;
-
-                            case 2:
-                                p.object_to_generate = world_object.load("department_store");
-                                break;
-
-                            case 3:
-                                p.object_to_generate = world_object.load("building_shell");
-                                break;
-                        }
-                    }
-                }
-            }
-    }
-}
-
-public class craters : biome_modifier
-{
-    const int BURNT_BIT_SIZE = 32;
-
-    void add_burnt_bit(biome b)
-    {
-        int x = b.random.range(BURNT_BIT_SIZE / 2, biome.SIZE - BURNT_BIT_SIZE / 2);
-        int z = b.random.range(BURNT_BIT_SIZE / 2, biome.SIZE - BURNT_BIT_SIZE / 2);
-
-        for (int dx = -BURNT_BIT_SIZE / 2; dx < BURNT_BIT_SIZE / 2; ++dx)
-            for (int dz = -BURNT_BIT_SIZE / 2; dz < BURNT_BIT_SIZE / 2; ++dz)
-            {
-                var p = b.grid[x + dx, z + dz];
-
-                // Remove objects
-                p.object_to_generate = null;
-
-                // Lower terrain
-                float im = procmath.maps.maximum_in_middle(dx, -BURNT_BIT_SIZE / 2, BURNT_BIT_SIZE / 2);
-                float jm = procmath.maps.maximum_in_middle(dz, -BURNT_BIT_SIZE / 2, BURNT_BIT_SIZE / 2);
-                float amt = im * jm;
-                p.altitude -= amt * 8f;
-
-                p.terrain_color = p.terrain_color * (1f - amt) + Color.black * amt;
-
-                if (Random.Range(0, 16) == 0)
-                    p.object_to_generate = world_object.load("zombie_spawn_point");
-            }
-
-        b.grid[x, z].object_to_generate = world_object.load("random_wreckage");
-    }
-
-    public override void modify(biome b)
-    {
-        for (int i = 0; i < 8; ++i)
-            add_burnt_bit(b);
-    }
-}
-
-[biome_mod_info(generation_enabled: false)]
-public class spawn_biome : biome_modifier
-{
-    const int SPAWN_REGION_SIZE = 32;
-
-    public override void modify(biome b)
-    {
-        const int MIN = biome.SIZE / 2 - SPAWN_REGION_SIZE / 2;
-        const int MAX = biome.SIZE / 2 + SPAWN_REGION_SIZE / 2;
-        for (int i = MIN; i < MAX; ++i)
-            for (int j = MIN; j < MAX; ++j)
-            {
-                // Remove objects in spawn region
-                var p = b.grid[i, j];
-                p.object_to_generate = null;
-            }
-    }
-}
-
 public class tangled_forest : biome
 {
     protected override void generate_grid()
@@ -941,20 +851,6 @@ public class tangled_forest : biome
                     p.object_to_generate = world_object.load("tree");
                 else if (random.range(0, 100) == 0)
                     p.object_to_generate = world_object.load("ground_ore");
-            }
-    }
-}
-
-[biome_info(generation_enabled: false)]
-public class empty : biome
-{
-    protected override void generate_grid()
-    {
-        for (int i = 0; i < SIZE; ++i)
-            for (int j = 0; j < SIZE; ++j)
-            {
-                var p = grid[i, j] = new point();
-                p.altitude = world.SEA_LEVEL + 1;
             }
     }
 }

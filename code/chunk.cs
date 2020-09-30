@@ -369,6 +369,7 @@ public class chunk : MonoBehaviour
     int alphamaps_i = 0;
     float[,,] alphamaps = new float[TERRAIN_RES, TERRAIN_RES, 1];
     Color[] pixels = new Color[TERRAIN_RES * TERRAIN_RES];
+
     bool continue_set_alphamaps()
     {
         if (alphamaps_i >= TERRAIN_RES)
@@ -385,17 +386,19 @@ public class chunk : MonoBehaviour
         if (alphamaps_i == TERRAIN_RES - 1)
         {
             // Create the terrain texture
-            SplatPrototype[] splats = new SplatPrototype[1];
             var tex = new Texture2D(TERRAIN_RES, TERRAIN_RES);
             tex.wrapMode = TextureWrapMode.Clamp;
 
-            // Create the terain layers
+            // Create the terrain layers
             var terrain_layers = new TerrainLayer[1];
             terrain_layers[0] = new TerrainLayer();
             terrain_layers[0].diffuseTexture = tex;
             terrain_layers[0].tileSize = new Vector2(1f, 1f) * SIZE;
             terrain.terrainData.terrainLayers = terrain_layers;
             terrain.materialTemplate = Resources.Load<Material>("materials/terrain");
+
+            // Set the terrain holes
+            // terrain.terrainData.SetHoles(0, 0, holes);
 
             // Apply the alphmaps
             tex.SetPixels(pixels);

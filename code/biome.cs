@@ -110,6 +110,15 @@ public abstract class biome : MonoBehaviour
                z_in_biome >= SIZE - BLEND_DISTANCE;
     }
 
+    /// <summary> Gives the nearest coordinates to the given world 
+    /// position, in my grid of biome points. </summary>
+    public void get_grid_coords(Vector3 world_position, out int i, out int j)
+    {
+        Vector3 delta = world_position - transform.position;
+        i = Mathf.Clamp(0, Mathf.FloorToInt(delta.x), SIZE);
+        j = Mathf.Clamp(0, Mathf.FloorToInt(delta.z), SIZE);
+    }
+
     //#########################//
     // CHUNK GRID MANIPULATION //
     //#########################//
@@ -576,10 +585,4 @@ public abstract class biome_modifier
     {
         return new T();
     }
-}
-
-/// <summary> A biome modifier that does nothing. </summary>
-public class no_modifier : biome_modifier
-{
-    public override void modify(biome b) { }
 }

@@ -8,6 +8,7 @@ public class world : networked
     // World-scale geograpical constants
     public const int SEA_LEVEL = 16;
     public const float MAX_ALTITUDE = 128f;
+    public const float UNDERGROUND_ROOF = -2000f; // The level below which "underground" systems generate
 
     public networked_variables.net_int networked_seed;
     public networked_variables.net_string networked_name;
