@@ -289,18 +289,8 @@ public class chunk : MonoBehaviour
 
         // Create the terrain scavenging mechanic
         terrain.gameObject.AddComponent<scavangable>();
-
-        var scavange_dirt = terrain.gameObject.AddComponent<product>();
-        scavange_dirt.item = Resources.Load<item>("items/dirt");
-        scavange_dirt.mode = product.MODE.RANDOM_AMOUNT;
-        scavange_dirt.min_count = 1;
-        scavange_dirt.max_count = 2;
-
-        var scavange_flint = terrain.gameObject.AddComponent<product>();
-        scavange_flint.item = Resources.Load<item>("items/flint");
-        scavange_flint.mode = product.MODE.RANDOM_AMOUNT;
-        scavange_flint.min_count = 1;
-        scavange_flint.max_count = 2;
+        foreach (var p in Resources.Load<GameObject>("misc/terrain_products").GetComponents<product>())
+            p.copy_to(terrain.gameObject.AddComponent<product>());
 
         // Start the gradual chunk generator
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();

@@ -13,3 +13,8 @@ Tasks
 - Make characters fall if they are following a chase path
 - Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
+- Awarenes meter for enemies?
+- Render range going back to 64 in cinematic playback
+- Add turn-off-enemies option
+- Stop adding keyframe every time cinematic playback is started
+- Leg animations go out of player fulcrum when using cinematic playback

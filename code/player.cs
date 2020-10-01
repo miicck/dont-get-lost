@@ -758,6 +758,15 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
         Vector3 move = fly_velocity * Time.deltaTime;
         controller.Move(move);
+
+        if (controls.key_press(controls.BIND.ADD_CINEMATIC_KEYFRAME) || controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+            cinematic_recording.add_keyframe(camera.transform.position, camera.transform.rotation);
+
+        if (controls.key_press(controls.BIND.REMOVE_LAST_CINEMATIC_KEYFRAME))
+            cinematic_recording.remove_last_keyframe();
+
+        if (controls.key_press(controls.BIND.TOGGLE_CINEMATIC_PLAYBACK))
+            cinematic_recording.toggle_playback();
     }
 
     public void teleport(Vector3 location)
@@ -1273,7 +1282,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     int passive_effect_counter = 0;
     void passive_effect_update()
     {
-        if (is_dead) return;
+        if (is_dead || fly_mode) return;
 
         ++passive_effect_counter;
         if (hunger.value > 50) heal(1);
@@ -1435,11 +1444,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
             }
         }
 
-        // Add the water
+        // Create the water
         water = new GameObject("water").AddComponent<water_reflections>();
-        water.transform.SetParent(transform);
-        water.transform.position = transform.position;
-        water.transform.rotation = transform.rotation;
 
         // Ensure sky color is set properly
         sky_color = sky_color;
@@ -1612,6 +1618,13 @@ public class player : networked_player, INotPathBlocking, IInspectable
             }
             else inventory = inv;
         }
+    }
+
+    public void lerp_towards(Vector3 position, float xrot, float yrot, float amt)
+    {
+        networked_position = Vector3.Lerp(networked_position, position, amt);
+        x_rotation.value = Mathf.Lerp(x_rotation.value, xrot, amt);
+        y_rotation.value = Mathf.Lerp(y_rotation.value, yrot, amt);
     }
 
     //################//

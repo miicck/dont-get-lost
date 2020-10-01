@@ -37,6 +37,8 @@ public class water_reflections : MonoBehaviour
 
     void Update()
     {
+        if (player.current == null) return;
+
         // Get rid of deleted water
         water_undersides.RemoveWhere((u) => u == null);
         waters.RemoveWhere((w) => w == null);
@@ -58,10 +60,11 @@ public class water_reflections : MonoBehaviour
         // Set clear color to sky color (doesn't seem to work?)
         probe.settingsRaw.cameraSettings.bufferClearing.backgroundColorHDR = lighting.sky_color;
 
-        // Ensure probe stays at water level
-        Vector3 pos = transform.position;
+        // Ensure probe stays at water level wherever the player is
+        Vector3 pos = player.current.transform.position;
         pos.y = world.SEA_LEVEL;
         transform.position = pos;
+        transform.rotation = player.current.transform.rotation;
 
         // Ensure probe enabled state is correct
         if (probe.enabled != should_reflect)

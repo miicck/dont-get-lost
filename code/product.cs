@@ -130,6 +130,19 @@ public class product : MonoBehaviour
         }
     }
 
+    public void copy_to(product other)
+    {
+        other.mode = mode;
+        other.item = item;
+        other.min_count = min_count;
+        other.max_count = max_count;
+        other.one_in_chance = one_in_chance;
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
     /// <summary> Convert a list of products to a string describing that list. </summary>
     public static string product_quantities_list(IList<product> products)
     {
