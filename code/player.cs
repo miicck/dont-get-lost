@@ -1162,7 +1162,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 saved_camera_rotation = camera.transform.localRotation;
 
                 // Eyes start in horizontal plane in map view
-                x_rotation.value = 90;
+                x_rotation.value = 0;
 
                 // Setup the camera in map mode/position   
                 camera.orthographicSize = game.render_range;
