@@ -19,8 +19,8 @@ public class random_ore : world_object.sub_generator
         if (chunk.random.range(0, 1f) > probability)
             return;
 
-        var options = Resources.LoadAll<GameObject>(directory());
-        var chosen = options[chunk.random.Next() % options.Length].inst();
+        var options = Resources.LoadAll<object_with_probability>(directory());
+        var chosen = procmath.choose_from_weights(options, (o) => o.probability, chunk.random).inst();
         chosen.transform.SetParent(transform);
         chosen.transform.localPosition = Vector3.zero;
         chosen.transform.localRotation = Quaternion.identity;

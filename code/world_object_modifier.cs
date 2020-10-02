@@ -7,11 +7,24 @@ public abstract class world_object_modifier : networked
 {
     // The coordinates of the world object that this refers to
     // and the timeout for how long the modifier lasts for
-    public networked_variables.net_int x_in_chunk;
-    public networked_variables.net_int z_in_chunk;
-    public networked_variables.net_int chunk_x;
-    public networked_variables.net_int chunk_z;
-    public networked_variables.net_float timeout;
+    networked_variables.net_int x_in_chunk;
+    networked_variables.net_int z_in_chunk;
+    networked_variables.net_int chunk_x;
+    networked_variables.net_int chunk_z;
+    networked_variables.net_float timeout;
+
+    public void target_to_world_object(world_object wo)
+    {
+        x_in_chunk.value = wo.x_in_chunk;
+        z_in_chunk.value = wo.z_in_chunk;
+        chunk_x.value = wo.chunk.x;
+        chunk_z.value = wo.chunk.z;
+    }
+
+    public void set_timeout(float timeout)
+    {
+        this.timeout.value = timeout;
+    }
 
     public override void on_init_network_variables()
     {

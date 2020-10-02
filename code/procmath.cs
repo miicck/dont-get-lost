@@ -139,6 +139,27 @@ public static class procmath
         }
     }
 
+    /// <summary> Choose a random element from the given list, 
+    /// weighted by the given weighting function. </summary>
+    public static T choose_from_weights<T>(IEnumerable<T> choices, weighting_function<T> weight, System.Random random)
+    {
+        float total = 0;
+        foreach (var c in choices) total += weight(c);
+
+        float p = random.range(0, total);
+        total = 0;
+
+        foreach (var c in choices)
+        {
+            total += weight(c);
+            if (total > p)
+                return c;
+        }
+
+        return default;
+    }
+    public delegate float weighting_function<T>(T t);
+
     // Pick a choice from the given array, with a Gaussian probability with the given width
     // centred at a fractional position p along the array.
     public static T sliding_scale<T>(float p, T[] choices, System.Random random, float width = 0.25f)

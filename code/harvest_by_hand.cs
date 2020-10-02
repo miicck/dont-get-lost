@@ -71,11 +71,8 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
         var woh = (world_object_harvested)client.create(
             wo.transform.position, "misc/world_object_harvested");
 
-        woh.x_in_chunk.value = wo.x_in_chunk;
-        woh.z_in_chunk.value = wo.z_in_chunk;
-        woh.chunk_x.value = wo.chunk.x;
-        woh.chunk_z.value = wo.chunk.z;
-        woh.timeout.value = regrow_time;
+        woh.target_to_world_object(wo);
+        woh.set_timeout(regrow_time);
 
         // Create the product in the player inventory
         foreach (var p in products)
