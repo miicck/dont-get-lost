@@ -664,10 +664,17 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 // Fall damage
                 if (velocity.y < -FALL_DAMAGE_START_SPEED)
                 {
-                    float fd = -velocity.y;
-                    fd -= FALL_DAMAGE_START_SPEED;
-                    fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
-                    take_damage((int)(fd * 100));
+                    if (disable_next_fall_damage)
+                    {
+                        disable_next_fall_damage = false;
+                    }
+                    else
+                    {
+                        float fd = -velocity.y;
+                        fd -= FALL_DAMAGE_START_SPEED;
+                        fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
+                        take_damage((int)(fd * 100));
+                    }
                 }
 
                 // Ensure we don't accumulate too much -ve y velocity
@@ -808,6 +815,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
+    bool disable_next_fall_damage = false;
     public bool fly_mode
     {
         get => _fly_mode;
@@ -823,6 +831,11 @@ public class player : networked_player, INotPathBlocking, IInspectable
             foodbar.gameObject.SetActive(!_fly_mode);
             toolbar_display_slot.toolbar_active = !_fly_mode;
             compass.active = !_fly_mode;
+            if (!_fly_mode)
+            {
+                cinematic_recording.stop_playback();
+                disable_next_fall_damage = true;
+            }
 
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))

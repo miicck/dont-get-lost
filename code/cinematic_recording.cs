@@ -44,16 +44,25 @@ public static class cinematic_recording
     /// <summary> Toggle playback (restarts from beginning). </summary>
     public static void toggle_playback()
     {
-        if (current_playback == null)
-        {
-            current_playback = new GameObject("playback").AddComponent<cinematic_playback>();
-            current_playback.set_frames(keyframes);
-        }
-        else
-        {
-            Object.Destroy(current_playback.gameObject);
-            current_playback = null;
-        }
+        if (current_playback == null) start_playback();
+        else stop_playback();
+    }
+
+    /// <summary> Stop cinematic playback (if it's going). </summary>
+    public static void stop_playback()
+    {
+        if (current_playback == null) return;
+        Object.Destroy(current_playback);
+        current_playback = null;
+    }
+
+    /// <summary> Start cinematic playback (restart if it's going). </summary>
+    public static void start_playback()
+    {
+        if (current_playback != null)
+            Object.Destroy(current_playback);
+        current_playback = new GameObject("playback").AddComponent<cinematic_playback>();
+        current_playback.set_frames(keyframes);
     }
 
     /// <summary> Class for replaying the cinematic. This takes control of the
