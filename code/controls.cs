@@ -50,6 +50,8 @@ public static class controls
         QUICK_ITEM_TRANSFER,
         TOGGLE_CONSOLE,
         REPEAT_LAST_CONSOLE_COMMAND,
+        CONSOLE_MOVE_HISTORY_BACK,
+        CONSOLE_MOVE_HISTORY_FORWARD,
         TOGGLE_OPTIONS,
         TOGGLE_DEBUG_INFO,
         INCREASE_RENDER_RANGE,
@@ -112,6 +114,8 @@ public static class controls
             [BIND.QUICK_ITEM_TRANSFER] = KeyCode.LeftShift,
             [BIND.TOGGLE_CONSOLE] = KeyCode.Slash,
             [BIND.REPEAT_LAST_CONSOLE_COMMAND] = KeyCode.F1,
+            [BIND.CONSOLE_MOVE_HISTORY_BACK] = KeyCode.UpArrow,
+            [BIND.CONSOLE_MOVE_HISTORY_FORWARD] = KeyCode.DownArrow,
             [BIND.TOGGLE_OPTIONS] = KeyCode.Escape,
             [BIND.TOGGLE_DEBUG_INFO] = KeyCode.F3,
             [BIND.INCREASE_RENDER_RANGE] = KeyCode.Equals,
@@ -138,7 +142,24 @@ public static class controls
 
     public static bool disabled = false;
 
-    static bool controls_enabled()
+    static bool is_player_control(BIND b)
+    {
+        switch(b)
+        {
+            // Console commands aren't player commands
+            case BIND.CONSOLE_MOVE_HISTORY_BACK:
+            case BIND.CONSOLE_MOVE_HISTORY_FORWARD:
+            case BIND.TOGGLE_CONSOLE:
+            case BIND.REPEAT_LAST_CONSOLE_COMMAND:
+                return false;
+
+            // Everything else is a player command
+            default:
+                return true;
+        }
+    }
+
+    static bool player_controls_enabled()
     {
         if (disabled) return false;
         if (ui_focus_disables_controls.controls_disabled) return false;
@@ -149,17 +170,18 @@ public static class controls
 
     static bool bind_enabled(BIND b)
     {
-        return controls_enabled();
+        if (!is_player_control(b)) return true;
+        return player_controls_enabled();
     }
 
     static bool mouse_enabled(MOUSE_BUTTON b)
     {
-        return controls_enabled();
+        return player_controls_enabled();
     }
 
     static bool axis_enabled(string name)
     {
-        return controls_enabled();
+        return player_controls_enabled();
     }
 
     static Dictionary<BIND, KeyCode> keybinds = default_keybinds();

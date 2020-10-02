@@ -6,6 +6,8 @@ public class console : MonoBehaviour
 {
     /// <summary> The console in this game session. </summary>
     static console current;
+    static List<string> command_history;
+    static int command_history_position = 0;
 
     /// <summary> True if the console window is open/selected. </summary>
     public static bool open
@@ -27,7 +29,8 @@ public class console : MonoBehaviour
     public static void repeat_last_command()
     {
         if (current == null) return;
-        current.process_command(current.last_command);
+        if (command_history.Count == 0) return;
+        current.process_command(command_history[command_history.Count - 1], record: false);
     }
 
     /// <summary> The input field where console commands are typed. </summary>
@@ -39,6 +42,7 @@ public class console : MonoBehaviour
         input = GetComponent<UnityEngine.UI.InputField>();
         current = this;
         open = false;
+        command_history = new List<string>();
 
         // Called when the player hits enter after typing a command
         input.onEndEdit.AddListener((string command) =>
@@ -49,6 +53,33 @@ public class console : MonoBehaviour
         });
     }
 
+    bool in_history_range(int i)
+    {
+        if (i < 0) return false;
+        if (i >= command_history.Count) return false;
+        return true;
+    }
+
+    private void Update()
+    {
+        bool fill_from_history = false;
+        if (controls.key_press(controls.BIND.CONSOLE_MOVE_HISTORY_BACK))
+        {
+            if (in_history_range(command_history_position - 1))
+                command_history_position -= 1;
+            fill_from_history = true;
+        }
+        else if (controls.key_press(controls.BIND.CONSOLE_MOVE_HISTORY_FORWARD))
+        {
+            if (in_history_range(command_history_position + 1))
+                command_history_position += 1;
+            fill_from_history = true;
+        }
+
+        if (fill_from_history && in_history_range(command_history_position))
+            input.text = command_history[command_history_position];
+    }
+
     /// <summary> Throw the given console error message 
     /// to the player. Returns false. </summary>
     bool console_error(string msg)
@@ -57,12 +88,11 @@ public class console : MonoBehaviour
         return false;
     }
 
-    string last_command = "";
-
     /// <summary> Process the given console command. </summary>
-    bool process_command(string command)
+    bool process_command(string command, bool record = true)
     {
-        last_command = command;
+        if (record) command_history.Add(command);
+        command_history_position = command_history.Count;
         var args = command.Split(null);
 
         switch (args[0])
@@ -236,6 +266,7 @@ public class console : MonoBehaviour
             // Enable, or disable characters
             case "characters":
                 character.characters_enabled = !character.characters_enabled;
+                popup_message.create("Characters " + (character.characters_enabled ? "enabled" : "disabled"));
                 return true;
 
             default:
