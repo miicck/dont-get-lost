@@ -296,11 +296,33 @@ public class character : networked, INotPathBlocking, IInspectable
         }
     }
 
+    public bool check_agro(player p)
+    {
+        if (p.fly_mode) return false; // Don't agro in fly mode
+        return (p.transform.position - transform.position).magnitude < agro_range;
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//
 
     static HashSet<character> characters;
+
+    public static bool characters_enabled
+    {
+        get => _characters_enabled;
+        set
+        {
+            if (_characters_enabled == value)
+                return; // No change
+
+            _characters_enabled = value;
+            if (!_characters_enabled)
+                foreach (var c in FindObjectsOfType<character>())
+                    c.delete();
+        }
+    }
+    static bool _characters_enabled = true;
 
     public static int target_character_count
     {
@@ -317,6 +339,7 @@ public class character : networked, INotPathBlocking, IInspectable
 
     public static void run_spawning()
     {
+        if (!characters_enabled) return;
         if (characters.Count < target_character_count)
             character_spawn_point.spawn();
     }
@@ -708,14 +731,9 @@ public class character_control_v2 : ICharacterController, IPathingAgent
         }
 
         // If we're not already agro to a player/a player is in agro range
-        if (agro_path == null &&
-            (player.current.transform.position - c.transform.position).magnitude <
-            c.agro_range)
-        {
-
+        if (agro_path == null && c.check_agro(player.current))
             switch (character.friendliness)
             {
-
                 case character.FRIENDLINESS.AGRESSIVE:
 
                     // Find the nearest point along the idle path to the player
@@ -756,9 +774,7 @@ public class character_control_v2 : ICharacterController, IPathingAgent
                     agro_path = new flee_path(character.transform.position, player.current.transform, this);
 
                     break;
-
             }
-        }
 
         if (agro_path != null)
         {

@@ -559,7 +559,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     CharacterController controller;
     Vector3 velocity = Vector3.zero;
-    Vector3 fly_velocity = Vector3.zero;
 
     void run_movement()
     {
@@ -736,27 +735,30 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
+    const float FLY_SPEED_RESET = 10f;
+    const float FLY_ACCELERATION = 10f;
+    float fly_speed = FLY_SPEED_RESET;
+
     void fly_move()
     {
-        const float FLY_ACCEL = 10f;
-
         crouched.value = false;
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
+        Vector3 move = Vector3.zero;
 
-        if (controls.key_down(controls.BIND.WALK_FORWARD)) fly_velocity += fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.BIND.WALK_BACKWARD)) fly_velocity -= fw * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.BIND.STRAFE_RIGHT)) fly_velocity += ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.BIND.STRAFE_LEFT)) fly_velocity -= ri * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.BIND.FLY_UP)) fly_velocity += Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
-        if (controls.key_down(controls.BIND.FLY_DOWN)) fly_velocity -= Vector3.up * 2 * FLY_ACCEL * Time.deltaTime;
+        if (controls.key_down(controls.BIND.WALK_FORWARD)) move += fw * fly_speed * Time.deltaTime;
+        if (controls.key_down(controls.BIND.WALK_BACKWARD)) move -= fw * fly_speed * Time.deltaTime;
+        if (controls.key_down(controls.BIND.STRAFE_RIGHT)) move += ri * fly_speed * Time.deltaTime;
+        if (controls.key_down(controls.BIND.STRAFE_LEFT)) move -= ri * fly_speed * Time.deltaTime;
+        if (controls.key_down(controls.BIND.FLY_UP)) move += Vector3.up * fly_speed * Time.deltaTime;
+        if (controls.key_down(controls.BIND.FLY_DOWN)) move -= Vector3.up * fly_speed * Time.deltaTime;
 
-        if (fly_velocity.magnitude > FLY_ACCEL * Time.deltaTime)
-            fly_velocity -= fly_velocity.normalized * FLY_ACCEL * Time.deltaTime;
+        if (move.magnitude > 10e-4f)
+            fly_speed += Time.deltaTime * FLY_ACCELERATION;
         else
-            fly_velocity = Vector3.zero;
+            fly_speed = FLY_SPEED_RESET;
 
-        Vector3 move = fly_velocity * Time.deltaTime;
+
         controller.Move(move);
 
         if (controls.key_press(controls.BIND.ADD_CINEMATIC_KEYFRAME) || controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
@@ -813,8 +815,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
         {
             _fly_mode = value;
 
-            fly_velocity = Vector3.zero;
-            mouse_look_velocity = Vector2.zero;
             ui_state = UI_STATE.ALL_CLOSED;
             cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
@@ -916,8 +916,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 client.create(hit.point, "misc/map_ping");
         }
 
-        if (fly_mode) mouse_look_fly();
-        else mouse_look_normal();
+        mouse_look();
     }
 
     void run_map()
@@ -987,7 +986,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     }
     UnityEngine.UI.Image crosshairs;
 
-    void mouse_look_normal()
+    void mouse_look()
     {
         // Rotate the player view
         y_rotation.value += controls.get_axis("Mouse X") * controls.mouse_look_sensitivity;
@@ -1003,21 +1002,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
-    Vector2 mouse_look_velocity = Vector2.zero;
-    void mouse_look_fly()
+    public void set_look_rotation(Quaternion rotation)
     {
-        // Smooth mouse look for fly mode
-        mouse_look_velocity.x += controls.get_axis("Mouse X");
-        mouse_look_velocity.y += controls.get_axis("Mouse Y");
-
-        float deccel = Time.deltaTime * mouse_look_velocity.magnitude;
-        if (mouse_look_velocity.magnitude < deccel)
-            mouse_look_velocity = Vector2.zero;
-        else
-            mouse_look_velocity -= mouse_look_velocity.normalized * deccel;
-
-        y_rotation.value += mouse_look_velocity.x * Time.deltaTime;
-        eye_transform.Rotate(-mouse_look_velocity.y * Time.deltaTime * 5f, 0, 0);
+        x_rotation.value = rotation.eulerAngles.x;
+        y_rotation.value = rotation.eulerAngles.y;
     }
 
     /// <summary> The player camera. </summary>
@@ -1565,11 +1553,11 @@ public class player : networked_player, INotPathBlocking, IInspectable
         };
 
         // x_rotation is the rotation of the eyes around their x axis and is clamped.
-        x_rotation = new networked_variables.net_float(resolution: 5f, min_value: 0f, max_value: 160f);
+        x_rotation = new networked_variables.net_float(resolution: 5f, min_value: -90f, max_value: 90f);
         x_rotation.on_change = () =>
         {
             if (has_authority)
-                eye_transform.localRotation = Quaternion.Euler(x_rotation.value, 0, 0);
+                eye_transform.rotation = Quaternion.Euler(x_rotation.value, y_rotation.value, 0);
         };
 
         // Network the players crouch state

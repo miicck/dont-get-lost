@@ -46,8 +46,8 @@ public static class cinematic_recording
     {
         if (current_playback == null)
         {
-            keyframes.Add(keyframes[0]); // Loop the path
             current_playback = new GameObject("playback").AddComponent<cinematic_playback>();
+            current_playback.set_frames(keyframes);
         }
         else
         {
@@ -56,12 +56,18 @@ public static class cinematic_recording
         }
     }
 
-    /// <summary> Class for replaying the cinematic. This creates a copy of the player
-    /// camera and moves it along an interpolated version of the keyframe path. </summary>
+    /// <summary> Class for replaying the cinematic. This takes control of the
+    /// player position+rotation so that the camera follows the keyframe path. </summary>
     class cinematic_playback : MonoBehaviour
     {
         float progress = 0;
         float total_length = 0;
+        List<keyframe> keyframes;
+
+        public void set_frames(List<keyframe> keyframes)
+        {
+            this.keyframes = new List<keyframe>(keyframes);
+        }
 
         private void Start()
         {
@@ -72,11 +78,8 @@ public static class cinematic_recording
                 return;
             }
 
-            var cam = player.current.camera.inst();
-            cam.transform.SetParent(transform);
-            cam.transform.localPosition = Vector3.zero;
-            cam.transform.localRotation = Quaternion.identity;
-            player.current.camera.enabled = false;
+            // Make the keyframes loop
+            keyframes.Add(keyframes[0]);
 
             // Go to the start
             transform.position = keyframes[0].position;
@@ -142,10 +145,11 @@ public static class cinematic_recording
             transform.position = Vector3.Lerp(transform.position, inter.position, Time.deltaTime);
             transform.rotation = Quaternion.Lerp(transform.rotation, inter.rotation, Time.deltaTime);
 
-            // The player follows along (for render range reasons)
+            // The player follows along such that the camera is at our location
             Vector3 cam_delta = player.current.camera.transform.position -
                                 player.current.transform.position;
-            player.current.teleport(transform.position - cam_delta);
+            player.current.networked_position = transform.position - cam_delta;
+            player.current.set_look_rotation(transform.rotation);
         }
 
         private void OnDrawGizmos()

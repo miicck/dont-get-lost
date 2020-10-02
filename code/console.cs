@@ -146,16 +146,16 @@ public class console : MonoBehaviour
 
                 if (args.Length < 2) return console_error("Not enough arguments!");
 
-                string character = "characters/" + args[1];
+                string character_to_spawn = "characters/" + args[1];
                 count = 1;
                 if (args.Length > 2)
                 {
-                    character = "characters/" + args[2];
+                    character_to_spawn = "characters/" + args[2];
                     if (!int.TryParse(args[1], out count))
                         return console_error("Could not parse count from " + args[1]);
                 }
 
-                if (Resources.Load<character>(character) == null)
+                if (Resources.Load<character>(character_to_spawn) == null)
                     return console_error("Unkown character: " + args[1]);
 
                 if (player.current == null) return true;
@@ -163,14 +163,8 @@ public class console : MonoBehaviour
                 var ray = player.current.camera_ray();
                 if (Physics.Raycast(ray, out RaycastHit hit))
                     for (int i = 0; i < count; ++i)
-                        client.create(hit.point, character);
+                        client.create(hit.point, character_to_spawn);
 
-                return true;
-
-            // Kill all characters
-            case "kill_all":
-                foreach (var c in FindObjectsOfType<character>())
-                    c.delete();
                 return true;
 
             // Enter fly (cinematic) mode
@@ -237,6 +231,11 @@ public class console : MonoBehaviour
                     return console_error("Could not parse an integer from the arguement " + args[1]);
 
                 player.current.modify_hunger(hunger);
+                return true;
+
+            // Enable, or disable characters
+            case "characters":
+                character.characters_enabled = !character.characters_enabled;
                 return true;
 
             default:
