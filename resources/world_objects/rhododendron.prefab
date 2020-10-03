@@ -535,8 +535,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 1
   item: {fileID: 8064825131368538078, guid: 6bc1bbdb51ee08b43a1d0a3948376c27, type: 3}
-  min_count: 8
-  max_count: 16
+  min_count: 2
+  max_count: 5
   one_in_chance: 1
 --- !u!114 &8220738393042248847
 MonoBehaviour:

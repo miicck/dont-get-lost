@@ -43,4 +43,20 @@ public class options_menu_bool : options_menu_option
         // Load the option from saved value
         options_menu.set_bool(option_name, PlayerPrefs.GetInt(option_name) > 0);
     }
+
+    public override bool increase_graphics()
+    {
+        if (toggle.isOn == default_value)
+            return false;
+        toggle.isOn = default_value;
+        return true;
+    }
+
+    public override bool reduce_graphics()
+    {
+        if (toggle.isOn == optimized_value)
+            return false;
+        toggle.isOn = optimized_value;
+        return true;
+    }
 }

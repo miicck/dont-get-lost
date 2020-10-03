@@ -5,6 +5,10 @@ using UnityEngine;
 /// <summary> An option that can be changed from the options menu. </summary>
 public abstract class options_menu_option : MonoBehaviour
 {
+    public int increase_graphics_priority = 0;
+    public virtual bool reduce_graphics() { return false; }
+    public virtual bool increase_graphics() { return false; }
+
     public abstract void load_default();
     public abstract void load_optimized();
     public abstract void initialize_option();
@@ -41,6 +45,24 @@ public class options_menu : MonoBehaviour
     {
         foreach (var o in GetComponentsInChildren<options_menu_option>(true))
             o.load_optimized();
+    }
+
+    public void increase_graphics()
+    {
+        var options = new List<options_menu_option>(GetComponentsInChildren<options_menu_option>());
+        options.Sort((a, b) => a.increase_graphics_priority.CompareTo(b.increase_graphics_priority));
+        foreach (var o in options)
+            if (o.increase_graphics())
+                return;
+    }
+
+    public void reduce_graphics()
+    {
+        var options = new List<options_menu_option>(GetComponentsInChildren<options_menu_option>());
+        options.Sort((a, b) => b.increase_graphics_priority.CompareTo(a.increase_graphics_priority));
+        foreach (var o in options)
+            if (o.reduce_graphics())
+                return;
     }
 
     //##############//
@@ -165,7 +187,7 @@ public class options_menu : MonoBehaviour
 
                 // Attempt to match the apparent thickness of 
                 // volumetric and non-volumetric fog
-                fog.maximumHeight.value = value ? 80 : 50; 
+                fog.maximumHeight.value = value ? 80 : 50;
                 break;
 
             case "moving_sun":
@@ -189,7 +211,7 @@ public class options_menu : MonoBehaviour
             case "shadows":
                 var light_data = FindObjectOfType<lighting>().sun.GetComponent<
                     UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>();
-                light_data.EnableShadows(value);                
+                light_data.EnableShadows(value);
                 break;
 
             default:
