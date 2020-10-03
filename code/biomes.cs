@@ -763,8 +763,8 @@ public class rocky_plains : biome
                         else
                             p.object_to_generate = world_object.load("bush");
                     }
-                    else if (bush_amt > (0.7f + random.range(0, 0.3f)) && random.range(0, 4) == 0)
-                        p.object_to_generate = world_object.load("foxglove");
+                    else if (bush_amt > (0.7f + random.range(0, 0.3f)) && random.range(0, 2) == 0)
+                        p.object_to_generate = world_object.load(random, "foxglove", "flax");
                 }
                 else
                 {
