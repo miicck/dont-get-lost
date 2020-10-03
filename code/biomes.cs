@@ -854,3 +854,31 @@ public class tangled_forest : biome
             }
     }
 }
+
+public class bamboo_marsh : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.fog_distance = fog_distances.VERY_CLOSE;
+                p.altitude = world.SEA_LEVEL + 10f * Mathf.PerlinNoise(i / 32f, j / 32f) - 6f;
+
+                if (p.altitude > world.SEA_LEVEL - 1f)
+                {
+                    float bamboo_density = Mathf.PerlinNoise(i / 24f, j / 24f);
+                    if (bamboo_density > 0.5f)
+                    {
+                        if (random.range(0, 5) == 0)
+                            p.object_to_generate = world_object.load("bamboo");
+                        else if (random.range(0, 50) == 0)
+                            p.object_to_generate = world_object.load("mangroves");
+                    }
+                    else if (random.range(0, 40) == 0)
+                        p.object_to_generate = world_object.load("aloe_vera");
+                }
+            }
+    }
+}

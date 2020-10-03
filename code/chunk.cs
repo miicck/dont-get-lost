@@ -259,6 +259,7 @@ public class chunk : MonoBehaviour
         water.transform.forward = -Vector3.up;
         var ren = water.gameObject.GetComponent<MeshRenderer>();
         ren.material = Resources.Load<Material>("materials/standard_shader/water");
+        ren.rendererPriority = -1; // Render behind other transparents
         ren.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         water_reflections.register_water(ren);
 
