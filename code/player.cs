@@ -1017,8 +1017,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     public void set_look_rotation(Quaternion rotation)
     {
-        x_rotation.value = rotation.eulerAngles.x;
-        y_rotation.value = rotation.eulerAngles.y;
+        x_rotation.value = utils.minimal_modulus_angle(rotation.eulerAngles.x);
+        y_rotation.value = utils.minimal_modulus_angle(rotation.eulerAngles.y);
     }
 
     /// <summary> The player camera. </summary>

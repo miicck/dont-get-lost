@@ -14,3 +14,4 @@ Tasks
 - Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
+- More foliage (small plants/flowers)

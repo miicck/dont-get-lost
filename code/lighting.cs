@@ -4,13 +4,13 @@ using UnityEngine;
 
 public static class fog_distances
 {
-    public const float EXTEREMELY_CLOSE = 1f;
-    public const float VERY_CLOSE = 3f;
-    public const float CLOSE = 8f;
-    public const float MEDIUM = 20f;
-    public const float FAR = 50f;
-    public const float VERY_FAR = 100f;
-    public const float OFF = 500f;
+    public const float EXTEREMELY_CLOSE = 6f;
+    public const float VERY_CLOSE = 12f;
+    public const float CLOSE = 32f;
+    public const float MEDIUM = 80f;
+    public const float FAR = 200f;
+    public const float VERY_FAR = 400f;
+    public const float OFF = 2000f;
 }
 
 public class lighting : MonoBehaviour
@@ -122,6 +122,7 @@ public class lighting : MonoBehaviour
                     fog.enabled.value = !player.current.map_open;
 
                 // Keep fog color/distance up to date
+                fog.baseHeight.value = world.SEA_LEVEL;
                 fog.color.value = sky_color;
                 fog.albedo.value = sky_color;
                 fog.meanFreePath.value = Mathf.Lerp(

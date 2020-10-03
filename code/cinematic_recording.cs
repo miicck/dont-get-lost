@@ -17,6 +17,17 @@ public static class cinematic_recording
     /// <summary> Add the next keyframe at the given position/rotation. </summary>
     public static void add_keyframe(Vector3 position, Quaternion rotation)
     {
+        if (keyframes.Count > 0)
+        {
+            Vector3 delta = position - keyframes[keyframes.Count - 1].position;
+            Debug.Log(delta.magnitude);
+            if (delta.magnitude < 0.5f)
+            {
+                popup_message.create("Keyframes too close!");
+                return;
+            }
+        }
+
         keyframes.Add(new keyframe
         {
             position = position,
@@ -61,6 +72,13 @@ public static class cinematic_recording
     {
         if (current_playback != null)
             Object.Destroy(current_playback);
+
+        if (keyframes.Count < 2)
+        {
+            popup_message.create("Too few keyframes to start playback!");
+            return;
+        }
+
         current_playback = new GameObject("playback").AddComponent<cinematic_playback>();
         current_playback.set_frames(keyframes);
     }
@@ -80,13 +98,6 @@ public static class cinematic_recording
 
         private void Start()
         {
-            if (keyframes.Count == 0)
-            {
-                popup_message.create("No saved keyframes!");
-                Destroy(gameObject);
-                return;
-            }
-
             // Make the keyframes loop
             keyframes.Add(keyframes[0]);
 

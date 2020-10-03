@@ -481,7 +481,15 @@ public static class utils
             if (-z < 10e-3) return 360;
             return 270 - Mathf.Atan(x / z) * DTR;
         }
+    }
 
+    /// <summary> Convert the given angle in degrees to the version with
+    /// minimal modulus (employing negative values if neccassary). </summary>
+    public static float minimal_modulus_angle(float angle)
+    {
+        angle -= Mathf.Floor(angle / 360f) * 360f;
+        if (angle > 180) return -(360f - angle);
+        return angle;
     }
 
 #if UNITY_EDITOR // Unity edtor utilities
