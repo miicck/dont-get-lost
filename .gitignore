@@ -2,3 +2,11 @@
 .vs
 *.swp
 Assets/resources/version_info*
+Assembly-CSharp.csproj
+Library/
+Logs/
+Packages/
+UserSettings/
+build/
+dont-get-lost-2020.1.2f1.sln
+obj/
