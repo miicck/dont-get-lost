@@ -51,7 +51,8 @@ public class world : networked
                "    Generated chunks  : " + chunk.chunks_generated + "\n" +
                "    Generating chunks : " + chunk.chunks_generating + " (" +
                     chunk.enabled_and_generating + " enabled, limit render range at " +
-                    chunk.generating_limit + ")";
+                    chunk.generating_limit + ")\n" +
+               "    Save location     : " + server.save_file();
     }
 
 #if UNITY_EDITOR

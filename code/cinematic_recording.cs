@@ -116,34 +116,14 @@ public static class cinematic_recording
 
         keyframe interpolated_keyframe(float progress)
         {
-            float cum_length = 0;
-            float prog_length = total_length * progress;
+            int frame = Mathf.FloorToInt(progress);
+            float f = progress - frame;
 
-            for (int i = 1; i < keyframes.Count; ++i)
+            return new keyframe
             {
-                // Increament cumulative length with the segment length
-                float seg_length = (keyframes[i].position - keyframes[i - 1].position).magnitude;
-                cum_length += seg_length;
-
-                // See if the interpolated keyframe is on this segement
-                if (cum_length >= prog_length)
-                {
-                    // Work out how far along the segment the interpolated frame is
-                    float seg_start = cum_length - seg_length;
-                    float f = (prog_length - seg_start) / seg_length;
-
-                    // Return the interpolated result
-                    return new keyframe
-                    {
-                        position = Vector3.Lerp(keyframes[i - 1].position, keyframes[i].position, f),
-                        rotation = Quaternion.Lerp(keyframes[i - 1].rotation, keyframes[i].rotation, f)
-                    };
-                }
-            }
-
-            // cum_length was never > prog_length => we're beyond 
-            // the end (or there is only one keyframe)
-            return keyframes[keyframes.Count - 1];
+                position = Vector3.Lerp(keyframes[frame].position, keyframes[frame + 1].position, f),
+                rotation = Quaternion.Lerp(keyframes[frame].rotation, keyframes[frame + 1].rotation, f)
+            };
         }
 
         private void Update()
@@ -155,9 +135,12 @@ public static class cinematic_recording
                 return;
             }
 
-            // Increment the progress along the path
-            progress += 5f * Time.deltaTime / total_length;
-            while (progress > 1f) progress -= 1f; // Loop
+            // Increment the progress along the path (it takes 1 second
+            // to increment by 1 keyframe, allowing the user to control
+            // the playback speed).
+            progress += Time.deltaTime;
+            while (progress > keyframes.Count - 1)
+                progress -= keyframes.Count - 1; // Loop
 
             // Work out the corresponding interpolated keyframe
             var inter = interpolated_keyframe(progress);

@@ -1238,7 +1238,7 @@ public static class server
     }
 
     /// <summary> The directory in which games are saved. </summary>
-    static string saves_dir()
+    public static string saves_dir()
     {
         // Ensure the saves/ directory exists
         string saves_dir = Application.persistentDataPath + "/saves";
@@ -1248,7 +1248,7 @@ public static class server
     }
 
     /// <summary> The directory that this session is saved in. </summary>
-    static string save_file()
+    public static string save_file()
     {
         return saves_dir() + "/" + savename + ".save";
     }

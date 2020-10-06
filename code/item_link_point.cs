@@ -269,6 +269,13 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
 
         private void Update()
         {
+            if (item == null)
+            {
+                // Item has been destroyed (probably picked up)
+                Destroy(gameObject);
+                return;
+            }
+
             // Make the item fall
             float dt = Time.time - start_time;
             item.transform.position += Vector3.down * Time.deltaTime * dt * 10f;
