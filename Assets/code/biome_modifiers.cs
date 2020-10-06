@@ -283,3 +283,28 @@ public class cave_system : biome_modifier
             link_in_section.transform.position;
     }
 }
+
+public class traders : biome_modifier
+{
+    const int CLEAR_RANGE = 8;
+
+    public override void modify(biome b)
+    {
+        for (int n = 0; n < 8; ++n)
+            add_trader(b,
+                b.random.range(0, biome.SIZE),
+                b.random.range(0, biome.SIZE));
+    }
+
+    void add_trader(biome b, int i, int j)
+    {
+        if (i >= biome.SIZE - CLEAR_RANGE) return;
+        if (j >= biome.SIZE - CLEAR_RANGE) return;
+
+        for (int x = i; x < i + CLEAR_RANGE; ++x)
+            for (int y = j; y < j + CLEAR_RANGE; ++y)
+                b.grid[x, y].object_to_generate = null;
+
+        b.grid[i + CLEAR_RANGE / 2, j + CLEAR_RANGE / 2].object_to_generate = world_object.load("traders_hut");
+    }
+}

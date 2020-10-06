@@ -253,7 +253,9 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
                     {
                         // Don't drop onto the building I came 
                         // from, or onto other items.
-                        if (t.IsChildOf(from.building.transform)) return false;
+                        if (from.building != null)
+                            if (t.IsChildOf(from.building.transform))
+                                return false;
                         if (t.GetComponentInParent<item>() != null) return false;
                         return true;
                     });
