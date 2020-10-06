@@ -308,8 +308,10 @@ MonoBehaviour:
   plural: autofurnaces
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
+  craft_time: 0.1
   recipes_folder: recipes/workbenches/furnace
 --- !u!1 &6712449088207452527
 GameObject:

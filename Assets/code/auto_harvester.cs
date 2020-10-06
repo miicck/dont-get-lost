@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_harvester : building_material, IInspectable
+public class auto_harvester : item_logistic_building, IInspectable
 {
     // Determines where we check for harvestable objects
     public Transform ray_start;
@@ -19,32 +19,26 @@ public class auto_harvester : building_material, IInspectable
     int current_product = 0;
     float next_harvest_time = 0;
 
-    item_link_point output;
+    item_link_point output => item_outputs[0];
 
-    public override void on_create()
+    protected override void Start()
     {
-        base.on_create();
+        base.Start();
+        InvokeRepeating("validate_harvesting", 0, 0.5f);
+    }
 
-        // Assign the output link
-        foreach (var lp in GetComponentsInChildren<item_link_point>())
-            if (lp.type == item_link_point.TYPE.OUTPUT)
-                output = lp;
+    void validate_harvesting()
+    {
+        if (this == null) return; // Destroyed
 
-        if (output == null)
-            throw new System.Exception("Could not find autominer output!");
-
-        // Once the map has generated, figure out what we're harvesting
-        chunk.add_generation_listener(transform.position, (c) =>
-        {
-            if (this == null) return;
-            harvesting = utils.raycast_for_closest<harvestable>(
-                new Ray(ray_start.position, ray_start.forward),
-                out RaycastHit hit, ray_length, (h) =>
+        // Figure out what we're harvesting
+        harvesting = utils.raycast_for_closest<harvestable>(
+            new Ray(ray_start.position, ray_start.forward),
+            out RaycastHit hit, ray_length, (h) =>
             {
                 return h.tool.tool_type == tool_type &&
-                       h.tool.tool_quality <= tool_quality;
+                                   h.tool.tool_quality <= tool_quality;
             });
-        });
     }
 
     private void Update()

@@ -6,100 +6,48 @@ using UnityEngine;
 /// that the items roll downhill. It also records/remembers
 /// the average item flow, so that it can reproduce it when
 /// it's input isn't loaded. </summary>
-public class item_gutter : building_material, IInspectable
+public class item_gutter : item_logistic_building
 {
     public const float ITEM_FLOW_TIMESPAN = 60f;
     public const float ITEM_SEPERATION = 0.25f;
 
-    item_link_point input;
-    item_link_point output;
-
     List<item> items = new List<item>();
+    item_link_point output => item_outputs[0];
 
-    Dictionary<string, float> item_flow_float = new Dictionary<string, float>();
-    networked_variables.net_string_counts_v2 item_flow;
-
-    Dictionary<string, float> last_mimic_times = new Dictionary<string, float>();
-    void mimic_flow()
+    /// <summary> Overloaded version of assign links, 
+    /// sets the lowest link to the output and all others 
+    /// to inputs. </summary>
+    protected override void assign_links(
+        out List<item_link_point> inputs,
+        out List<item_link_point> outputs)
     {
-        if (input.item != null) return; // Can't mimic anything unless input is free
+        var links = GetComponentsInChildren<item_link_point>();
+        if (links.Length < 2)
+            throw new System.Exception("A gutter must have at least 2 links!");
 
-        foreach (var kv in item_flow)
-        {
-            var itm = Resources.Load<item>("items/" + kv.Key);
-            if (itm == null)
+        item_link_point output = null;
+
+        // Set the lowest link point as the output, record the rest as inputs
+        float min_alt = Mathf.Infinity;
+        foreach (var lp in links)
+            if (lp.position.y < min_alt)
             {
-                Debug.Log("Could not mimic flow of item " + kv.Key + "!");
-                continue;
+                min_alt = lp.position.y;
+                output = lp;
             }
 
-            // Spawn item at a rate of kv.Value items per ITEM_FLOW_TIMESPAN
-            if (!last_mimic_times.TryGetValue(kv.Key, out float last_time)
-                || Time.realtimeSinceStartup - last_time > ITEM_FLOW_TIMESPAN / kv.Value)
+        output.type = item_link_point.TYPE.OUTPUT;
+
+        // Record all the inputs
+        inputs = new List<item_link_point>();
+        foreach (var l in links)
+            if (l != output)
             {
-                last_mimic_times[kv.Key] = Time.realtimeSinceStartup;
-                input.item = itm.inst();
-                return;
+                l.type = item_link_point.TYPE.INPUT;
+                inputs.Add(l);
             }
-        }
-    }
 
-    public override void on_init_network_variables()
-    {
-        base.on_init_network_variables();
-        item_flow = new networked_variables.net_string_counts_v2();
-    }
-
-    public override void on_create()
-    {
-        base.on_create();
-        foreach (var kv in item_flow)
-            item_flow_float[kv.Key] = kv.Value;
-    }
-
-    void Start()
-    {
-        item_link_point[] links = GetComponentsInChildren<item_link_point>();
-        if (links.Length != 2)
-            throw new System.Exception("Item gutters must have exactly 2 link points!");
-
-        // The lower end is the output, the higher end is the input
-        if (links[0].position.y < links[1].position.y)
-        {
-            links[0].type = item_link_point.TYPE.OUTPUT;
-            output = links[0];
-
-            links[1].type = item_link_point.TYPE.INPUT;
-            input = links[1];
-        }
-        else
-        {
-            links[0].type = item_link_point.TYPE.INPUT;
-            input = links[0];
-
-            links[1].type = item_link_point.TYPE.OUTPUT;
-            output = links[1];
-        }
-
-        InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
-    }
-
-    public override void on_forget(bool deleted)
-    {
-        base.on_forget(deleted);
-        if (!deleted) return;
-
-        // If I've been deleted, reset the flow of anything that I output to
-        if (output.linked_to != null)
-        {
-            var gutter = output.linked_to.GetComponentInParent<item_gutter>();
-            if (gutter != null)
-            {
-                if (gutter.has_authority)
-                    gutter.item_flow.clear();
-                gutter.item_flow_float.Clear();
-            }
-        }
+        outputs = new List<item_link_point> { output };
     }
 
     void OnDestroy()
@@ -110,14 +58,17 @@ public class item_gutter : building_material, IInspectable
                 Destroy(itm.gameObject);
     }
 
-    bool can_accept_input()
+    bool can_accept_input(item_link_point input)
     {
+        return true;
+
         // No items on gutter => free
         if (items.Count == 0) return true;
 
-        // See if there is enough space at the start of the gutter
-        Vector3 delta = items[items.Count - 1].transform.position - input.position;
-        return delta.magnitude > ITEM_SEPERATION;
+
+        // See if there is enough space near this input
+        var closest = utils.find_to_min(items, (i) => (i.transform.position - input.transform.position).magnitude);
+        return (closest.transform.position - input.transform.position).magnitude > ITEM_SEPERATION;
     }
 
     bool can_output()
@@ -136,56 +87,29 @@ public class item_gutter : building_material, IInspectable
         return true;
     }
 
-    void slow_update()
-    {
-        if (has_authority && !is_client_side)
-        {
-            // Update the networked flow with the floored flow
-            Dictionary<string, int> floor_flows = new Dictionary<string, int>();
-            foreach (var kv in item_flow_float)
-            {
-                int fflow = Mathf.FloorToInt(kv.Value);
-                if (fflow > 0)
-                    floor_flows[kv.Key] = fflow;
-            }
-
-            item_flow.set(floor_flows);
-        }
-    }
-
     private void Update()
     {
-        if (item_flow == null) return; // Wait for networked variables
-
         // Forget about any deleted items
         items.RemoveAll((i) => i == null);
 
-        if (input.linked_to == null && item_flow.item_types > 0)
-        {
-            // Mimic flow from unloaded items
-            mimic_flow();
-        }
-
-        if (input.item != null)
-        {
-            // Take an item from the input
-            // and place it on the gutter
-            if (can_accept_input())
+        foreach (var input in item_inputs)
+            if (input.item != null && can_accept_input(input))
             {
+                // Take an item from the input
+                // and place it on the gutter
                 var to_add = input.release_item();
                 items.Add(to_add);
+
+                // Keep items so items[0] is the closest to the output
+                items.Sort((a, b) =>
+                {
+                    float a_dis = (a.transform.position - output.transform.position).magnitude;
+                    float b_dis = (b.transform.position - output.transform.position).magnitude;
+                    return a_dis.CompareTo(b_dis);
+                });
+
                 to_add.transform.forward = output.position - input.position;
-
-                // Bump the item flow by 1
-                if (item_flow_float.ContainsKey(to_add.name))
-                    item_flow_float[to_add.name] += 1;
-                else item_flow_float[to_add.name] = 1;
             }
-        }
-
-        // Asymptotically reduce the flow to 0
-        foreach (var k in new List<string>(item_flow_float.Keys))
-            item_flow_float[k] -= item_flow_float[k] * Time.deltaTime / ITEM_FLOW_TIMESPAN;
 
         for (int i = 1; i < items.Count; ++i)
         {
@@ -234,50 +158,4 @@ public class item_gutter : building_material, IInspectable
             }
         }
     }
-
-    //##############//
-    // IINspectable //
-    //##############//
-
-    new public string inspect_info()
-    {
-        string ret = display_name + "\nItem flow:\n";
-
-        if (item_flow.item_types == 0)
-            ret += "No flow.";
-        else foreach (var kv in item_flow)
-                ret += "    " + kv.Value + " " + kv.Key + "/m\n";
-
-        return ret;
-    }
-
-    //###############//
-    // CUSTOM EDITOR //
-    //###############//
-
-#if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(item_gutter), true)]
-    new class editor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            base.OnInspectorGUI();
-            item_gutter g = (item_gutter)target;
-
-            if (Application.isPlaying)
-            {
-                string text = g.inspect_info();
-                text += "\nLast mimic times:\n";
-                foreach (var kv in g.last_mimic_times)
-                    text += "    " + kv.Key + ": " + kv.Value + "\n";
-
-                text += "\nFloat flows:\n";
-                foreach (var kv in g.item_flow_float)
-                    text += "    " + kv.Key + ": " + kv.Value + "\n";
-
-                UnityEditor.EditorGUILayout.TextArea(text);
-            }
-        }
-    }
-#endif
 }

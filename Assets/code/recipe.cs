@@ -39,9 +39,6 @@ public class recipe : MonoBehaviour
 
     public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use)
     {
-        if (ingredients.Length == 0)
-            throw new System.Exception("Recipies should have > 0 ingredients!");
-
         to_use = new Dictionary<string, int>();
         foreach (var ing in ingredients)
             if (!ing.find(i, ref to_use))

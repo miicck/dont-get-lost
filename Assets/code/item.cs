@@ -14,7 +14,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public int fuel_value = 0;
     public int food_value = 0;
     public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
-    public Transform carry_pivot { get; private set; } // The point we are carrying this item by in carry mode
+    public bool is_equpped => GetComponentInParent<player>() != null;
 
     public string display_name
     {

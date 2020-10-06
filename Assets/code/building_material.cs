@@ -319,6 +319,9 @@ public class building_material : item
             if (comp is INonBlueprintable)
                 Destroy(comp);
         }
+
+        // Don't carry out normal updates on blueprinted version.
+        enabled = false;
     }
 
     building_material spawn_and_fix_to(

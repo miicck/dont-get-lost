@@ -499,7 +499,7 @@ namespace networked_variables
         public IEnumerator<KeyValuePair<string, int>> GetEnumerator() { return dict.GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
-        public int item_types => dict.Count;
+        public int count => dict.Count;
 
         public int this[string s]
         {

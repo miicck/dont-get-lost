@@ -126,7 +126,7 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
             item_dropper.create(release_item(), this, linked_to);
     }
 
-    bool try_link_to(item_link_point other)
+    public bool can_link_to(item_link_point other)
     {
         // Don't overwrite links
         if (other.linked_to != null)
@@ -135,24 +135,13 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
         switch (type)
         {
             case TYPE.INPUT:
-                if (other.type != TYPE.OUTPUT)
-                    return false;
-                if (test_connection(other, this))
-                {
-                    other.linked_to = this;
-                    this.linked_to = other;
-                    return true;
-                }
+                if (other.type != TYPE.OUTPUT) return false;
+                if (test_connection(other, this)) return true;
                 return false;
 
             case TYPE.OUTPUT:
-                if (other.type != TYPE.INPUT)
-                    return false;
-                if (test_connection(this, other))
-                {
-                    other.linked_to = this;
-                    this.linked_to = other;
-                }
+                if (other.type != TYPE.INPUT) return false;
+                if (test_connection(this, other)) return true;
                 return false;
 
             default:
@@ -340,9 +329,20 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
         }
 
         // Create new links
+        List<item_link_point> possible_links = new List<item_link_point>();
         foreach (var p2 in points)
-            if (p.try_link_to(p2))
-                break;
+            if (p.can_link_to(p2))
+                possible_links.Add(p2);
+
+        if (possible_links.Count > 0)
+        {
+            // Link to the closest possibility
+            var closest = utils.find_to_min(possible_links,
+                (l) => (l.position - p.position).magnitude);
+
+            p.linked_to = closest;
+            closest.linked_to = p;
+        }
     }
 
     static void register_point(item_link_point p)

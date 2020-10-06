@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_crafter : building_material, IInspectable
+public class auto_crafter : item_logistic_building, IInspectable
 {
+    public float craft_time = 1f;
     public string recipes_folder;
-    item_link_point[] inputs;
-    item_link_point[] outputs;
     recipe[] recipies;
 
     simple_item_collection pending_inputs = new simple_item_collection();
@@ -39,32 +38,20 @@ public class auto_crafter : building_material, IInspectable
         return info;
     }
 
-    void Start()
+    protected override void Start()
     {
-        // Get references to input/output link points
-        List<item_link_point> inputs = new List<item_link_point>();
-        List<item_link_point> outputs = new List<item_link_point>();
+        base.Start();
+
+        // Load the recipes
         recipies = Resources.LoadAll<recipe>(recipes_folder);
-
-        foreach (var lp in GetComponentsInChildren<item_link_point>())
-        {
-            if (lp.type == item_link_point.TYPE.INPUT)
-                inputs.Add(lp);
-            else if (lp.type == item_link_point.TYPE.OUTPUT)
-                outputs.Add(lp);
-            else
-                throw new System.Exception("Unkown link type!");
-        }
-
-        this.inputs = inputs.ToArray();
-        this.outputs = outputs.ToArray();
+        InvokeRepeating("crafting_update", craft_time, craft_time);
     }
 
-    void Update()
+    void crafting_update()
     {
         // Add inputs to the pending inputs collection
         bool inputs_changed = false;
-        foreach (var ip in inputs)
+        foreach (var ip in item_inputs)
             if (ip.item != null)
             {
                 pending_inputs.add(ip.item, 1);
@@ -74,7 +61,7 @@ public class auto_crafter : building_material, IInspectable
 
         // Output stuff from the pending outputs collection
         bool outputs_free = true;
-        foreach (var op in outputs)
+        foreach (var op in item_outputs)
         {
             if (op.item == null)
             {
@@ -90,7 +77,7 @@ public class auto_crafter : building_material, IInspectable
             else outputs_free = false;
         }
 
-        if (inputs_changed && outputs_free)
+        if ((inputs_changed || item_inputs.Count == 0) && outputs_free)
         {
             // Attempt to craft something
             foreach (var r in recipies)

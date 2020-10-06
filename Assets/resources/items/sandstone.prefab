@@ -578,7 +578,8 @@ MonoBehaviour:
   plural: sandstone
   value: 1
   fuel_value: 0
-  logistics_scale: 1
+  food_value: 0
+  logistics_scale: 0.3
   axes_scale: 1
 --- !u!65 &8512623307125809498
 BoxCollider:

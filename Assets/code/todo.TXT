@@ -15,3 +15,7 @@ Tasks
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
 - More foliage (small plants/flowers)
+- Make gutter input work anywhere along the gutter (sort of done - might need to
+  create a multi-input link point for the gutter?)
+- Make item_link_points link to the closest valid connection (so gutters 
+  can pass over one another without accedentally dropping between the levels)
