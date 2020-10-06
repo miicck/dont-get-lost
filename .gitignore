@@ -1,12 +1,13 @@
-*blend1*
 .vs
+*blend1*
 *.swp
-Assets/resources/version_info*
+*.sln
 Assembly-CSharp.csproj
+Assets/resources/version_info*
 Library/
 Logs/
 Packages/
 UserSettings/
 build/
-dont-get-lost-2020.1.2f1.sln
 obj/
+Temp/
