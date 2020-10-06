@@ -59,7 +59,7 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
     /// <summary> Drop the item I have. </summary>
     public void drop_item()
     {
-        item_dropper.create(release_item(), this);
+        item_dropper.create(release_item(), this, null);
     }
 
     /// <summary> Delete the item I have. </summary>
@@ -113,27 +113,17 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
             return;
         }
 
-        // Move the item along the path to the 
-        // next link (accelerate with gravity)
-        Vector3 delta = linked_to.position - item.transform.position;
-        float dt = Time.time - time_got_item;
-        float max_move = Time.deltaTime * dt * 10f;
-
-        bool arrived = false;
-        if (delta.magnitude > max_move) delta = delta.normalized * max_move;
-        else arrived = true;
-
-        item.transform.position += delta;
-
-        if (arrived)
+        if ((position - linked_to.position).magnitude < 0.1f)
         {
-            // Check there is free space at the next link
-            if (linked_to.item == null)
-            {
-                // Transfer item to the point I am linked to
-                transfer_item(linked_to);
-            }
+            // Linked to is close (probably directly connected)
+            // wait for free slot, then directly transfer
+            if (utils.move_towards(item.transform, linked_to.position, Time.deltaTime) &&
+                linked_to.item == null)
+                linked_to.item = release_item();
         }
+        else
+            // Linked to is far away => drop to it
+            item_dropper.create(release_item(), this, linked_to);
     }
 
     bool try_link_to(item_link_point other)
@@ -244,27 +234,33 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
     class item_dropper : MonoBehaviour
     {
         item item;
-        item_link_point point;
+        item_link_point from;
+        item_link_point to;
         float target_alt;
         float start_time = 0;
 
         private void Start()
         {
             start_time = Time.time;
-            target_alt = transform.position.y - 100f;
-            var found = utils.raycast_for_closest<Transform>(
-                new Ray(transform.position, Vector3.down), out RaycastHit hit,
-                accept: (t) =>
-                {
-                    // Don't drop onto the building I came 
-                    // from, or onto other items.
-                    if (t.IsChildOf(point.building.transform)) return false;
-                    if (t.GetComponentInParent<item>() != null) return false;
-                    return true;
-                });
 
-            if (found != null)
-                target_alt = hit.point.y;
+            if (to == null)
+            {
+                // Find a point in the world to drop to/destroy
+                target_alt = transform.position.y - 100f;
+                var found = utils.raycast_for_closest<Transform>(
+                    new Ray(transform.position, Vector3.down), out RaycastHit hit,
+                    accept: (t) =>
+                    {
+                        // Don't drop onto the building I came 
+                        // from, or onto other items.
+                        if (t.IsChildOf(from.building.transform)) return false;
+                        if (t.GetComponentInParent<item>() != null) return false;
+                        return true;
+                    });
+
+                if (found != null)
+                    target_alt = hit.point.y;
+            }
         }
 
         private void Update()
@@ -276,23 +272,44 @@ public class item_link_point : MonoBehaviour, INonBlueprintable
                 return;
             }
 
-            // Make the item fall
+            // Time since start
             float dt = Time.time - start_time;
-            item.transform.position += Vector3.down * Time.deltaTime * dt * 10f;
 
-            // Item has reached the bottom
-            if (item.transform.position.y < target_alt)
+            if (to == null)
             {
-                Destroy(item.gameObject);
-                Destroy(gameObject);
+                // Just fall down
+                item.transform.position += Vector3.down * Time.deltaTime * dt * 10f;
+
+                // Item has reached the bottom
+                if (item.transform.position.y < target_alt)
+                {
+                    Destroy(item.gameObject);
+                    Destroy(gameObject);
+                }
+            }
+            else
+            {
+                // Fall to the target
+                if (utils.move_towards(item.transform, to.position, Time.deltaTime * dt * 10f))
+                {
+                    if (to.item == null)
+                        to.item = item;
+                    else
+                        // No free space -> destroy item
+                        Destroy(item.gameObject);
+
+                    // Item has reached target, destroy the dropper
+                    Destroy(gameObject);
+                }
             }
         }
 
-        public static item_dropper create(item i, item_link_point point)
+        public static item_dropper create(item i, item_link_point from, item_link_point to)
         {
             var dr = new GameObject("item_dropper").AddComponent<item_dropper>();
             dr.item = i;
-            dr.point = point;
+            dr.from = from;
+            dr.to = to;
             dr.transform.position = i.transform.position;
             return dr;
         }
