@@ -6,7 +6,7 @@ public class item_request : MonoBehaviour
 {
     public item item;
     public Transform sign_location;
-    item_link_point input;
+    item_input input;
 
     void Start()
     {
@@ -21,17 +21,17 @@ public class item_request : MonoBehaviour
         rend.material = Resources.Load<Material>("materials/item_sign");
         rend.material.SetTexture("_BaseColorMap", item.sprite.texture);
 
-        input = GetComponent<item_link_point>();
-        if (input.type != item_link_point.TYPE.INPUT)
-            throw new System.Exception("Item request link point must be an input!");
+        input = GetComponent<item_input>();
+        if (input == null)
+            throw new System.Exception("No item input found on item requester!");
     }
 
     private void Update()
     {
-        if (input.item != null)
+        if (input.item_count > 0)
         {
-            if (input.item.name == item.name)
-                input.drop_item();
+            var itm = input.release_next_item();
+            item_dropper.create(itm, itm.transform.position, null);
         }
     }
 

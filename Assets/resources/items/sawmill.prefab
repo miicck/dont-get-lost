@@ -222,8 +222,10 @@ MonoBehaviour:
   plural: sawmills
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
+  craft_time: 1
   recipes_folder: recipes/workbenches/sawtable
 --- !u!1 &4301794516072145572
 GameObject:
@@ -446,7 +448,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1279191113030588326}
-  - component: {fileID: 8142498302831161363}
+  - component: {fileID: 8209207842414788381}
   m_Layer: 0
   m_Name: output
   m_TagString: Untagged
@@ -469,7 +471,7 @@ Transform:
   m_Father: {fileID: 8658560283577463865}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8142498302831161363
+--- !u!114 &8209207842414788381
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -478,10 +480,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7432191926174630446}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
 --- !u!1 &8572839816360125904
 GameObject:
   m_ObjectHideFlags: 0
@@ -577,7 +578,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1979108419088052375}
-  - component: {fileID: 6694474972001023987}
+  - component: {fileID: 6683271411227964277}
   m_Layer: 0
   m_Name: input
   m_TagString: Untagged
@@ -600,7 +601,7 @@ Transform:
   m_Father: {fileID: 8658560283577463865}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6694474972001023987
+--- !u!114 &6683271411227964277
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -609,10 +610,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 9166091182641050031}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
 --- !u!1001 &370170732104765219
 PrefabInstance:
   m_ObjectHideFlags: 0

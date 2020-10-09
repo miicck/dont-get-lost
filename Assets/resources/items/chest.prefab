@@ -211,7 +211,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 986823912078635995}
-  - component: {fileID: 92007409774967115}
+  - component: {fileID: 7141389777453485819}
   m_Layer: 0
   m_Name: input
   m_TagString: Untagged
@@ -234,7 +234,7 @@ Transform:
   m_Father: {fileID: 6776418774877819747}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &92007409774967115
+--- !u!114 &7141389777453485819
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -243,10 +243,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4717717391544391576}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
 --- !u!1 &5035377021398408852
 GameObject:
   m_ObjectHideFlags: 0
@@ -307,9 +306,9 @@ MonoBehaviour:
   plural: 
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
-  settler_stands_here: {fileID: 2404787497281977318}
 --- !u!65 &7707463802257312042
 BoxCollider:
   m_ObjectHideFlags: 0

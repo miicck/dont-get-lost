@@ -65,6 +65,9 @@ public class product : MonoBehaviour
     /// <summary> The quantity and (appropriately pluralized) name. </summary>
     public virtual string product_name_quantity()
     {
+        if (item == null)
+            throw new System.Exception("No item assigned to product " + name);
+
         switch (mode)
         {
             case MODE.SIMPLE:

@@ -8,8 +8,8 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
 {
     public float selector_speed = 1f;
 
-    List<item_link_point> inputs = new List<item_link_point>();
-    List<item_link_point> outputs = new List<item_link_point>();
+    item_input[] inputs => GetComponentsInChildren<item_input>();
+    item_output[] outputs => GetComponentsInChildren<item_output>();
 
     int current_input = 0;
     int current_output = 0;
@@ -30,35 +30,20 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
 
     private void Start()
     {
-        // Record the inputs and outputs
-        foreach (var lp in GetComponentsInChildren<item_link_point>())
-        {
-            switch (lp.type)
-            {
-                case item_link_point.TYPE.INPUT:
-                    inputs.Add(lp);
-                    break;
-
-                case item_link_point.TYPE.OUTPUT:
-                    outputs.Add(lp);
-                    break;
-            }
-        }
-
-        if (inputs.Count == 0)
+        if (inputs.Length == 0)
             throw new System.Exception("No inputs to item splitter!");
 
-        if (outputs.Count == 0)
+        if (outputs.Length == 0)
             throw new System.Exception("No outputs to item splitter!");
     }
 
-    bool move_selector_towards(Transform selector, item_link_point target,
+    bool move_selector_towards(Transform selector, Vector3 target,
         AXIS selector_axis, AXIS rotation_axis)
     {
         // Get the current selector axis direction, and the target
         // selector axis direction in the rotation plane
         Vector3 ax = selector.axis(selector_axis);
-        Vector3 target_ax = (target.position - selector.position).normalized;
+        Vector3 target_ax = (target - selector.position).normalized;
 
         Vector3 rot_axis = transform.axis(rotation_axis);
         ax -= Vector3.Project(ax, rot_axis);
@@ -94,44 +79,44 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
 
     private void Update()
     {
+        if (inputs.Length == 0 || outputs.Length == 0) return;
+
         // The input and output selectors cycle to the next
         // input/output when they have picked up an item
-
         var input = inputs[current_input];
         var output = outputs[current_output];
 
         // Move input selector towards current_input
-        if (move_selector_towards(input_selector, input,
+        if (move_selector_towards(input_selector, input.transform.position,
             input_selector_axis, input_rotation_axis))
-            if (input_selector_item == null && input.item != null)
+            if (input_selector_item == null && input.item_count > 0)
             {
                 // Pickup item
-                input_selector_item = input.release_item();
+                input_selector_item = input.release_next_item();
                 input_selector_item.transform.SetParent(input_selector);
                 input_selector_item.transform.position = input_selector_end.position;
 
                 // Cycle to next input
-                current_input = (current_input + 1) % inputs.Count;
+                current_input = (current_input + 1) % inputs.Length;
             }
 
         // Move output selector towards current_output
-        bool output_alligned = move_selector_towards(output_selector, output,
+        bool output_alligned = move_selector_towards(
+            output_selector, output.transform.position,
             output_selector_axis, output_rotation_axis);
 
         // Move output selector item along the output selector
         if (output_selector_item != null)
             if (move_towards(output_selector_item.transform,
                 output_selector_end.position, 1f) && 
-                output_alligned && 
-                output.item == null)
+                output_alligned)
             {
                 // Drop off item
-                output_selector_item.transform.SetParent(null);
-                output.item = output_selector_item;
+                output.add_item(output_selector_item);
                 output_selector_item = null;
 
                 // Cycle to next output
-                current_output = (current_output + 1) % outputs.Count;
+                current_output = (current_output + 1) % outputs.Length;
             }
 
         // Move input selector item along input selector

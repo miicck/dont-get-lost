@@ -10,14 +10,14 @@ public class item_ingredient : ingredient
     public override string str()
     {
         if (item == null)
-            throw new System.Exception("Item ingredient missing!");
+            throw new System.Exception("Item ingredient missing on " + name);
 
         if (count > 1) return count + " " + item.plural;
         return item.display_name;
     }
 
     public override bool find(
-        IItemCollection i, 
+        IItemCollection i,
         ref Dictionary<string, int> in_use)
     {
         if (item == null)

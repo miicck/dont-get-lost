@@ -181,7 +181,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6105313060820036914}
-  - component: {fileID: 6105313060820036915}
+  - component: {fileID: 3398142902272697129}
   m_Layer: 0
   m_Name: input
   m_TagString: Untagged
@@ -204,7 +204,7 @@ Transform:
   m_Father: {fileID: 6105313062233208686}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6105313060820036915
+--- !u!114 &3398142902272697129
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -213,10 +213,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6105313060820036913}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
 --- !u!1 &6105313061932589680
 GameObject:
   m_ObjectHideFlags: 0
@@ -226,7 +225,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6105313061932589681}
-  - component: {fileID: 6105313061932589682}
+  - component: {fileID: 2165068439539518809}
   m_Layer: 0
   m_Name: input (1)
   m_TagString: Untagged
@@ -249,7 +248,7 @@ Transform:
   m_Father: {fileID: 6105313062233208686}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6105313061932589682
+--- !u!114 &2165068439539518809
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -258,10 +257,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6105313061932589680}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
 --- !u!1 &6105313061950264500
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,7 +269,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6105313061950264501}
-  - component: {fileID: 6105313061950264502}
+  - component: {fileID: 4570221320804220732}
   m_Layer: 0
   m_Name: output
   m_TagString: Untagged
@@ -294,7 +292,7 @@ Transform:
   m_Father: {fileID: 6105313062233208686}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6105313061950264502
+--- !u!114 &4570221320804220732
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -303,10 +301,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6105313061950264500}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
 --- !u!1 &6105313062233208684
 GameObject:
   m_ObjectHideFlags: 0
@@ -385,6 +382,7 @@ MonoBehaviour:
   plural: item  combiners
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
 --- !u!1 &7414937531593024544

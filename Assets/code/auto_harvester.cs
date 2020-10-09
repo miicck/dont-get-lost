@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_harvester : item_logistic_building, IInspectable
+public class auto_harvester : building_material, IInspectable
 {
     // Determines where we check for harvestable objects
     public Transform ray_start;
@@ -19,11 +19,10 @@ public class auto_harvester : item_logistic_building, IInspectable
     int current_product = 0;
     float next_harvest_time = 0;
 
-    item_link_point output => item_outputs[0];
+    item_output output => GetComponentInChildren<item_output>();
 
-    protected override void Start()
+    void Start()
     {
-        base.Start();
         InvokeRepeating("validate_harvesting", 0, 0.5f);
     }
 
@@ -45,7 +44,7 @@ public class auto_harvester : item_logistic_building, IInspectable
     {
         if (harvesting == null) return;
 
-        if (output.item == null & Time.time > next_harvest_time)
+        if (output.item_count == 0 && Time.time > next_harvest_time)
         {
             // Work out time of next harvest
             next_harvest_time = Time.time + time_between_harvests;
@@ -55,8 +54,9 @@ public class auto_harvester : item_logistic_building, IInspectable
             var next_harvest = harvesting.products[current_product].auto_item;
 
             // Create output product
-            output.item = create(next_harvest.name,
-                output.position, output.transform.rotation);
+            output.add_item(create(
+                next_harvest.name, output.transform.position,
+                output.transform.rotation, logistics_version: true));
         }
     }
 

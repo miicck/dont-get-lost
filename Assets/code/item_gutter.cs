@@ -2,120 +2,130 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> A simple track for items. This component ensures 
-/// that the items roll downhill. It also records/remembers
-/// the average item flow, so that it can reproduce it when
-/// it's input isn't loaded. </summary>
-public class item_gutter : item_logistic_building
+/// <summary> A downhill track for items, represented 
+/// as an extended item node. </summary>
+public class item_gutter : item_node
 {
     public const float ITEM_FLOW_TIMESPAN = 60f;
     public const float ITEM_SEPERATION = 0.25f;
 
-    List<item> items = new List<item>();
-    item_link_point output => item_outputs[0];
+    public Transform start;
+    public Transform end;
 
-    /// <summary> Overloaded version of assign links, 
-    /// sets the lowest link to the output and all others 
-    /// to inputs. </summary>
-    protected override void assign_links(
-        out List<item_link_point> inputs,
-        out List<item_link_point> outputs)
+    public override Vector3 output_point => end.position;
+    public override Vector3 input_point(Vector3 input_from)
     {
-        var links = GetComponentsInChildren<item_link_point>();
-        if (links.Length < 2)
-            throw new System.Exception("A gutter must have at least 2 links!");
+        // Work out the nearest point to the downwards line
+        // from input_from on the line from start to end
+        // I found the maths for this surprisingly difficult
+        // so there is probably a better/faster way to do this
 
-        item_link_point output = null;
+        // Vector from input to end of line
+        Vector3 to_end = end.position - input_from;
 
-        // Set the lowest link point as the output, record the rest as inputs
-        float min_alt = Mathf.Infinity;
-        foreach (var lp in links)
-            if (lp.position.y < min_alt)
-            {
-                min_alt = lp.position.y;
-                output = lp;
-            }
+        // Vector from start of line to end of line
+        Vector3 line = end.position - start.position;
+        Vector3 along_line = line.normalized;
 
-        output.type = item_link_point.TYPE.OUTPUT;
+        // Down
+        Vector3 down = Vector3.down;
 
-        // Record all the inputs
-        inputs = new List<item_link_point>();
-        foreach (var l in links)
-            if (l != output)
-            {
-                l.type = item_link_point.TYPE.INPUT;
-                inputs.Add(l);
-            }
+        // The direction perpendicular to the line and to down
+        Vector3 normal = Vector3.Cross(down, along_line);
 
-        outputs = new List<item_link_point> { output };
+        // An intermediate point, above the target point
+        Vector3 inter = input_from + Vector3.Project(to_end, normal);
+
+        // The direction from start to end, in the x-z plane
+        Vector3 in_plane = along_line;
+        in_plane.y = 0;
+        in_plane.Normalize();
+
+        // Vector to end of line from intermediate point
+        Vector3 inter_to_end = end.position - inter;
+
+        // The height of the result above the end of the line
+        float h = -line.y * Vector3.Dot(inter_to_end, in_plane) / Vector3.Dot(line, in_plane);
+
+        inter.y = end.position.y + h;
+        return inter;
     }
 
-    void OnDestroy()
+    protected override bool can_input_from(item_node other)
     {
-        // Destroy my items along with me
-        foreach (var itm in items)
-            if (itm != null)
-                Destroy(itm.gameObject);
+        Vector3 input_point = this.input_point(other.output_point);
+        Vector3 delta = input_point - other.output_point;
+
+        // Don't allow uphill links
+        if (delta.y > UPHILL_LINK_ALLOW) return false;
+
+        // Check input point is close enough to directly below the other
+        delta.y = 0;
+        if (delta.magnitude > LINK_DISTANCE_TOLERANCE) return false;
+
+        // Check input position is between start and end (to within tolerance)
+        Vector3 start_to_end = end.position - start.position;
+        float distance_along = Vector3.Dot(input_point - start.position, start_to_end.normalized);
+        if (distance_along < -LINK_DISTANCE_TOLERANCE) return false;
+        if (distance_along > start_to_end.magnitude + LINK_DISTANCE_TOLERANCE) return false;
+
+
+        // Check there is nothing in the way
+        Vector3 out_to_in = input_point - other.output_point;
+        foreach (var h in Physics.RaycastAll(other.output_point,
+            out_to_in.normalized, out_to_in.magnitude))
+        {
+            // Ignore collisions with self/other
+            if (h.transform.IsChildOf(building.transform)) continue;
+            if (h.transform.IsChildOf(other.building.transform)) continue;
+
+            // Ignore collisions with dropping items
+            if (h.transform.GetComponentInParent<item_dropper>()) continue;
+
+            // Hit something in-between, don't allow the connection
+            return false;
+        }
+
+        return true;
     }
 
-    bool can_accept_input(item_link_point input)
+    protected override bool can_output_to(item_node other)
     {
         return true;
-
-        // No items on gutter => free
-        if (items.Count == 0) return true;
-
-
-        // See if there is enough space near this input
-        var closest = utils.find_to_min(items, (i) => (i.transform.position - input.transform.position).magnitude);
-        return (closest.transform.position - input.transform.position).magnitude > ITEM_SEPERATION;
     }
 
-    bool can_output()
+    protected override void OnDrawGizmos()
     {
-        // Can't output if output is already occupied
-        if (output.item != null) return false;
+        base.OnDrawGizmos();
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(start.position, end.position);
+    }
 
-        // Can assign to output if it is a dead end
-        if (output.linked_to == null) return true;
+    protected override void Start()
+    {
+        // Switch start/end if they aren't going downhill
+        if (start.position.y < end.position.y)
+        {
+            Transform tmp = start;
+            start = end;
+            end = tmp;
+        }
 
-        // Can't assign to output if the output's output
-        // isn't free (as it is likely less than ITEM_SEPERATION away)
-        if (output.linked_to.item != null) return false;
-
-        // g2g
-        return true;
+        base.Start();
     }
 
     private void Update()
     {
-        // Forget about any deleted items
-        items.RemoveAll((i) => i == null);
+        if (this == null)
+            return; // Destroyed
 
-        foreach (var input in item_inputs)
-            if (input.item != null && can_accept_input(input))
-            {
-                // Take an item from the input
-                // and place it on the gutter
-                var to_add = input.release_item();
-                items.Add(to_add);
-
-                // Keep items so items[0] is the closest to the output
-                items.Sort((a, b) =>
-                {
-                    float a_dis = (a.transform.position - output.transform.position).magnitude;
-                    float b_dis = (b.transform.position - output.transform.position).magnitude;
-                    return a_dis.CompareTo(b_dis);
-                });
-
-                to_add.transform.forward = output.position - input.position;
-            }
-
-        for (int i = 1; i < items.Count; ++i)
+        for (int i = 1; i < item_count; ++i)
         {
+            item b = get_item(i - 1);
+            item a = get_item(i);
+
             // Get direction towards next item
-            Vector3 delta = items[i - 1].transform.position -
-                            items[i].transform.position;
+            Vector3 delta = b.transform.position - a.transform.position;
 
             // Only move towards the next
             // item if we're far enough apart
@@ -126,36 +136,17 @@ public class item_gutter : item_logistic_building
                 float max_move = Time.deltaTime;
                 if (delta.magnitude > max_move)
                     delta = delta.normalized * max_move;
-                items[i].transform.position += delta;
+                a.transform.position += delta;
             }
         }
 
-        if (items.Count > 0)
+        if (item_count > 0)
         {
-            // Move the item nearest the output
-            if (can_output())
-            {
-                // Move first item towards (unoccupied) output
-                if (utils.move_towards(items[0].transform,
-                    output.position, Time.deltaTime))
-                {
-                    output.item = items[0];
-                    items.RemoveAt(0);
-                }
-            }
-            else
-            {
-                // Move up to ITEM_SEPERATION away from (occupied) output
-                Vector3 delta = output.position - items[0].transform.position;
-                if (delta.magnitude > ITEM_SEPERATION)
-                {
-                    delta = delta.normalized * (delta.magnitude - ITEM_SEPERATION);
-                    float max_move = Time.deltaTime;
-                    if (delta.magnitude > max_move)
-                        delta = delta.normalized * max_move;
-                    items[0].transform.position += delta;
-                }
-            }
+            var itm = get_item(0);
+
+            // Move first item towards output, dropping it off the end
+            if (utils.move_towards(itm.transform, end.position, Time.deltaTime))
+                item_dropper.create(release_item(0), end.position, nearest_output);
         }
     }
 }

@@ -39,9 +39,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4312032556441443543}
-  - component: {fileID: 4038842299455924935}
+  - component: {fileID: 5115518664600424282}
   m_Layer: 0
-  m_Name: link_point
+  m_Name: output
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -61,7 +61,7 @@ Transform:
   m_Father: {fileID: 7524341533753994155}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4038842299455924935
+--- !u!114 &5115518664600424282
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -70,10 +70,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3403838321894726912}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
 --- !u!1 &4173613485318881663
 GameObject:
   m_ObjectHideFlags: 0
@@ -213,6 +212,7 @@ MonoBehaviour:
   plural: autominers
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
   ray_start: {fileID: 91028742736544884}

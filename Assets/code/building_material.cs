@@ -241,6 +241,8 @@ public class building_material : item
     // ITEM USE //
     //##########//
 
+    public bool is_blueprint { get; private set; }
+
     snap_point closest_to_ray(Ray ray, float ray_distance)
     {
         snap_point ret = null;
@@ -322,6 +324,7 @@ public class building_material : item
 
         // Don't carry out normal updates on blueprinted version.
         enabled = false;
+        is_blueprint = true;
     }
 
     building_material spawn_and_fix_to(

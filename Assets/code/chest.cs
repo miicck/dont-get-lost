@@ -9,25 +9,21 @@ public class chest : building_with_inventory, ILeftPlayerMenu
         return "inventories/chest";
     }
 
-    item_link_point input;
+    item_input input;
 
     private void Start()
     {
-        input = GetComponentInChildren<item_link_point>();
-
-        if (input == null)
-            throw new System.Exception("Chest has no item input!");
-
-        if (input.type != item_link_point.TYPE.INPUT)
-            throw new System.Exception("Chest input link is of the wrong type!");
+        input = GetComponentInChildren<item_input>();
+        if (input == null) throw new System.Exception("Chest has no item input!");
     }
 
     private void Update()
     {
         // Transfer input into chest inventory
-        if (input.item == null) return;
-        if (has_authority) inventory?.add(input.item, 1);
-        input.delete_item();
+        var next_item = input.release_next_item();
+        if (next_item == null) return;
+        if (has_authority) inventory?.add(next_item, 1);
+        Destroy(next_item.gameObject);
     }
 
     //#################//

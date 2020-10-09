@@ -6,8 +6,9 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
 {
     public Transform bottom;
     public Transform top;
+    public item_input input;
+    public item_output output;
 
-    item_lift lift => GetComponentInParent<item_lift>();
     item item;
 
     private void Update()
@@ -18,12 +19,12 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
             if (utils.move_towards(transform, bottom.position, Time.deltaTime))
             {
                 // Arrived at bottom, attempt to pick up item
-                if (lift.input.item != null)
+                if (input.item_count > 0)
                 {
-                    item = lift.input.release_item();
+                    item = input.release_next_item();
                     item.transform.SetParent(transform);
-                    item.transform.position = transform.position + 
-                        Vector3.up * item_link_point.END_MATCH_DISTANCE / 2f;
+                    item.transform.position = transform.position +
+                        Vector3.up * item_node.LINK_DISTANCE_TOLERANCE / 2f;
                 }
             }
         }
@@ -32,14 +33,11 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
             // Going up
             if (utils.move_towards(transform, top.position, Time.deltaTime))
             {
-                // Arrived at top, attempt to drop off item
-                if (lift.output.item == null)
-                {
-                    lift.output.item = item;
-                    item.transform.SetParent(null);
-                    item.transform.localScale = Vector3.one * item.logistics_scale;
-                    item = null;
-                }
+                // Arrived at top, drop off item
+                output.add_item(item);
+                item.transform.SetParent(null);
+                item.transform.localScale = Vector3.one * item.logistics_scale;
+                item = null;
             }
         }
     }

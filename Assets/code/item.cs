@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface INotEquippable { }
+
 public class item : networked, IInspectable, IAcceptLeftClick
 {
     //###########//
@@ -102,6 +104,10 @@ public class item : networked, IInspectable, IAcceptLeftClick
         // Make it invisible.
         foreach (var r in GetComponentsInChildren<Renderer>())
             r.enabled = false;
+
+        // Destroy non-equippable things
+        foreach (Component eq in GetComponentsInChildren<INotEquippable>())
+            Destroy(eq);
     }
 
     public void on_left_click() { pick_up(register_undo: true); }
@@ -220,7 +226,8 @@ public class item : networked, IInspectable, IAcceptLeftClick
         Vector3 position, Quaternion rotation,
         bool networked = false,
         networked network_parent = null,
-        bool register_undo = false)
+        bool register_undo = false,
+        bool logistics_version = false)
     {
         item item = null;
 
@@ -252,6 +259,9 @@ public class item : networked, IInspectable, IAcceptLeftClick
             item.transform.position = position;
             item.transform.rotation = rotation;
             item.transform.SetParent(network_parent == null ? null : network_parent.transform);
+
+            if (logistics_version)
+                item.transform.localScale *= item.logistics_scale;
         }
 
         return item;

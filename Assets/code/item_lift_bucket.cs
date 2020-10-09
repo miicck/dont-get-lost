@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class item_lift_bucket : MonoBehaviour
 {
-    item_lift lift => GetComponentInParent<item_lift>();
     float last_sign = 1f;
+    public item_input input;
+    public item_output output;
 
     item item
     {
@@ -50,8 +51,7 @@ public class item_lift_bucket : MonoBehaviour
         // Pick up an item if we don't already have one
         // and there is one to pick up
         if (item != null) return;
-        if (lift.input.item == null) return;
-        item = lift.input.release_item();
+        item = input.release_next_item();
     }
 
     void request_item_offload()
@@ -59,7 +59,6 @@ public class item_lift_bucket : MonoBehaviour
         // Offload an item to the output if we have
         // one and the output is free
         if (item == null) return;
-        if (lift.output.item != null) return;
-        lift.output.item = release_item();
+        output.add_item(release_item());
     }
 }

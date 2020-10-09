@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4533559595524842322}
-  - component: {fileID: 5295237144752824339}
+  - component: {fileID: 5023278240271509956}
   m_Layer: 0
   m_Name: input
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Father: {fileID: 8946902083556223009}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5295237144752824339
+--- !u!114 &5023278240271509956
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,10 +41,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 400547300734980956}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
 --- !u!1 &1082706248931013736
 GameObject:
   m_ObjectHideFlags: 0
@@ -218,6 +217,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bottom: {fileID: 8858422217762321463}
   top: {fileID: 882639761447339335}
+  input: {fileID: 5023278240271509956}
+  output: {fileID: 26062158051343658}
 --- !u!1 &3127481997548326201
 GameObject:
   m_ObjectHideFlags: 0
@@ -227,7 +228,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8946902083556223009}
-  - component: {fileID: 4720981052477191053}
+  - component: {fileID: 2183741204855293120}
   m_Layer: 0
   m_Name: piston_lift
   m_TagString: Untagged
@@ -258,7 +259,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4720981052477191053
+--- !u!114 &2183741204855293120
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -267,12 +268,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 3127481997548326201}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a254ee4de0e8ad6438b9f1faa9bc76ee, type: 3}
+  m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 5c2de5f1d3b7fae419da705f8a7ecd64, type: 3}
-  plural: piston lifts
+  plural: 
   value: 0
   fuel_value: 0
   food_value: 0
@@ -330,7 +331,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 832867581376189892}
-  - component: {fileID: 1138990972160447286}
+  - component: {fileID: 26062158051343658}
   m_Layer: 0
   m_Name: output
   m_TagString: Untagged
@@ -353,7 +354,7 @@ Transform:
   m_Father: {fileID: 8946902083556223009}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1138990972160447286
+--- !u!114 &26062158051343658
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -362,10 +363,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3721669667445588837}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f14b3f1cca34a84f97626b0d639b45b, type: 3}
+  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
 --- !u!1 &7752293026464412905
 GameObject:
   m_ObjectHideFlags: 0
