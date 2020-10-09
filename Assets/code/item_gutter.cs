@@ -7,7 +7,7 @@ using UnityEngine;
 public class item_gutter : item_node
 {
     public const float ITEM_FLOW_TIMESPAN = 60f;
-    public const float ITEM_SEPERATION = 0.25f;
+    public const float ITEM_SEPERATION = 0.3f;
 
     public Transform start;
     public Transform end;
@@ -118,6 +118,10 @@ public class item_gutter : item_node
     {
         if (this == null)
             return; // Destroyed
+
+        // Allign items to gutter
+        for (int i = 0; i < item_count; ++i)
+            get_item(i).transform.forward = end.position - start.position;
 
         for (int i = 1; i < item_count; ++i)
         {

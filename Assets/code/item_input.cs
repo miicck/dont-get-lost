@@ -29,6 +29,17 @@ public class item_input : item_node
         return true;
     }
 
+    protected override bool on_add_item(item i)
+    {
+        // Only one item allowed in input
+        if (item_count > 0)
+        {
+            Destroy(i.gameObject);
+            return false;
+        }
+        return true;
+    }
+
     protected override bool can_output_to(item_node other)
     {
         // Inputs can't output to anything

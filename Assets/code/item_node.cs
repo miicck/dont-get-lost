@@ -8,24 +8,31 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;
 
+    /// <summary> The parent building to which this item node belongs. </summary>
+    public building_material building => GetComponentInParent<building_material>();
+
+    //#######//
+    // ITEMS //
+    //#######//
+
     /// <summary> The items this node point is currently responsible for. </summary>
     List<item> items = new List<item>();
     public int item_count => items.Count;
     protected item get_item(int i) { return items[i]; }
 
-    /// <summary> The item nodes that input to this node. </summary>
-    List<item_node> inputs_from = new List<item_node>();
-    public int input_count => inputs_from.Count;
+    /// <summary> Add an item to this node. </summary>
+    public void add_item(item i)
+    {
+        if (!on_add_item(i)) return;
 
-    /// <summary> The item nodes that this node outputs to. </summary>
-    List<item_node> outputs_to = new List<item_node>();
-    public int output_count => outputs_to.Count;
+        items.Add(i);
+        items.Sort(sort_items);
+        i.transform.SetParent(transform);
+    }
 
-    public item_node nearest_output => utils.find_to_min(outputs_to, 
-        (o) => (o.input_point(output_point) - output_point).magnitude);
-
-    /// <summary> The parent building to which this item node belongs. </summary>
-    public building_material building => GetComponentInParent<building_material>();
+    /// <summary> Called just before an item is added to my items list, in 
+    /// case we want to delete it, rather than accept it. </summary>
+    protected virtual bool on_add_item(item i) { return true; }
 
     /// <summary> Release the <paramref name="i"/>th item from this node. </summary>
     public item release_item(int i)
@@ -47,6 +54,49 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
         return ret;
     }
 
+    /// <summary> Used to determine the order that items are 
+    /// maintained in the list. Defaults to closest-to-output 
+    /// at position 0. </summary>
+    protected virtual int sort_items(item a, item b)
+    {
+        float a_dis = (a.transform.position - output_point).magnitude;
+        float b_dis = (b.transform.position - output_point).magnitude;
+        return a_dis.CompareTo(b_dis);
+    }
+
+    //########//
+    // INPUTS //
+    //########//
+
+    /// <summary> Should return true if this node can get input
+    /// from the given <paramref name="other"/> node. </summary>
+    protected abstract bool can_input_from(item_node other);
+
+    /// <summary> The item nodes that input to this node. </summary>
+    List<item_node> inputs_from = new List<item_node>();
+    public int input_count => inputs_from.Count;
+
+    /// <summary> The point where items are input to this node. </summary>
+    public virtual Vector3 input_point(Vector3 input_from) { return transform.position; }
+
+    //#########//
+    // OUTPUTS //
+    //#########//
+
+    /// <summary> Should return true if this node can output
+    /// to the given <paramref name="other"/> node. </summary>
+    protected abstract bool can_output_to(item_node other);
+
+    /// <summary> The item nodes that this node outputs to. </summary>
+    List<item_node> outputs_to = new List<item_node>();
+    public int output_count => outputs_to.Count;
+
+    /// <summary> The point where items are output from this node. </summary>
+    public virtual Vector3 output_point => transform.position;
+
+    public item_node nearest_output => utils.find_to_min(outputs_to, 
+        (o) => (o.input_point(output_point) - output_point).magnitude);
+
     /// <summary> Get the next output, in a cyclic fashion. </summary>
     protected item_node next_output()
     {
@@ -55,6 +105,10 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
         return outputs_to[output_number];
     }
     int output_number = 0;
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     // Keep track of nodes
     bool registered = false;
@@ -74,32 +128,12 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
             forget_node(this);
     }
 
-    public void add_item(item i)
-    {
-        items.Add(i);
-        i.transform.SetParent(transform);
-    }
-
     protected virtual void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
         foreach (var l in outputs_to)
             Gizmos.DrawLine(output_point, l.input_point(output_point));
     }
-
-    /// <summary> Should return true if this node can output
-    /// to the given <paramref name="other"/> node. </summary>
-    protected abstract bool can_output_to(item_node other);
-
-    /// <summary> Should return true if this node can get input
-    /// from the given <paramref name="other"/> node. </summary>
-    protected abstract bool can_input_from(item_node other);
-
-    /// <summary> The point where items are output from this node. </summary>
-    public virtual Vector3 output_point => transform.position;
-
-    /// <summary> The point where items are input to this node. </summary>
-    public virtual Vector3 input_point(Vector3 input_from) { return transform.position; }
 
     //##############//
     // STATIC STUFF //
