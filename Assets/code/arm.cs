@@ -178,8 +178,8 @@ public class arm : MonoBehaviour
                 var a = (arm)target;
                 foreach (Transform t in a.transform)
                 {
-                    if (t.name.Contains("upper")) a.shoulder = t;
-                    else if (t.name.Contains("lower")) a.elbow = t;
+                    if (t.name.Contains("upper") || t.name.Contains("shoulder")) a.shoulder = t;
+                    else if (t.name.Contains("lower") || t.name.Contains("elbow")) a.elbow = t;
                     else if (t.name.Contains("hand")) a.hand = t;
                 }
             }

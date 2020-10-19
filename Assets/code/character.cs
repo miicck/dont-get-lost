@@ -42,7 +42,7 @@ public class character : networked, INotPathBlocking, IInspectable
         {
             // Default control
             if (_controller == null)
-                _controller = new character_control_v2();
+                _controller = default_controller();
             return _controller;
         }
         set => _controller = value;
@@ -285,6 +285,11 @@ public class character : networked, INotPathBlocking, IInspectable
     //#########//
     // CONTROL //
     //#########//
+
+    protected virtual ICharacterController default_controller()
+    {
+        return new character_control_v2();
+    }
 
     float last_attack_time = 0;
     public void melee_attack(player p)

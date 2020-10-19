@@ -20,7 +20,6 @@ public static class cinematic_recording
         if (keyframes.Count > 0)
         {
             Vector3 delta = position - keyframes[keyframes.Count - 1].position;
-            Debug.Log(delta.magnitude);
             if (delta.magnitude < 0.5f)
             {
                 popup_message.create("Keyframes too close!");

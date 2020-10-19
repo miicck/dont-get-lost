@@ -186,8 +186,9 @@ public class game : MonoBehaviour
 
         // Initialize various things
         options_menu.initialize();
-        item_node.initalize_nodes();
+        item_node.initialize();
         biome.initialize();
+        road.initialize();
         character_spawn_point.initialize();
         character.initialize();
 

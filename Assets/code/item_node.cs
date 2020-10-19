@@ -141,7 +141,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
 
     static HashSet<item_node> nodes;
 
-    public static void initalize_nodes()
+    public static void initialize()
     {
         nodes = new HashSet<item_node>();
     }

@@ -10,9 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2774728822356606977}
   - component: {fileID: 7792129839299711683}
+  - component: {fileID: 4528473083228640199}
   - component: {fileID: 4832043639438628094}
   m_Layer: 0
-  m_Name: straw
+  m_Name: wheat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,9 +46,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 4183447387819725491, guid: ebfd1b2a53dd73644a276e810ef719e4, type: 3}
+  item: {fileID: 7456890149895918369, guid: 69fbb8b0d92a33e45a7c2e48d32462eb, type: 3}
   min_count: 1
   max_count: 1
+  one_in_chance: 1
+--- !u!114 &4528473083228640199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3422138164616214891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 2538827299418554887, guid: 79e710047dd70d6499b09328839fa940, type: 3}
+  min_count: 1
+  max_count: 2
   one_in_chance: 1
 --- !u!114 &4832043639438628094
 MonoBehaviour:

@@ -60,7 +60,7 @@ public class auto_crafter : building_material, IInspectable
             }
 
         // Attempt to craft something
-        if (inputs_changed)
+        if (inputs_changed || inputs.Length == 0)
             foreach (var r in recipies)
                 if (r.craft(pending_inputs, pending_outputs))
                 {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(character))]
 public class character_hitbox : accepts_item_impact
 {
     character character;
