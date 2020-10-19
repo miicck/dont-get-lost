@@ -308,8 +308,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2839960634216640760}
-  - component: {fileID: 2910395768303566328}
+  - component: {fileID: 5032644002433172250}
   - component: {fileID: 7927457733478339910}
+  - component: {fileID: 5353650457427765530}
   m_Layer: 0
   m_Name: stone_path
   m_TagString: Untagged
@@ -340,7 +341,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2910395768303566328
+--- !u!114 &5032644002433172250
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -349,7 +350,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6531066225032219599}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4764f0ddb2ed6354ca82461b46359377, type: 3}
+  m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
@@ -373,6 +374,18 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 0.05, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5353650457427765530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6531066225032219599}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 119155b4a9ef54c499df6016a9e6ee41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6631049756508945221
 GameObject:
   m_ObjectHideFlags: 0

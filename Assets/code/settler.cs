@@ -17,15 +17,15 @@ public class settler : character
 
 class settler_control : ICharacterController
 {
-    road current_road;
-    road next_road;
+    settler_path_element current_road;
+    settler_path_element next_road;
     float progress = 0;
 
     public void control(character c)
     {
         if (current_road == null)
         {
-            current_road = road.find_nearest(c.transform.position);
+            current_road = settler_path_element.find_nearest(c.transform.position);
             if (current_road != null)
                 c.transform.position = current_road.transform.position;
         }
@@ -33,7 +33,7 @@ class settler_control : ICharacterController
         {
             if (next_road == null)
             {
-                var rds = current_road.linked_roads();
+                var rds = current_road.linked_elements();
                 if (rds.Count == 0) return;
                 next_road = rds[Random.Range(0, rds.Count)];
             }
@@ -51,8 +51,10 @@ class settler_control : ICharacterController
                 current_road.transform.position, 
                 next_road.transform.position, progress);
 
-            c.transform.forward = next_road.transform.position - 
+            Vector3 forward = next_road.transform.position -
                 current_road.transform.position;
+            forward.y = 0;
+            c.transform.forward = forward;
         }
     }
 

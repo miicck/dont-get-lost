@@ -2,41 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class road : building_material
+/// <summary> An object that can be connected to other 
+/// objects of the same kind via road_links. </summary>
+public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquippable
 {
-    bool dont_register => is_blueprint || is_equpped;
-
     public road_link[] links { get; private set; }
 
-    public List<road> linked_roads()
+    public List<settler_path_element> linked_elements()
     {
-        List<road> ret = new List<road>();
+        List<settler_path_element> ret = new List<settler_path_element>();
         foreach (var l in links)
             if (l.linked_to != null)
             {
-                var rl = l.linked_to.GetComponentInParent<road>();
+                var rl = l.linked_to.GetComponentInParent<settler_path_element>();
                 if (rl != null)
                     ret.Add(rl);
             }
         return ret;
     }
 
+    bool start_called = false;
     private void Start()
     {
-        // Register this road, if neccassary
-        if (dont_register) return;
+        // Register this element, if neccassary
+        start_called = true;
         links = GetComponentsInChildren<road_link>();
-        register_road(this);
+        register_element(this);
     }
 
     private void OnDestroy()
     {
-        // Unregister this road, if neccassary
-        if (dont_register) return;
-        forget_road(this);
+        // Unregister this element, if neccassary
+        if (start_called)
+            forget_element(this);
     }
 
-    void try_link(road other)
+    void try_link(settler_path_element other)
     {
         // Can't link to self
         if (other == this) return;
@@ -78,41 +79,41 @@ public class road : building_material
     // STATIC STUFF //
     //##############//
 
-    static HashSet<road> all_roads;
+    static HashSet<settler_path_element> all_elements;
 
-    public static road find_nearest(Vector3 position)
+    public static settler_path_element find_nearest(Vector3 position)
     {
-        return utils.find_to_min(all_roads,
+        return utils.find_to_min(all_elements,
             (r) => (r.transform.position - position).sqrMagnitude);
     }
 
     public static void initialize()
     {
-        // Initialize the roads collection
-        all_roads = new HashSet<road>();
+        // Initialize theelements collection
+        all_elements = new HashSet<settler_path_element>();
     }
 
-    static void validate_links(road r)
+    static void validate_links(settler_path_element r)
     {
         // Re-make all links to/from r
         r.break_links();
-        foreach (var r2 in all_roads)
+        foreach (var r2 in all_elements)
             r.try_link(r2);
     }
 
-    static void register_road(road r)
+    static void register_element(settler_path_element r)
     {
-        // Create links to/from r, add r to the collection of roads.
+        // Create links to/from r, add r to the collection of elements.
         validate_links(r);
-        if (!all_roads.Add(r))
-            throw new System.Exception("Tried to register road twice!");
+        if (!all_elements.Add(r))
+            throw new System.Exception("Tried to register element twice!");
     }
 
-    static void forget_road(road r)
+    static void forget_element(settler_path_element r)
     {
-        // Forget all the links to/from r, remove r from the collection of roads
+        // Forget all the links to/from r, remove r from the collection of elements
         r.break_links();
-        if (!all_roads.Remove(r))
-            throw new System.Exception("Tried to forget unregistered road!");
+        if (!all_elements.Remove(r))
+            throw new System.Exception("Tried to forget unregistered element!");
     }
 }

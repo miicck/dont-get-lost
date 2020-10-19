@@ -118,8 +118,8 @@ MonoBehaviour:
   lean_velocity_scale: 5
   character: {fileID: 8225977474041488406}
   head: {fileID: 5001111125917672842}
-  head_bob_amt: 0
-  head_lean_inherit_amt: 0
+  head_bob_amt: 1
+  head_lean_inherit_amt: 1
 --- !u!1 &8141453118886981493
 GameObject:
   m_ObjectHideFlags: 0
