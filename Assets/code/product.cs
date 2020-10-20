@@ -118,6 +118,37 @@ public class product : MonoBehaviour
         }
     }
 
+    public virtual void spawn_in_node(item_node node)
+    {
+        int count = 0;
+
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                count = Random.Range(min_count, max_count + 1);
+                break;
+
+            case MODE.PROBABILITY:
+                float prob = 1f / one_in_chance;
+                if (Random.Range(0, 1f) < prob)
+                    count = Random.Range(min_count, max_count + 1);
+                break;
+
+            default:
+                throw new System.Exception("Unkown product mode!");
+        }
+
+        if (count == 0) return;
+
+        for (int i=0; i<count; ++i)
+        {
+            var itm = item.create(item.name, node.transform.position, 
+                Quaternion.identity, logistics_version: true);
+            node.add_item(itm);
+        }
+    }
+
     /// <summary> A sprite representing the product. </summary>
     public virtual Sprite sprite()
     {

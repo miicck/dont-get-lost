@@ -19,19 +19,21 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     }
 
     bool registered = false;
-    private void Start()
+    protected virtual void Start()
     {
+        if (path_element == null)
+            throw new System.Exception("Path element on " + name + " isn't assigned!");
         registered = true;
         register_interactable(this);
     }
 
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         if (registered)
             forget_interactable(this);
     }
 
-    public virtual bool interact()
+    public virtual bool interact(settler s)
     {
         return true;
     }
@@ -44,7 +46,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
 
     public static settler_interactable nearest(TYPE t, Vector3 v)
     {
-        return utils.find_to_min(interactables[t], 
+        return utils.find_to_min(interactables[t],
             (i) => (i.transform.position - v).sqrMagnitude);
     }
 
@@ -58,7 +60,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
         });
 
         // Only return if acceptable
-        if (f(ret)) return ret; 
+        if (f(ret)) return ret;
         return null;
     }
 
@@ -88,5 +90,19 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     {
         if (!interactables[i.type].Remove(i))
             throw new System.Exception("Tried to remove unregistered interactable!");
+    }
+
+    public static string info()
+    {
+        string ret = "";
+        int total = 0;
+        foreach (TYPE e in System.Enum.GetValues(typeof(TYPE)))
+        {
+            int count = interactables[e].Count;
+            ret += "    " + e + " : " + count + "\n";
+            total += count;
+        }
+        ret = "Total interactions : " + total + "\n" + ret;
+        return ret.TrimEnd();
     }
 }

@@ -19,7 +19,6 @@ class settler_control : ICharacterController
 {
     List<settler_path_element> path;
     settler_interactable target;
-    HashSet<settler_interactable> unpathable_from_target = new HashSet<settler_interactable>();
     float walk_speed_mod = 1f;
     bool interaction_complete = false;
 
@@ -29,11 +28,20 @@ class settler_control : ICharacterController
         {
             // Set the initial target to the nearest one and teleport there
             target = settler_interactable.nearest(settler_interactable.TYPE.WORK, c.transform.position);
+            if (target == null || target.path_element == null) return;
             c.transform.position = target.path_element.transform.position;
         }
 
         if (path != null && path.Count > 0)
         {
+            if (path[0] == null)
+            {
+                // Path has been destroyed, reset
+                path = null;
+                target = null;
+                return;
+            }
+
             // Walk the path to completion  
             Vector3 next_point = path[0].transform.position;
             Vector3 forward = next_point - c.transform.position;
@@ -47,15 +55,14 @@ class settler_control : ICharacterController
             return;
         }
 
-        if (interaction_complete || target.interact())
+        if (interaction_complete || target.interact((settler)c))
         {
             interaction_complete = true;
 
             // A random interactable object
             var next = settler_interactable.random(settler_interactable.TYPE.WORK);
 
-            // Don't consider unpathable objects, or returning to the same target
-            if (unpathable_from_target.Contains(next)) return;
+            // Don't consider returning to the same target
             if (next == target) return;
 
             // Attempt to path to new target
@@ -63,8 +70,7 @@ class settler_control : ICharacterController
 
             if (path == null)
             {
-                // Pathing failed, record this
-                unpathable_from_target.Add(next);
+                // Pathing failed
                 return;
             }
 
@@ -92,5 +98,12 @@ class settler_control : ICharacterController
                     path[i - 1].transform.position + Vector3.up);
     }
 
-    public void draw_inspector_gui() { }
+    public void draw_inspector_gui()
+    {
+#if UNITY_EDITOR
+        string text = target == null ? "No target\n" : "Target = " + target.name + "\n";
+        text += (path == null) ? "No path\n" : "Path length = " + path.Count;
+        UnityEditor.EditorGUILayout.TextArea(text);
+#endif
+    }
 }
