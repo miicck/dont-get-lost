@@ -4,9 +4,9 @@ using UnityEngine;
 
 /// <summary> An object that can be connected to other 
 /// objects of the same kind via road_links. </summary>
-public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquippable
+public class settler_path_element : MonoBehaviour, INonBlueprintable, INonEquipable
 {
-    public road_link[] links { get; private set; }
+    public settler_path_link[] links { get; private set; }
 
     public List<settler_path_element> linked_elements()
     {
@@ -26,7 +26,7 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquipp
     {
         // Register this element, if neccassary
         start_called = true;
-        links = GetComponentsInChildren<road_link>();
+        links = GetComponentsInChildren<settler_path_link>();
         register_element(this);
     }
 
@@ -52,7 +52,8 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquipp
                 // L2 already linked
                 if (l2.linked_to != null) continue;
 
-                if ((l.transform.position - l2.transform.position).magnitude < 0.1f)
+                if ((l.transform.position - l2.transform.position).magnitude <
+                    settler_path_link.LINK_DISTANCE)
                 {
                     // Make link both ways
                     l.linked_to = l2;
@@ -73,6 +74,19 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquipp
                 l.linked_to = null;
             }
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        foreach (var l in links)
+            if (l.linked_to != null)
+                Gizmos.DrawLine(transform.position, l.transform.position);
+    }
+
+    float heuristic(settler_path_element other)
+    {
+        return (transform.position - other.transform.position).magnitude;
     }
 
     //##############//
@@ -115,5 +129,67 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INotEquipp
         r.break_links();
         if (!all_elements.Remove(r))
             throw new System.Exception("Tried to forget unregistered element!");
+    }
+
+    /// <summary> Find a path between the start and end elements, using 
+    /// the A* algorithm. Returns null if no such path exists. </summary>
+    public static List<settler_path_element> path(settler_path_element start, settler_path_element goal)
+    {
+        // Setup pathfinding state
+        var open_set = new HashSet<settler_path_element>();
+        var closed_set = new HashSet<settler_path_element>();
+        var came_from = new Dictionary<settler_path_element, settler_path_element>();
+        var fscore = new Dictionary<settler_path_element, float>();
+        var gscore = new Dictionary<settler_path_element, float>();
+
+        // Initialize pathfinding with just start open
+        open_set.Add(start);
+        gscore[start] = 0;
+        fscore[start] = goal.heuristic(start);
+
+        while (open_set.Count > 0)
+        {
+            // Find the lowest fscore in the open set
+            var current = utils.find_to_min(open_set, (c) => fscore[c]);
+
+            if (current == goal)
+            {
+                // Success - reconstruct path
+                List<settler_path_element> path = new List<settler_path_element> { current };
+                while (came_from.TryGetValue(current, out current))
+                    path.Add(current);
+                path.Reverse();
+                return path;
+            }
+
+            // Close current
+            open_set.Remove(current);
+            closed_set.Add(current);
+
+            foreach (var n in current.linked_elements())
+            {
+                if (closed_set.Contains(n))
+                    continue;
+
+                // Work out tentative path length to n, if we wen't via current
+                var tgs = gscore[current] + n.heuristic(current);
+
+                // Get the current neighbour gscore (infinity if not already scored)
+                if (!gscore.TryGetValue(n, out float gsn))
+                    gsn = Mathf.Infinity;
+
+                if (tgs < gsn)
+                {
+                    // This is a better path to n, update it
+                    came_from[n] = current;
+                    gscore[n] = tgs;
+                    fscore[n] = tgs + goal.heuristic(n);
+                    open_set.Add(n);
+                }
+            }
+        }
+
+        // Pathfinding failed
+        return null;
     }
 }

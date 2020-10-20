@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A node in the item logistics network. </summary>
-public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippable
+public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipable
 {
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;
@@ -17,8 +17,25 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
 
     /// <summary> The items this node point is currently responsible for. </summary>
     List<item> items = new List<item>();
-    public int item_count => items.Count;
-    protected item get_item(int i) { return items[i]; }
+    public int item_count
+    {
+        get
+        {
+            remove_deleted_items();
+            return items.Count;
+        }
+    }
+
+    protected item get_item(int i)
+    {
+        remove_deleted_items();
+        return items[i];
+    }
+
+    void remove_deleted_items()
+    {
+        items.RemoveAll((i) => i == null);
+    }
 
     /// <summary> Add an item to this node. </summary>
     public void add_item(item i)
@@ -94,7 +111,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INotEquippab
     /// <summary> The point where items are output from this node. </summary>
     public virtual Vector3 output_point => transform.position;
 
-    public item_node nearest_output => utils.find_to_min(outputs_to, 
+    public item_node nearest_output => utils.find_to_min(outputs_to,
         (o) => (o.input_point(output_point) - output_point).magnitude);
 
     /// <summary> Get the next output, in a cyclic fashion. </summary>

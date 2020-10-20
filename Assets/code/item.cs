@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface INotEquippable { }
+public interface INonEquipable { }
 
 public class item : networked, IInspectable, IAcceptLeftClick
 {
@@ -106,7 +106,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
             r.enabled = false;
 
         // Destroy non-equippable things
-        foreach (Component eq in GetComponentsInChildren<INotEquippable>())
+        foreach (Component eq in GetComponentsInChildren<INonEquipable>())
             Destroy(eq);
     }
 

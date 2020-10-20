@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class road_link : MonoBehaviour
+public class settler_path_link : MonoBehaviour
 {
-    public road_link linked_to;
+    public const float LINK_DISTANCE = 0.25f;
+
+    public settler_path_link linked_to;
 
     private void OnDrawGizmos()
     {
@@ -15,6 +17,6 @@ public class road_link : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawLine(transform.position, linked_to.transform.position);
         }
-        Gizmos.DrawWireSphere(transform.position, 0.1f);
+        Gizmos.DrawWireSphere(transform.position, LINK_DISTANCE / 2f);
     }
 }
