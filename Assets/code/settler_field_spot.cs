@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field_spot : MonoBehaviour, INonBlueprintable, INonEquipable
+public class settler_field_spot : MonoBehaviour, INonBlueprintable, INonEquipable, IInspectable
 {
     public bool grown => progress >= 1f;
     public GameObject to_grow;
@@ -35,6 +35,14 @@ public class settler_field_spot : MonoBehaviour, INonBlueprintable, INonEquipabl
     {
         progress += 10f / growth_time;
     }
+
+    public string inspect_info()
+    {
+        return Mathf.Clamp(progress * 100f, 0f, 100f) + "% grown";
+    }
+
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 
     private void OnDrawGizmos()
     {
