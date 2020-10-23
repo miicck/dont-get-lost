@@ -34,17 +34,10 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
             forget_interactable(this);
     }
 
-    public virtual bool start_interaction(settler s)
-    {
-        return true;
-    }
-
     public virtual bool interact(settler s, float time_elapsed)
     {
         return true;
     }
-
-    public virtual void end_interaction(settler s) { }
 
     //##############//
     // STATIC STUFF //

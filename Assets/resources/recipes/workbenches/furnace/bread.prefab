@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 2538827299418554887, guid: 651c9b88489c37b4389a82bc356fbd00, type: 3}
-  count: 2
+  count: 1
 --- !u!114 &1213581095459593720
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,4 +89,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c115349308b276345950de919ec67a3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fuel_required: 4
+  fuel_required: 1

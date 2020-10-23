@@ -76,15 +76,32 @@ public class item : networked, IInspectable, IAcceptLeftClick
     // Use the equipped version of this item
     public virtual use_result on_use_start(player.USE_TYPE use_type)
     {
-        if (food_value > 0)
+        if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
         {
-            // Eat
-            player.current.inventory.remove(this, 1);
-            player.current.modify_hunger(food_value);
-            player.current.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
-            foreach (var p in GetComponents<product>())
-                p.create_in(player.current.inventory);
+            if (food_value > 0)
+            {
+                // Eat
+                player.current.inventory.remove(this, 1);
+                player.current.modify_hunger(food_value);
+                player.current.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
+                foreach (var p in GetComponents<product>())
+                    p.create_in(player.current.inventory);
+            }
         }
+        else if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
+        {
+            // Place this item on the gutter
+            var ray = player.current.camera_ray(player.INTERACTION_RANGE, out float dis);
+            var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
+            if (gutter != null)
+            {
+                var created = item.create(name, hit.point, Quaternion.identity, logistics_version: true);
+                gutter.add_item(created);
+                player.current.inventory.remove(this, 1);
+            }
+
+        }
+
         return use_result.complete;
     }
 
@@ -213,7 +230,11 @@ public class item : networked, IInspectable, IAcceptLeftClick
     // IInspectable //
     //##############//
 
-    public virtual string inspect_info() { return display_name; }
+    public virtual string inspect_info()
+    {
+        return item_quantity_info(this, 1);
+    }
+
     public virtual Sprite main_sprite() { return sprite; }
     public virtual Sprite secondary_sprite() { return null; }
 

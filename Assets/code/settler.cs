@@ -2,14 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler : character
+public class settler : character, IInspectable
 {
+    public const float HUNGER_PER_SECOND = 0.2f;
+    public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
+
     public float hunger
     {
         get => _hunger;
         set => _hunger = Mathf.Clamp(value, 0, 100);
     }
     float _hunger;
+
+    public float tiredness
+    {
+        get => _tiredness;
+        set => _tiredness = Mathf.Clamp(value, 0, 100);
+    }
+    float _tiredness;
 
     public override bool persistant()
     {
@@ -19,6 +29,13 @@ public class settler : character
     protected override ICharacterController default_controller()
     {
         return new settler_control();
+    }
+
+    new public string inspect_info()
+    {
+        return "Settler\n" +
+               "    " + Mathf.Round(hunger) + "% hungry\n" +
+               "    " + Mathf.Round(tiredness) + "% tired";
     }
 }
 
@@ -32,6 +49,12 @@ class settler_control : ICharacterController
 
     public void control(character c)
     {
+        var s = (settler)c;
+
+        // Get hungry/tired
+        s.hunger += settler.HUNGER_PER_SECOND * Time.deltaTime;
+        s.tiredness += settler.TIREDNESS_PER_SECOND * Time.deltaTime;
+
         if (target == null)
         {
             // Set the initial target to the nearest one and teleport there
@@ -63,12 +86,21 @@ class settler_control : ICharacterController
             return;
         }
 
-        if (interaction_complete || target.interact((settler)c, interaction_time))
+        if (interaction_complete || target.interact(s, interaction_time))
         {
             interaction_complete = true;
 
-            // A random interactable object
-            var next = settler_interactable.random();
+            // The next candidate interaction
+            settler_interactable next = null;
+            if (Random.Range(0, 100) < s.hunger)
+                next = settler_interactable.random(settler_interactable.TYPE.EAT);
+
+            else if (Random.Range(0, 100) < s.tiredness)
+                next = settler_interactable.random(settler_interactable.TYPE.SLEEP);
+
+            // Didn't need to do anything, so get to work
+            if (next == null)
+                next = settler_interactable.random(settler_interactable.TYPE.WORK);
 
             // Don't consider null interactables
             // or returning to the same target
