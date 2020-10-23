@@ -4,6 +4,13 @@ using UnityEngine;
 
 public class settler : character
 {
+    public float hunger
+    {
+        get => _hunger;
+        set => _hunger = Mathf.Clamp(value, 0, 100);
+    }
+    float _hunger;
+
     public override bool persistant()
     {
         return true;
@@ -21,6 +28,7 @@ class settler_control : ICharacterController
     settler_interactable target;
     float walk_speed_mod = 1f;
     bool interaction_complete = false;
+    float interaction_time = 0;
 
     public void control(character c)
     {
@@ -55,14 +63,16 @@ class settler_control : ICharacterController
             return;
         }
 
-        if (interaction_complete || target.interact((settler)c))
+        if (interaction_complete || target.interact((settler)c, interaction_time))
         {
             interaction_complete = true;
 
             // A random interactable object
-            var next = settler_interactable.random(settler_interactable.TYPE.WORK);
+            var next = settler_interactable.random();
 
-            // Don't consider returning to the same target
+            // Don't consider null interactables
+            // or returning to the same target
+            if (next == null) return;
             if (next == target) return;
 
             // Attempt to path to new target
@@ -76,11 +86,19 @@ class settler_control : ICharacterController
 
             // Pathing success, this is our next target
             target = next;
+
+            // Reset things
             interaction_complete = false;
+            interaction_time = 0;
 
             // Set a new randomized path speed, so settlers 
             // don't end up 100% in-phase
             walk_speed_mod = Random.Range(0.9f, 1.1f);
+        }
+        else
+        {
+            // Increment the interaction timer
+            interaction_time += Time.deltaTime;
         }
     }
 

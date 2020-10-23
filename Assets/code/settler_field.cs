@@ -15,8 +15,12 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         base.Start();
     }
 
-    public override bool interact(settler s)
+    public override bool interact(settler s, float time_elapsed)
     {
+        // It takes 1 second to tend the field
+        if (time_elapsed < 1f)
+            return false;
+
         var spot = spots[Random.Range(0, spots.Length)];
 
         spot.tend();

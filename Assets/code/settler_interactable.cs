@@ -15,7 +15,8 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     public enum TYPE
     {
         WORK,
-        EAT
+        EAT,
+        SLEEP,
     }
 
     bool registered = false;
@@ -33,10 +34,17 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
             forget_interactable(this);
     }
 
-    public virtual bool interact(settler s)
+    public virtual bool start_interaction(settler s)
     {
         return true;
     }
+
+    public virtual bool interact(settler s, float time_elapsed)
+    {
+        return true;
+    }
+
+    public virtual void end_interaction(settler s) { }
 
     //##############//
     // STATIC STUFF //
@@ -69,6 +77,12 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
         var l = interactables[t];
         if (l.Count == 0) return null;
         return l[Random.Range(0, l.Count)];
+    }
+
+    public static settler_interactable random()
+    {
+        var types = System.Enum.GetValues(typeof(TYPE));
+        return random((TYPE)types.GetValue(Random.Range(0, types.Length)));
     }
 
     public static void initialize()

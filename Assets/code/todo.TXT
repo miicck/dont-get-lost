@@ -3,7 +3,6 @@ Ongoing
 
 Tasks
 - Item flow recording should be done on link points?
-- Figure out why items slide into one another on gutters
 - Fix farming spots so that they display properly
 - Implement teleport-to-player
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
@@ -15,7 +14,3 @@ Tasks
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
 - More foliage (small plants/flowers)
-- Make gutter input work anywhere along the gutter (sort of done - might need to
-  create a multi-input link point for the gutter?)
-- Make item_link_points link to the closest valid connection (so gutters 
-  can pass over one another without accedentally dropping between the levels)
