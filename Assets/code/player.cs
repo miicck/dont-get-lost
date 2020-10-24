@@ -1289,7 +1289,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
         if (hunger.value > 50) heal(1);
         else if (hunger.value == 0) take_damage(1);
 
-        if (passive_effect_counter % 5 == 0)
+        if (passive_effect_counter % 20 == 0)
             modify_hunger(-1);
     }
 

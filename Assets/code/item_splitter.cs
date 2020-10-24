@@ -96,6 +96,10 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
                 input_selector_item.transform.SetParent(input_selector);
                 input_selector_item.transform.position = input_selector_end.position;
 
+                // Align forward direction along selector
+                input_selector_item.transform.forward =
+                    input_selector.transform.position - input_selector_item.transform.position;
+
                 // Cycle to next input
                 current_input = (current_input + 1) % inputs.Length;
             }
@@ -108,7 +112,7 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
         // Move output selector item along the output selector
         if (output_selector_item != null)
             if (move_towards(output_selector_item.transform,
-                output_selector_end.position, 1f) && 
+                output_selector_end.position, 1f) &&
                 output_alligned)
             {
                 // Drop off item
@@ -130,6 +134,10 @@ public class item_splitter : MonoBehaviour, INonBlueprintable
                     output_selector_item = input_selector_item;
                     output_selector_item.transform.SetParent(output_selector);
                     input_selector_item = null;
+
+                    // Align forward direction along selector
+                    output_selector_item.transform.forward =
+                        output_selector_end.position - output_selector_item.transform.position;
                 }
             }
     }
