@@ -409,6 +409,12 @@ public static class utils
         return arrived;
     }
 
+    public static bool rotate_towards(Transform t, Quaternion to, float max_angle)
+    {
+        t.rotation = Quaternion.RotateTowards(t.rotation, to, max_angle);
+        return Quaternion.Angle(t.rotation, to) < 0.1f;
+    }
+
     public static Vector3 axis(this Transform t, AXIS axis)
     {
         switch (axis)
