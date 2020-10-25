@@ -45,6 +45,13 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         items.Add(i);
         items.Sort(sort_items);
         i.transform.SetParent(transform);
+
+        if (!on_change_being_called) // Prevent recursive on_change calls
+        {
+            on_change_being_called = true;
+            on_change();
+            on_change_being_called = false;
+        }
     }
 
     /// <summary> Called just before an item is added to my items list, in 
@@ -57,6 +64,14 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         if (items.Count <= i) return null;
         item ret = items[i];
         items.RemoveAt(i);
+
+        if (!on_change_being_called) // Prevent recursive on_change calls
+        {
+            on_change_being_called = true;
+            on_change();
+            on_change_being_called = false;
+        }
+
         return ret;
     }
 
@@ -68,6 +83,14 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     {
         List<item> ret = new List<item>(items);
         items.Clear();
+
+        if (!on_change_being_called) // Prevent recursive on_change calls
+        {
+            on_change_being_called = true;
+            on_change();
+            on_change_being_called = false;
+        }
+
         return ret;
     }
 
@@ -79,6 +102,15 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         float a_dis = (a.transform.position - output_point).magnitude;
         float b_dis = (b.transform.position - output_point).magnitude;
         return a_dis.CompareTo(b_dis);
+    }
+
+    public delegate void on_change_func();
+    on_change_func on_change = () => { };
+    bool on_change_being_called = false;
+
+    public void add_on_change_listener(on_change_func f)
+    {
+        on_change += f;
     }
 
     //########//
@@ -184,8 +216,8 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// from <paramref name="node"/>. </summary>
     static void break_all_connections(item_node node)
     {
-        foreach (var ip in node.inputs_from) ip.outputs_to.Remove(node);
-        foreach (var ot in node.outputs_to) ot.inputs_from.Remove(node);
+        foreach (var ip in node.inputs_from) ip?.outputs_to.Remove(node);
+        foreach (var ot in node.outputs_to) ot?.inputs_from.Remove(node);
         node.inputs_from.Clear();
         node.outputs_to.Clear();
     }
@@ -203,6 +235,9 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     {
         // Break previous nodes
         break_all_connections(node);
+
+        // Remove deleted nodes
+        nodes.RemoveWhere((n) => n == null);
 
         // Loop over all nodes, creating connections where possible
         foreach (var n in nodes)

@@ -110,6 +110,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5761665303378400367}
+  - component: {fileID: 8549888262532801533}
   m_Layer: 0
   m_Name: boat
   m_TagString: Untagged
@@ -132,6 +133,20 @@ Transform:
   m_Father: {fileID: 259565917513825030}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8549888262532801533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3207268343743176118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17a5855505b74874e8d53296d5074acb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loading_centre: {x: 0.09, y: 0.66, z: -0.39}
+  loading_size: {x: 1, y: 0.5, z: 2}
 --- !u!1 &4436627978959986552
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,9 +229,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2768764127200988416}
-  - component: {fileID: 8757546601748828647}
+  - component: {fileID: 7084891667533090238}
   m_Layer: 0
-  m_Name: output
+  m_Name: boat_input
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -236,7 +251,7 @@ Transform:
   m_Father: {fileID: 259565917513825030}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8757546601748828647
+--- !u!114 &7084891667533090238
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -245,7 +260,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7810662082530172551}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
+  m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8541864954801483750
@@ -259,6 +274,7 @@ GameObject:
   - component: {fileID: 259565917513825030}
   - component: {fileID: 430330020041468505}
   - component: {fileID: 8885168432268371094}
+  - component: {fileID: 7119949115906502147}
   m_Layer: 0
   m_Name: dock
   m_TagString: Untagged
@@ -319,8 +335,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   input: {fileID: 4618826317970022091}
-  output: {fileID: 8757546601748828647}
+  output: {fileID: 7084891667533090238}
   crane: {fileID: 2041987997680519380}
+--- !u!114 &7119949115906502147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8541864954801483750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c76f5d26365034e960f53bb06bc601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boat_input: {fileID: 7084891667533090238}
+  boat: {fileID: 8549888262532801533}
 --- !u!1 &9048814620756532849
 GameObject:
   m_ObjectHideFlags: 0
@@ -332,7 +362,7 @@ GameObject:
   - component: {fileID: 1210039282776688044}
   - component: {fileID: 4618826317970022091}
   m_Layer: 0
-  m_Name: input
+  m_Name: dock_input
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -486,14 +516,9 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
---- !u!4 &1587605981211468680 stripped
+--- !u!4 &1117277458915575939 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
-  m_PrefabInstance: {fileID: 1261841630551884899}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1427561717599728188 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -9057511160527309217, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
+  m_CorrespondingSourceObject: {fileID: -7060611040363508512, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
   m_PrefabInstance: {fileID: 1261841630551884899}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &1292866646419420452 stripped
@@ -501,9 +526,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -9190763706858868409, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
   m_PrefabInstance: {fileID: 1261841630551884899}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &1117277458915575939 stripped
+--- !u!1 &1427561717599728188 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -9057511160527309217, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
+  m_PrefabInstance: {fileID: 1261841630551884899}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1587605981211468680 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -7060611040363508512, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e56d3b8893b6b0d4384fcbd1c1b0cdb9, type: 3}
   m_PrefabInstance: {fileID: 1261841630551884899}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7890844182507700248

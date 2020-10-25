@@ -118,7 +118,7 @@ public class product : MonoBehaviour
         }
     }
 
-    public virtual void spawn_in_node(item_node node)
+    public virtual void create_in_node(item_node node)
     {
         int count = 0;
 

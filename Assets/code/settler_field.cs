@@ -29,7 +29,7 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         {
             spot.harvest();
             foreach (var p in spot.products)
-                p.spawn_in_node(output);
+                p.create_in_node(output);
         }
 
         return true;

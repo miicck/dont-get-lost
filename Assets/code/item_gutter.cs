@@ -6,8 +6,7 @@ using UnityEngine;
 /// as an extended item node. </summary>
 public class item_gutter : item_node
 {
-    public const float ITEM_FLOW_TIMESPAN = 60f;
-    public const float ITEM_SEPERATION = 0.3f;
+    public const float ITEM_SEPERATION = item.LOGISTICS_SIZE;
 
     public Transform start;
     public Transform end;

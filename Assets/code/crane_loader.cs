@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class crane_loader : MonoBehaviour, INonBlueprintable, INonEquipable
 {
-    public item_input input;
-    public item_output output;
+    public item_node input;
+    public item_node output;
     public crane crane;
 
     item picked_up;
@@ -18,7 +18,6 @@ public class crane_loader : MonoBehaviour, INonBlueprintable, INonEquipable
 
     void pick_up()
     {
-        Debug.Log("pickup");
         if (input.item_count == 0)
         {
             // Nothing to input, try again later

@@ -6,6 +6,8 @@ public interface INonEquipable { }
 
 public class item : networked, IInspectable, IAcceptLeftClick
 {
+    public const float LOGISTICS_SIZE = 0.3f;
+
     //###########//
     // VARIABLES //
     //###########//
