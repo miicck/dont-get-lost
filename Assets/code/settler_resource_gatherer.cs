@@ -24,6 +24,12 @@ public class settler_resource_gatherer : settler_interactable
 
     protected override void Start()
     {
+        base.Start();
+        Invoke("update_harvesting", 1);
+    }
+
+    void update_harvesting()
+    {
         // Figure out what we're harvesting
         harvesting = utils.raycast_for_closest<harvestable>(
             new Ray(ray_start.position, ray_start.forward),
@@ -33,11 +39,17 @@ public class settler_resource_gatherer : settler_interactable
                                    h.tool.tool_quality <= tool_quality;
             });
 
-        base.Start();
+        // Try again later
+        if (harvesting == null)
+            Invoke("update_harvesting", 1);
     }
 
     public override bool interact(settler s, float time_elapsed)
     {
+        // Nothing to harvest => interaction complete
+        if (harvesting == null)
+            return true;
+
         // It takes 1 second to harvest
         if (time_elapsed < 1f)
             return false;
