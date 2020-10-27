@@ -1,5 +1,6 @@
 Ongoing
 - Create unique sprites for everything
+- More foliage (small plants/flowers)
 
 Tasks
 - Item flow recording should be done on link points?
@@ -13,4 +14,13 @@ Tasks
 - Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
-- More foliage (small plants/flowers)
+
+- Networking bugs for settlers
+	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
+	  makes sense to stick with the current framework, so stuff like crop progress
+	  gets saved etc.)
+	- Control over character arms/legs is fighting between client+server
+	- When authority over settlers change, they jump back to nearest target
+	  (settlers should probably reset to nearest settler_path_element + do
+	   pathing from there)
+    - Networked floats aren't lerping properly (see growth of wheat for example)

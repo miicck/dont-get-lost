@@ -2,43 +2,61 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field_spot : MonoBehaviour, INonBlueprintable, INonEquipable, IInspectable
+public class settler_field_spot : networked, IInspectable
 {
-    public bool grown => progress >= 1f;
+    networked_variables.net_float progress;
+
+    public override void on_init_network_variables()
+    {
+        progress = new networked_variables.net_float(resolution: 0.05f);
+        progress.on_change = () =>
+        {
+            grown_object.transform.localScale =
+                Vector3.one * Mathf.Clamp(progress.value, 0f, 1f);
+        };
+    }
+
+    public bool grown => progress.value >= 1f;
     public GameObject to_grow;
     public product[] products => GetComponents<product>();
     public float growth_time = 30f;
 
-    GameObject grown_object;
-    float progress = 0f;
-
-    private void Start()
+    GameObject grown_object
     {
-        grown_object = to_grow.inst();
-        grown_object.transform.SetParent(transform);
-        grown_object.transform.localPosition = Vector3.zero;
-        grown_object.transform.localRotation = Quaternion.identity;
+        get
+        {
+            if (_grown_object == null)
+            {
+                // Create the grown object
+                _grown_object = to_grow.inst();
+                _grown_object.transform.SetParent(transform);
+                _grown_object.transform.localPosition = Vector3.zero;
+                _grown_object.transform.localRotation = Quaternion.identity;
+            }
+            return _grown_object;
+        }
     }
+    GameObject _grown_object;
 
     private void Update()
     {
-        progress += Time.deltaTime / growth_time;
-        grown_object.transform.localScale = Vector3.one * Mathf.Clamp(progress, 0f, 1f);
+        if (!has_authority) return;
+        progress.value += Time.deltaTime / growth_time;
     }
 
     public void harvest()
     {
-        progress = 0;
+        progress.value = 0f;
     }
 
     public void tend()
     {
-        progress += 10f / growth_time;
+        progress.value += 10f / growth_time;
     }
 
     public string inspect_info()
     {
-        return Mathf.Clamp(progress * 100f, 0f, 100f) + "% grown";
+        return Mathf.Round(Mathf.Clamp(progress.value * 100f, 0f, 100f)) + "% grown";
     }
 
     public Sprite main_sprite() { return null; }
@@ -47,7 +65,7 @@ public class settler_field_spot : MonoBehaviour, INonBlueprintable, INonEquipabl
     private void OnDrawGizmos()
     {
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.color = Color.Lerp(Color.red, Color.green, Mathf.Clamp(progress, 0f, 1f));
+        Gizmos.color = Color.Lerp(Color.red, Color.green, Mathf.Clamp(progress.value, 0f, 1f));
         Gizmos.DrawWireCube(Vector3.zero, new Vector3(1f, 0.05f, 1f));
     }
 }
