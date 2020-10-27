@@ -112,9 +112,9 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 
-    /// <summary> Called when this item is equipped, to make it into the 
-    /// version that the player holds. </summary>
-    public virtual void make_equipped_version()
+    /// <summary> Called when this item is equipped. <paramref name="local_player"/> = false
+    /// iff this item is being equipped by a remote player. </summary>
+    public virtual void on_equip(bool local_player)
     {
         // Remove all colliders
         foreach (var c in GetComponentsInChildren<Collider>())
@@ -128,6 +128,10 @@ public class item : networked, IInspectable, IAcceptLeftClick
         foreach (Component eq in GetComponentsInChildren<INonEquipable>())
             Destroy(eq);
     }
+
+    /// <summary> Called when this item is unequipped. <paramref name="local_player"/> = false
+    /// iff this item is being unequipped by a remote player. </summary>
+    public virtual void on_unequip(bool local_player) { }
 
     public void on_left_click() { pick_up(register_undo: true); }
 

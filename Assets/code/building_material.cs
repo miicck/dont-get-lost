@@ -287,6 +287,30 @@ public class building_material : item
         return ret;
     }
 
+    public override void on_equip(bool local_player)
+    {
+        base.on_equip(local_player);
+
+        if (local_player)
+        {
+            // Draw links if a path element is equipped
+            if (GetComponentInChildren<settler_path_element>() != null)
+                settler_path_element.draw_links = true;
+        }
+    }
+
+    public override void on_unequip(bool local_player)
+    {
+        base.on_unequip(local_player);
+
+        if (local_player)
+        {
+            // Stop drawing links if a path element is unequipped
+            if (GetComponentInChildren<settler_path_element>() != null)
+                settler_path_element.draw_links = false;
+        }
+    }
+
     void make_blueprint()
     {
         // Create a blue, placeholder version of this object

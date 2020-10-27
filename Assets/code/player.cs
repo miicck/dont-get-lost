@@ -422,7 +422,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 return; // Already equipped
 
             if (_equipped != null)
+            {
+                // Call implementation-specific on_unequip
+                // stuff + destroy the item
+                _equipped.on_unequip(has_authority);
                 Destroy(_equipped.gameObject);
+            }
 
             if (value == null)
             {
@@ -432,11 +437,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
             {
                 // Ensure we actually have one of these in my inventory
                 if (inventory.contains(value))
-                {
-                    // Create an equipped-type copy of the item
                     _equipped = item.create(value.name, transform.position, transform.rotation);
-                    _equipped.make_equipped_version();
-                }
                 else _equipped = null; // Don't have, equip null
             }
 
@@ -446,6 +447,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 _equipped.transform.SetParent(hand_centre);
                 _equipped.transform.localPosition = Vector3.zero;
                 _equipped.transform.localRotation = Quaternion.identity;
+
+                // Call implementation-specific on_equip stuff
+                _equipped.on_equip(has_authority);
             }
 
             // If this is the local player, set the cursor

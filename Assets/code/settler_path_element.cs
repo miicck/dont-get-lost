@@ -4,9 +4,18 @@ using UnityEngine;
 
 /// <summary> An object that can be connected to other 
 /// objects of the same kind via road_links. </summary>
-public class settler_path_element : MonoBehaviour, INonBlueprintable, INonEquipable
+public class settler_path_element : MonoBehaviour
 {
-    public settler_path_link[] links { get; private set; }
+    public settler_path_link[] links
+    {
+        get
+        {
+            if (_links == null)
+                _links = GetComponentsInChildren<settler_path_link>();
+            return _links;
+        }
+    }
+    settler_path_link[] _links;
 
     public List<settler_path_element> linked_elements()
     {
@@ -21,19 +30,24 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INonEquipa
         return ret;
     }
 
-    bool start_called = false;
+    bool registered = false;
     private void Start()
     {
+        // Don't register this path element if we are 
+        // part of an unplaced building material
+        var bm = GetComponentInParent<building_material>();
+        if (bm != null && (bm.is_equpped || bm.is_blueprint))
+            return;
+
         // Register this element, if neccassary
-        start_called = true;
-        links = GetComponentsInChildren<settler_path_link>();
+        registered = true;
         register_element(this);
     }
 
     private void OnDestroy()
     {
         // Unregister this element, if neccassary
-        if (start_called)
+        if (registered)
             forget_element(this);
     }
 
@@ -130,6 +144,21 @@ public class settler_path_element : MonoBehaviour, INonBlueprintable, INonEquipa
         if (!all_elements.Remove(r))
             throw new System.Exception("Tried to forget unregistered element!");
     }
+
+    /// <summary> Set to true to draw objects representing 
+    /// links between path elements. </summary>
+    public static bool draw_links
+    {
+        get => _draw_links;
+        set
+        {
+            _draw_links = value;
+            foreach (var e in all_elements)
+                foreach (var l in e.links)
+                    l.display_enabled = value;
+        }
+    }
+    static bool _draw_links;
 
     /// <summary> Find a path between the start and end elements, using 
     /// the A* algorithm. Returns null if no such path exists. </summary>

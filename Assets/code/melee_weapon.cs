@@ -9,7 +9,7 @@ public class accepts_item_impact : MonoBehaviour
 
 public abstract class equip_in_hand : item
 {
-    public override void make_equipped_version()
+    public override void on_equip(bool local_player)
     {
         // Remove all colliders
         foreach (var c in GetComponentsInChildren<Collider>())
@@ -42,7 +42,7 @@ public class melee_weapon : equip_in_hand
             throw new System.Exception("Could not find rigidbody on melee weapon!");
     }
 
-    public override void make_equipped_version()
+    public override void on_equip(bool local_player)
     {
         // Remove all non-trigger colliders
         foreach (var c in GetComponentsInChildren<Collider>())
