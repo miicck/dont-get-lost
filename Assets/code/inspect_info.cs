@@ -15,12 +15,15 @@ public class inspect_info : MonoBehaviour
         set
         {
             IInspectable inspect = null;
+            List<IAddsToInspectionText> to_add = null;
+
             if (value)
             {
                 if (Cursor.visible)
                 {
                     // Raycast for a ui element
                     inspect = utils.raycast_ui_under_mouse<IInspectable>();
+                    to_add = new List<IAddsToInspectionText>(); // Impement if needed
                 }
                 else
                 {
@@ -34,12 +37,24 @@ public class inspect_info : MonoBehaviour
                         (c) => !c.transform.IsChildOf(player.current.transform));
 
                     if (col != null)
-                        inspect = col.gameObject.GetComponentInParent<IInspectable>();
+                    {
+                        var comp = col.gameObject.GetComponentInParent(typeof(IInspectable));
+                        if (comp != null)
+                        {
+                            inspect = (IInspectable)comp;
+                            to_add = new List<IAddsToInspectionText>(
+                                comp.GetComponentsInChildren<IAddsToInspectionText>());
+                        }
+                    }
                 }
 
                 if (inspect != null)
                 {
-                    info_text.text = inspect.inspect_info().capitalize();
+                    info_text.text = inspect.inspect_info().capitalize().Trim();
+                    foreach (var ta in to_add)
+                        info_text.text += "\n" + ta.added_inspection_text().Trim();
+
+                    Debug.Log(to_add.Count);
                     Sprite main = inspect.main_sprite();
                     Sprite secondary = inspect.secondary_sprite();
 
@@ -70,4 +85,9 @@ public interface IInspectable
     string inspect_info();
     Sprite main_sprite();
     Sprite secondary_sprite();
+}
+
+public interface IAddsToInspectionText
+{
+    string added_inspection_text();
 }

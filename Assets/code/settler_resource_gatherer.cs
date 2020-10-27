@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_resource_gatherer : settler_interactable
+public class settler_resource_gatherer : settler_interactable, IAddsToInspectionText
 {
     public item_output output;
     public Transform ray_start;
@@ -26,6 +26,14 @@ public class settler_resource_gatherer : settler_interactable
     {
         base.Start();
         Invoke("update_harvesting", 1);
+    }
+
+    public string added_inspection_text()
+    {
+        if (harvesting == null)
+            return "    Noting in harvest range.";
+
+        return "    Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
     void update_harvesting()
