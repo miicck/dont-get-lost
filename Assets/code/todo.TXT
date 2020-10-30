@@ -19,7 +19,8 @@ Tasks
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
 	  makes sense to stick with the current framework, so stuff like crop progress
 	  gets saved etc.)
-	- Control over character arms/legs is fighting between client+server
+	- Control over character arms/legs is fighting between client+server - this is
+	  actually an artifact of the character position lerping.
 	- When authority over settlers change, they jump back to nearest target
 	  (settlers should probably reset to nearest settler_path_element + do
 	   pathing from there)

@@ -68,7 +68,7 @@ public class item_dispenser : settler_interactable
                 foreach (var l in locators)
                     if (l.item != null)
                     {
-                        s.hunger -= l.item.food_value;
+                        s.hunger.value -= l.item.food_value;
                         Destroy(l.release_item().gameObject);
                         break;
                     }

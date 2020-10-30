@@ -166,7 +166,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
         {
             // Lerp rotation
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
-            eye_transform.localRotation = Quaternion.Euler(x_rotation.lerped_value, 0, 0);
+            eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
 
             // Lerp equipment position
             if (equipped != null)
@@ -1301,7 +1301,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
     {
         if (is_dead) return;
         health.value = Mathf.Max(0, health.value - damage);
-        last_damaged_time = Time.realtimeSinceStartup;
     }
 
     public void heal(int amount)
@@ -1536,11 +1535,19 @@ public class player : networked_player, INotPathBlocking, IInspectable
         health.on_change = () =>
         {
             healthbar?.set(health.value, 100);
+
             if (health.value <= 0)
             {
                 if (this == current) die();
                 popup_message.create(username.value + " has died!");
             }
+        };
+
+        // Check for decreases in health (i.e. damage)
+        health.on_change_old_new = (old_health, new_health) =>
+        {
+            if (new_health < old_health)
+                last_damaged_time = Time.realtimeSinceStartup;
         };
 
         // How fed the player is

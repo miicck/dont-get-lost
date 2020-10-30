@@ -446,7 +446,8 @@ public class leg : MonoBehaviour
                 stretch_amt += (l.knee.position - l.ankle.position).magnitude;
                 stretch_amt /= (l.thigh_length + l.shin_length);
 
-                string debug = "Speed " + l.velocity.magnitude + "\n" +
+                string debug = "Progress " + l.progress + "\n" +
+                               "Speed " + l.velocity.magnitude + "\n" +
                                "Step boost " + l.step_length_boost + "\n" +
                                "Step length " + l.step_length + "\n" +
                                "Stretch " + stretch_amt + "\n";

@@ -85,13 +85,13 @@ public class arm : MonoBehaviour
             following.step_length_boost;
 
         Vector3 shoulder_forward = initial_shoulder.forward + initial_shoulder.up * s / 2f;
-        shoulder.rotation = Quaternion.LookRotation(shoulder_forward, initial_shoulder.up);
+        utils.rotate_towards(shoulder, Quaternion.LookRotation(shoulder_forward, initial_shoulder.up), Time.deltaTime * 360f);
 
         elbow.position = shoulder.position - shoulder.up * bicep_length;
 
         if (s < -0.5f) s = -0.5f;
         Vector3 elbow_forward = initial_elbow.forward + initial_elbow.up * s;
-        elbow.rotation = Quaternion.LookRotation(elbow_forward, initial_elbow.up);
+        utils.rotate_towards(elbow, Quaternion.LookRotation(elbow_forward, initial_elbow.up), Time.deltaTime * 360f);
     }
 
     /// <summary> The arm grabs grab_position. Maths is 

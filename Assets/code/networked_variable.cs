@@ -64,6 +64,7 @@ public abstract class networked_variable<T> : networked_variable
             }
 
             on_change?.Invoke();
+            on_change_old_new?.Invoke(old_value, value);
             initialized = true;
         }
     }
@@ -81,6 +82,11 @@ public abstract class networked_variable<T> : networked_variable
     public on_change_func on_change;
     public delegate void on_change_func();
 
+    /// <summary> Function called every time the variable changes value, 
+    /// but with old+new values provided </summary>
+    public on_change_old_new_func on_change_old_new;
+    public delegate void on_change_old_new_func(T old_value, T new_value);
+
     /// <summary> True if value has been initialized, either from
     /// the server via <see cref="networked_variable.reccive_serialization(byte[], int, int)"/>,
     /// or by a client setting <see cref="value"/>. </summary>
@@ -93,7 +99,10 @@ public abstract class networked_variable<T> : networked_variable
         T old_value = _value;
         _value = deserialize(buffer, ref offset, length);
         if (!initialized || !_value.Equals(old_value))
+        {
             on_change?.Invoke();
+            on_change_old_new?.Invoke(old_value, _value);
+        }
         initialized = true;
     }
 
@@ -233,11 +242,23 @@ namespace networked_variables
     /// <summary> A simple networked integer. </summary>
     public class net_int : networked_variable<int>
     {
-        public net_int() { }
+        int min_value;
+        int max_value;
 
-        public net_int(int default_value = 0) : base()
+        public net_int(int default_value = 0, 
+            int min_value = int.MinValue, 
+            int max_value = int.MaxValue) : base()
         {
-            _value = default_value;
+            this.min_value = min_value;
+            this.max_value = max_value;
+            _value = validate(default_value);
+        }
+
+        protected override int validate(int new_value)
+        {
+            if (new_value < min_value) return min_value;
+            if (new_value > max_value) return max_value;
+            return new_value;
         }
 
         public override byte[] serialization()

@@ -7,19 +7,26 @@ public class settler : character, IInspectable
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
 
-    public float hunger
-    {
-        get => _hunger;
-        set => _hunger = Mathf.Clamp(value, 0, 100);
-    }
-    float _hunger;
+    public networked_variables.net_int hunger;
+    public networked_variables.net_int tiredness;
 
-    public float tiredness
+    public override float position_resolution()
     {
-        get => _tiredness;
-        set => _tiredness = Mathf.Clamp(value, 0, 100);
+        return 0.1f;
     }
-    float _tiredness;
+
+    public override float position_lerp_speed()
+    {
+        return 2f;
+    }
+
+    public override void on_init_network_variables()
+    {
+        base.on_init_network_variables();
+
+        hunger = new networked_variables.net_int(min_value: 0, max_value: 100);
+        tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
+    }
 
     public override bool persistant()
     {
@@ -34,8 +41,8 @@ public class settler : character, IInspectable
     new public string inspect_info()
     {
         return "Settler\n" +
-               "    " + Mathf.Round(hunger) + "% hungry\n" +
-               "    " + Mathf.Round(tiredness) + "% tired";
+               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
+               "    " + Mathf.Round(tiredness.value) + "% tired";
     }
 }
 
@@ -47,13 +54,28 @@ class settler_control : ICharacterController
     bool interaction_complete = false;
     float interaction_time = 0;
 
+    float delta_hunger = 0;
+    float delta_tired = 0;
+
     public void control(character c)
     {
         var s = (settler)c;
 
         // Get hungry/tired
-        s.hunger += settler.HUNGER_PER_SECOND * Time.deltaTime;
-        s.tiredness += settler.TIREDNESS_PER_SECOND * Time.deltaTime;
+        delta_hunger += settler.HUNGER_PER_SECOND * Time.deltaTime;
+        delta_tired += settler.TIREDNESS_PER_SECOND * Time.deltaTime;
+
+        if (delta_hunger > 1f)
+        {
+            delta_hunger = 0f;
+            s.hunger.value += 1;
+        }
+
+        if (delta_tired > 1f)
+        {
+            delta_tired = 0f;
+            s.tiredness.value += 1;
+        }
 
         if (target == null)
         {
@@ -92,10 +114,10 @@ class settler_control : ICharacterController
 
             // The next candidate interaction
             settler_interactable next = null;
-            if (Random.Range(0, 100) < s.hunger)
+            if (Random.Range(0, 100) < s.hunger.value)
                 next = settler_interactable.random(settler_interactable.TYPE.EAT);
 
-            else if (Random.Range(0, 100) < s.tiredness)
+            else if (Random.Range(0, 100) < s.tiredness.value)
                 next = settler_interactable.random(settler_interactable.TYPE.SLEEP);
 
             // Didn't need to do anything, so get to work

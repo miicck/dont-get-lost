@@ -8,11 +8,22 @@ public class settler_field_spot : networked, IInspectable
 
     public override void on_init_network_variables()
     {
-        progress = new networked_variables.net_float(resolution: 0.05f);
+        progress = new networked_variables.net_float(
+            resolution: 0.05f,
+            min_value: 0f,
+            max_value: 1f);
+
         progress.on_change = () =>
         {
-            grown_object.transform.localScale =
-                Vector3.one * Mathf.Clamp(progress.value, 0f, 1f);
+            // If progress has been reduced, that means we've been harvested
+            if (progress.value < grown_object.transform.localScale.x)
+            {
+                var field = GetComponentInParent<settler_field>();
+                foreach (var p in products)
+                    p.create_in_node(field.output);
+            }
+
+            grown_object.transform.localScale = Vector3.one * progress.value;
         };
     }
 
@@ -56,7 +67,7 @@ public class settler_field_spot : networked, IInspectable
 
     public string inspect_info()
     {
-        return Mathf.Round(Mathf.Clamp(progress.value * 100f, 0f, 100f)) + "% grown";
+        return Mathf.Round(progress.value * 100f) + "% grown";
     }
 
     public Sprite main_sprite() { return null; }
@@ -65,7 +76,7 @@ public class settler_field_spot : networked, IInspectable
     private void OnDrawGizmos()
     {
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.color = Color.Lerp(Color.red, Color.green, Mathf.Clamp(progress.value, 0f, 1f));
+        Gizmos.color = Color.Lerp(Color.red, Color.green, progress.value);
         Gizmos.DrawWireCube(Vector3.zero, new Vector3(1f, 0.05f, 1f));
     }
 }
