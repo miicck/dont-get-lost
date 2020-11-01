@@ -28,6 +28,7 @@ public class spawn_biome : biome_modifier
     }
 }
 
+[biome_mod_info(generation_enabled: false)]
 public class reclaimed_city : biome_modifier
 {
     int CITY_BLOCK_SIZE = 16;
@@ -81,6 +82,7 @@ public class reclaimed_city : biome_modifier
     }
 }
 
+[biome_mod_info(generation_enabled: false)]
 public class craters : biome_modifier
 {
     const int BURNT_BIT_SIZE = 32;
@@ -284,6 +286,7 @@ public class cave_system : biome_modifier
     }
 }
 
+[biome_mod_info(generation_enabled: false)]
 public class traders : biome_modifier
 {
     const int CLEAR_RANGE = 8;
