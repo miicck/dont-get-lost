@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public interface INonEquipable { }
+public interface INonLogistical { }
 
 public class item : networked, IInspectable, IAcceptLeftClick
 {
@@ -19,6 +20,22 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public int food_value = 0;
     public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
     public bool is_equpped => GetComponentInParent<player>() != null;
+
+    void make_logistics_version()
+    {
+        if (!is_client_side)
+            throw new System.Exception("Can only make client side items into the logstics version!");
+
+        is_logistics_version = true;
+        transform.localScale *= logistics_scale;
+
+        // Remove components that are incompatible with the logistics version
+        foreach (var c in GetComponentsInChildren<Component>())
+            if (c is INonLogistical)
+                Destroy(c);
+    }
+
+    public bool is_logistics_version { get; private set; }
 
     public string display_name
     {
@@ -288,7 +305,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
             item.transform.SetParent(network_parent == null ? null : network_parent.transform);
 
             if (logistics_version)
-                item.transform.localScale *= item.logistics_scale;
+                item.make_logistics_version();
         }
 
         return item;

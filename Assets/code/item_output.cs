@@ -44,7 +44,16 @@ public class item_dropper : MonoBehaviour
         else
         {
             // Drop to the floor
-            if (Physics.Raycast(from, Vector3.down, out RaycastHit hit))
+            var collided = utils.raycast_for_closest<Collider>(
+                new Ray(from, Vector3.down), out RaycastHit hit, accept: (c) =>
+            {
+                var itm = c.transform.GetComponentInParent<item>();
+                if (itm == null) return true; // Accept collisions with non-items
+                if (itm.is_logistics_version) return false; // Reject collisions with logistics items
+                return true; // Accept collisions with non-logistics items
+            });
+
+            if (collided != null)
                 target = hit.point;
             else
                 target = from + 100f * Vector3.down;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class snap_point : MonoBehaviour
+public class snap_point : MonoBehaviour, INonLogistical
 {
 
 }

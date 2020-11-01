@@ -7,21 +7,20 @@ Tasks
 - Fix farming spots so that they display properly
 - Implement teleport-to-player
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
-- Allow q to get items from bag?
 - Spread biome.generate across multiple frames
 - Optimize chase paths (i.e don't double back if thats what the player did)
 - Make characters fall if they are following a chase path
 - Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
-- Recipe selection for autocrafters (underway)
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
 	  makes sense to stick with the current framework, so stuff like crop progress
 	  gets saved etc.)
 	- Control over character arms/legs is fighting between client+server - this is
-	  actually an artifact of the character position lerping.
+	  actually an artifact of the character position lerping. Putting a ceiling on
+	  how fast the arms are allowed to move has lessened this problem.
 	- When authority over settlers change, they jump back to nearest target
 	  (settlers should probably reset to nearest settler_path_element + do
 	   pathing from there)

@@ -17,6 +17,10 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
     void Start()
     {
+        // Don't start the crafting updates if this isn't the placed version
+        if (is_blueprint || is_equpped)
+            return;
+
         // Load the recipes
         recipies = Resources.LoadAll<recipe>(recipes_folder);
         InvokeRepeating("crafting_update", craft_time, craft_time);

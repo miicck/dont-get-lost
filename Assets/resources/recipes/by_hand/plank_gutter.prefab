@@ -10,12 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
-  - component: {fileID: 37089541926742898}
-  - component: {fileID: -2883028437363985245}
-  - component: {fileID: -3675095248087102708}
-  - component: {fileID: 4228508087393313574}
+  - component: {fileID: 2458903323363178695}
+  - component: {fileID: 1489740370256527643}
   m_Layer: 0
-  m_Name: autofurnace
+  m_Name: plank_gutter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &37089541926742898
+--- !u!114 &2458903323363178695
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -59,37 +57,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
-  count: 4
---- !u!114 &-2883028437363985245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781572618251870278}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 7213998146970912852, guid: 105832c1309d1ca4bb70602ebd3860e5, type: 3}
-  count: 1
---- !u!114 &-3675095248087102708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781572618251870278}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 7373243042018251868, guid: a9a59cd52fdcf6945be5ae01f7f87f02, type: 3}
+  item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
   count: 2
---- !u!114 &4228508087393313574
+--- !u!114 &1489740370256527643
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -102,7 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 8842586173793418492, guid: 6595fad8042d17f79a54fb875333ff84, type: 3}
+  item: {fileID: 7213998146970912852, guid: 105832c1309d1ca4bb70602ebd3860e5, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1

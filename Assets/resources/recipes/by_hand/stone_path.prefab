@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
-  - component: {fileID: 2458903323363178695}
-  - component: {fileID: 1489740370256527643}
+  - component: {fileID: 37089541926742898}
+  - component: {fileID: 4228508087393313574}
   m_Layer: 0
-  m_Name: triangular_planks
+  m_Name: stone_path
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2458903323363178695
+--- !u!114 &37089541926742898
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,9 +57,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
+  item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
   count: 1
---- !u!114 &1489740370256527643
+--- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 1646124822960012488, guid: 3355d566fc788ff46b4b21a78036fcfe, type: 3}
+  item: {fileID: 5032644002433172250, guid: caa83ae72c70ca440bf57f0f17f700cb, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1

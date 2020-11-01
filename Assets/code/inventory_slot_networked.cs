@@ -17,20 +17,15 @@ public class inventory_slot_networked : networked
     networked_variables.net_int net_count;
     networked_variables.net_int net_index;
 
-    // For error checking
-    bool net_index_set = false;
-
     public override void on_init_network_variables()
     {
-        net_index = new networked_variables.net_int(default_value:-1);
+        net_index = new networked_variables.net_int(default_value: -1);
         net_item = new networked_variables.net_string();
         net_count = new networked_variables.net_int();
 
-        net_index.on_change = () =>
+        net_index.on_change_old_new = (old_value, new_value) =>
         {
-            if (!net_index_set)
-                net_index_set = true;
-            else
+            if (old_value > 0 && (old_value != new_value))
                 throw new System.Exception("Tried to overwrite slot index!");
         };
 
@@ -49,6 +44,18 @@ public class inventory_slot_networked : networked
         net_index.value = index;
         net_item.value = item.name;
         net_count.value = count;
+    }
+
+    public void switch_with(inventory_slot_networked other)
+    {
+        var tmp_item = net_item.value;
+        var tmp_count = net_count.value;
+
+        net_item.value = other.net_item.value;
+        net_count.value = other.net_count.value;
+
+        other.net_item.value = tmp_item;
+        other.net_count.value = tmp_count;
     }
 
     public bool add(item item, int count)
@@ -83,7 +90,7 @@ public class inventory_slot_networked : networked
                 return count;
             }
         }
-        
+
         // Nothing has been removed
         return 0;
     }

@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
-  - component: {fileID: -4380675486878801892}
-  - component: {fileID: 54385041574197017}
+  - component: {fileID: 37089541926742898}
+  - component: {fileID: 4228508087393313574}
   m_Layer: 0
-  m_Name: furnace
+  m_Name: autofurnace
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-4380675486878801892
+--- !u!114 &37089541926742898
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -59,7 +59,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
   count: 8
---- !u!114 &54385041574197017
+--- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -72,6 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: -5169961100938236186, guid: 16eb9109f496e144c8e50ceeae24d2c3, type: 3}
+  item: {fileID: 8842586173793418492, guid: 6595fad8042d17f79a54fb875333ff84, type: 3}
   min_count: 1
   max_count: 1
+  one_in_chance: 1

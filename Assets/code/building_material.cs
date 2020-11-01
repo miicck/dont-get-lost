@@ -424,13 +424,13 @@ public class building_material : item
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
             return use_result.complete;
 
-        // Find a building_material/snap_point under cursor 
-        // (unless ignore_snap_points is held)
+        // Find a (non-logistics version) building_material/snap_point 
+        // under cursor (unless ignore_snap_points is held)
         RaycastHit hit = default;
         building_material bm = null;
         if (!controls.key_down(controls.BIND.IGNORE_SNAP_POINTS))
             bm = utils.raycast_for_closest<building_material>(
-                camera_ray, out hit, raycast_distance);
+                camera_ray, out hit, raycast_distance, accept: (b) => !b.is_logistics_version);
 
         // If a building material is found, fix new build to it
         // otherwise, just fix to any solid object

@@ -460,9 +460,21 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     public void validate_equip()
     {
-        // Unequip if item is no more
-        if (equipped?.name != quickbar_slot(slot_equipped.value)?.item?.name)
+        var slot = quickbar_slot(slot_equipped.value);
+        if (slot == null) return;
+
+        if (slot.count == 0 || slot.item == null)
+        {
+            // Nothing in slot, unequip
             slot_equipped.value = 0;
+        }
+        else
+        {
+            // Re-equip whatever is in the slot
+            int tmp = slot_equipped.value;
+            slot_equipped.value = 0;
+            slot_equipped.value = tmp;
+        }
     }
 
     void toggle_equip(int slot)
@@ -480,18 +492,33 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
         const int QUICKBAR_SLOTS_COUNT = 8;
 
-        // Select something in the world from the quickbar
+        // Select something in the world/equip it if we have one
         if (controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD))
         {
             var ray = camera_ray(INTERACTION_RANGE, out float dist);
             var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
             if (itm != null)
+            {
+                // If we've already got the item in the quickbar, just equip it
                 for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
                     if (quickbar_slot(i)?.item?.name == itm.name)
                     {
                         slot_equipped.value = i;
                         return;
                     }
+
+                var slot_found = inventory.find_slot_by_item(itm);
+                if (slot_found != null)
+                {
+                    // We've found the item in our inventory
+                    // Switch with the currently equipped slot
+                    // (or the first slot if nothing is equipped)
+                    int switch_with = Mathf.Max(slot_equipped.value, 1);
+                    slot_found.switch_with(quickbar_slot(switch_with));
+                    slot_equipped.value = switch_with;
+                    validate_equip();
+                }
+            }
         }
 
         // Select quickbar item using keyboard shortcut

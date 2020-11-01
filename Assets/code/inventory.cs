@@ -410,6 +410,15 @@ public class inventory : networked, IItemCollection
         return item_collection_extensions.contains(this, to_test, count);
     }
 
+    public inventory_slot_networked find_slot_by_item(item item)
+    {
+        if (item == null) return null;
+        foreach (var isn in networked_slots)
+            if (isn.item_name == item.name)
+                return isn;
+        return null;
+    }
+
     public bool empty
     {
         get
