@@ -53,8 +53,8 @@
     <UnityVersion>2020.1.10f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Assets\editor\what_uses_this.cs" />
     <Compile Include="Assets\editor\missing_references_finder.cs" />
+    <Compile Include="Assets\editor\what_uses_this.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

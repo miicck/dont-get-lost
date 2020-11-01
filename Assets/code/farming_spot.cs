@@ -117,6 +117,7 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { update_growth(); }
     public void on_left_menu_close() { }
+    public recipe[] additional_recipes() { return null; }
 }
 
 public class farm_harvest_on_click : MonoBehaviour, IAcceptLeftClick

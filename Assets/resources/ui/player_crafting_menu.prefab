@@ -110,7 +110,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1461431720}
   - component: {fileID: 1461431721}
-  - component: {fileID: 1461431723}
+  - component: {fileID: 3679308506241963414}
   m_Layer: 5
   m_Name: crafting_menu
   m_TagString: Untagged
@@ -148,7 +148,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1461431719}
   m_CullTransparentMesh: 0
---- !u!114 &1461431723
+--- !u!114 &3679308506241963414
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -157,13 +157,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1461431719}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0120635253646a449930ff4ea422e79, type: 3}
+  m_Script: {fileID: 11500000, guid: 0d686fffdd7cbc042ac5fa4115ff240f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   options_go_here: {fileID: 3778643437991156276}
   craft_from: {fileID: 0}
   craft_to: {fileID: 0}
-  default_recipes_folder: recipes/by_hand
+  default_recipes_folder: 
 --- !u!1 &3868088250723223913
 GameObject:
   m_ObjectHideFlags: 0

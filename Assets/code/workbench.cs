@@ -20,7 +20,8 @@ public class workbench : building_with_inventory, ILeftPlayerMenu
         {
             crafting = inventory.ui.GetComponentInChildren<crafting_input>();
             inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.capitalize();
-            crafting.load_recipies("recipes/workbenches/" + name);
+            crafting.recipes_folder = "recipes/workbenches/" + name;
+            crafting.load_recipies();
             crafting.craft_from = inventory;
             crafting.craft_to = player.current.inventory;
         }
@@ -31,4 +32,5 @@ public class workbench : building_with_inventory, ILeftPlayerMenu
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
     public inventory editable_inventory() { return inventory; }
+    public recipe[] additional_recipes() { return null; }
 }

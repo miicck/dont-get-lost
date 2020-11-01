@@ -133,10 +133,10 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
         return left_menu;
     }
 
-
     public inventory editable_inventory() { return null; }
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
+    public recipe[] additional_recipes() { return recipies; }
 
     //##############//
     // IINspectable //

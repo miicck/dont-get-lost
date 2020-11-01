@@ -1738,6 +1738,9 @@ public class popup_message : MonoBehaviour
     }
 }
 
+// C# 8.0 allows default implementations in interfaces, once unity
+// catches up with this, a lot of code in classes that implement
+// ILeftPlayerMenu can be simplified.
 public interface ILeftPlayerMenu
 {
     /// <summary> An inventory associated with this menu, that a 
@@ -1753,6 +1756,10 @@ public interface ILeftPlayerMenu
 
     /// <summary> Called when the player opens the left menu. </summary>
     void on_left_menu_open();
+
+    /// <summary> Additional recipes that the player
+    /// can craft when this menu is open. </summary>
+    recipe[] additional_recipes();
 }
 
 /// <summary> Interfact for objects that can be 

@@ -40,6 +40,7 @@ public class portal : building_material, ILeftPlayerMenu
 
     public void on_left_menu_close() { }
     public inventory editable_inventory() { return null; }
+    public recipe[] additional_recipes() { return null; }
 
     //#################//
     // Unity callbacks //

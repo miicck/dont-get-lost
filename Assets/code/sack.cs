@@ -6,12 +6,9 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
 {
     inventory inventory;
 
-    public inventory editable_inventory() { return inventory; }
-    public RectTransform left_menu_transform() { return inventory.ui; }
-    public void on_left_menu_open()
-    {
-        inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.value;
-    }
+    //############//
+    // NETWORKING //
+    //############//
 
     networked_variables.net_string display_name;
 
@@ -28,11 +25,9 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
             inventory = (inventory)child;
     }
 
-    public void on_left_menu_close()
-    {
-        if (inventory.is_empty())
-            delete();
-    }
+    //##############//
+    // IINspectable //
+    //##############//
 
     public string inspect_info()
     {
@@ -41,6 +36,25 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
 
     public Sprite main_sprite() { return null; }
     public Sprite secondary_sprite() { return null; }
+
+    //#################//
+    // ILeftPlayerMenu //
+    //#################//
+
+    public inventory editable_inventory() { return inventory; }
+    public RectTransform left_menu_transform() { return inventory.ui; }
+    public recipe[] additional_recipes() { return null; }
+
+    public void on_left_menu_open()
+    {
+        inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.value;
+    }
+
+    public void on_left_menu_close()
+    {
+        if (inventory.is_empty())
+            delete();
+    }
 
     //##############//
     // STATIC STUFF //

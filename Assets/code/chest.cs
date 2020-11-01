@@ -34,4 +34,5 @@ public class chest : building_with_inventory, ILeftPlayerMenu
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }
     public inventory editable_inventory() { return inventory; }
+    public recipe[] additional_recipes() { return null; }
 }
