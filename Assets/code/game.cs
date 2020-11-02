@@ -185,6 +185,7 @@ public class game : MonoBehaviour
         debug_panel.SetActive(false);
 
         // Initialize various things
+        names.initialize();
         options_menu.initialize();
         item_node.initialize();
         biome.initialize();
@@ -192,6 +193,7 @@ public class game : MonoBehaviour
         settler_interactable.initialize();
         character_spawn_point.initialize();
         character.initialize();
+        settler.initialize();
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
@@ -256,6 +258,8 @@ public class game : MonoBehaviour
             player.info() + "\n" +
             "\nCHARACTERS\n" +
             character.info() + "\n" +
+            "\nSETTLERS\n" +
+            settler.info() + "\n" +
             "\nINTERACTIONS\n" +
             settler_interactable.info() + "\n" +
             "\nLOAD BALANCER\n" +

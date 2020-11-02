@@ -5,6 +5,7 @@ using UnityEngine;
 public class settler_field_spot : networked, IInspectable
 {
     networked_variables.net_float progress;
+    float progress_scale => progress.value * (1f - min_scale) + min_scale;
 
     public override void on_init_network_variables()
     {
@@ -16,14 +17,14 @@ public class settler_field_spot : networked, IInspectable
         progress.on_change = () =>
         {
             // If progress has been reduced, that means we've been harvested
-            if (progress.value < grown_object.transform.localScale.x)
+            if (progress_scale < grown_object.transform.localScale.x)
             {
                 var field = GetComponentInParent<settler_field>();
                 foreach (var p in products)
                     p.create_in_node(field.output);
             }
 
-            grown_object.transform.localScale = Vector3.one * progress.value;
+            grown_object.transform.localScale = Vector3.one * progress_scale;
         };
     }
 
@@ -31,6 +32,8 @@ public class settler_field_spot : networked, IInspectable
     public GameObject to_grow;
     public product[] products => GetComponents<product>();
     public float growth_time = 30f;
+    public float min_scale = 0.2f;
+
 
     GameObject grown_object
     {

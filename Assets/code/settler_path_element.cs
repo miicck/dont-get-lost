@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 /// <summary> An object that can be connected to other 
 /// objects of the same kind via road_links. </summary>
-public class settler_path_element : MonoBehaviour
+public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 {
     public settler_path_link[] links
     {
@@ -28,6 +29,16 @@ public class settler_path_element : MonoBehaviour
                     ret.Add(rl);
             }
         return ret;
+    }
+
+    public int group
+    {
+        get; private set;
+    }
+
+    public string added_inspection_text()
+    {
+        return "Group " + group;
     }
 
     bool registered = false;
@@ -108,6 +119,20 @@ public class settler_path_element : MonoBehaviour
     //##############//
 
     static HashSet<settler_path_element> all_elements;
+    static Dictionary<int, HashSet<settler_path_element>> grouped_elements;
+
+    public static settler_path_element nearest_element(Vector3 v)
+    {
+        return utils.find_to_min(all_elements, 
+            (e) => (e.transform.position - v).sqrMagnitude);
+    }
+
+    public static HashSet<settler_path_element> element_group(int group)
+    {
+        if (grouped_elements.TryGetValue(group, out HashSet<settler_path_element> elms))
+            return elms;
+        return null;
+    }
 
     public static settler_path_element find_nearest(Vector3 position)
     {
@@ -119,6 +144,45 @@ public class settler_path_element : MonoBehaviour
     {
         // Initialize theelements collection
         all_elements = new HashSet<settler_path_element>();
+        grouped_elements = new Dictionary<int, HashSet<settler_path_element>>();
+    }
+
+    static void evaluate_groups()
+    {
+        int group = 0;
+
+        HashSet<settler_path_element> ungrouped = new HashSet<settler_path_element>(all_elements);
+
+        while (ungrouped.Count > 0)
+        {
+            // Create an open set from the first ungrouped element
+            HashSet<settler_path_element> open = new HashSet<settler_path_element> { ungrouped.First() };
+            HashSet<settler_path_element> closed = new HashSet<settler_path_element>();
+
+            while (open.Count > 0)
+            {
+                // Get the first open element
+                var to_expand = open.First();
+                closed.Add(to_expand);
+                open.Remove(to_expand);
+
+                // Add all linked elements to the open set 
+                // (if they arent closed set)
+                foreach (var n in to_expand.linked_elements())
+                    if (!closed.Contains(n))
+                        open.Add(n);
+            }
+
+            grouped_elements[group] = closed;
+            foreach (var e in closed)
+            {
+                ungrouped.Remove(e);
+                e.group = group;
+            }
+            ++group;
+        }
+
+        settler.update_all_groups();
     }
 
     static void validate_links(settler_path_element r)
@@ -127,22 +191,27 @@ public class settler_path_element : MonoBehaviour
         r.break_links();
         foreach (var r2 in all_elements)
             r.try_link(r2);
+
+        evaluate_groups();
     }
 
     static void register_element(settler_path_element r)
     {
         // Create links to/from r, add r to the collection of elements.
-        validate_links(r);
         if (!all_elements.Add(r))
             throw new System.Exception("Tried to register element twice!");
+
+        validate_links(r);
     }
 
     static void forget_element(settler_path_element r)
     {
         // Forget all the links to/from r, remove r from the collection of elements
-        r.break_links();
         if (!all_elements.Remove(r))
             throw new System.Exception("Tried to forget unregistered element!");
+
+        r.break_links();
+        evaluate_groups();
     }
 
     /// <summary> Set to true to draw objects representing 

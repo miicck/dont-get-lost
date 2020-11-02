@@ -32,7 +32,11 @@ public abstract class networked_variable
     /// for sending over the network </summary>
     public abstract byte[] serialization();
 
+    /// <summary> Process a serialization recived from the network. </summary>
     protected abstract void process_serialization(byte[] buffer, ref int offset, int length);
+
+    /// <summary> Call to let the networking engine know the serialization has changed. </summary>
+    public void set_dirty() { queued_serial = serialization(); }
 }
 
 /// <summary> A value serialized over the network. </summary>
@@ -175,11 +179,6 @@ public class networked_list<T> : networked_variable, IEnumerable<T>
         foreach (var t in list) serial.AddRange(t.serialization());
         return serial.ToArray();
     }
-
-    public void set_dirty()
-    {
-        queued_serial = serialization();
-    }
 }
 
 public class networked_pair<T, K> : networked_variable
@@ -210,6 +209,47 @@ public class networked_pair<T, K> : networked_variable
     {
         return network_utils.concat_buffers(
             pair.Key.serialization(), pair.Value.serialization());
+    }
+}
+
+public class networked_int_set : networked_variable, IEnumerable<int>
+{
+    HashSet<int> set = new HashSet<int>();
+    public IEnumerator<int> GetEnumerator() { return set.GetEnumerator(); }
+    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+    public void add(int i)
+    {
+        if (!set.Add(i)) return; // Already in the set
+        set_dirty();
+    }
+
+    public void remove(int i)
+    {
+        if (!set.Remove(i)) return; // Wasn't in the set
+        set_dirty();
+    }
+
+    public bool contains(int i) => set.Contains(i);
+
+    public override byte[] serialization()
+    {
+        List<byte> serial = new List<byte>(sizeof(int) * (set.Count + 1));
+        serial.AddRange(network_utils.encode_int(set.Count));
+        foreach (var i in set)
+            serial.AddRange(network_utils.encode_int(i));
+        return serial.ToArray();
+    }
+
+    protected override void process_serialization(byte[] buffer, ref int offset, int length)
+    {
+        int start = offset;
+        int count = network_utils.decode_int(buffer, ref offset);
+        set = new HashSet<int>();
+        for (int i = 0; i < count; ++i)
+            set.Add(network_utils.decode_int(buffer, ref offset));
+        if (offset - start != length)
+            throw new System.Exception("int set not correctly deserialized!");
     }
 }
 
@@ -245,8 +285,8 @@ namespace networked_variables
         int min_value;
         int max_value;
 
-        public net_int(int default_value = 0, 
-            int min_value = int.MinValue, 
+        public net_int(int default_value = 0,
+            int min_value = int.MinValue,
             int max_value = int.MaxValue) : base()
         {
             this.min_value = min_value;

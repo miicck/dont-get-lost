@@ -25,3 +25,5 @@ Tasks
 	  (settlers should probably reset to nearest settler_path_element + do
 	   pathing from there)
     - Networked floats aren't lerping properly (see growth of wheat for example)
+	- Network tasking system (create networked children of settler_interactables, with
+	  a reference to the network id of the settler assigned?)

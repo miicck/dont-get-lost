@@ -8,6 +8,8 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     /// goes to in order to use this object. </summary>
     public settler_path_element path_element;
 
+    public int group => path_element.group;
+
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>
     public TYPE type;

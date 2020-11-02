@@ -7,18 +7,46 @@ public class settler : character, IInspectable
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
 
+    public int group { get; private set; }
+    protected override ICharacterController default_controller() { return new settler_control(); }
+
+    new public string inspect_info()
+    {
+        return name.capitalize() + " (group " + group + ")\n" +
+               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
+               "    " + Mathf.Round(tiredness.value) + "% tired";
+    }
+
+    private void Start()
+    {
+        update_group(snap: true);
+        settlers.Add(this);
+    }
+
+    private void OnDestroy()
+    {
+        settlers.Remove(this);
+    }
+
+    void update_group(bool snap = false)
+    {
+        var element = settler_path_element.nearest_element(transform.position);
+        if (snap) transform.position = element.transform.position;
+        group = element.group;
+    }
+
+    //############//
+    // NETWORKING //
+    //############//
+
     public networked_variables.net_int hunger;
     public networked_variables.net_int tiredness;
+    public networked_variables.net_string net_name;
+    public networked_variables.net_bool male;
 
-    public override float position_resolution()
-    {
-        return 0.1f;
-    }
-
-    public override float position_lerp_speed()
-    {
-        return 2f;
-    }
+    public override float position_resolution() { return 0.1f; }
+    public override float position_lerp_speed() { return 2f; }
+    public override bool persistant() { return true; }
 
     public override void on_init_network_variables()
     {
@@ -26,23 +54,39 @@ public class settler : character, IInspectable
 
         hunger = new networked_variables.net_int(min_value: 0, max_value: 100);
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
+        net_name = new networked_variables.net_string();
+        male = new networked_variables.net_bool();
+        net_name.on_change = () => name = net_name.value;
     }
 
-    public override bool persistant()
+    public override void on_first_create()
     {
-        return true;
+        base.on_first_create();
+        male.value = Random.Range(0, 2) == 0;
+        if (male.value) net_name.value = names.random_male_name();
+        else net_name.value = names.random_female_name();
     }
 
-    protected override ICharacterController default_controller()
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    static HashSet<settler> settlers;
+
+    new public static void initialize()
     {
-        return new settler_control();
+        settlers = new HashSet<settler>();
     }
 
-    new public string inspect_info()
+    public static void update_all_groups()
     {
-        return "Settler\n" +
-               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
-               "    " + Mathf.Round(tiredness.value) + "% tired";
+        foreach (var s in settlers)
+            s.update_group();
+    }
+
+    new public static string info()
+    {
+        return "    Total settler count : " + settlers.Count;
     }
 }
 

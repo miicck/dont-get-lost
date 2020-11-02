@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 408885589588523378}
   - component: {fileID: 7833439990514047747}
   - component: {fileID: 8762775896755834874}
-  - component: {fileID: 3216033632899776062}
   m_Layer: 0
-  m_Name: wheat
+  m_Name: pine_tree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,8 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  to_grow: {fileID: 260027079293200419, guid: 9d7dc0fe1972e45468684e9d5f1f497d, type: 3}
-  growth_time: 30
+  to_grow: {fileID: 6183768412213023806, guid: d1625acea2987304082a96731bef4a68, type: 3}
+  growth_time: 120
 --- !u!114 &8762775896755834874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,24 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 1
-  item: {fileID: 2538827299418554887, guid: 79e710047dd70d6499b09328839fa940, type: 3}
-  min_count: 1
-  max_count: 2
-  one_in_chance: 1
---- !u!114 &3216033632899776062
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7513126627270514002}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mode: 0
-  item: {fileID: 7456890149895918369, guid: 69fbb8b0d92a33e45a7c2e48d32462eb, type: 3}
-  min_count: 1
-  max_count: 1
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  min_count: 10
+  max_count: 20
   one_in_chance: 1
