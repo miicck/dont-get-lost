@@ -274,6 +274,27 @@ public class networked : MonoBehaviour
         on_loose_authority();
     }
 
+    /// <summary> The first networked object in the 
+    /// hierarchy above me, or null if there are none. </summary>
+    public networked networked_parent
+    {
+        get
+        {
+            // Find my networked parent (don't find myself)
+            Transform searching = transform.parent;
+            networked parent = null;
+
+            while (searching != null)
+            {
+                parent = searching.GetComponent<networked>();
+                if (parent != null)
+                    break;
+            }
+
+            return parent;
+        }
+    }
+
     /// <summary> A callback method. </summary>
     public delegate void callback();
 

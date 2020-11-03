@@ -229,10 +229,18 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     }
     static bool _draw_links;
 
+    public static List<settler_path_element> path(Vector3 v, settler_path_element goal)
+    {
+        return path(nearest_element(v), goal);
+    }
+
     /// <summary> Find a path between the start and end elements, using 
     /// the A* algorithm. Returns null if no such path exists. </summary>
     public static List<settler_path_element> path(settler_path_element start, settler_path_element goal)
     {
+        if (start == null || goal == null) return null;
+        if (start.group != goal.group) return null;
+
         // Setup pathfinding state
         var open_set = new HashSet<settler_path_element>();
         var closed_set = new HashSet<settler_path_element>();

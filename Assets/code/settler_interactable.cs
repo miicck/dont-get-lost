@@ -8,11 +8,22 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     /// goes to in order to use this object. </summary>
     public settler_path_element path_element;
 
+    /// <summary> Returns the pathing group to which I belong. </summary>
     public int group => path_element.group;
+
+    /// <summary> Returns the networked object to which I belong. </summary>
+    public networked networked_parent => GetComponentInParent<networked>();
+
+    /// <summary> Returns the assignment of a settler to this interactable, if one exists. </summary>
+    public settler_task_assignment[] assignments => networked_parent.GetComponentsInChildren<settler_task_assignment>();
 
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>
     public TYPE type;
+
+    /// <summary> The maximum number of settlers that 
+    /// can be assigned to this interactable. </summary>
+    public int max_simultaneous_users = 1;
 
     public enum TYPE
     {

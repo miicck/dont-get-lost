@@ -8,7 +8,7 @@ public class settler : character, IInspectable
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
 
     public int group { get; private set; }
-    protected override ICharacterController default_controller() { return new settler_control(); }
+    protected override ICharacterController default_controller() { return new settler_control_v2(); }
 
     new public string inspect_info()
     {
@@ -88,6 +88,117 @@ public class settler : character, IInspectable
     {
         return "    Total settler count : " + settlers.Count;
     }
+}
+
+class settler_control_v2 : ICharacterController
+{
+    List<settler_path_element> path;
+    float interaction_time = 0;
+    float delta_hunger = 0;
+    float delta_tired = 0;
+
+    public void control(character c)
+    {
+        var s = (settler)c;
+
+        // Get hungry/tired
+        delta_hunger += settler.HUNGER_PER_SECOND * Time.deltaTime;
+        delta_tired += settler.TIREDNESS_PER_SECOND * Time.deltaTime;
+
+        if (delta_hunger > 1f)
+        {
+            delta_hunger = 0f;
+            s.hunger.value += 1;
+        }
+
+        if (delta_tired > 1f)
+        {
+            delta_tired = 0f;
+            s.tiredness.value += 1;
+        }
+
+        // Look for my current assignment
+        var assignment = settler_task_assignment.current_assignment(s);
+
+        // Look for a new assignment if I don't have one
+        if (assignment == null)
+        {
+            // Reset stuff
+            path = null;
+            interaction_time = 0;
+
+            // The next candidate interaction
+            settler_interactable next = null;
+            if (Random.Range(0, 100) < s.hunger.value)
+                next = settler_interactable.random(settler_interactable.TYPE.EAT);
+
+            else if (Random.Range(0, 100) < s.tiredness.value)
+                next = settler_interactable.random(settler_interactable.TYPE.SLEEP);
+
+            // Didn't need to do anything, so get to work
+            if (next == null)
+                next = settler_interactable.random(settler_interactable.TYPE.WORK);
+
+            // No suitable interaction found
+            if (next == null) return;
+
+            // Create the assignment
+            settler_task_assignment.try_assign(s, next);
+            return;
+        }
+
+        // We have an assignment, attempt to carry it out
+
+        // Check if we have a path
+        if (path == null)
+        {
+            // Find a path to the assignment
+            path = settler_path_element.path(s.transform.position,
+                assignment.interactable.path_element);
+
+            if (path == null)
+            {
+                // Couldn't path to assignment, delete it
+                assignment.delete();
+                return;
+            }
+        }
+
+        // Check if there is any of the path left to walk
+        if (path.Count > 0)
+        {
+            if (path[0] == null)
+            {
+                // Path has been destroyed, reset
+                path = null;
+                return;
+            }
+
+            // Walk the path to completion
+            Vector3 next_point = path[0].transform.position;
+            Vector3 forward = next_point - c.transform.position;
+            forward.y = 0;
+            if (forward.magnitude > 10e-3f) c.transform.forward = forward;
+
+            if (utils.move_towards(s.transform, next_point,
+                Time.deltaTime * s.walk_speed))
+                path.RemoveAt(0);
+
+            return;
+        }
+
+        // Carry out the assignment
+        interaction_time += Time.deltaTime;
+        if (assignment.interactable.interact(s, interaction_time))
+        {
+            // Assignment complete
+            assignment.delete();
+            return;
+        }
+    }
+
+    public void draw_gizmos() { }
+    public void draw_inspector_gui() { }
 }
 
 class settler_control : ICharacterController

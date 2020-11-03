@@ -194,6 +194,7 @@ public class game : MonoBehaviour
         character_spawn_point.initialize();
         character.initialize();
         settler.initialize();
+        settler_task_assignment.initialize();
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
@@ -262,6 +263,7 @@ public class game : MonoBehaviour
             settler.info() + "\n" +
             "\nINTERACTIONS\n" +
             settler_interactable.info() + "\n" +
+            settler_task_assignment.info() + "\n" +
             "\nLOAD BALANCER\n" +
             load_balancing.info() + "\n" +
             "\nTIME OF DAY\n" +
