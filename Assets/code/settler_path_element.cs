@@ -106,7 +106,10 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         Gizmos.color = Color.cyan;
         foreach (var l in links)
             if (l.linked_to != null)
+            {
                 Gizmos.DrawLine(transform.position, l.transform.position);
+                Gizmos.DrawLine(l.transform.position, l.linked_to.transform.position);
+            }
     }
 
     float heuristic(settler_path_element other)

@@ -192,7 +192,7 @@ public class chunk : MonoBehaviour
     }
 
     // Highlight the chunk if enabled
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         var color = Color.cyan;
         if (!enabled) color = Color.black;

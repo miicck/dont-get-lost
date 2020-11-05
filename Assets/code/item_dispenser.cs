@@ -6,6 +6,7 @@ public class item_dispenser : settler_interactable
 {
     public item_input input;
     item_locator[] locators;
+    float time_interacted = 0f;
 
     public enum MODE
     {
@@ -54,15 +55,45 @@ public class item_dispenser : settler_interactable
         }
     }
 
-    public override bool interact(settler s, float time_elapsed)
+    bool accepts_item(item i)
     {
         switch (mode)
         {
-            case MODE.FOOD:
+            case MODE.FOOD: return i.food_value > 0;
+            default: throw new System.Exception("Unkown dispenser mode!");
+        }
+    }
 
-                // It takes 1 second to eat food
-                if (time_elapsed < 1f)
-                    return false;
+    //##############//
+    // INTERACTABLE //
+    //##############//
+
+    public override void on_assign(settler s)
+    {
+        // Reset stuff
+        time_interacted = 0f;
+    }
+
+    public override void on_interact(settler s)
+    {
+        time_interacted += Time.deltaTime;
+    }
+
+    public override bool is_complete(settler s)
+    {
+        // It takes 1 second to dispense item
+        return time_interacted > 1f;
+    }
+
+    public override void on_unassign(settler s)
+    {
+        // Only dispense item on authority client
+        if (!s.has_authority) return;
+
+        // Dispense the item
+        switch (mode)
+        {
+            case MODE.FOOD:
 
                 // Search for food
                 foreach (var l in locators)
@@ -73,17 +104,8 @@ public class item_dispenser : settler_interactable
                         break;
                     }
 
-                return true;
+                break;
 
-            default: throw new System.Exception("Unkown dispenser mode!");
-        }
-    }
-
-    bool accepts_item(item i)
-    {
-        switch (mode)
-        {
-            case MODE.FOOD: return i.food_value > 0;
             default: throw new System.Exception("Unkown dispenser mode!");
         }
     }

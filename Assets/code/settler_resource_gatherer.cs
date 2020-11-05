@@ -12,6 +12,7 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     public tool.QUALITY tool_quality = tool.QUALITY.TERRIBLE;
 
     harvestable harvesting;
+    float time_harvesting;
 
     private void OnDrawGizmos()
     {
@@ -52,19 +53,35 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
             Invoke("update_harvesting", 1);
     }
 
-    public override bool interact(settler s, float time_elapsed)
+    //##############//
+    // INTERACTABLE //
+    //##############//
+
+    public override void on_assign(settler s)
     {
-        // Nothing to harvest => interaction complete
-        if (harvesting == null)
-            return true;
+        // Reset stuff 
+        time_harvesting = 0f;
+    }
 
-        // It takes 1 second to harvest
-        if (time_elapsed < 1f)
-            return false;
+    public override void on_interact(settler s)
+    {
+        // Record how long has been spent harvesting
+        time_harvesting += Time.deltaTime;
+    }
 
+    public override bool is_complete(settler s)
+    {
+        // It takes 1 second to finish harvesting
+        return time_harvesting > 1f;
+    }
+
+    public override void on_unassign(settler s)
+    {
+        // Only create item on authority client
+        if (!s.has_authority) return;
+
+        // Create the products
         foreach (var p in harvesting.products)
             p.create_in_node(output);
-
-        return true;
     }
 }

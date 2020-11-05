@@ -77,7 +77,7 @@ public class settler_path_link : MonoBehaviour
             throw new System.Exception("Display created incorrectly!");
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (linked_to == null)
             Gizmos.color = Color.red;

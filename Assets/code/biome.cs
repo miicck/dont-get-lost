@@ -274,7 +274,7 @@ public abstract class biome : MonoBehaviour
         Resources.UnloadUnusedAssets();
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(

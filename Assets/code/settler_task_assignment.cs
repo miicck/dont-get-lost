@@ -33,7 +33,7 @@ public class settler_task_assignment : networked
         get
         {
             // Get the settler with network id = settler_id.value
-            var nw = find_by_id(settler_id.value);
+            var nw = try_find_by_id(settler_id.value);
             if (nw != null && nw is settler) return (settler)nw;
             return null;
         }
@@ -64,9 +64,11 @@ public class settler_task_assignment : networked
         var i = interactable;
         if (i == null) return;
 
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position, Vector3.one * 0.2f);
-        Gizmos.DrawWireCube(s.transform.position, Vector3.one * 0.2f);
+        Gizmos.color = has_authority ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(transform.position, 0.05f);
+
+        Gizmos.color = s.has_authority ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(transform.position, 0.05f);
         Gizmos.DrawLine(s.transform.position, transform.position);
     }
 
@@ -88,7 +90,7 @@ public class settler_task_assignment : networked
     {
         if (i.assignments.Length >= i.max_simultaneous_users)
             return; // Too many users are already using i
-         
+
         // Create an assignment as a child of i.networked_parent
         var assignment = (settler_task_assignment)client.create(
             i.transform.position, "misc/task_assignment", parent: i.networked_parent);
@@ -108,6 +110,8 @@ public class settler_task_assignment : networked
         // Record this assignment
         assignments.Add(a);
         assignments_by_id[a.settler_id.value] = a;
+        if (a.settler != null)
+            a.interactable.on_assign(a.settler);
     }
 
     static void forget_assignment(settler_task_assignment a)
@@ -115,6 +119,8 @@ public class settler_task_assignment : networked
         // Forget this assignment
         assignments.Remove(a);
         assignments_by_id.Remove(a.settler_id.value);
+        if (a.settler != null)
+            a.interactable.on_unassign(a.settler);
     }
 
     public static string info()
@@ -127,11 +133,12 @@ public class settler_task_assignment : networked
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(settler_task_assignment))]
-    class sta_editor : UnityEditor.Editor
+    class sta_editor : editor
     {
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+
             var ta = (settler_task_assignment)target;
             var settler = ta.settler;
             var task = ta.interactable;

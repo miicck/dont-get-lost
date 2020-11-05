@@ -47,10 +47,10 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
             forget_interactable(this);
     }
 
-    public virtual bool interact(settler s, float time_elapsed)
-    {
-        return true;
-    }
+    public virtual void on_assign(settler s) { }
+    public virtual void on_unassign(settler s) { }
+    public virtual void on_interact(settler s) { }
+    public virtual bool is_complete(settler s) { return true; }
 
     //##############//
     // STATIC STUFF //
