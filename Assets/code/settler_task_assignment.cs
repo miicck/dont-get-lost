@@ -76,7 +76,6 @@ public class settler_task_assignment : networked
     // STATIC STUFF //
     //##############//
 
-    static HashSet<settler_task_assignment> assignments;
     static Dictionary<int, settler_task_assignment> assignments_by_id;
 
     public static settler_task_assignment current_assignment(settler s)
@@ -101,14 +100,12 @@ public class settler_task_assignment : networked
 
     public static void initialize()
     {
-        assignments = new HashSet<settler_task_assignment>();
         assignments_by_id = new Dictionary<int, settler_task_assignment>();
     }
 
     static void register_assignment(settler_task_assignment a)
     {
         // Record this assignment
-        assignments.Add(a);
         assignments_by_id[a.settler_id.value] = a;
         if (a.settler != null)
             a.interactable.on_assign(a.settler);
@@ -117,7 +114,6 @@ public class settler_task_assignment : networked
     static void forget_assignment(settler_task_assignment a)
     {
         // Forget this assignment
-        assignments.Remove(a);
         assignments_by_id.Remove(a.settler_id.value);
         if (a.settler != null)
             a.interactable.on_unassign(a.settler);
@@ -126,8 +122,8 @@ public class settler_task_assignment : networked
     public static string info()
     {
         string ret = "Assignments:\n";
-        foreach (var a in assignments)
-            ret += "    " + a.settler?.name + " -> " + a.interactable?.name + "\n";
+        foreach (var kv in assignments_by_id)
+            ret += "    " + kv.Value.settler?.name + " -> " + kv.Value.interactable?.name + "\n";
         return ret;
     }
 

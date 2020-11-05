@@ -109,4 +109,13 @@ public class item_dispenser : settler_interactable
             default: throw new System.Exception("Unkown dispenser mode!");
         }
     }
+
+    public override string task_info()
+    {
+        switch (mode)
+        {
+            case MODE.FOOD: return "Getting food";
+            default: throw new System.Exception("Unkown dispenser mode!");
+        }
+    }
 }

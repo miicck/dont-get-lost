@@ -9,12 +9,18 @@ public class bed : settler_interactable
 
     float delta_tired;
     float time_slept;
+    int start_tiredness;
+    int last_tiredness;
+
+    int less_tired_amount => Mathf.Max(0, start_tiredness - last_tiredness);
 
     public override void on_assign(settler s)
     {
         // Reset stuff
         time_slept = 0f;
         delta_tired = 0f;
+        start_tiredness = s.tiredness.value;
+        last_tiredness = start_tiredness;
     }
 
     public override void on_interact(settler s)
@@ -24,6 +30,7 @@ public class bed : settler_interactable
         s.transform.rotation = sleep_orientation.rotation;
 
         time_slept += Time.deltaTime;
+        last_tiredness = s.tiredness.value;
 
         // Only modify tiredness on authority client
         if (!s.has_authority) return;
@@ -48,5 +55,12 @@ public class bed : settler_interactable
     {
         // Un-lie down
         s.transform.rotation = Quaternion.identity;
+    }
+
+    public override string task_info()
+    {
+        return "Sleeping\n" +
+               "    Slept for " + Mathf.Round(time_slept) + "s\n" +
+               "    " + less_tired_amount + "% less tired";
     }
 }

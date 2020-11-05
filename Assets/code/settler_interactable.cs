@@ -51,6 +51,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     public virtual void on_unassign(settler s) { }
     public virtual void on_interact(settler s) { }
     public virtual bool is_complete(settler s) { return true; }
+    public virtual string task_info() { return name; }
 
     //##############//
     // STATIC STUFF //

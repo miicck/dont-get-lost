@@ -126,4 +126,9 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
                 }
             }
     }
+
+    public override string task_info()
+    {
+        return "Tending to " + GetComponentInParent<item>().display_name;
+    }
 }

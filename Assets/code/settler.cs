@@ -13,11 +13,12 @@ public class settler : character, IInspectable
     List<settler_path_element> path;
     float delta_hunger = 0;
     float delta_tired = 0;
+    settler_task_assignment assignment;
 
     public void Update()
     {
         // Look for my current assignment
-        var assignment = settler_task_assignment.current_assignment(this);
+        assignment = settler_task_assignment.current_assignment(this);
 
         if (!has_authority)
         {
@@ -123,9 +124,14 @@ public class settler : character, IInspectable
 
     new public string inspect_info()
     {
+        string ass_string = "No assignment.";
+        if (assignment != null)
+            ass_string = "Assignment: " + assignment.interactable.task_info();
+
         return name.capitalize() + " (group " + group + ")\n" +
                "    " + Mathf.Round(hunger.value) + "% hungry\n" +
-               "    " + Mathf.Round(tiredness.value) + "% tired";
+               "    " + Mathf.Round(tiredness.value) + "% tired\n" +
+               ass_string;
     }
 
     private void Start()
