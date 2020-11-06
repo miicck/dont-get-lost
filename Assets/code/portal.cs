@@ -12,6 +12,8 @@ public class portal : building_material, ILeftPlayerMenu
 
     RectTransform menu;
 
+    public string left_menu_display_name() { return display_name; }
+
     public RectTransform left_menu_transform()
     {
         if (menu == null)

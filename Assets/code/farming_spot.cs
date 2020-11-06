@@ -113,6 +113,7 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
     // ILeftPlayerMenu //
     //#################//
 
+    public string left_menu_display_name() { return display_name; }
     public inventory editable_inventory() { return inventory; }
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { update_growth(); }

@@ -30,6 +30,7 @@ public class chest : building_with_inventory, ILeftPlayerMenu
     // ILeftPlayerMenu //
     //#################//
 
+    public string left_menu_display_name() { return display_name; }
     public RectTransform left_menu_transform() { return inventory?.ui; }
     public void on_left_menu_open() { }
     public void on_left_menu_close() { }

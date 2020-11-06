@@ -135,6 +135,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
             // We can see the crosshairs if we cant see the mouse
             crosshairs.enabled = !Cursor.visible;
+
+            // Make sure the crafting options are up to date with whatever we're interacting with
+            var crafting_options = crafting_menu?.ui?.GetComponentInChildren<player_crafting_options>(true);
+            if (crafting_options != null) crafting_options.update_recipies();
         }
     }
     UI_STATE _ui_state;
@@ -1772,6 +1776,9 @@ public class popup_message : MonoBehaviour
 // ILeftPlayerMenu can be simplified.
 public interface ILeftPlayerMenu
 {
+    /// <summary> The display name of whatever we're interating with. </summary>
+    string left_menu_display_name();
+
     /// <summary> An inventory associated with this menu, that a 
     /// player can take/put items at will. </summary>
     inventory editable_inventory();

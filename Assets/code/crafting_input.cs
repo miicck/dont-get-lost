@@ -18,7 +18,7 @@ public class crafting_input : MonoBehaviour
         craft_from.add_on_change_listener(update_recipies);
     }
 
-    public virtual void load_recipies()
+    protected virtual void load_recipies()
     {
         if (recipes_folder != null && recipes_folder.Trim().Length != 0)
             recipes = Resources.LoadAll<recipe>(recipes_folder);
@@ -26,7 +26,7 @@ public class crafting_input : MonoBehaviour
             throw new System.Exception("No recipe folder specified for " + name);
     }
 
-    void update_recipies()
+    public void update_recipies()
     {
         load_recipies();
 

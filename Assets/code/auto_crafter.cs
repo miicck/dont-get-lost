@@ -85,6 +85,8 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
     crafting_entry[] recipe_buttons;
 
+    public string left_menu_display_name() { return display_name; }
+
     RectTransform left_menu;
     public RectTransform left_menu_transform()
     {

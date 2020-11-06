@@ -41,6 +41,7 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
     // ILeftPlayerMenu //
     //#################//
 
+    public string left_menu_display_name() { return display_name.value; }
     public inventory editable_inventory() { return inventory; }
     public RectTransform left_menu_transform() { return inventory.ui; }
     public recipe[] additional_recipes() { return null; }
@@ -60,8 +61,8 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
     // STATIC STUFF //
     //##############//
 
-    public static sack create(Vector3 location, 
-        IEnumerable<KeyValuePair<item, int>> contents = null, 
+    public static sack create(Vector3 location,
+        IEnumerable<KeyValuePair<item, int>> contents = null,
         string display_name = "sack")
     {
         var sack = client.create(location, "misc/sack").GetComponent<sack>();
@@ -70,7 +71,7 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
         sack.add_register_listener(() =>
         {
             client.create(location, "inventories/sack", sack);
-           
+
             if (contents != null)
                 sack.inventory.add_register_listener(() =>
                 {
@@ -78,7 +79,7 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
                         sack.inventory.add(kv.Key, kv.Value);
                 });
         });
-    
+
         return sack;
     }
 }
