@@ -11,10 +11,11 @@ GameObject:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
   - component: {fileID: 37089541926742898}
+  - component: {fileID: -4898399488506822507}
+  - component: {fileID: -1515842055554838839}
   - component: {fileID: 4228508087393313574}
-  - component: {fileID: 6027368987675513023}
   m_Layer: 0
-  m_Name: flax_fibers
+  m_Name: bed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58,8 +59,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 481459423868873903, guid: e471869a6ce5822489af977eaf58692e, type: 3}
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  count: 2
+--- !u!114 &-4898399488506822507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
   count: 1
+--- !u!114 &-1515842055554838839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 2908574272653974355, guid: a9dc719385e2c5347b4c89de21e9e542, type: 3}
+  count: 4
 --- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,24 +102,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 2381921134792523599, guid: 67e9a04216491ea49947c320ebddf9af, type: 3}
+  item: {fileID: 9164871923869454548, guid: 3e74c2b38c7556f4bb91b5df2de31b5d, type: 3}
   min_count: 1
   max_count: 1
-  one_in_chance: 1
---- !u!114 &6027368987675513023
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781572618251870278}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mode: 1
-  item: {fileID: 3966449809020136031, guid: a505128589338bd48847d7aae42fb1e4, type: 3}
-  min_count: 1
-  max_count: 2
   one_in_chance: 1
