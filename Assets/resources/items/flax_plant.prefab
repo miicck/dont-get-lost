@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3600898417947631214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4347658890408287021}
+  - component: {fileID: 481459423868873903}
+  m_Layer: 0
+  m_Name: flax_plant
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4347658890408287021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3600898417947631214}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 6728479496805775918}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &481459423868873903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3600898417947631214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fc9c860e20d48d4baeb3949bda2eb71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  is_client_side: 0
+  sprite: {fileID: 21300000, guid: 6fbfcbf233912aa4bac0d8694952a576, type: 3}
+  plural: flax plants
+  value: 0
+  fuel_value: 0
+  food_value: 0
+  logistics_scale: 1
+--- !u!1001 &5207932314562692386
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 4347658890408287021}
+    m_Modifications:
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5194724810624745291, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_Name
+      value: flax_plant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+--- !u!4 &6728479496805775918 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+  m_PrefabInstance: {fileID: 5207932314562692386}
+  m_PrefabAsset: {fileID: 0}
