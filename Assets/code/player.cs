@@ -1396,6 +1396,8 @@ public class player : networked_player, INotPathBlocking, IInspectable
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_quaternion equipped_local_rot;
 
+    public int slot_number_equipped => slot_equipped.value;
+
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
     AudioSource sound_source;
