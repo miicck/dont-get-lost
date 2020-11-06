@@ -11,11 +11,7 @@ public class inventory_quickbar_slot : inventory_slot
         base.update(item, count, inventory);
 
         var player = inventory.GetComponentInParent<player>();
-        if (player != null)
-        {
-            player.validate_equip();
-            if (player == player.current)
-                toolbar_display_slot.update(number, item, count);
-        }
+        if (player != null && player == player.current)
+            toolbar_display_slot.update(number, item, count);
     }
 }
