@@ -42,7 +42,7 @@ public class inventory_slot_networked : networked
     public void set_item_count_index(item item, int count, int index)
     {
         net_index.value = index;
-        net_item.value = item.name;
+        net_item.value = item == null ? "" : item.name;
         net_count.value = count;
     }
 

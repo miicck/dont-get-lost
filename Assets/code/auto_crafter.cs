@@ -38,11 +38,10 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
                 inputs_changed = true;
             }
 
-        // Attempt to craft something
+        // Attempt to craft stuff
         if (inputs_changed || inputs.Length == 0)
             if (chosen_recipe.value >= 0 && chosen_recipe.value < recipies.Length)
-                if (recipies[chosen_recipe.value].craft(pending_inputs, pending_outputs))
-                    pending_inputs.clear();
+                recipies[chosen_recipe.value].craft(pending_inputs, pending_outputs);
 
         int output_number = -1;
         while (true)

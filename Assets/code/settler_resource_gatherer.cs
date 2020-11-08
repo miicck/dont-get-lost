@@ -8,11 +8,15 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     public Transform ray_start;
     public float ray_length;
 
+    public float time_between_harvests = 1f;
+    public int max_harvests = 5;
+
     public tool.TYPE tool_type = tool.TYPE.AXE;
     public tool.QUALITY tool_quality = tool.QUALITY.TERRIBLE;
 
     harvestable harvesting;
     float time_harvesting;
+    int harvested_count = 0;
 
     private void OnDrawGizmos()
     {
@@ -61,27 +65,30 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     {
         // Reset stuff 
         time_harvesting = 0f;
+        harvested_count = 0;
     }
 
     public override void on_interact(settler s)
     {
         // Record how long has been spent harvesting
         time_harvesting += Time.deltaTime;
+
+        if (time_harvesting > harvested_count)
+        {
+            harvested_count += 1;
+
+            // Create the products
+            if (harvesting != null)
+                foreach (var p in harvesting.products)
+                    p.create_in_node(output);
+        }
     }
 
     public override bool is_complete(settler s)
     {
-        // It takes 1 second to finish harvesting
-        return time_harvesting > 1f;
+        // We're done if we've harvested enough times
+        return harvested_count >= max_harvests;
     }
 
-    public override void on_unassign(settler s)
-    {
-        // Only create item on authority client
-        if (!s.has_authority) return;
-
-        // Create the products
-        foreach (var p in harvesting.products)
-            p.create_in_node(output);
-    }
+    public override void on_unassign(settler s) { }
 }

@@ -68,6 +68,9 @@ public class recipe : MonoBehaviour
         foreach (var wb in Resources.LoadAll<workbench>("items"))
             ret.Add(new KeyValuePair<string, recipe[]>(wb.name, Resources.LoadAll<recipe>("recipes/workbenches/" + wb.name)));
 
+        foreach (var ac in Resources.LoadAll<auto_crafter>("items"))
+            ret.Add(new KeyValuePair<string, recipe[]>(ac.name, Resources.LoadAll<recipe>("recipes/workbenches/" + ac.name)));
+
         return ret;
     }
 

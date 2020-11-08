@@ -20,8 +20,9 @@ public class settler_field_spot : networked, IInspectable
             if (progress_scale < grown_object.transform.localScale.x)
             {
                 var field = GetComponentInParent<settler_field>();
-                foreach (var p in products)
-                    p.create_in_node(field.output);
+                if (field != null)
+                    foreach (var p in products)
+                        p.create_in_node(field.output);
             }
 
             grown_object.transform.localScale = Vector3.one * progress_scale;

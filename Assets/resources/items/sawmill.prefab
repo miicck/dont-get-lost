@@ -240,7 +240,7 @@ MonoBehaviour:
   logistics_scale: 1
   axes_scale: 1
   craft_time: 1
-  recipes_folder: recipes/workbenches/sawtable
+  recipes_folder: recipes/workbenches/sawmill
 --- !u!1 &4301794516072145572
 GameObject:
   m_ObjectHideFlags: 0

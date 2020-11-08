@@ -85,10 +85,13 @@ public class settler_task_assignment : networked
         return null;
     }
 
-    public static void try_assign(settler s, settler_interactable i)
+    public static bool try_assign(settler s, settler_interactable i)
     {
+        if (s == null || i == null)
+            return false;
+
         if (i.assignments.Length >= i.max_simultaneous_users)
-            return; // Too many users are already using i
+            return false; // Too many users are already using i
 
         // Create an assignment as a child of i.networked_parent
         var assignment = (settler_task_assignment)client.create(
@@ -96,6 +99,7 @@ public class settler_task_assignment : networked
 
         // Set the assignment settler id
         assignment.settler_id.value = s.network_id;
+        return true;
     }
 
     public static void initialize()

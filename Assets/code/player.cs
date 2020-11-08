@@ -20,7 +20,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
 
     // Movement
     public const float BASE_SPEED = 4f;
-    public const float ACCELERATION_TIME = 0.2f;
+    public const float ACCELERATION_TIME = 0.1f;
     public const float ACCELERATION = BASE_SPEED / ACCELERATION_TIME;
     public const float CROUCH_SPEED_MOD = 0.25f;
     public const float SLOW_WALK_SPEED_MOD = 0.05f;
@@ -516,10 +516,20 @@ public class player : networked_player, INotPathBlocking, IInspectable
                 {
                     // We've found the item in our inventory
                     // Switch with the currently equipped slot
-                    // (or the first slot if nothing is equipped)
-                    int switch_with = Mathf.Max(slot_equipped.value, 1);
-                    slot_found.switch_with(quickbar_slot(switch_with));
-                    slot_equipped.value = switch_with;
+                    // (or the first slot if nothing is equipped)             
+                    int swith_with_slot = Mathf.Max(slot_equipped.value, 1);
+                    var switch_with = quickbar_slot(swith_with_slot);
+
+                    if (switch_with == null)
+                    {
+                        // Inventory slot doesn't exist, create one
+                        switch_with = (inventory_slot_networked)client.create(
+                            transform.position, "misc/networked_inventory_slot", inventory);
+                        switch_with.set_item_count_index(null, 0, swith_with_slot - 1);
+                    }
+
+                    slot_found.switch_with(switch_with);
+                    slot_equipped.value = swith_with_slot;
                     validate_equip();
                 }
             }

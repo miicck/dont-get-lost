@@ -7,6 +7,9 @@ public class item_input : item_node
 {
     protected override bool can_input_from(item_node other)
     {
+        if (this == null || other == null)
+            return false;
+
         Vector3 delta = input_point(other.output_point) - other.output_point;
         if (delta.y > UPHILL_LINK_ALLOW) return false; // Can't accept input from below
 

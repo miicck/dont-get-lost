@@ -22,8 +22,11 @@ public class settler : character, IInspectable
 
         if (!has_authority)
         {
-            if ((transform.position - assignment.transform.position).magnitude < 0.5f)
-                assignment.interactable.on_interact(this);
+            if (assignment != null)
+            {
+                if ((transform.position - assignment.transform.position).magnitude < 0.5f)
+                    assignment.interactable.on_interact(this);
+            }
             return;
         }
 
@@ -51,23 +54,24 @@ public class settler : character, IInspectable
             // Reset stuff
             path = null;
 
-            // The next candidate interaction
-            settler_interactable next = null;
-            if (Random.Range(0, 100) < hunger.value)
-                next = settler_interactable.random(settler_interactable.TYPE.EAT);
+            // Get an eat task
+            if (Random.Range(0, 100) < hunger.value &&
+                settler_task_assignment.try_assign(this,
+                settler_interactable.random(settler_interactable.TYPE.EAT)))
+                return;
 
-            else if (Random.Range(0, 100) < tiredness.value)
-                next = settler_interactable.random(settler_interactable.TYPE.SLEEP);
+            // Get a sleep task
+            if (Random.Range(0, 100) < tiredness.value &&
+                settler_task_assignment.try_assign(this,
+                settler_interactable.random(settler_interactable.TYPE.SLEEP)))
+                return;
 
-            // Didn't need to do anything, so get to work
-            if (next == null)
-                next = settler_interactable.random(settler_interactable.TYPE.WORK);
+            // Get a work task
+            if (settler_task_assignment.try_assign(this,
+                settler_interactable.random(settler_interactable.TYPE.WORK)))
+                return;
 
             // No suitable interaction found
-            if (next == null) return;
-
-            // Create the assignment
-            settler_task_assignment.try_assign(this, next);
             return;
         }
 
