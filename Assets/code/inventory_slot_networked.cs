@@ -7,62 +7,76 @@ public class inventory_slot_networked : networked
 {
     // Public getters
     public inventory inventory => GetComponentInParent<inventory>();
-    public item item => Resources.Load<item>("items/" + net_item.value);
-    public string item_name => net_item.value;
-    public int count => net_count.value;
+    public item item => Resources.Load<item>("items/" + item_name);
+    public string item_name => contents.first;
+    public int count => contents.second;
     public int index => net_index.value;
 
     // The actual contents of this slot are networked
-    networked_variables.net_string net_item;
-    networked_variables.net_int net_count;
-    networked_variables.net_int net_index;
+    networked_variables.net_int net_index; // The inventory slot coordinate
+    simple_networked_pair<string, int> contents; // The actual contents of the slot
 
     public override void on_init_network_variables()
     {
         net_index = new networked_variables.net_int(default_value: -1);
-        net_item = new networked_variables.net_string();
-        net_count = new networked_variables.net_int();
+
+        contents = new simple_networked_pair<string, int>(
+            new networked_variables.net_string(),
+            new networked_variables.net_int());
 
         net_index.on_change_old_new = (old_value, new_value) =>
         {
-            if (old_value > 0 && (old_value != new_value))
+            // Index value is not allowed to change (there is a 1:1 correspondance
+            // between indexed inventory slots and their networked version). However,
+            // if the old value is < 0, then this is the first time we're assigning
+            // this correspondance, which is obviously allowed and triggers an
+            // inventory.on_slot_change.
+            if (old_value >= 0 && (old_value != new_value))
                 throw new System.Exception("Tried to overwrite slot index!");
+
+            // Only trigger an on_slot_change when the index is first 
+            // assigned and my contents are not empty; this happens
+            // if the contents are deserialized before the index 
+            // (all other changes are handled by contents.on_change, which
+            //  requires a valid index to already be set).
+            if (old_value <= 0 && (item != null || count != 0))
+                inventory.on_slot_change(index, item, count);
         };
 
-        net_item.on_change = () => on_change();
-        net_count.on_change = () => on_change();
+        contents.on_change = () =>
+        {
+            if (net_index.value < 0) return; // Wait for correctly indexed slot
+            inventory.on_slot_change(index, item, count);
+        };
     }
 
-    void on_change()
+    public override void on_forget(bool deleted)
     {
-        if (net_index.value < 0) return;
-        inventory.on_slot_change(index, item, count);
+        base.on_forget(deleted);
+
+        // We've been deleted => this is now an empty slot
+        if (deleted) inventory.on_slot_change(index, null, 0);
     }
 
     public void set_item_count_index(item item, int count, int index)
     {
         net_index.value = index;
-        net_item.value = item == null ? "" : item.name;
-        net_count.value = count;
+        contents.set(item == null ? "" : item.name, count);
     }
 
     public void switch_with(inventory_slot_networked other)
     {
-        var tmp_item = net_item.value;
-        var tmp_count = net_count.value;
-
-        net_item.value = other.net_item.value;
-        net_count.value = other.net_count.value;
-
-        other.net_item.value = tmp_item;
-        other.net_count.value = tmp_count;
+        var tmp_item = item_name;
+        var tmp_count = count;
+        contents.set(other.item_name, other.count);
+        other.contents.set(tmp_item, tmp_count);
     }
 
     public bool add(item item, int count)
     {
         if (item.name == item_name)
         {
-            net_count.value += count;
+            contents.second += count;
             return true;
         }
         return false;
@@ -74,19 +88,19 @@ public class inventory_slot_networked : networked
     {
         if (item.name == item_name)
         {
-            if (count >= net_count.value)
+            if (count >= this.count)
             {
                 // Remove all of the items in this slot
                 // (by deleting the slot)
-                int removed = net_count.value;
-                net_count.value = 0;
+                int removed = this.count;
+                contents.second = 0;
                 delete();
                 return removed;
             }
             else
             {
                 // Remove count of the items from this slot
-                net_count.value -= count;
+                contents.second -= count;
                 return count;
             }
         }
@@ -103,8 +117,12 @@ public class inventory_slot_networked : networked
         int index = net_index.value;
         inventory inv = inventory;
 
-        if (remaining == 0) net_item.value = "";
-        net_count.value = remaining;
+        // Work out/set the new slot state
+        /*
+        string new_item = contents.first;
+        if (remaining == 0) new_item = "";
+        contents.set(new_item, remaining);
+        */
 
         // Delete this inventory slot + replace it with the
         // updated count.

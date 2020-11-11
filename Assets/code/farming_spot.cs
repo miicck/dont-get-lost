@@ -91,7 +91,7 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
             // Create the representation of grown products
             if (grown == null)
                 foreach (var kv in inventory.contents())
-                    if (kv.Key is growable_item)
+                    if (kv.Value > 0 && kv.Key is growable_item)
                     {
                         grown = create(kv.Key.name, transform.position, transform.rotation).gameObject;
                         grown.transform.SetParent(transform);

@@ -182,7 +182,8 @@ public class networked_list<T> : networked_variable, IEnumerable<T>
 }
 
 public class networked_pair<T, K> : networked_variable
-    where T : networked_variable, new() where K : networked_variable, new()
+    where T : networked_variable, new()
+    where K : networked_variable, new()
 {
     KeyValuePair<T, K> pair;
     public T first => pair.Key;
@@ -210,6 +211,68 @@ public class networked_pair<T, K> : networked_variable
         return network_utils.concat_buffers(
             pair.Key.serialization(), pair.Value.serialization());
     }
+}
+
+public class simple_networked_pair<T, K> : networked_variable
+{
+    public T first
+    {
+        get => net_first.value;
+        set
+        {
+            net_first.value = value;
+            on_change?.Invoke();
+            set_dirty();
+        }
+    }
+
+    public K second
+    {
+        get => net_second.value;
+        set
+        {
+            net_second.value = value;
+            on_change?.Invoke();
+            set_dirty();
+        }
+    }
+
+    public void set(T first, K second)
+    {
+        net_first.value = first;
+        net_second.value = second;
+        on_change?.Invoke();
+        set_dirty();
+    }
+
+    networked_variable<T> net_first;
+    networked_variable<K> net_second;
+
+    public simple_networked_pair(
+        networked_variable<T> first,
+        networked_variable<K> second)
+    {
+        net_first = first;
+        net_second = second;
+    }
+
+    protected override void process_serialization(byte[] buffer, ref int offset, int length)
+    {
+        int start = offset;
+        net_first.reccive_serialization(buffer, ref offset, length);
+        net_second.reccive_serialization(buffer, ref offset, length - (offset - start));
+        on_change?.Invoke();
+    }
+
+    public override byte[] serialization()
+    {
+        return network_utils.concat_buffers(
+            net_first.serialization(),
+            net_second.serialization());
+    }
+
+    public delegate void on_change_func();
+    public on_change_func on_change;
 }
 
 public class networked_int_set : networked_variable, IEnumerable<int>
@@ -292,6 +355,13 @@ namespace networked_variables
             this.min_value = min_value;
             this.max_value = max_value;
             _value = validate(default_value);
+        }
+
+        public net_int() : base()
+        {
+            this.min_value = int.MinValue;
+            this.max_value = int.MaxValue;
+            _value = 0;
         }
 
         protected override int validate(int new_value)

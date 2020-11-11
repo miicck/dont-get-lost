@@ -159,7 +159,8 @@ public class inventory : networked, IItemCollection
     }
     inventory_slot[] _slots;
 
-    HashSet<inventory_slot_networked> networked_slots = new HashSet<inventory_slot_networked>();
+    //HashSet<inventory_slot_networked> networked_slots = new HashSet<inventory_slot_networked>();
+    inventory_slot_networked[] networked_slots => GetComponentsInChildren<inventory_slot_networked>();
 
     public inventory_slot_networked nth_slot(int n)
     {
@@ -195,7 +196,6 @@ public class inventory : networked, IItemCollection
                         // Add the mouse item to the slot
                         isn.add(mi.item, mi.count);
                         mi.count = 0;
-                        on_slot_change(slot_index, isn.item, isn.count);
                     }
                     else
                     {
@@ -207,7 +207,6 @@ public class inventory : networked, IItemCollection
                             isn.set_item_count_index(mi.item, mi.count, slot_index);
                             mi.count = 0;
                             mouse_item.create(to_pickup, quantity, this);
-                            on_slot_change(slot_index, isn.item, isn.count);
                         }
                     }
 
@@ -239,7 +238,6 @@ public class inventory : networked, IItemCollection
                             {
                                 // Transfer into target inventory
                                 target.add(transfer_item, transfer_count);
-                                on_slot_change(transfer_slot, null, 0);
                             });
 
                         return;
@@ -259,28 +257,8 @@ public class inventory : networked, IItemCollection
             var isn = (inventory_slot_networked)client.create(
                 transform.position, "misc/networked_inventory_slot", this);
             isn.set_item_count_index(mi.item, mi.count, slot_index);
-            on_slot_change(slot_index, mi.item, mi.count);
             mi.count = 0;
         }
-    }
-
-    public override void on_add_networked_child(networked child)
-    {
-        base.on_add_networked_child(child);
-
-        // Networked slot added, register it
-        var isn = (inventory_slot_networked)child;
-        networked_slots.Add(isn);
-    }
-
-    public override void on_delete_networked_child(networked child)
-    {
-        base.on_delete_networked_child(child);
-
-        // Networked slot deleted => An inventory slot was cleared
-        var isn = (inventory_slot_networked)child;
-        networked_slots.Remove(isn);
-        on_slot_change(isn.index, null, 0);
     }
 
     public bool can_add(string item, int count)
@@ -455,6 +433,7 @@ public class inventory : networked, IItemCollection
     List<on_change_func> listeners = new List<on_change_func>();
     public void add_on_change_listener(on_change_func f) { listeners.Add(f); }
 
+    /// <summary> Called when an <see cref="inventory_slot_networked"/> changes contents. </summary>
     public void on_slot_change(int slot_index, item item, int count)
     {
         // Ensure the ui exists
