@@ -1,10 +1,9 @@
 Ongoing
 - Create unique sprites for everything
-- More foliage (small plants/flowers)
+- More foliage? (small plants/flowers)
 
 Tasks
 - Item flow recording should be done on link points?
-- Fix farming spots so that they display properly
 - Implement teleport-to-player
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Spread biome.generate across multiple frames
@@ -21,9 +20,6 @@ Tasks
 	- Control over character arms/legs is fighting between client+server - this is
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
-	- When authority over settlers change, they jump back to nearest target
-	  (settlers should probably reset to nearest settler_path_element + do
-	   pathing from there)
     - Networked floats aren't lerping properly (see growth of wheat for example)
 	- Network tasking system (create networked children of settler_interactables, with
 	  a reference to the network id of the settler assigned?)
