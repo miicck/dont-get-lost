@@ -12,7 +12,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public const float HEIGHT = 1.5f;
     public const float WIDTH = 0.45f;
     public const float GRAVITY = 10f;
-    public const float BOUYANCY = 5f;
+    public const float BOUYANCY = 5f;     
     public const float WATER_DRAG = 1.5f;
     public const float MAX_FLOAT_VELOCTY = 2f;
     public const float FALL_DAMAGE_START_SPEED = 10f;
@@ -1019,7 +1019,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     }
 
     // The current cursor sprite
-    string cursor_sprite
+    public string cursor_sprite
     {
         get
         {

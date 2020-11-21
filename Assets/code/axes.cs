@@ -31,14 +31,21 @@ public class axes : MonoBehaviour
         }
     }
 
-    Dictionary<Renderer, Color> initial_colors = new Dictionary<Renderer, Color>();
-
-    private void Start()
+    Dictionary<Renderer, Color> initial_colors
     {
-        foreach (var a in new GameObject[] { x_axis, y_axis, z_axis })
-            foreach (var r in GetComponentsInChildren<Renderer>())
-                initial_colors[r] = r.material.color;
+        get
+        {
+            if (_initial_colors == null)
+            {
+                _initial_colors = new Dictionary<Renderer, Color>();
+                foreach (var a in new GameObject[] { x_axis, y_axis, z_axis })
+                    foreach (var r in GetComponentsInChildren<Renderer>())
+                        _initial_colors[r] = r.material.color;
+            }
+            return _initial_colors;
+        }
     }
+    Dictionary<Renderer, Color> _initial_colors;
 
     void highlight(GameObject a, bool highlight)
     {

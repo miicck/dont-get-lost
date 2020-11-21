@@ -214,6 +214,10 @@ public class options_menu : MonoBehaviour
                 light_data.EnableShadows(value);
                 break;
 
+            case "key_rotation":
+                controls.key_based_building = value;
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }

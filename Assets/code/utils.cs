@@ -95,6 +95,41 @@ public static class utils
         return default;
     }
 
+    /// <summary> Returns the point on the given <paramref name="world_line"/>, that 
+    /// passes closest to the players camera ray. </summary>
+    public static Vector3 nearest_point_on_line_to_player_ray(Ray world_line)
+    {
+        var cam_ray = player.current.camera_ray();
+
+        Vector3 a1 = cam_ray.origin;
+        Vector3 r1 = cam_ray.direction;
+        Vector3 a2 = world_line.origin;
+        Vector3 r2 = world_line.direction;
+
+        a1_last = a1;
+        a2_last = a2;
+        r1_last = r1;
+        r2_last = r2;
+
+        float r12 = Vector3.Dot(r1, r2);
+        Vector3 c = a2 - a1;
+
+        float lambda = Vector3.Dot(c, -r2 + r1 * r12) / (1 - r12 * r12);
+        return a2 + lambda * r2;
+    }
+
+    static Vector3 a1_last;
+    static Vector3 a2_last;
+    static Vector3 r1_last;
+    static Vector3 r2_last;
+
+    public static void draw_gizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(a1_last, a1_last + r1_last);
+        Gizmos.DrawLine(a2_last, a2_last + r2_last);
+    }
+
     // Find the object in to_search that minimizes the given function
     public delegate float float_func<T>(T t);
     public static T find_to_min<T>(IEnumerable<T> to_search, float_func<T> objective)

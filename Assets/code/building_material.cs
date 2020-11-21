@@ -32,27 +32,15 @@ public class building_material : item
             get => Quaternion.LookRotation(forward_rot, up_rot);
         }
 
+        public void on_finish()
+        {
+            Destroy(axes.gameObject);
+            Destroy(rotation_axes.gameObject);
+        }
+
         /// <summary> The displayed axes. </summary>
         axes axes;
-
-        /// <summary> Are the axes shown? </summary>
-        public bool display_axes
-        {
-            get => axes != null;
-            set
-            {
-                if (display_axes == value)
-                    return; // No change
-
-                if (value)
-                {
-                    axes = Resources.Load<axes>("misc/axes").inst();
-                    axes.transform.localScale = Vector3.one * to_weld.axes_scale;
-                }
-                else
-                    Destroy(axes.gameObject);
-            }
-        }
+        GameObject rotation_axes;
 
         // Rotate the item so that the pivot has the given rotation
         void set_pivot_rotation(Quaternion rotation)
@@ -86,8 +74,7 @@ public class building_material : item
         public weld_info(
             building_material to_weld,
             Vector3 weld_location,
-            Quaternion weld_rotation
-            )
+            Quaternion weld_rotation)
         {
             this.to_weld = to_weld;
             pivot_index = pivot_index; // Loads the pivot
@@ -96,13 +83,22 @@ public class building_material : item
             this.weld_rotation = weld_rotation;
 
             // Determine the rotation axes
+            up_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
             right_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
             forward_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
-            up_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
 
-            display_axes = true;
+            // Create the axes/rotation axes
+            axes = Resources.Load<axes>("misc/axes").inst();
             axes.transform.position = weld_location;
             axes.transform.rotation = rotation_axes_rotation;
+            rotation_axes = Resources.Load<GameObject>("misc/rotation_axes").inst();
+            rotation_axes.transform.position = weld_location;
+            rotation_axes.transform.rotation = rotation_axes_rotation;
+
+            // Axes start disabled if we're using key based building
+            // (enabled if we're using mouse-based building)
+            axes.gameObject.SetActive(!controls.key_based_building);
+            rotation_axes.SetActive(!controls.key_based_building);
 
             set_pivot_rotation(rotation_axes_rotation);
         }
@@ -134,15 +130,111 @@ public class building_material : item
         public Vector3 forward_rot { get; private set; }
         public Vector3 up_rot { get; private set; }
 
-        void translate(Vector3 direction)
+        void translate(Vector3 amount)
         {
-            direction *= Time.deltaTime / 2f;
-            to_weld.transform.position += direction;
-            axes.transform.position += direction;
+            to_weld.transform.position += amount;
+            axes.transform.position += amount;
+            rotation_axes.transform.position += amount;
+        }
+
+        enum MOUSE_MODE
+        {
+            NONE,
+            X_TRANSLATE,
+            X_ROTATE,
+            Y_TRANSLATE,
+            Y_ROTATE,
+            Z_TRANSLATE,
+            Z_ROTATE
+        }
+        MOUSE_MODE mouse_mode = MOUSE_MODE.NONE;
+
+        Vector3? last_closest_point = null;
+        float last_click_time = Time.realtimeSinceStartup;
+
+        public bool mouse_rotate()
+        {
+            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+            {
+                if (Time.realtimeSinceStartup - last_click_time < 0.5f)
+                    return true;
+
+                last_click_time = Time.realtimeSinceStartup;
+                var ray = player.current.camera_ray();
+                if (Physics.Raycast(ray, out RaycastHit hit))
+                {
+                    Debug.Log(hit.transform.name);
+                    if (hit.transform.IsChildOf(axes.transform))
+                    {
+                        if (hit.transform.name.Contains("x")) mouse_mode = MOUSE_MODE.X_TRANSLATE;
+                        else if (hit.transform.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_TRANSLATE;
+                        else if (hit.transform.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_TRANSLATE;
+                        else mouse_mode = MOUSE_MODE.NONE;
+                    }
+                    else if (hit.transform.IsChildOf(rotation_axes.transform))
+                    {
+                        if (hit.transform.name.Contains("x")) mouse_mode = MOUSE_MODE.X_ROTATE;
+                        else if (hit.transform.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_ROTATE;
+                        else if (hit.transform.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_ROTATE;
+                        else mouse_mode = MOUSE_MODE.NONE;
+                    }
+                    else mouse_mode = MOUSE_MODE.NONE;
+                }
+            }
+            else if (controls.mouse_unclick(controls.MOUSE_BUTTON.LEFT))
+            {
+                last_closest_point = null;
+                mouse_mode = MOUSE_MODE.NONE;
+            }
+
+            Vector3? new_closest_point = null;
+            switch (mouse_mode)
+            {
+                case MOUSE_MODE.X_TRANSLATE:
+                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, right_rot));
+                    break;
+
+                case MOUSE_MODE.Y_TRANSLATE:
+                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, up_rot));
+                    break;
+
+                case MOUSE_MODE.Z_TRANSLATE:
+                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, forward_rot));
+                    break;
+            }
+
+            if (last_closest_point == null)
+                last_closest_point = new_closest_point;
+            else if (new_closest_point != null)
+            {
+                Vector3 delta = (Vector3)new_closest_point - (Vector3)last_closest_point;
+                translate(delta);
+                last_closest_point = new_closest_point;
+            }
+
+            return false;
+        }
+
+        public void draw_gizmos()
+        {
+            utils.draw_gizmos();
+
+            Vector3 line_to = utils.nearest_point_on_line_to_player_ray(new Ray(weld_location, up_rot));
+            Gizmos.DrawLine(player.current.camera.transform.position, line_to);
+            Gizmos.DrawWireSphere(line_to, 0.1f);
+
+            if (last_closest_point != null)
+            {
+                Gizmos.DrawLine(player.current.camera.transform.position, (Vector3)last_closest_point);
+                Gizmos.DrawWireSphere((Vector3)last_closest_point, 0.1f);
+            }
         }
 
         public void key_rotate()
         {
+            axes.gameObject.SetActive(controls.key_down(controls.BIND.BUILDING_TRANSLATION));
+            rotation_axes.SetActive(!controls.key_down(controls.BIND.BUILDING_TRANSLATION));
+
             float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
             if (controls.key_press(controls.BIND.CHANGE_PIVOT)) pivot_change_dir = 1f;
             if (pivot_change_dir != 0)
@@ -156,12 +248,13 @@ public class building_material : item
             if (controls.key_down(controls.BIND.BUILDING_TRANSLATION))
             {
                 // Translate, rather than rotate
-                if (controls.key_down(controls.BIND.TRANSLATE_RIGHT)) translate(right_rot);
-                else if (controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot);
-                else if (controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot);
-                else if (controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot);
-                else if (controls.key_down(controls.BIND.TRANSLATE_UP)) translate(up_rot);
-                else if (controls.key_down(controls.BIND.TRANSLATE_DOWN)) translate(-up_rot);
+                float t_amount = Time.deltaTime / 2f;
+                if (controls.key_down(controls.BIND.TRANSLATE_RIGHT)) translate(right_rot * t_amount);
+                else if (controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot * t_amount);
+                else if (controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot * t_amount);
+                else if (controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot * t_amount);
+                else if (controls.key_down(controls.BIND.TRANSLATE_UP)) translate(up_rot * t_amount);
+                else if (controls.key_down(controls.BIND.TRANSLATE_DOWN)) translate(-up_rot * t_amount);
             }
 
             else if (controls.key_down(controls.BIND.FINE_ROTATION))
@@ -445,27 +538,43 @@ public class building_material : item
         }
 
         // Move onto rotation stage if something was spawned
-        if (spawned != null) return use_result.underway_allows_look_only;
+        if (spawned != null)
+        {
+            if (!controls.key_based_building) player.current.cursor_sprite = cursors.DEFAULT;
+            return use_result.underway_allows_look_only;
+        }
         return use_result.complete;
     }
 
     public override use_result on_use_continue(player.USE_TYPE use_type)
     {
-        if (spawned == null || controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+        if (spawned == null)
             return use_result.complete;
+
+        last_time_placing_blueprint = Time.realtimeSinceStartup;
 
         if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
         {
             // Cancel build on right click
-            spawned.weld.display_axes = false;
+            spawned.weld.on_finish();
             Destroy(spawned.gameObject);
             spawned = null;
             return use_result.complete;
         }
 
-        spawned.weld.key_rotate();
-        last_time_placing_blueprint = Time.realtimeSinceStartup;
-        return use_result.underway_allows_look_only;
+        if (controls.key_based_building)
+        {
+            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+                return use_result.complete;
+            spawned.weld.key_rotate();
+            return use_result.underway_allows_look_only;
+        }
+        else
+        {
+            if (spawned.weld.mouse_rotate())
+                return use_result.complete;
+            return use_result.underway_allows_look_only;
+        }
     }
 
     /// <summary> Returns the networked object to parent this 
@@ -489,7 +598,7 @@ public class building_material : item
                     register_undo: true);
 
                 created.on_build();
-                spawned.weld.display_axes = false;
+                spawned.weld.on_finish();
                 Destroy(spawned.gameObject);
             }
         }
@@ -501,6 +610,7 @@ public class building_material : item
     private void OnDrawGizmos()
     {
         Gizmos.DrawLine(camera_ray.origin, camera_ray.origin + camera_ray.direction);
+        weld?.draw_gizmos();
     }
 }
 

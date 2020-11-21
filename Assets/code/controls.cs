@@ -5,6 +5,7 @@ using UnityEngine;
 public static class controls
 {
     public static float mouse_look_sensitivity = 1f;
+    public static bool key_based_building = false;
 
     public enum MOUSE_BUTTON : int
     {
