@@ -153,8 +153,23 @@ public class building_material : item
         float last_click_time = Time.realtimeSinceStartup;
         float accumulated_rotation = 0;
 
+        void change_pivot()
+        {
+            float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
+            if (controls.key_press(controls.BIND.CHANGE_PIVOT)) pivot_change_dir = 1f;
+            if (pivot_change_dir != 0)
+            {
+                // Change the pivot
+                Quaternion saved_rotation = pivot.transform.rotation;
+                pivot_index += pivot_change_dir > 0 ? 1 : -1;
+                set_pivot_rotation(saved_rotation);
+            }
+        }
+
         public bool mouse_rotate()
         {
+            change_pivot();
+
             if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
             {
                 if (Time.realtimeSinceStartup - last_click_time < 0.5f)
@@ -229,6 +244,7 @@ public class building_material : item
                 case MOUSE_MODE.NONE:
                     axes.highlight_axis(axes.AXIS.NONE);
                     rotation_axes.highlight_axis(axes.AXIS.NONE);
+                    accumulated_rotation = 0;
                     break;
             }
 
@@ -265,35 +281,12 @@ public class building_material : item
             return false;
         }
 
-        public void draw_gizmos()
-        {
-            utils.draw_gizmos();
-
-            Vector3 line_to = utils.nearest_point_on_line_to_player_ray(new Ray(weld_location, up_rot));
-            Gizmos.DrawLine(player.current.camera.transform.position, line_to);
-            Gizmos.DrawWireSphere(line_to, 0.1f);
-
-            if (last_closest_point != null)
-            {
-                Gizmos.DrawLine(player.current.camera.transform.position, (Vector3)last_closest_point);
-                Gizmos.DrawWireSphere((Vector3)last_closest_point, 0.1f);
-            }
-        }
-
         public void key_rotate()
         {
+            change_pivot();
+
             axes.gameObject.SetActive(controls.key_down(controls.BIND.BUILDING_TRANSLATION));
             rotation_axes.gameObject.SetActive(!controls.key_down(controls.BIND.BUILDING_TRANSLATION));
-
-            float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
-            if (controls.key_press(controls.BIND.CHANGE_PIVOT)) pivot_change_dir = 1f;
-            if (pivot_change_dir != 0)
-            {
-                // Change the pivot
-                Quaternion saved_rotation = pivot.transform.rotation;
-                pivot_index += pivot_change_dir > 0 ? 1 : -1;
-                set_pivot_rotation(saved_rotation);
-            }
 
             if (controls.key_down(controls.BIND.BUILDING_TRANSLATION))
             {
@@ -655,12 +648,6 @@ public class building_material : item
 
         spawned = null;
         player.current.validate_equip();
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawLine(camera_ray.origin, camera_ray.origin + camera_ray.direction);
-        weld?.draw_gizmos();
     }
 }
 
