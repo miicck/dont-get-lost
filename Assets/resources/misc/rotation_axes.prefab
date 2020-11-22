@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4182212053922429540}
+  - component: {fileID: 8728998346643504941}
   m_Layer: 0
   m_Name: rotation_axes
   m_TagString: Untagged
@@ -33,6 +34,21 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8728998346643504941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3890590247946071579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03aaecf9e3ed95c4e9beb8b9223fce37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  x_axis: {fileID: 5152704559866333299}
+  y_axis: {fileID: 6569722765504895469}
+  z_axis: {fileID: 5914712571099623122}
 --- !u!1001 &5423315466797151522
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -99,13 +115,18 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 2e481119512bc1e4884ef7201266583b, type: 2}
+      objectReference: {fileID: 2100000, guid: 948785457bd472b46b92c58741b1f38c, type: 2}
     - target: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Name
       value: x_rotate
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+--- !u!1 &5152704559866333299 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+  m_PrefabInstance: {fileID: 5423315466797151522}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5533171129946870473 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
@@ -177,13 +198,18 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3f79b710a8d91b841a4def909887ef89, type: 2}
+      objectReference: {fileID: 2100000, guid: 443bba6f512b5ff4fb3f2f35cb7423a7, type: 2}
     - target: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Name
       value: y_rotate
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+--- !u!1 &6569722765504895469 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+  m_PrefabInstance: {fileID: 6335775080244208828}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5793749668626629463 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
@@ -255,13 +281,18 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: d72e4549c831b274fa80666de921cdd6, type: 2}
+      objectReference: {fileID: 2100000, guid: d609b846025307f498c6437817b1de2d, type: 2}
     - target: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
       propertyPath: m_Name
       value: z_rotate
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+--- !u!1 &5914712571099623122 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}
+  m_PrefabInstance: {fileID: 6833137589187449731}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6439750622603277416 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ee093a6b7dc00a1449e9e4d50f4010fa, type: 3}

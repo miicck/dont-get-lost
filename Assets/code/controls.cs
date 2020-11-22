@@ -145,7 +145,7 @@ public static class controls
 
     static bool is_player_control(BIND b)
     {
-        switch(b)
+        switch (b)
         {
             // Console commands aren't player commands
             case BIND.CONSOLE_MOVE_HISTORY_BACK:
@@ -215,6 +215,11 @@ public static class controls
     {
         if (!mouse_enabled(button)) return false;
         return Input.GetMouseButton((int)button);
+    }
+
+    public static float object_rotation_axis()
+    {
+        return Input.GetAxis("Mouse X") + Input.GetAxis("Mouse Y");
     }
 
     public static float get_axis(string name)

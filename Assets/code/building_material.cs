@@ -40,7 +40,7 @@ public class building_material : item
 
         /// <summary> The displayed axes. </summary>
         axes axes;
-        GameObject rotation_axes;
+        axes rotation_axes;
 
         // Rotate the item so that the pivot has the given rotation
         void set_pivot_rotation(Quaternion rotation)
@@ -91,14 +91,14 @@ public class building_material : item
             axes = Resources.Load<axes>("misc/axes").inst();
             axes.transform.position = weld_location;
             axes.transform.rotation = rotation_axes_rotation;
-            rotation_axes = Resources.Load<GameObject>("misc/rotation_axes").inst();
+            rotation_axes = Resources.Load<axes>("misc/rotation_axes").inst();
             rotation_axes.transform.position = weld_location;
             rotation_axes.transform.rotation = rotation_axes_rotation;
 
             // Axes start disabled if we're using key based building
             // (enabled if we're using mouse-based building)
             axes.gameObject.SetActive(!controls.key_based_building);
-            rotation_axes.SetActive(!controls.key_based_building);
+            rotation_axes.gameObject.SetActive(!controls.key_based_building);
 
             set_pivot_rotation(rotation_axes_rotation);
         }
@@ -151,6 +151,7 @@ public class building_material : item
 
         Vector3? last_closest_point = null;
         float last_click_time = Time.realtimeSinceStartup;
+        float accumulated_rotation = 0;
 
         public bool mouse_rotate()
         {
@@ -161,24 +162,25 @@ public class building_material : item
 
                 last_click_time = Time.realtimeSinceStartup;
                 var ray = player.current.camera_ray();
-                if (Physics.Raycast(ray, out RaycastHit hit))
+                mouse_mode = MOUSE_MODE.NONE;
+
+                var trans = utils.raycast_for_closest<Transform>(ray, out RaycastHit hit,
+                    accept: (t) => t.IsChildOf(axes.transform) || t.IsChildOf(rotation_axes.transform));
+
+                if (trans != null)
                 {
-                    Debug.Log(hit.transform.name);
-                    if (hit.transform.IsChildOf(axes.transform))
+                    if (trans.IsChildOf(axes.transform))
                     {
-                        if (hit.transform.name.Contains("x")) mouse_mode = MOUSE_MODE.X_TRANSLATE;
-                        else if (hit.transform.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_TRANSLATE;
-                        else if (hit.transform.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_TRANSLATE;
-                        else mouse_mode = MOUSE_MODE.NONE;
+                        if (trans.name.Contains("x")) mouse_mode = MOUSE_MODE.X_TRANSLATE;
+                        else if (trans.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_TRANSLATE;
+                        else if (trans.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_TRANSLATE;
                     }
-                    else if (hit.transform.IsChildOf(rotation_axes.transform))
+                    else if (trans.IsChildOf(rotation_axes.transform))
                     {
-                        if (hit.transform.name.Contains("x")) mouse_mode = MOUSE_MODE.X_ROTATE;
-                        else if (hit.transform.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_ROTATE;
-                        else if (hit.transform.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_ROTATE;
-                        else mouse_mode = MOUSE_MODE.NONE;
+                        if (trans.name.Contains("x")) mouse_mode = MOUSE_MODE.X_ROTATE;
+                        else if (trans.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_ROTATE;
+                        else if (trans.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_ROTATE;
                     }
-                    else mouse_mode = MOUSE_MODE.NONE;
                 }
             }
             else if (controls.mouse_unclick(controls.MOUSE_BUTTON.LEFT))
@@ -188,19 +190,67 @@ public class building_material : item
             }
 
             Vector3? new_closest_point = null;
+            Vector3? rotation_axis = null;
+            accumulated_rotation += 10 * controls.object_rotation_axis();
+
             switch (mouse_mode)
             {
                 case MOUSE_MODE.X_TRANSLATE:
                     new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, right_rot));
+                    axes.highlight_axis(axes.AXIS.X);
                     break;
 
                 case MOUSE_MODE.Y_TRANSLATE:
                     new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, up_rot));
+                    axes.highlight_axis(axes.AXIS.Y);
                     break;
 
                 case MOUSE_MODE.Z_TRANSLATE:
                     new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, forward_rot));
+                    axes.highlight_axis(axes.AXIS.Z);
                     break;
+
+                case MOUSE_MODE.X_ROTATE:
+                    rotation_axis = right_rot;
+                    rotation_axes.highlight_axis(axes.AXIS.X);
+                    break;
+
+                case MOUSE_MODE.Y_ROTATE:
+                    rotation_axis = -up_rot;
+                    rotation_axes.highlight_axis(axes.AXIS.Y);
+
+                    break;
+
+                case MOUSE_MODE.Z_ROTATE:
+                    rotation_axis = -forward_rot;
+                    rotation_axes.highlight_axis(axes.AXIS.Z);
+                    break;
+
+                case MOUSE_MODE.NONE:
+                    axes.highlight_axis(axes.AXIS.NONE);
+                    rotation_axes.highlight_axis(axes.AXIS.NONE);
+                    break;
+            }
+
+            if (rotation_axis != null)
+            {
+                Vector3 rot_axis = (Vector3)rotation_axis;
+
+                if (controls.key_down(controls.BIND.FINE_ROTATION))
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, accumulated_rotation);
+                    accumulated_rotation = 0;
+                }
+                else if (accumulated_rotation > 45f)
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, 45);
+                    accumulated_rotation = 0;
+                }
+                else if (accumulated_rotation < -45f)
+                {
+                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, -45);
+                    accumulated_rotation = 0;
+                }
             }
 
             if (last_closest_point == null)
@@ -233,7 +283,7 @@ public class building_material : item
         public void key_rotate()
         {
             axes.gameObject.SetActive(controls.key_down(controls.BIND.BUILDING_TRANSLATION));
-            rotation_axes.SetActive(!controls.key_down(controls.BIND.BUILDING_TRANSLATION));
+            rotation_axes.gameObject.SetActive(!controls.key_down(controls.BIND.BUILDING_TRANSLATION));
 
             float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
             if (controls.key_press(controls.BIND.CHANGE_PIVOT)) pivot_change_dir = 1f;
