@@ -6,8 +6,10 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
 {
     public item_output output;
     public string field_spot_prefab;
-    public int size = 2;
+    public int x_size = 2;
+    public int z_size = 2;
     public float spacing = 1f;
+    public Vector3 offset = Vector3.zero;
 
     float time_spent_farming;
 
@@ -16,7 +18,7 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     {
         get
         {
-            settler_field_spot[,] ret = new settler_field_spot[size, size];
+            settler_field_spot[,] ret = new settler_field_spot[x_size, z_size];
             foreach (var s in GetComponentsInChildren<settler_field_spot>())
             {
                 var c = get_coords(s);
@@ -41,8 +43,8 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         float min_dis = Mathf.Infinity;
         var locs = locations();
 
-        for (int x = 0; x < size; ++x)
-            for (int z = 0; z < size; ++z)
+        for (int x = 0; x < x_size; ++x)
+            for (int z = 0; z < z_size; ++z)
             {
                 float dis = (locs[x, z] - spot.transform.position).sqrMagnitude;
                 if (dis < min_dis)
@@ -58,12 +60,13 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
 
     Vector3[,] locations()
     {
-        Vector3[,] ret = new Vector3[size, size];
-        for (int x = 0; x < size; ++x)
-            for (int z = 0; z < size; ++z)
+        Vector3[,] ret = new Vector3[x_size, z_size];
+        for (int x = 0; x < x_size; ++x)
+            for (int z = 0; z < z_size; ++z)
                 ret[x, z] = transform.TransformPoint(
-                    (x - size / 2f + 0.5f) * spacing, 0,
-                    (z - size / 2f + 0.5f) * spacing
+                    offset.x + (x - x_size / 2f + 0.5f) * spacing,
+                    offset.y,
+                    offset.z + (z - z_size / 2f + 0.5f) * spacing
                 );
 
         return ret;
@@ -108,8 +111,8 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         var spots = this.spots;
         var locations = this.locations();
 
-        for (int x = 0; x < size; ++x)
-            for (int z = 0; z < size; ++z)
+        for (int x = 0; x < x_size; ++x)
+            for (int z = 0; z < z_size; ++z)
             {
                 var spot = spots[x, z];
                 if (spot == null)

@@ -366,7 +366,7 @@ MonoBehaviour:
   increase_graphics_priority: 0
   option_name: auto_exposure
   default_value: 1
-  optimized_value: 1
+  optimization_mode: 2
   toggle: {fileID: 3169010917571396813}
   suboptions: {fileID: 0}
 --- !u!1 &182589127445033686
@@ -2716,7 +2716,7 @@ MonoBehaviour:
   increase_graphics_priority: 5
   option_name: key_rotation
   default_value: 0
-  optimized_value: 0
+  optimization_mode: 2
   toggle: {fileID: 817782472773099219}
   suboptions: {fileID: 0}
 --- !u!1 &2221596298347202644
@@ -5472,7 +5472,7 @@ MonoBehaviour:
   increase_graphics_priority: 3
   option_name: volumetric_fog
   default_value: 1
-  optimized_value: 0
+  optimization_mode: 1
   toggle: {fileID: 6451382688518006930}
   suboptions: {fileID: 0}
 --- !u!1 &4356677787904049206
@@ -5869,7 +5869,7 @@ MonoBehaviour:
   increase_graphics_priority: 0
   option_name: physical_sky
   default_value: 1
-  optimized_value: 1
+  optimization_mode: 2
   toggle: {fileID: 1005009912432820677}
   suboptions: {fileID: 0}
 --- !u!1 &4793210777094689236
@@ -7136,7 +7136,7 @@ MonoBehaviour:
   increase_graphics_priority: 4
   option_name: water_reflections
   default_value: 1
-  optimized_value: 0
+  optimization_mode: 1
   toggle: {fileID: 3862560731352001066}
   suboptions: {fileID: 0}
 --- !u!1 &5367598453311873603
@@ -7926,7 +7926,7 @@ MonoBehaviour:
   increase_graphics_priority: 0
   option_name: moving_sun
   default_value: 0
-  optimized_value: 0
+  optimization_mode: 2
   toggle: {fileID: 3112326170387281875}
   suboptions: {fileID: 0}
 --- !u!1 &5891770909128463572
@@ -8405,7 +8405,7 @@ MonoBehaviour:
   increase_graphics_priority: 1
   option_name: ambient_occlusion
   default_value: 1
-  optimized_value: 0
+  optimization_mode: 1
   toggle: {fileID: 4140340946653165255}
   suboptions: {fileID: 0}
 --- !u!1 &6091138511270103573
@@ -10186,7 +10186,7 @@ MonoBehaviour:
   increase_graphics_priority: 5
   option_name: clip_out_of_range
   default_value: 0
-  optimized_value: 1
+  optimization_mode: 0
   toggle: {fileID: 8033614071474739076}
   suboptions: {fileID: 0}
 --- !u!1 &7096141611603916839
@@ -12116,7 +12116,7 @@ MonoBehaviour:
   increase_graphics_priority: 2
   option_name: fog
   default_value: 1
-  optimized_value: 0
+  optimization_mode: 1
   toggle: {fileID: 488061963594952785}
   suboptions: {fileID: 4268800195950254582}
 --- !u!1 &8644183698485109249
@@ -12929,6 +12929,6 @@ MonoBehaviour:
   increase_graphics_priority: 0
   option_name: shadows
   default_value: 1
-  optimized_value: 0
+  optimization_mode: 1
   toggle: {fileID: 2891076969898253271}
   suboptions: {fileID: 0}

@@ -8,7 +8,15 @@ public class options_menu_bool : options_menu_option
 {
     public string option_name = "water_reflections";
     public bool default_value = true;
-    public bool optimized_value = true;
+
+    public enum OPTIMIZATION
+    {
+        OPTIMAL_ON,
+        OPTIMAL_OFF,
+        NO_PREFERENACE
+    }
+    public OPTIMIZATION optimization_mode;
+
     public UnityEngine.UI.Toggle toggle;
     public GameObject suboptions;
 
@@ -35,7 +43,16 @@ public class options_menu_bool : options_menu_option
 
     public override void load_optimized()
     {
-        toggle.isOn = optimized_value;
+        switch(optimization_mode)
+        {
+            case OPTIMIZATION.OPTIMAL_OFF:
+                toggle.isOn = false;
+                break;
+
+            case OPTIMIZATION.OPTIMAL_ON:
+                toggle.isOn = true;
+                break;
+        }
     }
 
     public override void initialize_option()
@@ -54,9 +71,19 @@ public class options_menu_bool : options_menu_option
 
     public override bool reduce_graphics()
     {
-        if (toggle.isOn == optimized_value)
-            return false;
-        toggle.isOn = optimized_value;
-        return true;
+        switch(optimization_mode)
+        {
+            case OPTIMIZATION.OPTIMAL_ON:
+                if (toggle.isOn) return false;
+                toggle.isOn = true;
+                return true;
+
+            case OPTIMIZATION.OPTIMAL_OFF:
+                if (!toggle.isOn) return false;
+                toggle.isOn = false;
+                return true;
+        }
+
+        return false;
     }
 }
