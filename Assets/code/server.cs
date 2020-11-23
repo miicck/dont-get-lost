@@ -575,7 +575,9 @@ public static class server
     static network_utils.traffic_monitor traffic_down;
     static network_utils.traffic_monitor traffic_up;
 
-    static string last_stack_trace = "No trace available. NETWORK_DEBUG must be set.";
+    /// <summary> The stack trace sent alongside the last network 
+    /// message reccived, if NETWORK_DEBUG is set. </summary>
+    static string last_stack_trace = "Define NETWORK_DEBUG for stack trace.";
 
     // END STATE VARIABLES //
 

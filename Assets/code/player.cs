@@ -12,7 +12,7 @@ public class player : networked_player, INotPathBlocking, IInspectable
     public const float HEIGHT = 1.5f;
     public const float WIDTH = 0.45f;
     public const float GRAVITY = 10f;
-    public const float BOUYANCY = 5f;     
+    public const float BOUYANCY = 5f;
     public const float WATER_DRAG = 1.5f;
     public const float MAX_FLOAT_VELOCTY = 2f;
     public const float FALL_DAMAGE_START_SPEED = 10f;
@@ -762,15 +762,16 @@ public class player : networked_player, INotPathBlocking, IInspectable
             controls.key_down(controls.BIND.WALK_FORWARD))
         {
             // Look for solid objects in front of player
-            foreach (var h in Physics.CapsuleCastAll(
-                transform.position + Vector3.up * controller.radius,
-                transform.position + Vector3.up * (controller.height - controller.radius),
-                controller.radius, transform.forward, controller.radius))
-            {
-                if (h.transform.IsChildOf(transform)) continue;
-                velocity.y += ACCELERATION * Time.deltaTime;
-                break;
-            }
+            if (velocity.y < 2f)
+                foreach (var h in Physics.CapsuleCastAll(
+                    transform.position + Vector3.up * controller.radius,
+                    transform.position + Vector3.up * (controller.height - controller.radius),
+                    controller.radius, transform.forward, controller.radius))
+                {
+                    if (h.transform.IsChildOf(transform)) continue;
+                    velocity.y += ACCELERATION * Time.deltaTime;
+                    break;
+                }
         }
 
         controller.Move(move);

@@ -87,10 +87,10 @@ public class settler_task_assignment : networked
 
     public static bool try_assign(settler s, settler_interactable i)
     {
-        if (s == null || i == null)
-            return false;
-
-        if (i == null || i.assignments == null)
+        // Ensure everything we need exists, including a registered network
+        // parent for the interactable i
+        if (s == null || i == null || i.assignments == null || 
+            i.networked_parent == null || i.networked_parent.network_id < 0)
             return false;
 
         if (i.assignments.Length >= i.max_simultaneous_users)
