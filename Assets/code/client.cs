@@ -364,12 +364,24 @@ public static class client
         // Send a message type + payload
         void send(MESSAGE msg_type, byte[] payload)
         {
+#           if NETWORK_DEBUG
+            // Add a stack trace to every message
+            var st = network_utils.encode_string(System.Environment.StackTrace);
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                network_utils.encode_int(st.Length),
+                st,
+                new byte[] { (byte)msg_type },
+                payload
+            );
+#else
             // Message is of form [length, type, payload]
             byte[] to_send = network_utils.concat_buffers(
                 network_utils.encode_int(payload.Length),
                 new byte[] { (byte)msg_type },
                 payload
             );
+#endif
 
             message_queue.Enqueue(new pending_message
             {

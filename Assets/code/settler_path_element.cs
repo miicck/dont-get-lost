@@ -7,6 +7,8 @@ using System.Linq;
 /// objects of the same kind via road_links. </summary>
 public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 {
+    public settler_interactable interactable => GetComponentInParent<settler_interactable>();
+
     public settler_path_link[] links
     {
         get
@@ -126,7 +128,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
     public static settler_path_element nearest_element(Vector3 v)
     {
-        return utils.find_to_min(all_elements, 
+        return utils.find_to_min(all_elements,
             (e) => (e.transform.position - v).sqrMagnitude);
     }
 
@@ -134,7 +136,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     {
         if (grouped_elements.TryGetValue(group, out HashSet<settler_path_element> elms))
             return elms;
-        return null;
+        return new HashSet<settler_path_element>();
     }
 
     public static settler_path_element find_nearest(Vector3 position)

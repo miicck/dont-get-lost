@@ -9,6 +9,7 @@ public static class server
     // CONSTANTS //
     //###########//
 
+
     /// <summary> Clients that have been silent for longer than this are disconnected </summary>
     public const float CLIENT_TIMEOUT = 6f;
 
@@ -21,6 +22,7 @@ public static class server
 
     /// <summary> The default port to listen on. </summary>
     public const int DEFAULT_PORT = 6969;
+
 
     //########//
     // CLIENT //
@@ -573,6 +575,8 @@ public static class server
     static network_utils.traffic_monitor traffic_down;
     static network_utils.traffic_monitor traffic_up;
 
+    static string last_stack_trace = "No trace available. NETWORK_DEBUG must be set.";
+
     // END STATE VARIABLES //
 
     static representation try_get_rep(int id, bool error_on_fail = false, bool allow_recently_deleted = true)
@@ -749,7 +753,7 @@ public static class server
                 if (!representations.TryGetValue(network_id, out deleting))
                 {
                     // This should only happend in high-latency edge cases
-                    Debug.Log("Deleting non-existant id " + network_id);
+                    Debug.Log("Deleting non-existant id " + network_id + "\n" + last_stack_trace);
                     return;
                 }
 
@@ -1138,7 +1142,7 @@ public static class server
                     // Record the message start, in case of truncation
                     last_message_start = offset;
 
-                    // Check the payload length is in the buffer
+                    // Check the payload length bytre are in the buffer
                     if (offset + sizeof(int) > data_bytes)
                     {
                         truncated = true;
@@ -1148,7 +1152,28 @@ public static class server
                     // Parse message length
                     int payload_length = network_utils.decode_int(buffer, ref offset);
 
-                    // Check the whole message is in the buffer
+#if NETWORK_DEBUG
+                    // Check the stack trace length bytes are in the buffer
+                    if (offset + sizeof(int) > data_bytes)
+                    {
+                        truncated = true;
+                        break;
+                    }
+                    int stack_trace_length = network_utils.decode_int(buffer, ref offset);
+
+                    // Check the stack trace bytes are in the buffer
+                    if (offset + stack_trace_length > data_bytes)
+                    {
+                        truncated = true;
+                        break;
+                    }
+
+                    // Get the stack trace
+                    last_stack_trace = network_utils.decode_string(buffer, ref offset);
+
+#endif
+
+                    // Check the whole message is in the buffer (payload + 1 byte for message type)
                     if (offset + payload_length + 1 > data_bytes)
                     {
                         truncated = true;

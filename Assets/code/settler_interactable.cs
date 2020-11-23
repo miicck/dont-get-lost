@@ -15,7 +15,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     public networked networked_parent => GetComponentInParent<networked>();
 
     /// <summary> Returns the assignment of a settler to this interactable, if one exists. </summary>
-    public settler_task_assignment[] assignments => networked_parent.GetComponentsInChildren<settler_task_assignment>();
+    public settler_task_assignment[] assignments => networked_parent?.GetComponentsInChildren<settler_task_assignment>();
 
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>

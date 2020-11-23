@@ -116,21 +116,16 @@ public static class network_utils
     public static byte[] encode_string(string str)
     {
         byte[] ascii = System.Text.Encoding.ASCII.GetBytes(str);
-        if (ascii.Length > byte.MaxValue)
-            throw new System.Exception("String too long to encode!");
-        return concat_buffers(
-            new byte[] { (byte)ascii.Length },
-            ascii
-        );
+        return concat_buffers(encode_int(ascii.Length), ascii);
     }
 
     /// <summary> Decode a string encoded using <see cref="encode_string(string)"/>.
     /// <paramref name="offset"/> will be incremented by the number of bytes decoded. </summary>
     public static string decode_string(byte[] buffer, ref int offset)
     {
-        int length = buffer[offset];
-        string str = System.Text.Encoding.ASCII.GetString(buffer, offset + 1, length);
-        offset += length + 1;
+        int length = decode_int(buffer, ref offset);
+        string str = System.Text.Encoding.ASCII.GetString(buffer, offset, length);
+        offset += length;
         return str;
     }
 

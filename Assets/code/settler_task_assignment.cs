@@ -90,6 +90,9 @@ public class settler_task_assignment : networked
         if (s == null || i == null)
             return false;
 
+        if (i == null || i.assignments == null)
+            return false;
+
         if (i.assignments.Length >= i.max_simultaneous_users)
             return false; // Too many users are already using i
 

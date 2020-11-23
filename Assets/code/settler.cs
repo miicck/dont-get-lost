@@ -24,6 +24,7 @@ public class settler : character, IInspectable
         {
             if (assignment != null)
             {
+                // Mimic assignment on non-authority client
                 if ((transform.position - assignment.transform.position).magnitude < 0.5f)
                     assignment.interactable.on_interact(this);
             }
@@ -74,6 +75,10 @@ public class settler : character, IInspectable
             // No suitable interaction found
             return;
         }
+
+        // Wait for assignment to be registered
+        if (assignment.network_id < 0)
+            return;
 
         // We have an assignment, attempt to carry it out
 
@@ -200,6 +205,8 @@ public class settler : character, IInspectable
     //##############//
 
     static HashSet<settler> settlers;
+
+    public static int settler_count => settlers.Count;
 
     new public static void initialize()
     {

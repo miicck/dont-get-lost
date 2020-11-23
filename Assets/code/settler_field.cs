@@ -102,6 +102,7 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     {
         // Only finish task on authority client
         if (!s.has_authority) return;
+        if (!is_complete(s)) return;
 
         // When completed, tend/harvest the field
         var spots = this.spots;
