@@ -52,6 +52,9 @@ public class item_gutter : item_node
 
     protected override bool can_input_from(item_node other)
     {
+        // Can't link destroyed things
+        if (this == null || other == null) return false;
+
         Vector3 input_point = this.input_point(other.output_point);
         Vector3 delta = input_point - other.output_point;
 

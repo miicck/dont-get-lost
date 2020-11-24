@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler : character, IInspectable
+public class settler : character, IInspectable, ILeftPlayerMenu
 {
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
@@ -17,6 +17,10 @@ public class settler : character, IInspectable
 
     public void Update()
     {
+        // Don't do anything if there is a player interacting with me
+        if (players_interacting_with.value > 0)
+            return;
+
         // Look for my current assignment
         assignment = settler_task_assignment.current_assignment(this);
 
@@ -168,6 +172,18 @@ public class settler : character, IInspectable
         group = element.group;
     }
 
+    //#################//
+    // ILeftPlayerMenu //
+    //#################//
+
+    public string left_menu_display_name() { return name; }
+    public inventory editable_inventory() { return inventory; }
+    public RectTransform left_menu_transform() { return inventory.ui; }
+    public void on_left_menu_close() { players_interacting_with.value -= 1; }
+    public void on_left_menu_open() { players_interacting_with.value += 1; }
+
+    public recipe[] additional_recipes() { return null; }
+
     //############//
     // NETWORKING //
     //############//
@@ -176,19 +192,22 @@ public class settler : character, IInspectable
     public networked_variables.net_int tiredness;
     public networked_variables.net_string net_name;
     public networked_variables.net_bool male;
+    public networked_variables.net_int players_interacting_with;
 
     public override float position_resolution() { return 0.1f; }
     public override float position_lerp_speed() { return 2f; }
     public override bool persistant() { return true; }
 
+    public inventory inventory { get; private set; }
+
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
-
         hunger = new networked_variables.net_int(min_value: 0, max_value: 100);
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
         net_name = new networked_variables.net_string();
         male = new networked_variables.net_bool();
+        players_interacting_with = new networked_variables.net_int();
         net_name.on_change = () => name = net_name.value;
     }
 
@@ -198,6 +217,19 @@ public class settler : character, IInspectable
         male.value = Random.Range(0, 2) == 0;
         if (male.value) net_name.value = names.random_male_name();
         else net_name.value = names.random_female_name();
+    }
+
+    public override void on_first_register()
+    {
+        base.on_first_register();
+        client.create(transform.position, "inventories/settler_inventory", parent: this);
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        base.on_add_networked_child(child);
+        if (child is inventory)
+            inventory = (inventory)child;
     }
 
     //##############//

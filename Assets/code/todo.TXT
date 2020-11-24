@@ -12,7 +12,8 @@ Tasks
 - Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
-- Some sort of more-continuous version of a path
+- Some sort of more-continuous version of a path (maybe generalize settler_path_link
+  to allow some sort of extended_path_link that links when overlapped...)
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually

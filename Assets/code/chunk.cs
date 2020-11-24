@@ -177,8 +177,9 @@ public class chunk : MonoBehaviour
         // Disable out-of-range world objects
         objects_created.iterate((x, z, w) =>
         {
-            float dis = (w.transform.position - player.current.transform.position).magnitude;
-            w.gameObject.SetActive(dis < game.render_range);
+            Vector3 delta = w.transform.position - player.current.transform.position;
+            delta.y = 0;
+            w.gameObject.SetActive(delta.magnitude < game.render_range);
         });
     }
 

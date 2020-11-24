@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-/// <summary> An object that can be connected to other 
-/// objects of the same kind via road_links. </summary>
+/// <summary> An object that can be connected to other objects of 
+/// the same kind via <see cref="settler_path_link"/>s. </summary>
 public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 {
     public settler_interactable interactable => GetComponentInParent<settler_interactable>();

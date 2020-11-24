@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface ICustomMenu
+{
+    void open_custom_menu();
+    void close_custom_menu();
+}
+
 public class player : networked_player, INotPathBlocking, IInspectable
 {
     //###########//
@@ -68,65 +74,65 @@ public class player : networked_player, INotPathBlocking, IInspectable
             // Cinematic mode enforces ALL_CLOSED
             if (fly_mode) value = UI_STATE.ALL_CLOSED;
 
+            // Close everything
+            map_open = false;
+            open_custom_menu = null;
+            if (inventory != null) inventory.open = false;
+            if (crafting_menu != null) crafting_menu.open = false;
+            left_menu = null;
+            options_menu.open = false;
+            recipe.recipe_book.gameObject.SetActive(false);
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+
             _ui_state = value;
             switch (_ui_state)
             {
                 case UI_STATE.ALL_CLOSED:
-                    map_open = false;
-                    if (inventory != null) inventory.open = false;
-                    if (crafting_menu != null) crafting_menu.open = false;
-                    left_menu = null;
-                    options_menu.open = false;
-                    recipe.recipe_book.gameObject.SetActive(false);
-                    Cursor.visible = false;
-                    Cursor.lockState = CursorLockMode.Locked;
                     break;
 
                 case UI_STATE.INVENTORY_OPEN:
-                    map_open = false;
-                    if (inventory != null) inventory.open = true;
-                    if (crafting_menu != null) crafting_menu.open = true;
-                    options_menu.open = false;
-                    recipe.recipe_book.gameObject.SetActive(false);
+                    // Enable the cursor
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.None;
 
+                    // Attempt to open a standalone custom menu
+                    var ray = camera_ray(INTERACTION_RANGE, out float max_dis);
+                    open_custom_menu = utils.raycast_for_closest<ICustomMenu>(ray, 
+                        out RaycastHit hit, max_distance: max_dis);
+                    if (open_custom_menu != null) break; // Custom menu open => don't do anything else
+
+                    // No custom menu found, open the inventory
+                    if (inventory != null) inventory.open = true;
+                    if (crafting_menu != null) crafting_menu.open = true;
+
                     // Attempt also to open the left menu
-                    var ray = camera_ray(INTERACTION_RANGE, out float dist);
-                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
+                    ray = camera_ray(INTERACTION_RANGE, out float dist);
+                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out hit, dist);
                     break;
 
                 case UI_STATE.MAP_OPEN:
-                    map_open = true;
-                    if (inventory != null) inventory.open = false;
-                    if (crafting_menu != null) crafting_menu.open = false;
-                    left_menu = null;
-                    options_menu.open = false;
-                    recipe.recipe_book.gameObject.SetActive(false);
-                    Cursor.visible = false;
-                    Cursor.lockState = CursorLockMode.Locked;
+                    map_open = true;                
                     break;
 
                 case UI_STATE.RECIPE_BOOK_OPEN:
-                    map_open = false;
-                    if (inventory != null) inventory.open = false;
-                    if (crafting_menu != null) crafting_menu.open = false;
-                    left_menu = null;
-                    options_menu.open = false;
-                    recipe.recipe_book.gameObject.SetActive(true);
+
+                    // Enable the cursor
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.None;
+
+                    // Open the recipe book
+                    recipe.recipe_book.gameObject.SetActive(true);
                     break;
 
                 case UI_STATE.OPTIONS_MENU_OPEN:
-                    map_open = false;
-                    if (inventory != null) inventory.open = false;
-                    if (crafting_menu != null) crafting_menu.open = false;
-                    left_menu = null;
-                    options_menu.open = true;
-                    recipe.recipe_book.gameObject.SetActive(false);
+
+                    // Enable the cursor
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.None;
+
+                    // Open the options menu
+                    options_menu.open = true;
                     break;
 
                 default:
@@ -294,6 +300,26 @@ public class player : networked_player, INotPathBlocking, IInspectable
         // Move to zero-offset array
         return inventory?.nth_slot(n - 1);
     }
+
+    ICustomMenu open_custom_menu
+    {
+        get => _open_custom_menu;
+        set
+        {
+            if (_open_custom_menu == value)
+                return; // No change
+
+            // Close previous menu
+            if (_open_custom_menu != null)
+                _open_custom_menu.close_custom_menu();
+
+            // Open new menu
+            _open_custom_menu = value;
+            if (_open_custom_menu != null)
+                _open_custom_menu.open_custom_menu();
+        }
+    }
+    ICustomMenu _open_custom_menu;
 
     //##########//
     // ITEM USE //

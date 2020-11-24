@@ -121,7 +121,13 @@ public static class server
                 if (c.has_loaded(player))
                     c.unload(player, false);
 
-            player?.transform.SetParent(inactive_representations);
+            if (player.transform.parent == deleted_representations)
+            {
+                // Player has been deleted, remove it from player representations
+                player_representations.Remove(username);
+            }
+            else
+                player?.transform.SetParent(inactive_representations);
         }
 
         /// <summary> The representations loaded as objects on this client. </summary>

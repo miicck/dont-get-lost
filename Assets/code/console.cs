@@ -269,6 +269,13 @@ public class console : MonoBehaviour
                 popup_message.create("Characters " + (character.characters_enabled ? "enabled" : "disabled"));
                 return true;
 
+            case "delete_player":
+                player.current.delete(() =>
+                {
+                    game.save_and_quit();
+                });
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
         }
