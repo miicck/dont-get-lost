@@ -441,9 +441,9 @@ public class building_material : item
 
         if (local_player)
         {
-            // Stop drawing links if a path element is unequipped
-            if (GetComponentInChildren<settler_path_element>() != null)
-                settler_path_element.draw_links = false;
+            // Stop drawing debug-type things
+            settler_path_element.draw_links = false;
+            item_node.display_enabled = false;
         }
     }
 

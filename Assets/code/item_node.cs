@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A node in the item logistics network. </summary>
-public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipable
+public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipableCallback
 {
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;
 
     /// <summary> The parent building to which this item node belongs. </summary>
     public building_material building => GetComponentInParent<building_material>();
+
+    public void on_equip_callback()
+    {
+        display_enabled = true;
+    }
 
     //#######//
     // ITEMS //
@@ -113,6 +118,34 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         on_change += f;
     }
 
+    protected virtual bool is_display_enabled()
+    {
+        return outputs_display != null;
+    }
+
+    Transform outputs_display;
+    protected virtual void set_display(bool enabled)
+    {
+        if (outputs_display != null)
+            Destroy(outputs_display.gameObject);
+
+        if (!enabled) return;
+
+        outputs_display = new GameObject("outputs_display").transform;
+        outputs_display.position = output_point;
+        outputs_display.SetParent(transform);
+
+        foreach (var n in outputs_to)
+        {
+            Vector3 input_point = n.input_point(output_point);
+            GameObject path = Resources.Load<GameObject>("misc/output_path").inst();
+            path.transform.SetParent(outputs_display);
+            path.transform.position = (output_point + input_point) / 2f;
+            path.transform.forward = input_point - output_point;
+            path.transform.localScale = new Vector3(0.02f, 0.02f, (input_point - output_point).magnitude);
+        }
+    }
+
     //########//
     // INPUTS //
     //########//
@@ -190,6 +223,18 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
     static HashSet<item_node> nodes;
 
+    public static bool display_enabled
+    {
+        get => _display_enabled;
+        set
+        {
+            foreach (var n in nodes)
+                n.set_display(value);
+            _display_enabled = value;
+        }
+    }
+    static bool _display_enabled;
+
     public static void initialize()
     {
         nodes = new HashSet<item_node>();
@@ -257,6 +302,13 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
         // Create the connections to/from the new node
         validate_connections(node);
+
+        if (display_enabled)
+        {
+            // Refresh display
+            display_enabled = false;
+            display_enabled = true;
+        }
     }
 
     static void forget_node(item_node node)

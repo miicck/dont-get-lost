@@ -152,4 +152,31 @@ public class item_gutter : item_node
                 item_dropper.create(release_item(0), end.position, nearest_output);
         }
     }
+
+    //#########//
+    // DISPLAY //
+    //#########//
+
+    GameObject display;
+
+    protected override bool is_display_enabled()
+    {
+        return base.is_display_enabled() && display != null && display.activeInHierarchy;
+    }
+
+    protected override void set_display(bool enabled)
+    {
+        base.set_display(enabled);
+
+        if (display == null)
+        {
+            display = Resources.Load<GameObject>("misc/gutter_path").inst();
+            display.transform.SetParent(transform);
+            display.transform.position = (end.position + start.position) / 2f;
+            display.transform.forward = end.position - start.position;
+            display.transform.localScale = new Vector3(0.02f, 0.02f, (end.position - start.position).magnitude);
+        }
+
+        display.SetActive(enabled);
+    }
 }

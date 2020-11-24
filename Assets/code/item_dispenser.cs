@@ -99,9 +99,11 @@ public class item_dispenser : settler_interactable
                 foreach (var l in locators)
                     if (l.item != null)
                     {
+                        if (l.item.food_value > s.hunger.value)
+                            break;
+
                         s.hunger.value -= l.item.food_value;
                         Destroy(l.release_item().gameObject);
-                        break;
                     }
 
                 break;

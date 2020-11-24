@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public interface INonEquipable { }
+public interface INonEquipableCallback : INonEquipable { void on_equip_callback(); }
+
 public interface INonLogistical { }
 
 public class item : networked, IInspectable, IAcceptLeftClick
@@ -143,7 +145,11 @@ public class item : networked, IInspectable, IAcceptLeftClick
 
         // Destroy non-equippable things
         foreach (Component eq in GetComponentsInChildren<INonEquipable>())
+        {
+            if (eq is INonEquipableCallback)
+                ((INonEquipableCallback)eq).on_equip_callback();
             Destroy(eq);
+        }
     }
 
     /// <summary> Called when this item is unequipped. <paramref name="local_player"/> = false
