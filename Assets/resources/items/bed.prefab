@@ -43,7 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &1644786924192506393
 GameObject:
   m_ObjectHideFlags: 0
@@ -87,7 +86,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &2587494857475498080
 GameObject:
   m_ObjectHideFlags: 0
@@ -112,7 +110,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2587494857475498080}
   m_LocalRotation: {x: -0.50000006, y: -0.49999994, z: -0.5, w: 0.50000006}
-  m_LocalPosition: {x: -0.861, y: 0.25, z: 0}
+  m_LocalPosition: {x: -0.671, y: 0.25, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
@@ -161,7 +159,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &2784765911531866723
 GameObject:
   m_ObjectHideFlags: 0
@@ -291,7 +288,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &5559573860801385688
 GameObject:
   m_ObjectHideFlags: 0
@@ -378,7 +374,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &7162227788691706560
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,7 +417,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ea1b2ffd918f2a47a8c62fcbd386c8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  linked_to: {fileID: 0}
 --- !u!1 &7395054960694913047
 GameObject:
   m_ObjectHideFlags: 0
@@ -514,6 +508,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   path_element: {fileID: 7956232593808211018}
   type: 2
+  max_simultaneous_users: 1
   sleep_orientation: {fileID: 31987850298176710}
 --- !u!1 &7501228647816298317
 GameObject:
