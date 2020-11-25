@@ -8,7 +8,7 @@ public interface ICustomMenu
     void close_custom_menu();
 }
 
-public class player : networked_player, INotPathBlocking, IInspectable
+public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour
 {
     //###########//
     // CONSTANTS //
@@ -203,6 +203,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
     // INVENTORY //
     //###########//
 
+    public inventory inventory { get; private set; }
+    public inventory crafting_menu { get; private set; }
+
     void run_inventory()
     {
         // Toggle inventory
@@ -223,37 +226,9 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
-    public armour_piece get_armour(armour_piece.LOCATION location)
-    {
-        foreach (var al in GetComponentsInChildren<armour_locator>())
-            if (al.location == location)
-                return al.equipped;
-        return null;
-    }
-
-    public void set_armour(armour_piece armour, armour_piece.HANDEDNESS slot_handedness)
-    {
-        foreach (var al in GetComponentsInChildren<armour_locator>())
-            if (al.location == armour.location && al.handedness == slot_handedness)
-                al.equipped = armour;
-    }
-
-    public void clear_armour(armour_piece.LOCATION location, armour_piece.HANDEDNESS handedness)
-    {
-        foreach (var al in GetComponentsInChildren<armour_locator>())
-            if (al.location == location && al.handedness == handedness)
-            {
-                al.equipped = null;
-                return;
-            }
-
-        string err = "Could not find armour_locator with the location ";
-        err += location + " and handedness " + handedness;
-        throw new System.Exception(err);
-    }
-
-    public inventory inventory { get; private set; }
-    public inventory crafting_menu { get; private set; }
+    //#######//
+    // MENUS //
+    //#######//
 
     /// <summary> The menu that appears to the left of the inventory. </summary>
     public ILeftPlayerMenu left_menu
@@ -295,12 +270,6 @@ public class player : networked_player, INotPathBlocking, IInspectable
     }
     ILeftPlayerMenu _left_menu;
 
-    public inventory_slot_networked quickbar_slot(int n)
-    {
-        // Move to zero-offset array
-        return inventory?.nth_slot(n - 1);
-    }
-
     ICustomMenu open_custom_menu
     {
         get => _open_custom_menu;
@@ -320,6 +289,15 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
     ICustomMenu _open_custom_menu;
+
+    //#################//
+    // ICanEquipArmour //
+    //#################//
+
+    public armour_locator[] armour_locators()
+    {
+        return GetComponentsInChildren<armour_locator>();
+    }
 
     //##########//
     // ITEM USE //
@@ -441,6 +419,10 @@ public class player : networked_player, INotPathBlocking, IInspectable
         }
     }
 
+    //########################//
+    // EQUIP + QUICKBAR SLOTS //
+    //########################//
+
     // The current equipped item
     item _equipped;
     public item equipped
@@ -486,6 +468,12 @@ public class player : networked_player, INotPathBlocking, IInspectable
             if (has_authority)
                 cursor_sprite = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
         }
+    }
+
+    public inventory_slot_networked quickbar_slot(int n)
+    {
+        // Move to zero-offset array
+        return inventory?.nth_slot(n - 1);
     }
 
     public void validate_equip()

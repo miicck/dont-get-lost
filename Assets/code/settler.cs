@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler : character, IInspectable, ILeftPlayerMenu
+public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 {
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
@@ -170,6 +170,15 @@ public class settler : character, IInspectable, ILeftPlayerMenu
 
         if (snap) transform.position = element.transform.position;
         group = element.group;
+    }
+
+    //#################//
+    // ICanEquipArmour //
+    //#################//
+
+    public armour_locator[] armour_locators()
+    {
+        return GetComponentsInChildren<armour_locator>();
     }
 
     //#################//

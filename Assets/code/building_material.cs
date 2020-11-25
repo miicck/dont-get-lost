@@ -657,7 +657,7 @@ public abstract class building_with_inventory : building_material
 
     protected override bool can_pick_up(out string message)
     {
-        if (!inventory.empty)
+        if (inventory != null && !inventory.empty)
         {
             message = "Inventory not empty!";
             return false;

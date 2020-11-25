@@ -2,6 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface ICanEquipArmour
+{
+    armour_locator[] armour_locators();
+}
+
+public static class armour_extensions
+{
+    public static void clear_armour(this ICanEquipArmour entity,
+        armour_piece.LOCATION location, armour_piece.HANDEDNESS handedness)
+    {
+        foreach (var al in entity.armour_locators())
+            if (al.location == location && al.handedness == handedness)
+            {
+                al.equipped = null;
+                return;
+            }
+
+        string err = "Could not find armour_locator with the location ";
+        err += location + " and handedness " + handedness;
+        throw new System.Exception(err);
+    }
+
+    public static void set_armour(this ICanEquipArmour entity,
+        armour_piece armour, armour_piece.HANDEDNESS handedness)
+    {
+        foreach (var al in entity.armour_locators())
+            if (al.location == armour.location && al.handedness == handedness)
+                al.equipped = armour;
+    }
+}
+
 /// <summary> A special slot in an inventory for armour. </summary>
 public class armour_slot : inventory_slot
 {
@@ -32,14 +63,13 @@ public class armour_slot : inventory_slot
     {
         base.update(item, count, inventory);
 
-        // Find the player that this slot belongs to
-        player player = inventory.GetComponentInParent<player>();
-        if (player == null)
-            throw new System.Exception("Armour slot doesn't belong to a player!");
+        // Find the entity that this slot belongs to
+        var entity = inventory.GetComponentInParent<ICanEquipArmour>();
+        if (entity == null)
+            throw new System.Exception("Armour slot doesn't belong to something that can equip armour!");
 
-        // Update the player armour
-        if (item == null) player.clear_armour(location, handedness);
-        else  player.set_armour((armour_piece)item, handedness);
+        if (item == null) entity.clear_armour(location, handedness);
+        else entity.set_armour((armour_piece)item, handedness);
     }
 
     public override Sprite empty_sprite()
