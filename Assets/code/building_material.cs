@@ -91,9 +91,11 @@ public class building_material : item
             axes = Resources.Load<axes>("misc/axes").inst();
             axes.transform.position = weld_location;
             axes.transform.rotation = rotation_axes_rotation;
+            axes.transform.localScale = Vector3.one * to_weld.axes_scale;
             rotation_axes = Resources.Load<axes>("misc/rotation_axes").inst();
             rotation_axes.transform.position = weld_location;
             rotation_axes.transform.rotation = rotation_axes_rotation;
+            rotation_axes.transform.localScale = Vector3.one * to_weld.axes_scale;
 
             // Axes start disabled if we're using key based building
             // (enabled if we're using mouse-based building)
