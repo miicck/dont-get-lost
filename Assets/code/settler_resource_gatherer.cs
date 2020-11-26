@@ -5,8 +5,8 @@ using UnityEngine;
 public class settler_resource_gatherer : settler_interactable, IAddsToInspectionText
 {
     public item_output output;
-    public Transform ray_start;
-    public float ray_length;
+    public Transform search_origin;
+    public float search_radius;
 
     public float time_between_harvests = 1f;
     public int max_harvests = 5;
@@ -21,10 +21,10 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     private void OnDrawGizmos()
     {
         // Draw the harvesting ray
-        if (ray_start == null) return;
+        if (search_origin == null) return;
+
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(ray_start.position,
-            ray_start.position + ray_start.forward * ray_length);
+        Gizmos.DrawWireSphere(search_origin.position, search_radius);
     }
 
     protected override void Start()
@@ -36,21 +36,24 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     public string added_inspection_text()
     {
         if (harvesting == null)
-            return "    Noting in harvest range.";
+            return "    Nothing in harvest range.";
 
         return "    Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
     void update_harvesting()
     {
-        // Figure out what we're harvesting
-        harvesting = utils.raycast_for_closest<harvestable>(
-            new Ray(ray_start.position, ray_start.forward),
-            out RaycastHit hit, ray_length, (h) =>
-            {
-                return h.tool.tool_type == tool_type &&
-                                   h.tool.tool_quality <= tool_quality;
-            });
+        // Search for harvestable objects within range
+        List<harvestable> options = new List<harvestable>();
+        foreach (var c in Physics.OverlapSphere(search_origin.position, search_radius))
+        {
+            var h = c.GetComponentInParent<harvestable>();
+            if (h == null) continue;
+            if (h.tool.tool_type != tool_type) continue;
+            if (h.tool.tool_quality > tool_quality) continue;
+            harvesting = h;
+            return;
+        }
 
         // Try again later
         if (harvesting == null)

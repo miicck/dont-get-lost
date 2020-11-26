@@ -96,7 +96,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6493507513712573707}
   m_Layer: 0
-  m_Name: harvest_ray_start
+  m_Name: search_origin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -367,8 +367,8 @@ MonoBehaviour:
   type: 0
   max_simultaneous_users: 1
   output: {fileID: 5679265494180299747}
-  ray_start: {fileID: 6493507513712573707}
-  ray_length: 0.75
+  search_origin: {fileID: 6493507513712573707}
+  search_radius: 1
   time_between_harvests: 1
   max_harvests: 5
   tool_type: 0
