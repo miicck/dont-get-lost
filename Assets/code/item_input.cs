@@ -23,11 +23,8 @@ public class item_input : item_node
 
         // Check if the drop is possible
         foreach (var h in Physics.RaycastAll(other.output_point, delta, delta.magnitude))
-        {
-            if (h.transform.GetComponentInParent<item>() != null)
-                continue; // Ignore collisions with items
-            return false; // Something in the way of the drop
-        }
+            if (!ignore_logistics_collisions_with(h))
+                return false; // Something in the way of the drop
 
         return true;
     }

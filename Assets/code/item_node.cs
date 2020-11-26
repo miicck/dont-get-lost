@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> Classes that implement IDontBlockItemLogisitcs aren't considered
+/// to block item logistics flow (mainly for the purposes of determining
+/// connections bettween <see cref="item_node"/>s). </summary>
+public interface IDontBlockItemLogisitcs { }
+
 /// <summary> A node in the item logistics network. </summary>
 public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipableCallback
 {
@@ -240,6 +245,14 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         nodes = new HashSet<item_node>();
     }
 
+    protected static string node_info(item_node node)
+    {
+        string ret = "Item node " + node.name;
+        if (nodes.Contains(node))
+            return ret + " registered.";
+        return ret + " unregistered!";
+    }
+
     /// <summary> Create a node where <paramref name="from"/> 
     /// outputs to <paramref name="to"/>. </summary>
     static void create_connection(item_node from, item_node to)
@@ -272,6 +285,20 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     static bool test_connection(item_node from, item_node to)
     {
         return from.can_output_to(to) && to.can_input_from(from);
+    }
+
+    /// <summary> Returns true if the raycast hit given should be ignored
+    /// when testing item logisitics paths. </summary>
+    protected static bool ignore_logistics_collisions_with(RaycastHit hit)
+    {
+        // Ignore collisions with logistics items
+        var itm = hit.transform.GetComponentInParent<item>();
+        if (itm != null && itm.is_logistics_version) return true;
+
+        // Ignore collisions with IDontBlockItemLogisitcs objects
+        if (hit.transform.GetComponentInParent<IDontBlockItemLogisitcs>() != null) return true;
+
+        return false;
     }
 
     /// <summary> Checks that all of the input/outputs 

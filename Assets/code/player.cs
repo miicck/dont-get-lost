@@ -8,7 +8,7 @@ public interface ICustomMenu
     void close_custom_menu();
 }
 
-public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour
+public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs
 {
     //###########//
     // CONSTANTS //

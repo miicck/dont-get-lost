@@ -77,12 +77,10 @@ public class item_gutter : item_node
         foreach (var h in Physics.RaycastAll(other.output_point,
             out_to_in.normalized, out_to_in.magnitude))
         {
-            // Ignore collisions with self/other
+            // Ignore collisions with self/other/ignore_logistics_collisions_with things
             if (h.transform.IsChildOf(building.transform)) continue;
             if (h.transform.IsChildOf(other.building.transform)) continue;
-
-            // Ignore collisions with dropping items
-            if (h.transform.GetComponentInParent<item_dropper>()) continue;
+            if (ignore_logistics_collisions_with(h)) continue;
 
             // Hit something in-between, don't allow the connection
             return false;

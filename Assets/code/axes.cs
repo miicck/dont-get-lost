@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class axes : MonoBehaviour
+public class axes : MonoBehaviour, IDontBlockItemLogisitcs
 {
     // #pragma is to stop it complaining about these 
     // not being initialized, because they are initialized

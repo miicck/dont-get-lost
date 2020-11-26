@@ -10,7 +10,7 @@ public interface ICharacterController
 }
 
 [RequireComponent(typeof(character_hitbox))]
-public class character : networked, INotPathBlocking, IInspectable
+public class character : networked, INotPathBlocking, IInspectable, IDontBlockItemLogisitcs
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
