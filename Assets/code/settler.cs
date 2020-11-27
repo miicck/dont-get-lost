@@ -7,6 +7,10 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
 
+    public List<Renderer> skin_renderers = new List<Renderer>();
+    public List<Renderer> top_underclothes = new List<Renderer>();
+    public List<Renderer> bottom_underclothes = new List<Renderer>();
+
     public int group { get; private set; }
     protected override ICharacterController default_controller() { return new settler_control(); }
 
@@ -226,6 +230,10 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public networked_variables.net_string net_name;
     public networked_variables.net_bool male;
     public networked_variables.net_int players_interacting_with;
+    public networked_variables.net_color skin_color;
+    public networked_variables.net_color top_color;
+    public networked_variables.net_color bottom_color;
+    new public networked_variables.net_float height;
 
     public override float position_resolution() { return 0.1f; }
     public override float position_lerp_speed() { return 2f; }
@@ -240,8 +248,36 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
         net_name = new networked_variables.net_string();
         male = new networked_variables.net_bool();
+        skin_color = new networked_variables.net_color();
+        top_color = new networked_variables.net_color();
+        bottom_color = new networked_variables.net_color();
+        height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
+
         net_name.on_change = () => name = net_name.value;
+
+        skin_color.on_change = () =>
+        {
+            foreach (var r in skin_renderers)
+                utils.set_color(r.material, skin_color.value);
+        };
+
+        top_color.on_change = () =>
+        {
+            foreach (var r in top_underclothes)
+                utils.set_color(r.material, top_color.value);
+        };
+
+        bottom_color.on_change = () =>
+        {
+            foreach (var r in bottom_underclothes)
+                utils.set_color(r.material, bottom_color.value);
+        };
+
+        height.on_change = () =>
+        {
+            transform.localScale = Vector3.one * height.value;
+        };
     }
 
     public override void on_first_create()
@@ -250,6 +286,10 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         male.value = Random.Range(0, 2) == 0;
         if (male.value) net_name.value = names.random_male_name();
         else net_name.value = names.random_female_name();
+        skin_color.value = character_colors.random_skin_color();
+        top_color.value = Random.ColorHSV();
+        bottom_color.value = Random.ColorHSV();
+        height.value = Random.Range(0.8f, 1.2f);
     }
 
     public override void on_first_register()

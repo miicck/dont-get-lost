@@ -519,6 +519,13 @@ public static class utils
         return angle;
     }
 
+    public static float random_normal(float mean, float stdDev)
+    {
+        float u1 = Random.Range(0, 1f);
+        float u2 = Random.Range(0, 1f);
+        return mean + stdDev * Mathf.Pow(-2f * Mathf.Log(u1), 0.5f) * Mathf.Cos(2 * Mathf.PI * u2);
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public static T select_from_resources_folder<T>(string folder) where T : Object

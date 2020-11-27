@@ -34,3 +34,15 @@ public static class water_colors
     public static readonly Color cyan = new Color(0.5f, 1f, 0.95f);
     public static readonly Color swampy_green = new Color(0.41f, 0.51f, 0.10f);
 }
+
+public static class character_colors
+{
+    public static Color random_skin_color()
+    {
+        return Color.HSVToRGB(
+            Random.Range(10f / 360f, 46f / 360f),
+            utils.random_normal(0.4f, 0.2f),
+            Random.Range(0.23f, 1f)
+        );
+    }
+}

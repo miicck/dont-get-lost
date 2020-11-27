@@ -37,7 +37,6 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     {
         if (harvesting == null)
             return "    Nothing in harvest range.";
-
         return "    Harvesting " + product.product_plurals_list(harvesting.products);
     }
 

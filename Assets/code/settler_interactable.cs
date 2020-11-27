@@ -86,6 +86,9 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
             (a.transform.position - position).magnitude.CompareTo(
             (b.transform.position - position).magnitude));
 
+        if (l.Count == 0)
+            return null;
+
         while (true)
             for (int i = 0; i < l.Count; ++i)
             {
