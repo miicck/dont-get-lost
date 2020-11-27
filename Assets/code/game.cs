@@ -263,7 +263,6 @@ public class game : MonoBehaviour
             settler.info() + "\n" +
             "\nINTERACTIONS\n" +
             settler_interactable.info() + "\n" +
-            settler_task_assignment.info() + "\n" +
             "\nLOAD BALANCER\n" +
             load_balancing.info() + "\n" +
             "\nTIME OF DAY\n" +
