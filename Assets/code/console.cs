@@ -269,11 +269,17 @@ public class console : MonoBehaviour
                 popup_message.create("Characters " + (character.characters_enabled ? "enabled" : "disabled"));
                 return true;
 
+            // Delete the current player from the server
             case "delete_player":
                 player.current.delete(() =>
                 {
                     game.save_and_quit();
                 });
+                return true;
+
+            // Refresh all of the node connections
+            case "refresh_connections":
+                item_node.refresh_connections();
                 return true;
 
             default:

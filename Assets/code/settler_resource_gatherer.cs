@@ -44,16 +44,20 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     void update_harvesting()
     {
         // Search for harvestable objects within range
-        List<harvestable> options = new List<harvestable>();
+        var options = new List<KeyValuePair<harvestable, float>>();
         foreach (var c in Physics.OverlapSphere(search_origin.position, search_radius))
         {
             var h = c.GetComponentInParent<harvestable>();
             if (h == null) continue;
             if (h.tool.tool_type != tool_type) continue;
             if (h.tool.tool_quality > tool_quality) continue;
-            harvesting = h;
-            return;
+            options.Add(new KeyValuePair<harvestable, float>(
+                h, (search_origin.position - c.ClosestPoint(search_origin.position)).magnitude
+            ));
         }
+
+        if (options.Count > 0)
+            harvesting = utils.find_to_min(options, (o) => o.Value).Key;
 
         // Try again later
         if (harvesting == null)

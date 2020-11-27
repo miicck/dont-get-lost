@@ -79,6 +79,21 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
         return null;
     }
 
+    public static settler_interactable proximity_weighted_ramdon(TYPE t, Vector3 position)
+    {
+        var l = interactables[t];
+        l.Sort((a, b) =>
+            (a.transform.position - position).magnitude.CompareTo(
+            (b.transform.position - position).magnitude));
+
+        while (true)
+            for (int i = 0; i < l.Count; ++i)
+            {
+                if (Random.Range(0, 3) == 0)
+                    return l[i];
+            }
+    }
+
     public static settler_interactable random(TYPE t)
     {
         var l = interactables[t];

@@ -166,6 +166,9 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> The point where items are input to this node. </summary>
     public virtual Vector3 input_point(Vector3 input_from) { return transform.position; }
 
+    /// <summary> Called whenever the inputs change. </summary>
+    protected virtual void on_inputs_change() { }
+
     //#########//
     // OUTPUTS //
     //#########//
@@ -192,6 +195,9 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         return outputs_to[output_number];
     }
     int output_number = 0;
+
+    /// <summary> Called whenever the outputs change. </summary>
+    protected virtual void on_outputs_change() { }
 
     //#################//
     // UNITY CALLBACKS //
@@ -245,12 +251,13 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         nodes = new HashSet<item_node>();
     }
 
-    protected static string node_info(item_node node)
+    public static void refresh_connections()
     {
-        string ret = "Item node " + node.name;
-        if (nodes.Contains(node))
-            return ret + " registered.";
-        return ret + " unregistered!";
+        foreach (var n in nodes)
+            break_all_connections(n);
+
+        foreach (var n in nodes)
+            validate_connections(n);
     }
 
     /// <summary> Create a node where <paramref name="from"/> 
@@ -268,16 +275,35 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
         from.outputs_to.Add(to);
         to.inputs_from.Add(from);
+
+        from.on_outputs_change();
+        to.on_inputs_change();
     }
 
     /// <summary> Remove all input and output nodes 
     /// from <paramref name="node"/>. </summary>
     static void break_all_connections(item_node node)
     {
-        foreach (var ip in node.inputs_from) ip?.outputs_to.Remove(node);
-        foreach (var ot in node.outputs_to) ot?.inputs_from.Remove(node);
+        foreach (var ip in node.inputs_from)
+        {
+            ip?.outputs_to.Remove(node);
+            ip?.on_outputs_change();
+        }
+
+        foreach (var ot in node.outputs_to)
+        {
+            ot?.inputs_from.Remove(node);
+            ot?.on_inputs_change();
+        }
+
+        bool inputs_changed = node.input_count > 0;
+        bool outputs_changed = node.output_count > 0;
+
         node.inputs_from.Clear();
         node.outputs_to.Clear();
+
+        if (inputs_changed) node.on_inputs_change();
+        if (outputs_changed) node.on_outputs_change();
     }
 
     /// <summary> Returns true if the output from <paramref name="from"/>
@@ -369,6 +395,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
             UnityEditor.EditorGUILayout.TextArea(
                 "Node information\n" +
+                "    " + (nodes.Contains(node) ? "registered\n" : "unregistered!\n") +
                 "    " + node.input_count + " inputs\n" +
                 "    " + node.output_count + " outputs\n" +
                 "    " + node.item_count + " items\n" +

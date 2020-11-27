@@ -415,9 +415,12 @@ public static class utils
         return v;
     }
 
-    public static bool move_towards(Transform t, Vector3 to, float max_move)
+    public static bool move_towards(Transform t, Vector3 to, float max_move, float arrive_distance = 0)
     {
         Vector3 delta = to - t.position;
+        if (delta.magnitude < arrive_distance)
+            return true;
+
         bool arrived = false;
         if (delta.magnitude > max_move)
             delta = delta.normalized * max_move;

@@ -730,7 +730,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  walk_speed: 1
+  walk_speed: 2
   run_speed: 4
   max_health: 10
   pathfinding_resolution: 0.5

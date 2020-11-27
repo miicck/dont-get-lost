@@ -114,6 +114,10 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         for (int x = 0; x < x_size; ++x)
             for (int z = 0; z < z_size; ++z)
             {
+                // Only tend to 1 in 3 of the spots
+                if (Random.Range(0, 3) != 0)
+                    continue;
+
                 var spot = spots[x, z];
                 if (spot == null)
                 {

@@ -171,11 +171,22 @@ public class item_gutter : item_node
 
         if (display == null)
         {
-            display = Resources.Load<GameObject>("misc/gutter_path").inst();
+            display = new GameObject("display");
             display.transform.SetParent(transform);
             display.transform.position = (end.position + start.position) / 2f;
             display.transform.forward = end.position - start.position;
-            display.transform.localScale = new Vector3(0.02f, 0.02f, (end.position - start.position).magnitude);
+
+            var path = Resources.Load<GameObject>("misc/gutter_path").inst();
+            path.transform.SetParent(display.transform);
+            path.transform.localPosition = Vector3.zero;
+            path.transform.localRotation = Quaternion.identity;
+            path.transform.localScale = new Vector3(0.02f, 0.02f, (end.position - start.position).magnitude);
+
+            var arrow = Resources.Load<GameObject>("misc/gutter_arrowhead").inst();
+            arrow.transform.SetParent(display.transform);
+            arrow.transform.localPosition = Vector3.zero;
+            arrow.transform.localRotation = Quaternion.identity;
+            arrow.transform.localScale = Vector3.one * 0.1f;
         }
 
         display.SetActive(enabled);

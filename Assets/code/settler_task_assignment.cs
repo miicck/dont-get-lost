@@ -6,7 +6,7 @@ using UnityEngine;
 /// to represent an assignment of the settler with network id 
 /// <see cref="settler_task_assignment.settler_id"/> to the
 /// <see cref="settler_interactable"/>. </summary>
-public class settler_task_assignment : networked
+public class settler_task_assignment : networked, IAddsToInspectionText
 {
     //############//
     // NETWORKING //
@@ -26,6 +26,12 @@ public class settler_task_assignment : networked
     //#####################//
     // Settler interaction //
     //#####################//
+
+    public string added_inspection_text()
+    {
+        if (settler == null) return "";
+        return settler.name.capitalize() + " is assigned to this.";
+    }
 
     /// <summary> The settler that this assignement refers to. </summary>
     public settler settler
@@ -89,7 +95,7 @@ public class settler_task_assignment : networked
     {
         // Ensure everything we need exists, including a registered network
         // parent for the interactable i
-        if (s == null || i == null || i.assignments == null || 
+        if (s == null || i == null || i.assignments == null ||
             i.networked_parent == null || i.networked_parent.network_id < 0)
             return false;
 

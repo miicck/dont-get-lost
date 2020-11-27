@@ -60,20 +60,23 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             path = null;
 
             // Get an eat task
-            if (Random.Range(0, 100) < hunger.value &&
+            if (Random.Range(20, 100) < hunger.value &&
                 settler_task_assignment.try_assign(this,
-                settler_interactable.random(settler_interactable.TYPE.EAT)))
+                settler_interactable.proximity_weighted_ramdon(
+                    settler_interactable.TYPE.EAT, transform.position)))
                 return;
 
             // Get a sleep task
-            if (Random.Range(0, 100) < tiredness.value &&
+            if (Random.Range(20, 100) < tiredness.value &&
                 settler_task_assignment.try_assign(this,
-                settler_interactable.random(settler_interactable.TYPE.SLEEP)))
+                settler_interactable.proximity_weighted_ramdon(
+                    settler_interactable.TYPE.SLEEP, transform.position)))
                 return;
 
             // Get a work task
             if (settler_task_assignment.try_assign(this,
-                settler_interactable.random(settler_interactable.TYPE.WORK)))
+                settler_interactable.proximity_weighted_ramdon(
+                    settler_interactable.TYPE.WORK, transform.position)))
                 return;
 
             // No suitable interaction found
@@ -114,11 +117,32 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             // Walk the path to completion
             Vector3 next_point = path[0].transform.position;
             Vector3 forward = next_point - transform.position;
+
+            if (path.Count > 1)
+            {
+                // Gradually turn towards the next direction, to make
+                // going round sharp corners look natural
+                Vector3 next_next_point = path[1].transform.position;
+                Vector3 next_forward = next_next_point - next_point;
+
+                float w1 = (transform.position - next_point).magnitude;
+                float w2 = (transform.position - next_next_point).magnitude;
+                forward = forward.normalized * w1 + next_forward.normalized * w2;
+                forward /= (w1 + w2);
+            }
+
             forward.y = 0;
-            if (forward.magnitude > 10e-3f) transform.forward = forward;
+            if (forward.magnitude > 10e-3f)
+            {
+                // If we need to do > 90 degree turn, just do it instantly
+                if (Vector3.Dot(transform.forward, forward) < 0)
+                    transform.forward = forward;
+                else // Otherwise, lerp our forward vector
+                    transform.forward = Vector3.Lerp(transform.forward, forward, Time.deltaTime * 5f);
+            }
 
             if (utils.move_towards(transform, next_point,
-                Time.deltaTime * walk_speed))
+                Time.deltaTime * walk_speed, arrive_distance: 0.25f))
                 path.RemoveAt(0);
 
             return;
