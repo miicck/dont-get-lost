@@ -46,6 +46,9 @@ public class armour_locator : MonoBehaviour
                 size.z / _equipped.size.z
             );
 
+            // Scale armour
+            _equipped.transform.localScale *= GetComponentInParent<ICanEquipArmour>().armour_scale();
+
             _equipped.transform.SetParent(transform);
             _equipped.transform.localPosition = Vector3.zero;
             _equipped.transform.localRotation = Quaternion.identity;

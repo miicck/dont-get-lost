@@ -5,6 +5,7 @@ using UnityEngine;
 public interface ICanEquipArmour
 {
     armour_locator[] armour_locators();
+    float armour_scale();
 }
 
 public static class armour_extensions

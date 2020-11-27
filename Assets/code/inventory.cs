@@ -177,6 +177,35 @@ public class inventory : networked, IItemCollection
         set => ui.gameObject.SetActive(value);
     }
 
+    /// <summary> Set the item/count in the corresponding slot. </summary>
+    public void set_slot(inventory_slot s, string item, int count, bool overwrite = true)
+    {
+        int slot_index = -1;
+        for (int i = 0; i < slots.Length; ++i)
+            if (slots[i] == s)
+            {
+                slot_index = i;
+                break;
+            }
+
+        if (slot_index < 0)
+            throw new System.Exception("Slot not found in inventory!");
+
+        // Look for a non-empty slot to overwrite
+        foreach (var isn in networked_slots)
+            if (isn.index == slot_index)
+            {
+                if (!overwrite) return;
+                isn.set_item_count_index(Resources.Load<item>("items/" + item), count, slot_index);
+                return;
+            }
+
+        // Create new networked slot
+        var new_slot = (inventory_slot_networked)client.create(
+            transform.position, "misc/networked_inventory_slot", this);
+        new_slot.set_item_count_index(Resources.Load<item>("items/" + item), count, slot_index);
+    }
+
     /// <summary> Forward a click to the appropriate network slot. </summary>
     public void click_slot(int slot_index, bool right_click)
     {

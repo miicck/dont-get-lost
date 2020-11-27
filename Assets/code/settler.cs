@@ -204,10 +204,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     // ICanEquipArmour //
     //#################//
 
-    public armour_locator[] armour_locators()
-    {
-        return GetComponentsInChildren<armour_locator>();
-    }
+    public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
+    public float armour_scale() { return height.value; }
 
     //#################//
     // ILeftPlayerMenu //
@@ -295,7 +293,38 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public override void on_first_register()
     {
         base.on_first_register();
-        client.create(transform.position, "inventories/settler_inventory", parent: this);
+        var inv = (inventory)client.create(transform.position, "inventories/settler_inventory", parent: this);
+
+        // Randomize clothing
+        inv.add_register_listener(() =>
+        {
+            var armour_slots = inv.ui.GetComponentsInChildren<armour_slot>();
+
+            // Choose the armour slots to fill
+            var locations_to_fill = new HashSet<armour_piece.LOCATION>();
+            foreach (var slot in armour_slots)
+                if (Random.Range(0, 3) == 0)
+                    locations_to_fill.Add(slot.location);
+            
+            // Fill the chosen armour slots
+            var armours = Resources.LoadAll<armour_piece>("items");
+            foreach (var slot in armour_slots)
+            {
+                if (!locations_to_fill.Contains(slot.location))
+                    continue;
+
+                List<armour_piece> options = new List<armour_piece>();
+                foreach (var a in armours)
+                    if (slot.accepts(a))
+                        options.Add(a);
+
+                if (options.Count == 0)
+                    continue;
+
+                var chosen = options[Random.Range(0, options.Count)];
+                inv.set_slot(slot, chosen.name, 1);
+            }
+        });
     }
 
     public override void on_add_networked_child(networked child)

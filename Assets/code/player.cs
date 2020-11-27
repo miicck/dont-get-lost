@@ -98,7 +98,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
                     // Attempt to open a standalone custom menu
                     var ray = camera_ray(INTERACTION_RANGE, out float max_dis);
-                    open_custom_menu = utils.raycast_for_closest<ICustomMenu>(ray, 
+                    open_custom_menu = utils.raycast_for_closest<ICustomMenu>(ray,
                         out RaycastHit hit, max_distance: max_dis);
                     if (open_custom_menu != null) break; // Custom menu open => don't do anything else
 
@@ -112,7 +112,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     break;
 
                 case UI_STATE.MAP_OPEN:
-                    map_open = true;                
+                    map_open = true;
                     break;
 
                 case UI_STATE.RECIPE_BOOK_OPEN:
@@ -294,10 +294,8 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     // ICanEquipArmour //
     //#################//
 
-    public armour_locator[] armour_locators()
-    {
-        return GetComponentsInChildren<armour_locator>();
-    }
+    public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
+    public float armour_scale() { return 1f; }
 
     //##########//
     // ITEM USE //

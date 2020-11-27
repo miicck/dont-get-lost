@@ -117,13 +117,6 @@ public class inventory_slot_networked : networked
         int index = net_index.value;
         inventory inv = inventory;
 
-        // Work out/set the new slot state
-        /*
-        string new_item = contents.first;
-        if (remaining == 0) new_item = "";
-        contents.set(new_item, remaining);
-        */
-
         // Delete this inventory slot + replace it with the
         // updated count.
         delete(() =>
