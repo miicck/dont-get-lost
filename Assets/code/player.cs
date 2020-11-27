@@ -371,10 +371,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         // Don't allow item use when in UI
         if (ui_state != UI_STATE.ALL_CLOSED) return;
 
-        // Run undo/redo commands
-        if (controls.key_press(controls.BIND.UNDO)) undo_manager.undo();
-        if (controls.key_press(controls.BIND.REDO)) undo_manager.redo();
-
         // Use items
         current_item_use_result = item.use_result.complete;
         if (current_item_use == USE_TYPE.NOT_USING)
@@ -414,6 +410,13 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             // Update the network with equipment position
             equipped_local_pos.value = equipped.transform.localPosition;
             equipped_local_rot.value = equipped.transform.localRotation;
+        }
+
+        // Run undo/redo commands
+        if (current_item_use == USE_TYPE.NOT_USING)
+        {
+            if (controls.key_press(controls.BIND.UNDO)) undo_manager.undo();
+            if (controls.key_press(controls.BIND.REDO)) undo_manager.redo();
         }
     }
 
