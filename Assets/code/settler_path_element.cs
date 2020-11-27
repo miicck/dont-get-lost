@@ -234,73 +234,97 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     }
     static bool _draw_links;
 
-    public static List<settler_path_element> path(Vector3 v, settler_path_element goal)
+    public class path
     {
-        return path(nearest_element(v), goal);
-    }
+        List<settler_path_element> element_path;
 
-    /// <summary> Find a path between the start and end elements, using 
-    /// the A* algorithm. Returns null if no such path exists. </summary>
-    public static List<settler_path_element> path(settler_path_element start, settler_path_element goal)
-    {
-        if (start == null || goal == null) return null;
-        if (start.group != goal.group) return null;
+        public bool valid => element_path != null;
+        public int Count => element_path == null ? 0 : element_path.Count;
 
-        // Setup pathfinding state
-        var open_set = new HashSet<settler_path_element>();
-        var closed_set = new HashSet<settler_path_element>();
-        var came_from = new Dictionary<settler_path_element, settler_path_element>();
-        var fscore = new Dictionary<settler_path_element, float>();
-        var gscore = new Dictionary<settler_path_element, float>();
-
-        // Initialize pathfinding with just start open
-        open_set.Add(start);
-        gscore[start] = 0;
-        fscore[start] = goal.heuristic(start);
-
-        while (open_set.Count > 0)
+        public settler_path_element this[int i]
         {
-            // Find the lowest fscore in the open set
-            var current = utils.find_to_min(open_set, (c) => fscore[c]);
-
-            if (current == goal)
+            get
             {
-                // Success - reconstruct path
-                List<settler_path_element> path = new List<settler_path_element> { current };
-                while (came_from.TryGetValue(current, out current))
-                    path.Add(current);
-                path.Reverse();
-                return path;
-            }
-
-            // Close current
-            open_set.Remove(current);
-            closed_set.Add(current);
-
-            foreach (var n in current.linked_elements())
-            {
-                if (closed_set.Contains(n))
-                    continue;
-
-                // Work out tentative path length to n, if we wen't via current
-                var tgs = gscore[current] + n.heuristic(current);
-
-                // Get the current neighbour gscore (infinity if not already scored)
-                if (!gscore.TryGetValue(n, out float gsn))
-                    gsn = Mathf.Infinity;
-
-                if (tgs < gsn)
-                {
-                    // This is a better path to n, update it
-                    came_from[n] = current;
-                    gscore[n] = tgs;
-                    fscore[n] = tgs + goal.heuristic(n);
-                    open_set.Add(n);
-                }
+                if (element_path == null) return null;
+                if (element_path.Count <= i) return null;
+                return element_path[i];
             }
         }
 
-        // Pathfinding failed
-        return null;
+        public void remove_at(int i)
+        {
+            if (i >= 0 && i < element_path.Count)
+                element_path.RemoveAt(i);
+            else
+                throw new System.Exception("Tried to remove out of range path element!");
+        }
+
+        public path(Vector3 v, settler_path_element goal) :
+            this(nearest_element(v), goal)
+        { }
+
+        /// <summary> Find a path between the start and end elements, using 
+        /// the A* algorithm. Returns null if no such path exists. </summary>
+        public path(settler_path_element start, settler_path_element goal)
+        {
+            if (start == null || goal == null) return;
+            if (start.group != goal.group) return;
+
+            // Setup pathfinding state
+            var open_set = new HashSet<settler_path_element>();
+            var closed_set = new HashSet<settler_path_element>();
+            var came_from = new Dictionary<settler_path_element, settler_path_element>();
+            var fscore = new Dictionary<settler_path_element, float>();
+            var gscore = new Dictionary<settler_path_element, float>();
+
+            // Initialize pathfinding with just start open
+            open_set.Add(start);
+            gscore[start] = 0;
+            fscore[start] = goal.heuristic(start);
+
+            while (open_set.Count > 0)
+            {
+                // Find the lowest fscore in the open set
+                var current = utils.find_to_min(open_set, (c) => fscore[c]);
+
+                if (current == goal)
+                {
+                    // Success - reconstruct path
+                    element_path = new List<settler_path_element> { current };
+                    while (came_from.TryGetValue(current, out current))
+                        element_path.Add(current);
+                    element_path.Reverse();
+                    return;
+                }
+
+                // Close current
+                open_set.Remove(current);
+                closed_set.Add(current);
+
+                foreach (var n in current.linked_elements())
+                {
+                    if (closed_set.Contains(n))
+                        continue;
+
+                    // Work out tentative path length to n, if we wen't via current
+                    var tgs = gscore[current] + n.heuristic(current);
+
+                    // Get the current neighbour gscore (infinity if not already scored)
+                    if (!gscore.TryGetValue(n, out float gsn))
+                        gsn = Mathf.Infinity;
+
+                    if (tgs < gsn)
+                    {
+                        // This is a better path to n, update it
+                        came_from[n] = current;
+                        gscore[n] = tgs;
+                        fscore[n] = tgs + goal.heuristic(n);
+                        open_set.Add(n);
+                    }
+                }
+            }
+
+            // Pathfinding failed
+        }
     }
 }

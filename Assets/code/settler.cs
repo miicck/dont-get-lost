@@ -14,7 +14,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public int group { get; private set; }
     protected override ICharacterController default_controller() { return new settler_control(); }
 
-    List<settler_path_element> path;
+    settler_path_element.path path;
     float delta_hunger = 0;
     float delta_tired = 0;
     settler_task_assignment assignment;
@@ -97,7 +97,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path = settler_path_element.path(transform.position,
+            path = new settler_path_element.path(transform.position,
                 assignment.interactable.path_element);
 
             if (path == null)
@@ -124,6 +124,13 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
             if (path.Count > 1)
             {
+                if (path[1] == null)
+                {
+                    // Path has been destroyed, reset
+                    path = null;
+                    return;
+                }
+
                 // Gradually turn towards the next direction, to make
                 // going round sharp corners look natural
                 Vector3 next_next_point = path[1].transform.position;
@@ -147,7 +154,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
             if (utils.move_towards(transform, next_point,
                 Time.deltaTime * walk_speed, arrive_distance: 0.25f))
-                path.RemoveAt(0);
+                path.remove_at(0);
 
             return;
         }
@@ -305,7 +312,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             foreach (var slot in armour_slots)
                 if (Random.Range(0, 3) == 0)
                     locations_to_fill.Add(slot.location);
-            
+
             // Fill the chosen armour slots
             var armours = Resources.LoadAll<armour_piece>("items");
             foreach (var slot in armour_slots)
