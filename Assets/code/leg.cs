@@ -38,7 +38,6 @@ public class leg : MonoBehaviour
     float init_knee_scale;
     float test_up_amt;
     float test_down_amt;
-    float distance_from_player;
     AudioSource footstep_source;
     public AudioClip custom_footstep_sound;
     public float footstep_volume_multiplier = 1f;
@@ -268,9 +267,6 @@ public class leg : MonoBehaviour
 
     void play_contact_sounds()
     {
-        if (distance_from_player > SOUND_DISTANCE)
-            return; // No sounds in cheap mode
-
         bool underwater = foot_base.transform.position.y < world.SEA_LEVEL &&
                           foot_base.transform.position.y > world.UNDERGROUND_ROOF;
         if (underwater)
@@ -346,9 +342,6 @@ public class leg : MonoBehaviour
 
     private void Update()
     {
-        if (player.current != null)
-            distance_from_player = (transform.position - player.current.transform.position).magnitude;
-
         Vector3 delta = step_centre.position - position_last;
         position_last = step_centre.position;
         velocity = delta / Time.deltaTime;
@@ -398,9 +391,7 @@ public class leg : MonoBehaviour
             move_foot_towards(line_point + amt_above_ground * Vector3.up);
         }
 
-        // Only solve the leg if we're within the FOV
-        if (player.current.in_field_of_view(transform.position))
-            solve_leg();
+        solve_leg();
     }
 
     private void OnDrawGizmos()
