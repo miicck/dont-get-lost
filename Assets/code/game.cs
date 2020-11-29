@@ -186,15 +186,16 @@ public class game : MonoBehaviour
 
         // Initialize various things
         names.initialize();
-        options_menu.initialize();
         item_node.initialize();
         biome.initialize();
+        chunk.initialize();
         settler_path_element.initialize();
         settler_interactable.initialize();
         character_spawn_point.initialize();
         character.initialize();
         settler.initialize();
         settler_task_assignment.initialize();
+        options_menu.initialize();
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);
@@ -286,7 +287,6 @@ public class game : MonoBehaviour
     {
         // Disconnect from the network
         client.disconnect(true);
-        server.stop();
     }
 
     public string graphics_info()

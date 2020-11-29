@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_resource_gatherer : settler_interactable, IAddsToInspectionText
+public class settler_resource_gatherer : settler_interactable, IAddsToInspectionText, IExtendsNetworked, ILeftPlayerMenu
 {
     public item_output output;
     public Transform search_origin;
@@ -14,7 +14,17 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     public tool.TYPE tool_type = tool.TYPE.AXE;
     public tool.QUALITY tool_quality = tool.QUALITY.TERRIBLE;
 
-    harvestable harvesting;
+    List<harvestable> harvest_options;
+    harvestable harvesting
+    {
+        get
+        {
+            if (harvest_options == null) return null;
+            if (harvest_options.Count < harvesting_index.value) return null;
+            return harvest_options[harvesting_index.value];
+        }
+    }
+
     float time_harvesting;
     int harvested_count = 0;
 
@@ -30,8 +40,31 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     protected override void Start()
     {
         base.Start();
-        Invoke("update_harvesting", 1);
+
+        // Wait for a little bit after chunk generation to load harvesting objects
+        chunk.add_generation_listener(transform.position, (c) =>
+        {
+            Invoke("load_harvesting", 1);
+        });
     }
+
+    void load_harvesting()
+    {
+        // Search for harvestable objects within range
+        harvest_options = new List<harvestable>();
+        foreach (var c in Physics.OverlapSphere(search_origin.position, search_radius))
+        {
+            var h = c.GetComponentInParent<harvestable>();
+            if (h == null) continue;
+            if (h.tool.tool_type != tool_type) continue;
+            if (h.tool.tool_quality > tool_quality) continue;
+            harvest_options.Add(h);
+        }
+    }
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
 
     public string added_inspection_text()
     {
@@ -40,32 +73,89 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
         return "    Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
-    void update_harvesting()
+    //##################//
+    // LEFT PLAYER MENU //
+    //##################//
+
+    public string left_menu_display_name() { return name; }
+    public inventory editable_inventory() { return null; }
+    public void on_left_menu_close() { }
+    public recipe[] additional_recipes() { return null; }
+
+    RectTransform ui;
+
+    public RectTransform left_menu_transform()
     {
-        // Search for harvestable objects within range
-        var options = new List<KeyValuePair<harvestable, float>>();
-        foreach (var c in Physics.OverlapSphere(search_origin.position, search_radius))
-        {
-            var h = c.GetComponentInParent<harvestable>();
-            if (h == null) continue;
-            if (h.tool.tool_type != tool_type) continue;
-            if (h.tool.tool_quality > tool_quality) continue;
-            options.Add(new KeyValuePair<harvestable, float>(
-                h, (search_origin.position - c.ClosestPoint(search_origin.position)).magnitude
-            ));
-        }
-
-        if (options.Count > 0)
-            harvesting = utils.find_to_min(options, (o) => o.Value).Key;
-
-        // Try again later
-        if (harvesting == null)
-            Invoke("update_harvesting", 1);
+        if (ui == null)
+            ui = Resources.Load<RectTransform>("ui/resource_gatherer").inst();
+        return ui;
     }
 
-    //##############//
-    // INTERACTABLE //
-    //##############//
+    public void on_left_menu_open()
+    {
+        // Clear the options menu
+        var content = ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+        foreach (RectTransform child in content)
+            Destroy(child.gameObject);
+
+        // Create the options menu
+        if (harvest_options == null) return;
+        for (int i = 0; i < harvest_options.Count; ++i)
+        {
+            var trans = Resources.Load<RectTransform>("ui/resource_option_button").inst();
+            var but = trans.GetComponentInChildren<UnityEngine.UI.Button>();
+            var text = trans.GetComponentInChildren<UnityEngine.UI.Text>();
+
+            UnityEngine.UI.Image image = null;
+            foreach (var img in trans.GetComponentsInChildren<UnityEngine.UI.Image>())
+                if (img.sprite == null)
+                {
+                    image = img;
+                    break;
+                }
+
+            text.text = product.product_plurals_list(harvest_options[i].products);
+            image.sprite = harvest_options[i].main_sprite();
+
+            trans.SetParent(content);
+
+            if (i == harvesting_index.value)
+            {
+                var colors = but.colors;
+                colors.normalColor = Color.green;
+                colors.pressedColor = Color.green;
+                colors.highlightedColor = Color.green;
+                colors.selectedColor = Color.green;
+                colors.disabledColor = Color.green;
+                but.colors = colors;
+            }
+
+            int i_copy = i;
+            but.onClick.AddListener(() =>
+            {
+                harvesting_index.value = i_copy;
+
+                // Refresh 
+                player.current.ui_state = player.UI_STATE.ALL_CLOSED;
+                player.current.ui_state = player.UI_STATE.INVENTORY_OPEN;
+            });
+        }
+    }
+
+    //###################//
+    // IExtendsNetworked //
+    //###################//
+
+    networked_variables.net_int harvesting_index;
+
+    public void init_networked_variables()
+    {
+        harvesting_index = new networked_variables.net_int();
+    }
+
+    //######################//
+    // SETTLER_INTERACTABLE //
+    //######################//
 
     public override void on_assign(settler s)
     {

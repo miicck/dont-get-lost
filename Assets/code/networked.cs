@@ -2,6 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> A component child of a <see cref="networked"/> object that 
+/// itself has networked member variables. </summary>
+public interface IExtendsNetworked
+{
+    void init_networked_variables();
+}
+
+/// <summary> An object with a unique <see cref="networked.network_id"/> that is reproduced
+/// on every client via prefab initialization and <see cref="networked_variable"/>
+/// serialization. </summary>
 public class networked : MonoBehaviour
 {
     //###################//
@@ -115,9 +125,34 @@ public class networked : MonoBehaviour
 
         on_init_network_variables();
 
+        // Get my native networked fields
         networked_variables = new List<networked_variable>();
         foreach (var f in networked_fields[GetType()])
             networked_variables.Add((networked_variable)f.GetValue(this));
+
+        // Appenend any extended networked fields from my children
+        var networked_children = GetComponentsInChildren<IExtendsNetworked>();
+        if (networked_children.Length > 0)
+        {
+            // Sort extending children dererministically
+            var sorted_children = new List<IExtendsNetworked>(networked_children);
+            sorted_children.Sort((a, b) =>
+            {
+                // Sort alphabetically by type
+                var type_comp = a.GetType().Name.CompareTo(b.GetType().Name);
+                if (type_comp != 0) return type_comp;
+
+                // Not implemented
+                throw new System.NotImplementedException("Multiple IExtendsNetowrked children of the same type!");
+            });
+
+            foreach (var c in sorted_children)
+            {
+                c.init_networked_variables();
+                foreach (var f in networked_fields[c.GetType()])
+                    networked_variables.Add((networked_variable)f.GetValue(c));
+            }
+        }
     }
 
     /// <summary> All of the variables I contain that
@@ -441,8 +476,12 @@ public class networked : MonoBehaviour
         // Loop over all networked implementations
         foreach (var type in typeof(networked).Assembly.GetTypes())
         {
+            // Find all non-abstract types that inherit from 
+            // networked, or that implement IExtendsNetworked
             if (type.IsAbstract) continue;
-            if (!type.IsSubclassOf(typeof(networked))) continue;
+            bool child_of_networked = type.IsSubclassOf(typeof(networked));
+            bool extends_networked = typeof(IExtendsNetworked).IsAssignableFrom(type);
+            if (!child_of_networked && !extends_networked) continue;
 
             var fields = new List<System.Reflection.FieldInfo>();
             int special_fields_count = System.Enum.GetNames(typeof(engine_networked_variable.TYPE)).Length;
@@ -480,18 +519,21 @@ public class networked : MonoBehaviour
                 }
             }
 
-            // Check we've got all of the special fields
-            for (int i = 0; i < special_fields.Length; ++i)
-                if (special_fields[i] == null)
-                    throw new System.Exception("Engine field not found for type" + type + "!");
-
             // Sort fields alphabetically, so the order 
             // is the same on every client.
             fields.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
 
             // Add the special fields at the start, so we
             // know how to access them in the engine.
-            fields.InsertRange(0, special_fields);
+            if (child_of_networked)
+            {
+                // Check we've got all of the special fields
+                for (int i = 0; i < special_fields.Length; ++i)
+                    if (special_fields[i] == null)
+                        throw new System.Exception("Engine field not found for type" + type + "!");
+
+                fields.InsertRange(0, special_fields);
+            }
 
             networked_fields[type] = fields;
         }

@@ -369,8 +369,8 @@ MonoBehaviour:
   output: {fileID: 5679265494180299747}
   search_origin: {fileID: 6493507513712573707}
   search_radius: 1
-  time_between_harvests: 1
-  max_harvests: 5
+  time_between_harvests: 0.5
+  max_harvests: 20
   tool_type: 0
   tool_quality: 0
 --- !u!114 &5748081639992911202

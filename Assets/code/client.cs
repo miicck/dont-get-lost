@@ -526,6 +526,10 @@ public static class client
         tcp = null;
 
         on_disconnect(msg_from_server);
+
+        // If this client was running the server, stop the server
+        if (server.started)
+            server.stop();
     }
 
     public static void update()

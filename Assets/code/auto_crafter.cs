@@ -14,7 +14,6 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
     item_input[] inputs => GetComponentsInChildren<item_input>();
     item_output[] outputs => GetComponentsInChildren<item_output>();
 
-
     void Start()
     {
         // Don't start the crafting updates if this isn't the placed version

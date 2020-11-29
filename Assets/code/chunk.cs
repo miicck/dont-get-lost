@@ -24,15 +24,17 @@ public class chunk : MonoBehaviour
         }
     }
 
-    // Keep a quick lookup for chunks
-    static Dictionary<int, int, chunk> generated_chunks =
-        new Dictionary<int, int, chunk>();
+    //##############//
+    // STATIC STUFF //
+    //##############//
 
-    static Dictionary<int, int, chunk> generating_chunks =
-        new Dictionary<int, int, chunk>();
+    // Keep a quick lookup for chunks
+    static Dictionary<int, int, chunk> generated_chunks;
+    static Dictionary<int, int, chunk> generating_chunks;
 
     public static int chunks_generating => generating_chunks.count;
     public static int chunks_generated => generated_chunks.count;
+
     public static int enabled_and_generating
     {
         get
@@ -50,8 +52,14 @@ public class chunk : MonoBehaviour
 
     // Dictionary of functions to call once a chunk is generated
     public delegate void on_gen_func(chunk c);
-    static Dictionary<int, int, on_gen_func> on_gen_functions =
-        new Dictionary<int, int, on_gen_func>();
+    static Dictionary<int, int, on_gen_func> on_gen_functions;
+
+    public static void initialize()
+    {
+        on_gen_functions = new Dictionary<int, int, on_gen_func>();
+        generated_chunks = new Dictionary<int, int, chunk>();
+        generating_chunks = new Dictionary<int, int, chunk>();
+    }
 
     // Register a new listener to call when a chunk is generated
     public static void add_generation_listener(Vector3 position, on_gen_func f)

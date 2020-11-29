@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 2908574272653974355, guid: a9dc719385e2c5347b4c89de21e9e542, type: 3}
-  count: 4
+  count: 1
 --- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
