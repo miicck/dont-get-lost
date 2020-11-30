@@ -179,7 +179,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         return name.capitalize() + " (group " + group + ")\n" +
                "    " + Mathf.Round(hunger.value) + "% hungry\n" +
                "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-               ass_string;
+               ass_string + "\n" +
+               "    interacting with " + players_interacting_with.value + " players";
     }
 
     private void Start()
@@ -283,6 +284,11 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         {
             transform.localScale = Vector3.one * height.value;
         };
+    }
+
+    public override void on_create()
+    {
+        players_interacting_with.value = 0;
     }
 
     public override void on_first_create()
