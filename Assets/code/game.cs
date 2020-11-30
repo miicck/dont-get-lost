@@ -195,7 +195,7 @@ public class game : MonoBehaviour
         character.initialize();
         settler.initialize();
         settler_task_assignment.initialize();
-        options_menu.initialize();
+        options_menu.initialize(); // This relies on the most stuff, so should be initialized last
 
         // Set the slow_update method going
         InvokeRepeating("slow_update", 0, SLOW_UPDATE_TIME);

@@ -269,6 +269,13 @@ public class console : MonoBehaviour
                 popup_message.create("Characters " + (character.characters_enabled ? "enabled" : "disabled"));
                 return true;
 
+            // Kill all the characters
+            case "kill_all":
+                foreach (var c in FindObjectsOfType<character>())
+                    if (!c.is_client_side)
+                        c.delete();
+                return true;
+
             // Delete the current player from the server
             case "delete_player":
                 player.current.delete(() =>

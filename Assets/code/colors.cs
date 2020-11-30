@@ -41,7 +41,7 @@ public static class character_colors
     {
         return Color.HSVToRGB(
             Random.Range(10f / 360f, 46f / 360f),
-            utils.random_normal(0.4f, 0.2f),
+            utils.random_normal(0.5f, 0.1f),
             Random.Range(0.23f, 1f)
         );
     }

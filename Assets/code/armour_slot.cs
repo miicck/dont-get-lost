@@ -35,7 +35,7 @@ public static class armour_extensions
 }
 
 /// <summary> A special slot in an inventory for armour. </summary>
-public class armour_slot : inventory_slot
+public class armour_slot : inventory_slot, IInspectable
 {
     /// <summary> The location on the body that this armour slot corresponds to. </summary>
     public armour_piece.LOCATION location;
