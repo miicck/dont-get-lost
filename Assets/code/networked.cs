@@ -196,6 +196,12 @@ public class networked : MonoBehaviour
 
         if (network_id > 0) // Registered on the network
         {
+            if (networked_variables == null)
+            {
+                delete();
+                throw new System.Exception("Networked variables for " + name + " are unitialized!");
+            }
+
             // Send queued variable updates
             for (int i = 0; i < networked_variables.Count; ++i)
             {
@@ -251,9 +257,6 @@ public class networked : MonoBehaviour
 
     //###############//
     // NETWORK STATE //
-    //###############//
-
-    /// <summary> My unique id on the network. Negative values are unique only on this
     /// client and indicate that I'm awating a network-wide id. </summary>
     public int network_id
     {
