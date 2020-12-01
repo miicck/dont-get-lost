@@ -208,7 +208,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     protected virtual void Start()
     {
         // Register the node, only after the chunk has finished generating
-        chunk.add_generation_listener(transform.position, (c) =>
+        chunk.add_generation_listener(transform, (c) =>
         {
             registered = true;
             register_node(this);

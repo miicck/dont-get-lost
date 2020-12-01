@@ -13,7 +13,7 @@ public class character_spawn_point : world_object.sub_generator
     public override void generate(biome.point point, chunk chunk,
         int x_in_chunk, int z_in_chunk)
     {
-        chunk.add_generation_listener(chunk.x, chunk.z, (c) =>
+        chunk.add_generation_listener(transform, chunk.x, chunk.z, (c) =>
         {
             active = true;
             spawn_points.Add(this);

@@ -61,16 +61,21 @@ public class chunk : MonoBehaviour
         generating_chunks = new Dictionary<int, int, chunk>();
     }
 
-    // Register a new listener to call when a chunk is generated
-    public static void add_generation_listener(Vector3 position, on_gen_func f)
+    // Register a new listener to call when a chunk is generated 
+    // (will only call if the given transform still exists)
+    public static void add_generation_listener(Transform transform, on_gen_func f)
     {
-        var c = coords(position);
-        add_generation_listener(c[0], c[1], f);
+        var c = coords(transform.position);
+        add_generation_listener(transform, c[0], c[1], f);
     }
 
     // Register a new listener to call when a chunk is generated
-    public static void add_generation_listener(int chunk_x, int chunk_z, on_gen_func f)
+    public static void add_generation_listener(Transform transform, int chunk_x, int chunk_z, on_gen_func f)
     {
+        // Add transform check to function
+        var old_f = f;
+        f = (c) => { if (transform != null) old_f(c); };
+
         // Call immediately if chunk is already generated
         var chunk = at(chunk_x, chunk_z, true);
         if (chunk != null)
@@ -80,8 +85,12 @@ public class chunk : MonoBehaviour
         }
 
         // Queue the callback (append to any previous callbacks already registered)
-        var callback = (on_gen_functions.get(chunk_x, chunk_z) ?? ((c) => { })) + f;
-        on_gen_functions.set(chunk_x, chunk_z, callback);
+        var prev_func = on_gen_functions.get(chunk_x, chunk_z);
+        on_gen_func new_func;
+        if (prev_func == null) new_func = f;
+        else new_func = prev_func + f;
+
+        on_gen_functions.set(chunk_x, chunk_z, new_func);
     }
 
     //##################//

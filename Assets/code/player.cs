@@ -856,7 +856,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         controller.enabled = false;
         networked_position = location;
 
-        chunk.add_generation_listener(location, (c) =>
+        // Re-enable the controller once the chunk at the new location is generated
+        var chunk_coords = chunk.coords(location);
+        chunk.add_generation_listener(transform, chunk_coords[0], chunk_coords[1], (c) =>
         {
             controller.enabled = true;
         });

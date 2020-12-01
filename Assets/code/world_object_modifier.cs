@@ -66,7 +66,7 @@ public abstract class world_object_modifier : networked
     /// <summary> Called whenever the in_chunk coordinates change. </summary>
     void on_locate()
     {
-        chunk.add_generation_listener(chunk_x.value, chunk_z.value, (c) =>
+        chunk.add_generation_listener(transform, chunk_x.value, chunk_z.value, (c) =>
         {
             target = c.get_object(x_in_chunk.value, z_in_chunk.value);
         });

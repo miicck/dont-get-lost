@@ -42,7 +42,7 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
         base.Start();
 
         // Wait for a little bit after chunk generation to load harvesting objects
-        chunk.add_generation_listener(transform.position, (c) =>
+        chunk.add_generation_listener(transform, (c) =>
         {
             Invoke("load_harvesting", 1);
         });
