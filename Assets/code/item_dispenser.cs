@@ -5,6 +5,8 @@ using UnityEngine;
 public class item_dispenser : settler_interactable
 {
     public item_input input;
+    public item_output overflow_output;
+
     item_locator[] locators;
     float time_interacted = 0f;
 
@@ -26,8 +28,47 @@ public class item_dispenser : settler_interactable
         base.Start();
     }
 
+    HashSet<item> overflow_items = new HashSet<item>();
+
     private void Update()
     {
+        while (input.item_count > 0)
+        {
+            var itm = input.release_item(0);
+
+            // Find an available locator
+            item_locator locator = null;
+            foreach (var l in locators)
+                if (l.item == null)
+                {
+                    locator = l;
+                    break;
+                }
+
+            // Reject unacceptable items, or if there are no outputs
+            if (locator == null || !accepts_item(itm))
+            {
+                // Reject item (give to overflow output if we have one)
+                if (overflow_output == null)
+                    Destroy(itm.gameObject);
+                else
+                    overflow_items.Add(itm);
+                continue;
+            }
+
+            locator.item = itm;
+        }
+
+        foreach (var i in new List<item>(overflow_items))
+        {
+            if (utils.move_towards(i.transform, overflow_output.transform.position, Time.deltaTime))
+            {
+                overflow_output.add_item(i);
+                overflow_items.Remove(i);
+            }
+        }
+
+        /*
         // Search for an available locator
         foreach (var l in locators)
         {
@@ -53,6 +94,7 @@ public class item_dispenser : settler_interactable
 
             l.item = itm;
         }
+        */
     }
 
     bool accepts_item(item i)

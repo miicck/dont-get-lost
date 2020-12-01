@@ -126,7 +126,7 @@ public class boat : networked, IInspectable
     public string inspect_info()
     {
         string ret = "Boat\n";
-        ret += "Cargo (total value = " + total_cargo_value.qs() + " coins)\n";
+        ret += "Cargo (total value = " + total_cargo_value.qs() + " coins):\n";
         foreach (var kv in contents)
             ret += "    " + kv.Value.qs() + " " + kv.Key + "\n";
         return ret;
