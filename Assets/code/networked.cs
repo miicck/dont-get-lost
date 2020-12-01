@@ -336,8 +336,17 @@ public class networked : MonoBehaviour
     /// <summary> Callback to call when first registered. </summary>
     callback on_register_callback = () => { };
 
-    /// <summary> Add a callback to call when first registered. </summary>
-    public void add_register_listener(callback c) { on_register_callback += c; }
+    /// <summary> Add a callback to call when first registered (or now if already registered). </summary>
+    public void add_register_listener(callback c)
+    {
+        if (network_id > 0)
+        {
+            c();
+            return;
+        }
+
+        on_register_callback += c;
+    }
 
     //##########################//
     // TERMINATION OF EXISTANCE //
@@ -373,7 +382,7 @@ public class networked : MonoBehaviour
         {
             // Client side objects are deleted immediately
             // without involving the server
-            callback();
+            callback?.Invoke();
             forget(true);
             return;
         }
