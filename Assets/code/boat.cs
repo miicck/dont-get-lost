@@ -2,55 +2,136 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class boat : MonoBehaviour
+public class boat : networked, IInspectable
 {
-    public Vector3 loading_centre = Vector3.zero;
-    public Vector3 loading_size = Vector3.one;
+    const int TOTAL_JOURNEY_TIME = 10;
 
-    List<item> items = new List<item>();
+    networked_variables.net_int away_time;
+    networked_variables.net_bool outward_journey;
+    networked_variables.net_string_counts_v2 contents;
 
-    int x_size => 1 + (int)(loading_size.x / item.LOGISTICS_SIZE);
-    int y_size => 1 + (int)(loading_size.y / item.LOGISTICS_SIZE);
-    int z_size => 1 + (int)(loading_size.z / item.LOGISTICS_SIZE);
+    public float journey_percentage =>
+        Mathf.Round(100f * (away_time.value / (float)TOTAL_JOURNEY_TIME));
+
+    dock dock => GetComponentInParent<dock>();
+
+    bool visible
+    {
+        set
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>())
+                r.enabled = value;
+            foreach (var c in GetComponentsInChildren<Collider>())
+                c.enabled = value;
+        }
+    }
+
+    public int total_cargo
+    {
+        get
+        {
+            int ret = 0;
+            foreach (var kv in contents)
+                ret += kv.Value;
+            return ret;
+        }
+    }
+
+    public int total_cargo_value
+    {
+        get
+        {
+            int ret = 0;
+            foreach (var kv in contents)
+                ret += Resources.Load<item>("items/" + kv.Key).value * kv.Value;
+            return ret;
+        }
+    }
+
+    public void launch()
+    {
+        outward_journey.value = true;
+    }
+
+    public override void on_init_network_variables()
+    {
+        base.on_init_network_variables();
+        contents = new networked_variables.net_string_counts_v2();
+        outward_journey = new networked_variables.net_bool();
+        away_time = new networked_variables.net_int();
+
+        away_time.on_change = () =>
+        {
+            visible = away_time.value == 0;
+            if (away_time.value >= TOTAL_JOURNEY_TIME)
+            {
+                outward_journey.value = false;
+            }
+        };
+    }
+
+    float accumulated_away_time;
+
+    private void Update()
+    {
+        // Stay floating level
+        Vector3 fw = transform.forward;
+        fw.y = 0;
+        transform.rotation = Quaternion.LookRotation(fw, Vector3.up);
+
+        if (!has_authority) return;
+
+        Vector3 target = outward_journey.value ?
+            dock.transform.position + dock.transform.forward * 5 :
+            dock.transform.position;
+
+        // Stay at sea level
+        target.y = world.SEA_LEVEL;
+
+        bool arrived = false;
+        if (utils.move_towards(transform, target, Time.deltaTime))
+        {
+            arrived = true;
+            if (outward_journey.value)
+            {
+                // Accumulate time away
+                accumulated_away_time += Time.deltaTime;
+                if (accumulated_away_time > 1)
+                {
+                    away_time.value += 1;
+                    accumulated_away_time = 0;
+                }
+            }
+            else
+            {
+                away_time.value = 0;
+            }
+        }
+
+        visible = !(outward_journey.value && arrived);
+    }
 
     public void add_item(item i)
     {
-        // Check if we've reached capacity
-        if (items.Count >= x_size * y_size * z_size)
-        {
-            Destroy(i.gameObject);
-            return;
-        }
+        contents[i.name] += 1;
 
-        // Position + add item
-        i.transform.position = item_location(items.Count);
-        i.transform.SetParent(transform);
-        i.transform.localRotation = Quaternion.identity;
-        items.Add(i);
+        Debug.Log(i.display_name);
+        i.delete();
     }
 
-    Vector3 item_location(int n)
+    //##############//
+    // IINspectable //
+    //##############//
+
+    public string inspect_info()
     {
-        // Work out y coordinate
-        int y = n / (x_size * z_size);
-
-        // Work out z coordinate
-        int z = (n - y * x_size * z_size) / x_size;
-
-        // Work out x coordinate
-        int x = n - y * x_size * z_size - z * x_size;
-
-        return transform.TransformPoint(
-            x * item.LOGISTICS_SIZE - loading_size.x / 2 + loading_centre.x,
-            y * item.LOGISTICS_SIZE - loading_size.y / 2 + loading_centre.y,
-            z * item.LOGISTICS_SIZE - loading_size.z / 2 + loading_centre.z
-        );
+        string ret = "Boat\n";
+        ret += "Cargo (total value = " + total_cargo_value.qs() + " coins)\n";
+        foreach (var kv in contents)
+            ret += "    " + kv.Value.qs() + " " + kv.Key + "\n";
+        return ret;
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.blue;
-        for (int i = 0; i < x_size * y_size * z_size; ++i)
-            Gizmos.DrawWireSphere(item_location(i), 0.02f);
-    }
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 }

@@ -143,11 +143,15 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         foreach (var n in outputs_to)
         {
             Vector3 input_point = n.input_point(output_point);
+            Vector3 delta = input_point - output_point;
+            if (delta.magnitude < 10e-3)
+                continue;
+
             GameObject path = Resources.Load<GameObject>("misc/output_path").inst();
             path.transform.SetParent(outputs_display);
             path.transform.position = (output_point + input_point) / 2f;
-            path.transform.forward = input_point - output_point;
-            path.transform.localScale = new Vector3(0.02f, 0.02f, (input_point - output_point).magnitude);
+            path.transform.forward = delta;
+            path.transform.localScale = new Vector3(0.02f, 0.02f, delta.magnitude);
         }
     }
 
