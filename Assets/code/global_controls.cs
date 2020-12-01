@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class global_controls : MonoBehaviour
 {
+    static bool already_exists = false;
+
     [RuntimeInitializeOnLoadMethod]
     static void startup()
     {
@@ -13,6 +15,15 @@ public class global_controls : MonoBehaviour
 
     private void Start()
     {
+        // Ensure only one global_controls is created
+        if (already_exists)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        already_exists = true;
+
         // Persistant through scene loads
         DontDestroyOnLoad(gameObject);
     }
