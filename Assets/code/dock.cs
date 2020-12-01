@@ -5,6 +5,7 @@ using UnityEngine;
 public class dock : building_material, IAddsToInspectionText
 {
     public item_input boat_input;
+    public item_output coins_output;
 
     bool at_sea_level => Mathf.Abs(transform.position.y - world.SEA_LEVEL) < 1f;
     bool has_water_access = false;

@@ -66,6 +66,9 @@ public class boat : networked, IInspectable
             if (away_time.value >= TOTAL_JOURNEY_TIME)
             {
                 outward_journey.value = false;
+                int coins = total_cargo_value;
+                contents.clear();
+                contents["coin"] = coins;
             }
         };
     }
@@ -105,6 +108,15 @@ public class boat : networked, IInspectable
             else
             {
                 away_time.value = 0;
+
+                if (contents["coin"] > 0)
+                {
+                    contents["coin"] -= 1;
+                    var co = dock.coins_output;
+                    co.add_item(item.create(
+                        "coin", co.transform.position,
+                        Quaternion.identity, logistics_version: true));
+                }
             }
         }
 
