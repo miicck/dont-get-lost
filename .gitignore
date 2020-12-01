@@ -4,6 +4,7 @@
 *.sln
 Assembly-CSharp.csproj
 Assets/resources/version_info*
+Assets/Plugins*
 Library/
 Logs/
 Packages/

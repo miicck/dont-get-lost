@@ -4,16 +4,23 @@ using UnityEngine;
 
 public class global_controls : MonoBehaviour
 {
-    void Start()
+    [RuntimeInitializeOnLoadMethod]
+    static void startup()
     {
         version_control.on_startup();
+        steam.start();
+    }
 
+    private void Start()
+    {
         // Persistant through scene loads
         DontDestroyOnLoad(gameObject);
     }
 
     void Update()
     {
+        steam.update();
+
         // Cycle fullscreen modes
         if (controls.key_press(controls.BIND.CYCLE_FULLSCREEN_MODES))
         {
@@ -32,5 +39,10 @@ public class global_controls : MonoBehaviour
                     throw new System.Exception("Unkown fullscreen mode!");
             }
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        steam.stop();
     }
 }
