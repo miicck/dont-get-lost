@@ -368,8 +368,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     item.use_result current_item_use_result;
     void run_item_use()
     {
-        // Don't allow item use when in UI
+        // Don't allow item use when in UI, or when flying
         if (ui_state != UI_STATE.ALL_CLOSED) return;
+        if (fly_mode) return;
 
         // Use items
         current_item_use_result = item.use_result.complete;
@@ -505,9 +506,11 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     void run_quickbar_shortcuts()
     {
-        // Can't use quickbar shortcuts from the UI, or if we're using an item
+        // Can't use quickbar shortcuts from the UI, or if we're 
+        // using an item, or if we're flying
         if (ui_state != UI_STATE.ALL_CLOSED) return;
         if (current_item_use != USE_TYPE.NOT_USING) return;
+        if (fly_mode) return;
 
         const int QUICKBAR_SLOTS_COUNT = 8;
 
@@ -829,10 +832,12 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
         controller.Move(move);
 
-        if (controls.key_press(controls.BIND.ADD_CINEMATIC_KEYFRAME) || controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+        if (controls.key_press(controls.BIND.ADD_CINEMATIC_KEYFRAME) ||
+            controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
             cinematic_recording.add_keyframe(camera.transform.position, camera.transform.rotation);
 
-        if (controls.key_press(controls.BIND.REMOVE_LAST_CINEMATIC_KEYFRAME))
+        if (controls.key_press(controls.BIND.REMOVE_LAST_CINEMATIC_KEYFRAME) ||
+            controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
             cinematic_recording.remove_last_keyframe();
 
         if (controls.key_press(controls.BIND.TOGGLE_CINEMATIC_PLAYBACK))

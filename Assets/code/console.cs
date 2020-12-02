@@ -289,6 +289,13 @@ public class console : MonoBehaviour
                 item_node.refresh_connections();
                 return true;
 
+            // Toggle the various overlaid objects (either because we want to see
+            // them in fly mode, or because they are stuck for some reason)
+            case "toggle_overlays":
+                item_node.display_enabled = !item_node.display_enabled;
+                settler_path_element.draw_links = item_node.display_enabled;
+                return true;
+
             default:
                 return console_error("Unkown command " + args[0]);
         }

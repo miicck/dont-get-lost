@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class crane : MonoBehaviour
+public class crane : MonoBehaviour, IInspectable
 {
+    public float rotation_speed = 45f;
+    public float winch_speed = 1f;
+
     public Transform hook;
     public Transform extender;
     public Transform extender_bottom;
@@ -16,6 +19,8 @@ public class crane : MonoBehaviour
         get => _target;
         set
         {
+            // New target - first step towards
+            // getting there is to retract
             _target = value;
             state = STATE.RETRACTING;
         }
@@ -39,10 +44,8 @@ public class crane : MonoBehaviour
 
     private void Start()
     {
-        target = hook.position;
         hook_reset_y = hook.position.y;
         init_extension = extension;
-        state = STATE.ARRIVED;
 
         // Setup a pivot to allow easy control of the cranes rotation
         Vector3 pivot_to_hook = hook.position - transform.position;
@@ -86,7 +89,7 @@ public class crane : MonoBehaviour
                 // Retract hook
                 Vector3 hook_target = hook.transform.position;
                 hook_target.y = hook_reset_y;
-                if (utils.move_towards(hook, hook_target, Time.deltaTime))
+                if (utils.move_towards(hook, hook_target, Time.deltaTime * winch_speed))
                     state = STATE.ROTATING;
 
                 Vector3 extender_scale = extender.localScale;
@@ -102,7 +105,7 @@ public class crane : MonoBehaviour
                 delta_xz.Normalize();
 
                 Quaternion target_rot = Quaternion.LookRotation(delta_xz, Vector3.up);
-                if (utils.rotate_towards(pivot, target_rot, Time.deltaTime * 45f))
+                if (utils.rotate_towards(pivot, target_rot, Time.deltaTime * rotation_speed))
                     state = STATE.EXTENDING;
                 return;
 
@@ -111,7 +114,7 @@ public class crane : MonoBehaviour
                 // Extend hook
                 hook_target = hook.transform.position;
                 hook_target.y = target.y;
-                if (utils.move_towards(hook, hook_target, Time.deltaTime))
+                if (utils.move_towards(hook, hook_target, Time.deltaTime * winch_speed))
                     state = STATE.ARRIVED;
 
                 extender_scale = extender.localScale;
@@ -126,4 +129,12 @@ public class crane : MonoBehaviour
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(target, 0.1f);
     }
+
+    public string inspect_info()
+    {
+        return "Crane (" + state.ToString().ToLower() + ")";
+    }
+
+    public Sprite main_sprite() { return null; }
+    public Sprite secondary_sprite() { return null; }
 }
