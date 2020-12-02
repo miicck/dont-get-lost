@@ -121,6 +121,9 @@ public class game : MonoBehaviour
 
     void on_client_disconnect(string message_from_server)
     {
+        // Close all ui
+        player.current.ui_state = player.UI_STATE.ALL_CLOSED;
+
         // Go back to the world menu
         if (message_from_server != null)
             world_menu.message_to_display = "Disconnected: " + message_from_server;
