@@ -73,7 +73,6 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
 
     public string added_inspection_text()
     {
-        return "Index: " + harvesting_index.value;
         if (harvesting == null)
             return "    Nothing in harvest range.";
         return "    Harvesting " + product.product_plurals_list(harvesting.products);

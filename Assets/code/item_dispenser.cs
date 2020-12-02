@@ -7,8 +7,21 @@ public class item_dispenser : settler_interactable
     public item_input input;
     public item_output overflow_output;
 
+    public const float TIME_TO_DISPENSE = 1f;
+
     item_locator[] locators;
     float time_interacted = 0f;
+    float time_dispensing = 0f;
+    int initial_hunger = 0;
+
+    item_locator find_food()
+    {
+        foreach (var l in locators)
+            if (l.item != null)
+                if (l.item.food_value > 0)
+                    return l;
+        return null;
+    }
 
     public enum MODE
     {
@@ -67,34 +80,6 @@ public class item_dispenser : settler_interactable
                 overflow_items.Remove(i);
             }
         }
-
-        /*
-        // Search for an available locator
-        foreach (var l in locators)
-        {
-            // This locator isn't free
-            if (l.item != null) continue;
-
-            // Get the first usable item, discarding
-            // the useless ones
-            item itm = null;
-            while (itm == null && input.item_count > 0)
-            {
-                itm = input.release_item(0);
-                if (accepts_item(itm))
-                    break; // Accept
-
-                // Reject
-                Destroy(itm.gameObject);
-                itm = null;
-            }
-
-            if (itm == null)
-                break; // No acceptable items
-
-            l.item = itm;
-        }
-        */
     }
 
     bool accepts_item(item i)
@@ -114,43 +99,44 @@ public class item_dispenser : settler_interactable
     {
         // Reset stuff
         time_interacted = 0f;
+        time_dispensing = 0f;
+        initial_hunger = s.hunger.value;
     }
 
     public override void on_interact(settler s)
     {
         time_interacted += Time.deltaTime;
+        time_dispensing += Time.deltaTime;
+
+        if (time_dispensing > TIME_TO_DISPENSE)
+        {
+            // Reset dispensing timer
+            time_dispensing = 0;
+
+            // Search for food
+            var food = find_food();
+            if (food != null)
+            {
+                // Eat food on authority client, delete food on all clients
+                if (s.has_authority)
+                    s.hunger.value -= Mathf.Min(food.item.food_value, s.hunger.value);
+                Destroy(food.release_item().gameObject);
+            }
+        }
     }
 
     public override bool is_complete(settler s)
     {
-        // It takes 1 second to dispense item
-        return time_interacted > 1f;
-    }
-
-    public override void on_unassign(settler s)
-    {
-        // Only dispense item on authority client
-        if (!s.has_authority) return;
-
-        // Dispense the item
         switch (mode)
         {
             case MODE.FOOD:
 
-                // Search for food
-                foreach (var l in locators)
-                    if (l.item != null)
-                    {
-                        if (l.item.food_value > s.hunger.value)
-                            break;
+                // Done if there is no food, or our hunger drops below 20%
+                if (find_food() == null) return true;
+                return s.hunger.value < 20;
 
-                        s.hunger.value -= l.item.food_value;
-                        Destroy(l.release_item().gameObject);
-                    }
-
-                break;
-
-            default: throw new System.Exception("Unkown dispenser mode!");
+            default:
+                throw new System.Exception("Unkown item dispenser mode!");
         }
     }
 
