@@ -14,9 +14,9 @@ public static class steam
             Steamworks.SteamClient.Init(1442360);
             Debug.Log("Stated steam client for " + Steamworks.SteamClient.Name);
         }
-        catch (System.Exception e)
+        catch
         {
-            Debug.LogError("Failed to initialize steamworks client!");
+            Debug.Log("Failed to initialize steamworks client!");
         }
     }
 
@@ -31,7 +31,7 @@ public static class steam
         {
             Steamworks.SteamClient.Shutdown();
         }
-        catch (System.Exception e)
+        catch
         {
 
         }
