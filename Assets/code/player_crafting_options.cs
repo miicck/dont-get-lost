@@ -18,10 +18,10 @@ public class player_crafting_options : crafting_input
         var to_add = player.current.left_menu?.additional_recipes();
         if (to_add != null)
         {
-            loaded.AddRange(to_add);
-            title.text = "Crafting (" + player.current.left_menu.left_menu_display_name() + ")";
+            loaded = new List<recipe>(to_add);
+            title.text = player.current.left_menu.left_menu_display_name().capitalize();
         }
-        else title.text = "Crafting (by hand)";
+        else title.text = "Crafting";
 
         recipes = loaded.ToArray();
     }
