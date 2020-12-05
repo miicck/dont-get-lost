@@ -23,8 +23,8 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
                 {
                     item = input.release_next_item();
                     item.transform.SetParent(transform);
-                    item.transform.position = transform.position +
-                        Vector3.up * item_node.LINK_DISTANCE_TOLERANCE / 2f;
+                    item.transform.position = transform.position;
+                    item.transform.up = Vector3.up;
                 }
             }
         }

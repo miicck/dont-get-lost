@@ -206,14 +206,14 @@ public class game : MonoBehaviour
         // Set the character spawning going
         InvokeRepeating("character_spawn_update",
             CHARACTER_SPAWN_INTERVAL, CHARACTER_SPAWN_INTERVAL);
-
-        // Set the network updates going
-        InvokeRepeating("network_update", 1f / 60f, 1f / 60f);
-
     }
 
     void Update()
     {
+        // Run network updates
+        server.update();
+        client.update();
+
         // Update load balancing info
         load_balancing.update();
 
@@ -233,13 +233,6 @@ public class game : MonoBehaviour
         if (controls.key_press(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
         if (controls.key_press(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
-    }
-
-    void network_update()
-    {
-        // Run networking updates
-        server.update();
-        client.update();
     }
 
     /// <summary> Called every <see cref="SLOW_UPDATE_TIME"/> seconds. </summary>
