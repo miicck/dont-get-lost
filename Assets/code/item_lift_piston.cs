@@ -8,6 +8,7 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
     public Transform top;
     public item_input input;
     public item_output output;
+    public float speed = 1f;
 
     item item;
 
@@ -16,7 +17,7 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
         if (item == null)
         {
             // Going down
-            if (utils.move_towards(transform, bottom.position, Time.deltaTime))
+            if (utils.move_towards(transform, bottom.position, Time.deltaTime * speed))
             {
                 // Arrived at bottom, attempt to pick up item
                 if (input.item_count > 0)
@@ -31,7 +32,7 @@ public class item_lift_piston : MonoBehaviour, INonBlueprintable
         else
         {
             // Going up
-            if (utils.move_towards(transform, top.position, Time.deltaTime))
+            if (utils.move_towards(transform, top.position, Time.deltaTime * speed))
             {
                 // Arrived at top, drop off item
                 output.add_item(item);

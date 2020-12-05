@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  max_items_waiting: 4
 --- !u!1 &1082706248931013736
 GameObject:
   m_ObjectHideFlags: 0
@@ -176,6 +177,7 @@ MonoBehaviour:
   top: {fileID: 882639761447339335}
   input: {fileID: 5023278240271509956}
   output: {fileID: 26062158051343658}
+  speed: 2
 --- !u!1 &3127481997548326201
 GameObject:
   m_ObjectHideFlags: 0

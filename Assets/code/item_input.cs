@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary> An item input node to an object, such as an autocrafter. </summary>
 public class item_input : item_node
 {
+    public int max_items_waiting = 1;
+
     protected override bool can_input_from(item_node other)
     {
         if (this == null || other == null)
@@ -32,7 +34,7 @@ public class item_input : item_node
     protected override bool on_add_item(item i)
     {
         // Only one item allowed in input
-        if (item_count > 0)
+        if (item_count >= max_items_waiting)
         {
             Destroy(i.gameObject);
             return false;
