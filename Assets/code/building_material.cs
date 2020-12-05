@@ -168,14 +168,14 @@ public class building_material : item
             }
         }
 
-        public bool mouse_rotate()
+        public use_result mouse_rotate()
         {
             change_pivot();
 
             if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
             {
                 if (Time.realtimeSinceStartup - last_click_time < 0.5f)
-                    return true;
+                    return use_result.complete;
 
                 last_click_time = Time.realtimeSinceStartup;
                 var ray = player.current.camera_ray();
@@ -208,6 +208,7 @@ public class building_material : item
 
             Vector3? new_closest_point = null;
             Vector3? rotation_axis = null;
+            use_result result = use_result.underway_allows_look_only;
             accumulated_rotation += 10 * controls.object_rotation_axis();
 
             switch (mouse_mode)
@@ -230,23 +231,26 @@ public class building_material : item
                 case MOUSE_MODE.X_ROTATE:
                     rotation_axis = right_rot;
                     rotation_axes.highlight_axis(axes.AXIS.X);
+                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.Y_ROTATE:
                     rotation_axis = -up_rot;
                     rotation_axes.highlight_axis(axes.AXIS.Y);
-
+                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.Z_ROTATE:
                     rotation_axis = -forward_rot;
                     rotation_axes.highlight_axis(axes.AXIS.Z);
+                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.NONE:
                     axes.highlight_axis(axes.AXIS.NONE);
                     rotation_axes.highlight_axis(axes.AXIS.NONE);
                     accumulated_rotation = 0;
+                    result = use_result.underway_allows_look_only;
                     break;
             }
 
@@ -259,12 +263,12 @@ public class building_material : item
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, accumulated_rotation);
                     accumulated_rotation = 0;
                 }
-                else if (accumulated_rotation > 45f)
+                else if (accumulated_rotation > 20f)
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, 45);
                     accumulated_rotation = 0;
                 }
-                else if (accumulated_rotation < -45f)
+                else if (accumulated_rotation < -20f)
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, -45);
                     accumulated_rotation = 0;
@@ -280,7 +284,7 @@ public class building_material : item
                 last_closest_point = new_closest_point;
             }
 
-            return false;
+            return result;
         }
 
         public void key_rotate()
@@ -614,12 +618,7 @@ public class building_material : item
             spawned.weld.key_rotate();
             return use_result.underway_allows_look_only;
         }
-        else
-        {
-            if (spawned.weld.mouse_rotate())
-                return use_result.complete;
-            return use_result.underway_allows_look_only;
-        }
+        else return spawned.weld.mouse_rotate();
     }
 
     /// <summary> Returns the networked object to parent this 

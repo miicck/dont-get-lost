@@ -222,8 +222,31 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public string left_menu_display_name() { return name; }
     public inventory editable_inventory() { return inventory; }
     public RectTransform left_menu_transform() { return inventory.ui; }
-    public void on_left_menu_close() { players_interacting_with.value -= 1; }
-    public void on_left_menu_open() { players_interacting_with.value += 1; }
+
+    color_selector top_color_selector;
+    color_selector bottom_color_selector;
+
+    public void on_left_menu_close()
+    {
+        players_interacting_with.value -= 1;
+    }
+
+    public void on_left_menu_open()
+    {
+        players_interacting_with.value += 1;
+
+        foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>())
+        {
+            if (cs.name.Contains("top")) top_color_selector = cs;
+            else bottom_color_selector = cs;
+        }
+
+        top_color_selector.color = top_color.value;
+        bottom_color_selector.color = bottom_color.value;
+
+        top_color_selector.on_change = () => top_color.value = top_color_selector.color;
+        bottom_color_selector.on_change = () => bottom_color.value = bottom_color_selector.color;
+    }
 
     public recipe[] additional_recipes() { return null; }
 
