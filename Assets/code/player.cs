@@ -717,11 +717,13 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         else
             crouched.value = controls.key_down(controls.BIND.CROUCH);
 
+        // Jumping
+        if (controls.key_press(controls.BIND.JUMP) &&
+            Physics.Raycast(transform.position, Vector3.down, 0.5f))
+            velocity.y = JUMP_VEL;
+
         if (controller.isGrounded)
         {
-            // Jumping
-            if (controls.key_press(controls.BIND.JUMP)) velocity.y = JUMP_VEL;
-
             if (velocity.y < -1f)
             {
                 // Fall damage
@@ -744,7 +746,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 velocity.y = -1f;
             }
         }
-        else
+        else // Not grounded
         {
             // Gravity
             if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
