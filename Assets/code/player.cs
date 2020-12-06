@@ -645,6 +645,15 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         }
     }
 
+    bool can_jump()
+    {
+        foreach (var c in Physics.BoxCastAll(transform.position + Vector3.up,
+            Vector3.one * WIDTH / 2f, Vector3.down, transform.rotation, 1.5f))
+            if (!c.transform.IsChildOf(transform))
+                return true;
+        return false;
+    }
+
     void move()
     {
         if (controller == null) return; // Controller hasn't started yet
@@ -718,8 +727,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             crouched.value = controls.key_down(controls.BIND.CROUCH);
 
         // Jumping
-        if (controls.key_press(controls.BIND.JUMP) &&
-            Physics.Raycast(transform.position, Vector3.down, 0.5f))
+        if (controls.key_press(controls.BIND.JUMP) && can_jump())
             velocity.y = JUMP_VEL;
 
         if (controller.isGrounded)
