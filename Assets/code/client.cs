@@ -13,6 +13,7 @@ public static class client
     static int last_local_id;
     static float last_ping;
     static KeyValuePair<int, float> last_heartbeat;
+    static bool activity_since_heartbeat;
     static network_utils.traffic_monitor traffic_up;
     static network_utils.traffic_monitor traffic_down;
     static Queue<pending_message> message_queue;
@@ -52,6 +53,9 @@ public static class client
 
     /// <summary> Is the client connected to a server. </summary>
     public static bool connected { get => tcp != null; }
+
+    /// <summary> Call to prevent inactivity timeout. </summary>
+    public static void register_activity() { activity_since_heartbeat = true; }
 
     /// <summary> Create a networked object on the client. Automatically lets the
     /// server know, which will syncronise the object (including it's existance)
@@ -420,7 +424,12 @@ public static class client
                     Time.realtimeSinceStartup
                 );
 
-                send(MESSAGE.HEARTBEAT, network_utils.encode_int(last_heartbeat.Key));
+                send(MESSAGE.HEARTBEAT, network_utils.concat_buffers(
+                    network_utils.encode_bool(activity_since_heartbeat),
+                    network_utils.encode_int(last_heartbeat.Key)));
+
+                // Reset activity monitor
+                activity_since_heartbeat = false;
             },
 
             [MESSAGE.DISCONNECT] = (args) =>
@@ -669,7 +678,8 @@ public static class client
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage() + "\n" +
                "    Effective ping     : " + ping + "\n" +
-               "    Server time        : " + server_time + " (last = " + last_server_time + ")\n";
+               "    Server time        : " + server_time + " (last = " + last_server_time + ")\n" +
+               "    Activity           : " + activity_since_heartbeat + "\n";
 
     }
 

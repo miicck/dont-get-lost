@@ -13,6 +13,9 @@ public static class server
     /// <summary> Clients that have been silent for longer than this are disconnected </summary>
     public const float CLIENT_TIMEOUT = 6f;
 
+    /// <summary> Clients that have been inactive for longer than this are disconnected </summary>
+    public const float CLIENT_ACTIVITY_TIMEOUT = 60f;
+
     /// <summary> How often a client should send a heartbeat 
     /// (both to avoid timeout, and to measure ping). </summary>
     public const float CLIENT_HEARTBEAT_PERIOD = 1f;
@@ -59,10 +62,14 @@ public static class server
         // The last time we reccived a message from this client
         public float last_message_time = 0;
 
+        // The last time we reccived an active hearbeat from this client
+        public float last_active_time = 0;
+
         public client(TcpClient tcp)
         {
             this.tcp = tcp;
             stream = tcp.GetStream();
+            last_active_time = Time.realtimeSinceStartup;
         }
 
         public void login(string username, byte[] password)
@@ -167,16 +174,21 @@ public static class server
                 }
             }
 
-            // How long since the last message was recived from this client
-            float time_since_last_message = Time.realtimeSinceStartup - last_message_time;
-
-            // Check if we've timed out, if so disconnect, but with
-            // a large timeout to send remaining messages, in the
-            // off chance that the client will actually recive them.
 #if UNITY_EDITOR
             // Don't time out clients if the server is the editor, so that
             // we don't time people out if the editor is paused.
 #else
+            // Check if we've timed out, if so disconnect, but with
+            // a large timeout to send remaining messages, in the
+            // off chance that the client will actually recive them.
+
+            // Time out clients that have been inactive for a while
+            float time_since_last_active = Time.realtimeSinceStartup - last_active_time;
+            if (time_since_last_active > CLIENT_ACTIVITY_TIMEOUT)
+                disconnect("Disconnected due to inactivity", timeout: 10);
+
+            // Time out client from which we have not reccived a message in a while
+            float time_since_last_message = Time.realtimeSinceStartup - last_message_time;
             if (time_since_last_message > CLIENT_TIMEOUT)
                 disconnect("Timed out", timeout: 10);
 #endif
@@ -690,7 +702,9 @@ public static class server
             [global::client.MESSAGE.HEARTBEAT] = (client, bytes, offset, length) =>
             {
                 // This client is still kicking - respond so they can time the ping
+                bool activity = network_utils.decode_bool(bytes, ref offset);
                 int heartbeat_key = network_utils.decode_int(bytes, ref offset);
+                if (activity) client.last_active_time = Time.realtimeSinceStartup;
                 message_senders[MESSAGE.HEARTBEAT](client, heartbeat_key);
             },
 

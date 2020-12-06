@@ -143,6 +143,12 @@ public static class controls
 
     public static bool disabled = false;
 
+    static bool forward_activtity(bool value)
+    {
+        if (value) client.register_activity();
+        return value;
+    }
+
     static bool is_player_control(BIND b)
     {
         switch (b)
@@ -190,31 +196,31 @@ public static class controls
     public static bool key_press(BIND k)
     {
         if (!bind_enabled(k)) return false;
-        return Input.GetKeyDown(keybinds[k]);
+        return forward_activtity(Input.GetKeyDown(keybinds[k]));
     }
 
     public static bool key_down(BIND k)
     {
         if (!bind_enabled(k)) return false;
-        return Input.GetKey(keybinds[k]);
+        return forward_activtity(Input.GetKey(keybinds[k]));
     }
 
     public static bool mouse_click(MOUSE_BUTTON button)
     {
         if (!mouse_enabled(button)) return false;
-        return Input.GetMouseButtonDown((int)button);
+        return forward_activtity(Input.GetMouseButtonDown((int)button));
     }
 
     public static bool mouse_unclick(MOUSE_BUTTON button)
     {
         if (!mouse_enabled(button)) return false;
-        return Input.GetMouseButtonUp((int)button);
+        return forward_activtity(Input.GetMouseButtonUp((int)button));
     }
 
     public static bool mouse_down(MOUSE_BUTTON button)
     {
         if (!mouse_enabled(button)) return false;
-        return Input.GetMouseButton((int)button);
+        return forward_activtity(Input.GetMouseButton((int)button));
     }
 
     public static float object_rotation_axis()
