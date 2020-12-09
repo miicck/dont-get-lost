@@ -732,7 +732,7 @@ MonoBehaviour:
   is_client_side: 0
   walk_speed: 1.5
   run_speed: 4
-  max_health: 10
+  max_health: 100
   pathfinding_resolution: 0.5
   height: 1.5
   agro_range: 5

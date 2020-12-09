@@ -5,6 +5,7 @@ using UnityEngine;
 public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 {
     public const float HUNGER_PER_SECOND = 0.2f;
+    public const float HEAL_RATE = 100f / 120f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
 
     public List<Renderer> skin_renderers = new List<Renderer>();
@@ -17,6 +18,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     settler_path_element.path path;
     float delta_hunger = 0;
     float delta_tired = 0;
+    float delta_heal = 0;
     settler_task_assignment assignment;
 
     public void Update()
@@ -41,9 +43,12 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
         // Authority-only control from here
 
-        // Get hungry/tired
+        // Get hungry/tired/heal
         delta_hunger += HUNGER_PER_SECOND * Time.deltaTime;
         delta_tired += TIREDNESS_PER_SECOND * Time.deltaTime;
+
+        if (hunger.value < 50)
+            delta_heal += HEAL_RATE * Time.deltaTime;
 
         if (delta_hunger > 1f)
         {
@@ -55,6 +60,12 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         {
             delta_tired = 0f;
             tiredness.value += 1;
+        }
+
+        if (delta_heal > 1f)
+        {
+            delta_heal = 0f;
+            heal(1);
         }
 
         // Look for a new assignment if I don't have one
@@ -177,6 +188,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             ass_string = "Assignment: " + assignment.interactable.task_info();
 
         return name.capitalize() + " (group " + group + ")\n" +
+               "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                "    " + Mathf.Round(hunger.value) + "% hungry\n" +
                "    " + Mathf.Round(tiredness.value) + "% tired\n" +
                ass_string + "\n" +

@@ -220,6 +220,13 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
 
     public int remaining_health { get => health.value; }
 
+
+    public void heal(int amount)
+    {
+        int max_heal = 100 - health.value;
+        health.value += Mathf.Min(amount, max_heal);
+    }
+
     public void take_damage(int damage)
     {
         play_random_sound(character_sound.TYPE.INJURY);
