@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 5d45a712c03111647a7774a86641e7ff, type: 3}
+  sprite: {fileID: 21300000, guid: a3755683bbb6516409c7d446c9ef09b4, type: 3}
   plural: long layered hairstyles
   value: 0
   fuel_value: 0
