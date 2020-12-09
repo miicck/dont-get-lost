@@ -11,6 +11,10 @@ public class town_gate : building_material, IAddsToInspectionText
 
     private void Start()
     {
+        // Don't spawn settlers if this is the 
+        // equipped or blueprint version
+        if (is_equpped) return;
+        if (is_blueprint) return;
         InvokeRepeating("spawn_settlers", 1, 1);
     }
 

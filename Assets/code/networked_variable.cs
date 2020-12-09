@@ -101,7 +101,17 @@ public abstract class networked_variable<T> : networked_variable
     {
         // Set the value directly to avoid sending another update
         T old_value = _value;
-        _value = deserialize(buffer, ref offset, length);
+
+        try
+        {
+            _value = deserialize(buffer, ref offset, length);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Failed to deserialize networked variable: " + e.Message);
+            return;
+        }
+
         if (!initialized || !_value.Equals(old_value))
         {
             on_change?.Invoke();

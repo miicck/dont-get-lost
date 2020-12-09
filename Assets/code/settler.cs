@@ -226,6 +226,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
     public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
     public float armour_scale() { return height.value; }
+    public Color hair_color() { return net_hair_color.value; }
 
     //#################//
     // ILeftPlayerMenu //
@@ -235,6 +236,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public inventory editable_inventory() { return inventory; }
     public RectTransform left_menu_transform() { return inventory.ui; }
 
+    color_selector hair_color_selector;
     color_selector top_color_selector;
     color_selector bottom_color_selector;
 
@@ -249,13 +251,16 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
         foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>())
         {
-            if (cs.name.Contains("top")) top_color_selector = cs;
+            if (cs.name.Contains("hair")) hair_color_selector = cs;
+            else if (cs.name.Contains("top")) top_color_selector = cs;
             else bottom_color_selector = cs;
         }
 
+        hair_color_selector.color = net_hair_color.value;
         top_color_selector.color = top_color.value;
         bottom_color_selector.color = bottom_color.value;
 
+        hair_color_selector.on_change = () => net_hair_color.value = hair_color_selector.color;
         top_color_selector.on_change = () => top_color.value = top_color_selector.color;
         bottom_color_selector.on_change = () => bottom_color.value = bottom_color_selector.color;
     }
@@ -273,6 +278,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public networked_variables.net_int players_interacting_with;
     public networked_variables.net_color skin_color;
     public networked_variables.net_color top_color;
+    public networked_variables.net_color net_hair_color;
     public networked_variables.net_color bottom_color;
     new public networked_variables.net_float height;
 
@@ -292,6 +298,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         skin_color = new networked_variables.net_color();
         top_color = new networked_variables.net_color();
         bottom_color = new networked_variables.net_color();
+        net_hair_color = new networked_variables.net_color();
         height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
 
@@ -315,6 +322,14 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
                 utils.set_color(r.material, bottom_color.value);
         };
 
+        net_hair_color.on_change = () =>
+        {
+            // Set hair color
+            foreach (var al in armour_locators())
+                if (al.equipped != null && al.equipped is hairstyle)
+                    al.equipped.on_equip(this);
+        };
+
         height.on_change = () =>
         {
             transform.localScale = Vector3.one * height.value;
@@ -335,7 +350,17 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         skin_color.value = character_colors.random_skin_color();
         top_color.value = Random.ColorHSV();
         bottom_color.value = Random.ColorHSV();
+        net_hair_color.value = Random.ColorHSV();
         height.value = Random.Range(0.8f, 1.2f);
+    }
+
+    float armour_location_fill_probability(armour_piece.LOCATION loc)
+    {
+        switch (loc)
+        {
+            case armour_piece.LOCATION.HEAD: return 0.9f;
+            default: return 0.25f;
+        }
     }
 
     public override void on_first_register()
@@ -351,7 +376,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             // Choose the armour slots to fill
             var locations_to_fill = new HashSet<armour_piece.LOCATION>();
             foreach (var slot in armour_slots)
-                if (Random.Range(0, 3) == 0)
+                if (Random.Range(0, 1f) < armour_location_fill_probability(slot.location))
                     locations_to_fill.Add(slot.location);
 
             // Fill the chosen armour slots

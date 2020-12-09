@@ -296,6 +296,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
     public float armour_scale() { return 1f; }
+    public Color hair_color() { return net_hair_color.value; }
 
     //##########//
     // ITEM USE //
@@ -1442,6 +1443,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     networked_variables.net_vector3 equipped_local_pos;
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_quaternion equipped_local_rot;
+    networked_variables.net_color net_hair_color;
 
     public int slot_number_equipped => slot_equipped.value;
 
@@ -1671,6 +1673,16 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             else body.transform.localPosition = Vector3.zero;
         };
 
+        // Network the player hair color
+        net_hair_color = new networked_variables.net_color();
+        net_hair_color.on_change = () =>
+        {
+            // Refresh hair color
+            foreach (var al in armour_locators())
+                if (al.equipped != null && al.equipped is hairstyle)
+                    al.equipped.on_equip(this);
+        };
+
         // Network the equipped objects local position
         equipped_local_pos = new networked_variables.net_vector3(lerp_speed: 20f);
         equipped_local_rot = new networked_variables.net_quaternion(lerp_speed: 20f);
@@ -1703,6 +1715,13 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
                 crafting_input.craft_from = crafting_menu;
                 crafting_input.craft_to = inventory;
+
+                foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>(true))
+                    if (cs.name.Contains("hair"))
+                    {
+                        cs.color = net_hair_color.value;
+                        cs.on_change = () => { net_hair_color.value = cs.color; };
+                    }
             }
             else inventory = inv;
         }

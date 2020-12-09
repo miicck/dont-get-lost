@@ -64,4 +64,6 @@ public class armour_piece : item
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(transform.position, size);
     }
+
+    public virtual void on_equip(ICanEquipArmour entity) { }
 }

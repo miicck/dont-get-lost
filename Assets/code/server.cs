@@ -971,7 +971,6 @@ public static class server
     static void load()
     {
         string fullpath = System.IO.Path.GetFullPath(save_file());
-        Debug.Log("Loading: " + fullpath);
 
         using (var file = System.IO.File.OpenRead(fullpath))
         using (var decompress = new System.IO.Compression.GZipStream(file,

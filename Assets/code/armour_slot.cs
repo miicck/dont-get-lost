@@ -6,6 +6,7 @@ public interface ICanEquipArmour
 {
     armour_locator[] armour_locators();
     float armour_scale();
+    Color hair_color();
 }
 
 public static class armour_extensions
@@ -30,7 +31,10 @@ public static class armour_extensions
     {
         foreach (var al in entity.armour_locators())
             if (al.location == armour.location && al.handedness == handedness)
+            {
                 al.equipped = armour;
+                al.equipped?.on_equip(entity);
+            }
     }
 }
 

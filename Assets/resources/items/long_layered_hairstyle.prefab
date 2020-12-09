@@ -117,6 +117,10 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 148.3
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 9623fb321c65ba94ca7f4e73c7a3f3b6, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 32123b6d8a96cc241b613b399300e60e, type: 2}
     - target: {fileID: 919132149155446097, guid: 9623fb321c65ba94ca7f4e73c7a3f3b6, type: 3}
       propertyPath: m_Name
       value: long_layered_hairstyle

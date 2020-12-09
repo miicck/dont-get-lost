@@ -156,7 +156,6 @@ public class dock : building_material, IAddsToInspectionText
 
     public string added_inspection_text()
     {
-        return crane_state.ToString();
         if (has_water_access)
         {
             if (boat.journey_percentage > 0.1f)
