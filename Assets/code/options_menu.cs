@@ -18,6 +18,13 @@ public abstract class options_menu_option : MonoBehaviour
 /// options_menu_option children). </summary>
 public class options_menu : MonoBehaviour
 {
+    static options_menu()
+    {
+        tips.add("The + button at the top of the graphics options can be used " +
+            "to increase the graphics quality. The - button can be used to " +
+            "increase graphics performance.");
+    }
+
     public UnityEngine.UI.ScrollRect scroll_rect;
     public RectTransform main_menu;
 

@@ -11,6 +11,13 @@ public class item : networked, IInspectable, IAcceptLeftClick
 {
     public const float LOGISTICS_SIZE = 0.3f;
 
+    static item()
+    {
+        tips.add("To see if you can eat an item, hover over it and press " +
+                 controls.current_bind(controls.BIND.INSPECT) + " to check it's food value. " +
+                 "Equip it in your quckbar and left click to eat.");
+    }
+
     //###########//
     // VARIABLES //
     //###########//
@@ -364,7 +371,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
         if (item.food_value > 0)
         {
             if (quantity > 1)
-                info += "  Food value : " + (item.food_value * quantity).qs() + "(" + item.food_value.qs() + " each)\n";
+                info += "  Food value : " + (item.food_value * quantity).qs() + " (" + item.food_value.qs() + " each)\n";
             else
                 info += "  Food value : " + item.food_value.qs() + "\n";
         }

@@ -2,12 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface ICustomMenu
-{
-    void open_custom_menu();
-    void close_custom_menu();
-}
-
 public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs
 {
     //###########//
@@ -46,6 +40,30 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     // Map camera setup
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
+
+    //####################//
+    // STATIC CONSTRUCTOR //
+    //####################//
+
+    static player()
+    {
+        tips.add("You can change your hair color from the equipment " +
+            "options menu (the cog in the top corner of the equipment" +
+            " section of your inventory).");
+
+        tips.add("Certain actions can only be performed with free hands. Press " +
+            controls.current_bind(controls.BIND.QUICKBAR_1) +
+            " a few times to de-equip what you are holding " +
+            "(the cursor will change to a white circle).");
+
+        tips.add("Your health will gradually regenerate as long as you are not too hungry.");
+
+        tips.add("The green bar at the bottom of the screen is your health. " +
+            "The orange bar at the bottom of the screen shows how hungry you are.");
+
+        tips.add("You can switch between first and third-person views by pressing " +
+            controls.current_bind(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
+    }
 
     //##########//
     // UI STATE //
@@ -1858,6 +1876,12 @@ public interface ILeftPlayerMenu
     /// <summary> Additional recipes that the player
     /// can craft when this menu is open. </summary>
     recipe[] additional_recipes();
+}
+
+public interface ICustomMenu
+{
+    void open_custom_menu();
+    void close_custom_menu();
 }
 
 /// <summary> Interfact for objects that can be 

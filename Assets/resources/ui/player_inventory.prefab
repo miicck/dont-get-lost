@@ -515,6 +515,100 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!1 &4133131360060389934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6959411321322891174}
+  - component: {fileID: 206283056029838183}
+  - component: {fileID: 8347693932520135661}
+  - component: {fileID: 2442340020076072679}
+  m_Layer: 5
+  m_Name: tip
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6959411321322891174
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4133131360060389934}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4922385182657336515}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 0, y: -528}
+  m_SizeDelta: {x: 1024, y: 30}
+  m_Pivot: {x: 0, y: 1}
+--- !u!222 &206283056029838183
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4133131360060389934}
+  m_CullTransparentMesh: 0
+--- !u!114 &8347693932520135661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4133131360060389934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: db191ceb28809514bbdc255d444af43e, type: 3}
+    m_FontSize: 28
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 0
+    m_MaxSize: 254
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 1
+    m_LineSpacing: 1
+  m_Text: 'Tip: This is a very long tip, so we can see how well such a long tip will
+    fit in the text box thing that might contain such a long tip. If you see this
+    in game please submit a bug report.'
+--- !u!114 &2442340020076072679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4133131360060389934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d83027a5211429943a0498de9d7fb985, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4699918789561902293
 GameObject:
   m_ObjectHideFlags: 0
@@ -585,6 +679,7 @@ RectTransform:
   - {fileID: 3742173591207766025}
   - {fileID: 324448780633128876}
   - {fileID: 7990370602906680591}
+  - {fileID: 6959411321322891174}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6393,14 +6488,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c50da7ea089590349b846bc71a2ca6de, type: 3}
---- !u!224 &7990370602906680591 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 1791370896267649786, guid: c50da7ea089590349b846bc71a2ca6de, type: 3}
-  m_PrefabInstance: {fileID: 8520605901214212085}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &1258062764552790992 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7442986216366603301, guid: c50da7ea089590349b846bc71a2ca6de, type: 3}
+  m_PrefabInstance: {fileID: 8520605901214212085}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &7990370602906680591 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 1791370896267649786, guid: c50da7ea089590349b846bc71a2ca6de, type: 3}
   m_PrefabInstance: {fileID: 8520605901214212085}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8657091357307001634

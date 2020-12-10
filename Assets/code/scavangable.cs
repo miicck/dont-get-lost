@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
 {
+    static scavangable()
+    {
+        tips.add("You can scavange for items if your hands are free. Press " +
+            controls.current_bind(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding.");
+    }
+
     product[] products => GetComponents<product>();
 
     scavange_timer timer;
@@ -26,7 +32,7 @@ public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
     }
 
     // IINspectable
-    public string inspect_info() { return product.product_plurals_list(products) + " can be scavanged."; }
+    public string inspect_info() { return product.product_plurals_list(products) + " can be scavanged by hand."; }
     public Sprite main_sprite() { return Resources.Load<Sprite>("sprites/default_interact_cursor"); }
     public Sprite secondary_sprite() { return null; }
 }

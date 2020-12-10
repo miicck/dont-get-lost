@@ -9,6 +9,21 @@ public class building_material : item
     public const float BUILD_RANGE = 5f;
     public float axes_scale = 1f;
 
+    static building_material()
+    {
+        tips.add("When placing an object, you can cycle through the " +
+            "different starting orientations by pressing " +
+            controls.current_bind(controls.BIND.CHANGE_PIVOT) + " or by scrolling. " +
+            "This initial orientation will be saved when placing subsequent objects.");
+
+        tips.add("With a building material equipped, right click" +
+            " to quickly delete objects of the same type.");
+
+        tips.add("Building materials can be deleted by clicking on them with an empty hand. " +
+            "Press " + controls.current_bind(controls.BIND.QUICKBAR_1) +
+            " a few times to de-equip what you are holding.");
+    }
+
     //#########//
     // WELDING //
     //#########//

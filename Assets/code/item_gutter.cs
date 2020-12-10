@@ -6,6 +6,14 @@ using UnityEngine;
 /// as an extended item node. </summary>
 public class item_gutter : item_node
 {
+    static item_gutter()
+    {
+        tips.add("Items will flow downhill along gutters.");
+
+        tips.add("By clicking in the right spot when placing a gutter, " +
+            "you can snap to an output or input of a building.");
+    }
+
     public const float ITEM_SEPERATION = item.LOGISTICS_SIZE;
 
     public Transform start;

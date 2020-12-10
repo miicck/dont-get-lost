@@ -5,7 +5,13 @@ using UnityEngine;
 public static class controls
 {
     public static float mouse_look_sensitivity = 1f;
+
     public static bool key_based_building = false;
+
+    static controls()
+    {
+        tips.add("You can switch between using the mouse or keyboard to rotate/translate buildings in the options menu.");
+    }
 
     public enum MOUSE_BUTTON : int
     {
@@ -147,6 +153,33 @@ public static class controls
     {
         if (value) client.register_activity();
         return value;
+    }
+
+    public static string current_bind(BIND b)
+    {
+        var key = keybinds[b];
+        switch (key)
+        {
+            case KeyCode.Alpha0: return "0";
+            case KeyCode.Alpha1: return "1";
+            case KeyCode.Alpha2: return "2";
+            case KeyCode.Alpha3: return "3";
+            case KeyCode.Alpha4: return "4";
+            case KeyCode.Alpha5: return "5";
+            case KeyCode.Alpha6: return "6";
+            case KeyCode.Alpha7: return "7";
+            case KeyCode.Alpha8: return "8";
+            case KeyCode.Alpha9: return "9";
+            case KeyCode.UpArrow: return "the up key";
+            case KeyCode.DownArrow: return "the down key";
+            case KeyCode.LeftArrow: return "the left key";
+            case KeyCode.RightArrow: return "the right arrow";
+            case KeyCode.LeftCommand: return "the control key";
+            case KeyCode.LeftAlt: return "the alt key";
+            case KeyCode.Space: return "the spacebar";
+            case KeyCode.LeftShift: return "the shift key";
+            default: return key.ToString();
+        }
     }
 
     static bool is_player_control(BIND b)

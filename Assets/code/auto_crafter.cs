@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 {
+    static auto_crafter()
+    {
+        tips.add("The text at the top of the crafting menu will change when " +
+            "interacting with objects that allow crafting different recipes.");
+    }
+
     public float craft_time = 1f;
     public string recipes_folder;
     recipe[] recipies;
