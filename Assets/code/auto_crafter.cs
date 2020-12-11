@@ -12,6 +12,8 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
     public float craft_time = 1f;
     public string recipes_folder;
+    public List<GameObject> enable_when_crafting = new List<GameObject>();
+
     recipe[] recipies;
 
     simple_item_collection pending_inputs = new simple_item_collection();
@@ -19,6 +21,22 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
     item_input[] inputs => GetComponentsInChildren<item_input>();
     item_output[] outputs => GetComponentsInChildren<item_output>();
+
+    /// <summary> The recipe that is currently being crafted. </summary>
+    recipe currently_crafting
+    {
+        get => _currently_crafting;
+        set
+        {
+            _currently_crafting = value;
+
+            if (value != null) Invoke("complete_crafting", craft_time);
+
+            foreach (var ec in enable_when_crafting)
+                ec.SetActive(value != null);
+        }
+    }
+    recipe _currently_crafting;
 
     void Start()
     {
@@ -28,46 +46,69 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
         // Load the recipes
         recipies = Resources.LoadAll<recipe>(recipes_folder);
-        InvokeRepeating("crafting_update", craft_time, craft_time);
+
+        // Setup input listeners
+        foreach (var ip in inputs)
+            ip.add_on_change_listener(() =>
+            {
+                // Put all inputs intp pending inputs
+                foreach (var itm in ip.relesae_all_items())
+                {
+                    pending_inputs.add(itm, 1);
+                    Destroy(itm.gameObject);
+                }
+
+                // Chosen recipe is out of range
+                if (chosen_recipe.value < 0 ||
+                    chosen_recipe.value >= recipies.Length)
+                    return;
+
+                // See if we can craft the chosen recipe
+                var rec = recipies[chosen_recipe.value];
+                if (rec.can_craft(pending_inputs))
+                    currently_crafting = rec;
+            });
+
+        // Initially, not crafting anything
+        currently_crafting = null;
     }
 
-    void crafting_update()
+    void complete_crafting()
     {
-        // Add inputs to the pending inputs collection
-        bool inputs_changed = false;
-        foreach (var ip in inputs)
-            foreach (var itm in ip.relesae_all_items())
-            {
-                pending_inputs.add(itm, 1);
-                Destroy(itm.gameObject);
-                inputs_changed = true;
-            }
+        if (currently_crafting == null)
+            return;
 
-        // Attempt to craft stuff
-        if (inputs_changed || inputs.Length == 0)
-            if (chosen_recipe.value >= 0 && chosen_recipe.value < recipies.Length)
-                recipies[chosen_recipe.value].craft(pending_inputs, pending_outputs);
-
-        int output_number = -1;
-        while (true)
+        if (currently_crafting.craft(pending_inputs, pending_outputs))
         {
-            // Nothing to output to
-            if (outputs.Length == 0) break;
+            // Crafting success
+            int output_number = -1;
+            while (true)
+            {
+                // Nothing to output to
+                if (outputs.Length == 0) break;
 
-            // Get the next item to output
-            var itm = pending_outputs.remove_first();
-            if (itm == null) break; // No items left
+                // Get the next item to output
+                var itm = pending_outputs.remove_first();
+                if (itm == null) break; // No items left
 
-            // Cycle items to sequential outputs
-            output_number = (output_number + 1) % outputs.Length;
-            var op = outputs[output_number];
+                // Cycle items to sequential outputs
+                output_number = (output_number + 1) % outputs.Length;
+                var op = outputs[output_number];
 
-            // Create the item in the output
-            op.add_item(create(itm.name,
-                        op.transform.position,
-                        op.transform.rotation,
-                        logistics_version: true));
+                // Create the item in the output
+                op.add_item(create(itm.name,
+                            op.transform.position,
+                            op.transform.rotation,
+                            logistics_version: true));
+            }
         }
+
+        // If we can immedately craft again, do so, otherwise
+        // set the currently crafting recipe to null
+        if (currently_crafting.can_craft(pending_inputs))
+            Invoke("complete_crafting", craft_time);
+        else
+            currently_crafting = null;
     }
 
     //############//

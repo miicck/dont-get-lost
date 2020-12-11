@@ -63,6 +63,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
         tips.add("You can switch between first and third-person views by pressing " +
             controls.current_bind(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
+
+        tips.add("Open the recipe book by pressing " +
+            controls.current_bind(controls.BIND.OPEN_RECIPE_BOOK) + ".");
     }
 
     //##########//

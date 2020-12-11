@@ -22,6 +22,11 @@ public class building_material : item
         tips.add("Building materials can be deleted by clicking on them with an empty hand. " +
             "Press " + controls.current_bind(controls.BIND.QUICKBAR_1) +
             " a few times to de-equip what you are holding.");
+
+        tips.add("To turn off snapping when placing a building, hold " +
+            controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
+            "This will also orient the building to the world " +
+            "axes, rather than to the parent building.");
     }
 
     //#########//

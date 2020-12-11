@@ -287,6 +287,7 @@ Transform:
   m_Children:
   - {fileID: 6534109105582986373}
   - {fileID: 7147032884164263193}
+  - {fileID: 3495566257461925140}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -310,8 +311,10 @@ MonoBehaviour:
   food_value: 0
   logistics_scale: 1
   axes_scale: 1
-  craft_time: 0.1
+  craft_time: 1
   recipes_folder: recipes/workbenches/furnace
+  enable_when_crafting:
+  - {fileID: 8844632565118912347}
 --- !u!1 &6712449088207452527
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,6 +414,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  max_items_waiting: 1
 --- !u!1 &6712449088482568421
 GameObject:
   m_ObjectHideFlags: 0
@@ -596,6 +600,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  max_items_waiting: 1
 --- !u!1 &8374695875109222803
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,6 +644,73 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e74304430d37f44db24a79635b003be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1001 &2304828169967773147
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 6712449087804474299}
+    m_Modifications:
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.70710677
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7296420147638428288, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+      propertyPath: m_Name
+      value: furnace_fire
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+--- !u!1 &8844632565118912347 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7296420147638428288, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+  m_PrefabInstance: {fileID: 2304828169967773147}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3495566257461925140 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
+  m_PrefabInstance: {fileID: 2304828169967773147}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6712449088406041454
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -702,7 +774,19 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: -8143710011712545758, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
+    - target: {fileID: -7664728788398519507, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
     - target: {fileID: -6902573867230041995, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
+    - target: {fileID: -6093592463355912122, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
@@ -710,11 +794,19 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
+    - target: {fileID: -1806680513116206669, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
     - target: {fileID: -1461304994638716399, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
     - target: {fileID: -1439730007547781893, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
+    - target: {fileID: -1120989108687609925, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
@@ -731,6 +823,10 @@ PrefabInstance:
       value: autofurnace (1)
       objectReference: {fileID: 0}
     - target: {fileID: 1129496810705857465, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
+    - target: {fileID: 6745302439343835087, guid: 866e20ffc22243980a5730afcf1fd658, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
