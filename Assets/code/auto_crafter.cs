@@ -216,6 +216,12 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
                     kv.Key.singular_or_plural(kv.Value) + "\n";
         }
 
+        if (currently_crafting != null)
+        {
+            info += "Currently crafting " + 
+                product.product_plurals_list(currently_crafting.products) + "\n";
+        }
+
         return info;
     }
 }

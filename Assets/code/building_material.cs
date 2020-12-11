@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface INonBlueprintable { }
 
-public class building_material : item
+public class building_material : item, IAcceptLeftClick, IAcceptRightClick
 {
     public const float BUILD_RANGE = 5f;
     public float axes_scale = 1f;
@@ -19,7 +19,7 @@ public class building_material : item
         tips.add("With a building material equipped, right click" +
             " to quickly delete objects of the same type.");
 
-        tips.add("Building materials can be deleted by clicking on them with an empty hand. " +
+        tips.add("Building materials can be deleted by right-clicking on them with an empty hand. " +
             "Press " + controls.current_bind(controls.BIND.QUICKBAR_1) +
             " a few times to de-equip what you are holding.");
 
@@ -27,6 +27,27 @@ public class building_material : item
             controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
             "This will also orient the building to the world " +
             "axes, rather than to the parent building.");
+    }
+
+    //#############################################//
+    // IAcceptClick (when clicked with empty hand) //
+    //#############################################//
+
+    new public void on_left_click()
+    {
+        // Only pick up building materials 
+        // that are in the logistics system
+        if (is_logistics_version)
+        {
+            base.on_left_click();
+            return;
+        }
+    }
+
+    public void on_right_click()
+    {
+        // Delete buildings on right click
+        pick_up(register_undo: true);
     }
 
     //#########//

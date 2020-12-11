@@ -334,7 +334,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     // Called on a right click when no item is equipped
     public void right_click_with_hand()
     {
-
+        var ray = camera_ray(INTERACTION_RANGE, out float dis);
+        if (Physics.Raycast(ray, out RaycastHit hit, dis))
+            hit.collider.gameObject.GetComponentInParent<IAcceptRightClick>()?.on_right_click();
     }
 
     // The ways that we can use an item
@@ -1892,4 +1894,11 @@ public interface ICustomMenu
 public interface IAcceptLeftClick
 {
     void on_left_click();
+}
+
+/// <summary> Interfact for objects that can be 
+/// right-clicked with no item equipped. </summary>
+public interface IAcceptRightClick
+{
+    void on_right_click();
 }

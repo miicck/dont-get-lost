@@ -163,7 +163,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
     /// iff this item is being unequipped by a remote player. </summary>
     public virtual void on_unequip(bool local_player) { }
 
-    public void on_left_click() { pick_up(register_undo: true); }
+    public void on_left_click() { pick_up(); }
 
     public virtual Dictionary<string, int> add_to_inventory_on_pickup()
     {
