@@ -213,6 +213,7 @@ MonoBehaviour:
   play_footsteps: 0
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
+  step_length_boost: 0
 --- !u!1 &3391473999679208964
 GameObject:
   m_ObjectHideFlags: 0
@@ -502,6 +503,7 @@ MonoBehaviour:
   play_footsteps: 1
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
+  step_length_boost: 0
 --- !u!1 &4534050106290955940
 GameObject:
   m_ObjectHideFlags: 0
@@ -701,6 +703,7 @@ MonoBehaviour:
   shoulder: {fileID: 6701933843450705160}
   elbow: {fileID: 3247960092547669490}
   hand: {fileID: 7019310156683476173}
+  elbow_bend_direction_override: {fileID: 0}
   following: {fileID: 3230845046397430822}
   swing_multiplier: 2
   to_grab: {fileID: 0}
@@ -763,7 +766,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cabaef7eb71ea84b884de03941cd7db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bob_amplitude: 0.02
+  bob_amplitude: 0
   lean_into_run_amount: 20
   lean_lerp_speed: 5
   lean_velocity_scale: 5
@@ -833,6 +836,7 @@ MonoBehaviour:
   shoulder: {fileID: 4306353536807595915}
   elbow: {fileID: 6496177005455812997}
   hand: {fileID: 8011487001341558203}
+  elbow_bend_direction_override: {fileID: 0}
   following: {fileID: 3152520575910098955}
   swing_multiplier: 2
   to_grab: {fileID: 0}
@@ -967,6 +971,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 7394371374394546293}
     m_Modifications:
+    - target: {fileID: -9210516305528018342, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00111
+      objectReference: {fileID: 0}
+    - target: {fileID: -9210516305528018342, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.0282
+      objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1046,6 +1058,14 @@ PrefabInstance:
     - target: {fileID: -927199367670048503, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
       propertyPath: m_Name
       value: human_new
+      objectReference: {fileID: 0}
+    - target: {fileID: 1038837994342624044, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.001108081
+      objectReference: {fileID: 0}
+    - target: {fileID: 1038837994342624044, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.02807
       objectReference: {fileID: 0}
     - target: {fileID: 3748579148062101365, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
       propertyPath: m_Materials.Array.data[0]

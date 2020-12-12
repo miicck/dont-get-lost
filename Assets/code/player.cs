@@ -479,6 +479,11 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 else _equipped = null; // Don't have, equip null
             }
 
+            // If this is the local player, set the cursor (do this before we call
+            // on_equip, so on_equip can override the cursor if it wants)
+            if (has_authority)
+                cursor_sprite = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
+
             if (_equipped != null)
             {
                 // Parent the equipped object to the hand
@@ -489,10 +494,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 // Call implementation-specific on_equip stuff
                 _equipped.on_equip(has_authority);
             }
-
-            // If this is the local player, set the cursor
-            if (has_authority)
-                cursor_sprite = _equipped == null ? cursors.DEFAULT : _equipped.sprite.name;
         }
     }
 
@@ -1222,6 +1223,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
         // Allign the arm with the hand
         right_arm.to_grab = equipped?.transform;
+        if (equipped == null) left_arm.to_grab = null;
     }
 
     // Called when the render range changes
@@ -1478,6 +1480,16 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     water_reflections water;
     player_healthbar healthbar;
     player_healthbar foodbar;
+
+    public void mod_x_rotation(float mod)
+    {
+        x_rotation.value += mod;
+    }
+
+    public void mod_y_rotation(float mod)
+    {
+        y_rotation.value += mod;
+    }
 
     public void play_sound(string sound,
         float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
