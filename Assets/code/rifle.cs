@@ -182,7 +182,7 @@ public class rifle : equip_in_hand
     void set_camera_position()
     {
         // Switch cursors depending on mode of use
-        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) && !reloading)
+        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
             player.cursor_sprite = "transparent";
 
         if (controls.mouse_unclick(controls.MOUSE_BUTTON.RIGHT))
