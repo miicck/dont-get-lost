@@ -249,8 +249,56 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         }
     }
 
+    public class dead_character : MonoBehaviour
+    {
+        private void Start()
+        {
+            InvokeRepeating("gradual_decay", 1f, 1f);
+        }
+
+        void gradual_decay()
+        {
+            if (transform.childCount == 0)
+                Destroy(gameObject);
+
+            Destroy(transform.GetChild(Random.Range(0, transform.childCount)).gameObject);
+        }
+    }
+
     void die()
     {
+        var dead_version = new GameObject("dead_" + name).AddComponent<dead_character>();
+        dead_version.transform.position = transform.position;
+        dead_version.transform.rotation = transform.rotation;
+
+        foreach (var r in GetComponentsInChildren<MeshRenderer>())
+        {
+            var rcopy = r.inst();
+            rcopy.transform.position = r.transform.position;
+            rcopy.transform.rotation = r.transform.rotation;
+            rcopy.transform.localScale = r.transform.lossyScale;
+
+            foreach (var c in rcopy.GetComponentsInChildren<Component>())
+            {
+                if (c is Transform) continue;
+                if (c is MeshRenderer) continue;
+                if (c is MeshFilter) continue;
+                Destroy(c);
+            }
+
+            rcopy.transform.SetParent(dead_version.transform);
+            var bc = rcopy.gameObject.AddComponent<BoxCollider>();
+            bc.size = 0.1f * new Vector3(
+                1f / rcopy.transform.localScale.x,
+                1f / rcopy.transform.localScale.y,
+                1f / rcopy.transform.localScale.z
+            );
+
+            var rb = rcopy.gameObject.AddComponent<Rigidbody>();
+
+            r.enabled = false;
+        }
+
         Invoke("delayed_delete", 1f);
     }
 
