@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs
+public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage
 {
     //###########//
     // CONSTANTS //
@@ -1178,6 +1178,26 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         }
     }
 
+    bool head_visible
+    {
+        set
+        {
+            var head = GetComponentInChildren<body>().head;
+            foreach (var r in head.GetComponentsInChildren<Renderer>(true))
+            {
+                // Don't make eqipped things invisible
+                if (equipped != null)
+                    if (r.transform.IsChildOf(equipped?.transform))
+                        continue;
+
+                // Make invisible, but keep shadows
+                r.shadowCastingMode = value ?
+                    UnityEngine.Rendering.ShadowCastingMode.On :
+                    UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            }
+        }
+    }
+
     /// <summary> Are we in first, or third person? </summary>
     public bool first_person
     {
@@ -1188,6 +1208,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 return; // Can't change perspective if the map is open
 
             _first_person = value;
+            head_visible = !value;
 
             camera.transform.position = eye_transform.position;
 
@@ -1481,15 +1502,8 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     player_healthbar healthbar;
     player_healthbar foodbar;
 
-    public void mod_x_rotation(float mod)
-    {
-        x_rotation.value += mod;
-    }
-
-    public void mod_y_rotation(float mod)
-    {
-        y_rotation.value += mod;
-    }
+    public void mod_x_rotation(float mod) { x_rotation.value += mod; }
+    public void mod_y_rotation(float mod) { y_rotation.value += mod; }
 
     public void play_sound(string sound,
         float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
@@ -1515,7 +1529,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         camera.transform.SetParent(eye_transform);
         camera.transform.localRotation = Quaternion.identity;
         camera.transform.localPosition = Vector3.zero;
-        camera.nearClipPlane = 0.1f;
+        camera.nearClipPlane = 0.01f;
         first_person = true; // Start with camera in 1st person position
 
         // Enforce the render limit with a sky-color object

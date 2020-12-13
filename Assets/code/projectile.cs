@@ -27,7 +27,7 @@ public class projectile : item, INotPathBlocking
         if (collision.collider.GetComponent<projectile>() != null) return;
 
         // Apply damage to characters
-        collision.collider.GetComponentInParent<character>()?.take_damage(damage);
+        collision.collider.GetComponentInParent<IAcceptsDamage>()?.take_damage(damage);
 
         // Get stuck in whatever I hit
         got_stuck_in = collision.collider.name;

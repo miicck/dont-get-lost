@@ -9,8 +9,12 @@ public interface ICharacterController
     void draw_inspector_gui();
 }
 
-[RequireComponent(typeof(character_hitbox))]
-public class character : networked, INotPathBlocking, IInspectable, IDontBlockItemLogisitcs
+public interface IAcceptsDamage
+{
+    void take_damage(int damage);
+}
+
+public class character : networked, INotPathBlocking, IInspectable, IDontBlockItemLogisitcs, IAcceptsDamage
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -181,6 +185,9 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         // Don't do anyting unless the chunk is generated
         if (chunk.at(transform.position, true) == null) return;
 
+        // Don't do anything if dead
+        if (health.value <= 0) return;
+
         controller?.control(this);
     }
 
@@ -229,14 +236,27 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
 
     public void take_damage(int damage)
     {
+        int health_before = health.value;
+
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;
-        if (health.value <= 0)
+
+        if (health.value <= 0 && health_before > 0)
         {
+            // Create loot in player inventory only on this client
             foreach (var p in GetComponents<product>())
                 p.create_in(player.current.inventory);
-            delete();
         }
+    }
+
+    void die()
+    {
+        Invoke("delayed_delete", 1f);
+    }
+
+    void delayed_delete()
+    {
+        delete();
     }
 
     healthbar healthbar
@@ -277,6 +297,9 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
             }
             else
                 healthbar.belongs_to = this;
+
+            if (health.value <= 0)
+                die();
         };
     }
 

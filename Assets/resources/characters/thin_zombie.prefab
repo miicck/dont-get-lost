@@ -59,7 +59,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9189744706963915491}
-  - component: {fileID: 4532342236082410570}
   - component: {fileID: 3261361371971382002}
   - component: {fileID: 3755732905841746269}
   m_Layer: 0
@@ -85,18 +84,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4532342236082410570
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4540856014604781863}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f365b255c6119aa4481fcc5f2c2538ed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &3261361371971382002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -173,6 +160,7 @@ MonoBehaviour:
   play_footsteps: 1
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
+  step_length_boost: 0
 --- !u!114 &6281305333925251998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -242,6 +230,7 @@ MonoBehaviour:
   play_footsteps: 1
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
+  step_length_boost: 0
 --- !u!1001 &6710866136331910359
 PrefabInstance:
   m_ObjectHideFlags: 0

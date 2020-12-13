@@ -128,6 +128,9 @@ public class melee_weapon : equip_in_hand
         var aii = other.GetComponentInParent<accepts_item_impact>();
         aii?.on_impact(this);
 
+        var accepts_damage = other.GetComponentInParent<IAcceptsDamage>();
+        accepts_damage?.take_damage(damage);
+
         swing_progress_at_impact = swing_progress;
     }
 
