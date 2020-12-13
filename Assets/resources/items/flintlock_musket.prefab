@@ -255,7 +255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: cda3909d8bba04b43a58a468b7d976b3, type: 3}
+  sprite: {fileID: 21300000, guid: d21250f54d28fc24fa1222d45820fef2, type: 3}
   plural: flintlock muskets
   value: 0
   fuel_value: 0
@@ -273,6 +273,7 @@ MonoBehaviour:
   reload_time: 1
   pump_reload_amplitude: 0.25
   fire_delay: 0.12
+  hip_fire_sprite: crosshair
 --- !u!1 &4419149605063891703
 GameObject:
   m_ObjectHideFlags: 0

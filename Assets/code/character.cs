@@ -274,6 +274,9 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         foreach (var r in GetComponentsInChildren<MeshRenderer>())
         {
             var rcopy = r.inst();
+            foreach (Transform child in rcopy.transform)
+                Destroy(child.gameObject);
+
             rcopy.transform.position = r.transform.position;
             rcopy.transform.rotation = r.transform.rotation;
             rcopy.transform.localScale = r.transform.lossyScale;
@@ -285,6 +288,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
                 if (c is MeshFilter) continue;
                 Destroy(c);
             }
+
 
             rcopy.transform.SetParent(dead_version.transform);
             var bc = rcopy.gameObject.AddComponent<BoxCollider>();

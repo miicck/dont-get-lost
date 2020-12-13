@@ -347,7 +347,7 @@ MonoBehaviour:
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
@@ -423,7 +423,7 @@ MonoBehaviour:
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
