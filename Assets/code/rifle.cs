@@ -19,6 +19,7 @@ public class rifle : equip_in_hand
     public float reload_time = 1f;
     public float pump_reload_amplitude = 0f;
     public float fire_delay = 0f;
+    public string hip_fire_sprite = "crosshair";
 
     arm right_arm;
     arm left_arm;
@@ -48,7 +49,10 @@ public class rifle : equip_in_hand
         left_arm.to_grab = left_hand_location;
         right_arm.to_grab = transform;
         if (player.camera != null)
+        {
             reset_field_of_view = player.camera.fieldOfView;
+            player.cursor_sprite = hip_fire_sprite;
+        }
 
         locate();
     }
@@ -177,15 +181,18 @@ public class rifle : equip_in_hand
 
     void set_camera_position()
     {
-        // Default to crosshair cursor
-        player.cursor_sprite = "crosshair";
+        // Switch cursors depending on mode of use
+        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) && !reloading)
+            player.cursor_sprite = "transparent";
+
+        if (controls.mouse_unclick(controls.MOUSE_BUTTON.RIGHT))
+            player.cursor_sprite = hip_fire_sprite;
 
         if (controls.mouse_down(controls.MOUSE_BUTTON.RIGHT) && !reloading)
         {
             // ADS - lerp camera to sight position / sight field of view
             player.camera.fieldOfView = Mathf.Lerp(player.camera.fieldOfView,
                 reset_field_of_view * field_of_view_multiplier, 10 * Time.deltaTime);
-            player.cursor_sprite = "transparent";
             player.camera.transform.position =
                 Vector3.Lerp(player.camera.transform.position,
                 sight.transform.position, 10f * Time.deltaTime);

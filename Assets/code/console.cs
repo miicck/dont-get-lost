@@ -305,6 +305,21 @@ public class console : MonoBehaviour
             description = "Toggles the display of overlays in the game world " +
                           "(e.g. information about the transport system)",
             usage_example = "toggle_overlay"
+        },
+
+        ["cursor"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Not enough arguments!");
+                var sprite = Resources.Load<Sprite>("sprites/" + args[1]);
+                if (sprite == null) return console_error("Could not find the sprite: " + args[1]);
+                player.current.cursor_sprite = args[1];
+                return true;
+            },
+
+            description = "Set the current cursor",
+            usage_example = "cursor transparent"      
         }
     };
 
