@@ -577,8 +577,11 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
     }
 
     Ray camera_ray;
-    public override use_result on_use_start(player.USE_TYPE use_type)
+    public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
+        // Don't do anything on the non-authority client
+        if (!player.has_authority) return use_result.complete;
+
         if (snap_points.Length == 0)
             throw new System.Exception("No snap points found on " + display_name + "!");
 
@@ -636,8 +639,11 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
         return use_result.complete;
     }
 
-    public override use_result on_use_continue(player.USE_TYPE use_type)
+    public override use_result on_use_continue(player.USE_TYPE use_type, player player)
     {
+        // Don't do anything on the non-authority client
+        if (!player.has_authority) return use_result.complete;
+
         if (spawned == null)
             return use_result.complete;
 
@@ -669,8 +675,11 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
     /// <summary> Called when the object is built. </summary>
     protected virtual void on_build() { }
 
-    public override void on_use_end(player.USE_TYPE use_type)
+    public override void on_use_end(player.USE_TYPE use_type, player player)
     {
+        // Don't do anything on the authority client
+        if (!player.has_authority) return;
+
         if (spawned != null)
         {
             // Remove the object we're building from the inventory

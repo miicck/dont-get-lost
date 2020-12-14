@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class dynamite : item
 {
-    public override use_result on_use_start(player.USE_TYPE use_type)
+    public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
+        // Only blow stuff up if we have authority
+        if (!player.has_authority) return use_result.complete;
+
         var ray = player.current.camera_ray(player.INTERACTION_RANGE, out float dis);
 
         if (Physics.Raycast(ray, out RaycastHit hit, dis))

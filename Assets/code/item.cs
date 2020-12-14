@@ -102,39 +102,42 @@ public class item : networked, IInspectable, IAcceptLeftClick
     }
 
     // Use the equipped version of this item
-    public virtual use_result on_use_start(player.USE_TYPE use_type)
+    public virtual use_result on_use_start(player.USE_TYPE use_type, player player)
     {
-        if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
+        // If this is the authority player, carry out basic uses
+        if (player.has_authority)
         {
-            if (food_value > 0)
+            if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
             {
-                // Eat
-                player.current.inventory.remove(this, 1);
-                player.current.modify_hunger(food_value);
-                player.current.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
-                foreach (var p in GetComponents<product>())
-                    p.create_in(player.current.inventory);
+                if (food_value > 0)
+                {
+                    // Eat
+                    player.inventory.remove(this, 1);
+                    player.modify_hunger(food_value);
+                    player.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
+                    foreach (var p in GetComponents<product>())
+                        p.create_in(player.inventory);
+                }
             }
-        }
-        else if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
-        {
-            // Place this item on the gutter
-            var ray = player.current.camera_ray(player.INTERACTION_RANGE, out float dis);
-            var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
-            if (gutter != null)
+            else if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
             {
-                var created = item.create(name, hit.point, Quaternion.identity, logistics_version: true);
-                gutter.add_item(created);
-                player.current.inventory.remove(this, 1);
+                // Place this item on the gutter
+                var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
+                var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
+                if (gutter != null)
+                {
+                    var created = item.create(name, hit.point, Quaternion.identity, logistics_version: true);
+                    gutter.add_item(created);
+                    player.inventory.remove(this, 1);
+                }
             }
-
         }
 
         return use_result.complete;
     }
 
-    public virtual use_result on_use_continue(player.USE_TYPE use_type) { return use_result.complete; }
-    public virtual void on_use_end(player.USE_TYPE use_type) { }
+    public virtual use_result on_use_continue(player.USE_TYPE use_type, player player) { return use_result.complete; }
+    public virtual void on_use_end(player.USE_TYPE use_type, player player) { }
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
 

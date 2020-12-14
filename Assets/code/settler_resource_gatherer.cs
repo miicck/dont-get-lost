@@ -20,7 +20,7 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
         get
         {
             if (harvest_options == null) return null;
-            if (harvest_options.Count < harvesting_index.value) return null;
+            if (harvest_options.Count <= harvesting_index.value) return null;
             return harvest_options[harvesting_index.value];
         }
     }

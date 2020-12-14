@@ -90,7 +90,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         set
         {
             // If we're using an item, we can't change the UI state
-            if (current_item_use != USE_TYPE.NOT_USING) return;
+            if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
 
             // Cinematic mode enforces ALL_CLOSED
             if (fly_mode) value = UI_STATE.ALL_CLOSED;
@@ -188,25 +188,20 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             run_quickbar_shortcuts();
             run_map();
             run_first_third_person();
-            run_item_use();
             run_mouse_look();
             run_movement();
             run_teleports();
         }
         else
         {
+            // Non-authority only stuff (position lerping)
             // Lerp rotation
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
-
-            // Lerp equipment position
-            if (equipped != null)
-            {
-                equipped.transform.localPosition = equipped_local_pos.lerped_value;
-                equipped.transform.localRotation = equipped_local_rot.lerped_value;
-            }
         }
 
+        // Stuff that runs both on authority/non-auth clients
+        run_item_use();
         set_hand_position();
     }
 
@@ -347,48 +342,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         USING_RIGHT_CLICK,
     }
 
-    // Are we currently using the item, if so, how?
-    USE_TYPE _current_item_use;
-    USE_TYPE current_item_use
-    {
-        get { return _current_item_use; }
-        set
-        {
-            if (value == _current_item_use)
-                return; // No change
-
-            if (equipped == null)
-            {
-                // No item to use
-                _current_item_use = USE_TYPE.NOT_USING;
-                return;
-            }
-
-            if (_current_item_use == USE_TYPE.NOT_USING)
-            {
-                if (value != USE_TYPE.NOT_USING)
-                {
-                    // Item currently not in use and we want to
-                    // start using it, so start using it
-                    if (equipped.on_use_start(value).underway)
-                        _current_item_use = value; // Needs continuing
-                    else
-                        _current_item_use = USE_TYPE.NOT_USING; // Immediately completed
-                }
-            }
-            else
-            {
-                if (value == USE_TYPE.NOT_USING)
-                {
-                    // Item currently in use and we want to stop
-                    // using it, so stop using it
-                    equipped.on_use_end(value);
-                    _current_item_use = value;
-                }
-            }
-        }
-    }
-
     item.use_result current_item_use_result;
     void run_item_use()
     {
@@ -398,47 +351,48 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
         // Use items
         current_item_use_result = item.use_result.complete;
-        if (current_item_use == USE_TYPE.NOT_USING)
+        if (current_item_use.value == (int)USE_TYPE.NOT_USING)
         {
-            bool left_click = controls.mouse_click(controls.MOUSE_BUTTON.LEFT) ||
-                (equipped == null ? false :
-                    equipped.allow_left_click_held_down() &&
-                    controls.mouse_down(controls.MOUSE_BUTTON.LEFT));
-
-            bool right_click = controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) ||
-                (equipped == null ? false :
-                    equipped.allow_right_click_held_down() &&
-                    controls.mouse_down(controls.MOUSE_BUTTON.RIGHT));
-
-            // Start a new use type
-            if (left_click)
+            // Only authority clients can start item use
+            if (has_authority)
             {
-                if (equipped == null) left_click_with_hand();
-                else current_item_use = USE_TYPE.USING_LEFT_CLICK;
-            }
-            else if (right_click)
-            {
-                if (equipped == null) right_click_with_hand();
-                else current_item_use = USE_TYPE.USING_RIGHT_CLICK;
+                bool left_click = controls.mouse_click(controls.MOUSE_BUTTON.LEFT) ||
+                    (equipped == null ? false :
+                        equipped.allow_left_click_held_down() &&
+                        controls.mouse_down(controls.MOUSE_BUTTON.LEFT));
+
+                bool right_click = controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) ||
+                    (equipped == null ? false :
+                        equipped.allow_right_click_held_down() &&
+                        controls.mouse_down(controls.MOUSE_BUTTON.RIGHT));
+
+                // Start a new use type
+                if (left_click)
+                {
+                    if (equipped == null) left_click_with_hand();
+                    else current_item_use.value = (int)USE_TYPE.USING_LEFT_CLICK;
+                }
+                else if (right_click)
+                {
+                    if (equipped == null) right_click_with_hand();
+                    else current_item_use.value = (int)USE_TYPE.USING_RIGHT_CLICK;
+                }
             }
         }
         else
         {
-            // Continue item use
+            // Continue item use (both on auth client and non-auth client)
             if (equipped == null) current_item_use_result = item.use_result.complete;
-            else current_item_use_result = equipped.on_use_continue(current_item_use);
-            if (!current_item_use_result.underway) current_item_use = USE_TYPE.NOT_USING;
-        }
+            else current_item_use_result = equipped.on_use_continue(
+                (USE_TYPE)current_item_use.value, this);
 
-        if (equipped != null)
-        {
-            // Update the network with equipment position
-            equipped_local_pos.value = equipped.transform.localPosition;
-            equipped_local_rot.value = equipped.transform.localRotation;
+            // If use has completed, then stop using (on authority client)
+            if (!current_item_use_result.underway && has_authority)
+                current_item_use.value = (int)USE_TYPE.NOT_USING;
         }
 
         // Run undo/redo commands
-        if (current_item_use == USE_TYPE.NOT_USING)
+        if (current_item_use.value == (int)USE_TYPE.NOT_USING && has_authority)
         {
             if (controls.key_press(controls.BIND.UNDO)) undo_manager.undo();
             if (controls.key_press(controls.BIND.REDO)) undo_manager.redo();
@@ -534,7 +488,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         // Can't use quickbar shortcuts from the UI, or if we're 
         // using an item, or if we're flying
         if (ui_state != UI_STATE.ALL_CLOSED) return;
-        if (current_item_use != USE_TYPE.NOT_USING) return;
+        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
         if (fly_mode) return;
 
         const int QUICKBAR_SLOTS_COUNT = 8;
@@ -1038,7 +992,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     void run_map()
     {
         // Things that don't allow interation with the map
-        if (current_item_use != USE_TYPE.NOT_USING) return;
+        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
 
         // Toggle the map view on M
         if (controls.key_press(controls.BIND.TOGGLE_MAP))
@@ -1481,14 +1435,13 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     networked_variables.net_int health;
     networked_variables.net_int hunger;
+    networked_variables.net_int current_item_use;
     networked_variables.net_int slot_equipped;
     networked_variables.net_float y_rotation;
     networked_variables.net_float x_rotation;
     networked_variables.net_string username;
     networked_variables.net_bool crouched;
-    networked_variables.net_vector3 equipped_local_pos;
     networked_variables.net_vector3 respawn_point;
-    networked_variables.net_quaternion equipped_local_rot;
     networked_variables.net_color net_hair_color;
 
     public int slot_number_equipped => slot_equipped.value;
@@ -1732,9 +1685,43 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     al.equipped.on_equip(this);
         };
 
-        // Network the equipped objects local position
-        equipped_local_pos = new networked_variables.net_vector3(lerp_speed: 20f);
-        equipped_local_rot = new networked_variables.net_quaternion(lerp_speed: 20f);
+        // Are we currently using the item, if so, how?
+        current_item_use = new networked_variables.net_int(default_value: (int)USE_TYPE.NOT_USING);
+        current_item_use.on_change_old_new = (old_val, new_val) =>
+        {
+            if (new_val == (int)USE_TYPE.NOT_USING)
+            {
+                // Stopped using
+                equipped?.on_use_end((USE_TYPE)old_val, this);
+            }
+            else // Started using
+            {
+                if (equipped == null)
+                {
+                    // Nothing equipped. If we're on the auth 
+                    // client, immediately stop using.
+                    if (has_authority)
+                        current_item_use.value = (int)USE_TYPE.NOT_USING;
+                    return;
+                }
+
+                // Start using item
+                if (!equipped.on_use_start((USE_TYPE)new_val, this).underway)
+                {
+                    // Immediately completed. If we're on the auth
+                    // client, stop using - this might mean that
+                    // on_use_start is not called on remote clients
+                    // because current_item_use changes immediately back
+                    // to NOT_USING and network variable changes are only
+                    // sent at the end of the frame.
+                    // If you want on_use_start to be called on remote clients
+                    // then return use_result.underway from on_use_start
+                    // and use_result.complete from on_use_continue.
+                    if (has_authority)
+                        current_item_use.value = (int)USE_TYPE.NOT_USING;
+                }
+            }
+        };
     }
 
     public override void on_first_create()

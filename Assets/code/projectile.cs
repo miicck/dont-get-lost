@@ -35,8 +35,11 @@ public class projectile : item, INotPathBlocking
     }
 
     /// <summary> Allow easier picking up of projectiles if one is equipped. </summary>
-    public override use_result on_use_start(player.USE_TYPE use_type)
+    public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
+        // Don't do anything unless player has authority
+        if (!player.has_authority) return use_result.complete;
+
         var ray = player.current.camera_ray(player.INTERACTION_RANGE, out float distance);
         foreach (var hit in Physics.RaycastAll(ray, distance))
         {

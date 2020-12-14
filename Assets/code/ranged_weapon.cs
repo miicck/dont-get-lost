@@ -56,8 +56,11 @@ public class ranged_weapon : equip_in_hand
         return true;
     }
 
-    public override use_result on_use_start(player.USE_TYPE use_type)
+    public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
+        // Don't do anything unless we're on the authority client
+        if (!has_authority) return use_result.complete;
+
         switch(use_type)
         {
             case player.USE_TYPE.USING_LEFT_CLICK:

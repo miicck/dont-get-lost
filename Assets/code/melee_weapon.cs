@@ -31,7 +31,7 @@ public class melee_weapon : equip_in_hand
     public AudioSource swing_audio;
     float swing_progress = 0;
     float swing_progress_at_impact = -1f;
-    bool in_use = false;
+    player in_use_by;
 
     public override bool allow_left_click_held_down() { return true; }
 
@@ -50,7 +50,7 @@ public class melee_weapon : equip_in_hand
                 c.enabled = false;
     }
 
-    public override use_result on_use_start(player.USE_TYPE use_type)
+    public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
         // Only allow left click
         if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
@@ -60,7 +60,7 @@ public class melee_weapon : equip_in_hand
         {
             // Default audio
             swing_audio = gameObject.AddComponent<AudioSource>();
-            swing_audio.spatialBlend = 0.75f; // 3D amount
+            swing_audio.spatialBlend = player.has_authority ? 0.75f : 1f; // 3D amount
             swing_audio.clip = Resources.Load<AudioClip>("sounds/swoosh_1");
             swing_audio.volume = 0.35f;
         }
@@ -68,12 +68,15 @@ public class melee_weapon : equip_in_hand
         swing_audio.Play();
         swing_progress = 0;
         swing_progress_at_impact = -1f;
-        in_use = true;
+        in_use_by = player;
         return use_result.underway_allows_all;
     }
 
-    public override use_result on_use_continue(player.USE_TYPE use_type)
+    public override use_result on_use_continue(player.USE_TYPE use_type, player player)
     {
+        if (player != in_use_by)
+            throw new System.Exception("Player using melee weapon shouldn't change mid-use!");
+
         // Continue swinging the weapon
         swing_progress += 1f * Time.deltaTime / swing_time;
         if (swing_progress >= 1f)
@@ -86,24 +89,22 @@ public class melee_weapon : equip_in_hand
         float sin = -Mathf.Sin(Mathf.PI * 2f * arg);
 
         // Set the forward/back amount
-        Vector3 target_pos = player.current.hand_centre.position +
-                             swing_length * player.current.hand_centre.forward * sin;
+        Vector3 target_pos = player.hand_centre.position +
+                             swing_length * player.hand_centre.forward * sin;
 
         // Remove some of the right/left component
         // so we strike in the middle
         float fw_amt = Mathf.Max(sin, 0);
         target_pos -= fw_amt * Vector3.Project(
-            target_pos - player.current.transform.position,
-            player.current.transform.right
-        );
+            target_pos - player.transform.position, player.transform.right);
 
         transform.position = target_pos;
 
         // Work out/apply the swing rotation
-        Vector3 up = player.current.hand_centre.up +
-            max_forward_in_up * player.current.hand_centre.forward * sin;
-        Vector3 fw = -Vector3.Cross(up, player.current.hand_centre.right +
-            player.current.hand_centre.forward * fw_amt / 2f);
+        Vector3 up = player.hand_centre.up +
+            max_forward_in_up * player.hand_centre.forward * sin;
+        Vector3 fw = -Vector3.Cross(up, player.hand_centre.right +
+            player.hand_centre.forward * fw_amt / 2f);
         Quaternion target_rotation = Quaternion.LookRotation(fw, up);
 
         transform.rotation = target_rotation;
@@ -112,34 +113,39 @@ public class melee_weapon : equip_in_hand
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!in_use) return;
+        // Not being used
+        if (in_use_by == null) return;
 
         // Only allow one impact per swing
-        if (swing_progress_at_impact > 0) return; 
+        if (swing_progress_at_impact > 0) return;
 
         // Ignore collisions with the player
-        if (other.transform.IsChildOf(player.current.transform))
+        if (other.transform.IsChildOf(in_use_by.transform))
             return;
 
         var rend = other.GetComponent<Renderer>();
         if (rend != null)
             material_sound.play(material_sound.TYPE.HIT, transform.position, rend.material);
 
-        var aii = other.GetComponentInParent<accepts_item_impact>();
-        aii?.on_impact(this);
+        // Only affect the world if the user has authority
+        if (in_use_by.has_authority)
+        {
+            var aii = other.GetComponentInParent<accepts_item_impact>();
+            aii?.on_impact(this);
 
-        var accepts_damage = other.GetComponentInParent<IAcceptsDamage>();
-        accepts_damage?.take_damage(damage);
+            var accepts_damage = other.GetComponentInParent<IAcceptsDamage>();
+            accepts_damage?.take_damage(damage);
+        }
 
         swing_progress_at_impact = swing_progress;
     }
 
-    public override void on_use_end(player.USE_TYPE use_type)
+    public override void on_use_end(player.USE_TYPE use_type, player player)
     {
         swing_progress = 0f;
         swing_progress_at_impact = -1f;
-        transform.position = player.current.hand_centre.transform.position;
-        transform.rotation = player.current.hand_centre.transform.rotation;
-        in_use = false;
+        transform.position = player.hand_centre.transform.position;
+        transform.rotation = player.hand_centre.transform.rotation;
+        in_use_by = null;
     }
 }
