@@ -260,49 +260,76 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         {
             if (transform.childCount == 0)
                 Destroy(gameObject);
+            else
+                Destroy(transform.GetChild(Random.Range(0, transform.childCount)).gameObject);
+        }
 
-            Destroy(transform.GetChild(Random.Range(0, transform.childCount)).gameObject);
+        void on_create(character to_copy)
+        {
+            foreach (var r in to_copy.GetComponentsInChildren<MeshRenderer>())
+            {
+                // Create a render-only copy of each render in the character
+                var rcopy = r.inst();
+
+                // Don't copy children (they will be copied later in the
+                // GetComponentsInChildren loop)
+                foreach (Transform child in rcopy.transform)
+                    Destroy(child.gameObject);
+
+                // Move the copy to the exact same place as the original mesh
+                rcopy.transform.position = r.transform.position;
+                rcopy.transform.rotation = r.transform.rotation;
+                rcopy.transform.localScale = r.transform.lossyScale;
+
+                // Delete anything that isn't to do with rendering (perhaps
+                // this method could be improved by simply building an object
+                // that only has the desired stuff, rather than deleting stuff)
+                foreach (var c in rcopy.GetComponentsInChildren<Component>())
+                {
+                    if (c is Transform) continue;
+                    if (c is MeshRenderer) continue;
+                    if (c is MeshFilter) continue;
+                    Destroy(c);
+                }
+                
+                // Make the copy a child of this dead_character and
+                // give it a simple collider
+                rcopy.transform.SetParent(transform);
+                var bc = rcopy.gameObject.AddComponent<BoxCollider>();
+                bc.size = 0.1f * new Vector3(
+                    1f / rcopy.transform.localScale.x,
+                    1f / rcopy.transform.localScale.y,
+                    1f / rcopy.transform.localScale.z
+                );
+
+                // Make the character invisisble (do this after
+                // we copy, so the copied version isn't invisible)
+                r.enabled = false;
+            }
+
+            // Delay rigidbodies so they have time to register the new box colliders
+            Invoke("add_rigidbodies", 0.1f);
+        }
+
+        void add_rigidbodies()
+        {
+            foreach (Transform c in transform)
+                c.gameObject.AddComponent<Rigidbody>();
+        }
+
+        public static dead_character create(character to_copy)
+        {
+            var dead_version = new GameObject("dead_" + to_copy.name).AddComponent<dead_character>();
+            dead_version.transform.position = to_copy.transform.position;
+            dead_version.transform.rotation = to_copy.transform.rotation;
+            dead_version.on_create(to_copy);
+            return dead_version;
         }
     }
 
     void die()
     {
-        var dead_version = new GameObject("dead_" + name).AddComponent<dead_character>();
-        dead_version.transform.position = transform.position;
-        dead_version.transform.rotation = transform.rotation;
-
-        foreach (var r in GetComponentsInChildren<MeshRenderer>())
-        {
-            var rcopy = r.inst();
-            foreach (Transform child in rcopy.transform)
-                Destroy(child.gameObject);
-
-            rcopy.transform.position = r.transform.position;
-            rcopy.transform.rotation = r.transform.rotation;
-            rcopy.transform.localScale = r.transform.lossyScale;
-
-            foreach (var c in rcopy.GetComponentsInChildren<Component>())
-            {
-                if (c is Transform) continue;
-                if (c is MeshRenderer) continue;
-                if (c is MeshFilter) continue;
-                Destroy(c);
-            }
-
-
-            rcopy.transform.SetParent(dead_version.transform);
-            var bc = rcopy.gameObject.AddComponent<BoxCollider>();
-            bc.size = 0.1f * new Vector3(
-                1f / rcopy.transform.localScale.x,
-                1f / rcopy.transform.localScale.y,
-                1f / rcopy.transform.localScale.z
-            );
-
-            var rb = rcopy.gameObject.AddComponent<Rigidbody>();
-
-            r.enabled = false;
-        }
-
+        dead_character.create(this);
         Invoke("delayed_delete", 1f);
     }
 
