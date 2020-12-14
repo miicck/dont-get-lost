@@ -119,8 +119,34 @@ public class game : MonoBehaviour
     }
     private static float _render_range = DEFAULT_RENDER_RANGE;
 
+    /// <summary> True if we don't want/don't have 
+    /// time to wait before closing the server. </summary>
+    bool am_hard_disconnecting = false;
+    string hard_disconnect_message = "";
+
+    void hard_disconnect()
+    {
+        am_hard_disconnecting = true;
+        on_client_disconnect(hard_disconnect_message);
+    }
+
     void on_client_disconnect(string message_from_server)
     {
+        if (server.started)
+        {
+            if (am_hard_disconnecting)
+                server.stop();
+            else
+            {
+                // Don't close the server for a little bit so we can
+                // process messages that were sent during the disconnect
+                // (for example, the DISCONNECT message from the player)
+                hard_disconnect_message = message_from_server;
+                Invoke("hard_disconnect", 1f);
+                return;
+            }
+        }
+
         // Close all ui
         player.current.ui_state = player.UI_STATE.ALL_CLOSED;
 
@@ -276,13 +302,14 @@ public class game : MonoBehaviour
 
     void OnApplicationQuit()
     {
+        am_hard_disconnecting = true;
         save_and_quit();
     }
 
-    public static void save_and_quit()
+    public static void save_and_quit(bool delete_player = false)
     {
         // Disconnect from the network
-        client.disconnect(true);
+        client.disconnect(true, delete_player: delete_player);
     }
 
     public string graphics_info()

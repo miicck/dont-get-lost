@@ -100,7 +100,7 @@ public static class server
         /// <summary> Called when a client disconnects. If message is not 
         /// null, it is sent to the server as part of a DISCONNECT message, 
         /// otherwise no DISCONNECT message is sent to the server. </summary>
-        public void disconnect(string message, float timeout = CLIENT_TIMEOUT)
+        public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
             Debug.Log("Client " + username + " disconnected, message: " + message);
 
@@ -122,11 +122,14 @@ public static class server
             stream.Close((int)(timeout * 1000));
             tcp.Close();
 
-            // Unload the player (also remove it from representations
-            // so that it doens't just get re-loaded based on proximity)
-            foreach (var c in connected_clients)
-                if (c.has_loaded(player))
-                    c.unload(player, false);
+            if (delete_player)
+                player.delete();
+            else
+                // Unload the player (also remove it from representations
+                // so that it doens't just get re-loaded based on proximity)
+                foreach (var c in connected_clients)
+                    if (c.has_loaded(player))
+                        c.unload(player, false);
 
             if (player.transform.parent == deleted_representations)
             {
@@ -705,7 +708,8 @@ public static class server
             {
                 // No need to send a server.DISCONNECT message to
                 // the client as they requested the disconnect
-                client.disconnect(null);
+                bool delete_player = network_utils.decode_bool(bytes, ref offset);
+                client.disconnect(null, delete_player: delete_player);
             },
 
             [global::client.MESSAGE.HEARTBEAT] = (client, bytes, offset, length) =>

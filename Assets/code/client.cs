@@ -274,6 +274,9 @@ public static class client
             return false;
         }
 
+        // Let the TCP connection linger after disconnect, so queued messages are sent
+        tcp.LingerState = new LingerOption(true, 10);
+
         // Initialize the networked object static state
         networked.client_initialize();
 
@@ -450,10 +453,11 @@ public static class client
 
             [MESSAGE.DISCONNECT] = (args) =>
             {
-                if (args.Length != 0)
+                if (args.Length != 1)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
-                send(MESSAGE.DISCONNECT, new byte[0]);
+                bool delete_player = (bool)args[0];
+                send(MESSAGE.DISCONNECT, network_utils.encode_bool(delete_player));
             },
 
             [MESSAGE.CREATE] = (args) =>
@@ -539,15 +543,15 @@ public static class client
         return true;
     }
 
-    public static void disconnect(bool initiated_by_client, string msg_from_server = null)
+    public static void disconnect(bool initiated_by_client, string msg_from_server = null, bool delete_player = false)
     {
         if (!connected) return; // Not connected
 
         if (initiated_by_client)
         {
-            // Send any queued messages, followed by a disconnect message
+            // Send any queued messages (including a disconnect message)
+            message_senders[MESSAGE.DISCONNECT](delete_player);
             send_queued_messages();
-            message_senders[MESSAGE.DISCONNECT]();
         }
 
         try
@@ -559,15 +563,11 @@ public static class client
         {
             Debug.Log("Connection severed ungracefully.");
         }
-
+        
         tcp.Close();
         tcp = null;
 
         on_disconnect(msg_from_server);
-
-        // If this client was running the server, stop the server
-        if (server.started)
-            server.stop();
     }
 
     public static void update()

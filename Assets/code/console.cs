@@ -117,10 +117,7 @@ public class console : MonoBehaviour
         {
             command = (args) =>
             {
-                player.current.delete(() =>
-                {
-                    game.save_and_quit();
-                });
+                game.save_and_quit(delete_player: true);
                 return true;
             },
 
@@ -319,7 +316,7 @@ public class console : MonoBehaviour
             },
 
             description = "Set the current cursor",
-            usage_example = "cursor transparent"      
+            usage_example = "cursor transparent"
         }
     };
 
