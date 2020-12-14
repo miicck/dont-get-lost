@@ -59,6 +59,9 @@ public class networked : MonoBehaviour
     /// <summary> Called the first time this object reccives a positive id. </summary>
     public virtual void on_first_register() { }
 
+    /// <summary> Called when the given numbered network event is triggered. </summary>
+    public virtual void on_network_event_triggered(int number) { }
+
     /// <summary> Should return true if this object should persist 
     /// between loads/if they go out of range. </summary>
     public virtual bool persistant() { return true; }
@@ -213,6 +216,17 @@ public class networked : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary> Called to trigger the network event with the given number, 
+    /// across all clients that have this object loaded. </summary>
+    public void trigger_network_event(int event_number)
+    {
+        // Trigger immediately on this client
+        on_network_event_triggered(event_number);
+
+        // Tell the server to trigger on other clients
+        client.send_trigger(network_id, event_number);
     }
 
     /// <summary> My position as stored by the network. </summary>

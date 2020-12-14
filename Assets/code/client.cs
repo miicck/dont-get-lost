@@ -233,6 +233,13 @@ public static class client
         message_senders[MESSAGE.VARIABLE_UPDATE](network_id, index, serialization);
     }
 
+    /// <summary> Trigger network <paramref name="event_number"/> for
+    /// the object with the given <paramref name="network_id"/>. </summary>
+    public static void send_trigger(int network_id, int event_number)
+    {
+        message_senders[MESSAGE.TRIGGER](network_id, event_number);
+    }
+
     /// <summary> Called when the render range of a player changes. </summary>
     public static void on_render_range_change(networked_player player)
     {
@@ -312,6 +319,15 @@ public static class client
                 int index = network_utils.decode_int(buffer, ref offset);
                 var nw = networked.try_find_by_id(id);
                 nw?.variable_update(index, buffer, offset, length - (offset - start));
+            },
+
+            [server.MESSAGE.TRIGGER] = (buffer, offset, length) =>
+            {
+                // Trigger a network event on a given object
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                int event_number = network_utils.decode_int(buffer, ref offset);
+                var nw = networked.try_find_by_id(network_id);
+                nw?.on_network_event_triggered(event_number);
             },
 
             [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
@@ -501,6 +517,19 @@ public static class client
                     network_utils.encode_int(network_id),
                     network_utils.encode_int(index),
                     serialization
+                ));
+            },
+
+            [MESSAGE.TRIGGER] = (args) =>
+            {
+                if (args.Length != 2)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                int number = (int)args[1];
+                send(MESSAGE.TRIGGER, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(number)
                 ));
             }
         };
@@ -693,6 +722,7 @@ public static class client
         DELETE,              // Delete an object from the server
         RENDER_RANGE_UPDATE, // Client render range has changed
         VARIABLE_UPDATE,     // A networked_variable has changed
+        TRIGGER,             // A networked event has been triggered
     }
 
     delegate void message_sender(params object[] args);

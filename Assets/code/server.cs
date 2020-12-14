@@ -403,6 +403,15 @@ public static class server
                     message_senders[MESSAGE.VARIABLE_UPDATE](c, network_id, index, new_serialization);
         }
 
+        /// <summary> Trigger a network event on all clients that have this representation 
+        /// loaded (apart from the client that triggered the event). </summary>
+        public void trigger_network_event(client triggered_by, int event_number)
+        {
+            foreach (var c in connected_clients)
+                if ((c != triggered_by) && c.has_loaded(this))
+                    message_senders[MESSAGE.TRIGGER](c, network_id, event_number);
+        }
+
         /// <summary> My network id. Automatically updates the 
         /// representations[network_id] dictionary. </summary>
         public int network_id
@@ -720,6 +729,17 @@ public static class server
                 try_get_rep(id)?.on_network_variable_change(client, index, serialization);
             },
 
+            [global::client.MESSAGE.TRIGGER] = (client, bytes, offset, length) =>
+            {
+                // Trigger the numbered network event on the given representation
+                int network_id = network_utils.decode_int(bytes, ref offset);
+                int event_number = network_utils.decode_int(bytes, ref offset);
+                if (representations.TryGetValue(network_id, out representation rep))
+                    rep.trigger_network_event(client, event_number);
+                else
+                    Debug.Log("Reccived trigger for non-existant network ID!");
+            },
+
             [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
             {
                 client.render_range = network_utils.decode_float(bytes, ref offset);
@@ -886,6 +906,20 @@ public static class server
                     network_utils.encode_int(id),
                     network_utils.encode_int(index),
                     serialization
+                ));
+            },
+
+            [MESSAGE.TRIGGER] = (client, args) =>
+            {
+                if (args.Length != 2)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                var id = (int)args[0];
+                var number = (int)args[1];
+
+                send(client, MESSAGE.TRIGGER, network_utils.concat_buffers(
+                    network_utils.encode_int(id),
+                    network_utils.encode_int(number)
                 ));
             },
 
@@ -1345,6 +1379,7 @@ public static class server
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
         DELETE_SUCCESS,    // Send when a client deletes a networked object and requests a response
         VARIABLE_UPDATE,   // Send a networked_variable update to a client
+        TRIGGER,           // Send an event trigger from an object to all instances of same object
         LOSE_AUTH,         // Sent to a client when they lose authority over an object
         GAIN_AUTH,         // Sent to a ciient when they gain authority over an object
         HEARTBEAT,         // Respond to a client heartbeat
