@@ -66,6 +66,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
         tips.add("Open the recipe book by pressing " +
             controls.current_bind(controls.BIND.OPEN_RECIPE_BOOK) + ".");
+
+        tips.add("Look at a player and press " + controls.current_bind(controls.BIND.GIVE) +
+            " to give them the item you currently have equipped.");
     }
 
     //##########//
@@ -342,6 +345,24 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         USING_RIGHT_CLICK,
     }
 
+    void give_to_player()
+    {
+        if (equipped == null) return;
+        string to_give = equipped.name;
+        string to_give_display_name = equipped.display_name;
+
+        var giving_to = utils.raycast_for_closest<player>(camera_ray(),
+            out RaycastHit hit, INTERACTION_RANGE, (p) => p != this);
+        if (giving_to == null) return;
+
+        if (inventory.remove(to_give, 1))
+        {
+            popup_message.create("Gave " + to_give_display_name +
+                                 " to " + giving_to.username.value);
+            giving_to.inventory.add(to_give, 1);
+        }
+    }
+
     item.use_result current_item_use_result;
     void run_item_use()
     {
@@ -377,6 +398,8 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     if (equipped == null) right_click_with_hand();
                     else current_item_use.value = (int)USE_TYPE.USING_RIGHT_CLICK;
                 }
+                else if (controls.key_press(controls.BIND.GIVE))
+                    give_to_player();
             }
         }
         else

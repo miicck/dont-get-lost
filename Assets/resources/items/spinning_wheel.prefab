@@ -188,6 +188,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  max_items_waiting: 1
 --- !u!1 &5103593832195375785
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,7 +369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: a47eb0215e9d3fe4d9be674c3510af6b, type: 3}
+  sprite: {fileID: 21300000, guid: b28c3d85c4ed5f24983aab5f0cc4c11c, type: 3}
   plural: spinning wheels
   value: 0
   fuel_value: 0
@@ -377,6 +378,7 @@ MonoBehaviour:
   axes_scale: 1
   craft_time: 1
   recipes_folder: recipes/workbenches/spinning_wheel
+  enable_when_crafting: []
 --- !u!1 &8598502022755574780
 GameObject:
   m_ObjectHideFlags: 0
