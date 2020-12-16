@@ -55,7 +55,7 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
     //#########//
 
     // Points that welds snap to
-    protected snap_point[] snap_points { get { return GetComponentsInChildren<snap_point>(); } }
+    protected snap_point[] snap_points => GetComponentsInChildren<snap_point>();
 
     // A weld represents the fixture of an item via a pivot
     // to a particular weld point in space
