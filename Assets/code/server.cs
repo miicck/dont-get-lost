@@ -798,8 +798,13 @@ public static class server
                 representation deleting;
                 if (!representations.TryGetValue(network_id, out deleting))
                 {
-                    // This should only happend in high-latency edge cases
-                    Debug.Log("Deleting non-existant id " + network_id + "\n" + last_stack_trace);
+                    if (!recently_deleted.ContainsKey(network_id))
+                    {
+                        // This should only happend in high-latency edge cases
+                        Debug.Log("Deleting non-existant id " + network_id +
+                            " (was not recently deleted)\n" + last_stack_trace);
+                    }
+
                     return;
                 }
 

@@ -157,6 +157,12 @@ public static class controls
         return value;
     }
 
+    static float forward_activity(float axis)
+    {
+        if (Mathf.Abs(axis) > 10e-6) client.register_activity();
+        return axis;
+    }
+
     public static string current_bind(BIND b)
     {
         var key = keybinds[b];
@@ -260,12 +266,12 @@ public static class controls
 
     public static float object_rotation_axis()
     {
-        return Input.GetAxis("Mouse X") + Input.GetAxis("Mouse Y");
+        return get_axis("Mouse X") + get_axis("Mouse Y");
     }
 
     public static float get_axis(string name)
     {
         if (!axis_enabled(name)) return 0;
-        return Input.GetAxis(name);
+        return forward_activity(Input.GetAxis(name));
     }
 }
