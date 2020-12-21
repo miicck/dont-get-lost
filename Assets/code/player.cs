@@ -604,9 +604,8 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     public void validate_equip()
     {
         var slot = quickbar_slot(slot_equipped.value);
-        if (slot == null) return;
 
-        if (slot.count == 0 || slot.item == null)
+        if (slot == null || slot.count == 0 || slot.item == null)
         {
             // Nothing in slot, unequip
             slot_equipped.value = 0;
