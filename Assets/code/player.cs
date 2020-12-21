@@ -1536,6 +1536,15 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         // Create the sack containing my inventory
         var inv_contents = inventory.contents();
         inventory.clear();
+
+        // Add anything in the crafting menu also
+        foreach (var kv in crafting_menu.contents())
+        {
+            if (inv_contents.ContainsKey(kv.Key)) inv_contents[kv.Key] += kv.Value;
+            else inv_contents[kv.Key] = kv.Value;
+        }
+        crafting_menu.clear();
+
         sack.create(transform.position, inv_contents, username.value + "'s remains");
 
         // Create the respawn timer
