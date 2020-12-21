@@ -421,6 +421,7 @@ MonoBehaviour:
   axes_scale: 1
   craft_time: 1
   recipes_folder: recipes/autocrafters/windmill
+  enable_when_crafting: []
 --- !u!1001 &5536019610247330819
 PrefabInstance:
   m_ObjectHideFlags: 0
