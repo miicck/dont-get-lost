@@ -1167,7 +1167,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         // Toggle options
         if (controls.key_press(controls.BIND.TOGGLE_OPTIONS))
         {
-            if (ui_state == UI_STATE.OPTIONS_MENU_OPEN) ui_state = UI_STATE.ALL_CLOSED;
+            if (ui_state != UI_STATE.ALL_CLOSED) ui_state = UI_STATE.ALL_CLOSED;
             else ui_state = UI_STATE.OPTIONS_MENU_OPEN;
         }
     }
