@@ -107,10 +107,10 @@ public class rifle : equip_in_hand
     }
     STATE _state;
 
-    public override void on_equip(bool local_player)
+    public override void on_equip(player player)
     {
-        base.on_equip(local_player);
-        player_using = GetComponentInParent<player>();
+        base.on_equip(player);
+        player_using = player;
         bullets_in_mag = magazine_size;
 
         state = STATE.READY;
@@ -138,9 +138,9 @@ public class rifle : equip_in_hand
         locate();
     }
 
-    public override void on_unequip(bool local_player)
+    public override void on_unequip(player player)
     {
-        base.on_unequip(local_player);
+        base.on_unequip(player);
         if (player_using.has_authority)
             player_using.camera.fieldOfView = reset_field_of_view;
         player_using = null;

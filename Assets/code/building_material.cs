@@ -506,11 +506,11 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
         return ret;
     }
 
-    public override void on_equip(bool local_player)
+    public override void on_equip(player player)
     {
-        base.on_equip(local_player);
+        base.on_equip(player);
 
-        if (local_player)
+        if (player.has_authority)
         {
             // Draw links if a path element is equipped
             if (GetComponentInChildren<settler_path_element>() != null)
@@ -518,11 +518,11 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
         }
     }
 
-    public override void on_unequip(bool local_player)
+    public override void on_unequip(player player)
     {
-        base.on_unequip(local_player);
+        base.on_unequip(player);
 
-        if (local_player)
+        if (player.has_authority)
         {
             // Stop drawing debug-type things
             settler_path_element.draw_links = false;

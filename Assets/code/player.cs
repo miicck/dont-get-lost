@@ -561,7 +561,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             {
                 // Call implementation-specific on_unequip
                 // stuff + destroy the item
-                _equipped.on_unequip(has_authority);
+                _equipped.on_unequip(this);
                 Destroy(_equipped.gameObject);
             }
 
@@ -590,7 +590,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 _equipped.transform.localRotation = Quaternion.identity;
 
                 // Call implementation-specific on_equip stuff
-                _equipped.on_equip(has_authority);
+                _equipped.on_equip(this);
             }
         }
     }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public interface INonEquipable { }
-public interface INonEquipableCallback : INonEquipable { void on_equip_callback(); }
+public interface INonEquipableCallback : INonEquipable { void on_equip_callback(player player); }
 
 public interface INonLogistical { }
 
@@ -142,9 +142,8 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public virtual bool allow_right_click_held_down() { return false; }
     public virtual string equipped_context_tip() { return null; }
 
-    /// <summary> Called when this item is equipped. <paramref name="local_player"/> = false
-    /// iff this item is being equipped by a remote player. </summary>
-    public virtual void on_equip(bool local_player)
+    /// <summary> Called when this item is equipped.</summary>
+    public virtual void on_equip(player player)
     {
         // Remove all colliders
         foreach (var c in GetComponentsInChildren<Collider>())
@@ -158,14 +157,14 @@ public class item : networked, IInspectable, IAcceptLeftClick
         foreach (Component eq in GetComponentsInChildren<INonEquipable>())
         {
             if (eq is INonEquipableCallback)
-                ((INonEquipableCallback)eq).on_equip_callback();
+                ((INonEquipableCallback)eq).on_equip_callback(player);
             Destroy(eq);
         }
     }
 
     /// <summary> Called when this item is unequipped. <paramref name="local_player"/> = false
     /// iff this item is being unequipped by a remote player. </summary>
-    public virtual void on_unequip(bool local_player) { }
+    public virtual void on_unequip(player player) { }
 
     public void on_left_click() { pick_up(); }
 

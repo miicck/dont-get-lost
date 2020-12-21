@@ -16,9 +16,10 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> The parent building to which this item node belongs. </summary>
     public building_material building => GetComponentInParent<building_material>();
 
-    public void on_equip_callback()
+    public void on_equip_callback(player player)
     {
-        display_enabled = true;
+        if (player.has_authority)
+            display_enabled = true;
     }
 
     //#######//
