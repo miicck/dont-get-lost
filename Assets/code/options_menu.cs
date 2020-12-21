@@ -180,6 +180,10 @@ public class options_menu : MonoBehaviour
 
         switch (name)
         {
+            case "vsync":
+                QualitySettings.vSyncCount = value ? 1 : 0;
+                break;       
+
             case "water_reflections":
                 water_reflections.reflections_enabled = value;
                 break;
