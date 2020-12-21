@@ -1557,6 +1557,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         is_dead = false;
 
         heal(100);
+        modify_hunger(100);
 
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
             throw new System.Exception("No ColorAdjustments override on global volume!");
