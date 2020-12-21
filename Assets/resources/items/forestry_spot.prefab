@@ -366,6 +366,7 @@ MonoBehaviour:
   path_element: {fileID: 5748081639992911202}
   type: 0
   max_simultaneous_users: 1
+  display_name: forestry spot
   output: {fileID: 5679265494180299747}
   search_origin: {fileID: 6493507513712573707}
   search_radius: 1

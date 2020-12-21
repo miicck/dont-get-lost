@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class settler_resource_gatherer : settler_interactable, IAddsToInspectionText, IExtendsNetworked, ILeftPlayerMenu
 {
+    public string display_name;
     public item_output output;
     public Transform search_origin;
     public float search_radius;
@@ -82,7 +83,7 @@ public class settler_resource_gatherer : settler_interactable, IAddsToInspection
     // LEFT PLAYER MENU //
     //##################//
 
-    public string left_menu_display_name() { return name; }
+    public string left_menu_display_name() { return display_name; }
     public inventory editable_inventory() { return null; }
     public void on_left_menu_close() { }
     public recipe[] additional_recipes() { return null; }

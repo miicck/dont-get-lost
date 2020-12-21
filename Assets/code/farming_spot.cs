@@ -125,4 +125,5 @@ public class farm_harvest_on_click : MonoBehaviour, IAcceptLeftClick
 {
     public farming_spot spot;
     public void on_left_click() { spot.harvest(); }
+    public string left_click_context_tip() { return "Left click to harvest"; }
 }

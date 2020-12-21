@@ -44,10 +44,22 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
         }
     }
 
+    new public string left_click_context_tip()
+    {
+        if (is_logistics_version)
+            return base.left_click_context_tip();
+        return null;
+    }
+
     public void on_right_click()
     {
         // Delete buildings on right click
         pick_up(register_undo: true);
+    }
+
+    public string right_click_context_tip()
+    {
+        return "Right click to destroy";
     }
 
     //#########//
@@ -339,79 +351,103 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
             {
                 // Translate, rather than rotate
                 float t_amount = Time.deltaTime / 2f;
-                if (controls.key_down(controls.BIND.TRANSLATE_RIGHT)) translate(right_rot * t_amount);
-                else if (controls.key_down(controls.BIND.TRANSLATE_LEFT)) translate(-right_rot * t_amount);
-                else if (controls.key_down(controls.BIND.TRANSLATE_FORWARD)) translate(forward_rot * t_amount);
-                else if (controls.key_down(controls.BIND.TRANSLATE_BACK)) translate(-forward_rot * t_amount);
-                else if (controls.key_down(controls.BIND.TRANSLATE_UP)) translate(up_rot * t_amount);
-                else if (controls.key_down(controls.BIND.TRANSLATE_DOWN)) translate(-up_rot * t_amount);
+                if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_RIGHT))
+                {
+                    axes.highlight_axis(axes.AXIS.X);
+                    translate(right_rot * t_amount);
+                }
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_LEFT))
+                {
+                    axes.highlight_axis(axes.AXIS.X);
+                    translate(-right_rot * t_amount);
+                }
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_FORWARD))
+                {
+                    axes.highlight_axis(axes.AXIS.Z);
+                    translate(forward_rot * t_amount);
+                }
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_BACK))
+                {
+                    axes.highlight_axis(axes.AXIS.Z);
+                    translate(-forward_rot * t_amount);
+                }
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_UP))
+                {
+                    axes.highlight_axis(axes.AXIS.Y);
+                    translate(up_rot * t_amount);
+                }
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_DOWN))
+                {
+                    axes.highlight_axis(axes.AXIS.Y);
+                    translate(-up_rot * t_amount);
+                }
             }
 
             else if (controls.key_down(controls.BIND.FINE_ROTATION))
             {
                 // Continuous rotation
-                if (controls.key_down(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD))
+                if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_RIGHT))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.Z);
+                    rotation_axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (controls.key_down(controls.BIND.ROTATE_CLOCKWISE_AROUND_FORWARD))
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_LEFT))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, forward_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.Z);
+                    rotation_axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (controls.key_down(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_RIGHT))
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_BACK))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -right_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.X);
+                    rotation_axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (controls.key_down(controls.BIND.ROTATE_CLOCKWISE_AROUND_RIGHT))
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_FORWARD))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, right_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.X);
+                    rotation_axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (controls.key_down(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_UP))
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_DOWN))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -up_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.Y);
+                    rotation_axes.highlight_axis(axes.AXIS.Y);
                 }
-                else if (controls.key_down(controls.BIND.ROTATE_CLOCKWISE_AROUND_UP))
+                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_UP))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, up_rot, Time.deltaTime * 15f);
-                    axes.highlight_axis(axes.AXIS.Y);
+                    rotation_axes.highlight_axis(axes.AXIS.Y);
                 }
             }
 
             // Rotation by 45 degree increments
-            else if (controls.key_press(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_RIGHT))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
-                axes.highlight_axis(axes.AXIS.Z);
+                rotation_axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (controls.key_press(controls.BIND.ROTATE_CLOCKWISE_AROUND_FORWARD))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_LEFT))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, forward_rot, 45);
-                axes.highlight_axis(axes.AXIS.Z);
+                rotation_axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (controls.key_press(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_RIGHT))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_BACK))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -right_rot, 45);
-                axes.highlight_axis(axes.AXIS.X);
+                rotation_axes.highlight_axis(axes.AXIS.X);
             }
-            else if (controls.key_press(controls.BIND.ROTATE_CLOCKWISE_AROUND_RIGHT))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_FORWARD))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, right_rot, 45);
-                axes.highlight_axis(axes.AXIS.X);
+                rotation_axes.highlight_axis(axes.AXIS.X);
             }
-            else if (controls.key_press(controls.BIND.ROTATE_ANTICLOCKWISE_AROUND_UP))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_DOWN))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -up_rot, 45);
-                axes.highlight_axis(axes.AXIS.Y);
+                rotation_axes.highlight_axis(axes.AXIS.Y);
             }
-            else if (controls.key_press(controls.BIND.ROTATE_CLOCKWISE_AROUND_UP))
+            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_UP))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, up_rot, 45);
-                axes.highlight_axis(axes.AXIS.Y);
+                rotation_axes.highlight_axis(axes.AXIS.Y);
             }
             else return;
         }
@@ -570,10 +606,44 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
 
     building_material spawned;
     static float last_time_placing_blueprint;
+    static float last_time_deleting;
 
     public override bool allow_right_click_held_down()
     {
         return true;
+    }
+
+    public override string equipped_context_tip()
+    {
+        if (spawned != null)
+        {
+            if (controls.key_based_building)
+            {
+                return "Left click to build, right click to cancel\nUse " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_RIGHT) + ", " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
+                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
+                    "Hold " + controls.current_bind(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
+                    "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
+                    "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+            }
+            else
+            {
+                return
+                    "Double left click to build, right click to cancel\n" +
+                    "Click and drag the arrows to translate, or the circles to rotate\n" +
+                    "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
+                    "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+            }
+        }
+
+        return "Left click to build, right click to destroy matching objects (can be held down)\n" +
+            "Buildings will snap together at key points, hold " +
+            controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
+            "Disabling snapping will also allign the building to the world axes";
     }
 
     Ray camera_ray;
@@ -595,8 +665,12 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
             // Stop cancelling a build with right-click from immediately 
             // destroying the object we were welding to during the build.
             const float WAIT_AFTER_BUILD = 0.25f;
-            if (Time.realtimeSinceStartup < last_time_placing_blueprint + WAIT_AFTER_BUILD)
+            const float TIME_BETWEEN_DELETES = 0.1f;
+            if (Time.realtimeSinceStartup < last_time_placing_blueprint + WAIT_AFTER_BUILD ||
+                Time.realtimeSinceStartup < last_time_deleting + TIME_BETWEEN_DELETES)
                 return use_result.complete;
+
+            last_time_deleting = Time.realtimeSinceStartup;
 
             // Right click destroys items of the same kind
             RaycastHit same_hit;

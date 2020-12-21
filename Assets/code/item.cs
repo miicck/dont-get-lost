@@ -140,6 +140,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public virtual void on_use_end(player.USE_TYPE use_type, player player) { }
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
+    public virtual string equipped_context_tip() { return null; }
 
     /// <summary> Called when this item is equipped. <paramref name="local_player"/> = false
     /// iff this item is being equipped by a remote player. </summary>
@@ -167,6 +168,8 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public virtual void on_unequip(bool local_player) { }
 
     public void on_left_click() { pick_up(); }
+
+    public string left_click_context_tip() { return "Left click to pick up " + utils.a_or_an(display_name) + " " + display_name; }
 
     public virtual Dictionary<string, int> add_to_inventory_on_pickup()
     {

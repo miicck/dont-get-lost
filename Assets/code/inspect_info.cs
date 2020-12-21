@@ -16,52 +16,64 @@ public class inspect_info : MonoBehaviour
             "works when hovering over items in your inventory.");
     }
 
+    public struct inspectable_info
+    {
+        public IInspectable inspecting;
+        public List<IAddsToInspectionText> sub_inspecting;
+    }
+
+    public static inspectable_info inspectable_under_cursor
+    {
+        get
+        {
+            // Raycast for a ui element
+            if (Cursor.visible)
+                return new inspectable_info
+                {
+                    inspecting = utils.raycast_ui_under_mouse<IInspectable>(),
+                    sub_inspecting = new List<IAddsToInspectionText>()
+                };
+
+            // Raycast for the nearest collider, and search that for IInspectable
+            // objects (raycast for collider, rather than IInspectable so that 
+            // you can't get IInspectables from behind stuff).
+            RaycastHit hit;
+            float range;
+            var ray = player.current.camera_ray(INSPECT_RANGE, out range);
+            var col = utils.raycast_for_closest<Collider>(ray, out hit, range,
+                (c) => !c.transform.IsChildOf(player.current.transform));
+
+            if (col != null)
+            {
+                var comp = col.gameObject.GetComponentInParent(typeof(IInspectable));
+                if (comp != null)
+                    return new inspectable_info
+                    {
+                        inspecting = (IInspectable)comp,
+                        sub_inspecting = new List<IAddsToInspectionText>(
+                        comp.GetComponentsInChildren<IAddsToInspectionText>())
+                    };
+            }
+
+            return new inspectable_info();
+        }
+    }
+
     public bool visible
     {
         get => gameObject.activeInHierarchy;
         set
         {
-            IInspectable inspect = null;
-            List<IAddsToInspectionText> to_add = null;
-
             if (value)
             {
-                if (Cursor.visible)
+                var info = inspectable_under_cursor;
+                if (info.inspecting != null)
                 {
-                    // Raycast for a ui element
-                    inspect = utils.raycast_ui_under_mouse<IInspectable>();
-                    to_add = new List<IAddsToInspectionText>(); // Impement if needed
-                }
-                else
-                {
-                    // Raycast for the nearest collider, and search that for IInspectable
-                    // objects (raycast for collider, rather than IInspectable so that 
-                    // you can't get IInspectables from behind stuff).
-                    RaycastHit hit;
-                    float range;
-                    var ray = player.current.camera_ray(INSPECT_RANGE, out range);
-                    var col = utils.raycast_for_closest<Collider>(ray, out hit, range,
-                        (c) => !c.transform.IsChildOf(player.current.transform));
-
-                    if (col != null)
-                    {
-                        var comp = col.gameObject.GetComponentInParent(typeof(IInspectable));
-                        if (comp != null)
-                        {
-                            inspect = (IInspectable)comp;
-                            to_add = new List<IAddsToInspectionText>(
-                                comp.GetComponentsInChildren<IAddsToInspectionText>());
-                        }
-                    }
-                }
-
-                if (inspect != null)
-                {
-                    info_text.text = inspect.inspect_info().capitalize().Trim();
-                    foreach (var ta in to_add)
+                    info_text.text = info.inspecting.inspect_info().capitalize().Trim();
+                    foreach (var ta in info.sub_inspecting)
                         info_text.text += "\n" + ta.added_inspection_text().Trim();
-                    Sprite main = inspect.main_sprite();
-                    Sprite secondary = inspect.secondary_sprite();
+                    Sprite main = info.inspecting.main_sprite();
+                    Sprite secondary = info.inspecting.secondary_sprite();
 
                     if (main == null)
                         image_upper.enabled = false;
@@ -79,8 +91,10 @@ public class inspect_info : MonoBehaviour
                         image_lower.sprite = secondary;
                     }
                 }
+
+                gameObject.SetActive(info.inspecting != null);
             }
-            gameObject.SetActive(inspect != null);
+            else gameObject.SetActive(false);
         }
     }
 }

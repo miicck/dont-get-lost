@@ -3,6 +3,7 @@ Ongoing
 - More foliage? (small plants/flowers)
 
 Tasks
+- Generalise player interactions (both for generating tips and the actual interaction)
 - Item flow recording should be done on link points?
 - Implement teleport-to-player
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions

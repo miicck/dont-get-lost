@@ -79,6 +79,11 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
             p.create_in(player.current.inventory);
     }
 
+    public string left_click_context_tip()
+    {
+        return "Left click to harvest " + product.product_plurals_list(products);
+    }
+
     //##############//
     // IInspectable //
     //##############//

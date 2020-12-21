@@ -66,19 +66,13 @@ public static class controls
         DECREASE_RENDER_RANGE,
         CHANGE_PIVOT,
         FINE_ROTATION,
-        ROTATE_ANTICLOCKWISE_AROUND_UP,
-        ROTATE_CLOCKWISE_AROUND_UP,
-        ROTATE_ANTICLOCKWISE_AROUND_RIGHT,
-        ROTATE_CLOCKWISE_AROUND_RIGHT,
-        ROTATE_ANTICLOCKWISE_AROUND_FORWARD,
-        ROTATE_CLOCKWISE_AROUND_FORWARD,
+        MANIPULATE_BUILDING_DOWN,
+        MANIPULATE_BUILDING_UP,
+        MANIPULATE_BUILDING_BACK,
+        MANIPULATE_BUILDING_FORWARD,
+        MANIPULATE_BUILDING_RIGHT,
+        MANIPULATE_BUILDING_LEFT,
         BUILDING_TRANSLATION,
-        TRANSLATE_RIGHT,
-        TRANSLATE_LEFT,
-        TRANSLATE_UP,
-        TRANSLATE_DOWN,
-        TRANSLATE_FORWARD,
-        TRANSLATE_BACK,
         IGNORE_SNAP_POINTS,
         CYCLE_FULLSCREEN_MODES
     }
@@ -131,19 +125,13 @@ public static class controls
             [BIND.DECREASE_RENDER_RANGE] = KeyCode.Minus,
             [BIND.CHANGE_PIVOT] = KeyCode.C,
             [BIND.FINE_ROTATION] = KeyCode.LeftControl,
-            [BIND.ROTATE_ANTICLOCKWISE_AROUND_UP] = KeyCode.Q,
-            [BIND.ROTATE_CLOCKWISE_AROUND_UP] = KeyCode.E,
-            [BIND.ROTATE_ANTICLOCKWISE_AROUND_RIGHT] = KeyCode.S,
-            [BIND.ROTATE_CLOCKWISE_AROUND_RIGHT] = KeyCode.W,
-            [BIND.ROTATE_ANTICLOCKWISE_AROUND_FORWARD] = KeyCode.D,
-            [BIND.ROTATE_CLOCKWISE_AROUND_FORWARD] = KeyCode.A,
+            [BIND.MANIPULATE_BUILDING_DOWN] = KeyCode.Q,
+            [BIND.MANIPULATE_BUILDING_UP] = KeyCode.E,
+            [BIND.MANIPULATE_BUILDING_BACK] = KeyCode.S,
+            [BIND.MANIPULATE_BUILDING_FORWARD] = KeyCode.W,
+            [BIND.MANIPULATE_BUILDING_RIGHT] = KeyCode.D,
+            [BIND.MANIPULATE_BUILDING_LEFT] = KeyCode.A,
             [BIND.BUILDING_TRANSLATION] = KeyCode.LeftAlt,
-            [BIND.TRANSLATE_RIGHT] = KeyCode.D,
-            [BIND.TRANSLATE_LEFT] = KeyCode.A,
-            [BIND.TRANSLATE_FORWARD] = KeyCode.W,
-            [BIND.TRANSLATE_BACK] = KeyCode.S,
-            [BIND.TRANSLATE_UP] = KeyCode.E,
-            [BIND.TRANSLATE_DOWN] = KeyCode.Q,
             [BIND.IGNORE_SNAP_POINTS] = KeyCode.LeftControl,
             [BIND.CYCLE_FULLSCREEN_MODES] = KeyCode.F11,
         };
@@ -182,7 +170,7 @@ public static class controls
             case KeyCode.DownArrow: return "the down key";
             case KeyCode.LeftArrow: return "the left key";
             case KeyCode.RightArrow: return "the right arrow";
-            case KeyCode.LeftCommand: return "the control key";
+            case KeyCode.LeftControl: return "the control key";
             case KeyCode.LeftAlt: return "the alt key";
             case KeyCode.Space: return "the spacebar";
             case KeyCode.LeftShift: return "the shift key";

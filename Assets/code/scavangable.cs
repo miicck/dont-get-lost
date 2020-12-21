@@ -24,6 +24,13 @@ public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
         controls.disabled = true;
     }
 
+    public string left_click_context_tip()
+    {
+        string prod_list = product.product_plurals_list(products);
+        if (prod_list.Length < 40) return "Left click to scavange " + prod_list;
+        return "Left click to scavange";
+    }
+
     public void complete_scavange()
     {
         controls.disabled = false;

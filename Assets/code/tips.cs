@@ -10,18 +10,59 @@ public class tips : MonoBehaviour
 {
     UnityEngine.UI.Text text;
 
+    public enum MODE
+    {
+        GENERAL,
+        CONTEXT,
+    }
+    public MODE mode;
+
     private void Start()
     {
         text = GetComponent<UnityEngine.UI.Text>();
-        set_tip();
+
+        switch (mode)
+        {
+            case MODE.GENERAL:
+                set_general_tip();
+                break;
+
+            case MODE.CONTEXT:
+                text.text = "";
+                break;
+
+            default:
+                throw new System.Exception("Unkown tip mode!");
+        }
+
+        all_tips.Add(this);
     }
 
     private void OnEnable()
     {
-        set_tip();
+        if (text == null) return;
+
+        switch (mode)
+        {
+            case MODE.GENERAL:
+                set_general_tip();
+                break;
+
+            case MODE.CONTEXT:
+                text.text = "";
+                break;
+
+            default:
+                throw new System.Exception("Unkown tip mode!");
+        }
     }
 
-    void set_tip()
+    private void OnDestroy()
+    {
+        all_tips.Remove(this);
+    }
+
+    void set_general_tip()
     {
         if (text == null) return;
         if (general_tips == null) return;
@@ -36,9 +77,23 @@ public class tips : MonoBehaviour
     //##############//
 
     static List<string> general_tips = new List<string>();
+    static HashSet<tips> all_tips = new HashSet<tips>();
 
     public static void add(string tip)
     {
         general_tips.Add(tip);
     }
+
+    public static string context_tip
+    {
+        get => _context_tip;
+        set
+        {
+            _context_tip = value;
+            foreach (var t in all_tips)
+                if (t.mode == MODE.CONTEXT)
+                    t.text.text = value;
+        }
+    }
+    static string _context_tip;
 }

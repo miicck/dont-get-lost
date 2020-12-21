@@ -6,7 +6,7 @@ public class cave_system_teleporter : MonoBehaviour, IAcceptLeftClick
 {
     public bool is_underground => transform.position.y < world.UNDERGROUND_ROOF;
     public Transform teleport_spot;
-  
+
     public void on_left_click()
     {
         var target = utils.find_to_min(FindObjectsOfType<cave_system_teleporter>(), (t) =>
@@ -28,5 +28,11 @@ public class cave_system_teleporter : MonoBehaviour, IAcceptLeftClick
         }
 
         player.current.teleport(target.teleport_spot.position);
+    }
+
+    public string left_click_context_tip()
+    {
+        if (is_underground) return "Left click to leave cave";
+        return "Left click to enter cave";
     }
 }

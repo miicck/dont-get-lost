@@ -121,9 +121,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     Cursor.lockState = CursorLockMode.None;
 
                     // Attempt to open a standalone custom menu
-                    var ray = camera_ray(INTERACTION_RANGE, out float max_dis);
-                    open_custom_menu = utils.raycast_for_closest<ICustomMenu>(ray,
-                        out RaycastHit hit, max_distance: max_dis);
+                    open_custom_menu = custom_menu_under_cursor;
                     if (open_custom_menu != null) break; // Custom menu open => don't do anything else
 
                     // No custom menu found, open the inventory
@@ -131,8 +129,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     if (crafting_menu != null) crafting_menu.open = true;
 
                     // Attempt also to open the left menu
-                    ray = camera_ray(INTERACTION_RANGE, out float dist);
-                    left_menu = utils.raycast_for_closest<ILeftPlayerMenu>(ray, out hit, dist);
+                    left_menu = left_menu_under_cursor;
                     break;
 
                 case UI_STATE.MAP_OPEN:
@@ -173,6 +170,68 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     }
     UI_STATE _ui_state;
 
+    //####################//
+    // INTERACTABLE STUFF //
+    //####################//
+
+    ILeftPlayerMenu left_menu_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dist);
+            return utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
+        }
+    }
+
+    ICustomMenu custom_menu_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float max_dis);
+            return utils.raycast_for_closest<ICustomMenu>(ray, out RaycastHit hit, max_dis);
+        }
+    }
+
+    IAcceptLeftClick left_clickable_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dis);
+            if (Physics.Raycast(ray, out RaycastHit hit, dis))
+                return hit.collider.gameObject.GetComponentInParent<IAcceptLeftClick>();
+            return null;
+        }
+    }
+
+    IAcceptRightClick right_clickable_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dis);
+            if (Physics.Raycast(ray, out RaycastHit hit, dis))
+                return hit.collider.gameObject.GetComponentInParent<IAcceptRightClick>();
+            return null;
+        }
+    }
+
+    player player_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dis);
+            return utils.raycast_for_closest<player>(ray, out RaycastHit hit, dis, (p) => p != this);
+        }
+    }
+
+    item item_under_cursor
+    {
+        get
+        {
+            var ray = camera_ray(INTERACTION_RANGE, out float dist);
+            return utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
+        }
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -182,6 +241,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         if (has_authority)
         {
             // Most things require authority to run
+            run_context_tips();
             indicate_damage();
             run_world_generator();
             run_recipe_book();
@@ -216,6 +276,78 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             Gizmos.DrawWireSphere(transform.position + controller.radius * Vector3.up,
                                   controller.radius);
         }
+    }
+
+    void run_context_tips()
+    {
+        if (equipped != null)
+        {
+            var ect = equipped?.equipped_context_tip();
+            if (ect != null)
+            {
+                tips.context_tip = ect;
+                return;
+            }
+        }
+
+        string context_tip = "";
+
+        if (ui_state != UI_STATE.INVENTORY_OPEN)
+        {
+            var lm = left_menu_under_cursor;
+            if (lm != null)
+            {
+                context_tip +=
+                    "Press " + controls.current_bind(controls.BIND.OPEN_INVENTORY) +
+                    " to interact with " + lm.left_menu_display_name() + "\n";
+            }
+
+            var cm = custom_menu_under_cursor;
+            if (cm != null)
+            {
+                context_tip +=
+                    "Press " + controls.current_bind(controls.BIND.OPEN_INVENTORY) +
+                    " to interact\n";
+            }
+        }
+
+        if (ui_state == UI_STATE.ALL_CLOSED)
+        {
+            if (equipped == null)
+            {
+                var lc = left_clickable_under_cursor;
+                if (lc != null)
+                {
+                    var lct = lc.left_click_context_tip();
+                    if (lct != null && lct.Length > 0)
+                        context_tip += lct + "\n";
+                }
+
+                var rc = right_clickable_under_cursor;
+                if (rc != null)
+                {
+                    var rct = rc.right_click_context_tip();
+                    if (rct != null && rct.Length > 0)
+                        context_tip += rct + "\n";
+                }
+            }
+            else
+            {
+                var puc = player_under_cursor;
+                if (puc != null)
+                {
+                    string to_give = equipped.display_name;
+                    context_tip += "Press " + controls.current_bind(controls.BIND.GIVE) +
+                        " to give " + puc.username.value + " " + utils.a_or_an(to_give) + " " + to_give + "\n";
+                }
+            }
+        }
+
+        var to_inspect = global::inspect_info.inspectable_under_cursor;
+        if (to_inspect.inspecting != null)
+            context_tip += "Press " + controls.current_bind(controls.BIND.INSPECT) + " to inspect\n";
+
+        tips.context_tip = context_tip;
     }
 
     //###########//
@@ -322,20 +454,10 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     //##########//
 
     // Called on a left click when no item is equipped
-    public void left_click_with_hand()
-    {
-        var ray = camera_ray(INTERACTION_RANGE, out float dis);
-        if (Physics.Raycast(ray, out RaycastHit hit, dis))
-            hit.collider.gameObject.GetComponentInParent<IAcceptLeftClick>()?.on_left_click();
-    }
+    public void left_click_with_hand() { left_clickable_under_cursor?.on_left_click(); }
 
     // Called on a right click when no item is equipped
-    public void right_click_with_hand()
-    {
-        var ray = camera_ray(INTERACTION_RANGE, out float dis);
-        if (Physics.Raycast(ray, out RaycastHit hit, dis))
-            hit.collider.gameObject.GetComponentInParent<IAcceptRightClick>()?.on_right_click();
-    }
+    public void right_click_with_hand() { right_clickable_under_cursor?.on_right_click(); }
 
     // The ways that we can use an item
     public enum USE_TYPE
@@ -351,8 +473,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         string to_give = equipped.name;
         string to_give_display_name = equipped.display_name;
 
-        var giving_to = utils.raycast_for_closest<player>(camera_ray(),
-            out RaycastHit hit, INTERACTION_RANGE, (p) => p != this);
+        var giving_to = player_under_cursor;
         if (giving_to == null) return;
 
         if (inventory.remove(to_give, 1))
@@ -519,8 +640,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         // Select something in the world/equip it if we have one
         if (controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD))
         {
-            var ray = camera_ray(INTERACTION_RANGE, out float dist);
-            var itm = utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
+            var itm = item_under_cursor;
             if (itm != null)
             {
                 // If we've already got the item in the quickbar, just equip it
@@ -1930,6 +2050,7 @@ public interface ICustomMenu
 public interface IAcceptLeftClick
 {
     void on_left_click();
+    string left_click_context_tip();
 }
 
 /// <summary> Interfact for objects that can be 
@@ -1937,4 +2058,5 @@ public interface IAcceptLeftClick
 public interface IAcceptRightClick
 {
     void on_right_click();
+    string right_click_context_tip();
 }
