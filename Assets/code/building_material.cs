@@ -59,7 +59,7 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
 
     public string right_click_context_tip()
     {
-        return "Right click to destroy";
+        return "Right click to destroy " + display_name;
     }
 
     //#########//

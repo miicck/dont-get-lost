@@ -347,7 +347,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         if (to_inspect.inspecting != null)
             context_tip += "Press " + controls.current_bind(controls.BIND.INSPECT) + " to inspect\n";
 
-        tips.context_tip = context_tip;
+        tips.context_tip = context_tip.Trim();
     }
 
     //###########//

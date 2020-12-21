@@ -122,8 +122,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
             else if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
             {
                 // Place this item on the gutter
-                var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
-                var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
+                var gutter = gutter_to_place_on(player, out RaycastHit hit);
                 if (gutter != null)
                 {
                     var created = item.create(name, hit.point, Quaternion.identity, logistics_version: true);
@@ -136,11 +135,26 @@ public class item : networked, IInspectable, IAcceptLeftClick
         return use_result.complete;
     }
 
+    item_gutter gutter_to_place_on(player p, out RaycastHit hit)
+    {
+        var ray = p.camera_ray(player.INTERACTION_RANGE, out float dis);
+        return utils.raycast_for_closest<item_gutter>(ray, out hit, dis);
+    }
+
+    public virtual string equipped_context_tip()
+    {
+        string ret = "";
+        if (food_value > 0) ret += "Left click to eat";
+        var gut = gutter_to_place_on(player.current, out RaycastHit hit);
+        if (gut != null) ret += "\nRight click to place on gutter";
+        if (ret.Length == 0) return null;
+        return ret;
+    }
+
     public virtual use_result on_use_continue(player.USE_TYPE use_type, player player) { return use_result.complete; }
     public virtual void on_use_end(player.USE_TYPE use_type, player player) { }
     public virtual bool allow_left_click_held_down() { return false; }
     public virtual bool allow_right_click_held_down() { return false; }
-    public virtual string equipped_context_tip() { return null; }
 
     /// <summary> Called when this item is equipped.</summary>
     public virtual void on_equip(player player)

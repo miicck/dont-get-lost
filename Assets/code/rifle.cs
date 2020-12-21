@@ -107,6 +107,11 @@ public class rifle : equip_in_hand
     }
     STATE _state;
 
+    public override string equipped_context_tip()
+    {
+        return "Left click to fire\nRight click to aim down sight";
+    }
+
     public override void on_equip(player player)
     {
         base.on_equip(player);

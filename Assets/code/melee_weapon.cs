@@ -42,6 +42,11 @@ public class melee_weapon : equip_in_hand
             throw new System.Exception("Could not find rigidbody on melee weapon!");
     }
 
+    public override string equipped_context_tip()
+    {
+        return "Left click to swing " + display_name;
+    }
+
     public override void on_equip(player player)
     {
         // Remove all non-trigger colliders
