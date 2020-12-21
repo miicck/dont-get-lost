@@ -54,6 +54,12 @@ public class options_menu : MonoBehaviour
             o.load_optimized();
     }
 
+    public void max_graphics()
+    {
+        foreach (var o in GetComponentsInChildren<options_menu_option>())
+            while (o.increase_graphics()) { }
+    }
+
     public void increase_graphics()
     {
         var options = new List<options_menu_option>(GetComponentsInChildren<options_menu_option>());
