@@ -112,16 +112,23 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
         /// </summary>
         int pivot_index
         {
-            get => _pivot_index;
+            get
+            {
+                if (_pivot_index.ContainsKey(to_weld.name))
+                    return _pivot_index[to_weld.name];
+                return 0;
+            }
             set
             {
-                _pivot_index = value;
-                if (_pivot_index > to_weld.snap_points.Length - 1) _pivot_index = 0;
-                else if (_pivot_index < 0) _pivot_index = to_weld.snap_points.Length - 1;
-                pivot = to_weld.snap_points[_pivot_index];
+                if (value > to_weld.snap_points.Length - 1) value = 0;
+                else if (value < 0) value = to_weld.snap_points.Length - 1;
+                _pivot_index[to_weld.name] = value;
+                pivot = to_weld.snap_points[value];
             }
         }
-        static int _pivot_index; // Static so it's remembered between placements
+
+        // Pivot index, by item name. Static so it's remembered between placements.
+        static Dictionary<string, int> _pivot_index = new Dictionary<string, int>();
 
         // Constructor
         public weld_info(
@@ -190,6 +197,7 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
             to_weld.transform.position += amount;
             axes.transform.position += amount;
             rotation_axes.transform.position += amount;
+            weld_location += amount;
         }
 
         enum MOUSE_MODE
