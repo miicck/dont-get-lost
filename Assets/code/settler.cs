@@ -333,6 +333,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         height.on_change = () =>
         {
             transform.localScale = Vector3.one * height.value;
+            base.height = height.value * 1.5f + 0.2f;
         };
     }
 
