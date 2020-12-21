@@ -28,6 +28,15 @@ public class inventory_slot : MonoBehaviour, IInspectable
     item item;
     int count;
 
+    public string contents_display_name
+    {
+        get
+        {
+            if (count == 0) return null;
+            return count > 1 ? item?.plural : item?.display_name;
+        }
+    }
+
     public virtual void update(item item, int count, inventory inventory)
     {
         if (count == 0 || item == null)
