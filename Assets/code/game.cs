@@ -7,7 +7,7 @@ public class game : MonoBehaviour
     public const float MIN_RENDER_RANGE = 4f;
     public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
-    public const float CHARACTER_SPAWN_INTERVAL = 0.02f;
+    public const float CHARACTER_SPAWN_INTERVAL = 0.5f;
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;

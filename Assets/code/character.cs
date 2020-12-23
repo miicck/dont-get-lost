@@ -291,7 +291,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
                     if (c is MeshFilter) continue;
                     Destroy(c);
                 }
-                
+
                 // Make the copy a child of this dead_character and
                 // give it a simple collider
                 rcopy.transform.SetParent(transform);
@@ -438,13 +438,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
     }
     static bool _characters_enabled = true;
 
-    public static int target_character_count
-    {
-        get
-        {
-            return character_spawn_point.spawn_point_count / 4;
-        }
-    }
+    public static int target_character_count => character_spawn_point.active_count;
 
     public static void initialize()
     {
@@ -454,8 +448,20 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
     public static void run_spawning()
     {
         if (!characters_enabled) return;
+
         if (characters.Count < target_character_count)
+        {
+            // Fewer characters than target, spawn one
             character_spawn_point.spawn();
+        }
+        else if (characters.Count > target_character_count)
+        {
+            // More characters than target, despawn the character 
+            // that is furthest from the player
+            var furthest = utils.find_to_min(characters,
+                (c) => -(c.transform.position - player.current.transform.position).sqrMagnitude);
+            furthest?.delete();
+        }
     }
 
     public static string info()
