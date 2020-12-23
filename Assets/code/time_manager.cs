@@ -21,7 +21,7 @@ public class time_manager : networked
 
     public override void on_init_network_variables()
     {
-        time_of_day = new networked_variables.net_float(resolution: 0.01f);
+        time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);
         day_number = new networked_variables.net_int();
         manager = this;
     }
@@ -58,7 +58,7 @@ public class time_manager : networked
 
     public static float time
     {
-        get => manager == null ? 0f : manager.time_of_day.value;
+        get => manager == null ? 0f : manager.time_of_day.lerped_value;
         set
         {
             if (manager == null) return;
