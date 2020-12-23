@@ -245,9 +245,9 @@ public class game : MonoBehaviour
         // Update load balancing info
         load_balancing.update();
 
-        // Toggle the console
-        if (controls.key_press(controls.BIND.TOGGLE_CONSOLE))
-            console.open = !console.open;
+        // Open/Close the console
+        if (controls.key_press(controls.BIND.OPEN_CONSOLE)) console.open = true;
+        if (controls.key_press(controls.BIND.CLOSE_CONSOLE)) console.open = false;
 
         // Repeat the last console command
         if (controls.key_press(controls.BIND.REPEAT_LAST_CONSOLE_COMMAND))
@@ -280,8 +280,9 @@ public class game : MonoBehaviour
             server.info() + "\n" +
             "\nCLIENT\n" +
             client.info() + "\n" +
-            "\nPLAYER\n" +
+            "\nPLAYERS\n" +
             player.info() + "\n" +
+            client.connected_player_info() + "\n" +
             "\nCHARACTERS\n" +
             character.info() + "\n" +
             "\nSETTLERS\n" +

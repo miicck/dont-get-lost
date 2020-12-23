@@ -163,8 +163,20 @@ public class console : MonoBehaviour
         {
             command = (args) =>
             {
+                if (player.current == null) return console_error("Please wait until the local player is loaded");
+
+                if (args.Length == 2)
+                {
+                    // Teleport to player
+                    var pi = client.get_player_info(args[1]);
+                    if (pi == null || !pi.connected) return console_error("Player " + args[1] + " is not connected!");
+                    player.current.teleport(pi.position);
+                    return true;
+                }
+
                 if (args.Length < 4) return console_error("Not enough arguments!");
 
+                // Teleport to location
                 if (!float.TryParse(args[1], out float x))
                     return console_error("Could not parse coordinate from " + args[1]);
                 if (!float.TryParse(args[2], out float y))
@@ -317,6 +329,40 @@ public class console : MonoBehaviour
 
             description = "Set the current cursor",
             usage_example = "cursor transparent"
+        },
+
+        ["create"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Not enough arguments!");
+                if (player.current == null) return console_error("Please wait for the player to load!");
+                if (Resources.Load<networked>(args[1]) == null) return console_error("Could not find the networked prefab: " + args[1]);
+                if (Physics.Raycast(player.current.camera_ray(), out RaycastHit hit))
+                    client.create(hit.point, args[1]);
+                return true;
+            },
+
+            description = "Create a networked prefab with the given resource path where the player is looking",
+            usage_example = "create characters/chicken"
+        },
+
+        ["delete_type"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Not enough arguments!");
+                var t = System.Type.GetType(args[1]);
+                if (t == null) return console_error("Could not find the type: " + args[1]);
+                if (!t.IsSubclassOf(typeof(networked))) return console_error(t + " is not a networked type!");
+
+                var found = (networked)FindObjectOfType(t);
+                found.delete();
+                return true;
+            },
+
+            description = "Deletes the first found instance of the given network type.",
+            usage_example = "Delete character"
         }
     };
 

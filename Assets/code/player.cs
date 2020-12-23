@@ -1597,6 +1597,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     networked_variables.net_color net_hair_color;
 
     public int slot_number_equipped => slot_equipped.value;
+    public string player_username => username.value;
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }

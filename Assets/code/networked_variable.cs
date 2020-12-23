@@ -74,6 +74,22 @@ public abstract class networked_variable<T> : networked_variable
     }
     protected T _value;
 
+    /// <summary> The hash code is inherited from 
+    /// the underlying type <typeparamref name="T"/>. </summary>
+    public override int GetHashCode() { return value.GetHashCode(); }
+
+    /// <summary> Equality is inherited from the underlying 
+    /// type <typeparamref name="T"/>. </summary>
+    public override bool Equals(object obj)
+    {
+        if (obj is networked_variable<T>)
+        {
+            var other = (networked_variable<T>)obj;
+            return value.Equals(other.value);
+        }
+        return false;
+    }
+
     /// <summary> The last value that was sent. </summary>
     T last_queued_value;
 
@@ -136,202 +152,202 @@ public abstract class networked_variable<T> : networked_variable
     }
 }
 
-public class networked_list<T> : networked_variable, IEnumerable<T>
-    where T : networked_variable, new()
-{
-    List<T> list = new List<T>();
-    public IEnumerator<T> GetEnumerator() { return list.GetEnumerator(); }
-    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
-
-    public void add(T t)
-    {
-        list.Add(t);
-        set_dirty();
-    }
-
-    public bool remove(T t)
-    {
-        if (list.Remove(t))
-        {
-            set_dirty();
-            return true;
-        }
-        return false;
-    }
-
-    public void remove_at(int i)
-    {
-        list.RemoveAt(i);
-        set_dirty();
-    }
-
-    public T this[int i] => list[i];
-    public int length => list.Count;
-
-    protected override void process_serialization(byte[] buffer, ref int offset, int length)
-    {
-        int start = offset;
-        int list_length = network_utils.decode_int(buffer, ref offset);
-        list = new List<T>();
-
-        for (int i = 0; i < list_length; ++i)
-        {
-            var t = new T();
-            t.reccive_serialization(buffer, ref offset, length - (offset - start));
-            list.Add(t);
-        }
-    }
-
-    public override byte[] serialization()
-    {
-        List<byte> serial = new List<byte>();
-        serial.AddRange(network_utils.encode_int(list.Count));
-        foreach (var t in list) serial.AddRange(t.serialization());
-        return serial.ToArray();
-    }
-}
-
-public class networked_pair<T, K> : networked_variable
-    where T : networked_variable, new()
-    where K : networked_variable, new()
-{
-    KeyValuePair<T, K> pair;
-    public T first => pair.Key;
-    public K second => pair.Value;
-
-    public networked_pair(T first, K second)
-    {
-        pair = new KeyValuePair<T, K>(first, second);
-    }
-
-    public networked_pair()
-    {
-        pair = new KeyValuePair<T, K>(new T(), new K());
-    }
-
-    protected override void process_serialization(byte[] buffer, ref int offset, int length)
-    {
-        int start = offset;
-        pair.Key.reccive_serialization(buffer, ref offset, length);
-        pair.Value.reccive_serialization(buffer, ref offset, length - (offset - start));
-    }
-
-    public override byte[] serialization()
-    {
-        return network_utils.concat_buffers(
-            pair.Key.serialization(), pair.Value.serialization());
-    }
-}
-
-public class simple_networked_pair<T, K> : networked_variable
-{
-    public T first
-    {
-        get => net_first.value;
-        set
-        {
-            net_first.value = value;
-            on_change?.Invoke();
-            set_dirty();
-        }
-    }
-
-    public K second
-    {
-        get => net_second.value;
-        set
-        {
-            net_second.value = value;
-            on_change?.Invoke();
-            set_dirty();
-        }
-    }
-
-    public void set(T first, K second)
-    {
-        net_first.value = first;
-        net_second.value = second;
-        on_change?.Invoke();
-        set_dirty();
-    }
-
-    networked_variable<T> net_first;
-    networked_variable<K> net_second;
-
-    public simple_networked_pair(
-        networked_variable<T> first,
-        networked_variable<K> second)
-    {
-        net_first = first;
-        net_second = second;
-    }
-
-    protected override void process_serialization(byte[] buffer, ref int offset, int length)
-    {
-        int start = offset;
-        net_first.reccive_serialization(buffer, ref offset, length);
-        net_second.reccive_serialization(buffer, ref offset, length - (offset - start));
-        on_change?.Invoke();
-    }
-
-    public override byte[] serialization()
-    {
-        return network_utils.concat_buffers(
-            net_first.serialization(),
-            net_second.serialization());
-    }
-
-    public delegate void on_change_func();
-    public on_change_func on_change;
-}
-
-public class networked_int_set : networked_variable, IEnumerable<int>
-{
-    HashSet<int> set = new HashSet<int>();
-    public IEnumerator<int> GetEnumerator() { return set.GetEnumerator(); }
-    IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
-
-    public void add(int i)
-    {
-        if (!set.Add(i)) return; // Already in the set
-        set_dirty();
-    }
-
-    public void remove(int i)
-    {
-        if (!set.Remove(i)) return; // Wasn't in the set
-        set_dirty();
-    }
-
-    public bool contains(int i) => set.Contains(i);
-
-    public override byte[] serialization()
-    {
-        List<byte> serial = new List<byte>(sizeof(int) * (set.Count + 1));
-        serial.AddRange(network_utils.encode_int(set.Count));
-        foreach (var i in set)
-            serial.AddRange(network_utils.encode_int(i));
-        return serial.ToArray();
-    }
-
-    protected override void process_serialization(byte[] buffer, ref int offset, int length)
-    {
-        int start = offset;
-        int count = network_utils.decode_int(buffer, ref offset);
-        set = new HashSet<int>();
-        for (int i = 0; i < count; ++i)
-            set.Add(network_utils.decode_int(buffer, ref offset));
-        if (offset - start != length)
-            throw new System.Exception("int set not correctly deserialized!");
-    }
-}
-
 //#################//
 // IMPLEMENTATIONS //
 //#################//
 
 namespace networked_variables
 {
+    public class networked_list<T> : networked_variable, IEnumerable<T>
+    where T : networked_variable, new()
+    {
+        List<T> list = new List<T>();
+        public IEnumerator<T> GetEnumerator() { return list.GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+        public void add(T t)
+        {
+            list.Add(t);
+            set_dirty();
+        }
+
+        public bool remove(T t)
+        {
+            if (list.Remove(t))
+            {
+                set_dirty();
+                return true;
+            }
+            return false;
+        }
+
+        public void remove_at(int i)
+        {
+            list.RemoveAt(i);
+            set_dirty();
+        }
+
+        public T this[int i] => list[i];
+        public int length => list.Count;
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int start = offset;
+            int list_length = network_utils.decode_int(buffer, ref offset);
+            list = new List<T>();
+
+            for (int i = 0; i < list_length; ++i)
+            {
+                var t = new T();
+                t.reccive_serialization(buffer, ref offset, length - (offset - start));
+                list.Add(t);
+            }
+        }
+
+        public override byte[] serialization()
+        {
+            List<byte> serial = new List<byte>();
+            serial.AddRange(network_utils.encode_int(list.Count));
+            foreach (var t in list) serial.AddRange(t.serialization());
+            return serial.ToArray();
+        }
+    }
+
+    public class networked_pair<T, K> : networked_variable
+        where T : networked_variable, new()
+        where K : networked_variable, new()
+    {
+        KeyValuePair<T, K> pair;
+        public T first => pair.Key;
+        public K second => pair.Value;
+
+        public networked_pair(T first, K second)
+        {
+            pair = new KeyValuePair<T, K>(first, second);
+        }
+
+        public networked_pair()
+        {
+            pair = new KeyValuePair<T, K>(new T(), new K());
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int start = offset;
+            pair.Key.reccive_serialization(buffer, ref offset, length);
+            pair.Value.reccive_serialization(buffer, ref offset, length - (offset - start));
+        }
+
+        public override byte[] serialization()
+        {
+            return network_utils.concat_buffers(
+                pair.Key.serialization(), pair.Value.serialization());
+        }
+    }
+
+    public class simple_networked_pair<T, K> : networked_variable
+    {
+        public T first
+        {
+            get => net_first.value;
+            set
+            {
+                net_first.value = value;
+                on_change?.Invoke();
+                set_dirty();
+            }
+        }
+
+        public K second
+        {
+            get => net_second.value;
+            set
+            {
+                net_second.value = value;
+                on_change?.Invoke();
+                set_dirty();
+            }
+        }
+
+        public void set(T first, K second)
+        {
+            net_first.value = first;
+            net_second.value = second;
+            on_change?.Invoke();
+            set_dirty();
+        }
+
+        networked_variable<T> net_first;
+        networked_variable<K> net_second;
+
+        public simple_networked_pair(
+            networked_variable<T> first,
+            networked_variable<K> second)
+        {
+            net_first = first;
+            net_second = second;
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int start = offset;
+            net_first.reccive_serialization(buffer, ref offset, length);
+            net_second.reccive_serialization(buffer, ref offset, length - (offset - start));
+            on_change?.Invoke();
+        }
+
+        public override byte[] serialization()
+        {
+            return network_utils.concat_buffers(
+                net_first.serialization(),
+                net_second.serialization());
+        }
+
+        public delegate void on_change_func();
+        public on_change_func on_change;
+    }
+
+    public class networked_int_set : networked_variable, IEnumerable<int>
+    {
+        HashSet<int> set = new HashSet<int>();
+        public IEnumerator<int> GetEnumerator() { return set.GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+        public void add(int i)
+        {
+            if (!set.Add(i)) return; // Already in the set
+            set_dirty();
+        }
+
+        public void remove(int i)
+        {
+            if (!set.Remove(i)) return; // Wasn't in the set
+            set_dirty();
+        }
+
+        public bool contains(int i) => set.Contains(i);
+
+        public override byte[] serialization()
+        {
+            List<byte> serial = new List<byte>(sizeof(int) * (set.Count + 1));
+            serial.AddRange(network_utils.encode_int(set.Count));
+            foreach (var i in set)
+                serial.AddRange(network_utils.encode_int(i));
+            return serial.ToArray();
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int start = offset;
+            int count = network_utils.decode_int(buffer, ref offset);
+            set = new HashSet<int>();
+            for (int i = 0; i < count; ++i)
+                set.Add(network_utils.decode_int(buffer, ref offset));
+            if (offset - start != length)
+                throw new System.Exception("int set not correctly deserialized!");
+        }
+    }
+
     /// <summary> A networked boolean value. </summary>
     public class net_bool : networked_variable<bool>
     {
@@ -599,42 +615,7 @@ namespace networked_variables
         }
     }
 
-    /// <summary> Represents a map from strings to ints. </summary>
-    public class net_string_counts : networked_variable<SortedDictionary<string, int>>
-    {
-        public net_string_counts()
-        {
-            _value = new SortedDictionary<string, int>();
-        }
-
-        public override byte[] serialization()
-        {
-            List<byte> ret = new List<byte>();
-            foreach (var kv in value)
-            {
-                ret.AddRange(network_utils.encode_string(kv.Key));
-                ret.AddRange(network_utils.encode_int(kv.Value));
-            }
-            return ret.ToArray();
-        }
-
-        protected override SortedDictionary<string, int> deserialize(byte[] buffer, ref int offset, int length)
-        {
-            var new_dict = new SortedDictionary<string, int>();
-
-            int end = offset + length;
-            while (offset < end)
-            {
-                string key = network_utils.decode_string(buffer, ref offset);
-                int value = network_utils.decode_int(buffer, ref offset);
-                new_dict[key] = value;
-            }
-
-            return new_dict;
-        }
-    }
-
-    public class net_string_counts_v2 : networked_variable, IEnumerable<KeyValuePair<string, int>>
+    public class net_string_counts : networked_variable, IEnumerable<KeyValuePair<string, int>>
     {
         Dictionary<string, int> dict = new Dictionary<string, int>();
         public IEnumerator<KeyValuePair<string, int>> GetEnumerator() { return dict.GetEnumerator(); }
@@ -730,5 +711,63 @@ namespace networked_variables
 
         public delegate void on_change_func();
         public on_change_func on_change;
+    }
+
+    public class net_dictionary<K, V> : networked_variable, IEnumerable<KeyValuePair<K, V>>
+        where K : networked_variable, new()
+        where V : networked_variable, new()
+    {
+        Dictionary<K, V> dict = new Dictionary<K, V>();
+        public IEnumerator<KeyValuePair<K, V>> GetEnumerator() { return dict.GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+        public bool TryGetValue(K key, out V val) { return dict.TryGetValue(key, out val); }
+        public V this[K key]
+        {
+            get
+            {
+                if (dict.ContainsKey(key))
+                    return dict[key];
+                return null;
+            }
+            set
+            {
+                dict[key] = value;
+                set_dirty();
+            }
+        }
+
+        public override byte[] serialization()
+        {
+            List<byte> bytes = new List<byte>();
+            foreach (var kv in dict)
+            {
+                var key_serial = kv.Key.serialization();
+                bytes.AddRange(network_utils.encode_int(key_serial.Length));
+                bytes.AddRange(key_serial);
+
+                var val_serial = kv.Value.serialization();
+                bytes.AddRange(network_utils.encode_int(val_serial.Length));
+                bytes.AddRange(val_serial);
+            }
+            return bytes.ToArray();
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int end = offset + length;
+            while (offset < end)
+            {
+                K key = new K();
+                int key_length = network_utils.decode_int(buffer, ref offset);
+                key.reccive_serialization(buffer, ref offset, key_length);
+
+                V val = new V();
+                int val_length = network_utils.decode_int(buffer, ref offset);
+                val.reccive_serialization(buffer, ref offset, val_length);
+
+                dict[key] = val;
+            }
+        }
     }
 }

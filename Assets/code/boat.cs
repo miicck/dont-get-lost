@@ -8,7 +8,7 @@ public class boat : networked, IInspectable
 
     networked_variables.net_int away_time;
     networked_variables.net_int journey_stage;
-    networked_variables.net_string_counts_v2 contents;
+    networked_variables.net_string_counts contents;
 
     enum JOURNEY_STAGES
     {
@@ -53,7 +53,7 @@ public class boat : networked, IInspectable
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
-        contents = new networked_variables.net_string_counts_v2();
+        contents = new networked_variables.net_string_counts();
         away_time = new networked_variables.net_int();
         journey_stage = new networked_variables.net_int();
 

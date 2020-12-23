@@ -20,6 +20,10 @@ public static class server
     /// (both to avoid timeout, and to measure ping). </summary>
     public const float CLIENT_HEARTBEAT_PERIOD = 1f;
 
+    /// <summary> The position resolution to which players are updated about each other, even
+    /// when they are out of render range on each others clients. </summary>
+    public const float PLAYER_RESOLUTION_UNLOADED = 5f;
+
     /// <summary> The render range for clients starts at this value. </summary>
     public const float INIT_RENDER_RANGE = 0f;
 
@@ -52,6 +56,9 @@ public static class server
             }
         }
         representation _player;
+
+        /// <summary> The last position of the player that other clients were told about. </summary>
+        Vector3 last_updated_position;
 
         // The TCP connection to this client
         public TcpClient tcp { get; private set; }
@@ -103,6 +110,7 @@ public static class server
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
             Debug.Log("Client " + username + " disconnected, message: " + message);
+            Vector3 disconnect_position = player.transform.position;
 
             // Unload representations (only top-level, lower level will
             // be automatically unloaded using the unload function)
@@ -138,6 +146,10 @@ public static class server
             }
             else
                 player?.transform.SetParent(inactive_representations);
+
+            // Let other clients know that we've disconnected
+            foreach (var c in connected_clients)
+                message_senders[MESSAGE.PLAYER_UPDATE](c, username, disconnect_position, false);
         }
 
         /// <summary> The representations loaded as objects on this client. </summary>
@@ -174,6 +186,18 @@ public static class server
                     // Load on clients that are within range
                     if (should_load(rep))
                         load(rep, false);
+                }
+            }
+
+            // Let other clients know about our updated position, if we've moved far enough
+            if ((last_updated_position - player.transform.position).magnitude > PLAYER_RESOLUTION_UNLOADED)
+            {
+                last_updated_position = player.transform.position;
+                foreach (var c in connected_clients)
+                {
+                    if (c == this) continue;
+                    message_senders[MESSAGE.PLAYER_UPDATE](c, username,
+                        player.transform.position, connected_clients.Contains(this));
                 }
             }
 
@@ -702,6 +726,16 @@ public static class server
 
                 // Login
                 client.login(uname, pword);
+
+                foreach (var c in connected_clients)
+                    if (c != client)
+                    {
+                        // Update other clients about this new login
+                        message_senders[MESSAGE.PLAYER_UPDATE](c, uname, client.player.transform.position, true);
+
+                        // Update this client about the other players
+                        message_senders[MESSAGE.PLAYER_UPDATE](client, c.username, c.player.transform.position, true);
+                    }
             },
 
             [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
@@ -1007,7 +1041,24 @@ public static class server
                 // Disconnect messages are sent immediately, so that the client object (including 
                 // it's message queues) can be immediately removed afterwards
                 send(client, MESSAGE.DISCONNECT, network_utils.encode_string(msg), immediate: true);
-            }
+            },
+
+            [MESSAGE.PLAYER_UPDATE] = (client, args) =>
+            {
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                // The username of the player we're sending updates about
+                string username = (string)args[0];
+                Vector3 position = (Vector3)args[1];
+                bool connected = (bool)args[2];
+
+                send(client, MESSAGE.PLAYER_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_string(username),
+                    network_utils.encode_vector3(position),
+                    network_utils.encode_bool(connected)
+                ));
+            },
         };
     }
 
@@ -1393,6 +1444,7 @@ public static class server
         GAIN_AUTH,         // Sent to a ciient when they gain authority over an object
         HEARTBEAT,         // Respond to a client heartbeat
         DISCONNECT,        // Sent to a client when they are disconnected
+        PLAYER_UPDATE,     // Sent to clients to update info about connected players
     }
 
     delegate void message_parser(client c, byte[] bytes, int offset, int length);

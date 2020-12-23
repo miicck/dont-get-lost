@@ -56,7 +56,8 @@ public static class controls
         TOGGLE_MAP,
         CRAFT_FIVE,
         QUICK_ITEM_TRANSFER,
-        TOGGLE_CONSOLE,
+        OPEN_CONSOLE,
+        CLOSE_CONSOLE,
         REPEAT_LAST_CONSOLE_COMMAND,
         CONSOLE_MOVE_HISTORY_BACK,
         CONSOLE_MOVE_HISTORY_FORWARD,
@@ -115,7 +116,8 @@ public static class controls
             [BIND.TOGGLE_MAP] = KeyCode.M,
             [BIND.CRAFT_FIVE] = KeyCode.LeftShift,
             [BIND.QUICK_ITEM_TRANSFER] = KeyCode.LeftShift,
-            [BIND.TOGGLE_CONSOLE] = KeyCode.Slash,
+            [BIND.OPEN_CONSOLE] = KeyCode.Slash,
+            [BIND.CLOSE_CONSOLE] = KeyCode.Escape,
             [BIND.REPEAT_LAST_CONSOLE_COMMAND] = KeyCode.F1,
             [BIND.CONSOLE_MOVE_HISTORY_BACK] = KeyCode.UpArrow,
             [BIND.CONSOLE_MOVE_HISTORY_FORWARD] = KeyCode.DownArrow,
@@ -185,7 +187,7 @@ public static class controls
             // Console commands aren't player commands
             case BIND.CONSOLE_MOVE_HISTORY_BACK:
             case BIND.CONSOLE_MOVE_HISTORY_FORWARD:
-            case BIND.TOGGLE_CONSOLE:
+            case BIND.OPEN_CONSOLE:
             case BIND.REPEAT_LAST_CONSOLE_COMMAND:
                 return false;
 

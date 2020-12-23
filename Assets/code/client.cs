@@ -22,6 +22,7 @@ public static class client
     static TcpClient tcp;
     static int last_server_time;
     static int last_server_time_local;
+    static Dictionary<string, player_info> player_infos;
 
     /// <summary> Any bytes of a partial message from the server that appeared at the
     /// end of a buffer, to be glued to the start of the next buffer. </summary>
@@ -30,6 +31,21 @@ public static class client
     // END STATE VARIABLES //
 
     public static int server_time => ((int)Time.realtimeSinceStartup - last_server_time_local) + last_server_time;
+
+    /// <summary> Struct containing information about the players on the server. </summary>
+    public class player_info
+    {
+        public Vector3 position;
+        public bool connected;
+    }
+
+    /// <summary> Get information about player that are, or have been
+    /// connected during this session. </summary>
+    public static player_info get_player_info(string username)
+    {
+        if (player_infos.TryGetValue(username, out player_info pi)) return pi;
+        return null;
+    }
 
     /// <summary> Called when the client disconnects. </summary>
     /// <param name="message">The message from the server, if it 
@@ -263,6 +279,7 @@ public static class client
         traffic_down = new network_utils.traffic_monitor();
         message_queue = new Queue<pending_message>();
         pending_creation_messages = new Queue<pending_creation_message>();
+        player_infos = new Dictionary<string, player_info>();
         client.on_disconnect = on_disconnect;
         tcp = new TcpClient();
         var connector = tcp.BeginConnect(host, port, null, null);
@@ -381,7 +398,21 @@ public static class client
                 // The server told us to disconnect. How rude.
                 string msg = network_utils.decode_string(buffer, ref offset);
                 disconnect(false, msg_from_server: msg);
-            }
+            },
+
+            [server.MESSAGE.PLAYER_UPDATE] = (buffer, offset, length) =>
+            {
+                // Update player infos from server message
+                string uname = network_utils.decode_string(buffer, ref offset);
+                Vector3 pos = network_utils.decode_vector3(buffer, ref offset);
+                bool con = network_utils.decode_bool(buffer, ref offset);
+
+                player_infos[uname] = new player_info
+                {
+                    position = pos,
+                    connected = con
+                };
+            },
         };
 
         // Send a message type + payload
@@ -563,7 +594,7 @@ public static class client
         {
             Debug.Log("Connection severed ungracefully.");
         }
-        
+
         tcp.Close();
         tcp = null;
 
@@ -710,6 +741,14 @@ public static class client
                "    Server time        : " + server_time + " (last = " + last_server_time + ")\n" +
                "    Activity           : " + activity_since_heartbeat + "\n";
 
+    }
+
+    public static string connected_player_info()
+    {
+        string ret = "";
+        foreach (var kv in player_infos)
+            ret += "    " + kv.Key + " " + (kv.Value.connected ? "connected" : "disconnected") + " at " + kv.Value.position;
+        return ret;
     }
 
     public enum MESSAGE : byte

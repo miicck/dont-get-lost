@@ -14,13 +14,13 @@ public class inventory_slot_networked : networked
 
     // The actual contents of this slot are networked
     networked_variables.net_int net_index; // The inventory slot coordinate
-    simple_networked_pair<string, int> contents; // The actual contents of the slot
+    networked_variables.simple_networked_pair<string, int> contents; // The actual contents of the slot
 
     public override void on_init_network_variables()
     {
         net_index = new networked_variables.net_int(default_value: -1);
 
-        contents = new simple_networked_pair<string, int>(
+        contents = new networked_variables.simple_networked_pair<string, int>(
             new networked_variables.net_string(),
             new networked_variables.net_int());
 
