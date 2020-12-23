@@ -13,7 +13,8 @@ public class time_manager : networked
 
     /// <summary> The time of day in [0,2). Values in [0,1] correspond to
     /// daytime, values in [1,2) correspond to nighttime. </summary>
-    networked_variables.net_float time_of_day;
+    networked_variables.net_float networked_time_of_day;
+    float local_time_of_day;
 
     /// <summary> The number of days passed since the 
     /// start of the server. </summary> 
@@ -21,26 +22,42 @@ public class time_manager : networked
 
     public override void on_init_network_variables()
     {
-        time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);
+        networked_time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);
+
+        networked_time_of_day.on_change = () =>
+        {
+            // Always belive updates from the network
+            local_time_of_day = networked_time_of_day.value;
+        };
+
         day_number = new networked_variables.net_int();
         manager = this;
     }
 
     void Update()
     {
-        // Only the authoriy client controls time
-        if (!has_authority) return;
-
         // Increment time
-        if (time_of_day.value < 1f)
-            time_of_day.value += Time.deltaTime / DAY_LENGTH;
-        else if (time_of_day.value < 2f)
-            time_of_day.value += Time.deltaTime / NIGHT_LENGTH;
+        if (local_time_of_day < 1f)
+            local_time_of_day += Time.deltaTime / DAY_LENGTH;
+        else if (local_time_of_day < 2f)
+            local_time_of_day += Time.deltaTime / NIGHT_LENGTH;
         else
         {
-            // Increment day count, reset time
-            time_of_day.value = 0;
-            day_number.value += 1;
+            // Time > 2 => a day has passed
+            if (has_authority)
+            {
+                // Increment day count, reset time
+                day_number.value += 1;
+            }
+
+            // Reset time
+            local_time_of_day = 0;
+        }
+
+        if (has_authority)
+        {
+            // Clien has authority over networked time of day
+            networked_time_of_day.value = local_time_of_day;
         }
     }
 
@@ -58,11 +75,16 @@ public class time_manager : networked
 
     public static float time
     {
-        get => manager == null ? 0f : manager.time_of_day.lerped_value;
+        get
+        {
+            if (manager == null) return 0;
+            return manager.local_time_of_day;
+        }
         set
         {
             if (manager == null) return;
-            manager.time_of_day.value = value;
+            manager.local_time_of_day = value;
+            manager.networked_time_of_day.value = value;
         }
     }
 
