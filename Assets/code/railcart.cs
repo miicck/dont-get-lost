@@ -12,6 +12,11 @@ public class railcart : item
     float progress;
     float speed;
 
+    public override string equipped_context_tip()
+    {
+        return "Click on a rail to use";
+    }
+
     public override use_result on_use_start(player.USE_TYPE use_type, player player)
     {
         // Rails only get used by authority client
