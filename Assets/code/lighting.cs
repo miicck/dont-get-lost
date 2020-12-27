@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class fog_distances
 {
+    public const float EXTRA_EXTREMELY_CLOSE = 2f;
     public const float EXTEREMELY_CLOSE = 6f;
     public const float VERY_CLOSE = 12f;
     public const float CLOSE = 32f;

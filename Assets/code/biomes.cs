@@ -882,3 +882,58 @@ public class bamboo_marsh : biome
             }
     }
 }
+
+public class dried_up_rivers : biome
+{
+    public const int CHANNEL_SIZE = 16;
+    public const int CHANNEL_WIGGLE = CHANNEL_SIZE * 2;
+    public const float WIGGLE_PERIOD = CHANNEL_WIGGLE * 1.1f;
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + Mathf.PerlinNoise(i / 32f, j / 32f) - 0.5f;
+                p.fog_distance = fog_distances.EXTEREMELY_CLOSE;
+                p.terrain_color = terrain_colors.dirt;
+
+                int i_offset = (int)(CHANNEL_WIGGLE * Mathf.PerlinNoise(i / WIGGLE_PERIOD, j / WIGGLE_PERIOD));
+                int j_offset = (int)(CHANNEL_WIGGLE * Mathf.PerlinNoise(i / WIGGLE_PERIOD + 0.21f, j / WIGGLE_PERIOD));
+
+                int distance_from_channel = Mathf.Min(
+                    Mathf.Abs((i + i_offset) % CHANNEL_SIZE - CHANNEL_SIZE / 2),
+                    Mathf.Abs((j + j_offset) % CHANNEL_SIZE - CHANNEL_SIZE / 2));
+
+                p.altitude += random.range(-0.15f, 0.15f);
+
+                // In channel
+                if (distance_from_channel < CHANNEL_SIZE / 4)
+                {
+                    if (p.altitude <= world.SEA_LEVEL)
+                    {
+                        if (random.range(0, 64) == 0)
+                            p.object_to_generate = world_object.load("tree_underwater_only");
+
+                        continue;
+                    }
+
+                    if (distance_from_channel > CHANNEL_SIZE / 8)
+                    {
+                        if (random.range(0, 8) == 0)
+                            p.object_to_generate = world_object.load("dead_tree_1");
+                        else if (random.range(0, 8) == 0)
+                            p.object_to_generate = world_object.load("dry_bush");
+                    }
+
+                    continue;
+                }
+
+                // Outside channel
+                p.altitude += distance_from_channel * 0.5f;
+                if (random.range(0, 16) == 0)
+                    p.object_to_generate = world_object.load("standing_rock_1");
+            }
+    }
+}
