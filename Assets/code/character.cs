@@ -7,6 +7,8 @@ public interface ICharacterController
     void control(character c);
     void draw_gizmos();
     void draw_inspector_gui();
+    void on_end_control(character c);
+    string inspect_info();
 }
 
 public interface IAcceptsDamage
@@ -21,6 +23,8 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
     public const float ARRIVE_DISTANCE = 0.25f;
 
     // Character behaviour
+    public string display_name;
+    public string plural_name;
     public float walk_speed = 1f;
     public float run_speed = 4f;
     public int max_health = 10;
@@ -30,7 +34,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
     public float rotation_lerp_speed = 1f;
     public float idle_walk_distance = 4f;
     public float flee_distance = 4f;
-    public float reach = 0.5f;
+    public float melee_range = 0.5f;
     public float melee_cooldown = 1f;
     public int melee_damage = 10;
     public FRIENDLINESS friendliness;
@@ -47,9 +51,20 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
             // Default control
             if (_controller == null)
                 _controller = default_controller();
+
             return _controller;
         }
-        set => _controller = value;
+        set
+        {
+            if (_controller == value)
+                return; // No change
+
+            var tmp = _controller;
+            _controller = value;
+
+            if (tmp != null)
+                tmp.on_end_control(this);
+        }
     }
     ICharacterController _controller;
 
@@ -71,7 +86,12 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
     // IINspectable //
     //##############//
 
-    public string inspect_info() { return name.Replace('_', ' ').capitalize(); }
+    public string inspect_info()
+    {
+        return display_name.capitalize() + "\n" +
+               controller?.inspect_info();
+    }
+
     public Sprite main_sprite() { return null; }
     public Sprite secondary_sprite() { return null; }
 
@@ -327,11 +347,19 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         }
     }
 
+    bool dead = false;
     void die()
     {
-        dead_character.create(this);
-        Invoke("delayed_delete", 1f);
+        if (!dead)
+        {
+            dead = true;
+            dead_character.create(this);
+            on_death();
+            Invoke("delayed_delete", 1f);
+        }
     }
+
+    protected virtual void on_death() { }
 
     void delayed_delete()
     {
@@ -397,7 +425,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
 
     protected virtual ICharacterController default_controller()
     {
-        return new character_control_v2();
+        return new default_character_control();
     }
 
     float last_attack_time = 0;
@@ -458,8 +486,16 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         {
             // More characters than target, despawn the character 
             // that is furthest from the player
-            var furthest = utils.find_to_min(characters,
-                (c) => -(c.transform.position - player.current.transform.position).sqrMagnitude);
+            var furthest = utils.find_to_min(characters, (c) =>
+            {
+                if (c == null) return Mathf.Infinity;
+
+                // Only delete default-controlled characters
+                if (c.controller is default_character_control)
+                    return -(c.transform.position - player.current.transform.position).sqrMagnitude;
+
+                return Mathf.Infinity;
+            });
             furthest?.delete();
         }
     }
@@ -556,245 +592,6 @@ class healthbar : MonoBehaviour
 
 public class default_character_control : ICharacterController, IPathingAgent
 {
-    character character
-    {
-        get => _character;
-        set
-        {
-            if (_character != null && _character != value)
-                throw new System.Exception("Cannot switch control!");
-            _character = value;
-        }
-    }
-    character _character;
-
-    public void control(character c)
-    {
-        character = c;
-
-        // Within agro range
-        if ((character.transform.position - player.current.transform.position).magnitude < character.agro_range)
-        {
-            switch (character.friendliness)
-            {
-                case character.FRIENDLINESS.AGRESSIVE:
-                    chase(player.current.transform);
-                    break;
-
-                case character.FRIENDLINESS.AFRAID:
-                    flee(player.current.transform);
-                    break;
-
-                default:
-                    idle_walk();
-                    break;
-            }
-        }
-        else
-            idle_walk();
-    }
-
-    public void draw_gizmos() { path?.draw_gizmos(); }
-
-    public void draw_inspector_gui()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorGUILayout.TextArea(path?.info_text());
-#endif
-    }
-
-    //###############//
-    // IPathingAgent //
-    //###############//
-
-    protected virtual bool is_allowed_at(Vector3 v)
-    {
-        // Check we're in the right medium
-        if (!character.can_swim && v.y < world.SEA_LEVEL) return false;
-        if (!character.can_walk && v.y > world.SEA_LEVEL) return false;
-        return true;
-    }
-
-    public Vector3 validate_position(Vector3 v, out bool valid)
-    {
-        Vector3 ret = pathfinding_utils.validate_walking_position(v, resolution, out valid);
-        if (!is_allowed_at(ret)) valid = false;
-        return ret;
-    }
-
-    public bool validate_move(Vector3 a, Vector3 b)
-    {
-        return pathfinding_utils.validate_walking_move(a, b,
-            resolution, character.height, resolution / 2f);
-    }
-
-    public float resolution { get => character.pathfinding_resolution; }
-
-    //#############//
-    // PATHFINDING //
-    //#############//
-
-    // The current path the character is walking
-    path path
-    {
-        get => _path;
-        set
-        {
-            _path = value;
-            path_progress = 0;
-        }
-    }
-    path _path;
-    int path_progress = 0;
-
-    bool move_towards(Vector3 point, float speed)
-    {
-        // Work out how far to the point
-        Vector3 delta = point - character.transform.position;
-        float dis = Time.deltaTime * speed;
-
-        Vector3 new_pos = character.transform.position;
-
-        if (delta.magnitude < dis) new_pos += delta;
-        else new_pos += delta.normalized * dis;
-
-        if (!is_allowed_at(new_pos)) return false;
-        character.transform.position = new_pos;
-
-        // Look in the direction of travel
-        delta.y = 0;
-        if (delta.magnitude > 10e-4)
-        {
-            // Lerp forward look direction
-            Vector3 new_forward = Vector3.Lerp(character.transform.forward,
-                delta.normalized, character.rotation_lerp_speed * speed * Time.deltaTime);
-
-            if (new_forward.magnitude > 10e-4)
-                character.transform.forward = new_forward;
-        }
-        return true;
-    }
-
-    void move_along_path(float speed)
-    {
-        switch (path.state)
-        {
-            case path.STATE.SEARCHING:
-                // Run pathfinding (walking back+forth along the last path
-                // whilst we do so)
-                path.pathfind(load_balancing.iter);
-                return;
-
-            case path.STATE.FAILED:
-                // Path failed, diffuse around a little to try and fix it
-                path = null;
-                character.transform.position += Random.onUnitSphere * 0.05f;
-                return;
-
-            case path.STATE.COMPLETE:
-
-                if (path.length <= path_progress)
-                {
-                    // Path complete, reset
-                    path = null;
-                    return;
-                }
-
-                // Move towards the next path point
-                if (!move_towards(path[path_progress], speed))
-                {
-                    // Couldn't walk along the path
-                    path = null;
-                    return;
-                }
-
-                Vector3 delta = path[path_progress] - character.transform.position;
-
-                // Increment progress if we've arrived at the next path point
-                if (delta.magnitude < character.ARRIVE_DISTANCE) ++path_progress;
-                return;
-
-            default:
-                throw new System.Exception("Unkown path state!");
-        }
-    }
-
-    // Just idly wonder around
-    void idle_walk()
-    {
-        if (path == null)
-        {
-            random_path.success_func f = (v) =>
-                (v - character.transform.position).magnitude > character.idle_walk_distance;
-            path = new random_path(character.transform.position, f, f, this);
-        }
-        else move_along_path(character.walk_speed);
-    }
-
-    // Run from the given transform
-    void flee(Transform fleeing_from)
-    {
-        character.play_idle_sounds();
-
-        if (path == null)
-        {
-            Vector3 delta = (character.transform.position - fleeing_from.position).normalized;
-            Vector3 flee_to = character.transform.position + delta * character.flee_distance;
-
-            if (is_allowed_at(flee_to))
-                // Flee away
-                path = new astar_path(character.transform.position, flee_to, this);
-            else
-                // Flee back the way we came
-                path = new astar_path(character.transform.position,
-                    fleeing_from.position - delta * character.flee_distance, this);
-        }
-        else move_along_path(character.run_speed);
-    }
-
-    void chase(Transform chasing)
-    {
-        character.play_idle_sounds();
-
-        if (path == null)
-        {
-            Vector3 delta = chasing.transform.position - character.transform.position;
-
-            if (delta.magnitude < character.pathfinding_resolution)
-            {
-                if (delta.magnitude > character.reach)
-                    move_towards(chasing.position, delta.magnitude);
-                else
-                    melee_attack(chasing);
-                return;
-            }
-
-            if (is_allowed_at(chasing.position))
-                path = new chase_path(character.transform.position, chasing, this);
-            else
-                idle_walk();
-        }
-        else move_along_path(character.run_speed);
-    }
-
-    float last_attacked = 0;
-
-    void melee_attack(Transform attacking)
-    {
-        if (Time.realtimeSinceStartup - last_attacked > character.melee_cooldown)
-        {
-            last_attacked = Time.realtimeSinceStartup;
-            attacking.GetComponent<player>()?.take_damage(character.melee_damage);
-        }
-    }
-}
-
-//######################//
-// CHARACTER CONTROL V2 //
-//######################//
-
-public class character_control_v2 : ICharacterController, IPathingAgent
-{
     // The character being controlled
     character character
     {
@@ -872,7 +669,7 @@ public class character_control_v2 : ICharacterController, IPathingAgent
                     agro_path = new chase_path(idle_path[agro_path_idle_link],
                         player.current.transform, this,
                         max_iterations: 100,
-                        goal_distance: character.reach * 0.8f);
+                        goal_distance: character.melee_range * 0.8f);
 
                     break;
 
@@ -968,7 +765,7 @@ public class character_control_v2 : ICharacterController, IPathingAgent
 
                         // Attack the player if we're close enough
                         if ((player.current.transform.position -
-                            character.transform.position).magnitude < character.reach)
+                            character.transform.position).magnitude < character.melee_range)
                             character.melee_attack(player.current);
                     }
                     return;
@@ -1064,10 +861,17 @@ public class character_control_v2 : ICharacterController, IPathingAgent
         return (point - new_pos).magnitude < character.ARRIVE_DISTANCE;
     }
 
+    public void on_end_control(character c) { }
+
     public void draw_gizmos()
     {
         idle_path?.draw_gizmos();
         agro_path?.draw_gizmos();
+    }
+
+    public string inspect_info()
+    {
+        return "";
     }
 
     public void draw_inspector_gui()

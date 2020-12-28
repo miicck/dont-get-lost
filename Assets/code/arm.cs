@@ -18,6 +18,8 @@ public class arm : MonoBehaviour
     float bicep_length;
     float forearm_length;
 
+    public float total_length => bicep_length + forearm_length;
+
     Transform initial_shoulder;
     Transform initial_elbow;
 
@@ -98,13 +100,15 @@ public class arm : MonoBehaviour
     /// simmilar to <see cref="leg.solve_leg"/> </summary>
     void update_to_grab()
     {
-        float a = bicep_length;
-        float b = forearm_length;
         Vector3 dvec = to_grab.position - shoulder.position;
         float d = dvec.magnitude;
+        if (Mathf.Abs(d) < 1e-4f) return;
 
         Vector3 shoulder_elbow;
         Vector3 elbow_bend_dir = Vector3.Cross(initial_shoulder.right, dvec.normalized);
+
+        float a = bicep_length;
+        float b = forearm_length;
 
         if (d > a + b) // Overstretched
         {
@@ -136,6 +140,14 @@ public class arm : MonoBehaviour
         Vector3 elbow_fw = Vector3.Cross(right, elbow_up);
         elbow.rotation = Quaternion.LookRotation(elbow_fw, elbow_up);
 
+    }
+
+    public Vector3 nearest_in_reach(Vector3 target)
+    {
+        Vector3 dvec = target - shoulder.transform.position;
+        if (dvec.magnitude > total_length)
+            dvec = dvec.normalized * total_length;
+        return dvec + shoulder.transform.position;
     }
 
     private void Update()

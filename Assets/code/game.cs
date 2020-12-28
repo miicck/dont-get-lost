@@ -217,6 +217,7 @@ public class game : MonoBehaviour
 
         // Initialize various things
         names.initialize();
+        pinned_message.initialize();
         item_node.initialize();
         biome.initialize();
         chunk.initialize();

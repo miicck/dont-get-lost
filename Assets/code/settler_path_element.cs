@@ -236,6 +236,8 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
     public class path
     {
+        public const float ARRIVE_DISTANCE = 0.25f;
+
         List<settler_path_element> element_path;
 
         public bool valid => element_path != null;
@@ -325,6 +327,61 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             }
 
             // Pathfinding failed
+        }
+
+        public bool walk(Transform transform, float speed)
+        {
+            if (this[0] == null)
+            {
+                // Path has been destroyed or we've walked all of it
+                return true;
+            }
+
+            // Walk the path to completion
+            Vector3 next_point = this[0].transform.position;
+            Vector3 forward = next_point - transform.position;
+
+            if (Count > 1)
+            {
+                if (this[1] == null)
+                {
+                    // Path has been destroyed
+                    return true;
+                }
+
+                // Gradually turn towards the next direction, to make
+                // going round sharp corners look natural
+                Vector3 next_next_point = this[1].transform.position;
+                Vector3 next_forward = next_next_point - next_point;
+
+                float w1 = (transform.position - next_point).magnitude;
+                float w2 = (transform.position - next_next_point).magnitude;
+                forward = forward.normalized * w1 + next_forward.normalized * w2;
+                forward /= (w1 + w2);
+            }
+
+            forward.y = 0;
+            if (forward.magnitude > 10e-3f)
+            {
+                // If we need to do > 90 degree turn, just do it instantly
+                if (Vector3.Dot(transform.forward, forward) < 0)
+                    transform.forward = forward;
+                else // Otherwise, lerp our forward vector
+                    transform.forward = Vector3.Lerp(transform.forward, forward, Time.deltaTime * 5f);
+            }
+
+            if (utils.move_towards(transform, next_point,
+                Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
+                remove_at(0);
+
+            return false;
+        }
+
+        public void draw_gizmos(Color color)
+        {
+            Gizmos.color = color;
+            for (int i = 1; i < Count; ++i)
+                Gizmos.DrawLine(this[i].transform.position, this[i - 1].transform.position);
         }
     }
 }

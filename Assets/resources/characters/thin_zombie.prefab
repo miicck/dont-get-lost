@@ -97,16 +97,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
+  display_name: thin zombie
+  plural_name: thin zombies
   walk_speed: 0.5
   run_speed: 3
-  max_health: 20
+  max_health: 150
   pathfinding_resolution: 0.5
   height: 1.55
   agro_range: 5
   rotation_lerp_speed: 4
   idle_walk_distance: 4
   flee_distance: 4
-  reach: 0.5
+  melee_range: 0.75
   melee_cooldown: 1
   melee_damage: 10
   friendliness: 0

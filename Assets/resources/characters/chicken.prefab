@@ -355,9 +355,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
+  display_name: chicken
+  plural_name: chickens
   walk_speed: 1
   run_speed: 4
-  max_health: 10
+  max_health: 25
   pathfinding_resolution: 0.5
   height: 1
   agro_range: 5
@@ -365,8 +367,8 @@ MonoBehaviour:
   idle_walk_distance: 4
   flee_distance: 4
   reach: 0.5
-  melee_cooldown: 1
-  melee_damage: 1
+  melee_cooldown: 0.5
+  melee_damage: 5
   friendliness: 2
   can_walk: 1
   can_swim: 0

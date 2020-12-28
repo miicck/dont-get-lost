@@ -746,3 +746,15 @@ public class int_rect
                z < bottom + edge_width;
     }
 }
+
+class temporary_object : MonoBehaviour
+{
+    public static temporary_object create(float lifetime)
+    {
+        var to = new GameObject("temp_object").AddComponent<temporary_object>();
+        to.Invoke("delete_temp_object", lifetime);
+        return to;
+    }
+
+    void delete_temp_object() { Destroy(gameObject); }
+}

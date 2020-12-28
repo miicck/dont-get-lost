@@ -270,7 +270,7 @@ GameObject:
   - component: {fileID: 6112736980431597841}
   - component: {fileID: 7771279036862464209}
   m_Layer: 0
-  m_Name: smoke_spider
+  m_Name: small_smoke_spider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -306,20 +306,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  display_name: smoke spider
-  plural_name: smoke spiders
-  walk_speed: 4
-  run_speed: 8
-  max_health: 100
-  pathfinding_resolution: 1
-  height: 1
+  display_name: small smoke spider
+  plural_name: small smoke spiders
+  walk_speed: 1.5
+  run_speed: 3
+  max_health: 50
+  pathfinding_resolution: 0.65
+  height: 0.5
   agro_range: 15
   rotation_lerp_speed: 1
   idle_walk_distance: 15
   flee_distance: 4
-  melee_range: 1.5
+  reach: 0.5
   melee_cooldown: 1
-  melee_damage: 30
+  melee_damage: 8
   friendliness: 0
   can_walk: 1
   can_swim: 0
@@ -495,7 +495,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.544
+      value: 0.046
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalRotation.x
@@ -528,6 +528,18 @@ PrefabInstance:
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.32379752
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.32379752
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.32379752
       objectReference: {fileID: 0}
     - target: {fileID: -4141203994337994934, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_Materials.Array.data[0]

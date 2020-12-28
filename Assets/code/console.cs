@@ -363,6 +363,29 @@ public class console : MonoBehaviour
 
             description = "Deletes the first found instance of the given network type.",
             usage_example = "Delete character"
+        },
+
+        ["trigger_attack"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    var gates = FindObjectsOfType<town_gate>();
+                    var gate = utils.find_to_min(gates, (g) =>
+                        (player.current.transform.position - g.transform.position).magnitude);
+                    if (gate == null)
+                    {
+                        console_error("Could not find a town gate to attack!");
+                        return;
+                    }
+                    gate.trigger_attack(args);
+                });
+                return true;
+            },
+
+            description = "Trigger an attack on the nearest town gate to the player.",
+            usage_example = "trigger_attack"
         }
     };
 

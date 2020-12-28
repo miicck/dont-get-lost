@@ -49,6 +49,7 @@ MonoBehaviour:
   plural: coal
   value: 1
   fuel_value: 4
+  food_value: 0
   logistics_scale: 0.7
 --- !u!1001 &581380012422511553
 PrefabInstance:
@@ -63,7 +64,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.135
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
       propertyPath: m_LocalPosition.z

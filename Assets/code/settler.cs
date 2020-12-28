@@ -13,7 +13,30 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public List<Renderer> bottom_underclothes = new List<Renderer>();
 
     public int group { get; private set; }
+
+    //###################//
+    // CHARACTER CONTROL //
+    //###################//
+
     protected override ICharacterController default_controller() { return new settler_control(); }
+
+    class settler_control : ICharacterController
+    {
+        public void control(character c)
+        {
+            var s = (settler)c;
+            s.default_control();
+        }
+
+        public void on_end_control(character c) { }
+        public void draw_gizmos() { }
+        public void draw_inspector_gui() { }
+
+        public string inspect_info()
+        {
+            return "";
+        }
+    }
 
     settler_path_element.path path;
     float delta_hunger = 0;
@@ -21,7 +44,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     float delta_heal = 0;
     settler_task_assignment assignment;
 
-    public void Update()
+    void default_control()
     {
         // Don't do anything if there is a player interacting with me
         if (players_interacting_with.value > 0)
@@ -122,51 +145,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            if (path[0] == null)
-            {
-                // Path has been destroyed, reset
+            if (path.walk(transform, walk_speed))
                 path = null;
-                return;
-            }
-
-            // Walk the path to completion
-            Vector3 next_point = path[0].transform.position;
-            Vector3 forward = next_point - transform.position;
-
-            if (path.Count > 1)
-            {
-                if (path[1] == null)
-                {
-                    // Path has been destroyed, reset
-                    path = null;
-                    return;
-                }
-
-                // Gradually turn towards the next direction, to make
-                // going round sharp corners look natural
-                Vector3 next_next_point = path[1].transform.position;
-                Vector3 next_forward = next_next_point - next_point;
-
-                float w1 = (transform.position - next_point).magnitude;
-                float w2 = (transform.position - next_next_point).magnitude;
-                forward = forward.normalized * w1 + next_forward.normalized * w2;
-                forward /= (w1 + w2);
-            }
-
-            forward.y = 0;
-            if (forward.magnitude > 10e-3f)
-            {
-                // If we need to do > 90 degree turn, just do it instantly
-                if (Vector3.Dot(transform.forward, forward) < 0)
-                    transform.forward = forward;
-                else // Otherwise, lerp our forward vector
-                    transform.forward = Vector3.Lerp(transform.forward, forward, Time.deltaTime * 5f);
-            }
-
-            if (utils.move_towards(transform, next_point,
-                Time.deltaTime * walk_speed, arrive_distance: 0.25f))
-                path.remove_at(0);
-
             return;
         }
 
@@ -181,19 +161,14 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         }
     }
 
-    new public string inspect_info()
+    protected override void on_death()
     {
-        string ass_string = "No assignment.";
-        if (assignment != null)
-            ass_string = "Assignment: " + assignment.interactable.task_info();
-
-        return name.capitalize() + " (group " + group + ")\n" +
-               "    " + "Health " + remaining_health + "/" + max_health + "\n" +
-               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
-               "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-               ass_string + "\n" +
-               "    interacting with " + players_interacting_with.value + " players";
+        temporary_object.create(60f).gameObject.add_pinned_message("The settler " + name + " died!", Color.red);
     }
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     private void Start()
     {
@@ -218,6 +193,24 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
         if (snap) transform.position = element.transform.position;
         group = element.group;
+    }
+
+    //##############//
+    // IINspectable //
+    //##############//
+
+    new public string inspect_info()
+    {
+        string ass_string = "No assignment.";
+        if (assignment != null)
+            ass_string = "Assignment: " + assignment.interactable.task_info();
+
+        return name.capitalize() + " (group " + group + ")\n" +
+               "    " + "Health " + remaining_health + "/" + max_health + "\n" +
+               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
+               "    " + Mathf.Round(tiredness.value) + "% tired\n" +
+               ass_string + "\n" +
+               "    interacting with " + players_interacting_with.value + " players";
     }
 
     //#################//
@@ -427,15 +420,13 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             s.update_group();
     }
 
+    public static settler find_to_min(utils.float_func<settler> f)
+    {
+        return utils.find_to_min(settlers, f);
+    }
+
     new public static string info()
     {
         return "    Total settler count : " + settlers.Count;
     }
-}
-
-class settler_control : ICharacterController
-{
-    public void control(character c) { }
-    public void draw_gizmos() { }
-    public void draw_inspector_gui() { }
 }

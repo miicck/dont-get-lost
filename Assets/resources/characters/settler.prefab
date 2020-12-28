@@ -717,6 +717,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
+  display_name: settler
+  plural_name: settlers
   walk_speed: 1.5
   run_speed: 4
   max_health: 100
@@ -726,7 +728,7 @@ MonoBehaviour:
   rotation_lerp_speed: 1
   idle_walk_distance: 4
   flee_distance: 4
-  reach: 0.5
+  melee_range: 0.75
   melee_cooldown: 1
   melee_damage: 10
   friendliness: 0
