@@ -2,9 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class mineshaft : settler_interactable_options
+public class mineshaft : settler_interactable_options, IAddsToInspectionText
 {
     item_output output => GetComponentInChildren<item_output>();
+
+    public float test_depth = 2f;
+
+    bool on_terrain = false;
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(transform.position, transform.position - Vector3.up * test_depth);
+    }
+
+    new void Start()
+    {
+        base.Start();
+        chunk.add_generation_listener(transform, (c) =>
+        {
+            // Test depth 
+            var tc = utils.raycast_for_closest<TerrainCollider>(
+                new Ray(transform.position, Vector3.down),
+                out RaycastHit hit, max_distance: test_depth);
+
+            on_terrain = tc != null;
+        });
+    }
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
+
+    public string added_inspection_text()
+    {
+        if (!on_terrain) return "Must be placed on terrain to operate!";
+        return "Operating normally.";
+    }
 
     //##############################//
     // settler_interactable_options //
@@ -43,7 +77,7 @@ public class mineshaft : settler_interactable_options
             // time, create the item
             var itm = minable_items[selected_option];
             var op = output;
-            op.add_item(item.create(itm.name, op.transform.position, 
+            op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
         }
 
@@ -52,7 +86,7 @@ public class mineshaft : settler_interactable_options
 
     public override bool is_complete(settler s)
     {
-        return time_mining > 1f;
+        return !on_terrain || time_mining > 1f;
     }
 
     //##############//
