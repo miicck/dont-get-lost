@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1995531316843802350}
   - component: {fileID: 5363578731448351423}
+  - component: {fileID: -5900291530314929074}
   m_Layer: 0
   m_Name: cassiterite
   m_TagString: Untagged
@@ -49,7 +50,20 @@ MonoBehaviour:
   plural: cassiterite
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
+--- !u!114 &-5900291530314929074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9159053444679129411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2493159475336461579
 PrefabInstance:
   m_ObjectHideFlags: 0

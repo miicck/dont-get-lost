@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2297160791965678879}
   - component: {fileID: 5464482740840503985}
+  - component: {fileID: -653319990223191337}
   m_Layer: 0
   m_Name: coal
   m_TagString: Untagged
@@ -51,6 +52,18 @@ MonoBehaviour:
   fuel_value: 4
   food_value: 0
   logistics_scale: 0.7
+--- !u!114 &-653319990223191337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2415611608444428069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &581380012422511553
 PrefabInstance:
   m_ObjectHideFlags: 0

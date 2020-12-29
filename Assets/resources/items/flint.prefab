@@ -23,6 +23,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4139513341947214096}
   - component: {fileID: 293668860053935267}
+  - component: {fileID: -8022266731583849748}
   m_Layer: 0
   m_Name: flint
   m_TagString: Untagged
@@ -62,7 +63,20 @@ MonoBehaviour:
   plural: flint
   value: 1
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
+--- !u!114 &-8022266731583849748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3656051371494864843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &7616241738566892967
 PrefabInstance:
   m_ObjectHideFlags: 0

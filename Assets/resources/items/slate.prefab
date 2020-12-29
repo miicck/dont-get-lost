@@ -191,6 +191,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7679421885878977236}
   - component: {fileID: 2405045557127744063}
+  - component: {fileID: -755783909771982879}
   m_Layer: 0
   m_Name: slate
   m_TagString: Untagged
@@ -234,8 +235,21 @@ MonoBehaviour:
   plural: slate
   value: 1
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
   axes_scale: 1
+--- !u!114 &-755783909771982879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6718553397662222643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7394056408457303176
 GameObject:
   m_ObjectHideFlags: 0

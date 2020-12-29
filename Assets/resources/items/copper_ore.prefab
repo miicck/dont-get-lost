@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 925490920001156652}
   - component: {fileID: 7974885849315931415}
+  - component: {fileID: -6490129138155525649}
   m_Layer: 0
   m_Name: copper_ore
   m_TagString: Untagged
@@ -49,7 +50,20 @@ MonoBehaviour:
   plural: copper ore
   value: 0
   fuel_value: 0
+  food_value: 0
   logistics_scale: 1
+--- !u!114 &-6490129138155525649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3938467105268201958}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &111802402891730139
 PrefabInstance:
   m_ObjectHideFlags: 0

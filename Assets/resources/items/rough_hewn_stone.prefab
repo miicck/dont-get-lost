@@ -355,6 +355,7 @@ GameObject:
   - component: {fileID: 937079229864356976}
   - component: {fileID: 8229800829730807780}
   - component: {fileID: 1198510559849595072}
+  - component: {fileID: 3009573076117775154}
   m_Layer: 0
   m_Name: rough_hewn_stone
   m_TagString: Untagged
@@ -422,6 +423,18 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 0.5, y: 0.5, z: 1}
   m_Center: {x: 0, y: 0.25, z: 0}
+--- !u!114 &3009573076117775154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7260211643690761893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e02d17f5d31c742ba34205184fd6ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7553661883339329818
 GameObject:
   m_ObjectHideFlags: 0
