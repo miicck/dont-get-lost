@@ -5,11 +5,81 @@ using UnityEngine;
 public class town_gate : building_material, IAddsToInspectionText
 {
     const float SLOW_UPDATE_TIME = 1f;
+    const float MAX_APPROACH_DISTANCE = 30f;
 
     public List<gate> gates = new List<gate>();
     public settler_path_element path_element;
+    public Transform outside_link;
 
+    path enemy_approach_path;
     int bed_count;
+
+    class town_gate_pathfinder : IPathingAgent
+    {
+        Transform outside_link;
+
+        public town_gate_pathfinder(Transform outside_link)
+        {
+            this.outside_link = outside_link;
+        }
+
+        public Vector3 validate_position(Vector3 v, out bool valid)
+        {
+            if (v.y < world.SEA_LEVEL ||
+                Vector3.Dot(v - outside_link.position, outside_link.forward) < 0)
+            {
+                valid = false;
+                return v;
+            }
+
+            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        }
+
+        public bool validate_move(Vector3 a, Vector3 b)
+        {
+            return pathfinding_utils.validate_walking_move(a, b,
+                resolution, 1.5f, resolution / 2f);
+        }
+
+        public float resolution => 1f;
+    }
+
+    GameObject drawn_approach_path;
+    bool draw_approach_path
+    {
+        get => drawn_approach_path != null;
+        set
+        {
+            if (draw_approach_path == value)
+                return; // No change
+
+            if (drawn_approach_path != null)
+                Destroy(drawn_approach_path);
+            if (!value) return;
+
+            drawn_approach_path = new GameObject("approach_path");
+            drawn_approach_path.transform.SetParent(transform);
+            drawn_approach_path.transform.localPosition = Vector3.zero;
+
+            for (int i = 1; i < enemy_approach_path.length; ++i)
+            {
+                Vector3 a = enemy_approach_path[i - 1];
+                Vector3 b = enemy_approach_path[i];
+
+                var link = Resources.Load<GameObject>("misc/path_link").inst();
+                link.transform.SetParent(drawn_approach_path.transform);
+                link.transform.position = (a + b) / 2 + Vector3.up * 0.5f;
+                link.transform.forward = b - a;
+                link.transform.localScale = new Vector3(0.1f, 0.1f, (b - a).magnitude);
+            }
+        }
+    }
+
+    void refresh_drawn_approach_path()
+    {
+        draw_approach_path = false;
+        draw_approach_path = settler_path_element.draw_links;
+    }
 
     private void Start()
     {
@@ -18,6 +88,51 @@ public class town_gate : building_material, IAddsToInspectionText
         if (is_equpped) return;
         if (is_blueprint) return;
         InvokeRepeating("slow_update", SLOW_UPDATE_TIME, SLOW_UPDATE_TIME);
+    }
+
+    private void Update()
+    {
+        if (enemy_approach_path == null)
+        {
+            refresh_drawn_approach_path();
+            var pfd = new town_gate_pathfinder(outside_link);
+            Vector3 start = pfd.validate_position(outside_link.position, out bool valid);
+            float target_distance = Mathf.Min(game.render_range, MAX_APPROACH_DISTANCE);
+            random_path.success_func test = (v) => (v - start).magnitude > target_distance;
+            enemy_approach_path = new random_path(start, test, test, pfd);
+        }
+
+        switch (enemy_approach_path.state)
+        {
+            case path.STATE.COMPLETE:
+                if (enemy_approach_path.optimize(load_balancing.iter))
+                {
+                    // Path has been optimized, redraw approach path if needed
+                    refresh_drawn_approach_path();
+                }
+                else
+                {
+                    // Path can't be optimized any more, ensure that it remains valid
+                    if (!enemy_approach_path.validate(load_balancing.iter))
+                        enemy_approach_path = null;
+                }
+                break;
+
+            case path.STATE.SEARCHING:
+                enemy_approach_path.pathfind(load_balancing.iter);
+                break;
+
+            case path.STATE.FAILED:
+                enemy_approach_path = null;
+                break;
+        }
+
+        draw_approach_path = settler_path_element.draw_links;
+    }
+
+    private void OnDrawGizmos()
+    {
+        enemy_approach_path?.draw_gizmos();
     }
 
     void slow_update()
@@ -39,7 +154,8 @@ public class town_gate : building_material, IAddsToInspectionText
     public string added_inspection_text()
     {
         return "Beds     : " + bed_count + "\n" +
-               "Settlers : " + settler.settler_count;
+               "Settlers : " + settler.settler_count + "\n" +
+               "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
 
     //#########//
@@ -51,9 +167,13 @@ public class town_gate : building_material, IAddsToInspectionText
 
     public void trigger_attack(IEnumerable<string> characters_to_spawn)
     {
+        Vector3 spawn_point = transform.position;
+        if (enemy_approach_path != null && enemy_approach_path.state == path.STATE.COMPLETE)
+            spawn_point = enemy_approach_path[enemy_approach_path.length - 1];
+
         foreach (var c in characters_to_spawn)
             if (Resources.Load<character>("characters/" + c) != null)
-                client.create(transform.position, "characters/" + c, parent: this);
+                client.create(spawn_point, "characters/" + c, parent: this);
     }
 
     void update_attack_message()
@@ -91,7 +211,7 @@ public class town_gate : building_material, IAddsToInspectionText
         {
             // Characters attacking this gate
             var c = (character)child;
-            c.controller = new attack_controller();
+            c.controller = new town_approach_controller(this);
             under_attack_by.Add(c);
             update_attack_message();
         }
@@ -109,19 +229,66 @@ public class town_gate : building_material, IAddsToInspectionText
         }
     }
 
+    class town_approach_controller : ICharacterController
+    {
+        town_gate gate;
+        int index = 0;
+
+        public town_approach_controller(town_gate gate)
+        {
+            this.gate = gate;
+        }
+
+        public void control(character c)
+        {
+            if (gate == null)
+            {
+                c.delete();
+                return;
+            }
+
+            if (gate.enemy_approach_path == null ||
+                index >= gate.enemy_approach_path.length)
+            {
+                // Finished walking the path, or there wasn't a path to walk
+                // begin the attack
+                c.controller = new attack_controller(gate);
+                return;
+            }
+
+            // Make my way into town along the approach path
+            if (utils.move_towards_and_look(c.transform, gate.enemy_approach_path[
+                gate.enemy_approach_path.length - 1 - index],
+                Time.deltaTime * c.run_speed, 0.25f))
+                index += 1;
+        }
+
+        public void on_end_control(character c) { }
+        public void draw_gizmos() { }
+        public void draw_inspector_gui() { }
+        public string inspect_info() { return "Approaching town."; }
+    }
+
     class attack_controller : ICharacterController
     {
         settler_path_element.path path;
         float local_speed_mod = 1.0f;
+        town_gate gate;
 
-
-        public attack_controller()
+        public attack_controller(town_gate gate)
         {
+            this.gate = gate;
             local_speed_mod = Random.Range(0.9f, 1.1f);
         }
 
         public void control(character c)
         {
+            if (gate == null)
+            {
+                c.delete();
+                return;
+            }
+
             // Walk a path if we have one
             if (path != null)
             {
@@ -131,7 +298,7 @@ public class town_gate : building_material, IAddsToInspectionText
             }
 
             // Get the current element that I'm at
-            var current_element = settler_path_element.nearest_element(c.transform.position);
+            var current_element = settler_path_element.nearest_element(c.transform.position, gate.path_element.group);
 
             // Find the nearest (to within some random noize) target in the same group as me
             var target = settler.find_to_min((s) =>

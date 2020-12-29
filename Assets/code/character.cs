@@ -906,5 +906,5 @@ public class default_character_control : ICharacterController, IPathingAgent
             resolution, character.height, resolution / 2f);
     }
 
-    public float resolution { get => character.pathfinding_resolution; }
+    public float resolution => character.pathfinding_resolution;
 }

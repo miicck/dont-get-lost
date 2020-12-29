@@ -101,8 +101,7 @@ public class arm : MonoBehaviour
     void update_to_grab()
     {
         Vector3 dvec = to_grab.position - shoulder.position;
-        float d = dvec.magnitude;
-        if (Mathf.Abs(d) < 1e-4f) return;
+        float d = dvec.magnitude;      
 
         Vector3 shoulder_elbow;
         Vector3 elbow_bend_dir = Vector3.Cross(initial_shoulder.right, dvec.normalized);
@@ -118,11 +117,17 @@ public class arm : MonoBehaviour
         {
             // Work out lambda
             float lambda = d * d + b * b - a * a;
+
+            if (Mathf.Abs(d) < 1e-4f) return;
             lambda = b * b - lambda * lambda / (4 * d * d);
+
+            if (lambda < 0) return;
             lambda = Mathf.Sqrt(lambda);
 
             // Work out d1
             float d1 = a * a - lambda * lambda;
+
+            if (d1 < 0) return;
             d1 = Mathf.Sqrt(d1);
 
             shoulder_elbow = d1 * dvec.normalized +

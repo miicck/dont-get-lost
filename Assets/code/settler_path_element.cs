@@ -132,6 +132,16 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             (e) => (e.transform.position - v).sqrMagnitude);
     }
 
+    public static settler_path_element nearest_element(Vector3 v, int group)
+    {
+        return utils.find_to_min(all_elements,
+            (e) =>
+            {
+                if (e.group != group) return Mathf.Infinity;
+                return (e.transform.position - v).sqrMagnitude;
+            });
+    }
+
     public static HashSet<settler_path_element> element_group(int group)
     {
         if (grouped_elements.TryGetValue(group, out HashSet<settler_path_element> elms))

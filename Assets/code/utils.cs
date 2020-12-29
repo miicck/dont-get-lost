@@ -415,11 +415,36 @@ public static class utils
         return v;
     }
 
+    /// <summary> Move the transform <paramref name="t"/> towards the point <paramref name="to"/> by an amount
+    /// bounded from above by <paramref name="max_move"/> until <paramref name="t"/> is within 
+    /// <paramref name="arrive_distance"/> of <paramref name="to"/>. Returns true once this criteria is met. </summary>
     public static bool move_towards(Transform t, Vector3 to, float max_move, float arrive_distance = 0)
     {
         Vector3 delta = to - t.position;
         if (delta.magnitude < arrive_distance)
             return true;
+
+        bool arrived = false;
+        if (delta.magnitude > max_move)
+            delta = delta.normalized * max_move;
+        else
+            arrived = true;
+        t.position += delta;
+        return arrived;
+    }
+
+    /// <summary> Same as <see cref="move_towards(Transform, Vector3, float, float)"/>, except the transform 
+    /// will be made to look along the path. If <paramref name="level_look"/> is true, then the look vector
+    /// will have it's y componenet set to zero. </summary>
+    public static bool move_towards_and_look(Transform t, Vector3 to, float max_move, float arrive_distance = 0f, bool level_look = true)
+    {
+        Vector3 delta = to - t.position;
+        if (delta.magnitude < arrive_distance)
+            return true;
+
+        Vector3 forward = delta;
+        if (level_look) forward.y = 0;
+        t.forward = forward;
 
         bool arrived = false;
         if (delta.magnitude > max_move)

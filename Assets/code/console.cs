@@ -384,8 +384,8 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Trigger an attack on the nearest town gate to the player.",
-            usage_example = "trigger_attack"
+            description = "Trigger an attack on the nearest town gate to the player, by the given character types.",
+            usage_example = "trigger_attack chicken"
         }
     };
 

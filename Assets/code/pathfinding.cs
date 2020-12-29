@@ -42,8 +42,9 @@ public abstract class path
     /// the path was found to be no longer valid. </summary>
     public virtual bool validate(int iterations) { return true; }
 
-    /// <summary> Optimize a path, to make it more visually appealing. </summary>
-    public virtual void optimize(int iterations) { }
+    /// <summary> Optimize a path, to make it more visually appealing, returns 
+    /// true if some optimization was carried out </summary>
+    public virtual bool optimize(int iterations) { return false; }
 
     /// <summary> Return the <paramref name="i"/> th point along the path. </summary>
     public abstract Vector3 this[int i] { get; }
@@ -286,10 +287,11 @@ public class astar_path : path
         }
     }
 
-    public override void optimize(int iterations)
+    public override bool optimize(int iterations)
     {
-        if (length < 3) return; // Can't optimize a streight line
+        if (length < 3) return false; // Can't optimize a streight line
         last_optimize_step = last_optimize_step % (length - 2); // Stay in-range
+        bool optimized = false;
 
         for (int i = 0; i < iterations; ++i)
         {
@@ -298,10 +300,15 @@ public class astar_path : path
 
             // Remove unneccassary middle point
             if (agent.validate_move(a, b))
+            {
                 path.RemoveAt(last_optimize_step + 1);
+                optimized = true;
+            }
 
             last_optimize_step = (last_optimize_step + 1) % (length - 2);
         }
+
+        return optimized;
     }
 
     protected void search_for_endpoints(int iterations)

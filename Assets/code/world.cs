@@ -40,6 +40,15 @@ public class world : networked
         get => static_world.networked_name.value;
     }
 
+    public static float terrain_altitude(Vector3 v)
+    {
+        Vector3 start = v;
+        start.y = 2 * MAX_ALTITUDE;
+        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(start, Vector3.down), out RaycastHit hit);
+        if (tc == null) return SEA_LEVEL;
+        return hit.point.y;
+    }
+
     public static string info()
     {
         if (static_world == null) return "No world";
