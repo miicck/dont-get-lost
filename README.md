@@ -19,7 +19,8 @@ To setup a unity project for development, follow these steps:
     reimport. This should be fine. Note that using an older version than the last commit is not supported - update your engine.
  
 3. (optional, recommended) Go to Window > Package Manager, locate *High Definition RP* and update it to the latest version (it may already be the latest version).
-4. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
+4. (optional) If you want steam-based faetures, download the Facepunch.Steamworks C# wrapper from https://github.com/Facepunch/Facepunch.Steamworks/releases (the latest .zip file) and put the contents of the Unity folder within the .zip into Assets/Plugins (create Assets/Plugins if needed). You should #define FACEPUNCH_STEAMWORKS in code/steam.cs as needed.
+5. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
 the world is rendered, it might look super weird for a few seconds while the shaders compile for the first time.
 
 Feel free to fire off merge requests with any changes you've made!
