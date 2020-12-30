@@ -386,6 +386,21 @@ public class console : MonoBehaviour
 
             description = "Trigger an attack on the nearest town gate to the player, by the given character types.",
             usage_example = "trigger_attack chicken"
+        },
+
+        ["jump_to_next_biome"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.teleport(player.current.transform.position + Vector3.right * biome.SIZE);
+                });
+                return true;
+            },
+
+            description = "Teleport exactly one biome across in the x direction.",
+            usage_example = "jump_to_next_biome"
         }
     };
 
