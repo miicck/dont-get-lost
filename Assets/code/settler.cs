@@ -12,8 +12,6 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public List<Renderer> top_underclothes = new List<Renderer>();
     public List<Renderer> bottom_underclothes = new List<Renderer>();
 
-    public int group { get; private set; }
-
     //###################//
     // CHARACTER CONTROL //
     //###################//
@@ -39,6 +37,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     }
 
     settler_path_element.path path;
+    settler_path_element path_element;
+    public int group => path_element == null ? -1 : path_element.group;
     float delta_hunger = 0;
     float delta_tired = 0;
     float delta_heal = 0;
@@ -111,6 +111,17 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
                     settler_interactable.TYPE.SLEEP, transform.position)))
                 return;
 
+            // Get a guard task
+            if (town_gate.group_under_attack(group))
+            {
+                if (settler_task_assignment.try_assign(this,
+                    settler_interactable.proximity_weighted_ramdon(
+                        settler_interactable.TYPE.GUARD, transform.position)))
+                    return;
+
+                // Flee task here?
+            }
+
             // Get a work task
             if (settler_task_assignment.try_assign(this,
                 settler_interactable.proximity_weighted_ramdon(
@@ -131,8 +142,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path = new settler_path_element.path(transform.position,
-                assignment.interactable.path_element);
+            path_element = settler_path_element.nearest_element(transform.position);
+            path = new settler_path_element.path(path_element, assignment.interactable.path_element);
 
             if (path == null)
             {
@@ -145,7 +156,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            if (path.walk(transform, walk_speed))
+            if (path.walk(transform, assignment.interactable.move_to_speed(this), out path_element))
                 path = null;
             return;
         }
@@ -172,7 +183,6 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
     private void Start()
     {
-        update_group(snap: true);
         settlers.Add(this);
     }
 
@@ -181,18 +191,11 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         settlers.Remove(this);
     }
 
-    void update_group(bool snap = false)
+    private void OnDrawGizmos()
     {
-        var element = settler_path_element.nearest_element(transform.position);
-
-        if (element == null)
-        {
-            group = -1;
-            return;
-        }
-
-        if (snap) transform.position = element.transform.position;
-        group = element.group;
+        if (path_element == null) return;
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(path_element.transform.position, 0.1f);
     }
 
     //##############//
@@ -412,12 +415,6 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     new public static void initialize()
     {
         settlers = new HashSet<settler>();
-    }
-
-    public static void update_all_groups()
-    {
-        foreach (var s in settlers)
-            s.update_group();
     }
 
     public static settler find_to_min(utils.float_func<settler> f)

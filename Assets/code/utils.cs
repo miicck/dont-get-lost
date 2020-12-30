@@ -12,6 +12,14 @@ public static class utils
         return ret;
     }
 
+    // Create an exact copy of the object t at the given position
+    public static T inst<T>(this T t, Vector3 pos, Quaternion rot=default) where T : Object
+    {
+        var ret = Object.Instantiate(t, pos, rot);
+        ret.name = t.name;
+        return ret;
+    }
+
     // Returns true if i is within size range
     public static bool in_range(int i, int size)
     {

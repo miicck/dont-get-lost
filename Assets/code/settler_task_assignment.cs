@@ -84,6 +84,16 @@ public class settler_task_assignment : networked, IAddsToInspectionText
 
     static Dictionary<int, settler_task_assignment> assignments_by_id;
 
+    public static void on_attack_begin()
+    {
+        // Delete all non-guard tasks, so that settlers man 
+        // guard positions as quickly as possible
+        var copy = new Dictionary<int, settler_task_assignment>(assignments_by_id);
+        foreach (var kv in copy)
+            if (kv.Value.interactable.type != settler_interactable.TYPE.GUARD)
+                kv.Value.delete();
+    }
+
     public static settler_task_assignment current_assignment(settler s)
     {
         if (assignments_by_id.TryGetValue(s.network_id, out settler_task_assignment a))

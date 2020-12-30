@@ -35,7 +35,24 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
     public int group
     {
-        get; private set;
+        get => _group;
+        private set
+        {
+            if (_group == value)
+                return; // No change
+
+            _group = value;
+            on_group_change();
+        }
+    }
+    int _group;
+
+    public delegate void group_update_func();
+    group_update_func on_group_change = () => { };
+
+    public void add_group_change_listener(group_update_func f)
+    {
+        on_group_change += f;
     }
 
     public string added_inspection_text()
@@ -196,8 +213,6 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             }
             ++group;
         }
-
-        settler.update_all_groups();
     }
 
     static void validate_links(settler_path_element r)
@@ -341,13 +356,20 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
         public bool walk(Transform transform, float speed)
         {
+            return walk(transform, speed, out settler_path_element ignored);
+        }
+
+        public bool walk(Transform transform, float speed, out settler_path_element next_element)
+        {
             if (this[0] == null)
             {
                 // Path has been destroyed or we've walked all of it
+                next_element = null;
                 return true;
             }
 
             // Walk the path to completion
+            next_element = this[0];
             Vector3 next_point = this[0].transform.position;
             Vector3 forward = next_point - transform.position;
 
@@ -355,7 +377,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             {
                 if (this[1] == null)
                 {
-                    // Path has been destroyed
+                    // Path has been destroyed                 
                     return true;
                 }
 

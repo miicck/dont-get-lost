@@ -7,7 +7,6 @@ public class town_gate : building_material, IAddsToInspectionText
     const float SLOW_UPDATE_TIME = 1f;
     const float MAX_APPROACH_DISTANCE = 30f;
 
-    public List<gate> gates = new List<gate>();
     public settler_path_element path_element;
     public Transform outside_link;
 
@@ -87,6 +86,9 @@ public class town_gate : building_material, IAddsToInspectionText
         // equipped or blueprint version
         if (is_equpped) return;
         if (is_blueprint) return;
+
+        update_gate_group(this);
+        path_element.add_group_change_listener(() => update_gate_group(this));
         InvokeRepeating("slow_update", SLOW_UPDATE_TIME, SLOW_UPDATE_TIME);
     }
 
@@ -128,6 +130,13 @@ public class town_gate : building_material, IAddsToInspectionText
         }
 
         draw_approach_path = settler_path_element.draw_links;
+    }
+
+    private void OnDestroy()
+    {
+        if (is_equpped) return;
+        if (is_blueprint) return;
+        unregister_gate(this);
     }
 
     private void OnDrawGizmos()
@@ -174,6 +183,8 @@ public class town_gate : building_material, IAddsToInspectionText
         foreach (var c in characters_to_spawn)
             if (Resources.Load<character>("characters/" + c) != null)
                 client.create(spawn_point, "characters/" + c, parent: this);
+
+        settler_task_assignment.on_attack_begin();
     }
 
     void update_attack_message()
@@ -448,5 +459,57 @@ public class town_gate : building_material, IAddsToInspectionText
 
         public void draw_gizmos() { }
         public void draw_inspector_gui() { }
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    static Dictionary<int, HashSet<town_gate>> town_gates_by_group;
+
+    public static void initialize()
+    {
+        town_gates_by_group = new Dictionary<int, HashSet<town_gate>>();
+    }
+
+    public static HashSet<town_gate> gate_group(int group)
+    {
+        if (town_gates_by_group.TryGetValue(group, out HashSet<town_gate> set))
+            return set;
+        return new HashSet<town_gate>();
+    }
+
+    public static bool group_under_attack(int group)
+    {
+        foreach (var g in gate_group(group))
+            if (g.under_attack_by.Count > 0)
+                return true;
+        return false;
+    }
+
+    public delegate bool attacker_delegate(character c);
+    public static void iterate_over_attackers(int group, attacker_delegate del)
+    {
+        foreach (var gate in town_gates_by_group[group])
+            foreach (var c in gate.under_attack_by)
+                if (del(c))
+                    return;
+    }
+
+    static void update_gate_group(town_gate g)
+    {
+        unregister_gate(g);
+
+        int group = g.path_element.group;
+        if (town_gates_by_group.TryGetValue(group, out HashSet<town_gate> set))
+            set.Add(g);
+        else
+            town_gates_by_group[group] = new HashSet<town_gate> { g };
+    }
+
+    static void unregister_gate(town_gate g)
+    {
+        foreach (var kv in town_gates_by_group)
+            kv.Value.Remove(g);
     }
 }

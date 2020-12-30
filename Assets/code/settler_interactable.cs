@@ -30,6 +30,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
         WORK,
         EAT,
         SLEEP,
+        GUARD,
     }
 
     bool registered = false;
@@ -52,6 +53,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     public virtual void on_interact(settler s) { }
     public virtual bool is_complete(settler s) { return true; }
     public virtual string task_info() { return name; }
+    public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
     //##############//
     // STATIC STUFF //

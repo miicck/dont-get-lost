@@ -269,7 +269,7 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         }
     }
 
-    public class dead_character : MonoBehaviour
+    public class dead_character : MonoBehaviour, INotPathBlocking
     {
         private void Start()
         {

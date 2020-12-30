@@ -226,6 +226,7 @@ public class game : MonoBehaviour
         character_spawn_point.initialize();
         character.initialize();
         settler.initialize();
+        town_gate.initialize();
         settler_task_assignment.initialize();
         options_menu.initialize(); // This relies on the most stuff, so should be initialized last
 
