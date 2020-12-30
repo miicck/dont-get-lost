@@ -490,7 +490,8 @@ public abstract class biome : MonoBehaviour
                 altitude = 0,
                 terrain_color = new Color(0, 0, 0, 0),
                 sky_color = new Color(0, 0, 0, 1),
-                water_color = new Color(0, 0, 0, 0)
+                water_color = new Color(0, 0, 0, 0),
+                beach_color = new Color(0, 0, 0, 0)
             };
 
             float total_weight = 0;
