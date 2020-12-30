@@ -987,3 +987,60 @@ public class snowy_peaks : biome
             }
     }
 }
+
+public class jungle_cliff_islands : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + 3.5f - 12 * perlin(i / 25f, j / 25f);
+                p.fog_distance = fog_distances.VERY_CLOSE;
+
+                if ((x + z) % 2 == 0)
+                {
+                    // Swampy variety
+                    p.sky_color = sky_colors.slightly_dirty_green;
+                    p.water_color = water_colors.swampy_green;
+                }
+
+                if (random.range(0, 8 * 8) == 0)
+                    p.object_to_generate = world_object.load("rock_plateau_2");
+
+                if (p.altitude < point.BEACH_END + 1f)
+                {
+                    if (random.range(0, 1024) == 0)
+                        p.object_to_generate = world_object.load("jungle_tree_1");
+                    else if (random.range(0, 1024) == 0)
+                        p.object_to_generate = world_object.load("jungle_tree_2");
+                }
+
+                if (p.object_to_generate == null && p.altitude < point.BEACH_END)
+                {
+                    if (random.range(0, 100) == 0)
+                        p.object_to_generate = world_object.load("flint");
+                    else if (random.range(0, 200) == 0)
+                        p.object_to_generate = world_object.load("iron_ore");
+                }
+            }
+    }
+}
+
+public class volcano_field : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + 1;
+                p.fog_distance = fog_distances.FAR;
+
+                if (i % 44 == 0 && j % 44 == 0 && random.range(0, 4) == 0)
+                    p.object_to_generate = world_object.load("volcano_1");
+            }
+    }
+}

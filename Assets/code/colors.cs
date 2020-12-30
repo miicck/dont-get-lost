@@ -28,6 +28,7 @@ public static class sky_colors
     public static readonly Color smoke_grey = new Color(0.2f, 0.2f, 0.2f, 1f);
     public static readonly Color crystal_purple = new Color(0.55f, 0.21f, 0.49f);
     public static readonly Color jungle_green = new Color(0.38f, 0.57f, 0.29f);
+    public static readonly Color slightly_dirty_green = new Color(0.44f, 0.57f, 0.33f);
     public static readonly Color underground_darkness = new Color(0.2f, 0.2f, 0.2f);
 }
 

@@ -401,6 +401,26 @@ public class console : MonoBehaviour
 
             description = "Teleport exactly one biome across in the x direction.",
             usage_example = "jump_to_next_biome"
+        },
+
+        ["unstuck"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    Vector3 target = player.current.transform.position;
+                    target.y = 10 * world.MAX_ALTITUDE;
+                    if (Physics.Raycast(new Ray(target, Vector3.down), out RaycastHit hit))
+                        target = hit.point;
+                    player.current.teleport(target);
+                    player.current.disable_next_fall_damage = true;
+                });
+                return true;
+            },
+
+            description = "Teleport the player up until they are unstuck",
+            usage_example = "unstuck"
         }
     };
 

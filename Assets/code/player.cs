@@ -749,7 +749,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         get
         {
             var sg = utils.raycast_for_closest<slippy_ground>(
-                new Ray(transform.position + Vector3.up * 0.5f, Vector3.down), 
+                new Ray(transform.position + Vector3.up * 0.5f, Vector3.down),
                 out RaycastHit hit, max_distance: 1f);
 
             if (sg == null) return 0f;
@@ -1038,7 +1038,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         }
     }
 
-    bool disable_next_fall_damage = false;
+    public bool disable_next_fall_damage = false;
     public bool fly_mode
     {
         get => _fly_mode;
