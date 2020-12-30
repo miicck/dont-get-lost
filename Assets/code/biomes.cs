@@ -480,6 +480,7 @@ public class ice_ocean : biome
             {
                 var p = new point();
                 p.terrain_color = terrain_colors.snow;
+                p.beach_color = terrain_colors.snow;
                 p.sky_color = sky_colors.light_blue;
                 p.altitude = 0;
                 p.fog_distance = fog_distances.OFF;
