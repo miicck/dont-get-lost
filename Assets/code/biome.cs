@@ -296,6 +296,8 @@ public abstract class biome : MonoBehaviour
     static List<MethodInfo> biome_list;
     static List<MethodInfo> modifier_list;
 
+    public static int active_biomes => biome_list == null ? 0 : biome_list.Count;
+
     public static void initialize()
     {
         // Ensure the biome list doesn't persist from previous game
