@@ -53,7 +53,10 @@ public abstract class world_object : MonoBehaviour
             foreach (var o in Resources.LoadAll<world_object>("world_objects/"))
                 _library[o.name] = o;
         }
-        return _library[name];
+        if (_library.TryGetValue(name, out world_object found))
+            return found;
+        Debug.LogError("The world object \"" + name + "\" was not found!");
+        return null;
     }
     static Dictionary<string, world_object> _library;
 
@@ -69,7 +72,7 @@ public abstract class world_object : MonoBehaviour
     /// ore seam. </summary>
     public abstract class sub_generator : MonoBehaviour
     {
-        public abstract void generate(biome.point point, 
+        public abstract void generate(biome.point point,
             chunk chunk, int x_in_chunk, int z_in_chunk);
     }
 
