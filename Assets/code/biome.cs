@@ -22,6 +22,12 @@ public abstract class biome : MonoBehaviour
     /// <summary> The random number generator specific to this biome. </summary>
     public System.Random random { get; private set; }
 
+    /// <summary> Perlin noise, with a pattern specific to this biome. </summary>
+    protected float perlin(float x, float y)
+    {
+        return Mathf.PerlinNoise(x + this.x * 10f, y + this.z * 10f);
+    }
+
     /// <summary> The grid of points defining the biome. </summary>
     public point[,] grid = new point[SIZE, SIZE];
     protected abstract void generate_grid();
@@ -473,6 +479,7 @@ public abstract class biome : MonoBehaviour
         public Color water_color = water_colors.cyan;
         public Color terrain_color = terrain_colors.grass;
         public Color sky_color = sky_colors.light_blue;
+        public Color beach_color = terrain_colors.sand;
         public world_object object_to_generate;
 
         /// <summary> Compute a weighted average of a list of points. </summary>
@@ -512,6 +519,10 @@ public abstract class biome : MonoBehaviour
                 ret.water_color.g += p.water_color.g * w;
                 ret.water_color.b += p.water_color.b * w;
 
+                ret.beach_color.r += p.beach_color.r * w;
+                ret.beach_color.g += p.beach_color.g * w;
+                ret.beach_color.b += p.beach_color.b * w;
+
                 if (wts[i] > max_w)
                 {
                     max_w = wts[i];
@@ -532,11 +543,11 @@ public abstract class biome : MonoBehaviour
         {
             // Enforce beach color
             if (altitude < BEACH_START)
-                terrain_color = terrain_colors.sand;
+                terrain_color = beach_color;
             else if (altitude < BEACH_END)
             {
                 float s = 1 - procmath.maps.linear_turn_on(altitude, BEACH_START, BEACH_END);
-                terrain_color = Color.Lerp(terrain_color, terrain_colors.sand, s);
+                terrain_color = Color.Lerp(terrain_color, beach_color, s);
             }
 
             // Check if the object can be placed 

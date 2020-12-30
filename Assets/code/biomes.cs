@@ -937,3 +937,52 @@ public class dried_up_rivers : biome
             }
     }
 }
+
+public class snowy_peaks : biome
+{
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.fog_distance = fog_distances.OFF;
+                p.terrain_color = terrain_colors.snow;
+                p.beach_color = terrain_colors.ice;
+
+                if ((x + z) % 2 == 0)
+                    p.sky_color = sky_colors.pale_yellow_green;
+
+                p.altitude = world.SEA_LEVEL + perlin(i / 64f, j / 64f) * 32 - 16;
+                p.altitude += 16 * perlin(i / 32f, j / 32f) - 8f;
+
+                float cliffness = perlin(i / 55f, j / 55f);
+                if (cliffness < 0.5f) cliffness = 0f;
+                else cliffness = (cliffness - 0.5f) * 2f;
+
+                p.altitude = world.SEA_LEVEL + (p.altitude - world.SEA_LEVEL) * (1f + 3f * cliffness);
+
+                if (p.altitude > world.SEA_LEVEL)
+                {
+                    float tree_amount = perlin(i / 24f, j / 24f);
+                    if (tree_amount > 0.5f)
+                    {
+                        if (random.range(0, 16) == 0)
+                            p.object_to_generate = world_object.load("snowy_pine_tree");
+                    }
+                    else
+                    {
+                        if (random.range(0, 128) == 0)
+                            p.object_to_generate = world_object.load("snowy_boulder");
+                        else if (random.range(0, 32) == 0)
+                            p.object_to_generate = world_object.load("snowy_cliff");
+                    }
+                }
+                else
+                {
+                    if (random.range(0, 400) == 0)
+                        p.object_to_generate = world_object.load("ice_sheet_transparent");
+                }
+            }
+    }
+}

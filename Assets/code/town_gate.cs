@@ -52,9 +52,8 @@ public class town_gate : building_material, IAddsToInspectionText
             if (draw_approach_path == value)
                 return; // No change
 
-            if (drawn_approach_path != null)
-                Destroy(drawn_approach_path);
-            if (!value) return;
+            if (drawn_approach_path != null) Destroy(drawn_approach_path);
+            if (!value || enemy_approach_path == null) return;
 
             drawn_approach_path = new GameObject("approach_path");
             drawn_approach_path.transform.SetParent(transform);

@@ -744,6 +744,19 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     CharacterController controller;
     Vector3 velocity = Vector3.zero;
 
+    float ground_slippyness
+    {
+        get
+        {
+            var sg = utils.raycast_for_closest<slippy_ground>(
+                new Ray(transform.position + Vector3.up * 0.5f, Vector3.down), 
+                out RaycastHit hit, max_distance: 1f);
+
+            if (sg == null) return 0f;
+            return sg.slippyness;
+        }
+    }
+
     void run_movement()
     {
         // Things that disallow movement
@@ -881,19 +894,30 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
         }
 
+        // Work out how much of the x-z velocity should be removed due to friction
+        float local_slippyness = ground_slippyness;
+        float friction_attenuation = 1f;
+        if (local_slippyness > 1e-4)
+        {
+            friction_attenuation = Time.deltaTime / local_slippyness;
+            if (friction_attenuation > 1f) friction_attenuation = 1f;
+        }
+
         // Control forward/back velocity
         if (controls.key_down(controls.BIND.WALK_FORWARD))
             velocity += transform.forward * ACCELERATION * Time.deltaTime;
         else if (controls.key_down(controls.BIND.WALK_BACKWARD))
             velocity -= transform.forward * ACCELERATION * Time.deltaTime;
-        else velocity -= Vector3.Project(velocity, transform.forward);
+        else
+            velocity -= friction_attenuation * Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
         if (controls.key_down(controls.BIND.STRAFE_RIGHT))
             velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
         else if (controls.key_down(controls.BIND.STRAFE_LEFT))
             velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
-        else velocity -= Vector3.Project(velocity, camera.transform.right);
+        else
+            velocity -= friction_attenuation * Vector3.Project(velocity, camera.transform.right);
 
         move += velocity * Time.deltaTime;
 
