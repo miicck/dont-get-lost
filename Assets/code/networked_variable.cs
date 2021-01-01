@@ -817,6 +817,13 @@ namespace networked_variables
             if (dirty) set_dirty();
         }
 
+        public void modify_every_satisfaction(int amount)
+        {
+            for (int i = 0; i < group_values.Length; ++i)
+                group_values[i] = (byte)Mathf.Clamp(group_values[i] + amount, 0, byte.MaxValue);
+            set_dirty();
+        }
+
         public override byte[] serialization()
         {
             return group_values;

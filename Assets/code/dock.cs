@@ -22,7 +22,9 @@ public class dock : building_material, IAddsToInspectionText
         get
         {
             if (boat == null) return false;
-            return (boat.transform.position - transform.position).magnitude < 0.5f;
+            Vector3 delta = boat.transform.position - transform.position;
+            delta.y = 0;
+            return delta.magnitude < 0.5f;
         }
     }
 

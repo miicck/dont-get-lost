@@ -134,7 +134,7 @@ public class item_dispenser : settler_interactable
 
                 // Done if there is no food, or meetabolic satisfaction is high
                 if (find_food() == null) return true;
-                return s.nutrition.metabolic_satisfaction > 220; // Test for food eaten
+                return s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT;
 
             default:
                 throw new System.Exception("Unkown item dispenser mode!");

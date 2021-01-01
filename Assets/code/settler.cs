@@ -7,6 +7,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float HEAL_RATE = 100f / 120f;
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
+    public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
+    public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
 
     public List<Renderer> skin_renderers = new List<Renderer>();
     public List<Renderer> top_underclothes = new List<Renderer>();
@@ -75,7 +77,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         if (delta_hunger > 1f)
         {
             delta_hunger = 0f;
-            // Get hugry here
+            nutrition.modify_every_satisfaction(-1);
         }
 
         if (delta_tired > 1f)
@@ -97,7 +99,10 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             path = null;
 
             // Get an eat task
-            if (Random.Range(64, 255) > nutrition.metabolic_satisfaction &&
+            if (Random.Range(
+                GUARANTEED_EAT_METABOLIC_SATISFACTION,
+                MAX_METABOLIC_SATISFACTION_TO_EAT) >
+                nutrition.metabolic_satisfaction &&
                 settler_task_assignment.try_assign(this,
                 settler_interactable.proximity_weighted_ramdon(
                     settler_interactable.TYPE.EAT, transform.position)))
@@ -210,7 +215,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         return name.capitalize() + " (group " + group + ")\n" +
                "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-               nutrition_info() +
+               "    " + Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n" +
                ass_string + "\n" +
                "    interacting with " + players_interacting_with.value + " players";
     }
