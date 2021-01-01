@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6891757688209090192}
   - component: {fileID: 7606961425758704865}
+  - component: {fileID: 2877525331175093042}
   m_Layer: 0
   m_Name: mushroom
   m_TagString: Untagged
@@ -48,5 +49,17 @@ MonoBehaviour:
   plural: mushrooms
   value: 0
   fuel_value: 0
-  food_value: 3
   logistics_scale: 1
+--- !u!114 &2877525331175093042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846614148370836036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ca98641932248469fbf50dae5fbb70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  food_group_values: 000f280f00

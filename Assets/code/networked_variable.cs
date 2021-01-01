@@ -770,4 +770,64 @@ namespace networked_variables
             }
         }
     }
+
+    public class net_food_satisfaction : networked_variable
+    {
+        byte[] group_values = new byte[food.total_groups];
+
+        public byte metabolic_satisfaction
+        {
+            get
+            {
+                // The metabolic satisfaction is the maximum
+                // value of food groups which can be metabolised
+                byte value = 0;
+                foreach (var g in food.all_groups)
+                    if (food.can_metabolize(g) && this[g] > value)
+                        value = this[g];
+                return value;
+            }
+        }
+
+        public byte hunger => (byte)(byte.MaxValue - metabolic_satisfaction);
+
+        public byte this[food.GROUP group]
+        {
+            get { return group_values[(int)group]; }
+            set
+            {
+                if (value == group_values[(int)group])
+                    return; // No change
+
+                group_values[(int)group] = value;
+                set_dirty();
+            }
+        }
+
+        public void consume_food(food f)
+        {
+            bool dirty = false;
+            foreach (var g in food.all_groups)
+            {
+                byte val_before = group_values[(int)g];
+                group_values[(int)g] = (byte)Mathf.Min(byte.MaxValue, val_before + f.food_value(g));
+                if (group_values[(int)g] != val_before)
+                    dirty = true;
+            }
+            if (dirty) set_dirty();
+        }
+
+        public override byte[] serialization()
+        {
+            return group_values;
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            if (length != food.total_groups)
+                throw new System.Exception("Food satisfaction serialization has incorrect length!");
+            System.Buffer.BlockCopy(buffer, offset, group_values, 0, length);
+            offset += length;
+        }
+    }
 }

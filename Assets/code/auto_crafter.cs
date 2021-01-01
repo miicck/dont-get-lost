@@ -155,6 +155,21 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
                 button_i.button.onClick.AddListener(() =>
                 {
+                    if (controls.key_down(controls.BIND.QUICK_ITEM_TRANSFER))
+                    {
+                        // Transfer the recipe ingredients to the crafting menu
+                        if (player.current == null) return;
+
+                        var r = recipies[i_copy];
+                        bool can_craft = r.can_craft(player.current.inventory, out Dictionary<string, int> to_use);
+                        foreach (var kv in to_use)
+                        {
+                            if (player.current.inventory.remove(kv.Key, kv.Value))
+                                player.current.crafting_menu.add(kv.Key, kv.Value);
+                        }
+                        return;
+                    }
+
                     chosen_recipe.value = i_copy;
 
                     // Update colors to highlight selection
@@ -218,7 +233,7 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
 
         if (currently_crafting != null)
         {
-            info += "Currently crafting " + 
+            info += "Currently crafting " +
                 product.product_plurals_list(currently_crafting.products) + "\n";
         }
 

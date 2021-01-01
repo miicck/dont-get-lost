@@ -12,13 +12,12 @@ public class item_dispenser : settler_interactable
     item_locator[] locators;
     float time_interacted = 0f;
     float time_dispensing = 0f;
-    int initial_hunger = 0;
 
     item_locator find_food()
     {
         foreach (var l in locators)
             if (l.item != null)
-                if (l.item.food_value > 0)
+                if (l.item.food_values != null)
                     return l;
         return null;
     }
@@ -86,7 +85,7 @@ public class item_dispenser : settler_interactable
     {
         switch (mode)
         {
-            case MODE.FOOD: return i.food_value > 0;
+            case MODE.FOOD: return i.food_values != null;
             default: throw new System.Exception("Unkown dispenser mode!");
         }
     }
@@ -100,7 +99,6 @@ public class item_dispenser : settler_interactable
         // Reset stuff
         time_interacted = 0f;
         time_dispensing = 0f;
-        initial_hunger = s.hunger.value;
     }
 
     public override void on_interact(settler s)
@@ -119,7 +117,10 @@ public class item_dispenser : settler_interactable
             {
                 // Eat food on authority client, delete food on all clients
                 if (s.has_authority)
-                    s.hunger.value -= Mathf.Min(food.item.food_value, s.hunger.value);
+                {
+                    // Eat food
+                    s.nutrition.consume_food(food.item.food_values);
+                }
                 Destroy(food.release_item().gameObject);
             }
         }
@@ -131,9 +132,9 @@ public class item_dispenser : settler_interactable
         {
             case MODE.FOOD:
 
-                // Done if there is no food, or our hunger drops below 20%
+                // Done if there is no food, or meetabolic satisfaction is high
                 if (find_food() == null) return true;
-                return s.hunger.value < 20;
+                return s.nutrition.metabolic_satisfaction > 220; // Test for food eaten
 
             default:
                 throw new System.Exception("Unkown item dispenser mode!");

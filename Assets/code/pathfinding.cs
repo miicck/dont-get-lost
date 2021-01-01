@@ -303,6 +303,12 @@ public class astar_path : path
             {
                 path.RemoveAt(last_optimize_step + 1);
                 optimized = true;
+
+                if (length < 3) // Can't optimize a streight line
+                {
+                    last_optimize_step = 0;
+                    return true;
+                }
             }
 
             last_optimize_step = (last_optimize_step + 1) % (length - 2);

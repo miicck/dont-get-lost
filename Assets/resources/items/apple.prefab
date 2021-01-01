@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3113739144136294167}
   - component: {fileID: 4183447387819725491}
+  - component: {fileID: 5835272831789705929}
   m_Layer: 0
   m_Name: apple
   m_TagString: Untagged
@@ -49,8 +50,20 @@ MonoBehaviour:
   plural: apples
   value: 1
   fuel_value: 0
-  food_value: 5
   logistics_scale: 1
+--- !u!114 &5835272831789705929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424699822712960711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ca98641932248469fbf50dae5fbb70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  food_group_values: 00051e1e00
 --- !u!135 &7799642577333606537
 SphereCollider:
   m_ObjectHideFlags: 0

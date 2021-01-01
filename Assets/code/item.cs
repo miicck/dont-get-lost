@@ -4,7 +4,6 @@ using UnityEngine;
 
 public interface INonEquipable { }
 public interface INonEquipableCallback : INonEquipable { void on_equip_callback(player player); }
-
 public interface INonLogistical { }
 
 public class item : networked, IInspectable, IAcceptLeftClick
@@ -26,9 +25,10 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public string plural;
     public int value;
     public int fuel_value = 0;
-    public int food_value = 0;
     public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
     public bool is_equpped => GetComponentInParent<player>() != null;
+
+    public food food_values => GetComponent<food>();
 
     void make_logistics_version()
     {
@@ -109,11 +109,11 @@ public class item : networked, IInspectable, IAcceptLeftClick
         {
             if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
             {
-                if (food_value > 0)
+                if (food_values != null)
                 {
                     // Eat
                     player.inventory.remove(this, 1);
-                    player.modify_hunger(food_value);
+                    player.modify_hunger(food_values.metabolic_value());
                     player.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
                     foreach (var p in GetComponents<product>())
                         p.create_in(player.inventory);
@@ -144,7 +144,7 @@ public class item : networked, IInspectable, IAcceptLeftClick
     public virtual string equipped_context_tip()
     {
         string ret = "";
-        if (food_value > 0) ret += "Left click to eat";
+        if (food_values != null) ret += "Left click to eat";
         var gut = gutter_to_place_on(player.current, out RaycastHit hit);
         if (gut != null) ret += "\nRight click to place on gutter";
         if (ret.Length == 0) return null;
@@ -387,12 +387,13 @@ public class item : networked, IInspectable, IAcceptLeftClick
         }
 
         // Food value
-        if (item.food_value > 0)
+        if (item.food_values != null)
         {
+            int mv = item.food_values.metabolic_value();
             if (quantity > 1)
-                info += "  Food value : " + (item.food_value * quantity).qs() + " (" + item.food_value.qs() + " each)\n";
+                info += "  Food value (metabolic): " + (mv * quantity).qs() + " (" + mv.qs() + " each)\n";
             else
-                info += "  Food value : " + item.food_value.qs() + "\n";
+                info += "  Food value (metabolic): " + mv.qs() + "\n";
         }
 
         return utils.allign_colons(info);

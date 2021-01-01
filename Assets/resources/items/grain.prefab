@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5865365589815700442}
   - component: {fileID: 2538827299418554887}
+  - component: {fileID: -9056336870308433450}
   m_Layer: 0
   m_Name: grain
   m_TagString: Untagged
@@ -49,8 +50,20 @@ MonoBehaviour:
   plural: grain
   value: 0
   fuel_value: 0
-  food_value: 1
   logistics_scale: 1
+--- !u!114 &-9056336870308433450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 992061488607686714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ca98641932248469fbf50dae5fbb70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  food_group_values: 0005000f00
 --- !u!1001 &2516702900284415496
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -70,13 +70,12 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         delta_hunger += HUNGER_PER_SECOND * Time.deltaTime;
         delta_tired += TIREDNESS_PER_SECOND * Time.deltaTime;
 
-        if (hunger.value < 50)
-            delta_heal += HEAL_RATE * Time.deltaTime;
+        delta_heal += HEAL_RATE * Time.deltaTime;
 
         if (delta_hunger > 1f)
         {
             delta_hunger = 0f;
-            hunger.value += 1;
+            // Get hugry here
         }
 
         if (delta_tired > 1f)
@@ -98,7 +97,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
             path = null;
 
             // Get an eat task
-            if (Random.Range(20, 100) < hunger.value &&
+            if (Random.Range(64, 255) > nutrition.metabolic_satisfaction &&
                 settler_task_assignment.try_assign(this,
                 settler_interactable.proximity_weighted_ramdon(
                     settler_interactable.TYPE.EAT, transform.position)))
@@ -210,8 +209,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
         return name.capitalize() + " (group " + group + ")\n" +
                "    " + "Health " + remaining_health + "/" + max_health + "\n" +
-               "    " + Mathf.Round(hunger.value) + "% hungry\n" +
                "    " + Mathf.Round(tiredness.value) + "% tired\n" +
+               nutrition_info() +
                ass_string + "\n" +
                "    interacting with " + players_interacting_with.value + " players";
     }
@@ -235,6 +234,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     color_selector hair_color_selector;
     color_selector top_color_selector;
     color_selector bottom_color_selector;
+    UnityEngine.UI.Text info_panel_text;
 
     public void on_left_menu_close()
     {
@@ -245,12 +245,21 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     {
         players_interacting_with.value += 1;
 
-        foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>())
+        foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>(true))
         {
             if (cs.name.Contains("hair")) hair_color_selector = cs;
             else if (cs.name.Contains("top")) top_color_selector = cs;
             else bottom_color_selector = cs;
         }
+
+        foreach (var tex in inventory.ui.GetComponentsInChildren<UnityEngine.UI.Text>())
+            if (tex.name == "info_panel_text")
+            {
+                info_panel_text = tex;
+                break;
+            }
+
+        info_panel_text.text = left_menu_text();
 
         hair_color_selector.color = net_hair_color.value;
         top_color_selector.color = top_color.value;
@@ -261,13 +270,41 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         bottom_color_selector.on_change = () => bottom_color.value = bottom_color_selector.color;
     }
 
+    public string left_menu_text()
+    {
+        return name.capitalize() + "\n\n" +
+               "Health " + remaining_health + "/" + max_health + "\n" +
+               tiredness.value + "% tired\n" +
+               "Group  " + group + "\n\n" +
+               nutrition_info();
+    }
+
+    public string nutrition_info()
+    {
+        int max_length = 0;
+        foreach (var g in food.all_groups)
+            if (food.group_name(g).Length > max_length)
+                max_length = food.group_name(g).Length;
+
+        string ret = Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n";
+        ret += "Diet satisfaction\n";
+        foreach (food.GROUP g in food.all_groups)
+        {
+            string name = food.group_name(g).capitalize();
+            while (name.Length < max_length) name += " ";
+            ret += "  " + name + " " + Mathf.Round(nutrition[g] * 100f / 255f) + "%\n";
+        }
+
+        return ret;
+    }
+
     public recipe[] additional_recipes() { return null; }
 
     //############//
     // NETWORKING //
     //############//
 
-    public networked_variables.net_int hunger;
+    public networked_variables.net_food_satisfaction nutrition;
     public networked_variables.net_int tiredness;
     public networked_variables.net_string net_name;
     public networked_variables.net_bool male;
@@ -287,7 +324,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
-        hunger = new networked_variables.net_int(min_value: 0, max_value: 100);
+        nutrition = new networked_variables.net_food_satisfaction();
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
         net_name = new networked_variables.net_string();
         male = new networked_variables.net_bool();
