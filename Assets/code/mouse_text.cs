@@ -15,6 +15,10 @@ public class mouse_text : MonoBehaviour
 
     void Update()
     {
+        text_element.text = "";
+        if (player.current == null) return;
+        if (player.current.ui_state == player.UI_STATE.ALL_CLOSED) return;
+
         transform.SetAsLastSibling(); // Stay on top
         rect_transform.anchoredPosition = Input.mousePosition;
 
