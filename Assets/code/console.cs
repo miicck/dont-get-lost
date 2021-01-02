@@ -421,6 +421,33 @@ public class console : MonoBehaviour
 
             description = "Teleport the player up until they are unstuck",
             usage_example = "unstuck"
+        },
+
+        ["teleport_to_room"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Too few arguments!");
+                if (!int.TryParse(args[1], out int room_id))
+                    return console_error("Could not parse room id from " + args[1]);
+
+                player.call_when_current_player_available(() =>
+                {
+                    var elms = settler_path_element.elements_in_room(room_id);
+                    if (elms.Count == 0)
+                        console_error("No elements in room " + room_id);
+                    else
+                        foreach (var e in elms)
+                        {
+                            player.current.teleport(e.transform.position);
+                            break;
+                        }
+                });
+                return true;
+            },
+
+            description = "Teleport to the room with the given id",
+            usage_example = "teleport_to_room 3"
         }
     };
 

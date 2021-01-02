@@ -9,6 +9,51 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 {
     public settler_interactable interactable => GetComponentInParent<settler_interactable>();
 
+    public virtual void on_settler_enter(settler s) { }
+    public virtual void on_settler_move_towards(settler s) { }
+    public virtual void on_settler_leave(settler s) { }
+    public virtual bool seperates_rooms() { return false; }
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
+
+    bool registered = false;
+    protected virtual void Start()
+    {
+        // Don't register this path element if we are 
+        // part of an unplaced building material
+        var bm = GetComponentInParent<building_material>();
+        if (bm != null && (bm.is_equpped || bm.is_blueprint))
+            return;
+
+        // Register this element, if neccassary
+        registered = true;
+        register_element(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Unregister this element, if neccassary
+        if (registered)
+            forget_element(this);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.cyan;
+        foreach (var l in links)
+            if (l.linked_to != null)
+            {
+                Gizmos.DrawLine(transform.position, l.transform.position);
+                Gizmos.DrawLine(l.transform.position, l.linked_to.transform.position);
+            }
+    }
+
+    //#########//
+    // LINKING //
+    //#########//
+
     public settler_path_link[] links
     {
         get
@@ -49,36 +94,29 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
     public delegate void group_update_func();
     group_update_func on_group_change = () => { };
+    public void add_group_change_listener(group_update_func f) { on_group_change += f; }
 
-    public void add_group_change_listener(group_update_func f)
+    public int room
     {
-        on_group_change += f;
+        get => _room;
+        private set
+        {
+            if (_room == value)
+                return; // No change
+
+            _room = value;
+            on_room_change();
+        }
     }
+    int _room;
+
+    public delegate void room_update_func();
+    room_update_func on_room_change = () => { };
+    public void add_room_change_listener(room_update_func f) { on_room_change += f; }
 
     public string added_inspection_text()
     {
-        return "Group " + group;
-    }
-
-    bool registered = false;
-    private void Start()
-    {
-        // Don't register this path element if we are 
-        // part of an unplaced building material
-        var bm = GetComponentInParent<building_material>();
-        if (bm != null && (bm.is_equpped || bm.is_blueprint))
-            return;
-
-        // Register this element, if neccassary
-        registered = true;
-        register_element(this);
-    }
-
-    private void OnDestroy()
-    {
-        // Unregister this element, if neccassary
-        if (registered)
-            forget_element(this);
+        return "Group " + group + " room " + room;
     }
 
     void try_link(settler_path_element other)
@@ -120,17 +158,6 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-        foreach (var l in links)
-            if (l.linked_to != null)
-            {
-                Gizmos.DrawLine(transform.position, l.transform.position);
-                Gizmos.DrawLine(l.transform.position, l.linked_to.transform.position);
-            }
-    }
-
     float heuristic(settler_path_element other)
     {
         return (transform.position - other.transform.position).magnitude;
@@ -142,6 +169,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
     static HashSet<settler_path_element> all_elements;
     static Dictionary<int, HashSet<settler_path_element>> grouped_elements;
+    static Dictionary<int, HashSet<settler_path_element>> roomed_elements;
 
     public static settler_path_element nearest_element(Vector3 v)
     {
@@ -166,6 +194,13 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         return new HashSet<settler_path_element>();
     }
 
+    public static HashSet<settler_path_element> elements_in_room(int room)
+    {
+        if (roomed_elements.TryGetValue(room, out HashSet<settler_path_element> elms))
+            return elms;
+        return new HashSet<settler_path_element>();
+    }
+
     public static settler_path_element find_nearest(Vector3 position)
     {
         return utils.find_to_min(all_elements,
@@ -177,12 +212,18 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         // Initialize theelements collection
         all_elements = new HashSet<settler_path_element>();
         grouped_elements = new Dictionary<int, HashSet<settler_path_element>>();
+        roomed_elements = new Dictionary<int, HashSet<settler_path_element>>();
+    }
+
+    static void evaluate_groups_and_rooms()
+    {
+        evaluate_groups();
+        evaluate_rooms();
     }
 
     static void evaluate_groups()
     {
         int group = 0;
-
         HashSet<settler_path_element> ungrouped = new HashSet<settler_path_element>(all_elements);
 
         while (ungrouped.Count > 0)
@@ -199,7 +240,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
                 open.Remove(to_expand);
 
                 // Add all linked elements to the open set 
-                // (if they arent closed set)
+                // (if they arent in the closed set)
                 foreach (var n in to_expand.linked_elements())
                     if (!closed.Contains(n))
                         open.Add(n);
@@ -215,6 +256,46 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         }
     }
 
+    static void evaluate_rooms()
+    {
+        int room = 0;
+        HashSet<settler_path_element> unroomed = new HashSet<settler_path_element>(all_elements);
+
+        while (unroomed.Count > 0)
+        {
+            // Create an open set from the first unroomed element
+            HashSet<settler_path_element> open = new HashSet<settler_path_element> { unroomed.First() };
+            HashSet<settler_path_element> closed = new HashSet<settler_path_element>();
+
+            while (open.Count > 0)
+            {
+                // Get the first open element
+                var to_expand = open.First();
+                closed.Add(to_expand);
+                open.Remove(to_expand);
+
+                // Don't expand room searches from path elements
+                // that seperate rooms
+                if (to_expand.seperates_rooms())
+                    continue;
+
+                // Add all linked elements to the open set 
+                // (if they arent in the closed set)
+                foreach (var n in to_expand.linked_elements())
+                    if (!closed.Contains(n))
+                        open.Add(n);
+            }
+
+            roomed_elements[room] = closed;
+            foreach (var e in closed)
+            {
+                unroomed.Remove(e);
+                e.room = room;
+            }
+            ++room;
+        }
+    }
+
     static void validate_links(settler_path_element r)
     {
         // Re-make all links to/from r
@@ -222,7 +303,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         foreach (var r2 in all_elements)
             r.try_link(r2);
 
-        evaluate_groups();
+        evaluate_groups_and_rooms();
     }
 
     static void register_element(settler_path_element r)
@@ -241,7 +322,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             throw new System.Exception("Tried to forget unregistered element!");
 
         r.break_links();
-        evaluate_groups();
+        evaluate_groups_and_rooms();
     }
 
     /// <summary> Set to true to draw objects representing 
@@ -370,7 +451,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
             // Walk the path to completion
             next_element = this[0];
-            Vector3 next_point = this[0].transform.position;
+            Vector3 next_point = next_element.transform.position;
             Vector3 forward = next_point - transform.position;
 
             if (Count > 1)

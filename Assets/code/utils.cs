@@ -543,6 +543,11 @@ public static class utils
         }
     }
 
+    public static float distance_to(this Component c, Component other)
+    {
+        return (c.transform.position - other.transform.position).magnitude;
+    }
+
     /// <summary> Convert the given angle in degrees to the version with
     /// minimal modulus (employing negative values if neccassary). </summary>
     public static float minimal_modulus_angle(float angle)

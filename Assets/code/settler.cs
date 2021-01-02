@@ -39,7 +39,24 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     }
 
     settler_path_element.path path;
-    settler_path_element path_element;
+
+    /// <summary> The path element that I am currently moving 
+    /// towards. </summary>
+    settler_path_element path_element
+    {
+        get => _path_element;
+        set
+        {
+            if (_path_element == value)
+                return;
+
+            _path_element?.on_settler_leave(this);
+            _path_element = value;
+            _path_element?.on_settler_enter(this);
+        }
+    }
+    settler_path_element _path_element;
+
     public int group => path_element == null ? -1 : path_element.group;
     float delta_hunger = 0;
     float delta_tired = 0;
@@ -160,8 +177,11 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            if (path.walk(transform, assignment.interactable.move_to_speed(this), out path_element))
+            settler_path_element element_walking_towards;
+            if (path.walk(transform, assignment.interactable.move_to_speed(this), out element_walking_towards))
                 path = null;
+            path_element = element_walking_towards;
+            path_element?.on_settler_move_towards(this);
             return;
         }
 
@@ -192,6 +212,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
     private void OnDestroy()
     {
+        path_element = null;
         settlers.Remove(this);
     }
 
