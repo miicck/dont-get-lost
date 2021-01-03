@@ -14,6 +14,9 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public List<Renderer> top_underclothes = new List<Renderer>();
     public List<Renderer> bottom_underclothes = new List<Renderer>();
 
+    public Transform left_hand { get; private set; }
+    public Transform right_hand { get; private set; }
+
     //###################//
     // CHARACTER CONTROL //
     //###################//
@@ -58,6 +61,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     settler_path_element _path_element;
 
     public int group => path_element == null ? -1 : path_element.group;
+    public int room => path_element == null ? -1 : path_element.room;
     float delta_hunger = 0;
     float delta_tired = 0;
     float delta_heal = 0;
@@ -207,6 +211,25 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
     private void Start()
     {
+        // Get my left/right hand transforms
+        foreach (var al in GetComponentsInChildren<armour_locator>())
+            if (al.location == armour_piece.LOCATION.HAND)
+            {
+                switch (al.handedness)
+                {
+                    case armour_piece.HANDEDNESS.LEFT:
+                        left_hand = al.transform;
+                        break;
+
+                    case armour_piece.HANDEDNESS.RIGHT:
+                        right_hand = al.transform;
+                        break;
+
+                    case armour_piece.HANDEDNESS.EITHER:
+                        throw new System.Exception("A hand has EITHER handedness!");
+                }
+            }
+
         settlers.Add(this);
     }
 
@@ -229,16 +252,20 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
 
     new public string inspect_info()
     {
-        string ass_string = "No assignment.";
-        if (assignment != null)
-            ass_string = "Assignment: " + assignment.interactable.task_info();
-
-        return name.capitalize() + " (group " + group + ")\n" +
+        return name.capitalize() + "\n" +
                "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                "    " + Mathf.Round(tiredness.value) + "% tired\n" +
                "    " + Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n" +
-               ass_string + "\n" +
+               assignement_info() + "\n" +
                "    interacting with " + players_interacting_with.value + " players";
+    }
+
+    public string assignement_info()
+    {
+        string ass_string = "No assignment.";
+        if (assignment != null)
+            ass_string = "Assignment: " + assignment.interactable.task_info();
+        return ass_string;
     }
 
     //#################//
@@ -301,7 +328,8 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         return name.capitalize() + "\n\n" +
                "Health " + remaining_health + "/" + max_health + "\n" +
                tiredness.value + "% tired\n" +
-               "Group  " + group + "\n\n" +
+               "Group " + group + " room " + room + "\n\n" +
+               assignement_info() + "\n\n" +
                nutrition_info();
     }
 

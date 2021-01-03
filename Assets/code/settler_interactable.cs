@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipable
+public class has_path_elements : MonoBehaviour
 {
     /// <summary> Returns the path element that a settler from the
     /// given group can use to access this interactable </summary>
@@ -13,7 +13,10 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
                 return e;
         return null;
     }
+}
 
+public class settler_interactable : has_path_elements, INonBlueprintable, INonEquipable
+{
     /// <summary> Returns the networked object to which I belong. </summary>
     public networked networked_parent => GetComponentInParent<networked>();
 
@@ -34,6 +37,7 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
         EAT,
         SLEEP,
         GUARD,
+        DONT_ASSIGN_EXPLICITLY,
     }
 
     bool registered = false;

@@ -327,6 +327,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4783911086122082929}
   - component: {fileID: 5617365583440348834}
+  - component: {fileID: 4806985758012797492}
   m_Layer: 0
   m_Name: sawmill
   m_TagString: Untagged
@@ -373,6 +374,20 @@ MonoBehaviour:
   craft_time: 1
   recipes_folder: recipes/workbenches/sawmill
   enable_when_crafting: []
+--- !u!114 &4806985758012797492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4023101586510156779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71f15e9b6b464b7419a389e27de60b1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 0
+  max_simultaneous_users: 1
 --- !u!1 &4301794516072145572
 GameObject:
   m_ObjectHideFlags: 0

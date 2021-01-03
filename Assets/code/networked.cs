@@ -490,7 +490,7 @@ public class networked : MonoBehaviour
     public static networked look_up(string path)
     {
         var found = Resources.Load<networked>(path);
-        if (found == null) throw new System.Exception("Could not find networked prefab " + path);
+        if (found == null) Debug.LogError("Could not find networked prefab " + path);
         return found;
     }
 

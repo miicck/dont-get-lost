@@ -517,6 +517,10 @@ public static class server
             int parent_id = network_utils.decode_int(buffer, ref offset);
             string prefab = network_utils.decode_string(buffer, ref offset);
 
+            // Could not identify the requested prefab
+            if (networked.look_up(prefab) == null)
+                return null;
+
             // Create the representation
             representation rep = new GameObject(prefab).AddComponent<representation>();
             if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
@@ -1092,6 +1096,7 @@ public static class server
                 byte[] rep_bytes = new byte[length];
                 buffer.Read(rep_bytes, 0, length);
                 var rep = representation.create(rep_bytes, 0, length, out int input_id);
+                if (rep == null) continue; // Representation creation failed - likely prefab no longer exists
 
                 // Check the network id recovered makes sense
                 if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");

@@ -17,6 +17,9 @@ TODO
   to allow some sort of extended_path_link that links when overlapped...)
 - Different food groups - this way cabages don't become obsolete + fishing
 - Multiple items per strike for overpowered tools
+- MAke settler interactables more developer-friendly (on_interact returns interaction_result 
+  etc, which would allow an interactable to use sub-interactables) this would also allow us to
+  do away with the is_complete function, as when this was called was quite opaque.
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually

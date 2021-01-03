@@ -684,7 +684,9 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
             RaycastHit same_hit;
             building_material found_same = utils.raycast_for_closest<building_material>(
                 camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
-            if (found_same != null) found_same.pick_up(register_undo: true);
+            if (found_same == null)
+                return base.on_use_start(player.USE_TYPE.USING_RIGHT_CLICK, player);
+            else found_same.pick_up(register_undo: true);
             return use_result.complete;
         }
 

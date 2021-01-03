@@ -71,7 +71,12 @@ public class inspect_info : MonoBehaviour
                 {
                     info_text.text = info.inspecting.inspect_info().capitalize().Trim();
                     foreach (var ta in info.sub_inspecting)
-                        info_text.text += "\n" + ta.added_inspection_text().Trim();
+                    {
+                        var added_text = ta.added_inspection_text();
+                        added_text = added_text?.Trim();
+                        if (added_text != null && added_text.Length > 0)
+                            info_text.text += "\n" + added_text;
+                    }
                     Sprite main = info.inspecting.main_sprite();
                     Sprite secondary = info.inspecting.secondary_sprite();
 

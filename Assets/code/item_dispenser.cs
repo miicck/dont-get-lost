@@ -2,16 +2,36 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_dispenser : settler_interactable
+public class item_dispenser : settler_interactable, IAddsToInspectionText
 {
     public item_input input;
     public item_output overflow_output;
+    public item specific_material;
 
     public const float TIME_TO_DISPENSE = 1f;
 
     item_locator[] locators;
     float time_interacted = 0f;
     float time_dispensing = 0f;
+
+    public bool has_items_to_dispense 
+    {
+        get
+        {
+            foreach (var l in locators)
+                if (l.item != null)
+                    return true;
+            return false;
+        }
+    }
+
+    public item dispense_first_item()
+    {
+        foreach (var l in locators)
+            if (l.item != null)
+                return l.release_item();
+        return null;
+    }
 
     item_locator find_food()
     {
@@ -24,7 +44,8 @@ public class item_dispenser : settler_interactable
 
     public enum MODE
     {
-        FOOD
+        FOOD,
+        SHOP_MATERIALS_CUPBOARD
     }
     public MODE mode;
 
@@ -73,7 +94,9 @@ public class item_dispenser : settler_interactable
 
         foreach (var i in new List<item>(overflow_items))
         {
-            if (utils.move_towards(i.transform, overflow_output.transform.position, Time.deltaTime))
+            if (utils.move_towards_and_look(i.transform,
+                overflow_output.transform.position,
+                Time.deltaTime, level_look: false))
             {
                 overflow_output.add_item(i);
                 overflow_items.Remove(i);
@@ -86,8 +109,24 @@ public class item_dispenser : settler_interactable
         switch (mode)
         {
             case MODE.FOOD: return i.food_values != null;
+            case MODE.SHOP_MATERIALS_CUPBOARD: return i.name == specific_material?.name;
             default: throw new System.Exception("Unkown dispenser mode!");
         }
+    }
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
+
+    public string added_inspection_text()
+    {
+        switch (mode)
+        {
+            case MODE.SHOP_MATERIALS_CUPBOARD:
+                if (specific_material == null) return "Not providing anything to shop.";
+                else return "Providing " + specific_material.plural + " to the shop.";
+        }
+        return null;
     }
 
     //##############//
@@ -111,17 +150,25 @@ public class item_dispenser : settler_interactable
             // Reset dispensing timer
             time_dispensing = 0;
 
-            // Search for food
-            var food = find_food();
-            if (food != null)
+            switch (mode)
             {
-                // Eat food on authority client, delete food on all clients
-                if (s.has_authority)
-                {
-                    // Eat food
-                    s.nutrition.consume_food(food.item.food_values);
-                }
-                Destroy(food.release_item().gameObject);
+                case MODE.FOOD:
+                    // Search for food
+                    var food = find_food();
+                    if (food != null)
+                    {
+                        // Eat food on authority client, delete food on all clients
+                        if (s.has_authority)
+                        {
+                            // Eat food
+                            s.nutrition.consume_food(food.item.food_values);
+                        }
+                        Destroy(food.release_item().gameObject);
+                    }
+                    break;
+
+                default:
+                    throw new System.Exception("Unkown item dispenser mode!");
             }
         }
     }
