@@ -8,7 +8,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     public float test_depth = 2f;
 
-    bool on_terrain = false;
+    bool on_valid_ground = false;
 
     private void OnDrawGizmos()
     {
@@ -22,11 +22,11 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
         chunk.add_generation_listener(transform, (c) =>
         {
             // Test depth 
-            var tc = utils.raycast_for_closest<TerrainCollider>(
+            var tc = utils.raycast_for_closest<allows_mineshaft>(
                 new Ray(transform.position, Vector3.down),
                 out RaycastHit hit, max_distance: test_depth);
 
-            on_terrain = tc != null;
+            on_valid_ground = tc != null;
         });
     }
 
@@ -36,7 +36,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     public string added_inspection_text()
     {
-        if (!on_terrain) return "Must be placed on terrain to operate!";
+        if (!on_valid_ground) return "Must be placed on terrain to operate!";
         return "Operating normally.";
     }
 
@@ -67,7 +67,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
     public override INTERACTION_RESULT on_assign(settler s)
     {
         time_mining = 0;
-        if (!on_terrain) return INTERACTION_RESULT.FAILED;
+        if (!on_valid_ground) return INTERACTION_RESULT.FAILED;
         return INTERACTION_RESULT.UNDERWAY;
     }
 

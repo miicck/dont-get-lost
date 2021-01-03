@@ -306,6 +306,9 @@ public class chunk : MonoBehaviour
         terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         terrain.allowAutoConnect = true;
 
+        // Mineshafts can be built on terrain
+        terrain.gameObject.AddComponent<allows_mineshaft>();
+
         // Create the terrain scavenging mechanic
         terrain.gameObject.AddComponent<scavangable>();
         foreach (var p in Resources.Load<GameObject>("misc/terrain_products").GetComponents<product>())
