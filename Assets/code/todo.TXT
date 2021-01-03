@@ -16,7 +16,7 @@ TODO
 - Some sort of more-continuous version of a path (maybe generalize settler_path_link
   to allow some sort of extended_path_link that links when overlapped...)
 - Different food groups - this way cabages don't become obsolete + fishing
-- Half sticks
+- Multiple items per strike for overpowered tools
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually

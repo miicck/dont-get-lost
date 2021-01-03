@@ -59,7 +59,7 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Toggle fly mode. In fly mode left/right click can be used to add/remove " +
+            description = "Toggle fly mode In fly mode left/right click can be used to add/remove " +
                           "cinematic keyframes, which can be played back by pressing p.",
             usage_example = "fly"
         },
@@ -220,7 +220,7 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Spawn a given character where the player is looking",
+            description = "Spawn a given character where the player is looking.",
             usage_example = "spawn chicken\nspawn 10 chicken"
         },
 
@@ -312,7 +312,7 @@ public class console : MonoBehaviour
             },
 
             description = "Toggles the display of overlays in the game world " +
-                          "(e.g. information about the transport system)",
+                          "(e.g. information about the transport system).",
             usage_example = "toggle_overlay"
         },
 
@@ -343,7 +343,7 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Create a networked prefab with the given resource path where the player is looking",
+            description = "Create a networked prefab with the given resource path where the player is looking.",
             usage_example = "create characters/chicken"
         },
 
@@ -419,7 +419,7 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Teleport the player up until they are unstuck",
+            description = "Teleport the player up until they are unstuck.",
             usage_example = "unstuck"
         },
 
@@ -446,7 +446,7 @@ public class console : MonoBehaviour
                 return true;
             },
 
-            description = "Teleport to the room with the given id",
+            description = "Teleport to the room with the given id.",
             usage_example = "teleport_to_room 3"
         }
     };

@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipable
 {
-    /// <summary> The path element that a settler 
-    /// goes to in order to use this object. </summary>
-    public settler_path_element path_element;
-
-    /// <summary> Returns the pathing group to which I belong. </summary>
-    public int group => path_element.group;
+    /// <summary> Returns the path element that a settler from the
+    /// given group can use to access this interactable </summary>
+    public settler_path_element path_element(int group)
+    {
+        foreach (var e in GetComponentsInChildren<settler_path_element>())
+            if (e.group == group)
+                return e;
+        return null;
+    }
 
     /// <summary> Returns the networked object to which I belong. </summary>
     public networked networked_parent => GetComponentInParent<networked>();
@@ -36,8 +39,6 @@ public class settler_interactable : MonoBehaviour, INonBlueprintable, INonEquipa
     bool registered = false;
     protected virtual void Start()
     {
-        if (path_element == null)
-            throw new System.Exception("Path element on " + name + " isn't assigned!");
         registered = true;
         register_interactable(this);
     }

@@ -5,6 +5,9 @@ using UnityEngine;
 public class settler_path_link : MonoBehaviour
 {
     public const float LINK_DISTANCE = 0.25f;
+    public const float LINK_DISPLAY_ALT = 0.25f;
+    public const float LINK_WIDTH = 0.05f;
+    public const float POINT_WIDTH = 0.1f;
 
     public settler_path_link linked_to
     {
@@ -19,9 +22,9 @@ public class settler_path_link : MonoBehaviour
                 var elm = GetComponentInParent<settler_path_element>();
                 var link = Resources.Load<GameObject>("misc/path_link").inst();
                 Vector3 to = elm.transform.position - transform.position;
-                link.transform.position = transform.position + to / 2f;
-                link.transform.LookAt(elm.transform.position);
-                link.transform.localScale = new Vector3(0.1f, 0.1f, to.magnitude);
+                link.transform.position = transform.position + to / 2f + Vector3.up * LINK_DISPLAY_ALT;
+                link.transform.LookAt(elm.transform.position + Vector3.up * LINK_DISPLAY_ALT);
+                link.transform.localScale = new Vector3(LINK_WIDTH, LINK_WIDTH, to.magnitude);
                 link.transform.SetParent(display.transform);
             }
 
@@ -47,9 +50,9 @@ public class settler_path_link : MonoBehaviour
                 // Create the display sub-object
                 _display = Resources.Load<GameObject>("misc/path_point").inst();
                 _display.transform.SetParent(transform);
-                _display.transform.localPosition = Vector3.zero;
+                _display.transform.localPosition = Vector3.zero + Vector3.up * LINK_DISPLAY_ALT;
                 _display.transform.localRotation = Quaternion.identity;
-                _display.transform.localScale = Vector3.one * LINK_DISTANCE;
+                _display.transform.localScale = Vector3.one * POINT_WIDTH;
 
                 // Initial state depends on if drawing is already enabled
                 _display.SetActive(settler_path_element.draw_links);

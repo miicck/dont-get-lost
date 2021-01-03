@@ -164,7 +164,7 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         {
             // Find a path to the assignment
             path_element = settler_path_element.nearest_element(transform.position);
-            path = new settler_path_element.path(path_element, assignment.interactable.path_element);
+            path = new settler_path_element.path(path_element, assignment.interactable.path_element(group));
 
             if (path == null)
             {

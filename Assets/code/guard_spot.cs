@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class guard_spot : settler_interactable, IAddsToInspectionText
+public class guard_spot : settler_interactable
 {
     character target;
     float attack_timer = 0;
@@ -87,12 +87,5 @@ public class guard_spot : settler_interactable, IAddsToInspectionText
     {
         // Run to the guard spot
         return s.run_speed;
-    }
-
-    public string added_inspection_text()
-    {
-        var gg = town_gate.gate_group(path_element.group);
-        if (gg.Count == 0) return "No connected gates!";
-        return gg.Count + " connected " + (gg.Count > 1 ? "gates" : "gate");
     }
 }
