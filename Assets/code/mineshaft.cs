@@ -64,12 +64,14 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     float time_mining;
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         time_mining = 0;
+        if (!on_terrain) return INTERACTION_RESULT.FAILED;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
         if (time_mining + Time.deltaTime >= 1f && time_mining < 1f)
         {
@@ -79,14 +81,12 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
             var op = output;
             op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
+
+            return INTERACTION_RESULT.COMPLETE;
         }
 
         time_mining += Time.deltaTime;
-    }
-
-    public override bool is_complete(settler s)
-    {
-        return !on_terrain || time_mining > 1f;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     //##############//

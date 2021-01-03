@@ -14,16 +14,17 @@ public class bed : settler_interactable
 
     int less_tired_amount => Mathf.Max(0, start_tiredness - last_tiredness);
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff
         time_slept = 0f;
         delta_tired = 0f;
         start_tiredness = s.tiredness.value;
         last_tiredness = start_tiredness;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
         // Lie down
         s.transform.position = sleep_orientation.position;
@@ -33,7 +34,7 @@ public class bed : settler_interactable
         last_tiredness = s.tiredness.value;
 
         // Only modify tiredness on authority client
-        if (!s.has_authority) return;
+        if (!s.has_authority) return INTERACTION_RESULT.UNDERWAY;
 
         // Beomce un-tired
         delta_tired -= TIREDNESS_RECOVERY_RATE * Time.deltaTime;
@@ -42,13 +43,10 @@ public class bed : settler_interactable
             delta_tired = 0f;
             s.tiredness.value -= 1;
         }
-    }
 
-    public override bool is_complete(settler s)
-    {
-        // We have to sleep for at least 5 seconds and 
-        // until our tiredness drops below 20%
-        return s.tiredness.value < 20 && time_slept > 5f;
+        if (s.tiredness.value < 20 && time_slept > 5f)
+            return INTERACTION_RESULT.COMPLETE;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override void on_unassign(settler s)

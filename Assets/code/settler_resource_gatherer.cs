@@ -198,14 +198,18 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     // SETTLER_INTERACTABLE //
     //######################//
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
+        if (harvesting == null)
+            return INTERACTION_RESULT.FAILED;
+
         // Reset stuff 
         time_harvesting = 0f;
         harvested_count = 0;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
         // Record how long has been spent harvesting
         time_harvesting += Time.deltaTime;
@@ -215,16 +219,20 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             harvested_count += 1;
 
             // Create the products
-            if (harvesting != null)
-                foreach (var p in harvesting.products)
-                    p.create_in_node(output);
+            foreach (var p in harvesting.products)
+                p.create_in_node(output);
         }
+
+        if (harvested_count >= max_harvests)
+            return INTERACTION_RESULT.COMPLETE;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override bool is_complete(settler s)
+    public override string task_info()
     {
-        // We're done if we've harvested enough times
-        return harvested_count >= max_harvests;
+        if (harvesting == null) return "Harvesting nothing!!!";
+        return "Harvesting " + product.product_plurals_list(harvesting.products) +
+            " (" + harvested_count + "/" + max_harvests + ")";
     }
 
     public override void on_unassign(settler s) { }

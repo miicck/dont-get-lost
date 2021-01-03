@@ -12,10 +12,51 @@ public class guard_spot : settler_interactable
         return (c.transform.position - transform.position).magnitude < 20f;
     }
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         target = null;
         attack_timer = 0;
+        return INTERACTION_RESULT.UNDERWAY;
+    }
+
+    public override INTERACTION_RESULT on_interact(settler s)
+    {
+        if (target == null || !in_range(target))
+        {
+            // Identify a new target
+            town_gate.iterate_over_attackers(s.group, (c) =>
+            {
+                if (in_range(c))
+                {
+                    target = c;
+                    return true;
+                }
+                return false;
+            });
+
+            return INTERACTION_RESULT.UNDERWAY;
+        }
+
+        // We have an in-range target, attack it
+        attack_timer += Time.deltaTime;
+        if (attack_timer > 1f)
+        {
+            attack_timer = 0f;
+            projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target);
+        }
+
+        s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;
+
+        // Continue defending whilst attack is underway
+        if (town_gate.group_under_attack(s.group))
+            return INTERACTION_RESULT.UNDERWAY;
+        return INTERACTION_RESULT.UNDERWAY;
+    }
+
+    public override float move_to_speed(settler s)
+    {
+        // Run to the guard spot
+        return s.run_speed;
     }
 
     class projectile : MonoBehaviour
@@ -46,46 +87,5 @@ public class guard_spot : settler_interactable
                 Destroy(gameObject);
             }
         }
-    }
-
-    public override void on_interact(settler s)
-    {
-        if (target == null || !in_range(target))
-        {
-            // Identify a new target
-            town_gate.iterate_over_attackers(s.group, (c) =>
-            {
-                if (in_range(c))
-                {
-                    target = c;
-                    return true;
-                }
-                return false;
-            });
-
-            return;
-        }
-
-        // We have an in-range target, attack it
-        attack_timer += Time.deltaTime;
-        if (attack_timer > 1f)
-        {
-            attack_timer = 0f;
-            projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target);
-        }
-
-        s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;
-    }
-
-    public override bool is_complete(settler s)
-    {
-        // Guard until attack is over
-        return !town_gate.group_under_attack(s.group);
-    }
-
-    public override float move_to_speed(settler s)
-    {
-        // Run to the guard spot
-        return s.run_speed;
     }
 }

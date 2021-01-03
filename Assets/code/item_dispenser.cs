@@ -11,7 +11,6 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     public const float TIME_TO_DISPENSE = 1f;
 
     item_locator[] locators;
-    float time_interacted = 0f;
     float time_dispensing = 0f;
 
     public bool has_items_to_dispense 
@@ -133,16 +132,15 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     // INTERACTABLE //
     //##############//
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff
-        time_interacted = 0f;
         time_dispensing = 0f;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
-        time_interacted += Time.deltaTime;
         time_dispensing += Time.deltaTime;
 
         if (time_dispensing > TIME_TO_DISPENSE)
@@ -155,7 +153,9 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
                 case MODE.FOOD:
                     // Search for food
                     var food = find_food();
-                    if (food != null)
+                    if (food == null)
+                        return INTERACTION_RESULT.FAILED;
+                    else
                     {
                         // Eat food on authority client, delete food on all clients
                         if (s.has_authority)
@@ -164,28 +164,20 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
                             s.nutrition.consume_food(food.item.food_values);
                         }
                         Destroy(food.release_item().gameObject);
+
+                        // Complete if we've eaten enough
+                        if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
+                            return INTERACTION_RESULT.COMPLETE;
+                        else
+                            return INTERACTION_RESULT.UNDERWAY;
                     }
-                    break;
 
                 default:
                     throw new System.Exception("Unkown item dispenser mode!");
             }
         }
-    }
 
-    public override bool is_complete(settler s)
-    {
-        switch (mode)
-        {
-            case MODE.FOOD:
-
-                // Done if there is no food, or meetabolic satisfaction is high
-                if (find_food() == null) return true;
-                return s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT;
-
-            default:
-                throw new System.Exception("Unkown item dispenser mode!");
-        }
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override string task_info()

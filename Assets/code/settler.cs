@@ -190,13 +190,13 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
         }
 
         // Carry out the assignment
-        assignment.interactable.on_interact(this);
-
-        if (assignment.interactable.is_complete(this))
+        switch (assignment.interactable.on_interact(this))
         {
-            // Assignment complete
-            assignment.delete();
-            return;
+            case settler_interactable.INTERACTION_RESULT.COMPLETE:
+            case settler_interactable.INTERACTION_RESULT.FAILED:
+                // Remove my assignment
+                assignment.delete();
+                return;
         }
     }
 

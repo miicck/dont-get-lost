@@ -53,10 +53,17 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
             forget_interactable(this);
     }
 
-    public virtual void on_assign(settler s) { }
+    public enum INTERACTION_RESULT
+    {
+        COMPLETE,
+        FAILED,
+        UNDERWAY,
+    }
+
+    public virtual INTERACTION_RESULT on_assign(settler s) { return INTERACTION_RESULT.COMPLETE; }
+    public virtual INTERACTION_RESULT on_interact(settler s) { return INTERACTION_RESULT.COMPLETE; }
     public virtual void on_unassign(settler s) { }
-    public virtual void on_interact(settler s) { }
-    public virtual bool is_complete(settler s) { return true; }
+
     public virtual string task_info() { return name; }
     public virtual float move_to_speed(settler s) { return s.walk_speed; }
 

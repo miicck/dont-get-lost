@@ -78,12 +78,14 @@ public class shop : settler_interactable, IAddsToInspectionText
 
     public override string task_info() { return type_of_shop?.task_info(stage); }
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         // Starts in the stock stage
         stage = STAGE.STOCK;
         stage_timer = 0;
         cycles_completed = 0;
+        path = null;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override void on_unassign(settler s)
@@ -93,10 +95,10 @@ public class shop : settler_interactable, IAddsToInspectionText
             Destroy(item_carrying.gameObject);
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
         if (!validate_fittings())
-            return;
+            return INTERACTION_RESULT.FAILED;
 
         // No path, move to next stage
         if (path == null)
@@ -114,22 +116,12 @@ public class shop : settler_interactable, IAddsToInspectionText
                 }
             }
         }
-    }
 
-    public override bool is_complete(settler s)
-    {
-        if (!validate_fittings())
-            return true;
+        if (stage == STAGE.GET_MATERIALS && !materials_cupboard.has_items_to_dispense)
+            return INTERACTION_RESULT.FAILED;
 
-        switch (stage)
-        {
-            case STAGE.GET_MATERIALS:
-                if (!materials_cupboard.has_items_to_dispense)
-                    return false;
-                break;
-        }
-
-        return cycles_completed >= 4;
+        if (cycles_completed >= 4) return INTERACTION_RESULT.COMPLETE;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     enum STAGE

@@ -131,7 +131,15 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         // Record this assignment
         assignments_by_id[a.settler_id.value] = a;
         if (a.settler != null)
-            a.interactable.on_assign(a.settler);
+        {
+            switch (a.interactable.on_assign(a.settler))
+            {
+                case settler_interactable.INTERACTION_RESULT.FAILED:
+                case settler_interactable.INTERACTION_RESULT.COMPLETE:
+                    a.delete();
+                    break;
+            }
+        }
     }
 
     static void forget_assignment(settler_task_assignment a)

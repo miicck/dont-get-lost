@@ -83,56 +83,52 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     // INTERACTABLE //
     //##############//
 
-    public override void on_assign(settler s)
+    public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff
         time_spent_farming = 0f;
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_interact(settler s)
+    public override INTERACTION_RESULT on_interact(settler s)
     {
         // Record the amount of time spent farming
         time_spent_farming += Time.deltaTime;
-    }
+        if (time_spent_farming > 1f)
+        {
+            // Only grow field on authority client
+            if (!s.has_authority) return INTERACTION_RESULT.COMPLETE;
 
-    public override bool is_complete(settler s)
-    {
-        // It takes 1 second to tend the field
-        return time_spent_farming > 1f;
-    }
+            // When completed, tend/harvest the field
+            var spots = this.spots;
+            var locations = this.locations();
 
-    public override void on_unassign(settler s)
-    {
-        // Only finish task on authority client
-        if (!s.has_authority) return;
-        if (!is_complete(s)) return;
-
-        // When completed, tend/harvest the field
-        var spots = this.spots;
-        var locations = this.locations();
-
-        for (int x = 0; x < x_size; ++x)
-            for (int z = 0; z < z_size; ++z)
-            {
-                // Only tend to 1 in 3 of the spots
-                if (Random.Range(0, 3) != 0)
-                    continue;
-
-                var spot = spots[x, z];
-                if (spot == null)
+            for (int x = 0; x < x_size; ++x)
+                for (int z = 0; z < z_size; ++z)
                 {
-                    // Create a networked spot here
-                    client.create(locations[x, z], field_spot_prefab,
-                        rotation: transform.rotation, parent: GetComponent<networked>());
+                    // Only tend to 1 in 3 of the spots
+                    if (Random.Range(0, 3) != 0)
+                        continue;
+
+                    var spot = spots[x, z];
+                    if (spot == null)
+                    {
+                        // Create a networked spot here
+                        client.create(locations[x, z], field_spot_prefab,
+                            rotation: transform.rotation, parent: GetComponent<networked>());
+                    }
+                    else
+                    {
+                        // Farm the spot here
+                        spot.tend();
+                        if (spot.grown)
+                            spot.harvest();
+                    }
                 }
-                else
-                {
-                    // Farm the spot here
-                    spot.tend();
-                    if (spot.grown)
-                        spot.harvest();
-                }
-            }
+
+            return INTERACTION_RESULT.COMPLETE;
+        }
+        return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override string task_info()
