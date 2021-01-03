@@ -5,18 +5,19 @@ Ongoing
 TODO
 - Generalise player interactions (both for generating tips and the actual interaction)
 - Item flow recording should be done on link points?
-- Implement teleport-to-player
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Spread biome.generate across multiple frames
-- Optimize chase paths (i.e don't double back if thats what the player did)
-- Make characters fall if they are following a chase path
-- Figure out how to stop enemies bunching up when chasing
+- Optimize chase paths 
+	don't double back if thats what the player did
+	Make characters fall if they are following a chase path
+	Figure out how to stop enemies bunching up when chasing
 - Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
 - Some sort of more-continuous version of a path (maybe generalize settler_path_link
   to allow some sort of extended_path_link that links when overlapped...)
-- Different food groups - this way cabages don't become obsolete + fishing
+- Fishing
 - Multiple items per strike for overpowered tools
+- Ready-to-assign method for settler interactlabes? (e.g shops with no materials return false)
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
@@ -26,5 +27,3 @@ TODO
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
     - Networked floats aren't lerping properly (see growth of wheat for example)
-	- Network tasking system (create networked children of settler_interactables, with
-	  a reference to the network id of the settler assigned?)
