@@ -2,6 +2,7 @@
 *blend1*
 *.swp
 *.sln
+*.vsconfig
 Assembly-CSharp.csproj
 Assets/resources/version_info*
 Assets/Plugins*

@@ -8,22 +8,43 @@ public static class version_control
     public static string commit_date;
     public static string version;
 
+    static string find_git()
+    {
+        foreach (var to_try in new string[]
+        {
+            "git",
+            "C:\\Program Files\\Git\\cmd\\git.exe"
+        })
+            if (run(to_try, "--version") != null) return to_try;
+        return null;
+    }
+
     public static void on_startup()
     {
 #if UNITY_EDITOR
+
         // Get version info from git repo
-        commit_hash = run("git", "rev-parse HEAD").remove_special_characters();
+        string git = find_git();
+        if (git == null)
+        {
+            commit_hash = "Could not find git.";
+            commit_date = "Could not find git";
+            version = "Could not find git";
+            return;
+        }
+
+        commit_hash = run(git, "rev-parse HEAD").remove_special_characters();
         string date_command = @"show --no-patch --no-notes --pretty='%cd' " +
                               @"--date=format:'%Y.%m.%d.%H.%M.%S' " + commit_hash;
 
-        string formatted_date = run("git", date_command, env: new Dictionary<string, string> { ["TZ"] = "UTC" });
+        string formatted_date = run(git, date_command, env: new Dictionary<string, string> { ["TZ"] = "UTC" });
         formatted_date = formatted_date.remove_special_characters(' ', ':').ToLower();
 
         var split_date = formatted_date.Split('.');
         commit_date = string.Format("{2}/{1}/{0} {3}:{4}:{5}", split_date);
 
         version = string.Format("{0}.{1}.{2}.", split_date);
-        version += run("git", "rev-parse --short HEAD");
+        version += run(git, "rev-parse --short HEAD");
 
         version = version.remove_special_characters();
         commit_hash = commit_hash.remove_special_characters();
@@ -100,12 +121,21 @@ public static class version_control
 
         using (var proc = new System.Diagnostics.Process { StartInfo = start_info })
         {
-            proc.Start();
+            try
+            {
+                proc.Start();
+            }
+            catch
+            {
+                return null;
+            }
 
             string stdout = proc.StandardOutput.ReadToEnd();
             string stderr = proc.StandardError.ReadToEnd();
+
             if (!string.IsNullOrEmpty(stderr))
                 throw new System.Exception(stderr);
+
             return stdout;
         }
     }

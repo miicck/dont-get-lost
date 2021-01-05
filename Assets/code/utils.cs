@@ -502,6 +502,7 @@ public static class utils
 
     public static string remove_special_characters(this string s, params char[] allow)
     {
+        if (s == null) return s;
         List<char> allow_list = new List<char>(allow);
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
         foreach (char c in s)

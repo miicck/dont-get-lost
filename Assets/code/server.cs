@@ -666,10 +666,13 @@ public static class server
     }
 
     /// <summary> Start a server listening on the given port on the local machine. </summary>
-    public static void start(int port, string savename, string player_prefab)
+    public static bool start(int port, string savename, string player_prefab, out string error_message)
     {
         if (started)
-            throw new System.Exception("Server already running!");
+        {
+            error_message = "Server already started!";
+            return false;
+        }
 
         // Cleanup from previous run
         if (transform != null) Object.Destroy(transform.gameObject);
@@ -703,7 +706,15 @@ public static class server
             throw new System.Exception("Local player object must be a networked_player!");
 
         // Start listening
-        tcp.Start();
+        try
+        {
+            tcp.Start();
+        }
+        catch (System.Exception e)
+        {
+            error_message = e.Message;
+            return false;
+        }
 
         // Load the world
         if (System.IO.File.Exists(save_file()))
@@ -1064,6 +1075,10 @@ public static class server
                 ));
             },
         };
+
+        // Server started successfully
+        error_message = "";
+        return true;
     }
 
     static void load()

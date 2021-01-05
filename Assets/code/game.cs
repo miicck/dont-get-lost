@@ -167,7 +167,12 @@ public class game : MonoBehaviour
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                server.start(server.DEFAULT_PORT, startup.world_name, PLAYER_PREFAB);
+                if (!server.start(server.DEFAULT_PORT, startup.world_name, PLAYER_PREFAB, out string error_message))
+                {
+                    am_hard_disconnecting = true;
+                    on_client_disconnect(error_message);
+                    return;
+                }
 
                 client.connect(network_utils.local_ip_address().ToString(),
                     server.DEFAULT_PORT, startup.username, "password", on_client_disconnect);

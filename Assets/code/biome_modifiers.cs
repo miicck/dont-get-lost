@@ -264,9 +264,6 @@ public class cave_system : biome_modifier
         all_sections = null;
         open_sections = null;
 
-        if (failed_placements > MAX_FAILS)
-            Debug.Log("Maximum fails hit in cave system generation");
-
         foreach (var link in container.GetComponentsInChildren<cave_link_point>())
             if (link.link_to_surface)
             {

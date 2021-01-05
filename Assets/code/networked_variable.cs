@@ -50,9 +50,9 @@ public abstract class networked_variable<T> : networked_variable
             // Before we do anything, validate the value
             value = validate(value);
 
-            if (_value == default)
+            if (_value.Equals(default))
             {
-                if (value == default)
+                if (value.Equals(default))
                     return; // No change, still default
             }
             else if (_value.Equals(value))
@@ -145,8 +145,9 @@ public abstract class networked_variable<T> : networked_variable
     /// sending sufficiently large changes. </summary>
     protected virtual bool should_send(T last_sent, T new_value)
     {
-        if (last_sent == default)
-            return new_value != default;
+        if (last_sent == null) return new_value != null;
+        if (new_value == null) return last_sent != null;
+        if (last_sent.Equals(default)) return !new_value.Equals(default);
 
         return !last_sent.Equals(new_value);
     }

@@ -83,8 +83,7 @@ public class town_gate : building_material, IAddsToInspectionText, IAcceptLeftCl
     {
         // Don't spawn settlers if this is the 
         // equipped or blueprint version
-        if (is_equpped) return;
-        if (is_blueprint) return;
+        if (is_equpped || is_blueprint) return;
 
         update_gate_group(this);
         path_element.add_group_change_listener(() => update_gate_group(this));
@@ -93,6 +92,8 @@ public class town_gate : building_material, IAddsToInspectionText, IAcceptLeftCl
 
     private void Update()
     {
+        if (is_equpped || is_blueprint) return;
+
         if (enemy_approach_path == null)
         {
             refresh_drawn_approach_path();

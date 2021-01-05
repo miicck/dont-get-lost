@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 37089541926742898}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
-  m_Name: autofurnace
+  m_Name: furnace
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 8842586173793418492, guid: 6595fad8042d17f79a54fb875333ff84, type: 3}
+  item: {fileID: 8842586173793418492, guid: 16eb9109f496e144c8e50ceeae24d2c3, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1
