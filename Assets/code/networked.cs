@@ -129,7 +129,7 @@ public class networked : MonoBehaviour
         on_init_network_variables();
 
         // Get my native networked fields
-        networked_variables = new List<networked_variable>();
+        var networked_variables = new List<networked_variable>();
         foreach (var f in networked_fields[GetType()])
             networked_variables.Add((networked_variable)f.GetValue(this));
 
@@ -156,11 +156,16 @@ public class networked : MonoBehaviour
                     networked_variables.Add((networked_variable)f.GetValue(c));
             }
         }
+
+        // Slightly faster/lower memory usage if we deal with an array from here on
+        this.networked_variables = networked_variables.ToArray();
+        for (int i = 0; i < this.networked_variables.Length; ++i)
+            this.networked_variables[i].set_owner_and_index(this, i);
     }
 
     /// <summary> All of the variables I contain that
     /// are serialized over the network. </summary>
-    List<networked_variable> networked_variables;
+    networked_variable[] networked_variables;
 
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
@@ -196,26 +201,6 @@ public class networked : MonoBehaviour
         // on_network_update, we send their changed
         // values immediately
         on_network_update();
-
-        if (network_id > 0) // Registered on the network
-        {
-            if (networked_variables == null)
-            {
-                delete();
-                throw new System.Exception("Networked variables for " + name + " are unitialized!");
-            }
-
-            // Send queued variable updates
-            for (int i = 0; i < networked_variables.Count; ++i)
-            {
-                var nv = networked_variables[i];
-                if (nv.queued_serial != null)
-                {
-                    client.send_variable_update(network_id, i, nv.queued_serial);
-                    nv.queued_serial = null;
-                }
-            }
-        }
     }
 
     /// <summary> Called to trigger the network event with the given number, 
@@ -251,7 +236,7 @@ public class networked : MonoBehaviour
             throw new System.Exception("Should not serialize client side objects!");
 
         List<byte> serial = new List<byte>();
-        for (int i = 0; i < networked_variables.Count; ++i)
+        for (int i = 0; i < networked_variables.Length; ++i)
         {
             var nv_btyes = networked_variables[i].serialization();
             serial.AddRange(network_utils.encode_int(nv_btyes.Length));

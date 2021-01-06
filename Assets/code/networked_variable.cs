@@ -19,14 +19,31 @@ public class engine_networked_variable : System.Attribute
 
 public abstract class networked_variable
 {
+    public void set_owner_and_index(networked owner, int index)
+    {
+        this.owner = owner;
+        this.index = index;
+
+        awaiting_owner?.Invoke(owner);
+        awaiting_owner = (c) => { };
+    }
+
+    networked owner;
+    int index;
+
+    delegate void owner_callback(networked owner);
+    owner_callback awaiting_owner = (o) => { };
+    void add_owner_callback(owner_callback c)
+    {
+        if (owner != null) c(owner);
+        else awaiting_owner += c;
+    }
+
     /// <summary> Reccive a serialization from the server. </summary>
     public void reccive_serialization(byte[] buffer, ref int offset, int length)
     {
         process_serialization(buffer, ref offset, length);
     }
-
-    /// <summary> Serialization bytes queued for sending to the server. </summary>
-    public byte[] queued_serial;
 
     /// <summary> Serialize my value into a form suitable
     /// for sending over the network </summary>
@@ -36,7 +53,17 @@ public abstract class networked_variable
     protected abstract void process_serialization(byte[] buffer, ref int offset, int length);
 
     /// <summary> Call to let the networking engine know the serialization has changed. </summary>
-    public void set_dirty() { queued_serial = serialization(); }
+    public void send_update()
+    {
+        add_owner_callback((o) =>
+        {
+            o.add_register_listener(() =>
+            {
+                var to_send = serialization();
+                client.send_variable_update(owner.network_id, index, to_send);
+            });
+        });
+    }
 }
 
 /// <summary> A value serialized over the network. </summary>
@@ -61,10 +88,10 @@ public abstract class networked_variable<T> : networked_variable
             T old_value = _value;
             _value = value;
 
-            if (should_send(last_queued_value, _value))
+            if (should_send(last_sent_value, _value))
             {
-                queued_serial = serialization();
-                last_queued_value = value;
+                send_update();
+                last_sent_value = value;
             }
 
             on_change?.Invoke();
@@ -91,7 +118,7 @@ public abstract class networked_variable<T> : networked_variable
     }
 
     /// <summary> The last value that was sent. </summary>
-    T last_queued_value;
+    T last_sent_value;
 
     /// <summary> Checks <paramref name="new_value"/> for validity, 
     /// should return the nearest valid T. By default, just returns
@@ -169,14 +196,14 @@ namespace networked_variables
         public void add(T t)
         {
             list.Add(t);
-            set_dirty();
+            send_update();
         }
 
         public bool remove(T t)
         {
             if (list.Remove(t))
             {
-                set_dirty();
+                send_update();
                 return true;
             }
             return false;
@@ -185,7 +212,7 @@ namespace networked_variables
         public void remove_at(int i)
         {
             list.RemoveAt(i);
-            set_dirty();
+            send_update();
         }
 
         public T this[int i] => list[i];
@@ -255,7 +282,7 @@ namespace networked_variables
             {
                 net_first.value = value;
                 on_change?.Invoke();
-                set_dirty();
+                send_update();
             }
         }
 
@@ -266,7 +293,7 @@ namespace networked_variables
             {
                 net_second.value = value;
                 on_change?.Invoke();
-                set_dirty();
+                send_update();
             }
         }
 
@@ -275,7 +302,7 @@ namespace networked_variables
             net_first.value = first;
             net_second.value = second;
             on_change?.Invoke();
-            set_dirty();
+            send_update();
         }
 
         networked_variable<T> net_first;
@@ -317,13 +344,13 @@ namespace networked_variables
         public void add(int i)
         {
             if (!set.Add(i)) return; // Already in the set
-            set_dirty();
+            send_update();
         }
 
         public void remove(int i)
         {
             if (!set.Remove(i)) return; // Wasn't in the set
-            set_dirty();
+            send_update();
         }
 
         public bool contains(int i) => set.Contains(i);
@@ -648,7 +675,7 @@ namespace networked_variables
                 if (value == 0) dict.Remove(s);
                 else dict[s] = value;
 
-                queued_serial = serialization();
+                send_update();
                 on_change?.Invoke();
             }
         }
@@ -664,7 +691,7 @@ namespace networked_variables
             foreach (var kv in new_value)
                 dict[kv.Key] = kv.Value;
 
-            queued_serial = serialization();
+            send_update();
             on_change?.Invoke();
         }
 
@@ -674,7 +701,7 @@ namespace networked_variables
             // (to avoid calling on_change/serialize for every key)
             dict.Clear();
 
-            queued_serial = serialization();
+            send_update();
             on_change?.Invoke();
         }
 
@@ -734,7 +761,7 @@ namespace networked_variables
             set
             {
                 dict[key] = value;
-                set_dirty();
+                send_update();
             }
         }
 
@@ -801,7 +828,7 @@ namespace networked_variables
                     return; // No change
 
                 group_values[(int)group] = value;
-                set_dirty();
+                send_update();
             }
         }
 
@@ -815,14 +842,14 @@ namespace networked_variables
                 if (group_values[(int)g] != val_before)
                     dirty = true;
             }
-            if (dirty) set_dirty();
+            if (dirty) send_update();
         }
 
         public void modify_every_satisfaction(int amount)
         {
             for (int i = 0; i < group_values.Length; ++i)
                 group_values[i] = (byte)Mathf.Clamp(group_values[i] + amount, 0, byte.MaxValue);
-            set_dirty();
+            send_update();
         }
 
         public override byte[] serialization()

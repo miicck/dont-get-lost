@@ -211,6 +211,9 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
     public override INTERACTION_RESULT on_interact(settler s)
     {
+        if (harvesting == null)
+            return INTERACTION_RESULT.FAILED;
+
         // Record how long has been spent harvesting
         time_harvesting += Time.deltaTime;
 

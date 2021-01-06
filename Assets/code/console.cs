@@ -448,6 +448,21 @@ public class console : MonoBehaviour
 
             description = "Teleport to the room with the given id.",
             usage_example = "teleport_to_room 3"
+        },
+
+        ["server_delete_by_prefab"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Too few arguments!");
+                if (!server.started) return console_error("The server is not running!");
+                int deleted = server.delete_all_representations_with_prefab(args[1]);
+                popup_message.create("Deleted " + deleted + " representations.");
+                return true;
+            },
+
+            description = "Deletes all representations on the server with the matching prefab.",
+            usage_example = "server_delete_by_prefab characters/settler"
         }
     };
 
