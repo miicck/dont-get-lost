@@ -42,7 +42,7 @@ public class teleport_manager : networked
             throw new System.Exception("Portal moved, or not registered?");
 
         nearest.first.value = new_name;
-        destinations.send_update();
+        destinations.set_dirty();
         return nearest.first.value;
     }
 

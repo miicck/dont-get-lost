@@ -23,6 +23,7 @@ public static class client
     static int last_server_time;
     static int last_server_time_local;
     static Dictionary<string, player_info> player_infos;
+    static HashSet<networked_variable> queued_variable_updates;
 
     /// <summary> Any bytes of a partial message from the server that appeared at the
     /// end of a buffer, to be glued to the start of the next buffer. </summary>
@@ -190,6 +191,24 @@ public static class client
     /// <summary> Send all of the messages currently queued. </summary>
     static void send_queued_messages()
     {
+        // Send queued variable updates
+        var update_next_frame = new HashSet<networked_variable>();
+        foreach (var nv in queued_variable_updates)
+        {
+            if (nv.network_id <= 0)
+            {
+                // Not yet registered, wait until next frame
+                update_next_frame.Add(nv);
+                continue;
+            }
+
+            // Send the update
+            message_senders[MESSAGE.VARIABLE_UPDATE](nv.network_id, nv.index, nv.serialization());
+        }
+
+        // Forget any variables who have had updates sent
+        queued_variable_updates = update_next_frame;
+
         // The buffer used to send messages
         byte[] send_buffer = new byte[tcp.SendBufferSize];
         int offset = 0;
@@ -242,11 +261,10 @@ public static class client
         }
     }
 
-    /// <summary> Send the updated serialization of the variable with the 
-    /// given index, belonging to the networked object with the given network id. </summary>
-    public static void send_variable_update(int network_id, int index, byte[] serialization)
+    /// <summary> Register that the given variable needs to send an update message. </summary>
+    public static void queue_variable_update(networked_variable v)
     {
-        message_senders[MESSAGE.VARIABLE_UPDATE](network_id, index, serialization);
+        queued_variable_updates.Add(v);
     }
 
     /// <summary> Trigger network <paramref name="event_number"/> for
@@ -279,6 +297,7 @@ public static class client
         traffic_down = new network_utils.traffic_monitor();
         message_queue = new Queue<pending_message>();
         pending_creation_messages = new Queue<pending_creation_message>();
+        queued_variable_updates = new HashSet<networked_variable>();
         player_infos = new Dictionary<string, player_info>();
         client.on_disconnect = on_disconnect;
         tcp = new TcpClient();

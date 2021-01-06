@@ -23,21 +23,11 @@ public abstract class networked_variable
     {
         this.owner = owner;
         this.index = index;
-
-        awaiting_owner?.Invoke(owner);
-        awaiting_owner = (c) => { };
     }
 
     networked owner;
-    int index;
-
-    delegate void owner_callback(networked owner);
-    owner_callback awaiting_owner = (o) => { };
-    void add_owner_callback(owner_callback c)
-    {
-        if (owner != null) c(owner);
-        else awaiting_owner += c;
-    }
+    public int index { get; private set; }
+    public int network_id => owner == null ? -1 : owner.network_id;
 
     /// <summary> Reccive a serialization from the server. </summary>
     public void reccive_serialization(byte[] buffer, ref int offset, int length)
@@ -53,16 +43,9 @@ public abstract class networked_variable
     protected abstract void process_serialization(byte[] buffer, ref int offset, int length);
 
     /// <summary> Call to let the networking engine know the serialization has changed. </summary>
-    public void send_update()
+    public void set_dirty()
     {
-        add_owner_callback((o) =>
-        {
-            o.add_register_listener(() =>
-            {
-                var to_send = serialization();
-                client.send_variable_update(owner.network_id, index, to_send);
-            });
-        });
+        client.queue_variable_update(this);
     }
 }
 
@@ -90,7 +73,7 @@ public abstract class networked_variable<T> : networked_variable
 
             if (should_send(last_sent_value, _value))
             {
-                send_update();
+                set_dirty();
                 last_sent_value = value;
             }
 
@@ -196,14 +179,14 @@ namespace networked_variables
         public void add(T t)
         {
             list.Add(t);
-            send_update();
+            set_dirty();
         }
 
         public bool remove(T t)
         {
             if (list.Remove(t))
             {
-                send_update();
+                set_dirty();
                 return true;
             }
             return false;
@@ -212,7 +195,7 @@ namespace networked_variables
         public void remove_at(int i)
         {
             list.RemoveAt(i);
-            send_update();
+            set_dirty();
         }
 
         public T this[int i] => list[i];
@@ -282,7 +265,7 @@ namespace networked_variables
             {
                 net_first.value = value;
                 on_change?.Invoke();
-                send_update();
+                set_dirty();
             }
         }
 
@@ -293,7 +276,7 @@ namespace networked_variables
             {
                 net_second.value = value;
                 on_change?.Invoke();
-                send_update();
+                set_dirty();
             }
         }
 
@@ -302,7 +285,7 @@ namespace networked_variables
             net_first.value = first;
             net_second.value = second;
             on_change?.Invoke();
-            send_update();
+            set_dirty();
         }
 
         networked_variable<T> net_first;
@@ -344,13 +327,13 @@ namespace networked_variables
         public void add(int i)
         {
             if (!set.Add(i)) return; // Already in the set
-            send_update();
+            set_dirty();
         }
 
         public void remove(int i)
         {
             if (!set.Remove(i)) return; // Wasn't in the set
-            send_update();
+            set_dirty();
         }
 
         public bool contains(int i) => set.Contains(i);
@@ -675,7 +658,7 @@ namespace networked_variables
                 if (value == 0) dict.Remove(s);
                 else dict[s] = value;
 
-                send_update();
+                set_dirty();
                 on_change?.Invoke();
             }
         }
@@ -691,7 +674,7 @@ namespace networked_variables
             foreach (var kv in new_value)
                 dict[kv.Key] = kv.Value;
 
-            send_update();
+            set_dirty();
             on_change?.Invoke();
         }
 
@@ -701,7 +684,7 @@ namespace networked_variables
             // (to avoid calling on_change/serialize for every key)
             dict.Clear();
 
-            send_update();
+            set_dirty();
             on_change?.Invoke();
         }
 
@@ -761,7 +744,7 @@ namespace networked_variables
             set
             {
                 dict[key] = value;
-                send_update();
+                set_dirty();
             }
         }
 
@@ -828,7 +811,7 @@ namespace networked_variables
                     return; // No change
 
                 group_values[(int)group] = value;
-                send_update();
+                set_dirty();
             }
         }
 
@@ -842,14 +825,14 @@ namespace networked_variables
                 if (group_values[(int)g] != val_before)
                     dirty = true;
             }
-            if (dirty) send_update();
+            if (dirty) set_dirty();
         }
 
         public void modify_every_satisfaction(int amount)
         {
             for (int i = 0; i < group_values.Length; ++i)
                 group_values[i] = (byte)Mathf.Clamp(group_values[i] + amount, 0, byte.MaxValue);
-            send_update();
+            set_dirty();
         }
 
         public override byte[] serialization()

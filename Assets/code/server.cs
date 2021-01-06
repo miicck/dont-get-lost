@@ -281,30 +281,9 @@ public static class server
     /// <summary> Represents a networked object on the server. </summary>
     class representation : MonoBehaviour
     {
-        class serializations_container
-        {
-            List<byte[]> data = new List<byte[]>();
-
-            public representation rep;
-
-
-            public byte[] this[int i]
-            {
-                get => data[i];
-                set
-                {
-                    if (data.Count > i) data[i] = value;
-                    else if (data.Count == i) data.Add(value);
-                    else throw new System.Exception("Tried to skip a serial!");
-                }
-            }
-
-            public int count => data.Count;
-        }
-
         /// <summary> The serialized values of networked_variables 
         /// beloning to this object. </summary>
-        serializations_container serializations;
+        List<byte[]> serializations = new List<byte[]>();
 
         /// <summary> The client which has authority over 
         /// this networked object. </summary>
@@ -433,7 +412,9 @@ public static class server
                 transform.localPosition = local_pos;
             }
 
-            serializations[i] = serial;
+            if (serializations.Count > i) serializations[i] = serial;
+            else if (serializations.Count == i) serializations.Add(serial);
+            else throw new System.Exception("Tried to skip a serial!");
         }
 
         /// <summary> Called when the serialization 
@@ -514,7 +495,7 @@ public static class server
             };
 
             // Serialize all saved network variables
-            for (int i = 0; i < serializations.count; ++i)
+            for (int i = 0; i < serializations.Count; ++i)
             {
                 var serial = serializations[i];
                 to_send.Add(network_utils.encode_int(serial.Length));
@@ -542,8 +523,6 @@ public static class server
 
             // Create the representation
             representation rep = new GameObject(prefab).AddComponent<representation>();
-            rep.serializations = new serializations_container();
-            rep.serializations.rep = rep;
             if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
             else rep.transform.SetParent(active_representations);
 
