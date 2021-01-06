@@ -9,6 +9,9 @@ public class inspect_info : MonoBehaviour
     public UnityEngine.UI.Image image_upper;
     public UnityEngine.UI.Image image_lower;
 
+    static Vector3 last_mouse_pos_polled;
+    static inspectable_info last_mouse_info;
+
     static inspect_info()
     {
         tips.add("You can inspect the object you are currently looking at by " +
@@ -28,11 +31,19 @@ public class inspect_info : MonoBehaviour
         {
             // Raycast for a ui element
             if (Cursor.visible)
-                return new inspectable_info
+            {
+                // Raycasting is expensive, only carry out a raycast if the mouse has moved
+                if ((Input.mousePosition - last_mouse_pos_polled).magnitude < 4f)
+                    return last_mouse_info;
+
+                last_mouse_pos_polled = Input.mousePosition;
+                last_mouse_info = new inspectable_info
                 {
                     inspecting = utils.raycast_ui_under_mouse<IInspectable>(),
                     sub_inspecting = new List<IAddsToInspectionText>()
                 };
+                return last_mouse_info;
+            }
 
             // Raycast for the nearest collider, and search that for IInspectable
             // objects (raycast for collider, rather than IInspectable so that 
