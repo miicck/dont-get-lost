@@ -13,7 +13,7 @@ public static class utils
     }
 
     // Create an exact copy of the object t at the given position
-    public static T inst<T>(this T t, Vector3 pos, Quaternion rot=default) where T : Object
+    public static T inst<T>(this T t, Vector3 pos, Quaternion rot = default) where T : Object
     {
         var ret = Object.Instantiate(t, pos, rot);
         ret.name = t.name;
@@ -796,4 +796,293 @@ class temporary_object : MonoBehaviour
     }
 
     void delete_temp_object() { Destroy(gameObject); }
+}
+
+
+public class kd_tree<T>
+{
+    class node
+    {
+        public T value;
+
+        public node left_child
+        {
+            get => _left_child;
+            set
+            {
+                _left_child = value;
+                if (_left_child != null)
+                {
+                    _left_child.depth = depth + 1;
+                    _left_child.parent = this;
+                }
+            }
+        }
+        node _left_child;
+
+        public node right_child
+        {
+            get => _right_child;
+            set
+            {
+                _right_child = value;
+                if (_right_child != null)
+                {
+                    _right_child.depth = depth + 1;
+                    _right_child.parent = this;
+                }
+            }
+        }
+        node _right_child;
+
+        public int depth { get; private set; }
+
+        public node parent { get; private set; }
+
+        /// <summary> Searches downwards, deciding direction based on what takes 
+        /// us closer to <paramref name="target"/>. Stops when <paramref name="target"/> 
+        /// is found, or when a leaf is found. </summary>
+        public node recurse_downward(T target, axis_difference axis_dist)
+        {
+            // Search downwards until we find the node that
+            // target would be a child of
+            node current = this;
+            while (true)
+            {
+                if (current.value.Equals(target)) return current;
+                node child = current.get_nearer_child(target, axis_dist);
+                if (child == null) break;
+                current = child;
+            }
+            return current;
+        }
+
+        public node other_child(node child)
+        {
+            if (left_child == child) return right_child;
+            else if (right_child == child) return left_child;
+            else throw new System.Exception("The given node was not a child node!");
+        }
+
+        public node get_nearer_child(T to, axis_difference axis_diff)
+        {
+            if (value == null) throw new System.Exception("Can't find child of invalid node!");
+            return axis_diff(to, value, depth) < 0 ? left_child : right_child;
+        }
+
+        public void set_child(T child, axis_difference axis_diff)
+        {
+            if (axis_diff(child, value, depth) < 0)
+            {
+                if (left_child != null)
+                    throw new System.Exception("Tried to overwrite left child of KD tree!");
+                left_child = new node { value = child };
+            }
+            else
+            {
+                if (right_child != null)
+                    throw new System.Exception("Tried to overwrite right child of KD tree!");
+                right_child = new node { value = child };
+            }
+        }
+
+        public void remove_child(node child)
+        {
+            if (child == right_child) right_child = null;
+            else if (child == left_child) left_child = null;
+            else throw new System.Exception("The given child was not a child of this node!");
+        }
+    }
+
+    public delegate float axis_difference(T t1, T t2, int depth);
+    public delegate float total_distance(T t1, T t2);
+
+    node root;
+    axis_difference axis_dist;
+
+    /// <summary> Initializes a KD tree with a comparison function
+    /// <paramref name="axis_dist"/>(a,b,d) which returns
+    /// the difference b-a along axis d of the hyperspace. </summary>
+    public kd_tree(axis_difference axis_dist)
+    {
+        this.axis_dist = axis_dist;
+    }
+
+    /// <summary> Adds the given node to the tree. </summary>
+    public void add(T t)
+    {
+        // This is the first, and hence root, node
+        if (root == null)
+        {
+            root = new node { value = t };
+            return;
+        }
+
+        // Search downwards until we find the node that
+        // either contains t, or should have t has a child
+        var found = root.recurse_downward(t, axis_dist);
+        if (found.value.Equals(t)) return; // t already in tree
+        found.set_child(t, axis_dist); // Add as child of leaf
+    }
+
+    /// <summary> Remove a node from the kd tree, returns true
+    /// if the node was successfully removed. </summary>
+    public bool remove(T t)
+    {
+        // There is no tree
+        if (root == null)
+            return false;
+
+        node current = root;
+        while (true)
+        {
+            if (current.value.Equals(t))
+            {
+                // We've found the location of t in the tree. Removing
+                // it will break the tree from here down, so we need to
+                // re-add everyhting below this point
+                if (current == root) root = null; // Special case where t was at the top
+                else current.parent.remove_child(current);
+
+                // Accumulate all children of current
+                List<T> children = new List<T>();
+
+                // Start with a queue containing just the current node
+                var to_add_children_of = new Queue<node>();
+                to_add_children_of.Enqueue(current);
+
+                // Recure down the tree of all non-null child nodes
+                // adding all non-null values to children
+                while (to_add_children_of.Count > 0)
+                {
+                    var dq = to_add_children_of.Dequeue();
+                    if (dq.left_child != null)
+                    {
+                        to_add_children_of.Enqueue(dq.left_child);
+                        if (dq.left_child.value != null)
+                            children.Add(dq.left_child.value);
+                    }
+
+                    if (dq.right_child != null)
+                    {
+                        to_add_children_of.Enqueue(dq.right_child);
+                        if (dq.right_child.value != null)
+                            children.Add(dq.right_child.value);
+                    }
+                }
+
+                // Reconstruct the broken tree
+                foreach (var c in children) add(c);
+                return true;
+            }
+
+            // Move down the tree
+            current = current.get_nearer_child(t, axis_dist);
+
+            // We've reached the bottom of the tree, but 
+            // havent found t => it wasn't in the tree
+            if (current == null)
+                break;
+        }
+
+        return false;
+    }
+
+    /// <summary> Returns the nearest neighbour in the tree to 
+    /// <paramref name="target"/> according to <paramref name="f"/>. </summary>
+    public T nearest_neighbour(T target, total_distance f)
+    {
+        float best_dist = Mathf.Infinity;
+        node best_node = null;
+
+        // Start at the node where target would be put
+        node current = root.recurse_downward(target, axis_dist);
+        node child_came_from = null;
+
+        // Recurse upwards searching for any better nodes, or nodes 
+        // where we could have gone a different way
+        while (current != null)
+        {
+            // See if this node is closer to the 
+            // target than the current best
+            float dis = Mathf.Abs(f(current.value, target));
+            if (dis < best_dist)
+            {
+                best_dist = dis;
+                best_node = current;
+            };
+
+            if (child_came_from != null)
+            {
+                // See if we need to search the other side of this node from where we came from
+                node other_child = current.other_child(child_came_from);
+                if (other_child != null && Mathf.Abs(axis_dist(current.value, target, current.depth)) < best_dist)
+                {
+                    // We do, search down the tree from the other child
+                    current = other_child.recurse_downward(target, axis_dist);
+                    child_came_from = null;
+                }
+            }
+
+            child_came_from = current;
+            current = current.parent;
+        }
+
+        return best_node.value;
+    }
+
+    public static void test2()
+    {
+        // Setup a kd tree of integers
+        var tree = new kd_tree<int>((a, b, d) => b - a);
+        tree.add(0);
+        tree.add(-2);
+        tree.add(-1);
+        tree.add(-3);
+        tree.add(1);
+        tree.add(1);
+        tree.remove(-1);
+
+        string str = "";
+        var to_print = new Queue<kd_tree<int>.node>();
+        to_print.Enqueue(tree.root);
+        int last_depth = tree.root.depth;
+
+        while (to_print.Count > 0)
+        {
+            var dq = to_print.Dequeue();
+
+            if (dq.depth > last_depth)
+            {
+                last_depth = dq.depth;
+                str += "\n";
+            }
+
+            str += dq.value + " ";
+            if (dq.left_child != null) to_print.Enqueue(dq.left_child);
+            if (dq.right_child != null) to_print.Enqueue(dq.right_child);
+        }
+
+        Debug.Log(str);
+        Debug.Log(tree.nearest_neighbour(-4, (a, b) => a - b));
+    }
+
+    public static void test()
+    {
+        var tree = new kd_tree<Vector3>((a, b, d) =>
+        {
+            switch (d % 3)
+            {
+                case 0: return b.x - a.x;
+                case 1: return b.y - a.y;
+                case 2: return b.z - a.z;
+                default: throw new System.Exception("Unkown axis!");
+            }
+        });
+
+        for (int n = 0; n < 100; ++n)
+            tree.add(Random.insideUnitSphere);
+
+        Debug.Log(tree.nearest_neighbour(Vector3.zero, (a, b) => (a - b).magnitude));
+    }
 }
