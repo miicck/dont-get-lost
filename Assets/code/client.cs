@@ -203,7 +203,7 @@ public static class client
             }
 
             // Send the update
-            message_senders[MESSAGE.VARIABLE_UPDATE](nv.network_id, nv.index, nv.serialization());
+            queue_message(MESSAGE.VARIABLE_UPDATE, nv.network_id, nv.index, nv.serialization());
         }
 
         // Forget any variables who have had updates sent
@@ -271,19 +271,19 @@ public static class client
     /// the object with the given <paramref name="network_id"/>. </summary>
     public static void send_trigger(int network_id, int event_number)
     {
-        message_senders[MESSAGE.TRIGGER](network_id, event_number);
+        queue_message(MESSAGE.TRIGGER, network_id, event_number);
     }
 
     /// <summary> Called when the render range of a player changes. </summary>
     public static void on_render_range_change(networked_player player)
     {
-        message_senders[MESSAGE.RENDER_RANGE_UPDATE](player);
+        queue_message(MESSAGE.RENDER_RANGE_UPDATE, player);
     }
 
     /// <summary> Called when an object is deleted on this client, sends the server that info. </summary>
     public static void on_delete(networked deleted, bool response_required)
     {
-        message_senders[MESSAGE.DELETE](deleted.network_id, response_required);
+        queue_message(MESSAGE.DELETE, deleted.network_id, response_required);
     }
 
     /// <summary> Connect the client to a server. </summary>
@@ -316,280 +316,8 @@ public static class client
         // Initialize the networked object static state
         networked.client_initialize();
 
-        // Setup message parsers
-        message_parsers = new Dictionary<server.MESSAGE, message_parser>
-        {
-            [server.MESSAGE.CREATE] = (buffer, offset, length) =>
-                create_from_network(buffer, offset, length),
-
-            [server.MESSAGE.FORCE_CREATE] = (buffer, offset, length) =>
-            {
-                Vector3 position = network_utils.decode_vector3(buffer, ref offset);
-                string prefab = network_utils.decode_string(buffer, ref offset);
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                int parent_id = network_utils.decode_int(buffer, ref offset);
-
-                var created = create(position, prefab,
-                    parent: parent_id > 0 ? networked.find_by_id(parent_id) : null,
-                    network_id: network_id);
-            },
-
-            [server.MESSAGE.CREATION_SUCCESS] = (buffer, offset, length) =>
-            {
-                // Update the local id to a network-wide one
-                int local_id = network_utils.decode_int(buffer, ref offset);
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.try_find_by_id(local_id);
-                if (nw != null) nw.network_id = network_id;
-            },
-
-            [server.MESSAGE.DELETE_SUCCESS] = (buffer, offset, length) =>
-            {
-                // A delete was succesfully processed on the server
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                networked.on_delete_success_response(network_id);
-            },
-
-            [server.MESSAGE.VARIABLE_UPDATE] = (buffer, offset, length) =>
-            {
-                // Forward the variable update to the correct object
-                int start = offset;
-                int id = network_utils.decode_int(buffer, ref offset);
-                int index = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.try_find_by_id(id);
-                nw?.variable_update(index, buffer, offset, length - (offset - start));
-            },
-
-            [server.MESSAGE.TRIGGER] = (buffer, offset, length) =>
-            {
-                // Trigger a network event on a given object
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                int event_number = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.try_find_by_id(network_id);
-                nw?.on_network_event_triggered(event_number);
-            },
-
-            [server.MESSAGE.UNLOAD] = (buffer, offset, length) =>
-            {
-                // Remove the object from the client
-                int id = network_utils.decode_int(buffer, ref offset);
-                bool deleting = network_utils.decode_bool(buffer, ref offset);
-                var found = networked.try_find_by_id(id);
-                found?.forget(deleting);
-            },
-
-            [server.MESSAGE.GAIN_AUTH] = (buffer, offset, length) =>
-            {
-                // Gain authority over a networked object
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.try_find_by_id(network_id);
-                nw?.gain_authority();
-            },
-
-            [server.MESSAGE.LOSE_AUTH] = (buffer, offset, length) =>
-            {
-                // Loose authority over a networked object
-                int network_id = network_utils.decode_int(buffer, ref offset);
-                var nw = networked.try_find_by_id(network_id);
-                nw?.lose_authority();
-            },
-
-            [server.MESSAGE.HEARTBEAT] = (buffer, offset, length) =>
-            {
-                int heartbeat_key = network_utils.decode_int(buffer, ref offset);
-                last_server_time = network_utils.decode_int(buffer, ref offset);
-                last_server_time_local = (int)Time.realtimeSinceStartup;
-
-                if (last_heartbeat.Key == heartbeat_key)
-                {
-                    // Record the ping
-                    last_ping = Time.realtimeSinceStartup - last_heartbeat.Value;
-                }
-                else
-                {
-                    last_ping = -1;
-                    Debug.Log("Heartbeat key mismatch, packet loss/very high ping?");
-                }
-            },
-
-            [server.MESSAGE.DISCONNECT] = (buffer, offset, length) =>
-            {
-                // The server told us to disconnect. How rude.
-                string msg = network_utils.decode_string(buffer, ref offset);
-                disconnect(false, msg_from_server: msg);
-            },
-
-            [server.MESSAGE.PLAYER_UPDATE] = (buffer, offset, length) =>
-            {
-                // Update player infos from server message
-                string uname = network_utils.decode_string(buffer, ref offset);
-                Vector3 pos = network_utils.decode_vector3(buffer, ref offset);
-                bool con = network_utils.decode_bool(buffer, ref offset);
-
-                player_infos[uname] = new player_info
-                {
-                    position = pos,
-                    connected = con
-                };
-            },
-        };
-
-        // Send a message type + payload
-        void send(MESSAGE msg_type, byte[] payload)
-        {
-#           if NETWORK_DEBUG
-            // Add a stack trace to every message
-            var st = network_utils.encode_string(System.Environment.StackTrace);
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                network_utils.encode_int(st.Length),
-                st,
-                new byte[] { (byte)msg_type },
-                payload
-            );
-#else
-            // Message is of form [length, type, payload]
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                new byte[] { (byte)msg_type },
-                payload
-            );
-#endif
-
-            message_queue.Enqueue(new pending_message
-            {
-                bytes = to_send,
-                time_sent = Time.realtimeSinceStartup
-            });
-        }
-
-        // Setup message senders
-        message_senders = new Dictionary<MESSAGE, message_sender>
-        {
-            [MESSAGE.LOGIN] = (args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                string uname = (string)args[0];
-                string pword = (string)args[1];
-
-                var hasher = System.Security.Cryptography.SHA256.Create();
-                var hashed = hasher.ComputeHash(System.Text.Encoding.ASCII.GetBytes(pword));
-
-                // Send the username + hashed password to the server
-                send(MESSAGE.LOGIN, network_utils.concat_buffers(
-                    network_utils.encode_string(uname), hashed));
-            },
-
-            [MESSAGE.HEARTBEAT] = (args) =>
-            {
-                if (args.Length != 0)
-                    throw new System.Exception("Wrong number of arguments!");
-
-                // Increment the heartbeat key, and record the send time
-                last_heartbeat = new KeyValuePair<int, float>(
-                    last_heartbeat.Key + 1,
-                    Time.realtimeSinceStartup
-                );
-
-                send(MESSAGE.HEARTBEAT, network_utils.concat_buffers(
-                    network_utils.encode_bool(activity_since_heartbeat),
-                    network_utils.encode_int(last_heartbeat.Key)));
-
-                // Reset activity monitor
-                activity_since_heartbeat = false;
-            },
-
-            [MESSAGE.DISCONNECT] = (args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                bool delete_player = (bool)args[0];
-                send(MESSAGE.DISCONNECT, network_utils.encode_bool(delete_player));
-            },
-
-            [MESSAGE.CREATE] = (args) =>
-            {
-                if (args.Length != 4)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int local_id = (int)args[0];
-                int parent_id = (int)args[1];
-                string prefab = (string)args[2];
-                byte[] variable_serializations = (byte[])args[3];
-
-                send(MESSAGE.CREATE, network_utils.concat_buffers(
-                    network_utils.encode_int(local_id),
-                    network_utils.encode_int(parent_id),
-                    network_utils.encode_string(prefab),
-                    variable_serializations
-                ));
-            },
-
-            [MESSAGE.DELETE] = (args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                if (network_id < 0)
-                    throw new System.Exception("Tried to delete an unregistered object!");
-
-                bool response_required = (bool)args[1];
-
-                send(MESSAGE.DELETE, network_utils.concat_buffers(
-                    network_utils.encode_int(network_id),
-                    network_utils.encode_bool(response_required)
-                ));
-            },
-
-            [MESSAGE.RENDER_RANGE_UPDATE] = (args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                var nw = (networked_player)args[0];
-
-                // Send the new render range
-                send(MESSAGE.RENDER_RANGE_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_float(nw.render_range)
-                ));
-            },
-
-            [MESSAGE.VARIABLE_UPDATE] = (args) =>
-            {
-                if (args.Length != 3)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                int index = (int)args[1];
-                byte[] serialization = (byte[])args[2];
-
-                send(MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_int(network_id),
-                    network_utils.encode_int(index),
-                    serialization
-                ));
-            },
-
-            [MESSAGE.TRIGGER] = (args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.Exception("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                int number = (int)args[1];
-                send(MESSAGE.TRIGGER, network_utils.concat_buffers(
-                    network_utils.encode_int(network_id),
-                    network_utils.encode_int(number)
-                ));
-            }
-        };
-
         // Send login message
-        message_senders[MESSAGE.LOGIN](username, password);
+        queue_message(MESSAGE.LOGIN, username, password);
         return true;
     }
 
@@ -600,7 +328,7 @@ public static class client
         if (initiated_by_client)
         {
             // Send any queued messages (including a disconnect message)
-            message_senders[MESSAGE.DISCONNECT](delete_player);
+            queue_message(MESSAGE.DISCONNECT, delete_player);
             send_queued_messages();
         }
 
@@ -695,7 +423,7 @@ public static class client
                 offset += 1;
 
                 // Handle the message
-                message_parsers[msg_type](buffer, offset, payload_length);
+                parse_message(msg_type, buffer, offset, payload_length);
                 offset += payload_length;
 
                 // The last message parsed caused a disconnect, we
@@ -726,7 +454,7 @@ public static class client
                 continue; // This object has since been deleted
 
             // Request creation on the server
-            message_senders[MESSAGE.CREATE](cm.creating.network_id,
+            queue_message(MESSAGE.CREATE, cm.creating.network_id,
                 cm.parent_id, cm.prefab, cm.creating.serialize_networked_variables());
         }
 
@@ -735,7 +463,7 @@ public static class client
 
         // If it's been long enough, send another heartbeat
         if (Time.realtimeSinceStartup - last_heartbeat.Value > server.CLIENT_HEARTBEAT_PERIOD)
-            message_senders[MESSAGE.HEARTBEAT]();
+            queue_message(MESSAGE.HEARTBEAT);
 
         // Send messages
         send_queued_messages();
@@ -770,6 +498,10 @@ public static class client
         return ret;
     }
 
+    //###########//
+    // MESSAGING //
+    //###########//
+
     public enum MESSAGE : byte
     {
         // Numbering starts at 1 so erroneous 0's are caught
@@ -783,9 +515,284 @@ public static class client
         TRIGGER,             // A networked event has been triggered
     }
 
-    delegate void message_sender(params object[] args);
-    static Dictionary<MESSAGE, message_sender> message_senders;
+    /// <summary> Queue a message of the given <paramref name="type"/> 
+    /// and <paramref name="args"/> to the server. </summary>
+    static void queue_message(MESSAGE type, params object[] args)
+    {
+        // Send a message type + payload
+        void send(MESSAGE msg_type, byte[] payload)
+        {
+#           if NETWORK_DEBUG
+            // Add a stack trace to every message
+            var st = network_utils.encode_string(System.Environment.StackTrace);
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                network_utils.encode_int(st.Length),
+                st,
+                new byte[] { (byte)msg_type },
+                payload
+            );
+#else
+            // Message is of form [length, type, payload]
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                new byte[] { (byte)msg_type },
+                payload
+            );
+#endif
+            message_queue.Enqueue(new pending_message
+            {
+                bytes = to_send,
+                time_sent = Time.realtimeSinceStartup
+            });
+        }
 
-    delegate void message_parser(byte[] message, int offset, int length);
-    static Dictionary<server.MESSAGE, message_parser> message_parsers;
+        switch (type)
+        {
+
+            case MESSAGE.LOGIN:
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                string uname = (string)args[0];
+                string pword = (string)args[1];
+
+                var hasher = System.Security.Cryptography.SHA256.Create();
+                var hashed = hasher.ComputeHash(System.Text.Encoding.ASCII.GetBytes(pword));
+
+                // Send the username + hashed password to the server
+                send(MESSAGE.LOGIN, network_utils.concat_buffers(
+                    network_utils.encode_string(uname), hashed));
+                break;
+
+            case MESSAGE.HEARTBEAT:
+                if (args.Length != 0)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                // Increment the heartbeat key, and record the send time
+                last_heartbeat = new KeyValuePair<int, float>(
+                    last_heartbeat.Key + 1,
+                    Time.realtimeSinceStartup
+                );
+
+                send(MESSAGE.HEARTBEAT, network_utils.concat_buffers(
+                    network_utils.encode_bool(activity_since_heartbeat),
+                    network_utils.encode_int(last_heartbeat.Key)));
+
+                // Reset activity monitor
+                activity_since_heartbeat = false;
+                break;
+
+            case MESSAGE.DISCONNECT:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                bool delete_player = (bool)args[0];
+                send(MESSAGE.DISCONNECT, network_utils.encode_bool(delete_player));
+                break;
+
+            case MESSAGE.CREATE:
+                if (args.Length != 4)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int local_id = (int)args[0];
+                int parent_id = (int)args[1];
+                string prefab = (string)args[2];
+                byte[] variable_serializations = (byte[])args[3];
+
+                send(MESSAGE.CREATE, network_utils.concat_buffers(
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(parent_id),
+                    network_utils.encode_string(prefab),
+                    variable_serializations
+                ));
+                break;
+
+            case MESSAGE.DELETE:
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int network_id = (int)args[0];
+                if (network_id < 0)
+                    throw new System.Exception("Tried to delete an unregistered object!");
+
+                bool response_required = (bool)args[1];
+
+                send(MESSAGE.DELETE, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_bool(response_required)
+                ));
+                break;
+
+            case MESSAGE.RENDER_RANGE_UPDATE:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var nw = (networked_player)args[0];
+
+                // Send the new render range
+                send(MESSAGE.RENDER_RANGE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_float(nw.render_range)
+                ));
+                break;
+
+            case MESSAGE.VARIABLE_UPDATE:
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                int index = (int)args[1];
+                byte[] serialization = (byte[])args[2];
+
+                send(MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(index),
+                    serialization
+                ));
+                break;
+
+            case MESSAGE.TRIGGER:
+                if (args.Length != 2)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                int number = (int)args[1];
+                send(MESSAGE.TRIGGER, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(number)
+                ));
+                break;
+
+            default:
+                throw new System.Exception("Unkown message type!");
+        }
+    }
+
+    /// <summary> Parse a message of the given <paramref name="type"/> from the server that is
+    /// stored between <paramref name="offset"/> and <paramref name="offset"/>+<paramref name="length"/>
+    /// in <paramref name="buffer"/>. </summary>
+    static void parse_message(server.MESSAGE type, byte[] buffer, int offset, int length)
+    {
+        // Setup message parsers
+        switch (type)
+        {
+            case server.MESSAGE.CREATE:
+                create_from_network(buffer, offset, length);
+                break;
+
+            case server.MESSAGE.FORCE_CREATE:
+
+                Vector3 position = network_utils.decode_vector3(buffer, ref offset);
+                string prefab = network_utils.decode_string(buffer, ref offset);
+                int network_id = network_utils.decode_int(buffer, ref offset);
+                int parent_id = network_utils.decode_int(buffer, ref offset);
+
+                var created = create(position, prefab,
+                    parent: parent_id > 0 ? networked.find_by_id(parent_id) : null,
+                    network_id: network_id);
+                break;
+
+            case server.MESSAGE.CREATION_SUCCESS:
+
+                // Update the local id to a network-wide one
+                int local_id = network_utils.decode_int(buffer, ref offset);
+                network_id = network_utils.decode_int(buffer, ref offset);
+                var nw = networked.try_find_by_id(local_id);
+                if (nw != null) nw.network_id = network_id;
+                break;
+
+            case server.MESSAGE.DELETE_SUCCESS:
+
+                // A delete was succesfully processed on the server
+                network_id = network_utils.decode_int(buffer, ref offset);
+                networked.on_delete_success_response(network_id);
+                break;
+
+            case server.MESSAGE.VARIABLE_UPDATE:
+
+                // Forward the variable update to the correct object
+                int start = offset;
+                int id = network_utils.decode_int(buffer, ref offset);
+                int index = network_utils.decode_int(buffer, ref offset);
+                nw = networked.try_find_by_id(id);
+                nw?.variable_update(index, buffer, offset, length - (offset - start));
+                break;
+
+            case server.MESSAGE.TRIGGER:
+
+                // Trigger a network event on a given object
+                network_id = network_utils.decode_int(buffer, ref offset);
+                int event_number = network_utils.decode_int(buffer, ref offset);
+                nw = networked.try_find_by_id(network_id);
+                nw?.on_network_event_triggered(event_number);
+                break;
+
+            case server.MESSAGE.UNLOAD:
+
+                // Remove the object from the client
+                id = network_utils.decode_int(buffer, ref offset);
+                bool deleting = network_utils.decode_bool(buffer, ref offset);
+                var found = networked.try_find_by_id(id);
+                found?.forget(deleting);
+                break;
+
+            case server.MESSAGE.GAIN_AUTH:
+
+                // Gain authority over a networked object
+                network_id = network_utils.decode_int(buffer, ref offset);
+                nw = networked.try_find_by_id(network_id);
+                nw?.gain_authority();
+                break;
+
+            case server.MESSAGE.LOSE_AUTH:
+
+                // Loose authority over a networked object
+                network_id = network_utils.decode_int(buffer, ref offset);
+                nw = networked.try_find_by_id(network_id);
+                nw?.lose_authority();
+                break;
+
+            case server.MESSAGE.HEARTBEAT:
+
+                int heartbeat_key = network_utils.decode_int(buffer, ref offset);
+                last_server_time = network_utils.decode_int(buffer, ref offset);
+                last_server_time_local = (int)Time.realtimeSinceStartup;
+
+                if (last_heartbeat.Key == heartbeat_key)
+                {
+                    // Record the ping
+                    last_ping = Time.realtimeSinceStartup - last_heartbeat.Value;
+                }
+                else
+                {
+                    last_ping = -1;
+                    Debug.Log("Heartbeat key mismatch, packet loss/very high ping?");
+                }
+                break;
+
+            case server.MESSAGE.DISCONNECT:
+
+                // The server told us to disconnect. How rude.
+                string msg = network_utils.decode_string(buffer, ref offset);
+                disconnect(false, msg_from_server: msg);
+                break;
+
+            case server.MESSAGE.PLAYER_UPDATE:
+
+                // Update player infos from server message
+                string uname = network_utils.decode_string(buffer, ref offset);
+                Vector3 pos = network_utils.decode_vector3(buffer, ref offset);
+                bool con = network_utils.decode_bool(buffer, ref offset);
+
+                player_infos[uname] = new player_info
+                {
+                    position = pos,
+                    connected = con
+                };
+                break;
+
+            default:
+                throw new System.Exception("Unkown message type!");
+        }
+    }
 }
