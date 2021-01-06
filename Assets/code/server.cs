@@ -49,10 +49,16 @@ public static class server
             get => _player;
             set
             {
-                if (_player != null)
-                    throw new System.Exception("Client already has a player!");
+                if (_player == value) return; // No change
+                if (_player != null) throw new System.Exception("Client already has a player!");
+
                 _player = value;
                 player_representations[username] = value;
+
+                // Update other clients about this new player
+                foreach (var c in connected_clients)
+                    if (c != this)
+                        message_senders[MESSAGE.PLAYER_UPDATE](c, username, player.local_position, connected_clients.Contains(this));
             }
         }
         representation _player;
@@ -102,6 +108,11 @@ public static class server
                 player.parent = active_representations;
                 load(player);
             }
+
+            // Update this client about other already-loaded players
+            foreach (var c in connected_clients)
+                if (c != this && c.player != null)
+                    message_senders[MESSAGE.PLAYER_UPDATE](this, c.username, c.player.local_position, true);
         }
 
         /// <summary> Called when a client disconnects. If message is not 
@@ -760,16 +771,6 @@ public static class server
 
                 // Login
                 client.login(uname, pword);
-
-                foreach (var c in connected_clients)
-                    if (c != client)
-                    {
-                        // Update other clients about this new login
-                        message_senders[MESSAGE.PLAYER_UPDATE](c, uname, client.player.local_position, true);
-
-                        // Update this client about the other players
-                        message_senders[MESSAGE.PLAYER_UPDATE](client, c.username, c.player.local_position, true);
-                    }
             },
 
             [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
