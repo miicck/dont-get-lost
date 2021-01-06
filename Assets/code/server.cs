@@ -99,7 +99,7 @@ public static class server
             if (player != null)
             {
                 this.player = player;
-                player.transform.SetParent(active_representations);
+                player.parent = active_representations;
                 load(player);
             }
         }
@@ -110,7 +110,7 @@ public static class server
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
             Debug.Log("Client " + username + " disconnected, message: " + message);
-            Vector3 disconnect_position = player.transform.position;
+            Vector3 disconnect_position = player.local_position;
 
             // Unload representations (only top-level, lower level will
             // be automatically unloaded using the unload function)
@@ -139,13 +139,13 @@ public static class server
                     if (c.has_loaded(player))
                         c.unload(player, false);
 
-            if (player.transform.parent == deleted_representations)
+            if (player.parent == deleted_representations)
             {
                 // Player has been deleted, remove it from player representations
                 player_representations.Remove(username);
             }
             else
-                player?.transform.SetParent(inactive_representations);
+                player.parent = inactive_representations;
 
             // Let other clients know that we've disconnected
             foreach (var c in connected_clients)
@@ -158,7 +158,7 @@ public static class server
         /// <summary> Returns true if the client should load the provided representation. </summary>
         bool should_load(representation rep)
         {
-            return (rep.transform.position - player.transform.position).magnitude <
+            return (rep.local_position - player.local_position).magnitude <
                 rep.radius + render_range;
         }
 
@@ -170,34 +170,35 @@ public static class server
                 return; // Only update loaded if we have a player
 
             // Loop over active representations
-            foreach (Transform t in active_representations)
+            foreach (var elm in active_representations)
             {
-                var rep = t.GetComponent<representation>();
-                if (rep == null) continue;
-
-                if (has_loaded(rep))
+                if (elm is representation)
                 {
-                    // Unload from clients that are too far away
-                    if (!should_load(rep))
-                        unload(rep, false);
-                }
-                else
-                {
-                    // Load on clients that are within range
-                    if (should_load(rep))
-                        load(rep, false);
+                    var rep = (representation)elm;
+                    if (has_loaded(rep))
+                    {
+                        // Unload from clients that are too far away
+                        if (!should_load(rep))
+                            unload(rep, false);
+                    }
+                    else
+                    {
+                        // Load on clients that are within range
+                        if (should_load(rep))
+                            load(rep, false);
+                    }
                 }
             }
 
             // Let other clients know about our updated position, if we've moved far enough
-            if ((last_updated_position - player.transform.position).magnitude > PLAYER_RESOLUTION_UNLOADED)
+            if ((last_updated_position - player.local_position).magnitude > PLAYER_RESOLUTION_UNLOADED)
             {
-                last_updated_position = player.transform.position;
+                last_updated_position = player.local_position;
                 foreach (var c in connected_clients)
                 {
                     if (c == this) continue;
                     message_senders[MESSAGE.PLAYER_UPDATE](c, username,
-                        player.transform.position, connected_clients.Contains(this));
+                        player.local_position, connected_clients.Contains(this));
                 }
             }
 
@@ -232,17 +233,21 @@ public static class server
         public void load(representation rep, bool already_created = false)
         {
             // Load rep and all it's children
-            network_utils.top_down<representation>(rep.transform, (loading) =>
+            rep.recurse_top_down((elm) =>
             {
-                if (already_created && loading != rep)
-                    throw new System.Exception("A representation with children should not be already_created!");
+                if (elm is representation)
+                {
+                    var loading = (representation)elm;
+                    if (already_created && loading != rep)
+                        throw new System.Exception("A representation with children should not be already_created!");
 
-                if (!already_created)
-                    message_senders[MESSAGE.CREATE](this, loading.serialize());
+                    if (!already_created)
+                        message_senders[MESSAGE.CREATE](this, loading.serialize());
 
-                // Add this object to the loaded set
-                loaded.Add(loading);
-                loading.on_load_on(this);
+                    // Add this object to the loaded set
+                    loaded.Add(loading);
+                    loading.on_load_on(this);
+                }
             });
         }
 
@@ -251,18 +256,23 @@ public static class server
         public void unload(representation rep, bool deleting, bool already_removed = false)
         {
             // Unload rep and all of it's children
-            network_utils.top_down<representation>(rep.transform, (unloading) =>
+            rep.recurse_top_down((elm) =>
             {
-                if (!loaded.Contains(unloading))
+                if (elm is representation)
                 {
-                    string err = "Client " + username + " tried to unload an object (" + unloading.name +
-                                 " id = " + unloading.network_id + ") which was not loaded!";
-                    throw new System.Exception(err);
-                }
+                    var unloading = (representation)elm;
 
-                // Remove this object from the loaded set
-                loaded.Remove(unloading);
-                unloading.on_unload_on(this);
+                    if (!loaded.Contains(unloading))
+                    {
+                        string err = "Client " + username + " tried to unload an object (" +
+                                     "id = " + unloading.network_id + ") which was not loaded!";
+                        throw new System.Exception(err);
+                    }
+
+                    // Remove this object from the loaded set
+                    loaded.Remove(unloading);
+                    unloading.on_unload_on(this);
+                }
             });
 
             // Let the client know that rep has been unloaded
@@ -272,6 +282,47 @@ public static class server
         }
     }
 
+    //####################//
+    // HIERRARCHY ELEMENT //
+    //####################//
+
+    /// <summary> Allows the storage of objects in a parent-child type hierarchy. </summary>
+    class hierarchy_element : IEnumerable<hierarchy_element>
+    {
+        public hierarchy_element parent
+        {
+            get => _parent;
+            set
+            {
+                if (_parent == value) return;
+                _parent?.children.Remove(this);
+                _parent = value;
+                _parent?.children.Add(this);
+            }
+        }
+        hierarchy_element _parent;
+
+        HashSet<hierarchy_element> children = new HashSet<hierarchy_element>();
+        public IEnumerator<hierarchy_element> GetEnumerator() { return children.GetEnumerator(); }
+        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+        /// <summary> Call the function <paramref name="f"/> on me
+        /// and my children recursively downward. </summary>
+        public void recurse_top_down(recurse_func f)
+        {
+            var to_apply = new Queue<hierarchy_element>();
+            to_apply.Enqueue(this);
+
+            while (to_apply.Count > 0)
+            {
+                var applying_to = to_apply.Dequeue();
+                foreach (var c in applying_to) to_apply.Enqueue(c);
+                f(applying_to);
+            }
+        }
+        public delegate void recurse_func(hierarchy_element r);
+    }
+
 
     //################//
     // REPRESENTATION //
@@ -279,7 +330,7 @@ public static class server
 
 
     /// <summary> Represents a networked object on the server. </summary>
-    class representation : MonoBehaviour
+    class representation : hierarchy_element
     {
         /// <summary> The serialized values of networked_variables 
         /// beloning to this object. </summary>
@@ -312,10 +363,13 @@ public static class server
         }
         client _authority;
 
+        /// <summary> The local position of this representation (needed for proximity tests). </summary>
+        public Vector3 local_position;
+
         /// <summary> Returns true if this is a top-level representation. </summary>
         public bool is_top_level =>
-            transform.parent == active_representations ||
-            transform.parent == inactive_representations;
+            parent == active_representations ||
+            parent == inactive_representations;
 
         /// <summary> Remove the representation from the server, and  any corresponding objects from 
         /// clients. </summary>
@@ -334,17 +388,19 @@ public static class server
                         c.unload(this, true, already_removed: c == issued_from);
 
             // Move to inactive whilst deleting.
-            transform.SetParent(deleted_representations);
+            parent = deleted_representations;
 
             // Remove/destroy the representation + all children
-            network_utils.top_down<representation>(transform, (rep) =>
+            recurse_top_down((elm) =>
             {
-                // Move the id to the recently deleted collection
-                representations.Remove(rep.network_id);
-                recently_deleted[rep.network_id] = Time.realtimeSinceStartup;
+                if (elm is representation)
+                {
+                    // Move the id to the recently deleted collection
+                    var r = (representation)elm;
+                    representations.Remove(r.network_id);
+                    recently_deleted[r.network_id] = Time.realtimeSinceStartup;
+                }
             });
-
-            Destroy(gameObject);
 
             // Delete successful. If the client requested a response, send one.
             if (response_requested)
@@ -393,24 +449,13 @@ public static class server
         void set_serialization(int i, byte[] serial)
         {
             // Deal with special networked_variables
+            int offset = 0;
             if (i == (int)engine_networked_variable.TYPE.POSITION_X)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.x = System.BitConverter.ToSingle(serial, 0);
-                transform.localPosition = local_pos;
-            }
+                local_position.x = network_utils.decode_float(serial, ref offset);
             else if (i == (int)engine_networked_variable.TYPE.POSITION_Y)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.y = System.BitConverter.ToSingle(serial, 0);
-                transform.localPosition = local_pos;
-            }
+                local_position.y = network_utils.decode_float(serial, ref offset);
             else if (i == (int)engine_networked_variable.TYPE.POSITION_Z)
-            {
-                Vector3 local_pos = transform.localPosition;
-                local_pos.z = System.BitConverter.ToSingle(serial, 0);
-                transform.localPosition = local_pos;
-            }
+                local_position.z = network_utils.decode_float(serial, ref offset);
 
             if (serializations.Count > i) serializations[i] = serial;
             else if (serializations.Count == i) serializations.Add(serial);
@@ -479,9 +524,10 @@ public static class server
         /// be sent over the network, or saved to disk. </summary>
         public byte[] serialize()
         {
-            // Parent_id = 0 if I am not a child of another networked_v2
-            representation parent = transform.parent.GetComponent<representation>();
-            int parent_id = parent == null ? 0 : parent.network_id;
+            // Parent_id = 0 if I am not a child of another representation
+            int parent_id = 0;
+            if (parent != null && parent is representation)
+                parent_id = ((representation)parent).network_id;
 
             if (parent_id < 0)
                 throw new System.Exception("Tried to set unregistered parent!");
@@ -505,6 +551,10 @@ public static class server
             return network_utils.concat_buffers(to_send.ToArray());
         }
 
+        /// <summary> Representations can only be made using the 
+        /// <see cref="create(byte[], int, int, out int)"/> method. </summary>
+        private representation() { }
+
         /// <summary>  Create a network representation. This does not load the
         /// representation on any clients, or send creation messages. </summary>
         public static representation create(byte[] buffer, int offset, int length, out int input_id)
@@ -522,9 +572,9 @@ public static class server
                 return null;
 
             // Create the representation
-            representation rep = new GameObject(prefab).AddComponent<representation>();
-            if (parent_id > 0) rep.transform.SetParent(representations[parent_id].transform);
-            else rep.transform.SetParent(active_representations);
+            representation rep = new representation();
+            if (parent_id > 0) rep.parent = representations[parent_id];
+            else rep.parent = active_representations;
 
             rep.prefab = prefab;
             if (input_id < 0)
@@ -555,23 +605,6 @@ public static class server
         }
 
         public static int last_network_id_assigned = 0;
-
-#if UNITY_EDITOR
-
-        // The custom editor for server representations
-        [UnityEditor.CustomEditor(typeof(representation), true)]
-        class editor : UnityEditor.Editor
-        {
-            public override void OnInspectorGUI()
-            {
-                base.OnInspectorGUI();
-                var rep = (representation)target;
-                UnityEditor.EditorGUILayout.IntField("Network ID", rep.network_id);
-            }
-        }
-
-#endif
-
     }
 
 
@@ -606,20 +639,17 @@ public static class server
     /// <summary> Player representations on the server, keyed by username. </summary>
     static Dictionary<string, representation> player_representations;
 
-    /// <summary> The transform representing the server. </summary>
-    static Transform transform;
-
     /// <summary> Transform containing active representations (those which are
     /// considered for existance on clients) </summary>
-    static Transform active_representations;
+    static hierarchy_element active_representations;
 
     /// <summary> Representations that are not considered for existance
     /// on clients, but need to be remembered
     /// (such as logged out players) </summary>
-    static Transform inactive_representations;
+    static hierarchy_element inactive_representations;
 
     /// <summary> Representations that are in the process of being deleted. </summary>
-    static Transform deleted_representations;
+    static hierarchy_element deleted_representations;
 
     /// <summary> Messages that are yet to be sent. </summary>
     static Dictionary<client, Queue<pending_message>> message_queues;
@@ -674,11 +704,6 @@ public static class server
             return false;
         }
 
-        // Cleanup from previous run
-        if (transform != null) Object.Destroy(transform.gameObject);
-        if (active_representations != null) Object.Destroy(active_representations.gameObject);
-        if (inactive_representations != null) Object.Destroy(inactive_representations.gameObject);
-
         // Initialize state variables
         server.player_prefab = player_prefab;
         server.savename = savename;
@@ -690,16 +715,10 @@ public static class server
         recently_deleted = new Dictionary<int, float>();
         player_representations = new Dictionary<string, representation>();
         message_queues = new Dictionary<client, Queue<pending_message>>();
-        transform = new GameObject("server").transform;
-        active_representations = new GameObject("active").transform;
-        inactive_representations = new GameObject("inactive").transform;
-        deleted_representations = new GameObject("deleted").transform;
+        active_representations = new hierarchy_element();
+        inactive_representations = new hierarchy_element();
+        deleted_representations = new hierarchy_element();
         truncated_read_messages = new Dictionary<client, byte[]>();
-
-        // Tidy up the heirarcy a bit
-        active_representations.SetParent(transform);
-        inactive_representations.SetParent(transform);
-        deleted_representations.SetParent(transform);
 
         // Check that server configuration is valid
         if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
@@ -746,10 +765,10 @@ public static class server
                     if (c != client)
                     {
                         // Update other clients about this new login
-                        message_senders[MESSAGE.PLAYER_UPDATE](c, uname, client.player.transform.position, true);
+                        message_senders[MESSAGE.PLAYER_UPDATE](c, uname, client.player.local_position, true);
 
                         // Update this client about the other players
-                        message_senders[MESSAGE.PLAYER_UPDATE](client, c.username, c.player.transform.position, true);
+                        message_senders[MESSAGE.PLAYER_UPDATE](client, c.username, c.player.local_position, true);
                     }
             },
 
@@ -828,13 +847,11 @@ public static class server
                 // Register (load) the object on clients
                 client.load(rep, true);
 
-                // If this is a child, load it on all other
-                // clients that have the parent.
-                var parent = rep.transform.parent.GetComponent<representation>();
-                if (parent != null)
+                // If this is a child, load it on all other clients that have the parent.
+                if (rep.parent != null && rep.parent is representation)
                     foreach (var c in connected_clients)
                         if (c != client)
-                            if (c.has_loaded(parent))
+                            if (c.has_loaded((representation)rep.parent))
                                 c.load(rep, false);
             },
 
@@ -1129,7 +1146,7 @@ public static class server
                         string username = System.Text.Encoding.ASCII.GetString(uname_bytes);
 
                         // Players start inactive
-                        rep.transform.SetParent(inactive_representations);
+                        rep.parent = inactive_representations;
                         player_representations[username] = rep;
                         break;
 
@@ -1142,7 +1159,7 @@ public static class server
 
                         // If this is a top-level representation, move to inactive
                         if (rep.is_top_level)
-                            rep.transform.SetParent(inactive_representations);
+                            rep.parent = inactive_representations;
                         break;
 
                     default:
@@ -1193,21 +1210,29 @@ public static class server
             }
 
             // Then save active representations
-            network_utils.top_down<representation>(active_representations, (rep) =>
+            active_representations.recurse_top_down((elm) =>
             {
-                if (saved.Contains(rep.network_id) || !rep.persistant) return;
-                compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
-                compressor.write_bytes_with_length(rep.serialize());
-                saved.Add(rep.network_id);
+                if (elm is representation)
+                {
+                    var rep = (representation)elm;
+                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
+                    compressor.write_bytes_with_length(rep.serialize());
+                    saved.Add(rep.network_id);
+                }
             });
 
             // Then save inactive representations
-            network_utils.top_down<representation>(inactive_representations, (rep) =>
+            inactive_representations.recurse_top_down((elm) =>
             {
-                if (saved.Contains(rep.network_id) || !rep.persistant) return;
-                compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
-                compressor.write_bytes_with_length(rep.serialize());
-                saved.Add(rep.network_id);
+                if (elm is representation)
+                {
+                    var rep = (representation)elm;
+                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
+                    compressor.write_bytes_with_length(rep.serialize());
+                    saved.Add(rep.network_id);
+                }
             });
         }
     }
@@ -1435,20 +1460,6 @@ public static class server
                 ++ret;
             }
         return ret;
-    }
-
-    public static void draw_gizmos()
-    {
-        foreach (var c in connected_clients)
-        {
-            if (c.player == null)
-                continue;
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(c.player.transform.position, c.player.radius);
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(c.player.transform.position, c.render_range);
-        }
     }
 
     public static string info()
