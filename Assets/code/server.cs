@@ -58,7 +58,8 @@ public static class server
                 // Update other clients about this new player
                 foreach (var c in connected_clients)
                     if (c != this)
-                        message_senders[MESSAGE.PLAYER_UPDATE](c, username, player.local_position, connected_clients.Contains(this));
+                        send_message(MESSAGE.PLAYER_UPDATE, c, username,
+                            player.local_position, connected_clients.Contains(this));
             }
         }
         representation _player;
@@ -93,7 +94,7 @@ public static class server
             {
                 // Force the creation of the player on the client
                 player = null;
-                message_senders[MESSAGE.FORCE_CREATE](this,
+                send_message(MESSAGE.FORCE_CREATE, this,
                     Vector3.zero, player_prefab,
                     ++representation.last_network_id_assigned, 0
                 );
@@ -112,7 +113,7 @@ public static class server
             // Update this client about other already-loaded players
             foreach (var c in connected_clients)
                 if (c != this && c.player != null)
-                    message_senders[MESSAGE.PLAYER_UPDATE](this, c.username, c.player.local_position, true);
+                    send_message(MESSAGE.PLAYER_UPDATE, this, c.username, c.player.local_position, true);
         }
 
         /// <summary> Called when a client disconnects. If message is not 
@@ -131,7 +132,7 @@ public static class server
 
             // Send the disconnect message
             if (message != null)
-                message_senders[MESSAGE.DISCONNECT](this, message);
+                send_message(MESSAGE.DISCONNECT, this, message);
 
             connected_clients.Remove(this);
             message_queues.Remove(this);
@@ -160,7 +161,7 @@ public static class server
 
             // Let other clients know that we've disconnected
             foreach (var c in connected_clients)
-                message_senders[MESSAGE.PLAYER_UPDATE](c, username, disconnect_position, false);
+                send_message(MESSAGE.PLAYER_UPDATE, c, username, disconnect_position, false);
         }
 
         /// <summary> The representations loaded as objects on this client. </summary>
@@ -208,7 +209,7 @@ public static class server
                 foreach (var c in connected_clients)
                 {
                     if (c == this) continue;
-                    message_senders[MESSAGE.PLAYER_UPDATE](c, username,
+                    send_message(MESSAGE.PLAYER_UPDATE, c, username,
                         player.local_position, connected_clients.Contains(this));
                 }
             }
@@ -253,7 +254,7 @@ public static class server
                         throw new System.Exception("A representation with children should not be already_created!");
 
                     if (!already_created)
-                        message_senders[MESSAGE.CREATE](this, loading.serialize());
+                        send_message(MESSAGE.CREATE, this, loading.serialize());
 
                     // Add this object to the loaded set
                     loaded.Add(loading);
@@ -289,7 +290,7 @@ public static class server
             // Let the client know that rep has been unloaded
             // (the client will automatically unload it's children also)
             if (!already_removed)
-                message_senders[MESSAGE.UNLOAD](this, rep.network_id, deleting);
+                send_message(MESSAGE.UNLOAD, this, rep.network_id, deleting);
         }
     }
 
@@ -363,13 +364,13 @@ public static class server
             {
                 // Old client looses authority
                 if (_authority != null)
-                    message_senders[MESSAGE.LOSE_AUTH](_authority, network_id);
+                    send_message(MESSAGE.LOSE_AUTH, _authority, network_id);
 
                 _authority = value;
 
                 // New client gains authority
                 if (_authority != null)
-                    message_senders[MESSAGE.GAIN_AUTH](_authority, network_id);
+                    send_message(MESSAGE.GAIN_AUTH, _authority, network_id);
             }
         }
         client _authority;
@@ -415,7 +416,7 @@ public static class server
 
             // Delete successful. If the client requested a response, send one.
             if (response_requested)
-                message_senders[MESSAGE.DELETE_SUCCESS](issued_from, network_id);
+                send_message(MESSAGE.DELETE_SUCCESS, issued_from, network_id);
         }
 
         public void on_load_on(client client)
@@ -483,7 +484,7 @@ public static class server
 
             foreach (var c in connected_clients)
                 if ((c != sender) && c.has_loaded(this))
-                    message_senders[MESSAGE.VARIABLE_UPDATE](c, network_id, index, new_serialization);
+                    send_message(MESSAGE.VARIABLE_UPDATE, c, network_id, index, new_serialization);
         }
 
         /// <summary> Trigger a network event on all clients that have this representation 
@@ -492,7 +493,7 @@ public static class server
         {
             foreach (var c in connected_clients)
                 if ((c != triggered_by) && c.has_loaded(this))
-                    message_senders[MESSAGE.TRIGGER](c, network_id, event_number);
+                    send_message(MESSAGE.TRIGGER, c, network_id, event_number);
         }
 
         /// <summary> My network id. Automatically updates the 
@@ -623,14 +624,10 @@ public static class server
     // SERVER LOGIC //
     //##############//
 
-
     // STATE VARIABLES //
 
     /// <summary> The TCP listener the server is listening with. </summary>
     static TcpListener tcp;
-
-    /// <summary> Returns true if the server has been started. </summary>
-    public static bool started { get => tcp != null; }
 
     /// <summary> The name that this session is saved under. </summary>
     static string savename;
@@ -680,31 +677,14 @@ public static class server
 
     // END STATE VARIABLES //
 
-    static representation try_get_rep(int id, bool error_on_fail = false, bool allow_recently_deleted = true)
-    {
-        if (!representations.TryGetValue(id, out representation rep))
-        {
-            // Don't flag a warning if this was recently deleted
-            if (allow_recently_deleted && recently_deleted.ContainsKey(id))
-                return null;
 
-            // Couldn't find and wasn't recently deleted, throw an error/warning
-            string msg = "Could not find the representation with id " + rep;
-            if (error_on_fail) throw new System.Exception(msg);
-            else Debug.LogWarning(msg);
-            return null;
-        }
+    // DERIVED STATE //
 
-        return rep;
-    }
+    /// <summary> Returns true if the server has been started. </summary>
+    public static bool started { get => tcp != null; }
 
+    // END DERIVED STATE //
 
-    /// <summary> A server message waiting to be sent. </summary>
-    struct pending_message
-    {
-        public byte[] bytes;
-        public float send_time;
-    }
 
     /// <summary> Start a server listening on the given port on the local machine. </summary>
     public static bool start(int port, string savename, string player_prefab, out string error_message)
@@ -750,492 +730,9 @@ public static class server
         if (System.IO.File.Exists(save_file()))
             load();
 
-        // Setup the message senders
-        message_parsers = new Dictionary<global::client.MESSAGE, message_parser>
-        {
-            [global::client.MESSAGE.LOGIN] = (client, bytes, offset, length) =>
-            {
-                int init_offset = offset;
-                string uname = network_utils.decode_string(bytes, ref offset);
-
-                byte[] pword = new byte[length - (offset - init_offset)];
-                System.Buffer.BlockCopy(bytes, offset, pword, 0, pword.Length);
-
-                // Check if this username is in use
-                foreach (var c in connected_clients)
-                    if (c.username == uname)
-                    {
-                        client.disconnect("Username already in use.");
-                        return;
-                    }
-
-                // Login
-                client.login(uname, pword);
-            },
-
-            [global::client.MESSAGE.DISCONNECT] = (client, bytes, offset, legnth) =>
-            {
-                // No need to send a server.DISCONNECT message to
-                // the client as they requested the disconnect
-                bool delete_player = network_utils.decode_bool(bytes, ref offset);
-                client.disconnect(null, delete_player: delete_player);
-            },
-
-            [global::client.MESSAGE.HEARTBEAT] = (client, bytes, offset, length) =>
-            {
-                // This client is still kicking - respond so they can time the ping
-                bool activity = network_utils.decode_bool(bytes, ref offset);
-                int heartbeat_key = network_utils.decode_int(bytes, ref offset);
-                if (activity) client.last_active_time = Time.realtimeSinceStartup;
-                message_senders[MESSAGE.HEARTBEAT](client, heartbeat_key);
-            },
-
-            [global::client.MESSAGE.VARIABLE_UPDATE] = (client, bytes, offset, length) =>
-            {
-                // Forward the updated variable serialization to the correct representation
-                int start = offset;
-                int id = network_utils.decode_int(bytes, ref offset);
-                int index = network_utils.decode_int(bytes, ref offset);
-                int serial_length = length - (offset - start);
-                byte[] serialization = new byte[serial_length];
-                System.Buffer.BlockCopy(bytes, offset, serialization, 0, serial_length);
-                try_get_rep(id)?.on_network_variable_change(client, index, serialization);
-            },
-
-            [global::client.MESSAGE.TRIGGER] = (client, bytes, offset, length) =>
-            {
-                // Trigger the numbered network event on the given representation
-                int network_id = network_utils.decode_int(bytes, ref offset);
-                int event_number = network_utils.decode_int(bytes, ref offset);
-                if (representations.TryGetValue(network_id, out representation rep))
-                    rep.trigger_network_event(client, event_number);
-                else
-                    Debug.Log("Reccived trigger for non-existant network ID!");
-            },
-
-            [global::client.MESSAGE.RENDER_RANGE_UPDATE] = (client, bytes, offset, length) =>
-            {
-                client.render_range = network_utils.decode_float(bytes, ref offset);
-            },
-
-            [global::client.MESSAGE.CREATE] = (client, bytes, offset, length) =>
-            {
-                // Create the representation from the info sent from the client
-                int input_id;
-                var rep = representation.create(bytes, offset, length, out input_id);
-                if (input_id > 0)
-                {
-                    // This was a forced create
-
-                    if (rep.prefab == player_prefab)
-                    {
-                        // This was a forced player creation
-                        client.player = rep;
-                    }
-                    else
-                    {
-                        throw new System.NotImplementedException(
-                            "Forced creation of non-players is not supported!");
-                    }
-                }
-
-                // Let the client know that the creation was successful
-                // (this is done before the load, so that the client that created
-                //  it has the correct network id *before* it reccives 
-                //  load/serialization messages)
-                message_senders[MESSAGE.CREATION_SUCCESS](client, input_id, rep.network_id);
-
-                // Register (load) the object on clients
-                client.load(rep, true);
-
-                // If this is a child, load it on all other clients that have the parent.
-                if (rep.parent != null && rep.parent is representation)
-                    foreach (var c in connected_clients)
-                        if (c != client)
-                            if (c.has_loaded((representation)rep.parent))
-                                c.load(rep, false);
-            },
-
-            [global::client.MESSAGE.DELETE] = (client, bytes, offset, length) =>
-            {
-                int network_id = network_utils.decode_int(bytes, ref offset);
-                bool response = network_utils.decode_bool(bytes, ref offset);
-
-                // Find the representation being deleted
-                representation deleting;
-                if (!representations.TryGetValue(network_id, out deleting))
-                {
-                    if (!recently_deleted.ContainsKey(network_id))
-                    {
-                        // This should only happend in high-latency edge cases
-                        Debug.Log("Deleting non-existant id " + network_id +
-                            " (was not recently deleted)\n" + last_stack_trace);
-                    }
-
-                    return;
-                }
-
-                // Delete the representation
-                deleting.delete(issued_from: client, response_requested: response);
-            }
-        };
-
-        // Send a payload to a client
-        void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
-        {
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                new byte[] { (byte)msg_type },
-                payload
-            );
-
-            if (immediate)
-            {
-                // Send the message immediately
-                // this results in lower throughput and should only
-                // be used when absolutely neccassary
-                try
-                {
-                    client.stream.Write(to_send, 0, to_send.Length);
-                }
-                catch
-                {
-                    // Client was found to have disconnected
-                    // during immediate message send (message
-                    // = null because there would be no point
-                    // trying to contact them, given they just
-                    // disconnected).
-                    client.disconnect(null);
-                }
-                return;
-            }
-
-            // Queue the message, creating the queue for this
-            // client if it doesn't already exist
-            Queue<pending_message> queue;
-            if (!message_queues.TryGetValue(client, out queue))
-            {
-                queue = new Queue<pending_message>();
-                message_queues[client] = queue;
-            }
-
-            queue.Enqueue(new pending_message
-            {
-                bytes = to_send,
-                send_time = Time.realtimeSinceStartup
-            });
-        }
-
-        // Setup the message senders
-        message_senders = new Dictionary<MESSAGE, message_sender>
-        {
-            [MESSAGE.CREATE] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                send(client, MESSAGE.CREATE, (byte[])args[0]);
-            },
-
-            [MESSAGE.FORCE_CREATE] = (client, args) =>
-            {
-                if (args.Length != 4)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                Vector3 position = (Vector3)args[0];
-                string prefab = (string)args[1];
-                int network_id = (int)args[2];
-                int parent_id = (int)args[3];
-
-                send(client, MESSAGE.FORCE_CREATE, network_utils.concat_buffers(
-                    network_utils.encode_vector3(position),
-                    network_utils.encode_string(prefab),
-                    network_utils.encode_int(network_id),
-                    network_utils.encode_int(parent_id)
-                ));
-            },
-
-            [MESSAGE.UNLOAD] = (client, args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                bool deleting = (bool)args[1];
-
-                send(client, MESSAGE.UNLOAD, network_utils.concat_buffers(
-                    network_utils.encode_int(network_id),
-                    network_utils.encode_bool(deleting)
-                ));
-            },
-
-            [MESSAGE.VARIABLE_UPDATE] = (client, args) =>
-            {
-                if (args.Length != 3)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                var id = (int)args[0];
-                var index = (int)args[1];
-                var serialization = (byte[])args[2];
-
-                send(client, MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_int(id),
-                    network_utils.encode_int(index),
-                    serialization
-                ));
-            },
-
-            [MESSAGE.TRIGGER] = (client, args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.Exception("Wrong number of arguments!");
-
-                var id = (int)args[0];
-                var number = (int)args[1];
-
-                send(client, MESSAGE.TRIGGER, network_utils.concat_buffers(
-                    network_utils.encode_int(id),
-                    network_utils.encode_int(number)
-                ));
-            },
-
-            [MESSAGE.CREATION_SUCCESS] = (client, args) =>
-            {
-                if (args.Length != 2)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int local_id = (int)args[0];
-                int network_id = (int)args[1];
-
-                send(client, MESSAGE.CREATION_SUCCESS, network_utils.concat_buffers(
-                    network_utils.encode_int(local_id),
-                    network_utils.encode_int(network_id)
-                ));
-            },
-
-            [MESSAGE.DELETE_SUCCESS] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                send(client, MESSAGE.DELETE_SUCCESS, network_utils.encode_int(network_id));
-            },
-
-            [MESSAGE.GAIN_AUTH] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                if (network_id <= 0)
-                    throw new System.Exception("Can't gain authority over unregistered object!");
-
-                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
-            },
-
-            [MESSAGE.LOSE_AUTH] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int network_id = (int)args[0];
-                if (network_id <= 0)
-                    throw new System.Exception("Can't lose authority over unregistered object!");
-
-                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
-            },
-
-            [MESSAGE.HEARTBEAT] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                int heartbeat_key = (int)args[0];
-                var dt = System.DateTime.UtcNow.Subtract(new System.DateTime(1970, 1, 1, 0, 0, 0, 0));
-                int seconds_since_epoch = (int)dt.TotalSeconds; // See you in 2038!
-
-                send(client, MESSAGE.HEARTBEAT, network_utils.concat_buffers(
-                    network_utils.encode_int(heartbeat_key),
-                    network_utils.encode_int(seconds_since_epoch)
-                ));
-            },
-
-            [MESSAGE.DISCONNECT] = (client, args) =>
-            {
-                if (args.Length != 1)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                // The disconnection message
-                string msg = (string)args[0];
-                if (msg == null)
-                    throw new System.Exception("Disconnect messages should not be sent without a payload!");
-
-                // Disconnect messages are sent immediately, so that the client object (including 
-                // it's message queues) can be immediately removed afterwards
-                send(client, MESSAGE.DISCONNECT, network_utils.encode_string(msg), immediate: true);
-            },
-
-            [MESSAGE.PLAYER_UPDATE] = (client, args) =>
-            {
-                if (args.Length != 3)
-                    throw new System.ArgumentException("Wrong number of arguments!");
-
-                // The username of the player we're sending updates about
-                string username = (string)args[0];
-                Vector3 position = (Vector3)args[1];
-                bool connected = (bool)args[2];
-
-                send(client, MESSAGE.PLAYER_UPDATE, network_utils.concat_buffers(
-                    network_utils.encode_string(username),
-                    network_utils.encode_vector3(position),
-                    network_utils.encode_bool(connected)
-                ));
-            },
-        };
-
         // Server started successfully
         error_message = "";
         return true;
-    }
-
-    static void load()
-    {
-        string fullpath = System.IO.Path.GetFullPath(save_file());
-
-        using (var file = System.IO.File.OpenRead(fullpath))
-        using (var decompress = new System.IO.Compression.GZipStream(file,
-            System.IO.Compression.CompressionMode.Decompress))
-        using (var buffer = new System.IO.MemoryStream())
-        {
-            decompress.CopyTo(buffer);
-            buffer.Seek(0, System.IO.SeekOrigin.Begin);
-
-            int length = 0;
-            byte[] length_bytes = new byte[sizeof(int)];
-
-            while (true)
-            {
-                // Deserialize the type of the representation
-                int type_int = buffer.ReadByte();
-                if (type_int < 0) break;
-                SAVE_TYPE type = (SAVE_TYPE)type_int;
-
-                // Desrielize the length of the representation
-                buffer.Read(length_bytes, 0, sizeof(int));
-                length = System.BitConverter.ToInt32(length_bytes, 0);
-
-                // Deserialize the representation
-                byte[] rep_bytes = new byte[length];
-                buffer.Read(rep_bytes, 0, length);
-                var rep = representation.create(rep_bytes, 0, length, out int input_id);
-                if (rep == null) continue; // Representation creation failed - likely prefab no longer exists
-
-                // Check the network id recovered makes sense
-                if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");
-                if (input_id != rep.network_id) throw new System.Exception("Network id loaded incorrectly!");
-
-                switch (type)
-                {
-                    case SAVE_TYPE.PLAYER:
-
-                        // For players, deserialize also the username
-                        buffer.Read(length_bytes, 0, sizeof(int));
-                        length = System.BitConverter.ToInt32(length_bytes, 0);
-                        byte[] uname_bytes = new byte[length];
-                        buffer.Read(uname_bytes, 0, length);
-                        string username = System.Text.Encoding.ASCII.GetString(uname_bytes);
-
-                        // Players start inactive
-                        rep.parent = inactive_representations;
-                        player_representations[username] = rep;
-                        break;
-
-                    case SAVE_TYPE.ACTIVE:
-
-                        // Nothing needs doing
-                        break;
-
-                    case SAVE_TYPE.INACTIVE:
-
-                        // If this is a top-level representation, move to inactive
-                        if (rep.is_top_level)
-                            rep.parent = inactive_representations;
-                        break;
-
-                    default:
-                        throw new System.Exception("Unkown save type: " + type);
-                }
-            }
-        }
-    }
-
-    /// <summary> The byte identifying which kind of 
-    /// object comes next in the save file. </summary>
-    enum SAVE_TYPE : byte
-    {
-        PLAYER = 1,
-        ACTIVE,
-        INACTIVE
-    }
-
-    /// <summary> Extension method to write a variable-size byte array to a filestream. </summary>
-    public static void write_bytes_with_length(this System.IO.Stream s, byte[] bytes)
-    {
-        byte[] size_bytes = System.BitConverter.GetBytes(bytes.Length);
-        s.Write(size_bytes, 0, size_bytes.Length);
-        s.Write(bytes, 0, bytes.Length);
-    }
-
-    static void save()
-    {
-        // The file containing the savegame
-        using (var file = System.IO.File.OpenWrite(save_file()))
-        using (var compressor = new System.IO.Compression.GZipStream(file,
-            System.IO.Compression.CompressionLevel.Optimal))
-        {
-            // Remember which network_id's have been saved
-            HashSet<int> saved = new HashSet<int>();
-
-            // Save the players first
-            foreach (var kv in player_representations)
-            {
-                compressor.WriteByte((byte)SAVE_TYPE.PLAYER);
-                compressor.write_bytes_with_length(kv.Value.serialize());
-
-                // Write the username
-                var uname_bytes = System.Text.Encoding.ASCII.GetBytes(kv.Key);
-                compressor.write_bytes_with_length(uname_bytes);
-
-                saved.Add(kv.Value.network_id);
-            }
-
-            // Then save active representations
-            active_representations.recurse_top_down((elm) =>
-            {
-                if (elm is representation)
-                {
-                    var rep = (representation)elm;
-                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
-                    compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
-                    compressor.write_bytes_with_length(rep.serialize());
-                    saved.Add(rep.network_id);
-                }
-            });
-
-            // Then save inactive representations
-            inactive_representations.recurse_top_down((elm) =>
-            {
-                if (elm is representation)
-                {
-                    var rep = (representation)elm;
-                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
-                    compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
-                    compressor.write_bytes_with_length(rep.serialize());
-                    saved.Add(rep.network_id);
-                }
-            });
-        }
     }
 
     public static void stop()
@@ -1346,11 +843,8 @@ public static class server
                     offset += 1;
 
                     // Handle the message
-                    if (!message_parsers.TryGetValue(msg_type, out message_parser parser))
-                        throw new System.Exception("Unkown message " + msg_type);
-
                     c.last_message_time = Time.realtimeSinceStartup;
-                    parser(c, buffer, offset, payload_length);
+                    receive_message(msg_type, c, buffer, offset, payload_length);
                     offset += payload_length;
                 }
 
@@ -1423,6 +917,149 @@ public static class server
             d.disconnect(null);
     }
 
+    //################//
+    // SAVING/LOADING //
+    //################//
+
+    static void load()
+    {
+        string fullpath = System.IO.Path.GetFullPath(save_file());
+
+        using (var file = System.IO.File.OpenRead(fullpath))
+        using (var decompress = new System.IO.Compression.GZipStream(file,
+            System.IO.Compression.CompressionMode.Decompress))
+        using (var buffer = new System.IO.MemoryStream())
+        {
+            decompress.CopyTo(buffer);
+            buffer.Seek(0, System.IO.SeekOrigin.Begin);
+
+            int length = 0;
+            byte[] length_bytes = new byte[sizeof(int)];
+
+            while (true)
+            {
+                // Deserialize the type of the representation
+                int type_int = buffer.ReadByte();
+                if (type_int < 0) break;
+                SAVE_TYPE type = (SAVE_TYPE)type_int;
+
+                // Desrielize the length of the representation
+                buffer.Read(length_bytes, 0, sizeof(int));
+                length = System.BitConverter.ToInt32(length_bytes, 0);
+
+                // Deserialize the representation
+                byte[] rep_bytes = new byte[length];
+                buffer.Read(rep_bytes, 0, length);
+                var rep = representation.create(rep_bytes, 0, length, out int input_id);
+                if (rep == null) continue; // Representation creation failed - likely prefab no longer exists
+
+                // Check the network id recovered makes sense
+                if (input_id < 0) throw new System.Exception("Loaded unregistered representation!");
+                if (input_id != rep.network_id) throw new System.Exception("Network id loaded incorrectly!");
+
+                switch (type)
+                {
+                    case SAVE_TYPE.PLAYER:
+
+                        // For players, deserialize also the username
+                        buffer.Read(length_bytes, 0, sizeof(int));
+                        length = System.BitConverter.ToInt32(length_bytes, 0);
+                        byte[] uname_bytes = new byte[length];
+                        buffer.Read(uname_bytes, 0, length);
+                        string username = System.Text.Encoding.ASCII.GetString(uname_bytes);
+
+                        // Players start inactive
+                        rep.parent = inactive_representations;
+                        player_representations[username] = rep;
+                        break;
+
+                    case SAVE_TYPE.ACTIVE:
+
+                        // Nothing needs doing
+                        break;
+
+                    case SAVE_TYPE.INACTIVE:
+
+                        // If this is a top-level representation, move to inactive
+                        if (rep.is_top_level)
+                            rep.parent = inactive_representations;
+                        break;
+
+                    default:
+                        throw new System.Exception("Unkown save type: " + type);
+                }
+            }
+        }
+    }
+
+    static void save()
+    {
+        // The file containing the savegame
+        using (var file = System.IO.File.OpenWrite(save_file()))
+        using (var compressor = new System.IO.Compression.GZipStream(file,
+            System.IO.Compression.CompressionLevel.Optimal))
+        {
+            // Remember which network_id's have been saved
+            HashSet<int> saved = new HashSet<int>();
+
+            // Save the players first
+            foreach (var kv in player_representations)
+            {
+                compressor.WriteByte((byte)SAVE_TYPE.PLAYER);
+                compressor.write_bytes_with_length(kv.Value.serialize());
+
+                // Write the username
+                var uname_bytes = System.Text.Encoding.ASCII.GetBytes(kv.Key);
+                compressor.write_bytes_with_length(uname_bytes);
+
+                saved.Add(kv.Value.network_id);
+            }
+
+            // Then save active representations
+            active_representations.recurse_top_down((elm) =>
+            {
+                if (elm is representation)
+                {
+                    var rep = (representation)elm;
+                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
+                    compressor.write_bytes_with_length(rep.serialize());
+                    saved.Add(rep.network_id);
+                }
+            });
+
+            // Then save inactive representations
+            inactive_representations.recurse_top_down((elm) =>
+            {
+                if (elm is representation)
+                {
+                    var rep = (representation)elm;
+                    if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
+                    compressor.write_bytes_with_length(rep.serialize());
+                    saved.Add(rep.network_id);
+                }
+            });
+        }
+    }
+
+    /// <summary> The byte identifying which kind of 
+    /// object comes next in the save file. </summary>
+    enum SAVE_TYPE : byte
+    {
+        PLAYER = 1,
+        ACTIVE,
+        INACTIVE
+    }
+
+    /// <summary> Extension method to write a variable-size byte array to a filestream. </summary>
+    public static void write_bytes_with_length(this System.IO.Stream s, byte[] bytes)
+    {
+        byte[] size_bytes = System.BitConverter.GetBytes(bytes.Length);
+        s.Write(size_bytes, 0, size_bytes.Length);
+        s.Write(bytes, 0, bytes.Length);
+    }
+
     /// <summary> The directory in which games are saved. </summary>
     public static string saves_dir()
     {
@@ -1451,6 +1088,27 @@ public static class server
         return System.IO.File.Exists(saves_dir() + "/" + savename + ".save");
     }
 
+    //###########//
+    // UTILITIES //
+    //###########//
+
+    static representation try_get_rep(int id, bool error_on_fail = false, bool allow_recently_deleted = true)
+    {
+        if (!representations.TryGetValue(id, out representation rep))
+        {
+            // Don't flag a warning if this was recently deleted
+            if (allow_recently_deleted && recently_deleted.ContainsKey(id))
+                return null;
+
+            // Couldn't find and wasn't recently deleted, throw an error/warning
+            string msg = "Could not find the representation with id " + rep;
+            if (error_on_fail) throw new System.Exception(msg);
+            else Debug.LogWarning(msg);
+            return null;
+        }
+
+        return rep;
+    }
     public static int delete_all_representations_with_prefab(string prefab)
     {
         int ret = 0;
@@ -1463,6 +1121,13 @@ public static class server
         return ret;
     }
 
+    /// <summary> A server message waiting to be sent. </summary>
+    struct pending_message
+    {
+        public byte[] bytes;
+        public float send_time;
+    }
+
     public static string info()
     {
         if (!started) return "Server not started.";
@@ -1473,6 +1138,10 @@ public static class server
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage();
     }
+
+    //###########//
+    // MESSAGING //
+    //###########//
 
     public enum MESSAGE : byte
     {
@@ -1491,9 +1160,353 @@ public static class server
         PLAYER_UPDATE,     // Sent to clients to update info about connected players
     }
 
-    delegate void message_parser(client c, byte[] bytes, int offset, int length);
-    static Dictionary<global::client.MESSAGE, message_parser> message_parsers;
+    /// <summary> Send a message with the given type to the 
+    /// given client with the given arguments </summary>
+    static void send_message(MESSAGE type, client client, params object[] args)
+    {
+        // Send a payload to a client
+        void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
+        {
+            byte[] to_send = network_utils.concat_buffers(
+                network_utils.encode_int(payload.Length),
+                new byte[] { (byte)msg_type },
+                payload
+            );
 
-    delegate void message_sender(client c, params object[] args);
-    static Dictionary<MESSAGE, message_sender> message_senders;
+            if (immediate)
+            {
+                // Send the message immediately
+                // this results in lower throughput and should only
+                // be used when absolutely neccassary
+                try
+                {
+                    client.stream.Write(to_send, 0, to_send.Length);
+                }
+                catch
+                {
+                    // Client was found to have disconnected
+                    // during immediate message send (message
+                    // = null because there would be no point
+                    // trying to contact them, given they just
+                    // disconnected).
+                    client.disconnect(null);
+                }
+                return;
+            }
+
+            // Queue the message, creating the queue for this
+            // client if it doesn't already exist
+            Queue<pending_message> queue;
+            if (!message_queues.TryGetValue(client, out queue))
+            {
+                queue = new Queue<pending_message>();
+                message_queues[client] = queue;
+            }
+
+            queue.Enqueue(new pending_message
+            {
+                bytes = to_send,
+                send_time = Time.realtimeSinceStartup
+            });
+        }
+
+
+        switch (type)
+        {
+            case MESSAGE.CREATE:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                send(client, MESSAGE.CREATE, (byte[])args[0]);
+                break;
+
+            case MESSAGE.FORCE_CREATE:
+                if (args.Length != 4)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                Vector3 position = (Vector3)args[0];
+                string prefab = (string)args[1];
+                int network_id = (int)args[2];
+                int parent_id = (int)args[3];
+
+                send(client, MESSAGE.FORCE_CREATE, network_utils.concat_buffers(
+                    network_utils.encode_vector3(position),
+                    network_utils.encode_string(prefab),
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_int(parent_id)
+                ));
+                break;
+
+            case MESSAGE.UNLOAD:
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                bool deleting = (bool)args[1];
+
+                send(client, MESSAGE.UNLOAD, network_utils.concat_buffers(
+                    network_utils.encode_int(network_id),
+                    network_utils.encode_bool(deleting)
+                ));
+                break;
+
+            case MESSAGE.VARIABLE_UPDATE:
+
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                var id = (int)args[0];
+                var index = (int)args[1];
+                var serialization = (byte[])args[2];
+
+                send(client, MESSAGE.VARIABLE_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_int(id),
+                    network_utils.encode_int(index),
+                    serialization
+                ));
+                break;
+
+            case MESSAGE.TRIGGER:
+                if (args.Length != 2)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                id = (int)args[0];
+                var number = (int)args[1];
+
+                send(client, MESSAGE.TRIGGER, network_utils.concat_buffers(
+                    network_utils.encode_int(id),
+                    network_utils.encode_int(number)
+                ));
+                break;
+
+
+            case MESSAGE.CREATION_SUCCESS:
+                if (args.Length != 2)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int local_id = (int)args[0];
+                network_id = (int)args[1];
+
+                send(client, MESSAGE.CREATION_SUCCESS, network_utils.concat_buffers(
+                    network_utils.encode_int(local_id),
+                    network_utils.encode_int(network_id)
+                ));
+                break;
+
+            case MESSAGE.DELETE_SUCCESS:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                send(client, MESSAGE.DELETE_SUCCESS, network_utils.encode_int(network_id));
+                break;
+
+            case MESSAGE.GAIN_AUTH:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                if (network_id <= 0)
+                    throw new System.Exception("Can't gain authority over unregistered object!");
+
+                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
+                break;
+
+            case MESSAGE.LOSE_AUTH:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                network_id = (int)args[0];
+                if (network_id <= 0)
+                    throw new System.Exception("Can't lose authority over unregistered object!");
+
+                send(client, MESSAGE.GAIN_AUTH, network_utils.encode_int(network_id));
+                break;
+
+            case MESSAGE.HEARTBEAT:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                int heartbeat_key = (int)args[0];
+                var dt = System.DateTime.UtcNow.Subtract(new System.DateTime(1970, 1, 1, 0, 0, 0, 0));
+                int seconds_since_epoch = (int)dt.TotalSeconds; // See you in 2038!
+
+                send(client, MESSAGE.HEARTBEAT, network_utils.concat_buffers(
+                        network_utils.encode_int(heartbeat_key),
+                        network_utils.encode_int(seconds_since_epoch)
+                    ));
+                break;
+
+            case MESSAGE.DISCONNECT:
+
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                // The disconnection message
+                string msg = (string)args[0];
+                if (msg == null)
+                    throw new System.Exception("Disconnect messages should not be sent without a payload!");
+
+                // Disconnect messages are sent immediately, so that the client object (including 
+                // it's message queues) can be immediately removed afterwards
+                send(client, MESSAGE.DISCONNECT, network_utils.encode_string(msg), immediate: true);
+                break;
+
+            case MESSAGE.PLAYER_UPDATE:
+                if (args.Length != 3)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                // The username of the player we're sending updates about
+                string username = (string)args[0];
+                position = (Vector3)args[1];
+                bool connected = (bool)args[2];
+
+                send(client, MESSAGE.PLAYER_UPDATE, network_utils.concat_buffers(
+                    network_utils.encode_string(username),
+                    network_utils.encode_vector3(position),
+                    network_utils.encode_bool(connected)
+                ));
+                break;
+
+            default:
+                throw new System.Exception("Unkown message type!");
+        };
+    }
+
+    /// <summary> Receive a message of the given <paramref name="type"/> stored between <paramref name="offset"/> and 
+    /// <paramref name="offset"/>+<paramref name="length"/> in <paramref name="bytes"/>. </summary>
+    static void receive_message(global::client.MESSAGE type, client client, byte[] bytes, int offset, int length)
+    {
+        switch (type)
+        {
+
+            case global::client.MESSAGE.LOGIN:
+
+                int init_offset = offset;
+                string uname = network_utils.decode_string(bytes, ref offset);
+
+                byte[] pword = new byte[length - (offset - init_offset)];
+                System.Buffer.BlockCopy(bytes, offset, pword, 0, pword.Length);
+
+                // Check if this username is in use
+                foreach (var c in connected_clients)
+                    if (c.username == uname)
+                    {
+                        client.disconnect("Username already in use.");
+                        return;
+                    }
+
+                // Login
+                client.login(uname, pword);
+                break;
+
+            case global::client.MESSAGE.DISCONNECT:
+                // No need to send a server.DISCONNECT message to
+                // the client as they requested the disconnect
+                bool delete_player = network_utils.decode_bool(bytes, ref offset);
+                client.disconnect(null, delete_player: delete_player);
+                break;
+
+            case global::client.MESSAGE.HEARTBEAT:
+
+                // This client is still kicking - respond so they can time the ping
+                bool activity = network_utils.decode_bool(bytes, ref offset);
+                int heartbeat_key = network_utils.decode_int(bytes, ref offset);
+                if (activity) client.last_active_time = Time.realtimeSinceStartup;
+                send_message(MESSAGE.HEARTBEAT, client, heartbeat_key);
+                break;
+
+            case global::client.MESSAGE.VARIABLE_UPDATE:
+
+                // Forward the updated variable serialization to the correct representation
+                int start = offset;
+                int id = network_utils.decode_int(bytes, ref offset);
+                int index = network_utils.decode_int(bytes, ref offset);
+                int serial_length = length - (offset - start);
+                byte[] serialization = new byte[serial_length];
+                System.Buffer.BlockCopy(bytes, offset, serialization, 0, serial_length);
+                try_get_rep(id)?.on_network_variable_change(client, index, serialization);
+                break;
+
+            case global::client.MESSAGE.TRIGGER:
+
+                // Trigger the numbered network event on the given representation
+                int network_id = network_utils.decode_int(bytes, ref offset);
+                int event_number = network_utils.decode_int(bytes, ref offset);
+                if (representations.TryGetValue(network_id, out representation rep))
+                    rep.trigger_network_event(client, event_number);
+                else
+                    Debug.Log("Reccived trigger for non-existant network ID!");
+                break;
+
+            case global::client.MESSAGE.RENDER_RANGE_UPDATE:
+
+                client.render_range = network_utils.decode_float(bytes, ref offset);
+                break;
+
+            case global::client.MESSAGE.CREATE:
+
+                // Create the representation from the info sent from the client
+                int input_id;
+                rep = representation.create(bytes, offset, length, out input_id);
+                if (input_id > 0)
+                {
+                    // This was a forced create
+
+                    if (rep.prefab == player_prefab)
+                    {
+                        // This was a forced player creation
+                        client.player = rep;
+                    }
+                    else
+                    {
+                        throw new System.NotImplementedException(
+                            "Forced creation of non-players is not supported!");
+                    }
+                }
+
+                // Let the client know that the creation was successful
+                // (this is done before the load, so that the client that created
+                //  it has the correct network id *before* it reccives 
+                //  load/serialization messages)
+                send_message(MESSAGE.CREATION_SUCCESS, client, input_id, rep.network_id);
+
+                // Register (load) the object on clients
+                client.load(rep, true);
+
+                // If this is a child, load it on all other clients that have the parent.
+                if (rep.parent != null && rep.parent is representation)
+                    foreach (var c in connected_clients)
+                        if (c != client)
+                            if (c.has_loaded((representation)rep.parent))
+                                c.load(rep, false);
+                break;
+
+            case global::client.MESSAGE.DELETE:
+
+                network_id = network_utils.decode_int(bytes, ref offset);
+                bool response = network_utils.decode_bool(bytes, ref offset);
+
+                // Find the representation being deleted
+                representation deleting;
+                if (!representations.TryGetValue(network_id, out deleting))
+                {
+                    if (!recently_deleted.ContainsKey(network_id))
+                    {
+                        // This should only happend in high-latency edge cases
+                        Debug.Log("Deleting non-existant id " + network_id +
+                        " (was not recently deleted)\n" + last_stack_trace);
+                    }
+
+                    return;
+                }
+
+                // Delete the representation
+                deleting.delete(issued_from: client, response_requested: response);
+                break;
+
+            default:
+                throw new System.Exception("Unkown message type!");
+        };
+    }
 }
