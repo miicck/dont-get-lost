@@ -6,7 +6,7 @@ using UnityEngine;
 /// to yield a product, and takes time to regrow. The part will
 /// be disabled until it regrows. </summary>
 [RequireComponent(typeof(product))]
-public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
+public class harvest_by_hand : MonoBehaviour, IInspectable, IPlayerInteractable
 {
     public AudioClip play_on_pick;
     public float regrow_time = 1f;
@@ -39,7 +39,36 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
         return found;
     }
 
-    public void on_left_click()
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new player_interaction[] { new interaction(this) };
+        return interactions;
+    }
+
+    class interaction : player_interaction
+    {
+        harvest_by_hand harvesting;
+        public interaction(harvest_by_hand harvesting) { this.harvesting = harvesting; }
+        public override bool conditions_met() { return controls.mouse_click(controls.MOUSE_BUTTON.LEFT); }
+
+        public override bool start_interaction(player player)
+        {
+            harvesting.harvest();
+            return false;
+        }
+
+        public override string context_tip()
+        {
+            return "Left click to harvest.";
+        }
+    }
+
+    public void harvest()
     {
         if (source == null)
         {
@@ -77,11 +106,6 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IAcceptLeftClick
         // Create the product in the player inventory
         foreach (var p in products)
             p.create_in(player.current.inventory);
-    }
-
-    public string left_click_context_tip()
-    {
-        return "Left click to harvest " + product.product_plurals_list(products);
     }
 
     //##############//

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sack : networked, ILeftPlayerMenu, IInspectable
+public class sack : networked, IInspectable, IPlayerInteractable
 {
     inventory inventory;
 
@@ -41,20 +41,23 @@ public class sack : networked, ILeftPlayerMenu, IInspectable
     // ILeftPlayerMenu //
     //#################//
 
-    public string left_menu_display_name() { return display_name.value; }
-    public inventory editable_inventory() { return inventory; }
-    public RectTransform left_menu_transform() { return inventory.ui; }
-    public recipe[] additional_recipes() { return null; }
+    player_interaction[] interactions;
 
-    public void on_left_menu_open()
+    public player_interaction[] player_interactions()
     {
-        inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.value;
+        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        return interactions;
     }
 
-    public void on_left_menu_close()
+    class menu : left_player_menu
     {
-        if (inventory.is_empty())
-            delete();
+        sack sack;
+        public menu(sack sack) { this.sack = sack; }
+        protected override RectTransform create_menu() { return sack.inventory.ui; }
+        public override inventory editable_inventory() { return sack.inventory; }
+        public override string display_name() { return sack.display_name.value; }
+        protected override void on_open() { menu.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name(); }
+        protected override void on_close() { if (sack.inventory.is_empty()) sack.delete(); }
     }
 
     //##############//

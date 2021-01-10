@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
+public class settler : character, IInspectable, IPlayerInteractable, ICanEquipArmour
 {
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float HEAL_RATE = 100f / 120f;
@@ -276,13 +276,27 @@ public class settler : character, IInspectable, ILeftPlayerMenu, ICanEquipArmour
     public float armour_scale() { return height.value; }
     public Color hair_color() { return net_hair_color.value; }
 
-    //#################//
-    // ILeftPlayerMenu //
-    //#################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    public string left_menu_display_name() { return name; }
-    public inventory editable_inventory() { return inventory; }
-    public RectTransform left_menu_transform() { return inventory.ui; }
+    class menu : left_player_menu
+    {
+        settler settler;
+        public menu(settler settler) { this.settler = settler; }
+        public override string display_name() { return settler.name; }
+        public override inventory editable_inventory() { return settler.inventory; }
+        protected override RectTransform create_menu() { return settler.inventory.ui; }
+        protected override void on_open() { settler.on_left_menu_open(); }
+        protected override void on_close() { settler.on_left_menu_close(); }
+    }
+
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        return interactions;
+    }
 
     color_selector hair_color_selector;
     color_selector top_color_selector;

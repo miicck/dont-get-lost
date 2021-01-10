@@ -8,7 +8,7 @@ public class scavange_timer : MonoBehaviour
     public RectTransform green;
 
     float max_width;
-    
+
     private void Start()
     {
         max_width = green.sizeDelta.x;
@@ -21,10 +21,7 @@ public class scavange_timer : MonoBehaviour
         new_width += Time.deltaTime * max_width;
 
         if (new_width > max_width)
-        {
-            scavanging.complete_scavange();
             Destroy(gameObject);
-        }
 
         green.sizeDelta = new Vector2(new_width, green.sizeDelta.y);
     }

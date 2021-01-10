@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class settler_interactable_options : settler_interactable, ILeftPlayerMenu, IExtendsNetworked
+public abstract class settler_interactable_options : settler_interactable, IPlayerInteractable, IExtendsNetworked
 {
     //###################//
     // IExtendsNetworked //
@@ -22,10 +22,78 @@ public abstract class settler_interactable_options : settler_interactable, ILeft
     // LEFT PLAYER MENU //
     //##################//
 
-    public abstract string left_menu_display_name();
-    public inventory editable_inventory() { return null; }
-    public void on_left_menu_close() { }
-    public recipe[] additional_recipes() { return null; }
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        return interactions;
+    }
+
+    class menu : left_player_menu
+    {
+        settler_interactable_options options;
+        public menu(settler_interactable_options options)
+        {
+            this.options = options;
+        }
+
+        protected override RectTransform create_menu()
+        {
+            return Resources.Load<RectTransform>("ui/resource_gatherer").inst();
+        }
+
+        protected override void on_open()
+        {
+            // Clear the options menu
+            var content = menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+            foreach (RectTransform child in content)
+                Destroy(child.gameObject);
+
+            // Create the options menu
+            for (int i = 0; i < options.options_count; ++i)
+            {
+                // Create a button for each option
+                var trans = Resources.Load<RectTransform>("ui/resource_option_button").inst();
+                var but = trans.GetComponentInChildren<UnityEngine.UI.Button>();
+                var text = trans.GetComponentInChildren<UnityEngine.UI.Text>();
+
+                UnityEngine.UI.Image image = null;
+                foreach (var img in trans.GetComponentsInChildren<UnityEngine.UI.Image>())
+                    if (img.sprite == null)
+                    {
+                        image = img;
+                        break;
+                    }
+
+                // Set the button text/sprite
+                var opt = options.get_option(i);
+                text.text = opt.text;
+                image.sprite = opt.sprite;
+
+                trans.SetParent(content);
+
+                if (i == options.option_index.value)
+                {
+                    var colors = but.colors;
+                    colors.normalColor = Color.green;
+                    colors.pressedColor = Color.green;
+                    colors.highlightedColor = Color.green;
+                    colors.selectedColor = Color.green;
+                    colors.disabledColor = Color.green;
+                    but.colors = colors;
+                }
+
+                int i_copy = i;
+                but.onClick.AddListener(() =>
+                {
+                    options.option_index.value = i_copy;
+
+                    // Refresh 
+                    on_open();
+                });
+            }
+        }
+    }
 
     protected struct option
     {
@@ -35,68 +103,6 @@ public abstract class settler_interactable_options : settler_interactable, ILeft
 
     protected abstract option get_option(int i);
     protected abstract int options_count { get; }
-
-    RectTransform ui;
-
-    public RectTransform left_menu_transform()
-    {
-        if (ui == null)
-            ui = Resources.Load<RectTransform>("ui/resource_gatherer").inst();
-        return ui;
-    }
-
-    public void on_left_menu_open()
-    {
-        // Clear the options menu
-        var content = ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
-        foreach (RectTransform child in content)
-            Destroy(child.gameObject);
-
-        // Create the options menu
-        for (int i = 0; i < options_count; ++i)
-        {
-            // Create a button for each option
-            var trans = Resources.Load<RectTransform>("ui/resource_option_button").inst();
-            var but = trans.GetComponentInChildren<UnityEngine.UI.Button>();
-            var text = trans.GetComponentInChildren<UnityEngine.UI.Text>();
-
-            UnityEngine.UI.Image image = null;
-            foreach (var img in trans.GetComponentsInChildren<UnityEngine.UI.Image>())
-                if (img.sprite == null)
-                {
-                    image = img;
-                    break;
-                }
-
-            // Set the button text/sprite
-            var opt = get_option(i);
-            text.text = opt.text;
-            image.sprite = opt.sprite;
-
-            trans.SetParent(content);
-
-            if (i == option_index.value)
-            {
-                var colors = but.colors;
-                colors.normalColor = Color.green;
-                colors.pressedColor = Color.green;
-                colors.highlightedColor = Color.green;
-                colors.selectedColor = Color.green;
-                colors.disabledColor = Color.green;
-                but.colors = colors;
-            }
-
-            int i_copy = i;
-            but.onClick.AddListener(() =>
-            {
-                option_index.value = i_copy;
-
-                // Refresh 
-                player.current.ui_state = player.UI_STATE.ALL_CLOSED;
-                player.current.ui_state = player.UI_STATE.INVENTORY_OPEN;
-            });
-        }
-    }
 }
 
 public class settler_resource_gatherer : settler_interactable_options, IAddsToInspectionText
@@ -181,7 +187,6 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
     protected override option get_option(int i) { return menu_options[i]; }
     protected override int options_count => menu_options.Count;
-    public override string left_menu_display_name() { return display_name; }
 
     //#######################//
     // IAddsToInspectionText //

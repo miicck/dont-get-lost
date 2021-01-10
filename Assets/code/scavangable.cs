@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
+public class scavangable : MonoBehaviour, IInspectable, IPlayerInteractable
 {
     static scavangable()
     {
@@ -12,34 +12,68 @@ public class scavangable : MonoBehaviour, IInspectable, IAcceptLeftClick
 
     product[] products => GetComponents<product>();
 
-    scavange_timer timer;
+    //##############//
+    // IINspectable //
+    //##############//
 
-    public void on_left_click()
-    {
-        if (timer != null) Destroy(timer.gameObject);
-        timer = Resources.Load<scavange_timer>("ui/scavange_timer").inst();
-        timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-        timer.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-        timer.scavanging = this;
-        controls.disabled = true;
-    }
-
-    public string left_click_context_tip()
-    {
-        string prod_list = product.product_plurals_list(products);
-        if (prod_list.Length < 40) return "Left click to scavange " + prod_list;
-        return "Left click to scavange";
-    }
-
-    public void complete_scavange()
-    {
-        controls.disabled = false;
-        foreach (var p in products)
-            p.create_in(player.current.inventory);
-    }
-
-    // IINspectable
     public string inspect_info() { return product.product_plurals_list(products) + " can be scavanged by hand."; }
     public Sprite main_sprite() { return Resources.Load<Sprite>("sprites/default_interact_cursor"); }
     public Sprite secondary_sprite() { return null; }
+
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new interaction[] { new interaction(this) };
+        return interactions;
+    }
+
+    class interaction : player_interaction
+    {
+        scavange_timer timer;
+        scavangable scavangable;
+        public interaction(scavangable scavangable) { this.scavangable = scavangable; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override string context_tip()
+        {
+            var str = "Left click to scavange for " + product.product_plurals_list(scavangable.products);
+            if (str.Length < 40) return str;
+            return "Left click to scavange";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            if (timer != null) Destroy(timer.gameObject);
+            timer = Resources.Load<scavange_timer>("ui/scavange_timer").inst();
+            timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+            timer.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            timer.scavanging = scavangable;
+            controls.disabled = true;
+            return false;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            return timer == null;
+        }
+
+        public override void end_interaction(player player)
+        {
+            controls.disabled = false;
+            if (timer == null)
+            {
+                foreach (var p in scavangable.products)
+                    p.create_in(player.current.inventory);
+            }
+            else Destroy(timer.gameObject);
+        }
+    }
 }

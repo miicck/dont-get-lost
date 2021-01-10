@@ -2,36 +2,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class workbench : building_with_inventory, ILeftPlayerMenu
+public class workbench : building_with_inventory, IPlayerInteractable
 {
     protected override string inventory_prefab() { return "inventories/workbench"; }
-    crafting_input crafting;
 
     //#################//
     // ILeftPlayerMenu //
     //#################//
 
-    public RectTransform left_menu_transform()
+    player_interaction[] interactions;
+    public override player_interaction[] player_interactions()
     {
-        if (inventory == null)
-            return null;
-
-        if (crafting == null)
-        {
-            crafting = inventory.ui.GetComponentInChildren<crafting_input>();
-            inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name.capitalize();
-            crafting.recipes_folder = "recipes/workbenches/" + name;
-            crafting.craft_from = inventory;
-            crafting.craft_to = player.current.inventory;
-            crafting.update_recipies();
-        }
-
-        return inventory.ui;
+        if (interactions == null) interactions = base.player_interactions().prepend(new menu(this));
+        return interactions;
     }
 
-    public string left_menu_display_name() { return display_name; }
-    public void on_left_menu_open() { }
-    public void on_left_menu_close() { }
-    public inventory editable_inventory() { return inventory; }
-    public recipe[] additional_recipes() { return null; }
+    class menu : left_player_menu
+    {
+        workbench workbench;
+        public menu(workbench workbench) { this.workbench = workbench; }
+
+        public override string display_name() { return workbench.display_name; }
+        public override inventory editable_inventory() { return workbench.inventory; }
+
+        protected override RectTransform create_menu()
+        {
+            var crafting = workbench.inventory.ui.GetComponentInChildren<crafting_input>();
+            workbench.inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name().capitalize();
+            crafting.recipes_folder = "recipes/workbenches/" + workbench.name;
+            crafting.craft_from = workbench.inventory;
+            crafting.craft_to = player.current.inventory;
+            crafting.update_recipies();
+            return workbench.inventory.ui;
+        }
+    }
 }

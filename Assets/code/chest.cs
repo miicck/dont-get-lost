@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class chest : building_with_inventory, ILeftPlayerMenu
+public class chest : building_with_inventory, IPlayerInteractable
 {
     protected override string inventory_prefab()
     {
@@ -26,14 +26,25 @@ public class chest : building_with_inventory, ILeftPlayerMenu
         Destroy(next_item.gameObject);
     }
 
-    //#################//
-    // ILeftPlayerMenu //
-    //#################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    public string left_menu_display_name() { return display_name; }
-    public RectTransform left_menu_transform() { return inventory?.ui; }
-    public void on_left_menu_open() { }
-    public void on_left_menu_close() { }
-    public inventory editable_inventory() { return inventory; }
-    public recipe[] additional_recipes() { return null; }
+    player_interaction[] interactions;
+
+    public override player_interaction[] player_interactions()
+    {
+        if (interactions == null)
+            interactions = base.player_interactions().prepend(new menu(this));
+        return interactions;
+    }
+
+    class menu : left_player_menu
+    {
+        chest chest;
+        public menu(chest chest) { this.chest = chest; }
+        protected override RectTransform create_menu() { return chest.inventory.ui; }
+        public override inventory editable_inventory() { return chest.inventory; }
+        public override string display_name() { return chest.display_name; }
+    }
 }

@@ -74,6 +74,32 @@ public static class utils
         return ret;
     }
 
+    // Raycast for the nearest object of the given type
+    public static T[] raycast_for_closests<T>(Ray ray, out RaycastHit hit,
+        float max_distance = float.MaxValue)
+    {
+        float min_dis = float.MaxValue;
+        hit = new RaycastHit();
+        T[] ret = new T[0];
+
+        foreach (var h in Physics.RaycastAll(ray, max_distance))
+        {
+            var t = h.collider.gameObject.GetComponentsInParent<T>();
+            if (t != null && t.Length > 0)
+            {
+                float dis = (ray.origin - h.point).sqrMagnitude;
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    hit = h;
+                    ret = t;
+                }
+            }
+        }
+
+        return ret;
+    }
+
     /// <summary> Raycast for a <typeparamref name="T"/> under the mouse. </summary>
     public static T raycast_ui_under_mouse<T>()
     {
@@ -512,6 +538,19 @@ public static class utils
                 c == '.' || c == '_' || allow_list.Contains(c))
                 sb.Append(c);
         return sb.ToString();
+    }
+
+    public static T[] prepend<T>(this T[] arr, params T[] to_prepend)
+    {
+        var ret = new T[arr.Length + to_prepend.Length];
+        for (int i = 0; i < to_prepend.Length; ++i) ret[i] = to_prepend[i];
+        for (int i = to_prepend.Length; i < ret.Length; ++i) ret[i] = arr[i - to_prepend.Length];
+        return ret;
+    }
+
+    public static T[] append<T>(this T[] arr, params T[] to_append)
+    {
+        return to_append.prepend(arr);
     }
 
     public static float xz_angle(Vector3 look_direction)

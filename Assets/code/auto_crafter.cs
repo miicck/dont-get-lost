@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
+public class auto_crafter : building_material, IInspectable, IPlayerInteractable
 {
     static auto_crafter()
     {
@@ -124,28 +124,35 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
         chosen_recipe = new networked_variables.net_int();
     }
 
-    //#################//
-    // ILeftPlayerMenu //
-    //#################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    crafting_entry[] recipe_buttons;
-
-    public string left_menu_display_name() { return display_name; }
-
-    RectTransform left_menu;
-    public RectTransform left_menu_transform()
+    player_interaction[] interactions;
+    public override player_interaction[] player_interactions()
     {
-        if (left_menu == null)
-        {
-            recipe_buttons = new crafting_entry[recipies.Length];
+        if (interactions == null) interactions = base.player_interactions().prepend(new menu(this));
+        return interactions;
+    }
 
-            left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst();
+    class menu : left_player_menu
+    {
+        auto_crafter crafter;
+        public menu(auto_crafter crafter) { this.crafter = crafter; }
+        public override recipe[] additional_recipes() { return crafter.recipies; }
+        public override string display_name() { return crafter.display_name; }
+
+        protected override RectTransform create_menu()
+        {
+            var recipe_buttons = new crafting_entry[crafter.recipies.Length];
+
+            var left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst();
             var content = left_menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
 
-            for (int i = 0; i < recipies.Length; ++i)
+            for (int i = 0; i < crafter.recipies.Length; ++i)
             {
                 // Create the recipe selection button
-                recipe_buttons[i] = recipies[i].get_entry();
+                recipe_buttons[i] = crafter.recipies[i].get_entry();
                 var button_i = recipe_buttons[i];
                 button_i.transform.SetParent(content);
 
@@ -160,7 +167,7 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
                         // Transfer the recipe ingredients to the crafting menu
                         if (player.current == null) return;
 
-                        var r = recipies[i_copy];
+                        var r = crafter.recipies[i_copy];
                         bool can_craft = r.can_craft(player.current.inventory, out Dictionary<string, int> to_use);
                         foreach (var kv in to_use)
                         {
@@ -170,10 +177,10 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
                         return;
                     }
 
-                    chosen_recipe.value = i_copy;
+                    crafter.chosen_recipe.value = i_copy;
 
                     // Update colors to highlight selection
-                    for (int j = 0; j < recipies.Length; ++j)
+                    for (int j = 0; j < crafter.recipies.Length; ++j)
                     {
                         var button_j = recipe_buttons[j];
                         var colors = button_j.button.colors;
@@ -192,17 +199,12 @@ public class auto_crafter : building_material, IInspectable, ILeftPlayerMenu
             }
 
             // Simulate a click on the initially-selected button
-            if (chosen_recipe.value >= 0 && chosen_recipe.value < recipe_buttons.Length)
-                recipe_buttons[chosen_recipe.value].button.onClick.Invoke();
+            if (crafter.chosen_recipe.value >= 0 && crafter.chosen_recipe.value < recipe_buttons.Length)
+                recipe_buttons[crafter.chosen_recipe.value].button.onClick.Invoke();
+
+            return left_menu;
         }
-
-        return left_menu;
     }
-
-    public inventory editable_inventory() { return null; }
-    public void on_left_menu_open() { }
-    public void on_left_menu_close() { }
-    public recipe[] additional_recipes() { return recipies; }
 
     //##############//
     // IINspectable //

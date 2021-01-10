@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage
+public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable
 {
     //###########//
     // CONSTANTS //
@@ -40,6 +40,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     // Map camera setup
     public const float MAP_CAMERA_ALT = world.MAX_ALTITUDE * 2;
+
+    // Quickbar
+    public const int QUICKBAR_SLOTS_COUNT = 8;
 
     //####################//
     // STATIC CONSTRUCTOR //
@@ -100,10 +103,8 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
             // Close everything
             map_open = false;
-            open_custom_menu = null;
             if (inventory != null) inventory.open = false;
             if (crafting_menu != null) crafting_menu.open = false;
-            left_menu = null;
             options_menu.open = false;
             recipe.recipe_book.gameObject.SetActive(false);
             Cursor.visible = false;
@@ -120,16 +121,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.None;
 
-                    // Attempt to open a standalone custom menu
-                    open_custom_menu = custom_menu_under_cursor;
-                    if (open_custom_menu != null) break; // Custom menu open => don't do anything else
-
                     // No custom menu found, open the inventory
                     if (inventory != null) inventory.open = true;
                     if (crafting_menu != null) crafting_menu.open = true;
-
-                    // Attempt also to open the left menu
-                    left_menu = left_menu_under_cursor;
                     break;
 
                 case UI_STATE.MAP_OPEN:
@@ -174,63 +168,18 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     // INTERACTABLE STUFF //
     //####################//
 
-    ILeftPlayerMenu left_menu_under_cursor
+    public player_interaction current_interaction
     {
-        get
+        get => _current_interaction;
+        private set
         {
-            var ray = camera_ray(INTERACTION_RANGE, out float dist);
-            return utils.raycast_for_closest<ILeftPlayerMenu>(ray, out RaycastHit hit, dist);
+            if (_current_interaction == value) return;     // No change
+            _current_interaction?.end_interaction(this);   // End previous interaction
+            _current_interaction = value;                  // Assign new interaction
+            _current_interaction?.start_interaction(this); // start new interaction
         }
     }
-
-    ICustomMenu custom_menu_under_cursor
-    {
-        get
-        {
-            var ray = camera_ray(INTERACTION_RANGE, out float max_dis);
-            return utils.raycast_for_closest<ICustomMenu>(ray, out RaycastHit hit, max_dis);
-        }
-    }
-
-    IAcceptLeftClick left_clickable_under_cursor
-    {
-        get
-        {
-            var ray = camera_ray(INTERACTION_RANGE, out float dis);
-            if (Physics.Raycast(ray, out RaycastHit hit, dis))
-                return hit.collider.gameObject.GetComponentInParent<IAcceptLeftClick>();
-            return null;
-        }
-    }
-
-    IAcceptRightClick right_clickable_under_cursor
-    {
-        get
-        {
-            var ray = camera_ray(INTERACTION_RANGE, out float dis);
-            if (Physics.Raycast(ray, out RaycastHit hit, dis))
-                return hit.collider.gameObject.GetComponentInParent<IAcceptRightClick>();
-            return null;
-        }
-    }
-
-    player player_under_cursor
-    {
-        get
-        {
-            var ray = camera_ray(INTERACTION_RANGE, out float dis);
-            return utils.raycast_for_closest<player>(ray, out RaycastHit hit, dis, (p) => p != this);
-        }
-    }
-
-    item item_under_cursor
-    {
-        get
-        {
-            var ray = camera_ray(INTERACTION_RANGE, out float dist);
-            return utils.raycast_for_closest<item>(ray, out RaycastHit hit, max_distance: dist);
-        }
-    }
+    player_interaction _current_interaction;
 
     //#################//
     // UNITY CALLBACKS //
@@ -238,10 +187,13 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
     private void Update()
     {
+        // Stuff that runs both on authority/non-auth clients
+        bool using_item = run_item_use();
+        set_hand_position();
+
         if (has_authority)
         {
             // Most things require authority to run
-            run_context_tips();
             indicate_damage();
             run_world_generator();
             run_recipe_book();
@@ -254,6 +206,7 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             run_mouse_look();
             run_movement();
             run_teleports();
+            if (!using_item) run_interactions();
         }
         else
         {
@@ -262,10 +215,32 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
         }
+    }
 
-        // Stuff that runs both on authority/non-auth clients
-        run_item_use();
-        set_hand_position();
+    void run_interactions()
+    {
+        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
+        if (current_interaction == null)
+        {
+            // Get a new interaction
+            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+            var interactables = utils.raycast_for_closests<IPlayerInteractable>(
+                cam_ray, out RaycastHit hit, max_distance: dis);
+
+            List<player_interaction> inters = new List<player_interaction>();
+            foreach (var i in interactables)
+                inters.AddRange(i.player_interactions());
+
+            foreach (var i in inters)
+            {
+                tips.context_tip += i.context_tip() + "\n";
+                if (current_interaction == null && i.conditions_met())
+                    current_interaction = i;
+            }
+        }
+        // Continue current interaction
+        else if (current_interaction.continue_interaction(this))
+            current_interaction = null;
     }
 
     private void OnDrawGizmos()
@@ -276,78 +251,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             Gizmos.DrawWireSphere(transform.position + controller.radius * Vector3.up,
                                   controller.radius);
         }
-    }
-
-    void run_context_tips()
-    {
-        if (equipped != null)
-        {
-            var ect = equipped?.equipped_context_tip();
-            if (ect != null)
-            {
-                tips.context_tip = ect;
-                return;
-            }
-        }
-
-        string context_tip = "";
-
-        if (ui_state != UI_STATE.INVENTORY_OPEN)
-        {
-            var lm = left_menu_under_cursor;
-            if (lm != null)
-            {
-                context_tip +=
-                    "Press " + controls.current_bind(controls.BIND.OPEN_INVENTORY) +
-                    " to interact with " + lm.left_menu_display_name() + "\n";
-            }
-
-            var cm = custom_menu_under_cursor;
-            if (cm != null)
-            {
-                context_tip +=
-                    "Press " + controls.current_bind(controls.BIND.OPEN_INVENTORY) +
-                    " to interact\n";
-            }
-        }
-
-        if (ui_state == UI_STATE.ALL_CLOSED)
-        {
-            if (equipped == null)
-            {
-                var lc = left_clickable_under_cursor;
-                if (lc != null)
-                {
-                    var lct = lc.left_click_context_tip();
-                    if (lct != null && lct.Length > 0)
-                        context_tip += lct + "\n";
-                }
-
-                var rc = right_clickable_under_cursor;
-                if (rc != null)
-                {
-                    var rct = rc.right_click_context_tip();
-                    if (rct != null && rct.Length > 0)
-                        context_tip += rct + "\n";
-                }
-            }
-            else
-            {
-                var puc = player_under_cursor;
-                if (puc != null)
-                {
-                    string to_give = equipped.display_name;
-                    context_tip += "Press " + controls.current_bind(controls.BIND.GIVE) +
-                        " to give " + puc.username.value + " " + utils.a_or_an(to_give) + " " + to_give + "\n";
-                }
-            }
-        }
-
-        var to_inspect = global::inspect_info.inspectable_under_cursor;
-        if (to_inspect.inspecting != null)
-            context_tip += "Press " + controls.current_bind(controls.BIND.INSPECT) + " to inspect\n";
-
-        tips.context_tip = context_tip.Trim();
     }
 
     //###########//
@@ -377,70 +280,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         }
     }
 
-    //#######//
-    // MENUS //
-    //#######//
-
-    /// <summary> The menu that appears to the left of the inventory. </summary>
-    public ILeftPlayerMenu left_menu
-    {
-        get => _left_menu;
-        private set
-        {
-            if (_left_menu == value)
-                return; // No change
-
-            // Deactivate the old menu
-            if (_left_menu != null)
-            {
-                _left_menu.on_left_menu_close();
-                _left_menu.left_menu_transform().gameObject.SetActive(false);
-            }
-
-            // Activate the new menu
-            _left_menu = value;
-            if (_left_menu != null)
-            {
-                // Position the left menu at the left_expansion_point
-                // but leave it parented to the canvas, rather than
-                // the player inventory
-                var rt = _left_menu.left_menu_transform();
-                if (rt == null)
-                    _left_menu = null;
-                else
-                {
-                    rt.gameObject.SetActive(true);
-                    var attach_point = inventory.ui.GetComponentInChildren<left_menu_attach_point>();
-                    rt.SetParent(attach_point.transform);
-                    rt.anchoredPosition = Vector2.zero;
-                    rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                    _left_menu.on_left_menu_open();
-                }
-            }
-        }
-    }
-    ILeftPlayerMenu _left_menu;
-
-    ICustomMenu open_custom_menu
-    {
-        get => _open_custom_menu;
-        set
-        {
-            if (_open_custom_menu == value)
-                return; // No change
-
-            // Close previous menu
-            if (_open_custom_menu != null)
-                _open_custom_menu.close_custom_menu();
-
-            // Open new menu
-            _open_custom_menu = value;
-            if (_open_custom_menu != null)
-                _open_custom_menu.open_custom_menu();
-        }
-    }
-    ICustomMenu _open_custom_menu;
-
     //#################//
     // ICanEquipArmour //
     //#################//
@@ -453,12 +292,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     // ITEM USE //
     //##########//
 
-    // Called on a left click when no item is equipped
-    public void left_click_with_hand() { left_clickable_under_cursor?.on_left_click(); }
-
-    // Called on a right click when no item is equipped
-    public void right_click_with_hand() { right_clickable_under_cursor?.on_right_click(); }
-
     // The ways that we can use an item
     public enum USE_TYPE
     {
@@ -467,29 +300,14 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         USING_RIGHT_CLICK,
     }
 
-    void give_to_player()
-    {
-        if (equipped == null) return;
-        string to_give = equipped.name;
-        string to_give_display_name = equipped.display_name;
-
-        var giving_to = player_under_cursor;
-        if (giving_to == null) return;
-
-        if (inventory.remove(to_give, 1))
-        {
-            popup_message.create("Gave " + to_give_display_name +
-                                 " to " + giving_to.username.value);
-            giving_to.inventory.add(to_give, 1);
-        }
-    }
-
     item.use_result current_item_use_result;
-    void run_item_use()
+    bool run_item_use()
     {
         // Don't allow item use when in UI, or when flying
-        if (ui_state != UI_STATE.ALL_CLOSED) return;
-        if (fly_mode) return;
+        tips.context_tip = equipped?.equipped_context_tip();
+        if (ui_state != UI_STATE.ALL_CLOSED) return false;
+        if (fly_mode) return false;
+        bool just_stopped = false;
 
         // Use items
         current_item_use_result = item.use_result.complete;
@@ -511,16 +329,14 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                 // Start a new use type
                 if (left_click)
                 {
-                    if (equipped == null) left_click_with_hand();
-                    else current_item_use.value = (int)USE_TYPE.USING_LEFT_CLICK;
+                    if (equipped != null)
+                        current_item_use.value = (int)USE_TYPE.USING_LEFT_CLICK;
                 }
                 else if (right_click)
                 {
-                    if (equipped == null) right_click_with_hand();
-                    else current_item_use.value = (int)USE_TYPE.USING_RIGHT_CLICK;
+                    if (equipped != null)
+                        current_item_use.value = (int)USE_TYPE.USING_RIGHT_CLICK;
                 }
-                else if (controls.key_press(controls.BIND.GIVE))
-                    give_to_player();
             }
         }
         else
@@ -532,7 +348,10 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
 
             // If use has completed, then stop using (on authority client)
             if (!current_item_use_result.underway && has_authority)
+            {
                 current_item_use.value = (int)USE_TYPE.NOT_USING;
+                just_stopped = true;
+            }
         }
 
         // Run undo/redo commands
@@ -541,6 +360,9 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             if (controls.key_press(controls.BIND.UNDO)) undo_manager.undo();
             if (controls.key_press(controls.BIND.REDO)) undo_manager.redo();
         }
+
+        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return true;
+        return just_stopped; // If I stopped this frame, then it counts as still using
     }
 
     //########################//
@@ -634,46 +456,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
         if (fly_mode) return;
 
-        const int QUICKBAR_SLOTS_COUNT = 8;
-
-        // Select something in the world/equip it if we have one
-        if (controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD))
-        {
-            var itm = item_under_cursor;
-            if (itm != null)
-            {
-                // If we've already got the item in the quickbar, just equip it
-                for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
-                    if (quickbar_slot(i)?.item?.name == itm.name)
-                    {
-                        slot_equipped.value = i;
-                        return;
-                    }
-
-                var slot_found = inventory.find_slot_by_item(itm);
-                if (slot_found != null)
-                {
-                    // We've found the item in our inventory
-                    // Switch with the currently equipped slot
-                    // (or the first slot if nothing is equipped)             
-                    int swith_with_slot = Mathf.Max(slot_equipped.value, 1);
-                    var switch_with = quickbar_slot(swith_with_slot);
-
-                    if (switch_with == null)
-                    {
-                        // Inventory slot doesn't exist, create one
-                        switch_with = (inventory_slot_networked)client.create(
-                            transform.position, "misc/networked_inventory_slot", inventory);
-                        switch_with.set_item_count_index(null, 0, swith_with_slot - 1);
-                    }
-
-                    slot_found.switch_with(switch_with);
-                    slot_equipped.value = swith_with_slot;
-                    validate_equip();
-                }
-            }
-        }
-
         // Select quickbar item using keyboard shortcut
         if (controls.key_press(controls.BIND.QUICKBAR_1)) toggle_equip(1);
         else if (controls.key_press(controls.BIND.QUICKBAR_2)) toggle_equip(2);
@@ -706,6 +488,39 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
                     break;
                 }
             }
+        }
+    }
+
+    public void equip_matching(item itm)
+    {
+        // If we've already got the item in the quickbar, just equip it
+        for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
+            if (quickbar_slot(i)?.item?.name == itm.name)
+            {
+                slot_equipped.value = i;
+                return;
+            }
+
+        var slot_found = inventory.find_slot_by_item(itm);
+        if (slot_found != null)
+        {
+            // We've found the item in our inventory
+            // Switch with the currently equipped slot
+            // (or the first slot if nothing is equipped)             
+            int swith_with_slot = Mathf.Max(slot_equipped.value, 1);
+            var switch_with = quickbar_slot(swith_with_slot);
+
+            if (switch_with == null)
+            {
+                // Inventory slot doesn't exist, create one
+                switch_with = (inventory_slot_networked)client.create(
+                    transform.position, "misc/networked_inventory_slot", inventory);
+                switch_with.set_item_count_index(null, 0, swith_with_slot - 1);
+            }
+
+            slot_found.switch_with(switch_with);
+            slot_equipped.value = swith_with_slot;
+            validate_equip();
         }
     }
 
@@ -761,7 +576,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     {
         // Things that disallow movement
         if (ui_state == UI_STATE.OPTIONS_MENU_OPEN) return;
-        if (left_menu != null) return;
         if (!current_item_use_result.allows_move) return;
 
         move();
@@ -1605,6 +1419,53 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     public Sprite main_sprite() { return null; }
     public Sprite secondary_sprite() { return null; }
 
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new player_interaction[] { new interaction(this) };
+        return interactions;
+    }
+
+    class interaction : player_interaction
+    {
+        player interacting_with;
+        public interaction(player player) { this.interacting_with = player; }
+
+        public override bool conditions_met()
+        {
+            if (current.equipped == null) return false;
+            return controls.key_press(controls.BIND.GIVE);
+        }
+
+        public override string context_tip()
+        {
+            if (current.equipped == null) return "";
+            return "Press " + controls.current_bind(controls.BIND.GIVE) +
+                   " to give " + current.equipped.display_name +
+                   " to " + interacting_with.username.value;
+        }
+
+        public override bool start_interaction(player player)
+        {
+            if (current.equipped == null) return true;
+            if (interacting_with == null) return true;
+            string to_give = current.equipped.name;
+            string to_give_display_name = current.equipped.display_name;
+
+            if (player.inventory.remove(to_give, 1))
+            {
+                popup_message.create("Gave " + to_give_display_name +
+                                     " to " + interacting_with.username.value);
+                interacting_with.inventory.add(to_give, 1);
+            }
+            return true;
+        }
+    }
+
     //############//
     // NETWORKING //
     //############//
@@ -2046,51 +1907,103 @@ public class popup_message : MonoBehaviour
     }
 }
 
-// C# 8.0 allows default implementations in interfaces, once unity
-// catches up with this, a lot of code in classes that implement
-// ILeftPlayerMenu can be simplified.
-public interface ILeftPlayerMenu
+/// <summary> An object that a player can be interacted with by the player. </summary>
+public abstract class player_interaction
 {
-    /// <summary> The display name of whatever we're interating with. </summary>
-    string left_menu_display_name();
+    /// <summary> Should return true if the appropriate 
+    /// conditios are met to start the interaction 
+    /// (keypress, mouse click etc.) </summary>
+    public abstract bool conditions_met();
 
-    /// <summary> An inventory associated with this menu, that a 
-    /// player can take/put items at will. </summary>
-    inventory editable_inventory();
+    /// <summary> Shown at the bottom right of the screen to let the player 
+    /// know what interactions are currently possible. </summary>
+    public abstract string context_tip();
 
-    /// <summary> The UI element associated with this menu (should create
-    /// if it does not already exist). </summary>
-    RectTransform left_menu_transform();
+    /// <summary> Called when an interaction starts, should return 
+    /// true if the interaction is immediately completed. </summary>
+    public virtual bool start_interaction(player player) { return true; }
 
-    /// <summary> Called when the player closes the left menu. </summary>
-    void on_left_menu_close();
+    /// <summary> Called once per frame when the interaction is underway,
+    /// should return true once the interaction is over. </summary>
+    public virtual bool continue_interaction(player player) { return true; }
 
-    /// <summary> Called when the player opens the left menu. </summary>
-    void on_left_menu_open();
+    /// <summary> Called when the interaction is completed. </summary>
+    public virtual void end_interaction(player player) { }
 
-    /// <summary> Additional recipes that the player
-    /// can craft when this menu is open. </summary>
-    recipe[] additional_recipes();
+    /// <summary> An inventory that can be edited when 
+    /// interacting with this. null otherwise. </summary>
+    public virtual inventory editable_inventory() { return null; }
+
+    /// <summary> Additioanl recipes available to the player when 
+    /// interacting with this. </summary>
+    public virtual recipe[] additional_recipes() { return null; }
+
+    /// <summary> The display name of this interaction. </summary>
+    public virtual string display_name() { return null; }
 }
 
-public interface ICustomMenu
+/// <summary> A menu that appears alongside the inventory, to the left. </summary>
+public abstract class left_player_menu : player_interaction
 {
-    void open_custom_menu();
-    void close_custom_menu();
+    public override bool conditions_met()
+    {
+        // Left player menus open with the inventory.
+        return controls.key_press(controls.BIND.OPEN_INVENTORY);
+    }
+
+    public override string context_tip()
+    {
+        return "Press E to interact with " + display_name();
+    }
+
+    public override bool start_interaction(player player)
+    {
+        if (menu == null)
+            return true; // Menu generation failed
+
+        // Position the left menu at the left_expansion_point but leave 
+        // it parented to the canvas, rather than the player inventory
+        var attach_point = player.inventory.ui.GetComponentInChildren<left_menu_attach_point>();
+        menu.gameObject.SetActive(true);
+        menu.SetParent(attach_point.transform);
+        menu.anchoredPosition = Vector2.zero;
+        menu.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
+
+        on_open();
+        return false;
+    }
+
+    public override bool continue_interaction(player player)
+    {
+        // Left player menus close with the inventory.
+        if (player?.inventory?.ui != null && !player.inventory.ui.gameObject.activeInHierarchy)
+            return true;
+        return controls.key_press(controls.BIND.OPEN_INVENTORY);
+    }
+
+    public override void end_interaction(player player)
+    {
+        menu.gameObject.SetActive(false);
+        on_close();
+    }
+
+    protected RectTransform menu
+    {
+        get
+        {
+            if (_menu == null) _menu = create_menu();
+            return _menu;
+        }
+    }
+    RectTransform _menu;
+
+    // IMPLEMENTATION //
+    abstract protected RectTransform create_menu();
+    protected virtual void on_open() { }
+    protected virtual void on_close() { }
 }
 
-/// <summary> Interfact for objects that can be 
-/// left-clicked with no item equipped. </summary>
-public interface IAcceptLeftClick
+public interface IPlayerInteractable
 {
-    void on_left_click();
-    string left_click_context_tip();
-}
-
-/// <summary> Interfact for objects that can be 
-/// right-clicked with no item equipped. </summary>
-public interface IAcceptRightClick
-{
-    void on_right_click();
-    string right_click_context_tip();
+    public player_interaction[] player_interactions();
 }

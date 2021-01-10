@@ -251,7 +251,12 @@ public class networked : MonoBehaviour
     {
         if (is_client_side)
             throw new System.Exception("Client side objects should not recive variable updates!");
-        networked_variables[index].reccive_serialization(buffer, ref offset, length);
+        if (index < networked_variables.Length)
+            networked_variables[index].reccive_serialization(buffer, ref offset, length);
+        else
+            Debug.LogError("Networked variable index " + index + " out of range for " +
+                            GetType().FullName + " (" + name + ") which has " +
+                            networked_variables.Length + " variables!");
     }
 
     //###############//
@@ -412,7 +417,8 @@ public class networked : MonoBehaviour
     public string network_info()
     {
         return "Network id = " + network_id + "\n" +
-               "Has authority = " + has_authority;
+               "Has authority = " + has_authority + "\n" +
+               "Variables = " + networked_variables.Length;
     }
 
 #if UNITY_EDITOR

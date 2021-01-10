@@ -6,7 +6,7 @@ public interface INonEquipable { }
 public interface INonEquipableCallback : INonEquipable { void on_equip_callback(player player); }
 public interface INonLogistical { }
 
-public class item : networked, IInspectable, IAcceptLeftClick
+public class item : networked, IInspectable, IPlayerInteractable
 {
     public const float LOGISTICS_SIZE = 0.3f;
 
@@ -55,6 +55,59 @@ public class item : networked, IInspectable, IAcceptLeftClick
     {
         if (count == 1) return display_name;
         return plural;
+    }
+
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    public virtual player_interaction[] player_interactions()
+    {
+        return new player_interaction[] { new pick_up_interaction(this), new select_matching_interaction(this) };
+    }
+
+    class pick_up_interaction : player_interaction
+    {
+        item item;
+        public pick_up_interaction(item item) { this.item = item; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override bool start_interaction(player player)
+        {
+            item.pick_up();
+            return true;
+        }
+
+        public override string context_tip()
+        {
+            return "Left click to pick up " + item.display_name;
+        }
+    }
+
+    class select_matching_interaction : player_interaction
+    {
+        item item;
+        public select_matching_interaction(item item) { this.item = item; }
+
+        public override bool conditions_met()
+        {
+            return controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD);
+        }
+
+        public override bool start_interaction(player player)
+        {
+            player.current.equip_matching(item);
+            return true;
+        }
+
+        public override string context_tip()
+        {
+            return "Press Q to select matching objects from inventory";
+        }
     }
 
     //############//
@@ -179,10 +232,6 @@ public class item : networked, IInspectable, IAcceptLeftClick
     /// <summary> Called when this item is unequipped. <paramref name="local_player"/> = false
     /// iff this item is being unequipped by a remote player. </summary>
     public virtual void on_unequip(player player) { }
-
-    public void on_left_click() { pick_up(); }
-
-    public string left_click_context_tip() { return "Left click to pick up " + utils.a_or_an(display_name) + " " + display_name; }
 
     public virtual Dictionary<string, int> add_to_inventory_on_pickup()
     {

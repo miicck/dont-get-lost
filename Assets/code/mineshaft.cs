@@ -44,8 +44,6 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
     // settler_interactable_options //
     //##############################//
 
-    public override string left_menu_display_name() { return "Mineshaft"; }
-
     protected override int options_count => minable_items.Count;
 
     protected override option get_option(int i)

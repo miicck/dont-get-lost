@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   to_grow: {fileID: 260027079293200419, guid: 364ab9f362ccf3044894222615e613f8, type: 3}
-  growth_time: 30
+  growth_time: 120
   min_scale: 0.2
 --- !u!114 &8762775896755834874
 MonoBehaviour:

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface INonBlueprintable { }
 
-public class building_material : item, IAcceptLeftClick, IAcceptRightClick
+public class building_material : item, IPlayerInteractable
 {
     public const float BUILD_RANGE = 5f;
     public float axes_scale = 1f;
@@ -29,37 +29,51 @@ public class building_material : item, IAcceptLeftClick, IAcceptRightClick
             "axes, rather than to the parent building.");
     }
 
-    //#############################################//
-    // IAcceptClick (when clicked with empty hand) //
-    //#############################################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    new public void on_left_click()
+    class interaction : player_interaction
     {
-        // Only pick up building materials 
-        // that are in the logistics system
-        if (is_logistics_version)
+        building_material material;
+        public interaction(building_material material) { this.material = material; }
+
+        public override bool conditions_met()
         {
-            base.on_left_click();
-            return;
+            return (material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.LEFT)) ||
+                  (!material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.RIGHT));
+        }
+
+        public override bool start_interaction(player player)
+        {
+            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+            {
+                // Only pick up building materials 
+                // that are in the logistics system
+                if (material.is_logistics_version)
+                    material.pick_up();
+            }
+            else if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+            {
+                // Delete buildings on right click
+                if (!material.is_logistics_version)
+                    material.pick_up(true);
+            }
+            return true;
+        }
+
+        public override string context_tip()
+        {
+            if (material.is_logistics_version)
+                return "Left click to pick up " + material.display_name;
+            else
+                return "Right click to demolish " + material.display_name;
         }
     }
 
-    new public string left_click_context_tip()
+    public override player_interaction[] player_interactions()
     {
-        if (is_logistics_version)
-            return base.left_click_context_tip();
-        return null;
-    }
-
-    public void on_right_click()
-    {
-        // Delete buildings on right click
-        pick_up(register_undo: true);
-    }
-
-    public string right_click_context_tip()
-    {
-        return "Right click to destroy " + display_name;
+        return new player_interaction[] { new interaction(this) };
     }
 
     //#########//

@@ -2,57 +2,68 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class portal : building_material, ILeftPlayerMenu
+public class portal : building_material, IPlayerInteractable
 {
     public Transform teleport_location;
 
-    //#################//
-    // ILeftPlayerMenu //
-    //#################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    RectTransform menu;
-
-    public string left_menu_display_name() { return display_name; }
-
-    public RectTransform left_menu_transform()
+    player_interaction[] interactions;
+    public override player_interaction[] player_interactions()
     {
-        if (menu == null)
-        {
-            // Create the menu
-            menu = Resources.Load<RectTransform>("ui/portal").inst();
-            menu.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-        }
-        return menu;
+        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        return interactions;
     }
 
-    public void on_left_menu_open()
+    class menu : left_player_menu
     {
-        var content = menu.gameObject.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+        portal portal;
+        public menu(portal portal) { this.portal = portal; }
+        public override string display_name() { return portal.display_name; }
 
-        // Destroy the old buttons
-        foreach (Transform c in content)
+        protected override RectTransform create_menu()
         {
-            var b = c.GetComponent<UnityEngine.UI.Button>();
-            if (b != null) Destroy(b.gameObject);
+            var ui = Resources.Load<RectTransform>("ui/portal").inst();
+            var pr = ui.GetComponentInChildren<portal_renamer>();
+
+            pr.field.onValueChanged.AddListener((new_val) =>
+            {
+                pr.field.text = portal.attempt_rename(new_val);
+            });
+
+            pr.field.onEndEdit.AddListener((final_val) =>
+            {
+                // Refresh UI
+                player.current.ui_state = player.UI_STATE.ALL_CLOSED;
+                player.current.ui_state = player.UI_STATE.INVENTORY_OPEN;
+            });
+
+            pr.field.text = portal.teleport_name();
+
+            return ui;
         }
 
-        // Load the new buttons
-        FindObjectOfType<teleport_manager>().create_buttons(content);
-    }
+        protected override void on_open()
+        {
+            var content = menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
 
-    public void on_left_menu_close() { }
-    public inventory editable_inventory() { return null; }
-    public recipe[] additional_recipes() { return null; }
+            // Destroy the old buttons
+            foreach (Transform c in content)
+            {
+                var b = c.GetComponent<UnityEngine.UI.Button>();
+                if (b != null) Destroy(b.gameObject);
+            }
+
+            // Load the new buttons
+            FindObjectOfType<teleport_manager>().create_buttons(content);
+        }
+    }
 
     //#################//
     // Unity callbacks //
     //#################//
-
-    private void Start()
-    {      
-        //InvokeRepeating("create_pulse", 0.2f, 0.2f);
-        //InvokeRepeating("spawn_attacker", 1f, 1f);
-    }
 
     public override void on_first_create()
     {

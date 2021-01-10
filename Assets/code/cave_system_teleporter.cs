@@ -2,37 +2,58 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class cave_system_teleporter : MonoBehaviour, IAcceptLeftClick
+public class cave_system_teleporter : MonoBehaviour, IPlayerInteractable
 {
     public bool is_underground => transform.position.y < world.UNDERGROUND_ROOF;
     public Transform teleport_spot;
 
-    public void on_left_click()
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    public player_interaction[] player_interactions()
     {
-        var target = utils.find_to_min(FindObjectsOfType<cave_system_teleporter>(), (t) =>
-        {
-            // Has to be of the opposite type
-            if (t.is_underground == is_underground)
-                return Mathf.Infinity;
-
-            // Find the nearest in the x-z plane
-            Vector3 delta = (transform.position - t.transform.position);
-            delta.y = 0;
-            return delta.sqrMagnitude;
-        });
-
-        if (target == null)
-        {
-            Debug.Log("Cave teleport target is null, has the world loaded?");
-            return;
-        }
-
-        player.current.teleport(target.teleport_spot.position);
+        return new player_interaction[] { new interaction(this) };
     }
 
-    public string left_click_context_tip()
+    class interaction : player_interaction
     {
-        if (is_underground) return "Left click to leave cave";
-        return "Left click to enter cave";
+        cave_system_teleporter teleporter;
+        public interaction(cave_system_teleporter teleporter) { this.teleporter = teleporter; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override string context_tip()
+        {
+            if (teleporter.is_underground) return "Left click to return to the surface";
+            return "Left click to go underground";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            var target = utils.find_to_min(FindObjectsOfType<cave_system_teleporter>(), (t) =>
+            {
+                // Has to be of the opposite type
+                if (t.is_underground == teleporter.is_underground)
+                    return Mathf.Infinity;
+
+                // Find the nearest in the x-z plane
+                Vector3 delta = (teleporter.transform.position - t.transform.position);
+                delta.y = 0;
+                return delta.sqrMagnitude;
+            });
+
+            if (target == null)
+            {
+                Debug.Log("Cave teleport target is null, has the world loaded?");
+                return true;
+            }
+
+            player.current.teleport(target.teleport_spot.position);
+            return true;
+        }
     }
 }

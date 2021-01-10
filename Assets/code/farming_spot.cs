@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectable
+public class farming_spot : building_with_inventory, IInspectable, IPlayerInteractable
 {
     networked_variables.net_int time_planted;
 
@@ -113,17 +113,59 @@ public class farming_spot : building_with_inventory, ILeftPlayerMenu, IInspectab
     // ILeftPlayerMenu //
     //#################//
 
-    public string left_menu_display_name() { return display_name; }
-    public inventory editable_inventory() { return inventory; }
-    public RectTransform left_menu_transform() { return inventory?.ui; }
-    public void on_left_menu_open() { update_growth(); }
-    public void on_left_menu_close() { }
-    public recipe[] additional_recipes() { return null; }
+    player_interaction[] interactions;
+
+    public override player_interaction[] player_interactions()
+    {
+        if (interactions == null)
+        {
+            var ints = new List<player_interaction>();
+            ints.Add(new menu(this));
+            ints.AddRange(base.player_interactions());
+            interactions = ints.ToArray();
+        }
+        return interactions;
+    }
+
+    class menu : left_player_menu
+    {
+        farming_spot spot;
+        public menu(farming_spot spot) { this.spot = spot; }
+        protected override RectTransform create_menu() { return spot.inventory.ui; }
+        public override inventory editable_inventory() { return spot.inventory; }
+        protected override void on_open() { spot.update_growth(); }
+        public override string display_name() { return spot.display_name; }
+    }
 }
 
-public class farm_harvest_on_click : MonoBehaviour, IAcceptLeftClick
+public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 {
     public farming_spot spot;
-    public void on_left_click() { spot.harvest(); }
-    public string left_click_context_tip() { return "Left click to harvest"; }
+
+    public player_interaction[] player_interactions()
+    {
+        return new interaction[] { new interaction(spot) };
+    }
+
+    class interaction : player_interaction
+    {
+        farming_spot spot;
+        public interaction(farming_spot spot) { this.spot = spot; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override bool start_interaction(player player)
+        {
+            spot.harvest();
+            return true;
+        }
+
+        public override string context_tip()
+        {
+            return "Left click to harvest";
+        }
+    }
 }

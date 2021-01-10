@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class town_gate : building_material, IAddsToInspectionText, IAcceptLeftClick
+public class town_gate : building_material, IAddsToInspectionText
 {
     const float SLOW_UPDATE_TIME = 1f;
     const float MAX_APPROACH_DISTANCE = 30f;
@@ -165,20 +165,6 @@ public class town_gate : building_material, IAddsToInspectionText, IAcceptLeftCl
         return "Beds     : " + bed_count + "\n" +
                "Settlers : " + settler.settler_count + "\n" +
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
-    }
-
-    //##################//
-    // IAcceptLeftClick //
-    //##################//
-
-    new public void on_left_click()
-    {
-        enemy_approach_path = null;
-    }
-
-    new public string left_click_context_tip()
-    {
-        return "Left click to recalculate external path.";
     }
 
     //#########//
