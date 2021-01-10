@@ -34,25 +34,37 @@ public class projectile : item, INotPathBlocking
         Destroy(FindObjectOfType<Rigidbody>());
     }
 
-    /// <summary> Allow easier picking up of projectiles if one is equipped. </summary>
-    public override use_result on_use_start(player.USE_TYPE use_type, player player)
+    public override player_interaction[] player_interactions()
     {
-        // Don't do anything unless player has authority
-        if (!player.has_authority) return use_result.complete;
-
-        var ray = player.current.camera_ray(player.INTERACTION_RANGE, out float distance);
-        foreach (var hit in Physics.RaycastAll(ray, distance))
-        {
-            var proj = hit.transform.GetComponent<projectile>();
-            if (proj != null) proj.pick_up();
-        }
-
-        return use_result.complete;
+        return new player_interaction[] { new pickup_ammo() };
     }
 
-    public override bool allow_left_click_held_down()
+    class pickup_ammo : player_interaction
     {
-        return true;
+        public override bool conditions_met()
+        {
+            return controls.mouse_down(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override string context_tip()
+        {
+            return "Left click to pickup projectiles (can be held down)";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            // Don't do anything unless player has authority
+            if (!player.has_authority) return true;
+
+            var ray = player.camera_ray(player.INTERACTION_RANGE, out float distance);
+            foreach (var hit in Physics.RaycastAll(ray, distance))
+            {
+                var proj = hit.transform.GetComponent<projectile>();
+                if (proj != null) proj.pick_up();
+            }
+
+            return true;
+        }
     }
 
     private void OnDrawGizmosSelected()

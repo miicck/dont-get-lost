@@ -72,7 +72,7 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
 
         public override string context_tip()
         {
-            return "Left click to harvest.";
+            return "Left click to harvest";
         }
     }
 

@@ -107,11 +107,6 @@ public class rifle : equip_in_hand
     }
     STATE _state;
 
-    public override string equipped_context_tip()
-    {
-        return "Left click to fire\nRight click to aim down sight";
-    }
-
     public override void on_equip(player player)
     {
         base.on_equip(player);
@@ -180,35 +175,6 @@ public class rifle : equip_in_hand
         }
 
         locate();
-    }
-
-    // Allow holding down of left click for automatic fire
-    public override bool allow_left_click_held_down() { return true; }
-
-    public override use_result on_use_start(player.USE_TYPE use_type, player player)
-    {
-        if (player != player_using)
-            throw new System.Exception("Player using has changed!");
-
-        if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
-            if (state == STATE.READY)
-                state = STATE.FIRING;
-
-        return use_result.underway_allows_all;
-    }
-
-    public override use_result on_use_continue(player.USE_TYPE use_type, player player)
-    {
-        // on_use_continue is defined to ensure that the player is using the
-        // object for long enough to let other clients know (see the note in 
-        // the on_change_old_new method of current_item_use in the player class)
-        if (state == STATE.READY) return use_result.complete;
-        return use_result.underway_allows_all;
-    }
-
-    void fire()
-    {
-
     }
 
     float reloading_angle()
@@ -310,6 +276,54 @@ public class rifle : equip_in_hand
         {
             if (Time.realtimeSinceStartup - start_time > 1f && system.particleCount == 0)
                 Destroy(gameObject);
+        }
+    }
+
+    //##########//
+    // ITEM USE //
+    //##########//
+
+    player_interaction[] uses;
+    public override player_interaction[] item_uses()
+    {
+        if (uses == null) uses = new player_interaction[] { new rifle_use(this) };
+        return uses;
+    }
+
+    class rifle_use : player_interaction
+    {
+        rifle rifle;
+        public rifle_use(rifle rifle) { this.rifle = rifle; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_down(controls.MOUSE_BUTTON.LEFT);
+        }
+
+        public override string context_tip()
+        {
+            return "Left click to fire " + rifle.display_name + "\n" +
+                   "Right click to aim down the sights";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            if (player != rifle.player_using)
+                throw new System.Exception("Player using has changed!");
+
+            if (rifle.state == STATE.READY)
+                rifle.state = STATE.FIRING;
+
+            return false;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            // continue_interaction is defined to ensure that the player is using the
+            // object for long enough to let other clients know (see the note in 
+            // the on_change_old_new method of current_item_use in the player class)
+            if (rifle.state == STATE.READY) return true;
+            return false;
         }
     }
 }

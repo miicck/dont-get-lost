@@ -85,6 +85,7 @@ public class building_material : item, IPlayerInteractable
         {
             new left_click_interaction(this),
             new right_click_interaction(this),
+            new select_matching_interaction(this),
             new player_inspectable(transform)
             {
                 text = () => display_name + " (built)",
@@ -260,14 +261,16 @@ public class building_material : item, IPlayerInteractable
             }
         }
 
-        public use_result mouse_rotate()
+        /// <summary> Rotate the building using the mouse. Returns true 
+        /// when the orientation is confirmed. </summary>
+        public bool mouse_rotate()
         {
             change_pivot();
 
             if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
             {
                 if (Time.realtimeSinceStartup - last_click_time < 0.5f)
-                    return use_result.complete;
+                    return true;
 
                 last_click_time = Time.realtimeSinceStartup;
                 var ray = player.current.camera_ray();
@@ -300,7 +303,6 @@ public class building_material : item, IPlayerInteractable
 
             Vector3? new_closest_point = null;
             Vector3? rotation_axis = null;
-            use_result result = use_result.underway_allows_look_only;
             accumulated_rotation += 10 * controls.object_rotation_axis();
 
             switch (mouse_mode)
@@ -323,26 +325,22 @@ public class building_material : item, IPlayerInteractable
                 case MOUSE_MODE.X_ROTATE:
                     rotation_axis = right_rot;
                     rotation_axes.highlight_axis(axes.AXIS.X);
-                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.Y_ROTATE:
                     rotation_axis = -up_rot;
                     rotation_axes.highlight_axis(axes.AXIS.Y);
-                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.Z_ROTATE:
                     rotation_axis = -forward_rot;
                     rotation_axes.highlight_axis(axes.AXIS.Z);
-                    result = use_result.underway_allows_none;
                     break;
 
                 case MOUSE_MODE.NONE:
                     axes.highlight_axis(axes.AXIS.NONE);
                     rotation_axes.highlight_axis(axes.AXIS.NONE);
                     accumulated_rotation = 0;
-                    result = use_result.underway_allows_look_only;
                     break;
             }
 
@@ -376,7 +374,7 @@ public class building_material : item, IPlayerInteractable
                 last_closest_point = new_closest_point;
             }
 
-            return result;
+            return false;
         }
 
         public void key_rotate()
@@ -499,6 +497,18 @@ public class building_material : item, IPlayerInteractable
     // ITEM USE //
     //##########//
 
+    player_interaction[] interactions;
+    public override player_interaction[] item_uses()
+    {
+        if (interactions == null)
+            interactions = new player_interaction[]
+            {
+                new build_interaction(this),
+                new demolish_interaction(this)
+            };
+        return interactions;
+    }
+
     public bool is_blueprint { get; private set; }
 
     snap_point closest_to_ray(Ray ray, float ray_distance)
@@ -609,7 +619,7 @@ public class building_material : item, IPlayerInteractable
         is_blueprint = true;
     }
 
-    building_material spawn_and_fix_to(
+    building_material blueprint_and_fix_to(
         building_material other, RaycastHit hit,
         Ray player_ray, float ray_distance)
     {
@@ -631,7 +641,7 @@ public class building_material : item, IPlayerInteractable
         return spawned;
     }
 
-    building_material spawn_and_fix_at(RaycastHit hit)
+    building_material blueprint_and_fix_at(RaycastHit hit)
     {
         var spawned = (building_material)create(name, hit.point, Quaternion.identity);
         spawned.make_blueprint();
@@ -643,178 +653,193 @@ public class building_material : item, IPlayerInteractable
         return spawned;
     }
 
-    building_material spawned;
-    static float last_time_placing_blueprint;
-    static float last_time_deleting;
-
-    public override bool allow_right_click_held_down()
+    class demolish_interaction : player_interaction
     {
-        return true;
-    }
+        public static float last_time_deleting { get; private set; }
 
-    public override string equipped_context_tip()
-    {
-        if (spawned != null)
+        building_material equipped;
+        public demolish_interaction(building_material equipped) { this.equipped = equipped; }
+
+        public override bool conditions_met()
         {
-            if (controls.key_based_building)
-            {
-                return "Left click to build, right click to cancel\nUse " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_RIGHT) + ", " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
-                    controls.current_bind(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
-                    "Hold " + controls.current_bind(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
-                    "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
-                    "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
-            }
-            else
-            {
-                return
-                    "Double left click to build, right click to cancel\n" +
-                    "Click and drag the arrows to translate, or the circles to rotate\n" +
-                    "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
-                    "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
-            }
+            return controls.mouse_down(controls.MOUSE_BUTTON.RIGHT);
         }
 
-        return "Left click to build, right click to destroy matching objects (can be held down)\n" +
-            "Buildings will snap together at key points, hold " +
-            controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
-            "Disabling snapping will also allign the building to the world axes";
-    }
+        public override string context_tip()
+        {
+            return "Right click to destroy matching objects (can be held down)";
+        }
 
-    Ray camera_ray;
-    public override use_result on_use_start(player.USE_TYPE use_type, player player)
-    {
-        // Don't do anything on the non-authority client
-        if (!player.has_authority) return use_result.complete;
+        public override bool start_interaction(player player)
+        {
+            return base.start_interaction(player);
+        }
 
-        if (snap_points.Length == 0)
-            throw new System.Exception("No snap points found on " + display_name + "!");
-
-        // Get the ray to cast along, that stays within 
-        // BUILD_RANGE of the player
-        float raycast_distance = 0;
-        camera_ray = player.current.camera_ray(BUILD_RANGE, out raycast_distance);
-
-        if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
+        public override bool continue_interaction(player player)
         {
             // Stop cancelling a build with right-click from immediately 
             // destroying the object we were welding to during the build.
-            const float WAIT_AFTER_BUILD = 0.25f;
             const float TIME_BETWEEN_DELETES = 0.1f;
-            if (Time.realtimeSinceStartup < last_time_placing_blueprint + WAIT_AFTER_BUILD ||
-                Time.realtimeSinceStartup < last_time_deleting + TIME_BETWEEN_DELETES)
-                return use_result.complete;
-
-            last_time_deleting = Time.realtimeSinceStartup;
+            if (Time.realtimeSinceStartup < last_time_deleting + TIME_BETWEEN_DELETES ||
+                Time.realtimeSinceStartup < build_interaction.last_time_building + TIME_BETWEEN_DELETES)
+                return true;
 
             // Right click destroys items of the same kind
-            RaycastHit same_hit;
+            var camera_ray = player.camera_ray(BUILD_RANGE, out float dis);
             building_material found_same = utils.raycast_for_closest<building_material>(
-                camera_ray, out same_hit, raycast_distance, (b) => b.name == name);
-            if (found_same == null)
-                return base.on_use_start(player.USE_TYPE.USING_RIGHT_CLICK, player);
-            else found_same.pick_up(register_undo: true);
-            return use_result.complete;
+                camera_ray, out RaycastHit hit, dis, (b) => b.name == equipped.name);
+            if (found_same == null) return true;
+
+            last_time_deleting = Time.realtimeSinceStartup;
+            found_same.pick_up(register_undo: true);
+            return true;
         }
-
-        // Only allow left click action from here
-        if (use_type != player.USE_TYPE.USING_LEFT_CLICK)
-            return use_result.complete;
-
-        // Find a (non-logistics version) building_material/snap_point 
-        // under cursor (unless ignore_snap_points is held)
-        RaycastHit hit = default;
-        building_material bm = null;
-        if (!controls.key_down(controls.BIND.IGNORE_SNAP_POINTS))
-            bm = utils.raycast_for_closest<building_material>(
-                camera_ray, out hit, raycast_distance, accept: (b) => !b.is_logistics_version);
-
-        // If a building material is found, fix new build to it
-        // otherwise, just fix to any solid object
-        if (bm != null)
-            spawned = spawn_and_fix_to(bm, hit, camera_ray, raycast_distance);
-        else
-        {
-            var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
-                (c) => !c.transform.IsChildOf(player.current.transform));
-
-            if (col != null) spawned = spawn_and_fix_at(hit);
-        }
-
-        // Move onto rotation stage if something was spawned
-        if (spawned != null)
-        {
-            if (!controls.key_based_building) player.current.cursor_sprite = cursors.DEFAULT;
-            return use_result.underway_allows_look_only;
-        }
-        return use_result.complete;
     }
 
-    public override use_result on_use_continue(player.USE_TYPE use_type, player player)
+    class build_interaction : player_interaction
     {
-        // Don't do anything on the non-authority client
-        if (!player.has_authority) return use_result.complete;
+        public static float last_time_building { get; private set; }
 
-        if (spawned == null)
-            return use_result.complete;
+        building_material blueprint;
+        building_material equipped;
 
-        last_time_placing_blueprint = Time.realtimeSinceStartup;
+        public build_interaction(building_material equipped) { this.equipped = equipped; }
 
-        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+        public override bool conditions_met()
         {
-            // Cancel build on right click
-            spawned.weld.on_finish();
-            Destroy(spawned.gameObject);
-            spawned = null;
-            return use_result.complete;
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
         }
 
-        if (controls.key_based_building)
+        public override string context_tip()
         {
-            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
-                return use_result.complete;
-            spawned.weld.key_rotate();
-            return use_result.underway_allows_look_only;
+            if (blueprint != null)
+            {
+                if (controls.key_based_building)
+                {
+                    return "Left click to build, right click to cancel\nUse " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_RIGHT) + ", " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
+                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
+                        "Hold " + controls.current_bind(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
+                        "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
+                        "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                }
+                else
+                {
+                    return
+                        "Double left click to build, right click to cancel\n" +
+                        "Click and drag the arrows to translate, or the circles to rotate\n" +
+                        "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
+                        "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                }
+            }
+
+            return "Left click to build\n" +
+                "Buildings will snap together at key points, hold " +
+                controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
+                "Disabling snapping will also allign the building to the world axes";
         }
-        else return spawned.weld.mouse_rotate();
+
+        public override bool start_interaction(player player)
+        {
+            // Don't do anything on the non-authority client
+            if (!player.has_authority) return true;
+
+            if (equipped.snap_points.Length == 0)
+                throw new System.Exception("No snap points found on " + equipped.display_name + "!");
+
+            // Get the ray to cast along, that stays within 
+            // BUILD_RANGE of the player
+            float raycast_distance = 0;
+            var camera_ray = player.current.camera_ray(BUILD_RANGE, out raycast_distance);
+
+            // Find a (non-logistics version) building_material/snap_point 
+            // under cursor (unless ignore_snap_points is held)
+            RaycastHit hit = default;
+            building_material bm = null;
+            if (!controls.key_down(controls.BIND.IGNORE_SNAP_POINTS))
+                bm = utils.raycast_for_closest<building_material>(
+                    camera_ray, out hit, raycast_distance, accept: (b) => !b.is_logistics_version);
+
+            // If a building material is found, fix new build to it
+            // otherwise, just fix to any solid object
+            if (bm != null)
+                blueprint = equipped.blueprint_and_fix_to(bm, hit, camera_ray, raycast_distance);
+            else
+            {
+                var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
+                    (c) => !c.transform.IsChildOf(player.current.transform));
+
+                if (col != null) blueprint = equipped.blueprint_and_fix_at(hit);
+            }
+
+            // Move onto rotation stage if something was spawned
+            if (blueprint != null)
+            {
+                if (!controls.key_based_building) player.current.cursor_sprite = cursors.DEFAULT;
+                return false;
+            }
+            return true;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            // Don't do anything on the non-authority client
+            if (!player.has_authority) return true;
+            if (blueprint == null) return true;
+            last_time_building = Time.realtimeSinceStartup;
+
+            if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+            {
+                // Cancel build on right click
+                blueprint.weld.on_finish();
+                Destroy(blueprint.gameObject);
+                blueprint = null;
+                return true;
+            }
+
+            if (controls.key_based_building)
+            {
+                if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT)) return true;
+                blueprint.weld.key_rotate();
+                return false;
+            }
+            else return blueprint.weld.mouse_rotate();
+        }
+
+        public override void end_interaction(player player)
+        {
+            base.end_interaction(player);
+
+            // Don't do anything on the authority client
+            if (!player.has_authority) return;
+
+            if (blueprint != null)
+            {
+                // Remove the object we're building from the inventory
+                if (player.current.inventory.remove(blueprint, 1))
+                {
+                    // Create a proper, networked version of the spawned object
+                    var created = (building_material)create(blueprint.name,
+                        blueprint.transform.position, blueprint.transform.rotation,
+                        networked: true, register_undo: true);
+
+                    created.on_build();
+                    blueprint.weld.on_finish();
+                    Destroy(blueprint.gameObject);              
+                }
+            }
+
+            blueprint = null;
+            player.current.validate_equip();
+        }
     }
-
-    /// <summary> Returns the networked object to parent this 
-    /// building material to when it is placed. </summary>
-    protected virtual networked parent_on_placement() { return null; }
 
     /// <summary> Called when the object is built. </summary>
     protected virtual void on_build() { }
-
-    public override void on_use_end(player.USE_TYPE use_type, player player)
-    {
-        // Don't do anything on the authority client
-        if (!player.has_authority) return;
-
-        if (spawned != null)
-        {
-            // Remove the object we're building from the inventory
-            if (player.current.inventory.remove(spawned, 1))
-            {
-                // Create a proper, networked version of the spawned object
-                var created = (building_material)create(spawned.name,
-                    spawned.transform.position, spawned.transform.rotation,
-                    networked: true, network_parent: parent_on_placement(),
-                    register_undo: true);
-
-                created.on_build();
-                spawned.weld.on_finish();
-                Destroy(spawned.gameObject);
-            }
-        }
-
-        spawned = null;
-        player.current.validate_equip();
-    }
 }
 
 public abstract class building_with_inventory : building_material

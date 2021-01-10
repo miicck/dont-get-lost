@@ -97,7 +97,7 @@ public class item : networked, IPlayerInteractable
         }
     }
 
-    class select_matching_interaction : player_interaction
+    protected class select_matching_interaction : player_interaction
     {
         item item;
         public select_matching_interaction(item item) { this.item = item; }
@@ -123,100 +123,74 @@ public class item : networked, IPlayerInteractable
     // PLAYER USE //
     //############//
 
-    public struct use_result
+    player_interaction[] interactions;
+
+    public virtual player_interaction[] item_uses()
     {
-        public bool underway;
-        public bool allows_look;
-        public bool allows_move;
-        public bool allows_throw;
-
-        public static use_result complete => new use_result()
+        if (interactions == null)
         {
-            underway = false,
-            allows_look = true,
-            allows_move = true,
-            allows_throw = true
-        };
-
-        public static use_result underway_allows_none => new use_result()
-        {
-            underway = true,
-            allows_look = false,
-            allows_move = false,
-            allows_throw = false
-        };
-
-        public static use_result underway_allows_all => new use_result()
-        {
-            underway = true,
-            allows_look = true,
-            allows_move = true,
-            allows_throw = true
-        };
-
-        public static use_result underway_allows_look_only => new use_result()
-        {
-            underway = true,
-            allows_look = true,
-            allows_move = false,
-            allows_throw = false
-        };
+            interactions = new player_interaction[]
+            {
+                new eat_interaction(this),
+                new place_on_gutter(this)
+            };
+        }
+        return interactions;
     }
 
-    // Use the equipped version of this item
-    public virtual use_result on_use_start(player.USE_TYPE use_type, player player)
+    abstract class player_item_interaction : player_interaction
     {
-        // If this is the authority player, carry out basic uses
-        if (player.has_authority)
+        protected item item { get; private set; }
+        public player_item_interaction(item item) { this.item = item; }
+    }
+
+    class eat_interaction : player_item_interaction
+    {
+        public eat_interaction(item i) : base(i) { }
+
+        public override bool conditions_met()
         {
-            if (use_type == player.USE_TYPE.USING_LEFT_CLICK)
-            {
-                if (food_values != null)
-                {
-                    // Eat
-                    player.inventory.remove(this, 1);
-                    player.modify_hunger(food_values.metabolic_value());
-                    player.play_sound("sounds/munch1", 0.99f, 1.01f, 0.5f);
-                    foreach (var p in GetComponents<product>())
-                        p.create_in(player.inventory);
-                }
-            }
-            else if (use_type == player.USE_TYPE.USING_RIGHT_CLICK)
-            {
-                // Place this item on the gutter
-                var gutter = gutter_to_place_on(player, out RaycastHit hit);
-                if (gutter != null)
-                {
-                    var created = item.create(name, hit.point, Quaternion.identity, logistics_version: true);
-                    gutter.add_item(created);
-                    player.inventory.remove(this, 1);
-                }
-            }
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT) &&
+                   item.food_values != null;
         }
 
-        return use_result.complete;
+        public override string context_tip()
+        {
+            if (item.food_values == null) return null;
+            return "Left click to eat " + item.display_name;
+        }
+
+        public override bool start_interaction(player player)
+        {
+            player.modify_hunger(-item.food_values.metabolic_value());
+            return true;
+        }
     }
 
-    item_gutter gutter_to_place_on(player p, out RaycastHit hit)
+    class place_on_gutter : player_item_interaction
     {
-        var ray = p.camera_ray(player.INTERACTION_RANGE, out float dis);
-        return utils.raycast_for_closest<item_gutter>(ray, out hit, dis);
-    }
+        public place_on_gutter(item i) : base(i) { }
 
-    public virtual string equipped_context_tip()
-    {
-        string ret = "";
-        if (food_values != null) ret += "Left click to eat";
-        var gut = gutter_to_place_on(player.current, out RaycastHit hit);
-        if (gut != null) ret += "\nRight click to place on gutter";
-        if (ret.Length == 0) return null;
-        return ret;
-    }
+        public override bool conditions_met()
+        {
+            return controls.mouse_click(controls.MOUSE_BUTTON.RIGHT);
+        }
 
-    public virtual use_result on_use_continue(player.USE_TYPE use_type, player player) { return use_result.complete; }
-    public virtual void on_use_end(player.USE_TYPE use_type, player player) { }
-    public virtual bool allow_left_click_held_down() { return false; }
-    public virtual bool allow_right_click_held_down() { return false; }
+        public override string context_tip()
+        {
+            return "Right click to place " + item.display_name + " on gutter";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
+            var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
+            if (gutter == null) return true;
+            if (player.inventory.remove(item, 1))
+                gutter.add_item(create(item.name, hit.point, Quaternion.identity, logistics_version: true));
+            return true;
+        }
+    }
 
     /// <summary> Called when this item is equipped.</summary>
     public virtual void on_equip(player player)

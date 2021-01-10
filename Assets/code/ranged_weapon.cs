@@ -51,27 +51,66 @@ public class ranged_weapon : equip_in_hand
         }
     }
 
-    public override bool allow_right_click_held_down()
+    //############//
+    // PLAYER USE //
+    //############//
+
+    player_interaction[] uses;
+    public override player_interaction[] item_uses()
     {
-        return true;
+        if (uses == null)
+            uses = new player_interaction[]
+            {
+            new fire_interaction(this),
+            new pickup_ammo_interaction(this)
+        };
+        return uses;
     }
 
-    public override use_result on_use_start(player.USE_TYPE use_type, player player)
+    class fire_interaction : player_interaction
     {
-        // Don't do anything unless we're on the authority client
-        if (!has_authority) return use_result.complete;
+        ranged_weapon weapon;
+        public fire_interaction(ranged_weapon rw) { weapon = rw; }
 
-        switch(use_type)
+        public override bool conditions_met()
         {
-            case player.USE_TYPE.USING_LEFT_CLICK:
-                fire();
-                break;
-
-            case player.USE_TYPE.USING_RIGHT_CLICK:
-                pickup_ammo();
-                break;
+            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
         }
 
-        return use_result.complete;
+        public override string context_tip()
+        {
+            return "Left click to fire";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            weapon.fire();
+            return true;
+        }
+    }
+
+    class pickup_ammo_interaction : player_interaction
+    {
+        ranged_weapon weapon;
+        public pickup_ammo_interaction(ranged_weapon rw) { weapon = rw; }
+
+        public override bool conditions_met()
+        {
+            return controls.mouse_down(controls.MOUSE_BUTTON.RIGHT);
+        }
+
+        public override string context_tip()
+        {
+            return "Right click to pickup ammo (can be held down)";
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            if (!controls.mouse_down(controls.MOUSE_BUTTON.RIGHT))
+                return true;
+
+            weapon.pickup_ammo();
+            return false;
+        }
     }
 }
