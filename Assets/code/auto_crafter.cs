@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_crafter : building_material, IInspectable, IPlayerInteractable
+public class auto_crafter : building_material, IPlayerInteractable
 {
     static auto_crafter()
     {
@@ -131,16 +131,55 @@ public class auto_crafter : building_material, IInspectable, IPlayerInteractable
     player_interaction[] interactions;
     public override player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = base.player_interactions().prepend(new menu(this));
+        if (interactions == null) interactions = base.player_interactions().prepend(
+            new menu(this),
+            new player_inspectable(transform)
+            {
+                text = () =>
+                {
+                    string info = display_name + "\n";
+
+                    var pi = pending_inputs.contents();
+                    var po = pending_outputs.contents();
+
+                    if (pi.Count > 0)
+                    {
+                        info += "Pending inputs:\n";
+                        foreach (var kv in pi)
+                            info += "    " + kv.Value + " " +
+                                kv.Key.singular_or_plural(kv.Value) + "\n";
+                    }
+
+                    if (po.Count > 0)
+                    {
+                        info += "Pending outputs:\n";
+                        foreach (var kv in po)
+                            info += "    " + kv.Value + " " +
+                                kv.Key.singular_or_plural(kv.Value) + "\n";
+                    }
+
+                    if (currently_crafting != null)
+                    {
+                        info += "Currently crafting " +
+                            product.product_plurals_list(currently_crafting.products) + "\n";
+                    }
+
+                    return info;
+                }
+            });
         return interactions;
     }
 
     class menu : left_player_menu
     {
         auto_crafter crafter;
-        public menu(auto_crafter crafter) { this.crafter = crafter; }
-        public override recipe[] additional_recipes() { return crafter.recipies; }
-        public override string display_name() { return crafter.display_name; }
+        public menu(auto_crafter crafter) : base(crafter.display_name) { this.crafter = crafter; }
+
+        public override recipe[] additional_recipes(out string name)
+        {
+            name = crafter.display_name;
+            return crafter.recipies;
+        }
 
         protected override RectTransform create_menu()
         {
@@ -204,41 +243,5 @@ public class auto_crafter : building_material, IInspectable, IPlayerInteractable
 
             return left_menu;
         }
-    }
-
-    //##############//
-    // IINspectable //
-    //##############//
-
-    public override string inspect_info()
-    {
-        string info = display_name + "\n";
-
-        var pi = pending_inputs.contents();
-        var po = pending_outputs.contents();
-
-        if (pi.Count > 0)
-        {
-            info += "Pending inputs:\n";
-            foreach (var kv in pi)
-                info += "    " + kv.Value + " " +
-                    kv.Key.singular_or_plural(kv.Value) + "\n";
-        }
-
-        if (po.Count > 0)
-        {
-            info += "Pending outputs:\n";
-            foreach (var kv in po)
-                info += "    " + kv.Value + " " +
-                    kv.Key.singular_or_plural(kv.Value) + "\n";
-        }
-
-        if (currently_crafting != null)
-        {
-            info += "Currently crafting " +
-                product.product_plurals_list(currently_crafting.products) + "\n";
-        }
-
-        return info;
     }
 }

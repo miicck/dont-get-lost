@@ -16,7 +16,7 @@ public interface IAcceptsDamage
     void take_damage(int damage);
 }
 
-public class character : networked, INotPathBlocking, IInspectable, IDontBlockItemLogisitcs, IAcceptsDamage
+public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable
 {
     // A character is considered to have arrived at a point
     // if they are within this distance of it.
@@ -82,18 +82,24 @@ public class character : networked, INotPathBlocking, IInspectable, IDontBlockIt
         if (new_forward.magnitude > 10e-4) transform.forward = new_forward;
     }
 
-    //##############//
-    // IINspectable //
-    //##############//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    public string inspect_info()
+    public virtual player_interaction[] player_interactions()
     {
-        return display_name.capitalize() + "\n" +
-               controller?.inspect_info();
+        return new player_interaction[]
+        {
+            new player_inspectable(transform)
+            {
+                text= () =>
+                {
+                    return display_name.capitalize() + "\n" +
+                           controller?.inspect_info();
+                }
+            }
+        };
     }
-
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
 
     //########//
     // SOUNDS //

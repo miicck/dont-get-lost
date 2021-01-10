@@ -20,8 +20,7 @@ public class portal : building_material, IPlayerInteractable
     class menu : left_player_menu
     {
         portal portal;
-        public menu(portal portal) { this.portal = portal; }
-        public override string display_name() { return portal.display_name; }
+        public menu(portal portal) : base(portal.display_name) { this.portal = portal; }
 
         protected override RectTransform create_menu()
         {

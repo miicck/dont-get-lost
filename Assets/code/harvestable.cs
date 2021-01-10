@@ -6,7 +6,7 @@ using UnityEngine;
 /// to yield a specific product, repeatedly. </summary>
 [RequireComponent(typeof(product))]
 [RequireComponent(typeof(item_requirement))]
-public class harvestable : accepts_item_impact, IInspectable
+public class harvestable : accepts_item_impact, IPlayerInteractable
 {
     public product[] products { get => GetComponents<product>(); }
     public item_requirement tool { get => GetComponent<item_requirement>(); }
@@ -22,19 +22,20 @@ public class harvestable : accepts_item_impact, IInspectable
         return false;
     }
 
-    public string inspect_info()
-    {
-        return product.product_plurals_list(products) + " can be harvested with " +
-               utils.a_or_an(tool.display_name) + " " + tool.display_name + ".";
-    }
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    public Sprite main_sprite()
+    public player_interaction[] player_interactions()
     {
-        return products[0].sprite();
-    }
-
-    public Sprite secondary_sprite()
-    {
-        return tool.sprite;
+        return new player_interaction[]
+        {
+            new player_inspectable(transform)
+            {
+                text = ()=> product.product_plurals_list(products) + " can be harvested with " +
+                            utils.a_or_an(tool.display_name) + " " + tool.display_name + ".",
+                sprite = ()=> products[0].sprite()
+            }
+        };
     }
 }

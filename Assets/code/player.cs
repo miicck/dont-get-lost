@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking, IInspectable, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable
+public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable
 {
     //###########//
     // CONSTANTS //
@@ -181,6 +181,41 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     }
     player_interaction _current_interaction;
 
+    void run_interactions()
+    {
+        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
+        if (current_interaction == null)
+        {
+            IPlayerInteractable[] interactables = null;
+
+            // Get a new ui interaction
+            var ui_inter = utils.raycast_ui_under_mouse<IPlayerInteractable>();
+            if (ui_inter == null)
+            {
+                // Get in-world interactables
+                var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+                interactables = utils.raycast_for_closests<IPlayerInteractable>(
+                    cam_ray, out RaycastHit hit, max_distance: dis);
+            }
+            else interactables = new IPlayerInteractable[] { ui_inter };
+
+            List<player_interaction> inters = new List<player_interaction>();
+            foreach (var i in interactables)
+                inters.AddRange(i.player_interactions());
+
+            foreach (var i in inters)
+            {
+                string ct = i.context_tip()?.Trim();
+                if (ct != null && ct.Length > 0) tips.context_tip += "\n" + ct;
+                if (current_interaction == null && i.conditions_met())
+                    current_interaction = i;
+            }
+        }
+        // Continue current interaction
+        else if (current_interaction.continue_interaction(this))
+            current_interaction = null;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -197,7 +232,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             indicate_damage();
             run_world_generator();
             run_recipe_book();
-            run_inspect_info();
             run_inventory();
             run_options();
             run_quickbar_shortcuts();
@@ -215,32 +249,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
         }
-    }
-
-    void run_interactions()
-    {
-        if (current_item_use.value != (int)USE_TYPE.NOT_USING) return;
-        if (current_interaction == null)
-        {
-            // Get a new interaction
-            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-            var interactables = utils.raycast_for_closests<IPlayerInteractable>(
-                cam_ray, out RaycastHit hit, max_distance: dis);
-
-            List<player_interaction> inters = new List<player_interaction>();
-            foreach (var i in interactables)
-                inters.AddRange(i.player_interactions());
-
-            foreach (var i in inters)
-            {
-                tips.context_tip += i.context_tip() + "\n";
-                if (current_interaction == null && i.conditions_met())
-                    current_interaction = i;
-            }
-        }
-        // Continue current interaction
-        else if (current_interaction.continue_interaction(this))
-            current_interaction = null;
     }
 
     private void OnDrawGizmos()
@@ -523,34 +531,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
             validate_equip();
         }
     }
-
-    //############//
-    // INSPECTION //
-    //############//
-
-    void run_inspect_info()
-    {
-        // Note that the inspection window can be 
-        // opened independently of the UI state
-        inspection_ui.visible = controls.key_down(controls.BIND.INSPECT);
-    }
-
-    inspect_info inspection_ui
-    {
-        get
-        {
-            // Create the inspect_info object if it doesn't already exist
-            if (_inspection_ui == null)
-            {
-                _inspection_ui = Resources.Load<inspect_info>("ui/inspect_info").inst();
-                _inspection_ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
-                _inspection_ui.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-            }
-
-            return _inspection_ui;
-        }
-    }
-    inspect_info _inspection_ui;
 
     //###########//
     //  MOVEMENT //
@@ -1411,14 +1391,6 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
         color.colorFilter.value = Color.white;
     }
 
-    //##############//
-    // IINspectable //
-    //##############//
-
-    public string inspect_info() { return username.value; }
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
-
     //#####################//
     // IPlayerInteractable //
     //#####################//
@@ -1426,7 +1398,14 @@ public class player : networked_player, INotPathBlocking, IInspectable, ICanEqui
     player_interaction[] interactions;
     public player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new player_interaction[] { new interaction(this) };
+        if (interactions == null) interactions = new player_interaction[]
+        {
+            new interaction(this),
+            new player_inspectable(transform)
+            {
+                text = ()=> username.value
+            }
+        };
         return interactions;
     }
 
@@ -1936,15 +1915,15 @@ public abstract class player_interaction
 
     /// <summary> Additioanl recipes available to the player when 
     /// interacting with this. </summary>
-    public virtual recipe[] additional_recipes() { return null; }
-
-    /// <summary> The display name of this interaction. </summary>
-    public virtual string display_name() { return null; }
+    public virtual recipe[] additional_recipes(out string name) { name = null; return null; }
 }
 
 /// <summary> A menu that appears alongside the inventory, to the left. </summary>
 public abstract class left_player_menu : player_interaction
 {
+    string name;
+    public left_player_menu(string name) { this.name = name; }
+
     public override bool conditions_met()
     {
         // Left player menus open with the inventory.
@@ -1953,7 +1932,7 @@ public abstract class left_player_menu : player_interaction
 
     public override string context_tip()
     {
-        return "Press E to interact with " + display_name();
+        return "Press E to interact with " + name;
     }
 
     public override bool start_interaction(player player)

@@ -19,7 +19,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
 }
 
 /// <summary> The UI version of an inventory slot. </summary>
-public class inventory_slot : MonoBehaviour, IInspectable
+public class inventory_slot : MonoBehaviour, IPlayerInteractable
 {
     public Image item_image;
     public Button button;
@@ -67,7 +67,16 @@ public class inventory_slot : MonoBehaviour, IInspectable
     /// <summary> Returns true if <paramref name="item"/> can be put in this slot. </summary>
     public virtual bool accepts(item item) { return true; }
 
-    public string inspect_info() { return item.item_quantity_info(item, count); }
-    public Sprite main_sprite() { return item_image.sprite; }
-    public Sprite secondary_sprite() { return null; }
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    public player_interaction[] player_interactions()
+    {
+        return new player_interaction[] {new player_inspectable(transform)
+        {
+            text = () => item.item_quantity_info(item, count),
+            sprite = () => item_image.sprite
+        }};
+    }
 }

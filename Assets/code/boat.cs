@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class boat : networked, IInspectable
+public class boat : networked, IPlayerInteractable
 {
     const int TOTAL_JOURNEY_TIME = 10;
 
@@ -68,7 +68,7 @@ public class boat : networked, IInspectable
                     visible = false; // Invisible when away
                     break;
 
-                default:                   
+                default:
                     away_time.value = 0; // Reset away time if not away
                     visible = true; // Visible if not away
                     break;
@@ -174,15 +174,18 @@ public class boat : networked, IInspectable
     // IINspectable //
     //##############//
 
-    public string inspect_info()
+    public player_interaction[] player_interactions()
     {
-        string ret = "Boat\n";
-        ret += "Cargo (total value = " + total_cargo_value.qs() + " coins):\n";
-        foreach (var kv in contents)
-            ret += "    " + kv.Value.qs() + " " + kv.Key + "\n";
-        return ret;
+        return new player_interaction[] {new player_inspectable(transform)
+        {
+            text = () =>
+            {
+                string ret = "Boat\n";
+                ret += "Cargo (total value = " + total_cargo_value.qs() + " coins):\n";
+                foreach (var kv in contents)
+                    ret += "    " + kv.Value.qs() + " " + kv.Key + "\n";
+                return ret;
+            }
+        }};
     }
-
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
 }

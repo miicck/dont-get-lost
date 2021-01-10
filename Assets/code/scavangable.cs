@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class scavangable : MonoBehaviour, IInspectable, IPlayerInteractable
+public class scavangable : MonoBehaviour, IPlayerInteractable
 {
     static scavangable()
     {
@@ -12,14 +12,6 @@ public class scavangable : MonoBehaviour, IInspectable, IPlayerInteractable
 
     product[] products => GetComponents<product>();
 
-    //##############//
-    // IINspectable //
-    //##############//
-
-    public string inspect_info() { return product.product_plurals_list(products) + " can be scavanged by hand."; }
-    public Sprite main_sprite() { return Resources.Load<Sprite>("sprites/default_interact_cursor"); }
-    public Sprite secondary_sprite() { return null; }
-
     //#####################//
     // IPlayerInteractable //
     //#####################//
@@ -27,7 +19,15 @@ public class scavangable : MonoBehaviour, IInspectable, IPlayerInteractable
     player_interaction[] interactions;
     public player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new interaction[] { new interaction(this) };
+        if (interactions == null) interactions = new player_interaction[]
+        {
+            new interaction(this),
+            new player_inspectable(transform)
+            {
+                text = () => product.product_plurals_list(products) + " can be scavanged",
+                sprite = () => Resources.Load<Sprite>("sprites/default_interact_cursor")
+            }
+        };
         return interactions;
     }
 

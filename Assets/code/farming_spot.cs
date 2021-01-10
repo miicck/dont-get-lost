@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class farming_spot : building_with_inventory, IInspectable, IPlayerInteractable
+public class farming_spot : building_with_inventory, IPlayerInteractable
 {
     networked_variables.net_int time_planted;
 
@@ -17,15 +17,6 @@ public class farming_spot : building_with_inventory, IInspectable, IPlayerIntera
     {
         base.on_init_network_variables();
         time_planted = new networked_variables.net_int();
-    }
-
-    new public string inspect_info()
-    {
-        string ret = base.inspect_info() + "\n";
-        ret += (growing == null ? "Nothing growing." :
-                seed?.plural + " growing into " + product?.plural + ".");
-
-        return ret;
     }
 
     private void Start()
@@ -109,32 +100,36 @@ public class farming_spot : building_with_inventory, IInspectable, IPlayerIntera
             player.current.inventory.add(to_harvest, 1);
     }
 
-    //#################//
-    // ILeftPlayerMenu //
-    //#################//
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
     player_interaction[] interactions;
 
     public override player_interaction[] player_interactions()
     {
         if (interactions == null)
-        {
-            var ints = new List<player_interaction>();
-            ints.Add(new menu(this));
-            ints.AddRange(base.player_interactions());
-            interactions = ints.ToArray();
-        }
+            interactions = base.player_interactions().prepend(new menu(this),
+            new player_inspectable(transform)
+            {
+                text = () =>
+                {
+                    string ret = "Farming patch\n";
+                    ret += (growing == null ? "Nothing growing." :
+                            seed?.plural + " growing into " + product?.plural + ".");
+                    return ret;
+                }
+            });
         return interactions;
     }
 
     class menu : left_player_menu
     {
         farming_spot spot;
-        public menu(farming_spot spot) { this.spot = spot; }
+        public menu(farming_spot spot) : base(spot.display_name) { this.spot = spot; }
         protected override RectTransform create_menu() { return spot.inventory.ui; }
         public override inventory editable_inventory() { return spot.inventory; }
         protected override void on_open() { spot.update_growth(); }
-        public override string display_name() { return spot.display_name; }
     }
 }
 

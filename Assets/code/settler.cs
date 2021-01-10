@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler : character, IInspectable, IPlayerInteractable, ICanEquipArmour
+public class settler : character, IPlayerInteractable, ICanEquipArmour
 {
     public const float HUNGER_PER_SECOND = 0.2f;
     public const float HEAL_RATE = 100f / 120f;
@@ -246,28 +246,6 @@ public class settler : character, IInspectable, IPlayerInteractable, ICanEquipAr
         Gizmos.DrawWireSphere(path_element.transform.position, 0.1f);
     }
 
-    //##############//
-    // IINspectable //
-    //##############//
-
-    new public string inspect_info()
-    {
-        return name.capitalize() + "\n" +
-               "    " + "Health " + remaining_health + "/" + max_health + "\n" +
-               "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-               "    " + Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n" +
-               assignement_info() + "\n" +
-               "    interacting with " + players_interacting_with.value + " players";
-    }
-
-    public string assignement_info()
-    {
-        string ass_string = "No assignment.";
-        if (assignment != null)
-            ass_string = "Assignment: " + assignment.interactable.task_info();
-        return ass_string;
-    }
-
     //#################//
     // ICanEquipArmour //
     //#################//
@@ -280,22 +258,44 @@ public class settler : character, IInspectable, IPlayerInteractable, ICanEquipAr
     // IPlayerInteractable //
     //#####################//
 
+    player_interaction[] interactions;
+    public override player_interaction[] player_interactions()
+    {
+        if (interactions == null) interactions = new player_interaction[]
+        {
+            new menu(this),
+            new player_inspectable(transform)
+            {
+                text = () =>
+                {
+                    return name.capitalize() + "\n" +
+                       "    " + "Health " + remaining_health + "/" + max_health + "\n" +
+                       "    " + Mathf.Round(tiredness.value) + "% tired\n" +
+                       "    " + Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n" +
+                       assignement_info() + "\n" +
+                       "    interacting with " + players_interacting_with.value + " players";
+                }
+            }
+        };
+        return interactions;
+    }
+
+    public string assignement_info()
+    {
+        string ass_string = "No assignment.";
+        if (assignment != null)
+            ass_string = "Assignment: " + assignment.interactable.task_info();
+        return ass_string;
+    }
+
     class menu : left_player_menu
     {
         settler settler;
-        public menu(settler settler) { this.settler = settler; }
-        public override string display_name() { return settler.name; }
+        public menu(settler settler) : base(settler.name) { this.settler = settler; }
         public override inventory editable_inventory() { return settler.inventory; }
         protected override RectTransform create_menu() { return settler.inventory.ui; }
         protected override void on_open() { settler.on_left_menu_open(); }
         protected override void on_close() { settler.on_left_menu_close(); }
-    }
-
-    player_interaction[] interactions;
-    public player_interaction[] player_interactions()
-    {
-        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
-        return interactions;
     }
 
     color_selector hair_color_selector;

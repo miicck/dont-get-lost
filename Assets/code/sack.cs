@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class sack : networked, IInspectable, IPlayerInteractable
+public class sack : networked, IPlayerInteractable
 {
     inventory inventory;
 
@@ -25,18 +25,6 @@ public class sack : networked, IInspectable, IPlayerInteractable
             inventory = (inventory)child;
     }
 
-    //##############//
-    // IINspectable //
-    //##############//
-
-    public string inspect_info()
-    {
-        return display_name.value;
-    }
-
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
-
     //#################//
     // ILeftPlayerMenu //
     //#################//
@@ -45,18 +33,26 @@ public class sack : networked, IInspectable, IPlayerInteractable
 
     public player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        if (interactions == null) interactions =
+            new player_interaction[]
+            {
+                new menu(this),
+                new player_inspectable(transform)
+                {
+                    text = () => display_name.value
+                }
+            };
+
         return interactions;
     }
 
     class menu : left_player_menu
     {
         sack sack;
-        public menu(sack sack) { this.sack = sack; }
+        public menu(sack sack) : base(sack.display_name.value) { this.sack = sack; }
         protected override RectTransform create_menu() { return sack.inventory.ui; }
         public override inventory editable_inventory() { return sack.inventory; }
-        public override string display_name() { return sack.display_name.value; }
-        protected override void on_open() { menu.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name(); }
+        protected override void on_open() { menu.GetComponentInChildren<UnityEngine.UI.Text>().text = sack.display_name.value; }
         protected override void on_close() { if (sack.inventory.is_empty()) sack.delete(); }
     }
 

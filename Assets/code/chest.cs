@@ -42,9 +42,8 @@ public class chest : building_with_inventory, IPlayerInteractable
     class menu : left_player_menu
     {
         chest chest;
-        public menu(chest chest) { this.chest = chest; }
+        public menu(chest chest) : base(chest.display_name) { this.chest = chest; }
         protected override RectTransform create_menu() { return chest.inventory.ui; }
         public override inventory editable_inventory() { return chest.inventory; }
-        public override string display_name() { return chest.display_name; }
     }
 }

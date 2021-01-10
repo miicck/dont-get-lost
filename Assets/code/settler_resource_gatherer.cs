@@ -23,7 +23,7 @@ public abstract class settler_interactable_options : settler_interactable, IPlay
     //##################//
 
     player_interaction[] interactions;
-    public player_interaction[] player_interactions()
+    public virtual player_interaction[] player_interactions()
     {
         if (interactions == null) interactions = new player_interaction[] { new menu(this) };
         return interactions;
@@ -32,7 +32,8 @@ public abstract class settler_interactable_options : settler_interactable, IPlay
     class menu : left_player_menu
     {
         settler_interactable_options options;
-        public menu(settler_interactable_options options)
+        public menu(settler_interactable_options options) : base(
+            options.GetComponentInParent<item>()?.display_name)
         {
             this.options = options;
         }

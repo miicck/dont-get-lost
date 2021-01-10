@@ -20,15 +20,14 @@ public class workbench : building_with_inventory, IPlayerInteractable
     class menu : left_player_menu
     {
         workbench workbench;
-        public menu(workbench workbench) { this.workbench = workbench; }
+        public menu(workbench workbench) : base(workbench.display_name) { this.workbench = workbench; }
 
-        public override string display_name() { return workbench.display_name; }
         public override inventory editable_inventory() { return workbench.inventory; }
 
         protected override RectTransform create_menu()
         {
             var crafting = workbench.inventory.ui.GetComponentInChildren<crafting_input>();
-            workbench.inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = display_name().capitalize();
+            workbench.inventory.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = workbench.display_name;
             crafting.recipes_folder = "recipes/workbenches/" + workbench.name;
             crafting.craft_from = workbench.inventory;
             crafting.craft_to = player.current.inventory;

@@ -33,47 +33,64 @@ public class building_material : item, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    class interaction : player_interaction
+    class left_click_interaction : player_interaction
     {
         building_material material;
-        public interaction(building_material material) { this.material = material; }
+        public left_click_interaction(building_material material) { this.material = material; }
 
         public override bool conditions_met()
         {
-            return (material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.LEFT)) ||
-                  (!material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.RIGHT));
+            return material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
         }
 
         public override bool start_interaction(player player)
         {
-            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
-            {
-                // Only pick up building materials 
-                // that are in the logistics system
-                if (material.is_logistics_version)
-                    material.pick_up();
-            }
-            else if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
-            {
-                // Delete buildings on right click
-                if (!material.is_logistics_version)
-                    material.pick_up(true);
-            }
+            material.pick_up();
             return true;
         }
 
         public override string context_tip()
         {
-            if (material.is_logistics_version)
-                return "Left click to pick up " + material.display_name;
-            else
-                return "Right click to demolish " + material.display_name;
+            if (!material.is_logistics_version) return null;
+            return "Left click to pick up " + material.display_name;
+        }
+    }
+
+    class right_click_interaction : player_interaction
+    {
+        building_material material;
+        public right_click_interaction(building_material material) { this.material = material; }
+
+        public override bool conditions_met()
+        {
+            return !material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.RIGHT);
+        }
+
+        public override bool start_interaction(player player)
+        {
+            material.pick_up(true);
+            return true;
+        }
+
+        public override string context_tip()
+        {
+            if (material.is_logistics_version) return null;
+            return "Right click to demolish " + material.display_name;
         }
     }
 
     public override player_interaction[] player_interactions()
     {
-        return new player_interaction[] { new interaction(this) };
+        return new player_interaction[]
+        {
+            new left_click_interaction(this),
+            new right_click_interaction(this),
+            new player_inspectable(transform)
+            {
+                text = () => display_name + " (built)",
+                sprite = () => sprite
+            }
+        };
     }
 
     //#########//

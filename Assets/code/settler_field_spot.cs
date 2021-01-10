@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field_spot : networked, IInspectable
+public class settler_field_spot : networked, IPlayerInteractable
 {
     networked_variables.net_float progress;
     float progress_scale => progress.value * (1f - min_scale) + min_scale;
@@ -69,18 +69,25 @@ public class settler_field_spot : networked, IInspectable
         progress.value += 10f / growth_time;
     }
 
-    public string inspect_info()
-    {
-        return Mathf.Round(progress.value * 100f) + "% grown";
-    }
-
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
-
     private void OnDrawGizmos()
     {
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.color = Color.Lerp(Color.red, Color.green, progress.value);
         Gizmos.DrawWireCube(Vector3.zero, new Vector3(1f, 0.05f, 1f));
+    }
+
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    public player_interaction[] player_interactions()
+    {
+        return new player_interaction[]
+        {
+            new player_inspectable(transform)
+            {
+                text = () => Mathf.Round(progress.value * 100f) + "% grown"
+            }
+        };
     }
 }

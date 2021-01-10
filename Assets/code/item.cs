@@ -6,7 +6,7 @@ public interface INonEquipable { }
 public interface INonEquipableCallback : INonEquipable { void on_equip_callback(player player); }
 public interface INonLogistical { }
 
-public class item : networked, IInspectable, IPlayerInteractable
+public class item : networked, IPlayerInteractable
 {
     public const float LOGISTICS_SIZE = 0.3f;
 
@@ -63,7 +63,16 @@ public class item : networked, IInspectable, IPlayerInteractable
 
     public virtual player_interaction[] player_interactions()
     {
-        return new player_interaction[] { new pick_up_interaction(this), new select_matching_interaction(this) };
+        return new player_interaction[]
+        {
+            new pick_up_interaction(this),
+            new select_matching_interaction(this),
+            new player_inspectable(transform)
+            {
+                text = () => item_quantity_info(this, 1),
+                sprite = () => sprite
+            }
+        };
     }
 
     class pick_up_interaction : player_interaction
@@ -329,18 +338,6 @@ public class item : networked, IInspectable, IPlayerInteractable
         // Initialize networked variables
         networked_rotation.value = transform.rotation;
     }
-
-    //##############//
-    // IInspectable //
-    //##############//
-
-    public virtual string inspect_info()
-    {
-        return item_quantity_info(this, 1);
-    }
-
-    public virtual Sprite main_sprite() { return sprite; }
-    public virtual Sprite secondary_sprite() { return null; }
 
     //################//
     // STATIC METHODS //

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class crane : MonoBehaviour, IInspectable
+public class crane : MonoBehaviour, IPlayerInteractable
 {
     public float rotation_speed = 45f;
     public float winch_speed = 1f;
@@ -130,11 +130,15 @@ public class crane : MonoBehaviour, IInspectable
         Gizmos.DrawWireSphere(target, 0.1f);
     }
 
-    public string inspect_info()
-    {
-        return "Crane (" + state.ToString().ToLower() + ")";
-    }
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-    public Sprite main_sprite() { return null; }
-    public Sprite secondary_sprite() { return null; }
+    public player_interaction[] player_interactions()
+    {
+        return new player_interaction[] { new player_inspectable(transform)
+        {
+            text = () => "Crane (" + state.ToString().ToLower() + ")"
+        }};
+    }
 }

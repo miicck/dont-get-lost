@@ -6,7 +6,7 @@ using UnityEngine;
 /// to yield a product, and takes time to regrow. The part will
 /// be disabled until it regrows. </summary>
 [RequireComponent(typeof(product))]
-public class harvest_by_hand : MonoBehaviour, IInspectable, IPlayerInteractable
+public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
 {
     public AudioClip play_on_pick;
     public float regrow_time = 1f;
@@ -46,7 +46,15 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IPlayerInteractable
     player_interaction[] interactions;
     public player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new player_interaction[] { new interaction(this) };
+        if (interactions == null) interactions = new player_interaction[] {
+            new interaction(this),
+            new player_inspectable(transform)
+            {
+                text = ()=> product.product_plurals_list(products) + " can bn harvested",
+                sprite = ()=> products[0].sprite(),
+                secondary_sprite= ()=> Resources.Load<Sprite>("sprites/default_interact_cursor")
+            }
+        };
         return interactions;
     }
 
@@ -106,25 +114,6 @@ public class harvest_by_hand : MonoBehaviour, IInspectable, IPlayerInteractable
         // Create the product in the player inventory
         foreach (var p in products)
             p.create_in(player.current.inventory);
-    }
-
-    //##############//
-    // IInspectable //
-    //##############//
-
-    public string inspect_info()
-    {
-        return product.product_plurals_list(products) + " can bn harvested by hand";
-    }
-
-    public Sprite main_sprite()
-    {
-        return products[0].sprite();
-    }
-
-    public Sprite secondary_sprite()
-    {
-        return Resources.Load<Sprite>("sprites/default_interact_cursor");
     }
 
     //###############//

@@ -129,6 +129,26 @@ public static class utils
         return default;
     }
 
+    /// <summary> Simmilar to <see cref="System.Lazy{T}"/>, but not thread 
+    /// safe because we don't need that for most unity stuff. </summary>
+    public class lazy<T>
+    {
+        public delegate T creator();
+        creator create;
+        public lazy(creator c) { create = c; }
+
+        public T value
+        {
+            get
+            {
+                if (_value == null)
+                    _value = create();
+                return _value;
+            }
+        }
+        T _value;
+    }
+
     /// <summary> Returns the point on the given <paramref name="world_line"/>, that 
     /// passes closest to the players camera ray. </summary>
     public static Vector3 nearest_point_on_line_to_player_ray(Ray world_line)

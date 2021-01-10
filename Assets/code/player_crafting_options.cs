@@ -15,11 +15,12 @@ public class player_crafting_options : crafting_input
         loaded.AddRange(Resources.LoadAll<recipe>(recipes_folder));
 
         // ... and the additional recipes of the object we're interacting with
-        var to_add = player.current.current_interaction?.additional_recipes();
+        string name = null;
+        var to_add = player.current.current_interaction?.additional_recipes(out name);
         if (to_add != null)
         {
             loaded = new List<recipe>(to_add);
-            title.text = player.current.current_interaction.display_name();
+            title.text = name;
         }
         else title.text = "Crafting";
 

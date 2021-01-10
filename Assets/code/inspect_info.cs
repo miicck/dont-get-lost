@@ -9,9 +9,6 @@ public class inspect_info : MonoBehaviour
     public UnityEngine.UI.Image image_upper;
     public UnityEngine.UI.Image image_lower;
 
-    static Vector3 last_mouse_pos_polled;
-    static inspectable_info last_mouse_info;
-
     static inspect_info()
     {
         tips.add("You can inspect the object you are currently looking at by " +
@@ -19,110 +16,85 @@ public class inspect_info : MonoBehaviour
             "works when hovering over items in your inventory.");
     }
 
-    public struct inspectable_info
+    public void turn_on(string text, Sprite primary, Sprite secondary)
     {
-        public IInspectable inspecting;
-        public List<IAddsToInspectionText> sub_inspecting;
+        info_text.text = text;
+        image_upper.sprite = primary;
+        image_upper.enabled = primary != null;
+        image_lower.sprite = secondary;
+        image_lower.enabled = secondary != null;
+        gameObject.SetActive(true);
     }
 
-    public static inspectable_info inspectable_under_cursor
+    public void turn_off()
     {
-        get
-        {
-            // Raycast for a ui element
-            if (Cursor.visible)
-            {
-                // Raycasting is expensive, only carry out a raycast if the mouse has moved
-                if ((Input.mousePosition - last_mouse_pos_polled).magnitude < 4f)
-                    return last_mouse_info;
-
-                last_mouse_pos_polled = Input.mousePosition;
-                last_mouse_info = new inspectable_info
-                {
-                    inspecting = utils.raycast_ui_under_mouse<IInspectable>(),
-                    sub_inspecting = new List<IAddsToInspectionText>()
-                };
-                return last_mouse_info;
-            }
-
-            // Raycast for the nearest collider, and search that for IInspectable
-            // objects (raycast for collider, rather than IInspectable so that 
-            // you can't get IInspectables from behind stuff).
-            RaycastHit hit;
-            float range;
-            var ray = player.current.camera_ray(INSPECT_RANGE, out range);
-            var col = utils.raycast_for_closest<Collider>(ray, out hit, range,
-                (c) => !c.transform.IsChildOf(player.current.transform));
-
-            if (col != null)
-            {
-                var comp = col.gameObject.GetComponentInParent(typeof(IInspectable));
-                if (comp != null)
-                    return new inspectable_info
-                    {
-                        inspecting = (IInspectable)comp,
-                        sub_inspecting = new List<IAddsToInspectionText>(
-                        comp.GetComponentsInChildren<IAddsToInspectionText>())
-                    };
-            }
-
-            return new inspectable_info();
-        }
+        gameObject.SetActive(false);
     }
-
-    public bool visible
-    {
-        get => gameObject.activeInHierarchy;
-        set
-        {
-            if (value)
-            {
-                var info = inspectable_under_cursor;
-                if (info.inspecting != null)
-                {
-                    info_text.text = info.inspecting.inspect_info().capitalize().Trim();
-                    foreach (var ta in info.sub_inspecting)
-                    {
-                        var added_text = ta.added_inspection_text();
-                        added_text = added_text?.Trim();
-                        if (added_text != null && added_text.Length > 0)
-                            info_text.text += "\n" + added_text;
-                    }
-                    Sprite main = info.inspecting.main_sprite();
-                    Sprite secondary = info.inspecting.secondary_sprite();
-
-                    if (main == null)
-                        image_upper.enabled = false;
-                    else
-                    {
-                        image_upper.enabled = true;
-                        image_upper.sprite = main;
-                    }
-
-                    if (secondary == null)
-                        image_lower.enabled = false;
-                    else
-                    {
-                        image_lower.enabled = true;
-                        image_lower.sprite = secondary;
-                    }
-                }
-
-                gameObject.SetActive(info.inspecting != null);
-            }
-            else gameObject.SetActive(false);
-        }
-    }
-}
-
-public interface IInspectable
-{
-    string inspect_info();
-    Sprite main_sprite();
-    Sprite secondary_sprite();
 }
 
 public interface IAddsToInspectionText
 {
-    string added_inspection_text();
+    public string added_inspection_text();
+}
+
+public class player_inspectable : player_interaction
+{
+    Transform transform;
+    public player_inspectable(Transform attached_to)
+    {
+        transform = attached_to;
+    }
+
+    public delegate string text_func();
+    public text_func text;
+
+    public delegate Sprite sprite_func();
+    public sprite_func sprite;
+    public sprite_func secondary_sprite;
+
+    public override string context_tip()
+    {
+        return "Press " + controls.current_bind(controls.BIND.INSPECT) + " to inspect";
+    }
+
+    public override bool conditions_met()
+    {
+        return controls.key_down(controls.BIND.INSPECT);
+    }
+
+    public override bool start_interaction(player player)
+    {
+        string str = text?.Invoke();
+        foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
+            str += "\n" + add.added_inspection_text();
+        inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
+        return !controls.key_down(controls.BIND.INSPECT);
+    }
+
+    public override bool continue_interaction(player player)
+    {
+        return !controls.key_down(controls.BIND.INSPECT);
+    }
+
+    public override void end_interaction(player player)
+    {
+        inspect_info.turn_off();
+    }
+
+    static inspect_info inspect_info
+    {
+        get
+        {
+            // Create the inspect_info object if it doesn't already exist
+            if (_inspect_info == null)
+            {
+                _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst();
+                _inspect_info.transform.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
+                _inspect_info.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            }
+
+            return _inspect_info;
+        }
+    }
+    static inspect_info _inspect_info;
 }

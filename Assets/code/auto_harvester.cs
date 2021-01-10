@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class auto_harvester : building_material, IInspectable
+public class auto_harvester : building_material, IPlayerInteractable
 {
     // Determines where we check for harvestable objects
     public Transform ray_start;
@@ -69,16 +69,26 @@ public class auto_harvester : building_material, IInspectable
             ray_start.position + ray_start.forward * ray_length);
     }
 
-    public override string inspect_info()
-    {
-        string prod = "Nothing";
-        if (harvesting != null)
-            prod = harvesting.products[current_product].auto_item.display_name;
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
 
-        // Report what we are harvesting
-        return display_name + "\n" +
-               "Tool type    : " + tool.type_to_name(tool_type) + "\n" +
-               "Tool quality : " + tool.quality_to_name(tool_quality) + "\n" +
-               "Harvesting   : " + prod;
+    public override player_interaction[] player_interactions()
+    {
+        return base.player_interactions().prepend(new player_inspectable(transform)
+        {
+            text = () =>
+            {
+                string prod = "Nothing";
+                if (harvesting != null)
+                    prod = harvesting.products[current_product].auto_item.display_name;
+
+                // Report what we are harvesting
+                return display_name + "\n" +
+                       "Tool type    : " + tool.type_to_name(tool_type) + "\n" +
+                       "Tool quality : " + tool.quality_to_name(tool_quality) + "\n" +
+                       "Harvesting   : " + prod;
+            }
+        });
     }
 }
