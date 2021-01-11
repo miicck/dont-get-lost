@@ -129,6 +129,37 @@ public static class utils
         return default;
     }
 
+    /// <summary> Raycast for all <typeparamref name="T"/>s under the mouse. </summary>
+    public static T[] raycast_all_ui_under_mouse<T>()
+    {
+        // Setup the raycast
+        var event_system = UnityEngine.EventSystems.EventSystem.current;
+        var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)
+        {
+            position = Input.mousePosition
+        };
+
+        var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+
+        // This never seems to work, but I guess it might as well stay
+        event_system.RaycastAll(pointer_data, hits);
+
+        // Find the graphic raycaster and use it to find ui elements below the pointer
+        var raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
+        raycaster.Raycast(pointer_data, hits);
+
+        // Find an object with the given component type
+        List<T> ret = new List<T>();
+        foreach (var h in hits)
+        {
+            var t = h.gameObject.GetComponentInChildren<T>();
+            if (t != null) ret.Add(t);
+        }
+
+        return ret.ToArray();
+    }
+
+
     /// <summary> Simmilar to <see cref="System.Lazy{T}"/>, but not thread 
     /// safe because we don't need that for most unity stuff. </summary>
     public class lazy<T>

@@ -72,14 +72,11 @@ public class ranged_weapon : equip_in_hand
         ranged_weapon weapon;
         public fire_interaction(ranged_weapon rw) { weapon = rw; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override string context_tip()
         {
-            return "Left click to fire";
+            return "fire "+weapon.display_name;
         }
 
         public override bool start_interaction(player player)
@@ -94,14 +91,12 @@ public class ranged_weapon : equip_in_hand
         ranged_weapon weapon;
         public pickup_ammo_interaction(ranged_weapon rw) { weapon = rw; }
 
-        public override bool conditions_met()
-        {
-            return controls.held(controls.BIND.ALT_USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
+        public override bool allow_held => true;
 
         public override string context_tip()
         {
-            return "Right click to pickup ammo (can be held down)";
+            return "pickup ammo";
         }
 
         public override bool continue_interaction(player player)

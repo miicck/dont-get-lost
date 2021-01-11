@@ -21,15 +21,12 @@ public class cave_system_teleporter : MonoBehaviour, IPlayerInteractable
         cave_system_teleporter teleporter;
         public interaction(cave_system_teleporter teleporter) { this.teleporter = teleporter; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.ENTER_EXIT_CAVE);
-        }
+        public override controls.BIND keybind => controls.BIND.ENTER_EXIT_CAVE;
 
         public override string context_tip()
         {
-            if (teleporter.is_underground) return "Left click to return to the surface";
-            return "Left click to go underground";
+            if (teleporter.is_underground) return "return to the surface";
+            return "go underground";
         }
 
         public override bool start_interaction(player player)

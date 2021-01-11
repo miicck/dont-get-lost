@@ -80,10 +80,7 @@ public class item : networked, IPlayerInteractable
         item item;
         public pick_up_interaction(item item) { this.item = item; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.PICK_UP_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.PICK_UP_ITEM;
 
         public override bool start_interaction(player player)
         {
@@ -93,7 +90,7 @@ public class item : networked, IPlayerInteractable
 
         public override string context_tip()
         {
-            return "Left click to pick up " + item.display_name;
+            return "pick up " + item.display_name;
         }
     }
 
@@ -102,10 +99,7 @@ public class item : networked, IPlayerInteractable
         item item;
         public select_matching_interaction(item item) { this.item = item; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.SELECT_ITEM_FROM_WORLD);
-        }
+        public override controls.BIND keybind => controls.BIND.SELECT_ITEM_FROM_WORLD;
 
         public override bool start_interaction(player player)
         {
@@ -115,7 +109,7 @@ public class item : networked, IPlayerInteractable
 
         public override string context_tip()
         {
-            return "Press Q to select matching objects from inventory";
+            return "equip matching objects from inventory";
         }
     }
 
@@ -148,16 +142,13 @@ public class item : networked, IPlayerInteractable
     {
         public eat_interaction(item i) : base(i) { }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM) &&
-                   item.food_values != null;
-        }
+        public override bool is_possible() { return item.food_values != null; }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
+
 
         public override string context_tip()
         {
-            if (item.food_values == null) return null;
-            return "Left click to eat " + item.display_name;
+            return "eat " + item.display_name;
         }
 
         public override bool start_interaction(player player)
@@ -171,14 +162,11 @@ public class item : networked, IPlayerInteractable
     {
         public place_on_gutter(item i) : base(i) { }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.PLACE_ON_GUTTER);
-        }
+        public override controls.BIND keybind => controls.BIND.PLACE_ON_GUTTER;
 
         public override string context_tip()
         {
-            return "Right click to place " + item.display_name + " on gutter";
+            return "place " + item.display_name + " on gutter";
         }
 
         public override bool start_interaction(player player)

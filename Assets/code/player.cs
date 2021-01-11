@@ -197,43 +197,47 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         }
 
         tips.context_tip = "";
-        IPlayerInteractable[] interactables = null;
+        List<player_interaction> all_interactions = new List<player_interaction>();
 
-        // Get a new ui interaction
-        if (interactables == null)
-        {
-            var ui_inter = utils.raycast_ui_under_mouse<IPlayerInteractable>();
-            if (ui_inter != null) interactables = new IPlayerInteractable[] { ui_inter };
-        }
+        // Get UI interactions
+        foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
+            all_interactions.AddRange(ui_inter.player_interactions());
 
-        // Get equipped interactable
-        if (interactables == null)
-        {
-            if (equipped != null)
-                interactables = new IPlayerInteractable[] { new item_use_wrapper(equipped) };
-        }
+        // Get equipped interactions
+        if (equipped != null) all_interactions.AddRange(equipped?.item_uses());
 
         // Get in-world interactables
-        if (interactables == null)
+        var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+        foreach (var hit in Physics.RaycastAll(cam_ray, dis))
         {
-            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-            interactables = utils.raycast_for_closests<IPlayerInteractable>(
-                cam_ray, out RaycastHit hit, max_distance: dis);
+            if (hit.transform.IsChildOf(transform)) continue; // Can't interact with myself
+            var inters = hit.transform.GetComponentsInParent<IPlayerInteractable>();
+            foreach (var inter in inters)
+                all_interactions.AddRange(inter.player_interactions());
         }
 
-        // No interactions found
-        if (interactables == null)
-            return;
-
-        List<player_interaction> inters = new List<player_interaction>();
-        foreach (var i in interactables)
-            inters.AddRange(i.player_interactions());
-
-        foreach (var i in inters)
+        // Create a list of all possible interactions with unique keybinds
+        var unique_interactions = new Dictionary<controls.BIND, player_interaction>();
+        foreach (var i in all_interactions)
         {
+            if (!i.is_possible()) continue; // Not possible
+            if (unique_interactions.ContainsKey(i.keybind)) continue; // Not unique
+            unique_interactions[i.keybind] = i;
+        }
+
+        foreach (var kv in unique_interactions)
+        {
+            var i = kv.Value;
+
             string ct = i.context_tip()?.Trim();
-            if (ct != null && ct.Length > 0) tips.context_tip += "\n" + ct;
-            if (current_interaction == null && i.conditions_met())
+            if (ct != null && ct.Length > 0)
+            {
+                if (i.allow_held) ct = "[hold " + controls.bind_name(i.keybind) + "] " + ct;
+                else ct = "[" + controls.bind_name(i.keybind) + "] " + ct;
+                tips.context_tip +=  "\n" + ct;
+            }
+
+            if (current_interaction == null && i.triggered())
                 current_interaction = i;
         }
     }
@@ -1353,17 +1357,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         player interacting_with;
         public interaction(player player) { this.interacting_with = player; }
 
-        public override bool conditions_met()
-        {
-            if (current.equipped == null) return false;
-            return controls.triggered(controls.BIND.GIVE);
-        }
+        public override bool is_possible() { return current.equipped != null; }
+        public override controls.BIND keybind => controls.BIND.GIVE;
 
         public override string context_tip()
         {
-            if (current.equipped == null) return "";
-            return "Press " + controls.bind_name(controls.BIND.GIVE) +
-                   " to give " + current.equipped.display_name +
+            return "give " + current.equipped.display_name +
                    " to " + interacting_with.username.value;
         }
 
@@ -1789,10 +1788,18 @@ public class popup_message : MonoBehaviour
 /// <summary> An object that a player can be interacted with by the player. </summary>
 public abstract class player_interaction
 {
-    /// <summary> Should return true if the appropriate 
-    /// conditios are met to start the interaction 
-    /// (keypress, mouse click etc.) </summary>
-    public abstract bool conditions_met();
+    /// <summary> Returns the keybind needed to start this interaction </summary>
+    public abstract controls.BIND keybind { get; }
+
+    /// <summary> Returns true if the associated <see cref="keybind"/> can be held down. </summary>
+    public virtual bool allow_held => false;
+
+    /// <summary> Returns true if this interaction is triggered 
+    /// based on <see cref="keybind"/> and <see cref="allow_held"/> </summary>
+    public bool triggered() { return allow_held ? controls.held(keybind) : controls.triggered(keybind); }
+
+    /// <summary> Returns false if the interaction is (temporarily) impossible. </summary>
+    public virtual bool is_possible() { return true; }
 
     /// <summary> Shown at the bottom right of the screen to let the player 
     /// know what interactions are currently possible. </summary>
@@ -1824,15 +1831,12 @@ public abstract class left_player_menu : player_interaction
     string name;
     public left_player_menu(string name) { this.name = name; }
 
-    public override bool conditions_met()
-    {
-        // Left player menus open with the inventory.
-        return controls.triggered(controls.BIND.OPEN_INVENTORY);
-    }
+    // Left player menus open with the inventory.
+    public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
 
     public override string context_tip()
     {
-        return "Press E to interact with " + name;
+        return "interact with " + name;
     }
 
     public override bool start_interaction(player player)

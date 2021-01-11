@@ -147,10 +147,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
         farming_spot spot;
         public interaction(farming_spot spot) { this.spot = spot; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override bool start_interaction(player player)
         {
@@ -160,7 +157,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 
         public override string context_tip()
         {
-            return "Left click to harvest";
+            return "harvest";
         }
     }
 }

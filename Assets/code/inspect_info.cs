@@ -54,13 +54,11 @@ public class player_inspectable : player_interaction
 
     public override string context_tip()
     {
-        return "Press " + controls.bind_name(controls.BIND.INSPECT) + " to inspect";
+        return "inspect";
     }
 
-    public override bool conditions_met()
-    {
-        return controls.held(controls.BIND.INSPECT);
-    }
+    public override bool allow_held => true;
+    public override controls.BIND keybind => controls.BIND.INSPECT;
 
     public override bool start_interaction(player player)
     {

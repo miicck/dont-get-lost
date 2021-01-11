@@ -11,14 +11,11 @@ public class dynamite : item
 
     class demolish_use : player_interaction
     {
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override string context_tip()
         {
-            return "Left click to blow stuff up";
+            return "blow stuff up";
         }
 
         public override bool start_interaction(player player)

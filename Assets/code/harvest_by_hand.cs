@@ -47,10 +47,10 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
     public player_interaction[] player_interactions()
     {
         if (interactions == null) interactions = new player_interaction[] {
-            new interaction(this),
+            new harvest_interaction(this),
             new player_inspectable(transform)
             {
-                text = ()=> product.product_plurals_list(products) + " can bn harvested",
+                text = ()=> product.product_plurals_list(products) + " can bn harvested by hand",
                 sprite = ()=> products[0].sprite(),
                 secondary_sprite= ()=> Resources.Load<Sprite>("sprites/default_interact_cursor")
             }
@@ -58,11 +58,11 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
         return interactions;
     }
 
-    class interaction : player_interaction
+    class harvest_interaction : player_interaction
     {
         harvest_by_hand harvesting;
-        public interaction(harvest_by_hand harvesting) { this.harvesting = harvesting; }
-        public override bool conditions_met() { return controls.triggered(controls.BIND.USE_ITEM); }
+        public harvest_interaction(harvest_by_hand harvesting) { this.harvesting = harvesting; }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override bool start_interaction(player player)
         {
@@ -72,7 +72,7 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
 
         public override string context_tip()
         {
-            return "Left click to harvest";
+            return "harvest";
         }
     }
 

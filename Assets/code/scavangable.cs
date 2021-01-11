@@ -37,16 +37,13 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
         scavangable scavangable;
         public interaction(scavangable scavangable) { this.scavangable = scavangable; }
 
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override string context_tip()
         {
-            var str = "Left click to scavange for " + product.product_plurals_list(scavangable.products);
+            var str = "scavange for " + product.product_plurals_list(scavangable.products);
             if (str.Length < 40) return str;
-            return "Left click to scavange";
+            return "scavange";
         }
 
         public override bool start_interaction(player player)

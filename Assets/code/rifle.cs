@@ -32,6 +32,20 @@ public class rifle : equip_in_hand
     Vector2 acc_kick_angle;
     float time_in_state = 0;
 
+    bool ads_triggered
+    {
+        get => _ads_triggered;
+        set
+        {
+            _ads_triggered = value;
+
+            // Switch cursors depending on mode of use
+            if (_ads_triggered) player_using.cursor_sprite = "transparent";
+            else player_using.cursor_sprite = hip_fire_sprite;
+        }
+    }
+    bool _ads_triggered = false;
+
     /// <summary> How much reloading is left in the range [0,1] </summary>
     float reloading_left
     {
@@ -224,14 +238,7 @@ public class rifle : equip_in_hand
 
     void set_camera_position()
     {
-        // Switch cursors depending on mode of use
-        if (controls.triggered(controls.BIND.ALT_USE_ITEM))
-            player_using.cursor_sprite = "transparent";
-
-        if (controls.untriggered(controls.BIND.ALT_USE_ITEM))
-            player_using.cursor_sprite = hip_fire_sprite;
-
-        if (controls.held(controls.BIND.ALT_USE_ITEM) && state != STATE.RELOADING)
+        if (ads_triggered && state != STATE.RELOADING)
         {
             // ADS - lerp camera to sight position / sight field of view
             player_using.camera.fieldOfView = Mathf.Lerp(player_using.camera.fieldOfView,
@@ -286,24 +293,25 @@ public class rifle : equip_in_hand
     player_interaction[] uses;
     public override player_interaction[] item_uses()
     {
-        if (uses == null) uses = new player_interaction[] { new rifle_use(this) };
+        if (uses == null) uses = new player_interaction[] 
+        { 
+            new fire_interaction(this),
+            new ads_interaction(this)
+        };
         return uses;
     }
 
-    class rifle_use : player_interaction
+    class fire_interaction : player_interaction
     {
         rifle rifle;
-        public rifle_use(rifle rifle) { this.rifle = rifle; }
+        public fire_interaction(rifle rifle) { this.rifle = rifle; }
 
-        public override bool conditions_met()
-        {
-            return controls.held(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
+        public override bool allow_held => true;
 
         public override string context_tip()
         {
-            return "Left click to fire " + rifle.display_name + "\n" +
-                   "Right click to aim down the sights";
+            return "fire";
         }
 
         public override bool start_interaction(player player)
@@ -324,6 +332,33 @@ public class rifle : equip_in_hand
             // the on_change_old_new method of current_item_use in the player class)
             if (rifle.state == STATE.READY) return true;
             return false;
+        }
+    }
+
+    class ads_interaction : player_interaction
+    {
+        rifle rifle;
+        public ads_interaction(rifle rifle) { this.rifle = rifle; }
+
+        public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
+        public override bool allow_held => true;
+
+        public override string context_tip()
+        {
+            return "aim down sights";
+        }
+
+        public override bool start_interaction(player player)
+        {
+            rifle.ads_triggered = true;
+            return false;
+        }
+
+        public override bool continue_interaction(player player) { return !triggered(); }
+
+        public override void end_interaction(player player)
+        {
+            rifle.ads_triggered = false;
         }
     }
 }

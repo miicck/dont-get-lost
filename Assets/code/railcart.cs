@@ -16,16 +16,11 @@ public class railcart : item
         float speed;
 
         public ride_interaction(railcart riding) { this.riding = riding; }
-
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM) ||
-                   controls.triggered(controls.BIND.ALT_USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override string context_tip()
         {
-            return "Left click on a rail to ride";
+            return "ride";
         }
 
         public override bool start_interaction(player player)
@@ -82,8 +77,7 @@ public class railcart : item
             player.transform.position = current.progress_towards(next, progress);
 
             // Mouse click dismounts the rail
-            if (controls.triggered(controls.BIND.USE_ITEM) ||
-                controls.triggered(controls.BIND.ALT_USE_ITEM))
+            if (controls.triggered(controls.BIND.USE_ITEM))
                 return true;
 
             return false;

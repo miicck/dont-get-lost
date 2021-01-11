@@ -41,14 +41,12 @@ public class projectile : item, INotPathBlocking
 
     class pickup_ammo : player_interaction
     {
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
+        public override bool allow_held => true;
 
         public override string context_tip()
         {
-            return "Left click to pickup projectiles (can be held down)";
+            return "pickup projectiles";
         }
 
         public override bool start_interaction(player player)

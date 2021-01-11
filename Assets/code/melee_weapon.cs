@@ -106,13 +106,11 @@ public class melee_weapon : equip_in_hand
 
         public override string context_tip()
         {
-            return "Left click to swing " + swinging.display_name;
+            return "swing " + swinging.display_name;
         }
 
-        public override bool conditions_met()
-        {
-            return controls.held(controls.BIND.USE_ITEM);
-        }
+        public override bool allow_held => true;
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override bool start_interaction(player player)
         {

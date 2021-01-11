@@ -33,14 +33,15 @@ public class building_material : item, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    class use_interaction : player_interaction
+    class pick_up_from_gutter : player_interaction
     {
         building_material material;
-        public use_interaction(building_material material) { this.material = material; }
+        public pick_up_from_gutter(building_material material) { this.material = material; }
 
-        public override bool conditions_met()
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
+        public override bool is_possible()
         {
-            return material.is_logistics_version && controls.triggered(controls.BIND.USE_ITEM);
+            return material.is_logistics_version;
         }
 
         public override bool start_interaction(player player)
@@ -51,20 +52,17 @@ public class building_material : item, IPlayerInteractable
 
         public override string context_tip()
         {
-            if (!material.is_logistics_version) return null;
-            return "Left click to pick up " + material.display_name;
+            return "pick up " + material.display_name;
         }
     }
 
-    class alt_use_interaction : player_interaction
+    class deconstruct_interaction : player_interaction
     {
         building_material material;
-        public alt_use_interaction(building_material material) { this.material = material; }
+        public deconstruct_interaction(building_material material) { this.material = material; }
 
-        public override bool conditions_met()
-        {
-            return !material.is_logistics_version && controls.triggered(controls.BIND.ALT_USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
+        public override bool is_possible() { return !material.is_logistics_version; }
 
         public override bool start_interaction(player player)
         {
@@ -74,8 +72,7 @@ public class building_material : item, IPlayerInteractable
 
         public override string context_tip()
         {
-            if (material.is_logistics_version) return null;
-            return "Right click to demolish " + material.display_name;
+            return "demolish " + material.display_name;
         }
     }
 
@@ -83,8 +80,8 @@ public class building_material : item, IPlayerInteractable
     {
         return new player_interaction[]
         {
-            new use_interaction(this),
-            new alt_use_interaction(this),
+            new pick_up_from_gutter(this),
+            new deconstruct_interaction(this),
             new select_matching_interaction(this),
             new player_inspectable(transform)
             {
@@ -303,7 +300,7 @@ public class building_material : item, IPlayerInteractable
 
             Vector3? new_closest_point = null;
             Vector3? rotation_axis = null;
-            accumulated_rotation += 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) + 
+            accumulated_rotation += 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) +
                                           controls.delta(controls.BIND.ROTATION_AMOUNT_Y));
 
             switch (mouse_mode)
@@ -661,14 +658,12 @@ public class building_material : item, IPlayerInteractable
         building_material equipped;
         public demolish_interaction(building_material equipped) { this.equipped = equipped; }
 
-        public override bool conditions_met()
-        {
-            return controls.held(controls.BIND.ALT_USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
+        public override bool allow_held => true;
 
         public override string context_tip()
         {
-            return "Right click to destroy matching objects (can be held down)";
+            return "destroy matching objects";
         }
 
         public override bool start_interaction(player player)
@@ -705,11 +700,7 @@ public class building_material : item, IPlayerInteractable
         building_material equipped;
 
         public build_interaction(building_material equipped) { this.equipped = equipped; }
-
-        public override bool conditions_met()
-        {
-            return controls.triggered(controls.BIND.USE_ITEM);
-        }
+        public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
         public override string context_tip()
         {
@@ -717,7 +708,7 @@ public class building_material : item, IPlayerInteractable
             {
                 if (controls.key_based_building)
                 {
-                    return "Left click to build, right click to cancel\nUse " +
+                    return "build, " + controls.bind_name(controls.BIND.ALT_USE_ITEM) + "to cancel \nUse " +
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
@@ -731,14 +722,14 @@ public class building_material : item, IPlayerInteractable
                 else
                 {
                     return
-                        "Double left click to build, right click to cancel\n" +
+                        "Double tap " + controls.bind_name(keybind) + " to build, " + controls.bind_name(controls.BIND.ALT_USE_ITEM) + " to cancel\n" +
                         "Click and drag the arrows to translate, or the circles to rotate\n" +
                         "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations\n" +
                         "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
             }
 
-            return "Left click to build\n" +
+            return "build\n" +
                 "Buildings will snap together at key points, hold " +
                 controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
                 "Disabling snapping will also allign the building to the world axes";
