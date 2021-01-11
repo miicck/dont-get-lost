@@ -74,181 +74,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             " to give them the item you currently have equipped.");
     }
 
-    //##########//
-    // UI STATE //
-    //##########//
-
-    public enum UI_STATE
-    {
-        ALL_CLOSED = 0,
-        INVENTORY_OPEN,
-        MAP_OPEN,
-        RECIPE_BOOK_OPEN,
-        OPTIONS_MENU_OPEN
-    }
-
-    /// <summary> Which UI windows are currently open 
-    /// (excluding the inspection window, which can be 
-    /// open alongside any UI) </summary>
-    public UI_STATE ui_state
-    {
-        get => _ui_state;
-        set
-        {
-            // If we're interacting with something, we can't change the UI state
-            if (current_interaction != null) return;
-
-            // Cinematic mode enforces ALL_CLOSED
-            if (fly_mode) value = UI_STATE.ALL_CLOSED;
-
-            // Close everything
-            map_open = false;
-            if (inventory != null) inventory.open = false;
-            if (crafting_menu != null) crafting_menu.open = false;
-            options_menu.open = false;
-            recipe.recipe_book.gameObject.SetActive(false);
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-
-            _ui_state = value;
-            switch (_ui_state)
-            {
-                case UI_STATE.ALL_CLOSED:
-                    break;
-
-                case UI_STATE.INVENTORY_OPEN:
-                    // Enable the cursor
-                    Cursor.visible = true;
-                    Cursor.lockState = CursorLockMode.None;
-
-                    // No custom menu found, open the inventory
-                    if (inventory != null) inventory.open = true;
-                    if (crafting_menu != null) crafting_menu.open = true;
-                    break;
-
-                case UI_STATE.MAP_OPEN:
-                    map_open = true;
-                    break;
-
-                case UI_STATE.RECIPE_BOOK_OPEN:
-
-                    // Enable the cursor
-                    Cursor.visible = true;
-                    Cursor.lockState = CursorLockMode.None;
-
-                    // Open the recipe book
-                    recipe.recipe_book.gameObject.SetActive(true);
-                    break;
-
-                case UI_STATE.OPTIONS_MENU_OPEN:
-
-                    // Enable the cursor
-                    Cursor.visible = true;
-                    Cursor.lockState = CursorLockMode.None;
-
-                    // Open the options menu
-                    options_menu.open = true;
-                    break;
-
-                default:
-                    throw new System.Exception("Unkown UI_STATE!");
-            }
-
-            // We can see the crosshairs if we cant see the mouse
-            crosshairs.enabled = !Cursor.visible;
-
-            // Make sure the crafting options are up to date with whatever we're interacting with
-            var crafting_options = crafting_menu?.ui?.GetComponentInChildren<player_crafting_options>(true);
-            if (crafting_options != null) crafting_options.update_recipies();
-        }
-    }
-    UI_STATE _ui_state;
-
-    //####################//
-    // INTERACTABLE STUFF //
-    //####################//
-
-    public player_interaction current_interaction
-    {
-        get => _current_interaction;
-        private set
-        {
-            if (_current_interaction == value) return;     // No change
-            _current_interaction?.end_interaction(this);   // End previous interaction
-            _current_interaction = value;                  // Assign new interaction
-            _current_interaction?.start_interaction(this); // start new interaction
-        }
-    }
-    player_interaction _current_interaction;
-
-    void run_interactions()
-    {
-        if (current_interaction == null)
-        {
-            // Not interacting => undo/redo allowed
-            if (controls.triggered(controls.BIND.UNDO)) undo_manager.undo();
-            if (controls.triggered(controls.BIND.REDO)) undo_manager.redo();
-        }
-        // Continue current interaction
-        else if (current_interaction.continue_interaction(this))
-        {
-            current_interaction = null;
-            return; // Don't immediately start another interaction if we've just finished one
-        }
-
-        tips.context_tip = "";
-        List<player_interaction> all_interactions = new List<player_interaction>();
-
-        // Get UI interactions
-        foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
-            all_interactions.AddRange(ui_inter.player_interactions());
-
-        // Get equipped interactions
-        if (equipped != null) all_interactions.AddRange(equipped?.item_uses());
-
-        // Get in-world interactables
-        var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-        foreach (var hit in Physics.RaycastAll(cam_ray, dis))
-        {
-            if (hit.transform.IsChildOf(transform)) continue; // Can't interact with myself
-            var inters = hit.transform.GetComponentsInParent<IPlayerInteractable>();
-            foreach (var inter in inters)
-                all_interactions.AddRange(inter.player_interactions());
-        }
-
-        // Create a list of all possible interactions with unique keybinds
-        var unique_interactions = new Dictionary<controls.BIND, player_interaction>();
-        foreach (var i in all_interactions)
-        {
-            if (!i.is_possible()) continue; // Not possible
-            if (unique_interactions.ContainsKey(i.keybind)) continue; // Not unique
-            unique_interactions[i.keybind] = i;
-        }
-
-        foreach (var kv in unique_interactions)
-        {
-            var i = kv.Value;
-
-            string ct = i.context_tip()?.Trim();
-            if (ct != null && ct.Length > 0)
-            {
-                if (i.allow_held) ct = "[hold " + controls.bind_name(i.keybind) + "] " + ct;
-                else ct = "[" + controls.bind_name(i.keybind) + "] " + ct;
-                tips.context_tip +=  "\n" + ct;
-            }
-
-            if (current_interaction == null && i.triggered())
-                current_interaction = i;
-        }
-    }
-
-    class item_use_wrapper : IPlayerInteractable
-    {
-        item item;
-        public item_use_wrapper(item i) { item = i; }
-        public player_interaction[] player_interactions() { return item.item_uses(); }
-    }
-
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -263,16 +88,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             // Most things require authority to run
             indicate_damage();
             run_world_generator();
-            run_recipe_book();
-            run_inventory();
-            run_options();
             run_quickbar_shortcuts();
             run_map();
-            run_first_third_person();
             run_mouse_look();
             run_movement();
             run_teleports();
-            run_interactions();
+
+            if (controls.triggered(controls.BIND.UNDO)) undo_manager.undo();
+            if (controls.triggered(controls.BIND.REDO)) undo_manager.redo();
+
+            add_interactions();
+            interactions.continue_underway(this);
         }
         else
         {
@@ -293,30 +119,155 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         }
     }
 
-    //###########//
-    // INVENTORY //
-    //###########//
+    //##############//
+    // INTERACTIONS //
+    //##############//
 
-    public inventory inventory { get; private set; }
-    public inventory crafting_menu { get; private set; }
+    public interaction_set interactions { get; } = new interaction_set();
 
-    void run_inventory()
+    void add_interactions()
     {
-        // Toggle inventory
-        if (controls.triggered(controls.BIND.OPEN_INVENTORY))
+        tips.context_tip = "";
+        List<player_interaction> all_interactions = new List<player_interaction>();
+
+        // Get UI interactions
+        foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
+            all_interactions.AddRange(ui_inter.player_interactions());
+
+        // Get equipped interactions
+        if (equipped != null)
+            all_interactions.AddRange(equipped?.item_uses());
+
+        // Get in-world interactables
+        var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+        foreach (var hit in Physics.RaycastAll(cam_ray, dis))
         {
-            if (ui_state == UI_STATE.INVENTORY_OPEN) ui_state = UI_STATE.ALL_CLOSED;
-            else ui_state = UI_STATE.INVENTORY_OPEN;
+            if (hit.transform.IsChildOf(transform)) continue; // Can't interact with myself
+            var inters = hit.transform.GetComponentsInParent<IPlayerInteractable>();
+            foreach (var inter in inters)
+                all_interactions.AddRange(inter.player_interactions());
+        }
+
+        // Add self interactions to list
+        all_interactions.AddRange(self_interactions);
+
+        interactions.add_and_start_compatible(all_interactions, this, update_context_info: true);
+    }
+
+    //###################//
+    // SELF INTERACTIONS //
+    //###################//
+
+    /// <summary> Interactions that I can carry out upon myself. </summary>
+    player_interaction[] self_interactions
+    {
+        get
+        {
+            if (_self_interactions == null)
+                _self_interactions = new player_interaction[]
+                {
+                    new inventory_interaction(),
+                    new recipe_book_interaction(),
+                    new options_menu_interaction(),
+                    new first_third_person_interaction(),
+                    new place_marker(),
+                    new toggle_map()
+                };
+            return _self_interactions;
+        }
+    }
+    player_interaction[] _self_interactions;
+
+    public abstract class menu_interaction : player_interaction
+    {
+        protected abstract void set_menu_state(player player, bool state);
+
+        public override bool start_interaction(player player)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            set_menu_state(player, true);
+            return false;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            return triggered();
+        }
+
+        public override void end_interaction(player player)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            set_menu_state(player, false);
+        }
+
+        public override bool allows_mouse_look() { return false; }
+        public override bool show_context_tip() { return false; }
+    }
+
+    public class inventory_interaction : menu_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
+        public override string context_tip() { return "toggle inventory"; }
+        protected override void set_menu_state(player player, bool state)
+        {
+            player.inventory.open = state;
+            player.crafting_menu.open = state;
         }
     }
 
-    void run_recipe_book()
+    public class recipe_book_interaction : menu_interaction
     {
-        // Toggle recipe book
-        if (controls.triggered(controls.BIND.OPEN_RECIPE_BOOK))
+        public override controls.BIND keybind => controls.BIND.OPEN_RECIPE_BOOK;
+        public override string context_tip() { return "toggle recipe book"; }
+        protected override void set_menu_state(player player, bool state) { recipe.recipe_book.gameObject.SetActive(state); }
+    }
+
+    public class options_menu_interaction : menu_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.TOGGLE_OPTIONS;
+        public override string context_tip() { return "toggle options menu"; }
+        protected override void set_menu_state(player player, bool state) { options_menu.open = state; }
+    }
+
+    public class first_third_person_interaction : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.TOGGLE_THIRD_PERSON;
+        public override string context_tip() { return "toggle first/third person"; }
+        public override bool show_context_tip() { return false; }
+
+        public override bool start_interaction(player player)
         {
-            if (ui_state == UI_STATE.RECIPE_BOOK_OPEN) ui_state = UI_STATE.ALL_CLOSED;
-            else ui_state = UI_STATE.RECIPE_BOOK_OPEN;
+            player.first_person = !player.first_person;
+            return true;
+        }
+    }
+
+    public class place_marker : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.PLACE_MARKER;
+        public override string context_tip() { return "place marker"; }
+        public override bool show_context_tip() { return false; }
+
+        public override bool start_interaction(player player)
+        {
+            var ray = player.camera_ray();
+            if (Physics.Raycast(ray, out RaycastHit hit)) client.create(hit.point, "misc/map_ping");
+            return true;
+        }
+    }
+
+    public class toggle_map : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.TOGGLE_MAP;
+        public override string context_tip() { return "toggle map"; }
+        public override bool show_context_tip() { return false; }
+
+        public override bool start_interaction(player player)
+        {
+            player.map_open = !player.map_open;
+            return true;
         }
     }
 
@@ -413,10 +364,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void run_quickbar_shortcuts()
     {
-        // Can't use quickbar shortcuts from the UI, or if we're 
-        // using an item, or if we're flying
-        if (current_interaction != null) return;
-        if (ui_state != UI_STATE.ALL_CLOSED) return;
+        // Can't use quickbar shortcuts if we're carring out a non-simultanous action
+        if (!interactions.simultaneous()) return;
         if (fly_mode) return;
 
         // Select quickbar item using keyboard shortcut
@@ -509,8 +458,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void run_movement()
     {
-        // Things that disallow movement
-        if (ui_state == UI_STATE.OPTIONS_MENU_OPEN) return;
         move();
         float_in_water();
     }
@@ -580,6 +527,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void normal_move()
     {
+        if (!interactions.movement_allowed) return;
         Vector3 move = Vector3.zero;
 
         // Climb ladders
@@ -602,7 +550,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             }
 
         // Turn on/off crouch
-        if (ui_state != UI_STATE.ALL_CLOSED || climbing_ladder)
+        if (climbing_ladder)
             crouched.value = false;
         else
             crouched.value = controls.held(controls.BIND.CROUCH);
@@ -714,6 +662,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void fly_move()
     {
+        if (!interactions.movement_allowed) return;
+
         crouched.value = false;
         Vector3 fw = map_open ? transform.forward : camera.transform.forward;
         Vector3 ri = camera.transform.right;
@@ -753,7 +703,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             game.render_range_target = game.render_range;
         }
 
-        ui_state = UI_STATE.ALL_CLOSED;
         controller.enabled = false;
         networked_position = location;
 
@@ -786,8 +735,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         set
         {
             _fly_mode = value;
-
-            ui_state = UI_STATE.ALL_CLOSED;
             cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
             // Disable (or re-enable) ui things
@@ -869,68 +816,24 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     // VIEW/CAMERA CONTROL //
     //#####################//
 
-    void run_first_third_person()
-    {
-        // Only allow toggle first/third when no UI is open
-        if (ui_state != UI_STATE.ALL_CLOSED) return;
-
-        if (controls.triggered(controls.BIND.TOGGLE_THIRD_PERSON))
-            first_person = !first_person;
-    }
-
-    void run_mouse_look()
-    {
-        // Things that disallow camera movement
-        if (!(ui_state == UI_STATE.ALL_CLOSED ||
-              ui_state == UI_STATE.MAP_OPEN)) return;
-
-        // Ping the map
-        if (controls.triggered(controls.BIND.PLACE_MARKER))
-        {
-            var ray = camera_ray();
-            if (Physics.Raycast(ray, out RaycastHit hit))
-                client.create(hit.point, "misc/map_ping");
-        }
-
-        mouse_look();
-    }
-
     void run_map()
     {
-        // Toggle the map view on M
-        if (controls.triggered(controls.BIND.TOGGLE_MAP))
-        {
-            if (ui_state == UI_STATE.MAP_OPEN) ui_state = UI_STATE.ALL_CLOSED;
-            else ui_state = UI_STATE.MAP_OPEN;
-        }
+        if (!map_open) return;
 
-        if (map_open)
-        {
-            // Zoom the map
-            float scroll = controls.delta(controls.BIND.ZOOM_MAP);
-            if (scroll > 0) game.render_range_target /= 1.2f;
-            else if (scroll < 0) game.render_range_target *= 1.2f;
+        // Zoom the map
+        float scroll = controls.delta(controls.BIND.ZOOM_MAP);
+        if (scroll > 0) game.render_range_target /= 1.2f;
+        else if (scroll < 0) game.render_range_target *= 1.2f;
 
-            camera.orthographicSize = game.render_range;
+        camera.orthographicSize = game.render_range;
 
-            // Scale camera clipping plane/shadow distance to work
-            // with map-view render rangeas
-            float eff_render_range =
-                (camera.transform.position - transform.position).magnitude +
-                game.render_range;
-            camera.farClipPlane = eff_render_range * 1.5f;
-            QualitySettings.shadowDistance = eff_render_range;
-        }
-    }
-
-    void run_options()
-    {
-        // Toggle options
-        if (controls.triggered(controls.BIND.TOGGLE_OPTIONS))
-        {
-            if (ui_state != UI_STATE.ALL_CLOSED) ui_state = UI_STATE.ALL_CLOSED;
-            else ui_state = UI_STATE.OPTIONS_MENU_OPEN;
-        }
+        // Scale camera clipping plane/shadow distance to work
+        // with map-view render rangeas
+        float eff_render_range =
+            (camera.transform.position - transform.position).magnitude +
+            game.render_range;
+        camera.farClipPlane = eff_render_range * 1.5f;
+        QualitySettings.shadowDistance = eff_render_range;
     }
 
     // The current cursor sprite
@@ -959,8 +862,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     }
     UnityEngine.UI.Image crosshairs;
 
-    void mouse_look()
+    void run_mouse_look()
     {
+        // Interaction disables mouse look
+        if (!interactions.mouse_look_allowed) return;
+
         // Rotate the player view
         y_rotation.value += controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity;
         if (!map_open)
@@ -1208,19 +1114,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     // MAP //
     //#####//
 
-    /// <summary> Run the world generator around the current player position. </summary>
-    void run_world_generator()
-    {
-        biome = biome.at(transform.position, generate: true);
-        if (biome != null)
-        {
-            point = biome.blended_point(transform.position);
-            lighting.sky_color_daytime = point.sky_color;
-            lighting.fog_distance = point.fog_distance;
-            water.color = point.water_color;
-        }
-    }
-
+    /// <summary> The biome the player is currently in. </summary>
     public biome biome
     {
         get => _biome;
@@ -1233,7 +1127,20 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     }
     biome _biome;
 
+    /// <summary> The biome point the player is currently at. </summary>
     public biome.point point { get; private set; }
+
+    /// <summary> Run the world generator around the current player position. </summary>
+    void run_world_generator()
+    {
+        biome = biome.at(transform.position, generate: true);
+        if (biome == null) return;
+
+        point = biome.blended_point(transform.position);
+        lighting.sky_color_daytime = point.sky_color;
+        lighting.fog_distance = point.fog_distance;
+        water.color = point.water_color;
+    }
 
     //########//
     // HEALTH //
@@ -1338,10 +1245,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     // IPlayerInteractable //
     //#####################//
 
-    player_interaction[] interactions;
+    player_interaction[] remote_interactions;
     public player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new player_interaction[]
+        if (remote_interactions == null) remote_interactions = new player_interaction[]
         {
             new interaction(this),
             new player_inspectable(transform)
@@ -1349,7 +1256,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                 text = ()=> username.value
             }
         };
-        return interactions;
+        return remote_interactions;
     }
 
     class interaction : player_interaction
@@ -1399,6 +1306,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     public int slot_number_equipped => slot_equipped.value;
     public string player_username => username.value;
+
+    public inventory inventory { get; private set; }
+    public inventory crafting_menu { get; private set; }
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
@@ -1718,10 +1628,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public static string info()
     {
         if (current == null) return "No local player";
-        string str = "    Local player " + current.username.value;
-        if (current.current_interaction != null)
-            str += "\n    Interaction " + current.current_interaction.GetType().FullName;
-        return str;
+        return "    Local player " + current.username.value + "\n" +
+               current.interactions.info();
     }
 }
 
@@ -1783,110 +1691,4 @@ public class popup_message : MonoBehaviour
         if (time > 1)
             Destroy(this.gameObject);
     }
-}
-
-/// <summary> An object that a player can be interacted with by the player. </summary>
-public abstract class player_interaction
-{
-    /// <summary> Returns the keybind needed to start this interaction </summary>
-    public abstract controls.BIND keybind { get; }
-
-    /// <summary> Returns true if the associated <see cref="keybind"/> can be held down. </summary>
-    public virtual bool allow_held => false;
-
-    /// <summary> Returns true if this interaction is triggered 
-    /// based on <see cref="keybind"/> and <see cref="allow_held"/> </summary>
-    public bool triggered() { return allow_held ? controls.held(keybind) : controls.triggered(keybind); }
-
-    /// <summary> Returns false if the interaction is (temporarily) impossible. </summary>
-    public virtual bool is_possible() { return true; }
-
-    /// <summary> Shown at the bottom right of the screen to let the player 
-    /// know what interactions are currently possible. </summary>
-    public abstract string context_tip();
-
-    /// <summary> Called when an interaction starts, should return 
-    /// true if the interaction is immediately completed. </summary>
-    public virtual bool start_interaction(player player) { return false; }
-
-    /// <summary> Called once per frame when the interaction is underway,
-    /// should return true once the interaction is over. </summary>
-    public virtual bool continue_interaction(player player) { return true; }
-
-    /// <summary> Called when the interaction is completed. </summary>
-    public virtual void end_interaction(player player) { }
-
-    /// <summary> An inventory that can be edited when 
-    /// interacting with this. null otherwise. </summary>
-    public virtual inventory editable_inventory() { return null; }
-
-    /// <summary> Additioanl recipes available to the player when 
-    /// interacting with this. </summary>
-    public virtual recipe[] additional_recipes(out string name) { name = null; return null; }
-}
-
-/// <summary> A menu that appears alongside the inventory, to the left. </summary>
-public abstract class left_player_menu : player_interaction
-{
-    string name;
-    public left_player_menu(string name) { this.name = name; }
-
-    // Left player menus open with the inventory.
-    public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
-
-    public override string context_tip()
-    {
-        return "interact with " + name;
-    }
-
-    public override bool start_interaction(player player)
-    {
-        if (menu == null)
-            return true; // Menu generation failed
-
-        // Position the left menu at the left_expansion_point but leave 
-        // it parented to the canvas, rather than the player inventory
-        var attach_point = player.inventory.ui.GetComponentInChildren<left_menu_attach_point>();
-        menu.gameObject.SetActive(true);
-        menu.SetParent(attach_point.transform);
-        menu.anchoredPosition = Vector2.zero;
-        menu.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
-
-        on_open();
-        return false;
-    }
-
-    public override bool continue_interaction(player player)
-    {
-        // Left player menus close with the inventory.
-        if (player?.inventory?.ui != null && !player.inventory.ui.gameObject.activeInHierarchy)
-            return true;
-        return controls.triggered(controls.BIND.OPEN_INVENTORY);
-    }
-
-    public override void end_interaction(player player)
-    {
-        menu.gameObject.SetActive(false);
-        on_close();
-    }
-
-    protected RectTransform menu
-    {
-        get
-        {
-            if (_menu == null) _menu = create_menu();
-            return _menu;
-        }
-    }
-    RectTransform _menu;
-
-    // IMPLEMENTATION //
-    abstract protected RectTransform create_menu();
-    protected virtual void on_open() { }
-    protected virtual void on_close() { }
-}
-
-public interface IPlayerInteractable
-{
-    public player_interaction[] player_interactions();
 }

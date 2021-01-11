@@ -293,8 +293,8 @@ public class rifle : equip_in_hand
     player_interaction[] uses;
     public override player_interaction[] item_uses()
     {
-        if (uses == null) uses = new player_interaction[] 
-        { 
+        if (uses == null) uses = new player_interaction[]
+        {
             new fire_interaction(this),
             new ads_interaction(this)
         };
@@ -342,6 +342,7 @@ public class rifle : equip_in_hand
 
         public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
         public override bool allow_held => true;
+        public override bool simultaneous() { return true; }
 
         public override string context_tip()
         {

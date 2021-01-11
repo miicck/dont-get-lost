@@ -57,8 +57,8 @@ public class player_inspectable : player_interaction
         return "inspect";
     }
 
-    public override bool allow_held => true;
     public override controls.BIND keybind => controls.BIND.INSPECT;
+    public override bool simultaneous() { return true; }
 
     public override bool start_interaction(player player)
     {

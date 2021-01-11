@@ -34,9 +34,8 @@ public class portal : building_material, IPlayerInteractable
 
             pr.field.onEndEdit.AddListener((final_val) =>
             {
-                // Refresh UI
-                player.current.ui_state = player.UI_STATE.ALL_CLOSED;
-                player.current.ui_state = player.UI_STATE.INVENTORY_OPEN;
+                // Refresh ui
+                on_open();
             });
 
             pr.field.text = portal.teleport_name();

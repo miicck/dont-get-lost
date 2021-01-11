@@ -147,10 +147,6 @@ public class game : MonoBehaviour
             }
         }
 
-        // Close all ui
-        if (player.current != null)
-            player.current.ui_state = player.UI_STATE.ALL_CLOSED;
-
         // Go back to the world menu
         if (message_from_server != null)
             world_menu.message_to_display = "Disconnected: " + message_from_server;

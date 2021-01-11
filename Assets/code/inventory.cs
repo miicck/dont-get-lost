@@ -258,7 +258,7 @@ public class inventory : networked, IItemCollection
                         {
                             // Transfer out of player inventory, prioritising
                             // left_menu inventory, then the player crafting menu.
-                            target = player.current.current_interaction?.editable_inventory();
+                            target = player.current.interactions?.editable_inventory();
                             if (target == null) target = player.current.crafting_menu;
                         }
 

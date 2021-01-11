@@ -16,7 +16,7 @@ public class player_crafting_options : crafting_input
 
         // ... and the additional recipes of the object we're interacting with
         string name = null;
-        var to_add = player.current.current_interaction?.additional_recipes(out name);
+        var to_add = player.current.interactions?.additional_recipes(out name);
         if (to_add != null)
         {
             loaded = new List<recipe>(to_add);
