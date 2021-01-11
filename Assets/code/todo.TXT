@@ -3,7 +3,6 @@ Ongoing
 - More foliage? (small plants/flowers)
 
 TODO
-- Generalise player interactions (both for generating tips and the actual interaction)
 - Item flow recording should be done on link points?
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Spread biome.generate across multiple frames
@@ -20,6 +19,7 @@ TODO
 - Ready-to-assign method for settler interactlabes? (e.g shops with no materials return false)
 - Point-to-point connection building (like string or rope)
 - Item buffers (store an amount of an item and only output if connected input is free)
+- Re-implement remote item use
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
