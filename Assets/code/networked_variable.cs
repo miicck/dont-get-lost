@@ -788,16 +788,17 @@ namespace networked_variables
 
         public byte metabolic_satisfaction
         {
-            get
-            {
-                // The metabolic satisfaction is the maximum
-                // value of food groups which can be metabolised
-                byte value = 0;
-                foreach (var g in food.all_groups)
-                    if (food.can_metabolize(g) && this[g] > value)
-                        value = this[g];
-                return value;
-            }
+            get; private set;
+        }
+
+        void eval_metabolic_sat()
+        {
+            byte max = 0;
+            foreach (var g in food.all_groups)
+                if (food.can_metabolize(g))
+                    if (this[g] > max)
+                        max = this[g];
+            metabolic_satisfaction = max;
         }
 
         public byte hunger => (byte)(byte.MaxValue - metabolic_satisfaction);
@@ -811,6 +812,7 @@ namespace networked_variables
                     return; // No change
 
                 group_values[(int)group] = value;
+                eval_metabolic_sat();
                 set_dirty();
             }
         }
@@ -825,13 +827,19 @@ namespace networked_variables
                 if (group_values[(int)g] != val_before)
                     dirty = true;
             }
-            if (dirty) set_dirty();
+            if (dirty)
+            {
+                eval_metabolic_sat();
+                set_dirty();
+            }
         }
 
         public void modify_every_satisfaction(int amount)
         {
             for (int i = 0; i < group_values.Length; ++i)
                 group_values[i] = (byte)Mathf.Clamp(group_values[i] + amount, 0, byte.MaxValue);
+
+            eval_metabolic_sat();
             set_dirty();
         }
 
@@ -845,6 +853,7 @@ namespace networked_variables
             if (length != food.total_groups)
                 throw new System.Exception("Food satisfaction serialization has incorrect length!");
             System.Buffer.BlockCopy(buffer, offset, group_values, 0, length);
+            eval_metabolic_sat();
             offset += length;
         }
     }

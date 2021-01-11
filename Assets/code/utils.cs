@@ -101,8 +101,10 @@ public static class utils
     }
 
     /// <summary> Raycast for a <typeparamref name="T"/> under the mouse. </summary>
-    public static T raycast_ui_under_mouse<T>()
+    public static T raycast_ui_under_mouse<T>(bool require_cursor_visible = true)
     {
+        if (!Cursor.visible && require_cursor_visible) return default;
+
         // Setup the raycast
         var event_system = UnityEngine.EventSystems.EventSystem.current;
         var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)
@@ -130,8 +132,10 @@ public static class utils
     }
 
     /// <summary> Raycast for all <typeparamref name="T"/>s under the mouse. </summary>
-    public static T[] raycast_all_ui_under_mouse<T>()
+    public static T[] raycast_all_ui_under_mouse<T>(bool require_cursor_visible = true)
     {
+        if (!Cursor.visible && require_cursor_visible) return new T[0];
+
         // Setup the raycast
         var event_system = UnityEngine.EventSystems.EventSystem.current;
         var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)

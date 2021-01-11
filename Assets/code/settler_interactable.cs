@@ -96,6 +96,12 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
     public static settler_interactable proximity_weighted_ramdon(TYPE t, Vector3 position)
     {
         var l = interactables[t];
+        if (l.Count == 0) return null;
+        return l[Random.Range(0, l.Count)];
+
+        // This is expensive
+        /*
+        var l = interactables[t];
         l.Sort((a, b) =>
             (a.transform.position - position).magnitude.CompareTo(
             (b.transform.position - position).magnitude));
@@ -109,6 +115,7 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
                 if (Random.Range(0, 3) == 0)
                     return l[i];
             }
+        */
     }
 
     public static settler_interactable random(TYPE t)

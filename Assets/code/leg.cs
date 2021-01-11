@@ -45,25 +45,15 @@ public class leg : MonoBehaviour
     public float min_footstep_pitch = 0.95f;
     public float max_footsetp_pitch = 1.05f;
     public float step_length_boost;
+    Vector3 step_front;
+    Vector3 step_back;
+    Vector3 test_start;
+    Vector3 test_end;
 
     bool grounded { get => (foot_base.position - grounding).magnitude < 0.25f; }
 
     // The amount a body should bob up and down because of this leg
     public float body_bob_amt { get { return -Mathf.Sin(progress * Mathf.PI * 2f / following_phase); } }
-
-    // Desired orientation of thigh
-    Vector3 thigh_up { get => (hip.position - knee.position).normalized; }
-    Vector3 thigh_forward { get => Vector3.Cross(transform.right, thigh_up).normalized; }
-
-    // Desired orientation of shin
-    Vector3 shin_up { get => (knee.position - ankle.position).normalized; }
-    Vector3 shin_forward { get => Vector3.Cross(transform.right, shin_up).normalized; }
-
-    Vector3 step_front { get => step_centre.position + step_direction * step_length / 2f; }
-    Vector3 step_back { get => step_centre.position - step_direction * step_length / 2f; }
-
-    Vector3 test_start { get => step_front + Vector3.up * test_up_amt; }
-    Vector3 test_end { get => step_front - Vector3.up * test_down_amt; }
 
     // Update the various directions/lengths used to determine the step animations
     void update_lengths_and_directions()
@@ -94,6 +84,11 @@ public class leg : MonoBehaviour
         if (boost > 1f) boost = 1f;
         step_length_boost = min_step_length_boost + boost *
             (max_step_length_boost - min_step_length_boost);
+
+        step_front = step_centre.position + step_direction * step_length / 2f;
+        step_back = step_centre.position - step_direction * step_length / 2f;
+        test_start = step_front + Vector3.up * test_up_amt;
+        test_end = step_front - Vector3.up * test_down_amt;
     }
 
     private void Start()
@@ -118,6 +113,14 @@ public class leg : MonoBehaviour
         Vector3 right = Vector3.Cross(knee_bend_dir, whole_leg).normalized;
         Vector3 forward = Vector3.Cross(right, Vector3.up);
         utils.align_axes(transform, Quaternion.LookRotation(forward, Vector3.up));
+
+        // Desired orientation of thigh
+        Vector3 thigh_up = (hip.position - knee.position).normalized;
+        Vector3 thigh_forward = Vector3.Cross(transform.right, thigh_up).normalized;
+
+        // Desired orientation of shin
+        Vector3 shin_up = (knee.position - ankle.position).normalized;
+        Vector3 shin_forward = Vector3.Cross(transform.right, shin_up).normalized;
 
         // Reorient the hip so that hip.down points to the knee
         var new_hip = new GameObject("hip").transform;
@@ -176,19 +179,15 @@ public class leg : MonoBehaviour
         footstep_source.spatialBlend = 1f; // 3D
     }
 
-    void solve_orientation_and_scale()
+    void set_scales(float hip_length, float shin_length)
     {
-        hip.rotation = Quaternion.LookRotation(thigh_forward, thigh_up);
-        float new_thigh_lenth = (hip.position - knee.position).magnitude;
-        Vector3 ls = hip.transform.localScale;
-        ls.y = init_hip_scale * new_thigh_lenth / thigh_length;
-        hip.transform.localScale = ls;
+        Vector3 ls = hip.localScale;
+        ls.y = init_hip_scale * hip_length / thigh_length;
+        hip.localScale = ls;
 
-        knee.rotation = Quaternion.LookRotation(shin_forward, shin_up);
-        float new_shin_length = (knee.position - ankle.position).magnitude;
-        ls = knee.transform.localScale;
-        ls.y = init_knee_scale * new_shin_length / shin_length;
-        knee.transform.localScale = ls;
+        ls = knee.localScale;
+        ls.y = init_knee_scale * shin_length / shin_length;
+        knee.localScale = ls;
     }
 
     void solve_leg()
@@ -210,15 +209,24 @@ public class leg : MonoBehaviour
 
         float a = thigh_length;
         float b = shin_length;
-        Vector3 dvec = ankle.position - hip.position;
-        float d = dvec.magnitude;
+        Vector3 ankle_pos = ankle.position;
+        Vector3 hip_pos = hip.position;
+        Vector3 ankle_to_hip = hip_pos - ankle_pos;
+        float d = ankle_to_hip.magnitude;
+        Vector3 dhat = ankle_to_hip / d;
+        Vector3 khat = Vector3.Cross(transform.right, dhat);
 
-        // Asymptotically approach streight leg
         if (d > a + b)
         {
             // Foot is further than the maximum extent of the leg, create a streight leg
-            knee.position = hip.position + a * dvec / (a + b);
-            solve_orientation_and_scale();
+            knee.position = hip.position - a * ankle_to_hip / (a + b);
+
+            // Solve orientation and scale
+            Quaternion rotation = Quaternion.LookRotation(khat, dhat);
+            hip.rotation = rotation;
+            knee.rotation = rotation;
+            set_scales(a * d / (a + b), b * d / (a + b));
+
             return;
         }
 
@@ -227,21 +235,25 @@ public class leg : MonoBehaviour
         lambda = b * b - lambda * lambda / (4 * d * d);
         lambda = Mathf.Sqrt(lambda);
 
-        // Work out d1
+        // Work out d1/d2
         float d1 = a * a - lambda * lambda;
         d1 = Mathf.Sqrt(d1);
+        float d2 = d - d1;
 
         if (knees_bend_backward) lambda = -lambda;
 
         // Setup the bent leg accordingly
-        Vector3 new_knee_pos =
-            hip.position +
-            d1 * dvec.normalized -
-            lambda * Vector3.Cross(transform.right, dvec.normalized);
+        Vector3 hip_to_knee = -d1 * dhat + lambda * khat;
+        Vector3 ankle_to_knee = hip_to_knee + ankle_to_hip;
+        Vector3 new_knee_pos = hip.position + hip_to_knee;
 
         if (new_knee_pos.isNaN()) return;
         knee.position = new_knee_pos;
-        solve_orientation_and_scale();
+
+        // Solve orientation and scale
+        hip.rotation = Quaternion.LookRotation(d1 * khat + lambda * dhat, -hip_to_knee);
+        knee.rotation = Quaternion.LookRotation(d2 * khat - lambda * dhat, ankle_to_knee);
+        set_scales(a, b);
     }
 
     void move_foot_towards(Vector3 position)
@@ -287,11 +299,11 @@ public class leg : MonoBehaviour
                 // Re-evaluate the walking sound based on ground type
                 RaycastHit hit;
                 var rend = utils.raycast_for_closest<Renderer>(
-                    new Ray(foot_base.position + Vector3.up,
-                    Vector3.down), out hit);
+                    new Ray(test_start, Vector3.down), out hit,
+                    max_distance: test_up_amt * 2f);
 
                 Material ground_mat = null;
-                if (rend != null) ground_mat = rend.material;
+                if (rend != null) ground_mat = rend.sharedMaterial;
 
                 float vol;
                 footstep_source.clip = material_sound.sound(
@@ -314,17 +326,45 @@ public class leg : MonoBehaviour
         }
     }
 
-    void make_contact(Vector3 test_point)
+    RaycastHit find_grounding(out bool valid)
     {
         // Find the grounding point
         Vector3 delta = test_end - test_start;
-        foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
+
+        // Attempt to raycast all objects
+        if (Physics.Raycast(test_start, delta, out RaycastHit hit, delta.magnitude))
         {
-            if (h.transform.IsChildOf(character)) continue;
+            // The object found was a child of this character, fall back to
+            // an everything raycast until we find a non-character hit
+            if (hit.transform.IsChildOf(character))
+            {
+                foreach (var h in Physics.RaycastAll(test_start, delta, delta.magnitude))
+                {
+                    if (h.transform.IsChildOf(character)) continue;
+                    valid = true;
+                    return h;
+                }
+            }
+            else
+            {
+                valid = true;
+                return hit;
+            }
+        }
+
+        valid = false;
+        return default;
+    }
+
+    void make_contact(Vector3 test_point)
+    {
+        var h = find_grounding(out bool found);
+
+        if (found)
+        {
             grounding = h.point;
             ground_normal = h.normal;
             contact_made_this_step = true;
-            break;
         }
 
         if (play_footsteps)

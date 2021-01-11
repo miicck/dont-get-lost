@@ -16,6 +16,11 @@ public class material_sound : MonoBehaviour
     public AudioClip step_sound;
     public float step_volume = 1f;
 
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    static Dictionary<string, material_sound> sound_library = new Dictionary<string, material_sound>();
     static material_sound load(Material material)
     {
         string name = "default";
@@ -27,10 +32,14 @@ public class material_sound : MonoBehaviour
             name = name.Trim();
         }
 
-        var mat_sound = Resources.Load<material_sound>("sounds/materials/" + name);
+        if (sound_library.TryGetValue(name, out material_sound mat_sound))
+            return mat_sound;
+
+        mat_sound = Resources.Load<material_sound>("sounds/materials/" + name);
         if (mat_sound == null)
             mat_sound = Resources.Load<material_sound>("sounds/materials/default");
 
+        sound_library[name] = mat_sound;
         return mat_sound;
     }
 
