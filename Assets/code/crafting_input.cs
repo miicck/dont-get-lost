@@ -38,12 +38,12 @@ public class crafting_input : MonoBehaviour
             {
                 var entry = rec.get_entry();
                 entry.transform.SetParent(options_go_here);
-                entry.button.onClick.AddListener(() =>
+                entry.button.onClick.AddListener((UnityEngine.Events.UnityAction)(() =>
                 {
-                    int to_craft = controls.key_down(controls.BIND.CRAFT_FIVE) ? 5 : 1;
+                    int to_craft = controls.held((controls.BIND)controls.BIND.CRAFT_FIVE) ? 5 : 1;
                     for (int n = 0; n < to_craft; ++n)
                         rec.craft(craft_from, craft_to);
-                });
+                }));
             }
     }
 }

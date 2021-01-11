@@ -199,9 +199,9 @@ public class auto_crafter : building_material, IPlayerInteractable
                 int i_copy = i;
                 var reset_colors = button_i.button.colors;
 
-                button_i.button.onClick.AddListener(() =>
+                button_i.button.onClick.AddListener((UnityEngine.Events.UnityAction)(() =>
                 {
-                    if (controls.key_down(controls.BIND.QUICK_ITEM_TRANSFER))
+                    if (controls.held((controls.BIND)controls.BIND.QUICK_ITEM_TRANSFER))
                     {
                         // Transfer the recipe ingredients to the crafting menu
                         if (player.current == null) return;
@@ -234,7 +234,7 @@ public class auto_crafter : building_material, IPlayerInteractable
                         else colors = reset_colors;
                         button_j.button.colors = colors;
                     }
-                });
+                }));
             }
 
             // Simulate a click on the initially-selected button

@@ -245,7 +245,7 @@ public class inventory : networked, IItemCollection
                 {
                     // Move the contents of the slot directly into the player inventory
                     // (or from the player inventory to the interacting inventory)
-                    if (controls.key_down(controls.BIND.QUICK_ITEM_TRANSFER))
+                    if (controls.held(controls.BIND.QUICK_ITEM_TRANSFER))
                     {
                         // Copies for lambda function
                         item transfer_item = isn.item;

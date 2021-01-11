@@ -149,7 +149,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override bool start_interaction(player player)

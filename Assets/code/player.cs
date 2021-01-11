@@ -55,7 +55,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             " section of your inventory).");
 
         tips.add("Certain actions can only be performed with free hands. Press " +
-            controls.current_bind(controls.BIND.QUICKBAR_1) +
+            controls.bind_name(controls.BIND.QUICKBAR_1) +
             " a few times to de-equip what you are holding " +
             "(the cursor will change to a white circle).");
 
@@ -65,12 +65,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             "The orange bar at the bottom of the screen shows how hungry you are.");
 
         tips.add("You can switch between first and third-person views by pressing " +
-            controls.current_bind(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
+            controls.bind_name(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
 
         tips.add("Open the recipe book by pressing " +
-            controls.current_bind(controls.BIND.OPEN_RECIPE_BOOK) + ".");
+            controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) + ".");
 
-        tips.add("Look at a player and press " + controls.current_bind(controls.BIND.GIVE) +
+        tips.add("Look at a player and press " + controls.bind_name(controls.BIND.GIVE) +
             " to give them the item you currently have equipped.");
     }
 
@@ -183,55 +183,59 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void run_interactions()
     {
-        tips.context_tip = "";
         if (current_interaction == null)
         {
-            IPlayerInteractable[] interactables = null;
-
-            if (controls.key_press(controls.BIND.UNDO)) undo_manager.undo();
-            if (controls.key_press(controls.BIND.REDO)) undo_manager.redo();
-
-            // Get a new ui interaction
-            if (interactables == null)
-            {
-                var ui_inter = utils.raycast_ui_under_mouse<IPlayerInteractable>();
-                if (ui_inter != null) interactables = new IPlayerInteractable[] { ui_inter };
-            }
-
-            // Get equipped interactable
-            if (interactables == null)
-            {
-                if (equipped != null)
-                    interactables = new IPlayerInteractable[] { new item_use_wrapper(equipped) };
-            }
-
-            // Get in-world interactables
-            if (interactables == null)
-            {
-                var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-                interactables = utils.raycast_for_closests<IPlayerInteractable>(
-                    cam_ray, out RaycastHit hit, max_distance: dis);
-            }
-
-            // No interactions found
-            if (interactables == null)
-                return;
-
-            List<player_interaction> inters = new List<player_interaction>();
-            foreach (var i in interactables)
-                inters.AddRange(i.player_interactions());
-
-            foreach (var i in inters)
-            {
-                string ct = i.context_tip()?.Trim();
-                if (ct != null && ct.Length > 0) tips.context_tip += "\n" + ct;
-                if (current_interaction == null && i.conditions_met())
-                    current_interaction = i;
-            }
+            // Not interacting => undo/redo allowed
+            if (controls.triggered(controls.BIND.UNDO)) undo_manager.undo();
+            if (controls.triggered(controls.BIND.REDO)) undo_manager.redo();
         }
         // Continue current interaction
         else if (current_interaction.continue_interaction(this))
+        {
             current_interaction = null;
+            return; // Don't immediately start another interaction if we've just finished one
+        }
+
+        tips.context_tip = "";
+        IPlayerInteractable[] interactables = null;
+
+        // Get a new ui interaction
+        if (interactables == null)
+        {
+            var ui_inter = utils.raycast_ui_under_mouse<IPlayerInteractable>();
+            if (ui_inter != null) interactables = new IPlayerInteractable[] { ui_inter };
+        }
+
+        // Get equipped interactable
+        if (interactables == null)
+        {
+            if (equipped != null)
+                interactables = new IPlayerInteractable[] { new item_use_wrapper(equipped) };
+        }
+
+        // Get in-world interactables
+        if (interactables == null)
+        {
+            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+            interactables = utils.raycast_for_closests<IPlayerInteractable>(
+                cam_ray, out RaycastHit hit, max_distance: dis);
+        }
+
+        // No interactions found
+        if (interactables == null)
+            return;
+
+        List<player_interaction> inters = new List<player_interaction>();
+        foreach (var i in interactables)
+            inters.AddRange(i.player_interactions());
+
+        foreach (var i in inters)
+        {
+            string ct = i.context_tip()?.Trim();
+            if (ct != null && ct.Length > 0) tips.context_tip += "\n" + ct;
+            if (current_interaction == null && i.conditions_met())
+                current_interaction = i;
+        }
     }
 
     class item_use_wrapper : IPlayerInteractable
@@ -295,7 +299,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void run_inventory()
     {
         // Toggle inventory
-        if (controls.key_press(controls.BIND.OPEN_INVENTORY))
+        if (controls.triggered(controls.BIND.OPEN_INVENTORY))
         {
             if (ui_state == UI_STATE.INVENTORY_OPEN) ui_state = UI_STATE.ALL_CLOSED;
             else ui_state = UI_STATE.INVENTORY_OPEN;
@@ -305,7 +309,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void run_recipe_book()
     {
         // Toggle recipe book
-        if (controls.key_press(controls.BIND.OPEN_RECIPE_BOOK))
+        if (controls.triggered(controls.BIND.OPEN_RECIPE_BOOK))
         {
             if (ui_state == UI_STATE.RECIPE_BOOK_OPEN) ui_state = UI_STATE.ALL_CLOSED;
             else ui_state = UI_STATE.RECIPE_BOOK_OPEN;
@@ -407,21 +411,22 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     {
         // Can't use quickbar shortcuts from the UI, or if we're 
         // using an item, or if we're flying
+        if (current_interaction != null) return;
         if (ui_state != UI_STATE.ALL_CLOSED) return;
         if (fly_mode) return;
 
         // Select quickbar item using keyboard shortcut
-        if (controls.key_press(controls.BIND.QUICKBAR_1)) toggle_equip(1);
-        else if (controls.key_press(controls.BIND.QUICKBAR_2)) toggle_equip(2);
-        else if (controls.key_press(controls.BIND.QUICKBAR_3)) toggle_equip(3);
-        else if (controls.key_press(controls.BIND.QUICKBAR_4)) toggle_equip(4);
-        else if (controls.key_press(controls.BIND.QUICKBAR_5)) toggle_equip(5);
-        else if (controls.key_press(controls.BIND.QUICKBAR_6)) toggle_equip(6);
-        else if (controls.key_press(controls.BIND.QUICKBAR_7)) toggle_equip(7);
-        else if (controls.key_press(controls.BIND.QUICKBAR_8)) toggle_equip(8);
+        if (controls.triggered(controls.BIND.QUICKBAR_1)) toggle_equip(1);
+        else if (controls.triggered(controls.BIND.QUICKBAR_2)) toggle_equip(2);
+        else if (controls.triggered(controls.BIND.QUICKBAR_3)) toggle_equip(3);
+        else if (controls.triggered(controls.BIND.QUICKBAR_4)) toggle_equip(4);
+        else if (controls.triggered(controls.BIND.QUICKBAR_5)) toggle_equip(5);
+        else if (controls.triggered(controls.BIND.QUICKBAR_6)) toggle_equip(6);
+        else if (controls.triggered(controls.BIND.QUICKBAR_7)) toggle_equip(7);
+        else if (controls.triggered(controls.BIND.QUICKBAR_8)) toggle_equip(8);
 
         // Scroll through quickbar items
-        float sw = controls.get_axis("Mouse ScrollWheel");
+        float sw = controls.delta(controls.BIND.CYCLE_QUICKBAR);
 
         if (sw != 0)
         {
@@ -509,7 +514,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void run_teleports()
     {
         // Carry out home teleports
-        if (controls.key_press(controls.BIND.HOME_TELEPORT))
+        if (controls.triggered(controls.BIND.HOME_TELEPORT))
         {
             var tm = FindObjectOfType<teleport_manager>();
             if (tm != null)
@@ -562,7 +567,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         if (amt_submerged > 1.0f) amt_submerged = 1.0f;
 
         // Bouyancy (sink if shift is held, don't allow buildup of too much y velocity)
-        if (!controls.key_down(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
+        if (!controls.held(controls.BIND.SINK) && velocity.y < MAX_FLOAT_VELOCTY)
             velocity.y += amt_submerged * (GRAVITY + BOUYANCY) * Time.deltaTime;
 
         // Drag
@@ -575,8 +580,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         // Climb ladders
         bool climbing_ladder = false;
-        if (controls.key_down(controls.BIND.WALK_FORWARD) ||
-            controls.key_down(controls.BIND.PAUSE_ON_LADDER))
+        if (controls.held(controls.BIND.WALK_FORWARD) ||
+            controls.held(controls.BIND.PAUSE_ON_LADDER))
             foreach (var hit in
             Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
                                     transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
@@ -587,7 +592,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                 {
                     climbing_ladder = true;
                     velocity.y = speed * LADDER_SPEED_MULT;
-                    if (controls.key_down(controls.BIND.PAUSE_ON_LADDER))
+                    if (controls.held(controls.BIND.PAUSE_ON_LADDER))
                         velocity.y = 0;
                 }
             }
@@ -596,10 +601,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         if (ui_state != UI_STATE.ALL_CLOSED || climbing_ladder)
             crouched.value = false;
         else
-            crouched.value = controls.key_down(controls.BIND.CROUCH);
+            crouched.value = controls.held(controls.BIND.CROUCH);
 
         // Jumping
-        if (controls.key_press(controls.BIND.JUMP) && can_jump())
+        if (controls.triggered(controls.BIND.JUMP) && can_jump())
             velocity.y = JUMP_VEL;
 
         if (controller.isGrounded)
@@ -642,17 +647,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         }
 
         // Control forward/back velocity
-        if (controls.key_down(controls.BIND.WALK_FORWARD))
+        if (controls.held(controls.BIND.WALK_FORWARD))
             velocity += transform.forward * ACCELERATION * Time.deltaTime;
-        else if (controls.key_down(controls.BIND.WALK_BACKWARD))
+        else if (controls.held(controls.BIND.WALK_BACKWARD))
             velocity -= transform.forward * ACCELERATION * Time.deltaTime;
         else
             velocity -= friction_attenuation * Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
-        if (controls.key_down(controls.BIND.STRAFE_RIGHT))
+        if (controls.held(controls.BIND.STRAFE_RIGHT))
             velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
-        else if (controls.key_down(controls.BIND.STRAFE_LEFT))
+        else if (controls.held(controls.BIND.STRAFE_LEFT))
             velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
         else
             velocity -= friction_attenuation * Vector3.Project(velocity, camera.transform.right);
@@ -670,7 +675,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         // In water, allow climbing out
         if (transform.position.y < world.SEA_LEVEL &&
             transform.position.y > world.UNDERGROUND_ROOF &&
-            controls.key_down(controls.BIND.WALK_FORWARD))
+            controls.held(controls.BIND.WALK_FORWARD))
         {
             // Look for solid objects in front of player
             if (velocity.y < 2f)
@@ -710,30 +715,24 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         Vector3 ri = camera.transform.right;
         Vector3 move = Vector3.zero;
 
-        if (controls.key_down(controls.BIND.WALK_FORWARD)) move += fw * fly_speed * Time.deltaTime;
-        if (controls.key_down(controls.BIND.WALK_BACKWARD)) move -= fw * fly_speed * Time.deltaTime;
-        if (controls.key_down(controls.BIND.STRAFE_RIGHT)) move += ri * fly_speed * Time.deltaTime;
-        if (controls.key_down(controls.BIND.STRAFE_LEFT)) move -= ri * fly_speed * Time.deltaTime;
-        if (controls.key_down(controls.BIND.FLY_UP)) move += Vector3.up * fly_speed * Time.deltaTime;
-        if (controls.key_down(controls.BIND.FLY_DOWN)) move -= Vector3.up * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.WALK_FORWARD)) move += fw * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.WALK_BACKWARD)) move -= fw * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.STRAFE_RIGHT)) move += ri * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.STRAFE_LEFT)) move -= ri * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.FLY_UP)) move += Vector3.up * fly_speed * Time.deltaTime;
+        if (controls.held(controls.BIND.FLY_DOWN)) move -= Vector3.up * fly_speed * Time.deltaTime;
 
-        if (move.magnitude > 10e-4f)
-            fly_speed += Time.deltaTime * FLY_ACCELERATION;
-        else
-            fly_speed = FLY_SPEED_RESET;
-
-
+        if (move.magnitude > 10e-4f) fly_speed += Time.deltaTime * FLY_ACCELERATION;
+        else fly_speed = FLY_SPEED_RESET;
         controller.Move(move);
 
-        if (controls.key_press(controls.BIND.ADD_CINEMATIC_KEYFRAME) ||
-            controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+        if (controls.triggered(controls.BIND.ADD_CINEMATIC_KEYFRAME))
             cinematic_recording.add_keyframe(camera.transform.position, camera.transform.rotation);
 
-        if (controls.key_press(controls.BIND.REMOVE_LAST_CINEMATIC_KEYFRAME) ||
-            controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+        if (controls.triggered(controls.BIND.REMOVE_LAST_CINEMATIC_KEYFRAME))
             cinematic_recording.remove_last_keyframe();
 
-        if (controls.key_press(controls.BIND.TOGGLE_CINEMATIC_PLAYBACK))
+        if (controls.triggered(controls.BIND.TOGGLE_CINEMATIC_PLAYBACK))
             cinematic_recording.toggle_playback();
     }
 
@@ -769,7 +768,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             float s = BASE_SPEED;
             if (crouched.value)
                 s *= CROUCH_SPEED_MOD;
-            else if (controls.key_down(controls.BIND.SLOW_WALK))
+            else if (controls.held(controls.BIND.SLOW_WALK))
                 s *= SLOW_WALK_SPEED_MOD;
 
             return s;
@@ -871,7 +870,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         // Only allow toggle first/third when no UI is open
         if (ui_state != UI_STATE.ALL_CLOSED) return;
 
-        if (controls.key_press(controls.BIND.TOGGLE_THIRD_PERSON))
+        if (controls.triggered(controls.BIND.TOGGLE_THIRD_PERSON))
             first_person = !first_person;
     }
 
@@ -882,7 +881,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
               ui_state == UI_STATE.MAP_OPEN)) return;
 
         // Ping the map
-        if (controls.mouse_click(controls.MOUSE_BUTTON.MIDDLE))
+        if (controls.triggered(controls.BIND.PLACE_MARKER))
         {
             var ray = camera_ray();
             if (Physics.Raycast(ray, out RaycastHit hit))
@@ -895,7 +894,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void run_map()
     {
         // Toggle the map view on M
-        if (controls.key_press(controls.BIND.TOGGLE_MAP))
+        if (controls.triggered(controls.BIND.TOGGLE_MAP))
         {
             if (ui_state == UI_STATE.MAP_OPEN) ui_state = UI_STATE.ALL_CLOSED;
             else ui_state = UI_STATE.MAP_OPEN;
@@ -904,7 +903,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         if (map_open)
         {
             // Zoom the map
-            float scroll = controls.get_axis("Mouse ScrollWheel");
+            float scroll = controls.delta(controls.BIND.ZOOM_MAP);
             if (scroll > 0) game.render_range_target /= 1.2f;
             else if (scroll < 0) game.render_range_target *= 1.2f;
 
@@ -923,7 +922,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void run_options()
     {
         // Toggle options
-        if (controls.key_press(controls.BIND.TOGGLE_OPTIONS))
+        if (controls.triggered(controls.BIND.TOGGLE_OPTIONS))
         {
             if (ui_state != UI_STATE.ALL_CLOSED) ui_state = UI_STATE.ALL_CLOSED;
             else ui_state = UI_STATE.OPTIONS_MENU_OPEN;
@@ -959,14 +958,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     void mouse_look()
     {
         // Rotate the player view
-        y_rotation.value += controls.get_axis("Mouse X") * controls.mouse_look_sensitivity;
+        y_rotation.value += controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity;
         if (!map_open)
-            x_rotation.value -= controls.get_axis("Mouse Y") * controls.mouse_look_sensitivity;
+            x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity;
         else
         {
             // In map, so up/down rotation isn't networked    
             float eye_x = eye_transform.localRotation.eulerAngles.x;
-            eye_x -= controls.get_axis("Mouse Y") * controls.mouse_look_sensitivity;
+            eye_x -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity;
             eye_x = Mathf.Clamp(eye_x, 0, 90);
             eye_transform.localRotation = Quaternion.Euler(eye_x, 0, 0);
         }
@@ -1357,13 +1356,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         public override bool conditions_met()
         {
             if (current.equipped == null) return false;
-            return controls.key_press(controls.BIND.GIVE);
+            return controls.triggered(controls.BIND.GIVE);
         }
 
         public override string context_tip()
         {
             if (current.equipped == null) return "";
-            return "Press " + controls.current_bind(controls.BIND.GIVE) +
+            return "Press " + controls.bind_name(controls.BIND.GIVE) +
                    " to give " + current.equipped.display_name +
                    " to " + interacting_with.username.value;
         }
@@ -1720,10 +1719,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public static string info()
     {
         if (current == null) return "No local player";
-        return "Local player " + current.username.value + " at " +
-            System.Math.Round(current.transform.position.x, 1) + " " +
-            System.Math.Round(current.transform.position.y, 1) + " " +
-            System.Math.Round(current.transform.position.z, 1);
+        string str = "    Local player " + current.username.value;
+        if (current.current_interaction != null)
+            str += "\n    Interaction " + current.current_interaction.GetType().FullName;
+        return str;
     }
 }
 
@@ -1828,7 +1827,7 @@ public abstract class left_player_menu : player_interaction
     public override bool conditions_met()
     {
         // Left player menus open with the inventory.
-        return controls.key_press(controls.BIND.OPEN_INVENTORY);
+        return controls.triggered(controls.BIND.OPEN_INVENTORY);
     }
 
     public override string context_tip()
@@ -1858,7 +1857,7 @@ public abstract class left_player_menu : player_interaction
         // Left player menus close with the inventory.
         if (player?.inventory?.ui != null && !player.inventory.ui.gameObject.activeInHierarchy)
             return true;
-        return controls.key_press(controls.BIND.OPEN_INVENTORY);
+        return controls.triggered(controls.BIND.OPEN_INVENTORY);
     }
 
     public override void end_interaction(player player)

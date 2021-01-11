@@ -7,7 +7,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
     static scavangable()
     {
         tips.add("You can scavange for items if your hands are free. Press " +
-            controls.current_bind(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding.");
+            controls.bind_name(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding.");
     }
 
     product[] products => GetComponents<product>();
@@ -39,7 +39,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override string context_tip()

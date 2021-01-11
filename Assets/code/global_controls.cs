@@ -33,7 +33,7 @@ public class global_controls : MonoBehaviour
         steam.update();
 
         // Cycle fullscreen modes
-        if (controls.key_press(controls.BIND.CYCLE_FULLSCREEN_MODES))
+        if (controls.triggered(controls.BIND.CYCLE_FULLSCREEN_MODES))
         {
             switch (Screen.fullScreenMode)
             {

@@ -111,7 +111,7 @@ public class melee_weapon : equip_in_hand
 
         public override bool conditions_met()
         {
-            return controls.mouse_down(controls.MOUSE_BUTTON.LEFT);
+            return controls.held(controls.BIND.USE_ITEM);
         }
 
         public override bool start_interaction(player player)

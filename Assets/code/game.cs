@@ -253,20 +253,20 @@ public class game : MonoBehaviour
         load_balancing.update();
 
         // Open/Close the console
-        if (controls.key_press(controls.BIND.OPEN_CONSOLE)) console.open = true;
-        if (controls.key_press(controls.BIND.CLOSE_CONSOLE)) console.open = false;
+        if (controls.triggered(controls.BIND.OPEN_CONSOLE)) console.open = true;
+        if (controls.triggered(controls.BIND.CLOSE_CONSOLE)) console.open = false;
 
         // Repeat the last console command
-        if (controls.key_press(controls.BIND.REPEAT_LAST_CONSOLE_COMMAND))
+        if (controls.triggered(controls.BIND.REPEAT_LAST_CONSOLE_COMMAND))
             console.repeat_last_command();
 
         // Toggle the debug panel
-        if (controls.key_press(controls.BIND.TOGGLE_DEBUG_INFO))
+        if (controls.triggered(controls.BIND.TOGGLE_DEBUG_INFO))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
 
         // Increase/Decrease render ranges
-        if (controls.key_press(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
-        if (controls.key_press(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
+        if (controls.triggered(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
+        if (controls.triggered(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
     }
 

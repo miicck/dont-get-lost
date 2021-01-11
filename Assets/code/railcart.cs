@@ -19,7 +19,8 @@ public class railcart : item
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM) ||
+                   controls.triggered(controls.BIND.ALT_USE_ITEM);
         }
 
         public override string context_tip()
@@ -81,8 +82,8 @@ public class railcart : item
             player.transform.position = current.progress_towards(next, progress);
 
             // Mouse click dismounts the rail
-            if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT) ||
-                controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+            if (controls.triggered(controls.BIND.USE_ITEM) ||
+                controls.triggered(controls.BIND.ALT_USE_ITEM))
                 return true;
 
             return false;

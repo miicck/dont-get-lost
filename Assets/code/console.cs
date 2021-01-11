@@ -520,13 +520,13 @@ public class console : MonoBehaviour
     private void Update()
     {
         bool fill_from_history = false;
-        if (controls.key_press(controls.BIND.CONSOLE_MOVE_HISTORY_BACK))
+        if (controls.triggered(controls.BIND.CONSOLE_MOVE_HISTORY_BACK))
         {
             if (in_history_range(command_history_position - 1))
                 command_history_position -= 1;
             fill_from_history = true;
         }
-        else if (controls.key_press(controls.BIND.CONSOLE_MOVE_HISTORY_FORWARD))
+        else if (controls.triggered(controls.BIND.CONSOLE_MOVE_HISTORY_FORWARD))
         {
             if (in_history_range(command_history_position + 1))
                 command_history_position += 1;

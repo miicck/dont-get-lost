@@ -13,7 +13,7 @@ public class item : networked, IPlayerInteractable
     static item()
     {
         tips.add("To see if you can eat an item, hover over it and press " +
-                 controls.current_bind(controls.BIND.INSPECT) + " to check it's food value. " +
+                 controls.bind_name(controls.BIND.INSPECT) + " to check it's food value. " +
                  "Equip it in your quckbar and left click to eat.");
     }
 
@@ -82,7 +82,7 @@ public class item : networked, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.PICK_UP_ITEM);
         }
 
         public override bool start_interaction(player player)
@@ -104,7 +104,7 @@ public class item : networked, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.key_press(controls.BIND.SELECT_ITEM_FROM_WORLD);
+            return controls.triggered(controls.BIND.SELECT_ITEM_FROM_WORLD);
         }
 
         public override bool start_interaction(player player)
@@ -150,7 +150,7 @@ public class item : networked, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT) &&
+            return controls.triggered(controls.BIND.USE_ITEM) &&
                    item.food_values != null;
         }
 
@@ -173,7 +173,7 @@ public class item : networked, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.RIGHT);
+            return controls.triggered(controls.BIND.PLACE_ON_GUTTER);
         }
 
         public override string context_tip()

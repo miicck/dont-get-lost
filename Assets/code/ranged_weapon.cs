@@ -74,7 +74,7 @@ public class ranged_weapon : equip_in_hand
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override string context_tip()
@@ -96,7 +96,7 @@ public class ranged_weapon : equip_in_hand
 
         public override bool conditions_met()
         {
-            return controls.mouse_down(controls.MOUSE_BUTTON.RIGHT);
+            return controls.held(controls.BIND.ALT_USE_ITEM);
         }
 
         public override string context_tip()
@@ -106,7 +106,7 @@ public class ranged_weapon : equip_in_hand
 
         public override bool continue_interaction(player player)
         {
-            if (!controls.mouse_down(controls.MOUSE_BUTTON.RIGHT))
+            if (!controls.held(controls.BIND.ALT_USE_ITEM))
                 return true;
 
             weapon.pickup_ammo();

@@ -62,7 +62,7 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
     {
         harvest_by_hand harvesting;
         public interaction(harvest_by_hand harvesting) { this.harvesting = harvesting; }
-        public override bool conditions_met() { return controls.mouse_click(controls.MOUSE_BUTTON.LEFT); }
+        public override bool conditions_met() { return controls.triggered(controls.BIND.USE_ITEM); }
 
         public override bool start_interaction(player player)
         {

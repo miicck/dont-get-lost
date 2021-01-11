@@ -23,7 +23,7 @@ public class cave_system_teleporter : MonoBehaviour, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.ENTER_EXIT_CAVE);
         }
 
         public override string context_tip()

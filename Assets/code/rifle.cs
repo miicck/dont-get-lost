@@ -225,13 +225,13 @@ public class rifle : equip_in_hand
     void set_camera_position()
     {
         // Switch cursors depending on mode of use
-        if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+        if (controls.triggered(controls.BIND.ALT_USE_ITEM))
             player_using.cursor_sprite = "transparent";
 
-        if (controls.mouse_unclick(controls.MOUSE_BUTTON.RIGHT))
+        if (controls.untriggered(controls.BIND.ALT_USE_ITEM))
             player_using.cursor_sprite = hip_fire_sprite;
 
-        if (controls.mouse_down(controls.MOUSE_BUTTON.RIGHT) && state != STATE.RELOADING)
+        if (controls.held(controls.BIND.ALT_USE_ITEM) && state != STATE.RELOADING)
         {
             // ADS - lerp camera to sight position / sight field of view
             player_using.camera.fieldOfView = Mathf.Lerp(player_using.camera.fieldOfView,
@@ -297,7 +297,7 @@ public class rifle : equip_in_hand
 
         public override bool conditions_met()
         {
-            return controls.mouse_down(controls.MOUSE_BUTTON.LEFT);
+            return controls.held(controls.BIND.USE_ITEM);
         }
 
         public override string context_tip()

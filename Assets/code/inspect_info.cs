@@ -12,7 +12,7 @@ public class inspect_info : MonoBehaviour
     static inspect_info()
     {
         tips.add("You can inspect the object you are currently looking at by " +
-            "pressing " + controls.current_bind(controls.BIND.INSPECT) + ". This also " +
+            "pressing " + controls.bind_name(controls.BIND.INSPECT) + ". This also " +
             "works when hovering over items in your inventory.");
     }
 
@@ -54,12 +54,12 @@ public class player_inspectable : player_interaction
 
     public override string context_tip()
     {
-        return "Press " + controls.current_bind(controls.BIND.INSPECT) + " to inspect";
+        return "Press " + controls.bind_name(controls.BIND.INSPECT) + " to inspect";
     }
 
     public override bool conditions_met()
     {
-        return controls.key_down(controls.BIND.INSPECT);
+        return controls.held(controls.BIND.INSPECT);
     }
 
     public override bool start_interaction(player player)
@@ -68,12 +68,12 @@ public class player_inspectable : player_interaction
         foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
             str += "\n" + add.added_inspection_text();
         inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
-        return !controls.key_down(controls.BIND.INSPECT);
+        return !controls.held(controls.BIND.INSPECT);
     }
 
     public override bool continue_interaction(player player)
     {
-        return !controls.key_down(controls.BIND.INSPECT);
+        return !controls.held(controls.BIND.INSPECT);
     }
 
     public override void end_interaction(player player)

@@ -13,7 +13,7 @@ public class dynamite : item
     {
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override string context_tip()

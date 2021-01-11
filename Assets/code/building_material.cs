@@ -13,18 +13,18 @@ public class building_material : item, IPlayerInteractable
     {
         tips.add("When placing an object, you can cycle through the " +
             "different starting orientations by pressing " +
-            controls.current_bind(controls.BIND.CHANGE_PIVOT) + " or by scrolling. " +
+            controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " or by scrolling. " +
             "This initial orientation will be saved when placing subsequent objects.");
 
         tips.add("With a building material equipped, right click" +
             " to quickly delete objects of the same type.");
 
         tips.add("Building materials can be deleted by right-clicking on them with an empty hand. " +
-            "Press " + controls.current_bind(controls.BIND.QUICKBAR_1) +
+            "Press " + controls.bind_name(controls.BIND.QUICKBAR_1) +
             " a few times to de-equip what you are holding.");
 
         tips.add("To turn off snapping when placing a building, hold " +
-            controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
+            controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
             "This will also orient the building to the world " +
             "axes, rather than to the parent building.");
     }
@@ -33,14 +33,14 @@ public class building_material : item, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    class left_click_interaction : player_interaction
+    class use_interaction : player_interaction
     {
         building_material material;
-        public left_click_interaction(building_material material) { this.material = material; }
+        public use_interaction(building_material material) { this.material = material; }
 
         public override bool conditions_met()
         {
-            return material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return material.is_logistics_version && controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override bool start_interaction(player player)
@@ -56,14 +56,14 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    class right_click_interaction : player_interaction
+    class alt_use_interaction : player_interaction
     {
         building_material material;
-        public right_click_interaction(building_material material) { this.material = material; }
+        public alt_use_interaction(building_material material) { this.material = material; }
 
         public override bool conditions_met()
         {
-            return !material.is_logistics_version && controls.mouse_click(controls.MOUSE_BUTTON.RIGHT);
+            return !material.is_logistics_version && controls.triggered(controls.BIND.ALT_USE_ITEM);
         }
 
         public override bool start_interaction(player player)
@@ -83,8 +83,8 @@ public class building_material : item, IPlayerInteractable
     {
         return new player_interaction[]
         {
-            new left_click_interaction(this),
-            new right_click_interaction(this),
+            new use_interaction(this),
+            new alt_use_interaction(this),
             new select_matching_interaction(this),
             new player_inspectable(transform)
             {
@@ -250,8 +250,8 @@ public class building_material : item, IPlayerInteractable
 
         void change_pivot()
         {
-            float pivot_change_dir = controls.get_axis("Mouse ScrollWheel");
-            if (controls.key_press(controls.BIND.CHANGE_PIVOT)) pivot_change_dir = 1f;
+            float pivot_change_dir = controls.delta(controls.BIND.CHANGE_PIVOT);
+            if (controls.triggered(controls.BIND.INCREMENT_PIVOT)) pivot_change_dir = 1f;
             if (pivot_change_dir != 0)
             {
                 // Change the pivot
@@ -267,7 +267,7 @@ public class building_material : item, IPlayerInteractable
         {
             change_pivot();
 
-            if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT))
+            if (controls.triggered(controls.BIND.USE_ITEM))
             {
                 if (Time.realtimeSinceStartup - last_click_time < 0.5f)
                     return true;
@@ -295,7 +295,7 @@ public class building_material : item, IPlayerInteractable
                     }
                 }
             }
-            else if (controls.mouse_unclick(controls.MOUSE_BUTTON.LEFT))
+            else if (controls.untriggered(controls.BIND.USE_ITEM))
             {
                 last_closest_point = null;
                 mouse_mode = MOUSE_MODE.NONE;
@@ -303,7 +303,8 @@ public class building_material : item, IPlayerInteractable
 
             Vector3? new_closest_point = null;
             Vector3? rotation_axis = null;
-            accumulated_rotation += 10 * controls.object_rotation_axis();
+            accumulated_rotation += 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) + 
+                                          controls.delta(controls.BIND.ROTATION_AMOUNT_Y));
 
             switch (mouse_mode)
             {
@@ -348,7 +349,7 @@ public class building_material : item, IPlayerInteractable
             {
                 Vector3 rot_axis = (Vector3)rotation_axis;
 
-                if (controls.key_down(controls.BIND.FINE_ROTATION))
+                if (controls.held(controls.BIND.FINE_ROTATION))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, accumulated_rotation);
                     accumulated_rotation = 0;
@@ -381,74 +382,74 @@ public class building_material : item, IPlayerInteractable
         {
             change_pivot();
 
-            axes.gameObject.SetActive(controls.key_down(controls.BIND.BUILDING_TRANSLATION));
-            rotation_axes.gameObject.SetActive(!controls.key_down(controls.BIND.BUILDING_TRANSLATION));
+            axes.gameObject.SetActive(controls.held(controls.BIND.BUILDING_TRANSLATION));
+            rotation_axes.gameObject.SetActive(!controls.held(controls.BIND.BUILDING_TRANSLATION));
 
-            if (controls.key_down(controls.BIND.BUILDING_TRANSLATION))
+            if (controls.held(controls.BIND.BUILDING_TRANSLATION))
             {
                 // Translate, rather than rotate
                 float t_amount = Time.deltaTime / 2f;
-                if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_RIGHT))
+                if (controls.held(controls.BIND.MANIPULATE_BUILDING_RIGHT))
                 {
                     axes.highlight_axis(axes.AXIS.X);
                     translate(right_rot * t_amount);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_LEFT))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_LEFT))
                 {
                     axes.highlight_axis(axes.AXIS.X);
                     translate(-right_rot * t_amount);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_FORWARD))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_FORWARD))
                 {
                     axes.highlight_axis(axes.AXIS.Z);
                     translate(forward_rot * t_amount);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_BACK))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_BACK))
                 {
                     axes.highlight_axis(axes.AXIS.Z);
                     translate(-forward_rot * t_amount);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_UP))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_UP))
                 {
                     axes.highlight_axis(axes.AXIS.Y);
                     translate(up_rot * t_amount);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_DOWN))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_DOWN))
                 {
                     axes.highlight_axis(axes.AXIS.Y);
                     translate(-up_rot * t_amount);
                 }
             }
 
-            else if (controls.key_down(controls.BIND.FINE_ROTATION))
+            else if (controls.held(controls.BIND.FINE_ROTATION))
             {
                 // Continuous rotation
-                if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_RIGHT))
+                if (controls.held(controls.BIND.MANIPULATE_BUILDING_RIGHT))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_LEFT))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_LEFT))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, forward_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.Z);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_BACK))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_BACK))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -right_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_FORWARD))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_FORWARD))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, right_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.X);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_DOWN))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_DOWN))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, -up_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.Y);
                 }
-                else if (controls.key_down(controls.BIND.MANIPULATE_BUILDING_UP))
+                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_UP))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, up_rot, Time.deltaTime * 15f);
                     rotation_axes.highlight_axis(axes.AXIS.Y);
@@ -456,32 +457,32 @@ public class building_material : item, IPlayerInteractable
             }
 
             // Rotation by 45 degree increments
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_RIGHT))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_RIGHT))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_LEFT))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_LEFT))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, forward_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.Z);
             }
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_BACK))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_BACK))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -right_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.X);
             }
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_FORWARD))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_FORWARD))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, right_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.X);
             }
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_DOWN))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_DOWN))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, -up_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.Y);
             }
-            else if (controls.key_press(controls.BIND.MANIPULATE_BUILDING_UP))
+            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_UP))
             {
                 to_weld.transform.RotateAround(pivot.transform.position, up_rot, 45);
                 rotation_axes.highlight_axis(axes.AXIS.Y);
@@ -662,7 +663,7 @@ public class building_material : item, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_down(controls.MOUSE_BUTTON.RIGHT);
+            return controls.held(controls.BIND.ALT_USE_ITEM);
         }
 
         public override string context_tip()
@@ -707,7 +708,7 @@ public class building_material : item, IPlayerInteractable
 
         public override bool conditions_met()
         {
-            return controls.mouse_click(controls.MOUSE_BUTTON.LEFT);
+            return controls.triggered(controls.BIND.USE_ITEM);
         }
 
         public override string context_tip()
@@ -717,29 +718,29 @@ public class building_material : item, IPlayerInteractable
                 if (controls.key_based_building)
                 {
                     return "Left click to build, right click to cancel\nUse " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_RIGHT) + ", " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
-                        controls.current_bind(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
-                        "Hold " + controls.current_bind(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
-                        "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
-                        "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_FORWARD) + ", " +
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_LEFT) + ", " +
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_BACK) + ", " +
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_RIGHT) + ", " +
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
+                        controls.bind_name(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
+                        "Hold " + controls.bind_name(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
+                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations\n" +
+                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
                 else
                 {
                     return
                         "Double left click to build, right click to cancel\n" +
                         "Click and drag the arrows to translate, or the circles to rotate\n" +
-                        "Scroll, or press " + controls.current_bind(controls.BIND.CHANGE_PIVOT) + " to cycle initial orientations\n" +
-                        "Hold " + controls.current_bind(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations\n" +
+                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
             }
 
             return "Left click to build\n" +
                 "Buildings will snap together at key points, hold " +
-                controls.current_bind(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
+                controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
                 "Disabling snapping will also allign the building to the world axes";
         }
 
@@ -760,7 +761,7 @@ public class building_material : item, IPlayerInteractable
             // under cursor (unless ignore_snap_points is held)
             RaycastHit hit = default;
             building_material bm = null;
-            if (!controls.key_down(controls.BIND.IGNORE_SNAP_POINTS))
+            if (!controls.held(controls.BIND.IGNORE_SNAP_POINTS))
                 bm = utils.raycast_for_closest<building_material>(
                     camera_ray, out hit, raycast_distance, accept: (b) => !b.is_logistics_version);
 
@@ -792,7 +793,7 @@ public class building_material : item, IPlayerInteractable
             if (blueprint == null) return true;
             last_time_building = Time.realtimeSinceStartup;
 
-            if (controls.mouse_click(controls.MOUSE_BUTTON.RIGHT))
+            if (controls.triggered(controls.BIND.ALT_USE_ITEM))
             {
                 // Cancel build on right click
                 blueprint.weld.on_finish();
@@ -803,7 +804,7 @@ public class building_material : item, IPlayerInteractable
 
             if (controls.key_based_building)
             {
-                if (controls.mouse_click(controls.MOUSE_BUTTON.LEFT)) return true;
+                if (controls.triggered(controls.BIND.USE_ITEM)) return true;
                 blueprint.weld.key_rotate();
                 return false;
             }
@@ -829,7 +830,7 @@ public class building_material : item, IPlayerInteractable
 
                     created.on_build();
                     blueprint.weld.on_finish();
-                    Destroy(blueprint.gameObject);              
+                    Destroy(blueprint.gameObject);
                 }
             }
 
