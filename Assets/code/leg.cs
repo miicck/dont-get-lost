@@ -58,11 +58,17 @@ public class leg : MonoBehaviour
     // Update the various directions/lengths used to determine the step animations
     void update_lengths_and_directions()
     {
-        step_direction = velocity.magnitude > EPS_MAG ? velocity.normalized : step_centre.forward;
+        float speed = velocity.magnitude;
+        Vector3 step_centre_pos = step_centre.position;
+        Vector3 step_centre_fw = step_centre.forward;
+        Vector3 step_centre_right = step_centre.right;
+        Vector3 step_centre_up = step_centre.up;
 
-        float fw_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.forward));
-        float lr_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.right));
-        float ud_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre.up));
+        step_direction = speed > EPS_MAG ? velocity / speed : step_centre_fw;
+
+        float fw_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre_fw));
+        float lr_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre_right));
+        float ud_amt = Mathf.Abs(Vector3.Dot(step_direction, step_centre_up));
 
         float tot = fw_amt + lr_amt + ud_amt;
         fw_amt /= tot;
@@ -80,15 +86,14 @@ public class leg : MonoBehaviour
         step_length = step * step_length_boost;
         if (step_length < MIN_STEP_SIZE) step_length = MIN_STEP_SIZE;
 
-        float boost = velocity.magnitude / max_boost_at_speed;
-        if (boost > 1f) boost = 1f;
+        float boost = Mathf.Min(speed / max_boost_at_speed, 1f);
         step_length_boost = min_step_length_boost + boost *
             (max_step_length_boost - min_step_length_boost);
 
-        step_front = step_centre.position + step_direction * step_length / 2f;
-        step_back = step_centre.position - step_direction * step_length / 2f;
-        test_start = step_front + Vector3.up * test_up_amt;
-        test_end = step_front - Vector3.up * test_down_amt;
+        step_front = step_centre_pos + step_direction * step_length / 2f;
+        step_back = step_centre_pos - step_direction * step_length / 2f;
+        test_start = step_front + new Vector3(0, test_up_amt, 0);
+        test_end = step_front + new Vector3(0, -test_down_amt, 0);
     }
 
     private void Start()
@@ -196,12 +201,12 @@ public class leg : MonoBehaviour
         // according to the following diagram.
         // 
         //                                         a = thigh_length = hip-to-knee distance
-        //   thigh.transform.position = hip -> ._________. <- knee = shin.transform.position
+        //              hip.position = hip -> .__________. <- knee = shin.transform.position
         //                                     \        /
         //                                      \L     /  
         //                hip-ankle distance = d \    / b = shin_length = knee-to-ankle distance
         //                                        \  /
-        //                                         \/. <- ankle = foot.transform.position
+        //                                         \/. <- ankle = ankle.position
         //
         // point labelled L = the closest point to the knee along the hip-to-ankle line
         //           lambda = the distance between the knee and the point labelled L
@@ -213,13 +218,13 @@ public class leg : MonoBehaviour
         Vector3 hip_pos = hip.position;
         Vector3 ankle_to_hip = hip_pos - ankle_pos;
         float d = ankle_to_hip.magnitude;
-        Vector3 dhat = ankle_to_hip / d;
-        Vector3 khat = Vector3.Cross(transform.right, dhat);
+        Vector3 dhat = ankle_to_hip / d; // Direction from ankle to hip
+        Vector3 khat = Vector3.Cross(transform.right, dhat); // Direction from L to knee
 
         if (d > a + b)
         {
             // Foot is further than the maximum extent of the leg, create a streight leg
-            knee.position = hip.position - a * ankle_to_hip / (a + b);
+            knee.position = hip_pos - a * ankle_to_hip / (a + b);
 
             // Solve orientation and scale
             Quaternion rotation = Quaternion.LookRotation(khat, dhat);
@@ -245,7 +250,7 @@ public class leg : MonoBehaviour
         // Setup the bent leg accordingly
         Vector3 hip_to_knee = -d1 * dhat + lambda * khat;
         Vector3 ankle_to_knee = hip_to_knee + ankle_to_hip;
-        Vector3 new_knee_pos = hip.position + hip_to_knee;
+        Vector3 new_knee_pos = hip_pos + hip_to_knee;
 
         if (new_knee_pos.isNaN()) return;
         knee.position = new_knee_pos;
