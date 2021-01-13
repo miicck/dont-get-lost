@@ -138,15 +138,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         if (equipped != null)
             all_interactions.AddRange(equipped?.item_uses());
 
-        // Get in-world interactables
+        // Get in-world interactable
         var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-        foreach (var hit in Physics.RaycastAll(cam_ray, dis))
-        {
-            if (hit.transform.IsChildOf(transform)) continue; // Can't interact with myself
-            var inters = hit.transform.GetComponentsInParent<IPlayerInteractable>();
-            foreach (var inter in inters)
-                all_interactions.AddRange(inter.player_interactions());
-        }
+        foreach (var inter in utils.raycast_for_closests<IPlayerInteractable>(
+            cam_ray, out RaycastHit hit, max_distance: dis,
+            accept: (h, i) => !h.transform.IsChildOf(transform))) // Don't interact with myself
+            all_interactions.AddRange(inter.player_interactions());
 
         // Add self interactions to list
         all_interactions.AddRange(self_interactions);
@@ -214,6 +211,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         {
             player.inventory.open = state;
             player.crafting_menu.open = state;
+            if (state) player.crafting_menu.invoke_on_change();
         }
     }
 

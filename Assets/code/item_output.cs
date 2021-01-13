@@ -45,7 +45,7 @@ public class item_dropper : MonoBehaviour
         {
             // Drop to the floor
             var collided = utils.raycast_for_closest<Collider>(
-                new Ray(from, Vector3.down), out RaycastHit hit, accept: (c) =>
+                new Ray(from, Vector3.down), out RaycastHit hit, accept: (h, c) =>
             {
                 var itm = c.transform.GetComponentInParent<item>();
                 if (itm == null) return true; // Accept collisions with non-items

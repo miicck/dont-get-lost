@@ -199,9 +199,9 @@ public class auto_crafter : building_material, IPlayerInteractable
                 int i_copy = i;
                 var reset_colors = button_i.button.colors;
 
-                button_i.button.onClick.AddListener((UnityEngine.Events.UnityAction)(() =>
+                button_i.button.onClick.AddListener((() =>
                 {
-                    if (controls.held((controls.BIND)controls.BIND.QUICK_ITEM_TRANSFER))
+                    if (controls.held(controls.BIND.QUICK_ITEM_TRANSFER))
                     {
                         // Transfer the recipe ingredients to the crafting menu
                         if (player.current == null) return;

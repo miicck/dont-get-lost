@@ -462,6 +462,9 @@ public class inventory : networked, IItemCollection
     List<on_change_func> listeners = new List<on_change_func>();
     public void add_on_change_listener(on_change_func f) { listeners.Add(f); }
 
+    /// <summary> Call to invoke listeners added via <see cref="add_on_change_listener(on_change_func)"/>. </summary>
+    public void invoke_on_change() { foreach (var f in listeners) f(); }
+
     /// <summary> Called when an <see cref="inventory_slot_networked"/> changes contents. </summary>
     public void on_slot_change(int slot_index, item item, int count)
     {
@@ -470,6 +473,6 @@ public class inventory : networked, IItemCollection
             throw new System.Exception("UI should create itself!");
 
         slots[slot_index].update(item, count, this);
-        foreach (var f in listeners) f();
+        invoke_on_change();
     }
 }

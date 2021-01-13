@@ -33,7 +33,7 @@ public class auto_harvester : building_material, IPlayerInteractable
         // Figure out what we're harvesting
         harvesting = utils.raycast_for_closest<harvestable>(
             new Ray(ray_start.position, ray_start.forward),
-            out RaycastHit hit, ray_length, (h) =>
+            out RaycastHit hit, ray_length, (hit, h) =>
             {
                 return h.tool.tool_type == tool_type &&
                                    h.tool.tool_quality <= tool_quality;

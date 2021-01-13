@@ -392,7 +392,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
-        nutrition = new networked_variables.net_food_satisfaction();
+        nutrition = networked_variables.net_food_satisfaction.fully_satisfied;
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
         net_name = new networked_variables.net_string();
         male = new networked_variables.net_bool();

@@ -786,6 +786,17 @@ namespace networked_variables
     {
         byte[] group_values = new byte[food.total_groups];
 
+        public static net_food_satisfaction fully_satisfied
+        {
+            get
+            {
+                var ret = new net_food_satisfaction();
+                for (int i = 0; i < ret.group_values.Length; ++i)
+                    ret.group_values[i] = byte.MaxValue;
+                return ret;
+            }
+        }
+
         public byte metabolic_satisfaction
         {
             get; private set;

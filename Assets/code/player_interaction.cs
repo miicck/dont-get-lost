@@ -189,12 +189,20 @@ public class interaction_set
             if (underway.ContainsKey(i.keybind)) continue;
             if (!i.simultaneous() && !simultaneous()) continue;
             if (!i.triggered()) continue;
-            if (!i.start_interaction(player))
-                underway[i.keybind] = new started_info
-                {
-                    interaction = i,
-                    frame_started = Time.frameCount
-                };
+
+            // Add to underway tasks. We need to do this before we call 
+            // start_interaction, in case start_interaction queries 
+            // currently underway interactions (for example, when the player
+            // opens their inventory, player.current_interactions are checked
+            // for additional recipes)
+            underway[i.keybind] = new started_info
+            {
+                interaction = i,
+                frame_started = Time.frameCount
+            };
+
+            if (i.start_interaction(player))
+                underway.Remove(i.keybind); // Immediately completed, remove from underway
         }
     }
 

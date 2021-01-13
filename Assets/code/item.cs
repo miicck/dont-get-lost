@@ -145,7 +145,6 @@ public class item : networked, IPlayerInteractable
         public override bool is_possible() { return item.food_values != null; }
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
-
         public override string context_tip()
         {
             return "eat " + item.display_name;
@@ -153,7 +152,8 @@ public class item : networked, IPlayerInteractable
 
         public override bool start_interaction(player player)
         {
-            player.modify_hunger(-item.food_values.metabolic_value());
+            if (player.inventory.remove(item, 1))
+                player.modify_hunger(item.food_values.metabolic_value());
             return true;
         }
     }

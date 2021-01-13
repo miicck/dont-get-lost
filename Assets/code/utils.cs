@@ -44,9 +44,9 @@ public static class utils
     }
 
     // Raycast for the nearest object of the given type
-    public delegate bool accept_func<T>(T t);
+    public delegate bool raycast_accept_func<T>(RaycastHit h, T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
-        float max_distance = float.MaxValue, accept_func<T> accept = null)
+        float max_distance = float.MaxValue, raycast_accept_func<T> accept = null)
     {
         float min_dis = float.MaxValue;
         hit = new RaycastHit();
@@ -58,7 +58,7 @@ public static class utils
             if (t != null)
             {
                 if (accept != null)
-                    if (!accept(t))
+                    if (!accept(h, t))
                         continue;
 
                 float dis = (ray.origin - h.point).sqrMagnitude;
@@ -75,24 +75,32 @@ public static class utils
     }
 
     // Raycast for the nearest object of the given type
-    public static T[] raycast_for_closests<T>(Ray ray, out RaycastHit hit,
-        float max_distance = float.MaxValue)
+    public static List<T> raycast_for_closests<T>(Ray ray, out RaycastHit hit,
+        float max_distance = float.MaxValue, raycast_accept_func<T> accept = null)
     {
         float min_dis = float.MaxValue;
         hit = new RaycastHit();
-        T[] ret = new T[0];
+        List<T> ret = new List<T>();
 
         foreach (var h in Physics.RaycastAll(ray, max_distance))
         {
-            var t = h.collider.gameObject.GetComponentsInParent<T>();
-            if (t != null && t.Length > 0)
+            var ts = h.collider.gameObject.GetComponentsInParent<T>();
+            if (ts == null || ts.Length == 0) continue;
+
+            float dis = (ray.origin - h.point).sqrMagnitude;
+            if (dis < min_dis)
             {
-                float dis = (ray.origin - h.point).sqrMagnitude;
-                if (dis < min_dis)
+                min_dis = dis;
+                hit = h;
+                ret = new List<T>();
+
+                foreach (var t in ts)
                 {
-                    min_dis = dis;
-                    hit = h;
-                    ret = t;
+                    if (accept != null)
+                        if (!accept(h, t))
+                            continue;
+
+                    ret.Add(t);
                 }
             }
         }
@@ -146,7 +154,7 @@ public static class utils
         var hits = new List<UnityEngine.EventSystems.RaycastResult>();
 
         // This never seems to work, but I guess it might as well stay
-        event_system.RaycastAll(pointer_data, hits);
+        // event_system.RaycastAll(pointer_data, hits);
 
         // Find the graphic raycaster and use it to find ui elements below the pointer
         var raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();

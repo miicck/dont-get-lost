@@ -274,7 +274,7 @@ public class building_material : item, IPlayerInteractable
                 mouse_mode = MOUSE_MODE.NONE;
 
                 var trans = utils.raycast_for_closest<Transform>(ray, out RaycastHit hit,
-                    accept: (t) => t.IsChildOf(axes.transform) || t.IsChildOf(rotation_axes.transform));
+                    accept: (h, t) => t.IsChildOf(axes.transform) || t.IsChildOf(rotation_axes.transform));
 
                 if (trans != null)
                 {
@@ -518,7 +518,7 @@ public class building_material : item, IPlayerInteractable
         RaycastHit hit;
         if (utils.raycast_for_closest<item>(
             ray, out hit, ray_distance,
-            (t) => t == this))
+            (h, t) => t == this))
         {
             // Find the nearest snap point to the hit
             float min_dis_pt = float.MaxValue;
@@ -683,7 +683,7 @@ public class building_material : item, IPlayerInteractable
             // Right click destroys items of the same kind
             var camera_ray = player.camera_ray(BUILD_RANGE, out float dis);
             building_material found_same = utils.raycast_for_closest<building_material>(
-                camera_ray, out RaycastHit hit, dis, (b) => b.name == equipped.name);
+                camera_ray, out RaycastHit hit, dis, (h, b) => b.name == equipped.name);
             if (found_same == null) return true;
 
             last_time_deleting = Time.realtimeSinceStartup;
@@ -754,7 +754,7 @@ public class building_material : item, IPlayerInteractable
             building_material bm = null;
             if (!controls.held(controls.BIND.IGNORE_SNAP_POINTS))
                 bm = utils.raycast_for_closest<building_material>(
-                    camera_ray, out hit, raycast_distance, accept: (b) => !b.is_logistics_version);
+                    camera_ray, out hit, raycast_distance, accept: (h, b) => !b.is_logistics_version);
 
             // If a building material is found, fix new build to it
             // otherwise, just fix to any solid object
@@ -763,7 +763,7 @@ public class building_material : item, IPlayerInteractable
             else
             {
                 var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
-                    (c) => !c.transform.IsChildOf(player.current.transform));
+                    (h, c) => !c.transform.IsChildOf(player.current.transform));
 
                 if (col != null) blueprint = equipped.blueprint_and_fix_at(hit);
             }
