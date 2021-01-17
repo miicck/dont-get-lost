@@ -20,6 +20,14 @@ public class food : MonoBehaviour
         return val;
     }
 
+    public string shorthand_notation()
+    {
+        string ret = "";
+        foreach (var g in all_groups)
+            ret += group_symbol(g) + "=" + food_value(g) + "/";
+        return ret.Substring(0, ret.Length - 1);
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//
@@ -46,6 +54,7 @@ public class food : MonoBehaviour
     public static GROUP[] all_groups => (GROUP[])System.Enum.GetValues(typeof(GROUP));
     public static int total_groups = System.Enum.GetNames(typeof(GROUP)).Length;
     public static string group_name(GROUP g) { return g.ToString().ToLower(); }
+    public static string group_symbol(GROUP g) { return g.ToString().Substring(0, 2).ToLower().capitalize(); }
 
     //########//
     // EDITOR //

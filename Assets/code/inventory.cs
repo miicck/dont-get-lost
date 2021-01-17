@@ -56,6 +56,14 @@ public static class item_collection_extensions
         return null;
     }
 
+    public static item get_first(this IItemCollection col)
+    {
+        foreach (var kv in col.contents())
+            if (kv.Value > 0)
+                return kv.Key;
+        return null;
+    }
+
     public static void clear(this IItemCollection col)
     {
         var cts = col.contents();

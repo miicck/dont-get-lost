@@ -412,11 +412,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: a47eb0215e9d3fe4d9be674c3510af6b, type: 3}
+  sprite: {fileID: 21300000, guid: 187a008c373727b47b0b411997c084a7, type: 3}
   plural: windmills
   value: 0
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
   craft_time: 1
@@ -430,6 +429,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 7677598754923787605}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -442,6 +445,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -451,14 +458,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}

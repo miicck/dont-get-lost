@@ -396,13 +396,7 @@ public class item : networked, IPlayerInteractable
 
         // Food value
         if (item.food_values != null)
-        {
-            int mv = item.food_values.metabolic_value();
-            if (quantity > 1)
-                info += "  Food value (metabolic): " + (mv * quantity).qs() + " (" + mv.qs() + " each)\n";
-            else
-                info += "  Food value (metabolic): " + mv.qs() + "\n";
-        }
+            info += "Food values: " + item.food_values.shorthand_notation() + "\n";
 
         return utils.allign_colons(info);
     }

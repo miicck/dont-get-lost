@@ -8,7 +8,6 @@ public class item_output : item_node
     private void Update()
     {
         if (item_count == 0) return; // No items => nothing to do
-        var output = next_output();
         item_dropper.create(release_next_item(), transform.position, next_output());
     }
 

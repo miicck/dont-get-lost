@@ -201,6 +201,14 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     }
     int output_number = 0;
 
+    /// <summary> Get the next output in a cyclic fashion, but don't 
+    /// increment the <see cref="output_number"/> counter. </summary>
+    public item_node peek_next_output()
+    {
+        if (output_count == 0) return null;
+        return outputs_to[(output_number + 1) % output_count];
+    }
+
     /// <summary> Called whenever the outputs change. </summary>
     protected virtual void on_outputs_change() { }
 
