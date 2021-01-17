@@ -159,12 +159,13 @@ public class interaction_set
         player player, bool update_context_info = false)
     {
         // Get the possible interactions with unique keybinds
-        var unique_interactions = new Dictionary<controls.BIND, player_interaction>();
+        var unique_interactions = new Dictionary<string, player_interaction>();
         foreach (var i in interactions)
         {
-            if (unique_interactions.ContainsKey(i.keybind)) continue;
+            var bn = controls.bind_name(i.keybind);
+            if (unique_interactions.ContainsKey(bn)) continue;
             if (!i.is_possible()) continue;
-            unique_interactions[i.keybind] = i;
+            unique_interactions[bn] = i;
         }
 
         // Reset context tip
@@ -180,8 +181,8 @@ public class interaction_set
                 string ct = i.context_tip()?.Trim();
                 if (ct != null && ct.Length > 0)
                 {
-                    if (i.allow_held) ct = "[hold " + controls.bind_name(i.keybind) + "] " + ct;
-                    else ct = "[" + controls.bind_name(i.keybind) + "] " + ct;
+                    if (i.allow_held) ct = "[hold " + kv.Key + "] " + ct;
+                    else ct = "[" + kv.Key + "] " + ct;
                     tips.context_tip += "\n" + ct;
                 }
             }

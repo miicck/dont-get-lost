@@ -431,15 +431,19 @@ public class item : networked, IPlayerInteractable
         return max;
     }
 
-    public class prefab_editor : System.IDisposable
+    //##################//
+    // EDITOR UTILITIES //
+    //##################//
+#if UNITY_EDITOR
+    class prefab_editor : System.IDisposable
     {
         public readonly string path;
         public readonly GameObject prefab;
 
-        public prefab_editor(GameObject prefabRoot)
+        public prefab_editor(GameObject prefab)
         {
-            this.prefab = prefabRoot;
-            this.path = UnityEditor.AssetDatabase.GetAssetPath(prefabRoot);
+            this.prefab = prefab;
+            this.path = UnityEditor.AssetDatabase.GetAssetPath(prefab);
             this.prefab = UnityEditor.PrefabUtility.LoadPrefabContents(path);
         }
 
@@ -507,7 +511,6 @@ public class item : networked, IPlayerInteractable
         }
     }
 
-#if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(item), true)]
     class item_editor : UnityEditor.Editor
     {
