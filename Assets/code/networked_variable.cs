@@ -663,6 +663,8 @@ namespace networked_variables
             }
         }
 
+        public bool contains_key(string s) => dict.ContainsKey(s);
+
         public void set(Dictionary<string, int> new_value)
         {
             if (utils.compare_dictionaries(dict, new_value))

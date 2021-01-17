@@ -171,6 +171,14 @@ public static class utils
         return ret.ToArray();
     }
 
+    public static T get_child_with_name<T>(this Component c, string name) where T : Component
+    {
+        foreach (var t in c.GetComponentsInChildren<T>())
+            if (t.name == name)
+                return t;
+        return default;
+    }
+
 
     /// <summary> Simmilar to <see cref="System.Lazy{T}"/>, but not thread 
     /// safe because we don't need that for most unity stuff. </summary>

@@ -20,6 +20,7 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Item buffers (store an amount of an item and only output if connected input is free)
 - Re-implement remote item use
+- Production counter?
 
 - Networking bugs for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually

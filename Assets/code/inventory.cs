@@ -386,16 +386,19 @@ public class inventory : networked, IItemCollection
     {
         var to_remove = Resources.Load<item>("items/" + item);
         if (to_remove == null) throw new System.Exception("Could not find the item " + item);
-        return remove(to_remove, count);
+       return remove(to_remove, count);
     }
 
     public bool remove(item item, int count)
     {
+        // Tried to remove nothing, always succeeds
         if (item == null || count == 0)
             return true;
 
         // Ensure we're removing the prefab version of the item
+        // and that we have enough of the item to remove
         item = Resources.Load<item>("items/" + item.name);
+        if (!contains(item.name, count)) return false;
 
         // Run over the occupied (networked) slots, and remove count items
         foreach (var isn in new List<inventory_slot_networked>(networked_slots))
@@ -407,6 +410,7 @@ public class inventory : networked, IItemCollection
         if (count != 0)
             throw new System.Exception("Items not removed properly!");
 
+        // Removal successful
         return true;
     }
 

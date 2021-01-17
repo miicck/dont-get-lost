@@ -2,9 +2,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop : settler_interactable, IAddsToInspectionText
+public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IExtendsNetworked
 {
     public settler_path_element cashier_spot;
+
+    //###################//
+    // IExtendsNetworked //
+    //###################//
+
+    networked_variables.net_string_counts stock;
+    delegate void stock_listener(int new_count);
+    Dictionary<string, stock_listener> stock_listeners;
+
+    void add_stock_change_listener(string s, stock_listener sl)
+    {
+        if (stock_listeners.TryGetValue(s, out stock_listener prev))
+            stock_listeners[s] = prev + sl;
+        else
+            stock_listeners[s] = sl;
+    }
+
+    void invoke_stock_listeners()
+    {
+        foreach (var kv in stock_listeners)
+            kv.Value(stock[kv.Key]);
+    }
+
+    public void init_networked_variables()
+    {
+        stock = new networked_variables.net_string_counts();
+        stock_listeners = new Dictionary<string, stock_listener>();
+        stock.on_change = invoke_stock_listeners;
+    }
 
     //##########//
     // FITTINGS //
@@ -74,7 +103,8 @@ public class shop : settler_interactable, IAddsToInspectionText
     item item_carrying;
     settler_path_element.path path;
     float stage_timer = 0;
-    int cycles_completed = 0;
+    int stock_crafted = 0;
+    int left_to_stock = 0;
 
     public override string task_info() { return type_of_shop?.task_info(stage); }
 
@@ -83,7 +113,8 @@ public class shop : settler_interactable, IAddsToInspectionText
         // Starts in the stock stage
         stage = STAGE.STOCK;
         stage_timer = 0;
-        cycles_completed = 0;
+        stock_crafted = 0;
+        left_to_stock = 0;
         path = null;
         return INTERACTION_RESULT.UNDERWAY;
     }
@@ -120,7 +151,7 @@ public class shop : settler_interactable, IAddsToInspectionText
         if (stage == STAGE.GET_MATERIALS && !materials_cupboard.has_items_to_dispense)
             return INTERACTION_RESULT.FAILED;
 
-        if (cycles_completed >= 4) return INTERACTION_RESULT.COMPLETE;
+        if (stock_crafted >= 4) return INTERACTION_RESULT.COMPLETE;
         return INTERACTION_RESULT.UNDERWAY;
     }
 
@@ -158,7 +189,11 @@ public class shop : settler_interactable, IAddsToInspectionText
             case STAGE.CRAFT:
                 // Delete the material
                 if (item_carrying != null)
+                {
                     Destroy(item_carrying.gameObject);
+                    ++stock_crafted;
+                    ++left_to_stock;
+                }
 
                 // Move to the stocking stage
                 stage = STAGE.STOCK;
@@ -170,12 +205,24 @@ public class shop : settler_interactable, IAddsToInspectionText
                 break;
 
             case STAGE.STOCK:
-                ++cycles_completed;
                 stage = STAGE.GET_MATERIALS;
                 path = new settler_path_element.path(
                     path_element(s.group),
                     materials_cupboard.path_element(s.group)
                 );
+
+                while (left_to_stock > 0)
+                {
+                    // Increment the first item not in full stock
+                    --left_to_stock;
+                    foreach (var item_name in type_of_shop.items_sold())
+                    {
+                        if (stock[item_name] >= 10) continue;
+                        stock[item_name] += 1;
+                        break;
+                    }
+                }
+
                 break;
 
             default:
@@ -194,6 +241,98 @@ public class shop : settler_interactable, IAddsToInspectionText
         return type_of_shop.inspection_text();
     }
 
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    player_interaction[] interactions;
+    public player_interaction[] player_interactions()
+    {
+        if (interactions == null)
+            interactions = new player_interaction[] { new shop_interaction(this) };
+        return interactions;
+    }
+
+    class shop_interaction : left_player_menu
+    {
+        shop shop;
+        public shop_interaction(shop shop) : base("shop") { this.shop = shop; }
+
+        public override bool is_possible()
+        {
+            if (shop == null) return false;
+            shop.validate_fittings();
+            if (shop.type_of_shop == null) return false;
+            return true;
+        }
+
+        protected override RectTransform create_menu()
+        {
+            return Resources.Load<RectTransform>("ui/shop_menu").inst();
+        }
+
+        protected override void on_open()
+        {
+            // Update options
+            var sr = menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+
+            // Clear previous options
+            foreach (RectTransform child in sr)
+                Destroy(child.gameObject);
+
+            var template = Resources.Load<RectTransform>("ui/shop_option");
+            foreach (var item_name in shop.type_of_shop.items_sold())
+            {
+                var itm = Resources.Load<item>("items/" + item_name);
+                if (itm == null)
+                {
+                    Debug.LogError("Unkown item in shop: " + item_name);
+                    continue;
+                }
+
+                var option = template.inst();
+                option.transform.SetParent(sr);
+
+                var sprite = option.get_child_with_name<UnityEngine.UI.Image>("sprite");
+                sprite.sprite = itm.sprite;
+
+                var text = option.get_child_with_name<UnityEngine.UI.Text>("text");
+                text.text = item_name;
+
+                var price_text = option.get_child_with_name<UnityEngine.UI.Text>("price_text");
+                int price = Mathf.Max(1, itm.value);
+                price_text.text = price.qs();
+
+                var but = option.GetComponentInChildren<UnityEngine.UI.Button>();
+                but.onClick.AddListener(() =>
+                {
+                    int count = controls.held(controls.BIND.CRAFT_FIVE) ? 5 : 1;
+                    count = Mathf.Min(count, shop.stock[item_name]);
+                    if (count == 0)
+                        popup_message.create(itm.plural + " are out of stock!");
+                    else if (player.current.inventory.remove("coin", price * count))
+                    {
+                        player.current.inventory.add(item_name, count);
+                        shop.stock[item_name] = Mathf.Max(0, shop.stock[item_name] - count);
+                    }
+                    else if (count > 1)
+                        popup_message.create("You can't afford " + count + " " + itm.plural + "!");
+                    else
+                        popup_message.create("You can't afford any " + itm.plural + "!");
+
+                });
+
+                shop.add_stock_change_listener(item_name, (count) =>
+                {
+                    if (text == null) return;
+                    text.text = item_name + " (" + count.qs() + ")";
+                });
+            }
+
+            shop.invoke_stock_listeners();
+        }
+    }
+
     //############//
     // SHOP TYPES //
     //############//
@@ -207,6 +346,7 @@ public class shop : settler_interactable, IAddsToInspectionText
             return null;
         }
 
+        public abstract string[] items_sold();
         public abstract string inspection_text();
         public abstract string required_material();
         public abstract string task_info(STAGE stage);
@@ -224,9 +364,17 @@ public class shop : settler_interactable, IAddsToInspectionText
             return "log";
         }
 
+        public override string[] items_sold()
+        {
+            return new string[]
+            {
+                "plank",
+            };
+        }
+
         public override string task_info(STAGE stage)
         {
-            switch(stage)
+            switch (stage)
             {
                 case STAGE.GET_MATERIALS:
                     return "Getting logs needed for carpentry.";

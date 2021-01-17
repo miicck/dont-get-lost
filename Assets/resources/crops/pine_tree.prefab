@@ -47,6 +47,7 @@ MonoBehaviour:
   is_client_side: 0
   to_grow: {fileID: 6183768412213023806, guid: d1625acea2987304082a96731bef4a68, type: 3}
   growth_time: 120
+  min_scale: 0.2
 --- !u!114 &8762775896755834874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,6 +62,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 1
   item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  min_count: 10
-  max_count: 20
+  min_count: 5
+  max_count: 10
   one_in_chance: 1
