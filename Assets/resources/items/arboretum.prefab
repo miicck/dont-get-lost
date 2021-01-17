@@ -628,7 +628,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 44ca1e175c29af6479386d5f6144d3a1, type: 3}
   plural: arboreta
-  value: 0
+  value: 1
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1

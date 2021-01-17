@@ -60,7 +60,27 @@ public class recipe : MonoBehaviour
         return true;
     }
 
-    static List<KeyValuePair<string, recipe[]>> all_recipies()
+    public float average_amount_produced(item i)
+    {
+        float ret = 0;
+        foreach (var p in products)
+            ret += p.average_amount_produced(i);
+        return ret;
+    }
+
+    public float average_ingredients_value()
+    {
+        float ret = 0;
+        foreach (var i in ingredients)
+            ret += i.average_value();
+        return ret;
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static List<KeyValuePair<string, recipe[]>> all_recipies()
     {
         List<KeyValuePair<string, recipe[]>> ret = new List<KeyValuePair<string, recipe[]>>();
         ret.Add(new KeyValuePair<string, recipe[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
@@ -144,4 +164,5 @@ public abstract class ingredient : MonoBehaviour
 {
     public abstract string str();
     public abstract bool find(IItemCollection i, ref Dictionary<string, int> in_use);
+    public abstract float average_value();
 }

@@ -105,9 +105,10 @@ public class settler_task_assignment : networked, IAddsToInspectionText
     {
         // Ensure everything we need exists, including a registered network
         // parent for the interactable i
-        if (s == null || i == null || i.assignments == null ||
-            i.networked_parent == null || i.networked_parent.network_id < 0)
+        if (s == null || i == null || i.networked_parent == null || i.networked_parent.network_id < 0)
             return false;
+
+        if (!i.ready_to_assign(s)) return false; // Not ready to assign
 
         if (i.assignments.Length >= i.max_simultaneous_users)
             return false; // Too many users are already using i

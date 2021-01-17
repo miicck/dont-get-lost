@@ -136,9 +136,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 42a56f4c7646c1e46a93b1aa4041aace, type: 3}
   plural: half triangular planks (right angle)
-  value: 0
+  value: 3
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
 --- !u!1 &1299442711647711033
@@ -192,6 +191,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 8050216192696043675}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.49999908
       objectReference: {fileID: 0}
@@ -204,6 +207,10 @@ PrefabInstance:
       value: -1.0000005
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70710677
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.7071068
       objectReference: {fileID: 0}
@@ -214,14 +221,6 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0.0000002783414
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.70710677
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
-      propertyPath: m_RootOrder
-      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4866e16716e6afb44aa771dfbeeb0d8a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

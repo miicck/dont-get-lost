@@ -47,9 +47,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 05ff72772115a2848ba45f1a09c6b461, type: 3}
   plural: flax plants
-  value: 0
+  value: 3
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
 --- !u!1001 &5207932314562692386
 PrefabInstance:
@@ -58,6 +57,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 4347658890408287021}
     m_Modifications:
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -71,6 +74,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -80,14 +87,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}

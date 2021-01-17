@@ -400,4 +400,134 @@ public class item : networked, IPlayerInteractable
 
         return utils.allign_colons(info);
     }
+
+    int suggested_value(out recipe recipe_determining_value)
+    {
+        recipe_determining_value = null;
+
+        // Value is fixed by a fix_value component
+        var fv = GetComponent<fix_value>();
+        if (fv != null) return fv.value;
+
+        int max = 1; // If this isn't made in a recipe, default to a value of 1
+        foreach (var kv in recipe.all_recipies())
+        {
+            var rs = kv.Value;
+            foreach (var r in rs)
+            {
+                float amt_produced = r.average_amount_produced(this);
+                if (amt_produced > 0)
+                {
+                    float derived_value = r.average_ingredients_value() / amt_produced;
+                    derived_value = (derived_value + 1) * 1.2f;
+                    if (derived_value > max)
+                    {
+                        max = Mathf.CeilToInt(derived_value);
+                        recipe_determining_value = r;
+                    }
+                }
+            }
+        }
+        return max;
+    }
+
+    public class prefab_editor : System.IDisposable
+    {
+        public readonly string path;
+        public readonly GameObject prefab;
+
+        public prefab_editor(GameObject prefabRoot)
+        {
+            this.prefab = prefabRoot;
+            this.path = UnityEditor.AssetDatabase.GetAssetPath(prefabRoot);
+            this.prefab = UnityEditor.PrefabUtility.LoadPrefabContents(path);
+        }
+
+        public void Dispose()
+        {
+            UnityEditor.PrefabUtility.SaveAsPrefabAsset(prefab, path);
+            UnityEditor.PrefabUtility.UnloadPrefabContents(prefab);
+        }
+    }
+
+    static void solve_item_values()
+    {
+        var ivs = new GameObject("value_solver").AddComponent<item_value_solver>();
+    }
+
+    [ExecuteInEditMode]
+    class item_value_solver : MonoBehaviour
+    {
+        item[] all_items;
+        int iteration = 0;
+        private void Start()
+        {
+            all_items = Resources.LoadAll<item>("items");
+
+            // Initial condition is all items have value 1
+            foreach (var i in all_items)
+                i.value = 1;
+        }
+
+        private void Update()
+        {
+            ++iteration;
+            int changed = 0;
+            foreach (var i in all_items)
+            {
+                int suggested = i.suggested_value(out recipe r);
+                if (suggested != i.value)
+                {
+                    i.value = suggested;
+                    ++changed;
+                }
+            }
+
+            Debug.Log("Value solver iteration " + iteration + " values changed: " + changed);
+            if (changed == 0)
+            {
+                if (Application.isPlaying) Destroy(gameObject);
+                else DestroyImmediate(gameObject);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            var lst = new List<item>(all_items);
+            lst.Sort((a, b) => b.value.CompareTo(a.value));
+            string summary = "Resulting item values\n";
+            foreach (var i in lst)
+                summary += i.name + " " + i.value + "\n";
+            Debug.Log(summary);
+
+            // Write to prefabs
+            foreach (var i in all_items)
+                using (var pe = new prefab_editor(i.gameObject))
+                    pe.prefab.GetComponent<item>().value = i.value;
+        }
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(item), true)]
+    class item_editor : UnityEditor.Editor
+    {
+        recipe rec;
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+
+            item i = (item)target;
+            if (UnityEditor.EditorGUILayout.Toggle("Suggest value", false))
+            {
+                i.value = i.suggested_value(out recipe r);
+                rec = r;
+            }
+            if (UnityEditor.EditorGUILayout.Toggle("Solve all values", false))
+                solve_item_values();
+
+            if (rec != null)
+                UnityEditor.EditorGUILayout.ObjectField("Recipe determining value: ", rec, typeof(recipe), false);
+        }
+    }
+#endif
 }

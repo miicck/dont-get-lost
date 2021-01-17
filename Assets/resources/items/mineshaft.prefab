@@ -360,9 +360,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 743afd3840a0064449493caab72b2e3e, type: 3}
   plural: mineshafts
-  value: 0
+  value: 53
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
 --- !u!114 &6089583144561588591
@@ -389,9 +388,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 768719b878458d64ca578859b04a8c29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path_element: {fileID: 6089583144561588591}
   type: 0
   max_simultaneous_users: 1
+  test_depth: 2
 --- !u!1 &7348392932919876741
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,6 +572,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1274302369444171957}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -585,6 +588,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -594,14 +601,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}

@@ -47,9 +47,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 61c769892efcfbb45b280d84bac26202, type: 3}
   plural: dreadlocks hairstyles
-  value: 0
+  value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   location: 0
   handedness: 0
@@ -62,6 +61,22 @@ PrefabInstance:
     m_TransformParent: {fileID: 2782077624410490445}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 137.51688
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 177.45123
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 130.63254
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.0049012206
       objectReference: {fileID: 0}
@@ -72,6 +87,10 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.14832923
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70688635
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_LocalRotation.x
@@ -86,14 +105,6 @@ PrefabInstance:
       value: 0.01765243
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.70688635
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -90
       objectReference: {fileID: 0}
@@ -104,18 +115,6 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 2.861
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 137.51688
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 177.45123
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 130.63254
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
       propertyPath: m_Materials.Array.data[0]

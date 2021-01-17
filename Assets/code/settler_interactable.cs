@@ -60,6 +60,7 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
         UNDERWAY,
     }
 
+    public virtual bool ready_to_assign(settler s) { return true; }
     public virtual INTERACTION_RESULT on_assign(settler s) { return INTERACTION_RESULT.COMPLETE; }
     public virtual INTERACTION_RESULT on_interact(settler s) { return INTERACTION_RESULT.COMPLETE; }
     public virtual void on_unassign(settler s) { }

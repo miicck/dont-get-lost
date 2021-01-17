@@ -316,9 +316,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 44ca1e175c29af6479386d5f6144d3a1, type: 3}
   plural: flax fields
-  value: 0
+  value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
 --- !u!114 &8286624334026724863
@@ -345,13 +344,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b835dd1ec918da345b0a31c6497b0991, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path_element: {fileID: 8286624334026724863}
   type: 0
   max_simultaneous_users: 1
   output: {fileID: 8998243555125965264}
   field_spot_prefab: crops/flax
-  size: 2
+  x_size: 2
+  z_size: 2
   spacing: 1.21
+  offset: {x: 0, y: 0, z: 0}
 --- !u!1 &7790678638878898613
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,6 +489,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 3876848922602935452}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -501,6 +505,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -510,14 +518,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b140a9daaef8a894e9c0c62b03fd5428, type: 3}
@@ -567,6 +567,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 3876848922602935452}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
+      propertyPath: m_RootOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -579,6 +583,10 @@ PrefabInstance:
       value: -2.169
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.50000006
       objectReference: {fileID: 0}
@@ -589,14 +597,6 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
-      propertyPath: m_RootOrder
-      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: dbfdb639c65c9f44d8b39858cf081940, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

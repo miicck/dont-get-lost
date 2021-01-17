@@ -235,7 +235,6 @@ MonoBehaviour:
   plural: slate
   value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
 --- !u!114 &-755783909771982879

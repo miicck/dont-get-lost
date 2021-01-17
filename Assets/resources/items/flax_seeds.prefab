@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6331750235442577479}
   - component: {fileID: 3966449809020136031}
+  - component: {fileID: 1088192669539258332}
   m_Layer: 0
   m_Name: flax_seeds
   m_TagString: Untagged
@@ -46,8 +47,20 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: bd41d2ebf126f374f8ad341e94dfedc2, type: 3}
   plural: flax seeds
-  value: 0
+  value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   growth_time: 1
+--- !u!114 &1088192669539258332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9097824125358553232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff4a64c9e9b2d404887685f0942d52c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  value: 1

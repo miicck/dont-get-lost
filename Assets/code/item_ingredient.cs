@@ -7,6 +7,11 @@ public class item_ingredient : ingredient
     public item item;
     public int count;
 
+    public override float average_value()
+    {
+        return item.value * count;
+    }
+
     public override string str()
     {
         if (item == null)

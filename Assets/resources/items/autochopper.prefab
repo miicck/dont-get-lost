@@ -211,9 +211,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: eb1f003e2de50b04a98147dcb0d5ade3, type: 3}
   plural: autochoppers
-  value: 0
+  value: 26
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
   axes_scale: 1
   ray_start: {fileID: 1027071678750179555}
@@ -272,6 +271,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 2758738491064368769}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -284,6 +287,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -293,14 +300,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ad7055cc93a7b0c45904357b7eb948e1, type: 3}

@@ -478,7 +478,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 120962e4b1836404abc807a6ef888bd1, type: 3}
   plural: cabbage planters
-  value: 0
+  value: 22
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1

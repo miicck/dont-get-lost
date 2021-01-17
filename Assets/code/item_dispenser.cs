@@ -13,7 +13,7 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     item_locator[] locators;
     float time_dispensing = 0f;
 
-    public bool has_items_to_dispense 
+    public bool has_items_to_dispense
     {
         get
         {
@@ -132,6 +132,17 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     // INTERACTABLE //
     //##############//
 
+    public override bool ready_to_assign(settler s)
+    {
+        switch (mode)
+        {
+            case MODE.FOOD: return find_food() != null;
+            default:
+                Debug.LogError("Unkown item dispenser mode!");
+                return false;
+        }
+    }
+
     public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff
@@ -173,7 +184,8 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
                     }
 
                 default:
-                    throw new System.Exception("Unkown item dispenser mode!");
+                    Debug.LogError("Unkown item dispenser mode!");
+                    return INTERACTION_RESULT.FAILED;
             }
         }
 

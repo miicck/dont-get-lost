@@ -48,9 +48,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 79db9766c5a2dac4d86c8ed4e84256fc, type: 3}
   plural: fools gold
-  value: 0
+  value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1
 --- !u!114 &5747969101977054179
 MonoBehaviour:
@@ -72,6 +71,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 7690651687313362731}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
       objectReference: {fileID: 0}
@@ -84,6 +87,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.7071068
       objectReference: {fileID: 0}
@@ -94,14 +101,6 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071067
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: deca0b889e561db4188412eb825d3f72, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

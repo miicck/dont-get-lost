@@ -7,6 +7,12 @@ public class fuel_requirement : ingredient
     /// <summary> The amount of fuel required. </summary>
     public int fuel_required = 1;
 
+    public override float average_value()
+    {
+        var log = Resources.Load<item>("items/log");
+        return (float)(log.value * fuel_required) / log.fuel_value;
+    }
+
     /// <summary> If there is enough fuel in the given inventory to satisfy the
     /// given total fuel requirement, return a dictionary of string:int of items
     /// and quantities needed to satisfy that requirement. Otherwise return

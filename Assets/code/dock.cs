@@ -59,7 +59,7 @@ public class dock : building_material, IAddsToInspectionText
                 if (boat_docked)
                 {
                     boat.add_item(i);
-                    if (boat.total_cargo > 1)
+                    if (boat.total_cargo > 99)
                         boat.launch();
                 }
                 else

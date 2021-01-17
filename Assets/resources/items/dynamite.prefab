@@ -46,7 +46,6 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 655f4973ae9d1c6499c8b614bfdd3f42, type: 3}
   plural: dynamite
-  value: 0
+  value: 1
   fuel_value: 0
-  food_value: 0
   logistics_scale: 1

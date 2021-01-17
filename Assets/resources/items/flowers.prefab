@@ -91,7 +91,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6fbfcbf233912aa4bac0d8694952a576, type: 3}
   plural: flowers
-  value: 0
+  value: 1
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1
@@ -105,6 +105,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 2303826261697400477}
     m_Modifications:
     - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -117,6 +121,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -126,14 +134,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2881627223523742430, guid: c6a66e235b6a1624791bbf0bbe281afc, type: 3}

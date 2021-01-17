@@ -114,7 +114,28 @@ public class product : MonoBehaviour
                 break;
 
             default:
-                throw new System.Exception("Unkown product mode!");
+                Debug.LogError("Unkown product mode!");
+                break;
+        }
+    }
+
+    public virtual float average_amount_produced(item i)
+    {
+        // This product doesn't make that item
+        if (i == null || item == null || i.name != item.name) return 0;
+
+        switch (mode)
+        {
+            case MODE.SIMPLE:
+            case MODE.RANDOM_AMOUNT:
+                return (min_count + max_count) / 2f;
+
+            case MODE.PROBABILITY:
+                return (min_count + max_count) / (2f * one_in_chance);
+
+            default:
+                Debug.LogError("Unkown product mode!");
+                return 0;
         }
     }
 
@@ -136,7 +157,8 @@ public class product : MonoBehaviour
                 break;
 
             default:
-                throw new System.Exception("Unkown product mode!");
+                Debug.LogError("Unkown product mode!");
+                return;
         }
 
         if (count == 0) return;
