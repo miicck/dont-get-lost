@@ -418,7 +418,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3d4dcd918d6480458f493a56ad8eb95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  job: {fileID: 7915786716127770993, guid: 3c449c3134bcb084d82bf4ae583914c5, type: 3}
   max_simultaneous_users: 1
   cashier_spot: {fileID: 185178476336832972}
 --- !u!1 &6451046542693742480

@@ -490,7 +490,7 @@ public class town_gate : building_material, IAddsToInspectionText
     public delegate bool attacker_delegate(character c);
     public static void iterate_over_attackers(int group, attacker_delegate del)
     {
-        foreach (var gate in town_gates_by_group[group])
+        foreach (var gate in gate_group(group))
             foreach (var c in gate.under_attack_by)
                 if (del(c))
                     return;

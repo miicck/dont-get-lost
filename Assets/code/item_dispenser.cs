@@ -137,9 +137,7 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
         switch (mode)
         {
             case MODE.FOOD: return find_food() != null;
-            default:
-                Debug.LogError("Unkown item dispenser mode!");
-                return false;
+            default: return false;
         }
     }
 

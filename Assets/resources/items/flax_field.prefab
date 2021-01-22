@@ -344,7 +344,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b835dd1ec918da345b0a31c6497b0991, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  job: {fileID: 7915786716127770993, guid: 669215a1aa3375143bd20f0093e4f1ce, type: 3}
   max_simultaneous_users: 1
   output: {fileID: 8998243555125965264}
   field_spot_prefab: crops/flax

@@ -17,6 +17,27 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform left_hand { get; private set; }
     public Transform right_hand { get; private set; }
 
+    //########//
+    // SKILLS //
+    //########//
+
+    public enum SKILL
+    {
+        // Please append new skills to the end of the
+        // list, so it doesn't fuck up serialized values
+        COOKING,
+        CARPENTRY,
+        FARMING,
+        WOODCUTTING,
+        MELEE_COMBAT,
+        RANGED_COMBAT,
+        MINING,
+        SOCIAL,
+    }
+
+    public static SKILL[] all_skills => (SKILL[])System.Enum.GetValues(typeof(SKILL));
+    public static string skill_name(SKILL s) => s.ToString().Replace("_", " ").ToLower().capitalize();
+
     //###################//
     // CHARACTER CONTROL //
     //###################//
@@ -119,39 +140,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             // Reset stuff
             path = null;
 
-            // Get an eat task
-            if (Random.Range(
-                GUARANTEED_EAT_METABOLIC_SATISFACTION,
-                MAX_METABOLIC_SATISFACTION_TO_EAT) >
-                nutrition.metabolic_satisfaction &&
-                settler_task_assignment.try_assign(this,
-                settler_interactable.proximity_weighted_ramdon(
-                    settler_interactable.TYPE.EAT, transform.position)))
-                return;
-
-            // Get a sleep task
-            if (Random.Range(20, 100) < tiredness.value &&
-                settler_task_assignment.try_assign(this,
-                settler_interactable.proximity_weighted_ramdon(
-                    settler_interactable.TYPE.SLEEP, transform.position)))
-                return;
-
-            // Get a guard task
-            if (town_gate.group_under_attack(group))
+            // Attempt to find an interaction
+            foreach (var j in job_type.all)
             {
-                if (settler_task_assignment.try_assign(this,
-                    settler_interactable.proximity_weighted_ramdon(
-                        settler_interactable.TYPE.GUARD, transform.position)))
+                var job = settler_interactable.proximity_weighted_ramdon(j, transform.position);
+                if (settler_task_assignment.try_assign(this, job))
                     return;
-
-                // Flee task here?
             }
-
-            // Get a work task
-            if (settler_task_assignment.try_assign(this,
-                settler_interactable.proximity_weighted_ramdon(
-                    settler_interactable.TYPE.WORK, transform.position)))
-                return;
 
             // No suitable interaction found
             return;
@@ -263,7 +258,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     {
         if (interactions == null) interactions = new player_interaction[]
         {
-            new menu(this),
+            new left_menu(this),
+            new task_management(this),
             new player_inspectable(transform)
             {
                 text = () =>
@@ -280,71 +276,113 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return interactions;
     }
 
+    class left_menu : left_player_menu
+    {
+        color_selector hair_color_selector;
+        color_selector top_color_selector;
+        color_selector bottom_color_selector;
+        UnityEngine.UI.Text info_panel_text;
+        settler settler;
+
+        public left_menu(settler settler) : base(settler.name) { this.settler = settler; }
+        public override inventory editable_inventory() { return settler.inventory; }
+        protected override RectTransform create_menu() { return settler.inventory.ui; }
+        protected override void on_open()
+        {
+            settler.players_interacting_with.value += 1;
+
+            foreach (var cs in settler.inventory.ui.GetComponentsInChildren<color_selector>(true))
+            {
+                if (cs.name.Contains("hair")) hair_color_selector = cs;
+                else if (cs.name.Contains("top")) top_color_selector = cs;
+                else bottom_color_selector = cs;
+            }
+
+            foreach (var tex in settler.inventory.ui.GetComponentsInChildren<UnityEngine.UI.Text>())
+                if (tex.name == "info_panel_text")
+                {
+                    info_panel_text = tex;
+                    break;
+                }
+
+            info_panel_text.text = left_menu_text();
+
+            hair_color_selector.color = settler.net_hair_color.value;
+            top_color_selector.color = settler.top_color.value;
+            bottom_color_selector.color = settler.bottom_color.value;
+
+            hair_color_selector.on_change = () => settler.net_hair_color.value = hair_color_selector.color;
+            top_color_selector.on_change = () => settler.top_color.value = top_color_selector.color;
+            bottom_color_selector.on_change = () => settler.bottom_color.value = bottom_color_selector.color;
+        }
+
+        protected override void on_close()
+        {
+            settler.players_interacting_with.value -= 1;
+        }
+
+        string left_menu_text()
+        {
+            return settler.name.capitalize() + "\n\n" +
+                   "Health " + settler.remaining_health + "/" + settler.max_health + "\n" +
+                   settler.tiredness.value + "% tired\n" +
+                   "Group " + settler.group + " room " + settler.room + "\n\n" +
+                   settler.assignement_info() + "\n\n" +
+                   settler.nutrition_info();
+        }
+    }
+
+    class task_management : player_interaction
+    {
+        task_manager ui;
+        settler settler;
+        public task_management(settler settler) { this.settler = settler; }
+        public override controls.BIND keybind => controls.BIND.OPEN_TASK_MANAGER;
+        public override string context_tip() { return "manage tasks"; }
+        public override bool allows_mouse_look() { return false; }
+        public override bool allows_movement() { return false; }
+
+        public override bool start_interaction(player player)
+        {
+            if (ui == null)
+            {
+                //Create the ui
+                ui = Resources.Load<task_manager>("ui/task_manager").inst();
+                ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                ui.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                ui.set_target(settler);
+                ui.open = false; // ui starts closed
+            }
+
+            // Open the ui
+            ui.open = true;
+            settler.players_interacting_with.value += 1;
+            return false;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            return controls.triggered(keybind);
+        }
+
+        public override void end_interaction(player player)
+        {
+            // Close the ui
+            settler.players_interacting_with.value -= 1;
+            ui.open = false;
+        }
+    }
+
+    //#######################//
+    // Formatted information //
+    //#######################//
+
     public string assignement_info()
     {
         string ass_string = "No assignment.";
         if (assignment != null)
             ass_string = "Assignment: " + assignment.interactable.task_info();
         return ass_string;
-    }
-
-    class menu : left_player_menu
-    {
-        settler settler;
-        public menu(settler settler) : base(settler.name) { this.settler = settler; }
-        public override inventory editable_inventory() { return settler.inventory; }
-        protected override RectTransform create_menu() { return settler.inventory.ui; }
-        protected override void on_open() { settler.on_left_menu_open(); }
-        protected override void on_close() { settler.on_left_menu_close(); }
-    }
-
-    color_selector hair_color_selector;
-    color_selector top_color_selector;
-    color_selector bottom_color_selector;
-    UnityEngine.UI.Text info_panel_text;
-
-    public void on_left_menu_close()
-    {
-        players_interacting_with.value -= 1;
-    }
-
-    public void on_left_menu_open()
-    {
-        players_interacting_with.value += 1;
-
-        foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>(true))
-        {
-            if (cs.name.Contains("hair")) hair_color_selector = cs;
-            else if (cs.name.Contains("top")) top_color_selector = cs;
-            else bottom_color_selector = cs;
-        }
-
-        foreach (var tex in inventory.ui.GetComponentsInChildren<UnityEngine.UI.Text>())
-            if (tex.name == "info_panel_text")
-            {
-                info_panel_text = tex;
-                break;
-            }
-
-        info_panel_text.text = left_menu_text();
-
-        hair_color_selector.color = net_hair_color.value;
-        top_color_selector.color = top_color.value;
-        bottom_color_selector.color = bottom_color.value;
-
-        hair_color_selector.on_change = () => net_hair_color.value = hair_color_selector.color;
-        top_color_selector.on_change = () => top_color.value = top_color_selector.color;
-        bottom_color_selector.on_change = () => bottom_color.value = bottom_color_selector.color;
-    }
-
-    public string left_menu_text()
-    {
-        return name.capitalize() + "\n\n" +
-               "Health " + remaining_health + "/" + max_health + "\n" +
-               tiredness.value + "% tired\n" +
-               "Group " + group + " room " + room + "\n\n" +
-               assignement_info() + "\n\n" +
-               nutrition_info();
     }
 
     public string nutrition_info()
@@ -366,8 +404,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return ret;
     }
 
-    public recipe[] additional_recipes() { return null; }
-
     //############//
     // NETWORKING //
     //############//
@@ -381,6 +417,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color top_color;
     public networked_variables.net_color net_hair_color;
     public networked_variables.net_color bottom_color;
+    public networked_variables.net_job_priorities job_priorities;
+    public networked_variables.net_job_enable_state job_enabled_state;
     new public networked_variables.net_float height;
 
     public override float position_resolution() { return 0.1f; }
@@ -402,6 +440,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         net_hair_color = new networked_variables.net_color();
         height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
+        job_priorities = new networked_variables.net_job_priorities();
+        job_enabled_state = new networked_variables.net_job_enable_state();
 
         net_name.on_change = () => name = net_name.value;
 

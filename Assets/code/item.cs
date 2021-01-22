@@ -435,25 +435,6 @@ public class item : networked, IPlayerInteractable
     // EDITOR UTILITIES //
     //##################//
 #if UNITY_EDITOR
-    class prefab_editor : System.IDisposable
-    {
-        public readonly string path;
-        public readonly GameObject prefab;
-
-        public prefab_editor(GameObject prefab)
-        {
-            this.prefab = prefab;
-            this.path = UnityEditor.AssetDatabase.GetAssetPath(prefab);
-            this.prefab = UnityEditor.PrefabUtility.LoadPrefabContents(path);
-        }
-
-        public void Dispose()
-        {
-            UnityEditor.PrefabUtility.SaveAsPrefabAsset(prefab, path);
-            UnityEditor.PrefabUtility.UnloadPrefabContents(prefab);
-        }
-    }
-
     static void solve_item_values()
     {
         var ivs = new GameObject("value_solver").AddComponent<item_value_solver>();
@@ -506,7 +487,7 @@ public class item : networked, IPlayerInteractable
 
             // Write to prefabs
             foreach (var i in all_items)
-                using (var pe = new prefab_editor(i.gameObject))
+                using (var pe = new utils.prefab_editor(i.gameObject))
                     pe.prefab.GetComponent<item>().value = i.value;
         }
     }

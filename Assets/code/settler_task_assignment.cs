@@ -86,11 +86,10 @@ public class settler_task_assignment : networked, IAddsToInspectionText
 
     public static void on_attack_begin()
     {
-        // Delete all non-guard tasks, so that settlers man 
-        // guard positions as quickly as possible
+        // Stop all tasks that should be stopped when an attack starts
         var copy = new Dictionary<int, settler_task_assignment>(assignments_by_id);
         foreach (var kv in copy)
-            if (kv.Value.interactable.type != settler_interactable.TYPE.GUARD)
+            if (kv.Value.interactable.job.stop_when_attack_begins)
                 kv.Value.delete();
     }
 

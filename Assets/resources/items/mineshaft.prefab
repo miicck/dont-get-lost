@@ -388,7 +388,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 768719b878458d64ca578859b04a8c29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  job: {fileID: 7915786716127770993, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
   max_simultaneous_users: 1
   test_depth: 2
 --- !u!1 &7348392932919876741

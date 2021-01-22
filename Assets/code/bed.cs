@@ -14,6 +14,12 @@ public class bed : settler_interactable
 
     int less_tired_amount => Mathf.Max(0, start_tiredness - last_tiredness);
 
+    public override bool ready_to_assign(settler s)
+    {
+        // You have to be tired enough to sleep
+        return s.tiredness.value > 80;
+    }
+
     public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff

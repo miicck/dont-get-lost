@@ -677,6 +677,25 @@ public static class utils
 
 #if UNITY_EDITOR // Unity edtor utilities
 
+    public class prefab_editor : System.IDisposable
+    {
+        public readonly string path;
+        public readonly GameObject prefab;
+
+        public prefab_editor(GameObject prefab)
+        {
+            this.prefab = prefab;
+            this.path = UnityEditor.AssetDatabase.GetAssetPath(prefab);
+            this.prefab = UnityEditor.PrefabUtility.LoadPrefabContents(path);
+        }
+
+        public void Dispose()
+        {
+            UnityEditor.PrefabUtility.SaveAsPrefabAsset(prefab, path);
+            UnityEditor.PrefabUtility.UnloadPrefabContents(prefab);
+        }
+    }
+
     public static T select_from_resources_folder<T>(string folder) where T : Object
     {
         var selected = UnityEditor.EditorUtility.OpenFilePanel("Select " + typeof(T).Name,

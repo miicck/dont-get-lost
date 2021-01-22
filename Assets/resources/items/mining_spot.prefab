@@ -362,7 +362,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f83aff79d3cd4697bb108f98272bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  job: {fileID: 7915786716127770993, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
   max_simultaneous_users: 1
   display_name: mining spot
   output: {fileID: 5679265494180299747}

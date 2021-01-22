@@ -25,20 +25,11 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
 
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>
-    public TYPE type;
+    public job_type job;
 
     /// <summary> The maximum number of settlers that 
     /// can be assigned to this interactable. </summary>
     public int max_simultaneous_users = 1;
-
-    public enum TYPE
-    {
-        WORK,
-        EAT,
-        SLEEP,
-        GUARD,
-        DONT_ASSIGN_EXPLICITLY,
-    }
 
     bool registered = false;
     protected virtual void Start()
@@ -72,18 +63,19 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
     // STATIC STUFF //
     //##############//
 
-    static Dictionary<TYPE, List<settler_interactable>> interactables;
+    // All interactions, indexed by the default priority of their job type
+    static Dictionary<int, List<settler_interactable>> interactables;
 
-    public static settler_interactable nearest(TYPE t, Vector3 v)
+    public static settler_interactable nearest(job_type j, Vector3 v)
     {
-        return utils.find_to_min(interactables[t],
+        return utils.find_to_min(interactables[j.default_priority],
             (i) => (i.transform.position - v).sqrMagnitude);
     }
 
     public delegate bool accept_func(settler_interactable i);
-    public static settler_interactable nearest_acceptable(TYPE t, Vector3 v, accept_func f)
+    public static settler_interactable nearest_acceptable(job_type j, Vector3 v, accept_func f)
     {
-        var ret = utils.find_to_min(interactables[t], (i) =>
+        var ret = utils.find_to_min(interactables[j.default_priority], (i) =>
         {
             if (!f(i)) return Mathf.Infinity; // i not acceptable => infinite score
             return (i.transform.position - v).magnitude; // distance = score
@@ -94,9 +86,9 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
         return null;
     }
 
-    public static settler_interactable proximity_weighted_ramdon(TYPE t, Vector3 position)
+    public static settler_interactable proximity_weighted_ramdon(job_type j, Vector3 position)
     {
-        var l = interactables[t];
+        var l = interactables[j.default_priority];
         if (l.Count == 0) return null;
         return l[Random.Range(0, l.Count)];
 
@@ -119,37 +111,31 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
         */
     }
 
-    public static settler_interactable random(TYPE t)
+    public static settler_interactable random(job_type j)
     {
-        var l = interactables[t];
+        var l = interactables[j.default_priority];
         if (l.Count == 0) return null;
         return l[Random.Range(0, l.Count)];
-    }
-
-    public static settler_interactable random()
-    {
-        var types = System.Enum.GetValues(typeof(TYPE));
-        return random((TYPE)types.GetValue(Random.Range(0, types.Length)));
     }
 
     public static void initialize()
     {
         // Initialize the dictionary of interactables
-        interactables = new Dictionary<TYPE, List<settler_interactable>>();
-        foreach (TYPE e in System.Enum.GetValues(typeof(TYPE)))
-            interactables[e] = new List<settler_interactable>();
+        interactables = new Dictionary<int, List<settler_interactable>>();
+        foreach (var j in job_type.all)
+            interactables[j.default_priority] = new List<settler_interactable>();
     }
 
     static void register_interactable(settler_interactable i)
     {
-        if (interactables[i.type].Contains(i))
+        if (interactables[i.job.default_priority].Contains(i))
             throw new System.Exception("Tried to multiply-register interactable!");
-        interactables[i.type].Add(i);
+        interactables[i.job.default_priority].Add(i);
     }
 
     static void forget_interactable(settler_interactable i)
     {
-        if (!interactables[i.type].Remove(i))
+        if (!interactables[i.job.default_priority].Remove(i))
             throw new System.Exception("Tried to remove unregistered interactable!");
     }
 
@@ -157,10 +143,10 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
     {
         string ret = "";
         int total = 0;
-        foreach (TYPE e in System.Enum.GetValues(typeof(TYPE)))
+        foreach (var j in job_type.all)
         {
-            int count = interactables[e].Count;
-            ret += "    " + e + " : " + count + "\n";
+            int count = interactables[j.default_priority].Count;
+            ret += "    " + j.display_name + " : " + count + "\n";
             total += count;
         }
         ret = "Total interactions : " + total + "\n" + ret;
