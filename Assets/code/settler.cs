@@ -140,9 +140,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             // Reset stuff
             path = null;
 
-            // Attempt to find an interaction
-            foreach (var j in job_type.all)
+            // Attempt to find an interaction - go through job types in priority order
+            for (int i = 0; i < job_priorities.ordered.Length; ++i)
             {
+                var j = job_priorities.ordered[i];
+                if (!job_enabled_state[j]) continue; // Job type disabled
                 var job = settler_interactable.proximity_weighted_ramdon(j, transform.position);
                 if (settler_task_assignment.try_assign(this, job))
                     return;

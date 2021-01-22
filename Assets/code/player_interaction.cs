@@ -149,7 +149,7 @@ public class interaction_set
     {
         string ret = "    " + underway_count + " interaction(s) underway\n";
         foreach (var i in underway)
-            ret += "    " + i.GetType().FullName + "\n";
+            ret += "    " + i.Value.interaction.GetType().FullName + "\n";
         return ret.TrimEnd();
     }
 

@@ -136,7 +136,10 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     {
         switch (mode)
         {
-            case MODE.FOOD: return find_food() != null;
+            case MODE.FOOD:
+                if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
+                    return false;
+                return find_food() != null;
             default: return false;
         }
     }

@@ -940,6 +940,7 @@ namespace networked_variables
 
         public void switch_priority(job_type j1, job_type j2)
         {
+            if (!j1.can_set_priority || !j2.can_set_priority) return;
             var tmp = priorities[j1.default_priority];
             priorities[j1.default_priority] = priorities[j2.default_priority];
             priorities[j2.default_priority] = tmp;
@@ -948,12 +949,14 @@ namespace networked_variables
 
         public void decrease_priority(job_type j)
         {
+            if (!j.can_set_priority) return;
             byte old_priority = priorities[j.default_priority];
 
             // Find the job type this will be overtaking
             for (int i = 0; i < priorities.Length; ++i)
                 if (priorities[i] == old_priority + 1)
                 {
+                    if (!job_type.all[i].can_set_priority) return;
                     priorities[i] = old_priority;
                     priorities[j.default_priority] = (byte)(old_priority + 1);
                     set_dirty();
@@ -963,12 +966,14 @@ namespace networked_variables
 
         public void increase_priority(job_type j)
         {
+            if (!j.can_set_priority) return;
             byte old_priority = priorities[j.default_priority];
 
             // Find the job type this will be undertaking
             for (int i = 0; i < priorities.Length; ++i)
                 if (priorities[i] == old_priority - 1)
                 {
+                    if (!job_type.all[i].can_set_priority) return;
                     priorities[i] = old_priority;
                     priorities[j.default_priority] = (byte)(old_priority - 1);
                     set_dirty();
