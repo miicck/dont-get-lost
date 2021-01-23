@@ -9,6 +9,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
     public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
     public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
+    public const int XP_PER_LEVEL = 1000;
 
     public List<Renderer> skin_renderers = new List<Renderer>();
     public List<Renderer> top_underclothes = new List<Renderer>();
@@ -511,6 +512,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         bottom_color.value = Random.ColorHSV();
         net_hair_color.value = Random.ColorHSV();
         height.value = Random.Range(0.8f, 1.2f);
+
+        foreach (var s in all_skills)
+            skills[s] = Random.Range(0, 10 * XP_PER_LEVEL);
     }
 
     float armour_location_fill_probability(armour_piece.LOCATION loc)

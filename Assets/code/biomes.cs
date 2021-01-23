@@ -1044,3 +1044,31 @@ public class volcano_field : biome
             }
     }
 }
+
+public class mushroom_forest : biome
+{
+    public const float ALT_SCALE = 3f;
+    public const float ALT_PERIOD = 8f;
+
+    protected override void generate_grid()
+    {
+        for (int i = 0; i < SIZE; ++i)
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.altitude = world.SEA_LEVEL + (2f * perlin(i / ALT_PERIOD, j / ALT_PERIOD) - 1f) * ALT_SCALE;
+                p.fog_distance = 5f;
+                p.sky_color = sky_colors.mushroom_red;
+                p.terrain_color = terrain_colors.mushroom_red;
+                p.beach_color = terrain_colors.mushroom_red;
+                p.water_color = water_colors.mushroom_red;
+
+                if (random.range(0, 500) == 0)
+                    p.object_to_generate = world_object.load("mushroom_tree_1");
+                else if (random.range(0, 500) == 0)
+                    p.object_to_generate = world_object.load("tall_rock_mushroom");
+                else if (random.range(0, 300) == 0)
+                    p.object_to_generate = world_object.load("mushroom_tree_small");
+            }
+    }
+}

@@ -181,6 +181,10 @@ public static class server
             if (player == null)
                 return; // Only update loaded if we have a player
 
+            // Figure out which representations need loading or unloading this frame
+            List<representation> to_unload = new List<representation>();
+            List<representation> to_load = new List<representation>();
+
             // Loop over active representations
             foreach (var elm in active_representations)
             {
@@ -191,16 +195,23 @@ public static class server
                     {
                         // Unload from clients that are too far away
                         if (!should_load(rep))
-                            unload(rep, false);
+                            to_unload.Add(rep);
                     }
                     else
                     {
                         // Load on clients that are within range
                         if (should_load(rep))
-                            load(rep, false);
+                            to_load.Add(rep);
                     }
                 }
             }
+
+            // Load or unload representations that need loading/unloading
+            // (this is done as a seperate step to avoid modifying active_representations
+            //  during enumeration / avoid having to make a copy of active_representations
+            //  which is quite large)
+            foreach (var r in to_unload) unload(r, false);
+            foreach (var r in to_load) load(r, false);
 
             // Let other clients know about our updated position, if we've moved far enough
             if ((last_updated_position - player.local_position).magnitude > PLAYER_RESOLUTION_UNLOADED)

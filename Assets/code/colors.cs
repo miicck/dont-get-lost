@@ -19,6 +19,7 @@ public static class terrain_colors
     public static readonly Color crystal_dark = new Color(0.62f, 0.14f, 0.76f);
     public static readonly Color jungle_moss = new Color(0.18f, 0.30f, 0.11f);
     public static readonly Color marshy_grass = new Color(0.3f, 0.5f, 0.1f, 0);
+    public static readonly Color mushroom_red = new Color(0.4f, 0.1f, 0f);
 }
 
 public static class sky_colors
@@ -30,12 +31,14 @@ public static class sky_colors
     public static readonly Color jungle_green = new Color(0.38f, 0.57f, 0.29f);
     public static readonly Color slightly_dirty_green = new Color(0.44f, 0.57f, 0.33f);
     public static readonly Color underground_darkness = new Color(0.2f, 0.2f, 0.2f);
+    public static readonly Color mushroom_red = new Color(0.4f, 0.1f, 0.1f);
 }
 
 public static class water_colors
 {
     public static readonly Color cyan = new Color(0.5f, 1f, 0.95f);
     public static readonly Color swampy_green = new Color(0.41f, 0.51f, 0.10f);
+    public static readonly Color mushroom_red = new Color(0.61f, 0.31f, 0.10f);
 }
 
 public static class character_colors
