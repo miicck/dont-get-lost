@@ -19,6 +19,12 @@ public class guard_spot : settler_interactable
         return INTERACTION_RESULT.UNDERWAY;
     }
 
+    public override bool ready_to_assign(settler s)
+    {
+        // Only need to defend if under attack
+        return town_gate.group_under_attack(s.group);
+    }
+
     public override INTERACTION_RESULT on_interact(settler s)
     {
         if (target == null || !in_range(target))
@@ -50,7 +56,7 @@ public class guard_spot : settler_interactable
         // Continue defending whilst attack is underway
         if (town_gate.group_under_attack(s.group))
             return INTERACTION_RESULT.UNDERWAY;
-        return INTERACTION_RESULT.UNDERWAY;
+        return INTERACTION_RESULT.COMPLETE;
     }
 
     public override float move_to_speed(settler s)

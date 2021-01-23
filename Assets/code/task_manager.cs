@@ -26,14 +26,14 @@ public class task_manager : MonoBehaviour
 
     private void Start()
     {
-        // Build the task manager
-        job_panel template = GetComponentInChildren<job_panel>();
+        // Build the job panels
+        job_panel job_panel_template = GetComponentInChildren<job_panel>();
 
         foreach (var j in job_type.all)
         {
             if (!j.can_set_priority) continue;
-            var job_panel = template.inst();
-            job_panel.transform.SetParent(template.transform.parent);
+            var job_panel = job_panel_template.inst();
+            job_panel.transform.SetParent(job_panel_template.transform.parent);
             job_panel.job_name.text = j.display_name;
             job_panel.job_type = j;
             job_panel.name = j.name;
@@ -70,15 +70,34 @@ public class task_manager : MonoBehaviour
             });
         }
 
-        // Destroy templates
-        template.transform.SetParent(null);
-        Destroy(template.gameObject);
+        // Destroy template + update ui to reflect priorities
+        job_panel_template.transform.SetParent(null);
+        Destroy(job_panel_template.gameObject);
         update_priorities();
+
+        // Build the skill panels
+        skill_panel skill_panel_template = GetComponentInChildren<skill_panel>();
+        settler.skills.on_change += update_skills;
+
+        foreach (var s in settler.all_skills)
+        {
+            settler.SKILL stmp = s;
+            var skill_panel = skill_panel_template.inst();
+            skill_panel.transform.SetParent(skill_panel_template.transform.parent);
+            skill_panel.skill = stmp;
+            skill_panel.name = settler.skill_name(stmp);
+            skill_panel.name_text.text = settler.skill_name(stmp);
+            skill_panel.current_xp = settler.skills[stmp];
+        }
+
+        // Destroy template + update ui to reflect current xps
+        skill_panel_template.transform.SetParent(null);
+        Destroy(skill_panel_template.gameObject);
+        update_skills();
     }
 
     public int job_priority(job_panel j)
     {
-        if (j == null || j.job_type == null) return 0;
         return settler.job_priorities.priority(j.job_type);
     }
 
@@ -92,5 +111,18 @@ public class task_manager : MonoBehaviour
             jp.transform.SetAsLastSibling();
             jp.enabled_toggle.isOn = settler.job_enabled_state[jp.job_type];
         }
+    }
+
+    public void update_skills()
+    {
+        // Update xp for each skill
+        var sps = new List<skill_panel>(GetComponentsInChildren<skill_panel>());
+        foreach (var s in sps)
+            s.current_xp = settler.skills[s.skill];
+
+        // Show skills in decending xp order
+        sps.Sort((s1, s2) => s2.current_xp.CompareTo(s1.current_xp));
+        foreach (var sp in sps)
+            sp.transform.SetAsLastSibling();
     }
 }

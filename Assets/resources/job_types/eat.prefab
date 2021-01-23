@@ -46,3 +46,4 @@ MonoBehaviour:
   default_priority: 0
   can_set_priority: 0
   stop_when_attack_begins: 1
+  relevant_skills: 

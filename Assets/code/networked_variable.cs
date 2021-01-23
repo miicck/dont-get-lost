@@ -1000,4 +1000,52 @@ namespace networked_variables
             System.Buffer.BlockCopy(buffer, offset, priorities, 0, length);
         }
     }
+
+    public class net_skills : networked_variable
+    {
+        int[] xps = new int[settler.all_skills.Length];
+
+        public delegate void on_change_func();
+        public on_change_func on_change;
+
+        public override void set_dirty()
+        {
+            on_change?.Invoke();
+            base.set_dirty();
+        }
+
+        public int this[settler.SKILL s]
+        {
+            get => xps[(int)s];
+            set
+            {
+                if (value < 0) return; // Not allowed
+                if (value == this[s]) return; // No change
+                xps[(int)s] = value;
+                set_dirty();
+            }
+        }
+
+        public override byte[] serialization()
+        {
+            List<byte> ret = new List<byte>();
+            foreach (var i in xps)
+                ret.AddRange(network_utils.encode_int(i));
+            return ret.ToArray();
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int index = 0;
+            int end = offset + length;
+            while (offset < end)
+            {
+                xps[index] = network_utils.decode_int(buffer, ref offset);
+                index += 1;
+            }
+
+            if (index != xps.Length)
+                Debug.LogError("Did not deserialize networked skills correctly!");
+        }
+    }
 }

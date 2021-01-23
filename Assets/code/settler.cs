@@ -24,7 +24,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public enum SKILL
     {
         // Please append new skills to the end of the
-        // list, so it doesn't fuck up serialized values
+        // list, so it doesn't fuck up serialized values.
+        // They should also retain the default values, as
+        // they are used to index arrays.
         COOKING,
         CARPENTRY,
         FARMING,
@@ -86,6 +88,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     float delta_hunger = 0;
     float delta_tired = 0;
     float delta_heal = 0;
+    float delta_xp = 0;
     settler_task_assignment assignment;
 
     void default_control()
@@ -139,10 +142,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             // Reset stuff
             path = null;
+            delta_xp = 0;
 
             // Attempt to find an interaction - go through job types in priority order
             for (int i = 0; i < job_priorities.ordered.Length; ++i)
             {
+                if (Random.Range(0, 2) == 0) continue; // Add some randomness
                 var j = job_priorities.ordered[i];
                 if (!job_enabled_state[j]) continue; // Job type disabled
                 var job = settler_interactable.proximity_weighted_ramdon(j, transform.position);
@@ -187,6 +192,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
 
         // Carry out the assignment
+        delta_xp += Time.deltaTime;
+        if (delta_xp > 1f)
+        {
+            delta_xp = 0;
+            foreach (var s in assignment.interactable.job.relevant_skills)
+                skills[s] += Random.Range(0, 100); // Random so xp doesnt just stay in fixed intervals
+        }
+
         switch (assignment.interactable.on_interact(this))
         {
             case settler_interactable.INTERACTION_RESULT.COMPLETE:
@@ -421,6 +434,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color bottom_color;
     public networked_variables.net_job_priorities job_priorities;
     public networked_variables.net_job_enable_state job_enabled_state;
+    public networked_variables.net_skills skills;
     new public networked_variables.net_float height;
 
     public override float position_resolution() { return 0.1f; }
@@ -444,6 +458,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         players_interacting_with = new networked_variables.net_int();
         job_priorities = new networked_variables.net_job_priorities();
         job_enabled_state = new networked_variables.net_job_enable_state();
+        skills = new networked_variables.net_skills();
 
         net_name.on_change = () => name = net_name.value;
 
