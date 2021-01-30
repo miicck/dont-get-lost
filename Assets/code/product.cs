@@ -98,19 +98,19 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public virtual void create_in(IItemCollection inv)
+    public virtual void create_in(IItemCollection inv, int count = 1)
     {
         switch (mode)
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
-                inv.add(item, Random.Range(min_count, max_count + 1));
+                inv.add(item, Random.Range(min_count * count, max_count * count + 1));
                 break;
 
             case MODE.PROBABILITY:
                 float prob = 1f / one_in_chance;
                 if (Random.Range(0, 1f) < prob)
-                    inv.add(item, Random.Range(min_count, max_count + 1));
+                    inv.add(item, Random.Range(min_count * count, max_count * count + 1));
                 break;
 
             default:
@@ -163,9 +163,9 @@ public class product : MonoBehaviour
 
         if (count == 0) return;
 
-        for (int i=0; i<count; ++i)
+        for (int i = 0; i < count; ++i)
         {
-            var itm = item.create(item.name, node.transform.position, 
+            var itm = item.create(item.name, node.transform.position,
                 Quaternion.identity, logistics_version: true);
             node.add_item(itm);
         }

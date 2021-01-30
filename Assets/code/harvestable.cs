@@ -15,8 +15,9 @@ public class harvestable : accepts_item_impact, IPlayerInteractable
     {
         if (tool.satisfied(i))
         {
+            int count = tool.oversatisfaction(i) + 1;
             foreach (var p in products)
-                p.create_in(player.current.inventory);
+                p.create_in(player.current.inventory, count: count);
             return true;
         }
         return false;
@@ -33,7 +34,8 @@ public class harvestable : accepts_item_impact, IPlayerInteractable
             new player_inspectable(transform)
             {
                 text = ()=> product.product_plurals_list(products) + " can be harvested with " +
-                            utils.a_or_an(tool.display_name) + " " + tool.display_name + ".",
+                            utils.a_or_an(tool.display_name) + " " + tool.display_name +
+                            " (higher quality tools will produce more products).",
                 sprite = ()=> products[0].sprite()
             }
         };

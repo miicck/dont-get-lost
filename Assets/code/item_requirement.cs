@@ -37,7 +37,33 @@ public class item_requirement : MonoBehaviour
                 else return false;
 
             default:
-                throw new System.Exception("Unkown item requirement mode!");
+                Debug.LogError("Unkown item requirement mode!");
+                return false;
+        }
+    }
+
+    /// <summary> How much the item oversatisfies the requirement 
+    /// (where applicable, for example, how many levels higher 
+    /// in quality a tool is than required). </summary>
+    public int oversatisfaction(item item)
+    {
+        switch (mode)
+        {
+            case MODE.SPECIFIC_ITEM:
+                return 0;
+
+            case MODE.TOOL_QUALITY:
+                if (item is tool)
+                {
+                    var t = (tool)item;
+                    if (t.type != tool_type) return 0;
+                    return Mathf.Max(0, t.quality - tool_quality);
+                }
+                return 0;
+
+            default:
+                Debug.LogError("Unkown item requirement mode!");
+                return 0;
         }
     }
 
