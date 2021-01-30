@@ -318,7 +318,7 @@ MonoBehaviour:
   idle_walk_distance: 15
   flee_distance: 4
   melee_range: 1.5
-  melee_cooldown: 1
+  melee_cooldown: 3
   melee_damage: 30
   friendliness: 0
   can_walk: 1
@@ -486,6 +486,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 6eeb381227d26204f9fa1f29e23c25b1, type: 2}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -498,6 +502,10 @@ PrefabInstance:
       value: -0.544
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -507,14 +515,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fd7fce1a0478cd045a3bbe878f854bdf, type: 3}

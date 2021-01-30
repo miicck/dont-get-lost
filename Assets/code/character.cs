@@ -857,6 +857,13 @@ public class default_character_control : ICharacterController, IPathingAgent
                         up += l.ground_normal;
                 else up = Vector3.up;
 
+                up = Vector3.Lerp(
+                    character.transform.up,
+                    up.normalized,
+                    character.rotation_lerp_speed * speed * Time.deltaTime
+                );
+
+                new_forward -= Vector3.Project(new_forward, up);
                 character.transform.rotation = Quaternion.LookRotation(
                     new_forward,
                     up.normalized
@@ -901,6 +908,13 @@ public class default_character_control : ICharacterController, IPathingAgent
 
     public Vector3 validate_position(Vector3 v, out bool valid)
     {
+        if (v.y < world.SEA_LEVEL)
+        {
+            v.y = world.SEA_LEVEL;
+            valid = character.can_swim;
+            return v;
+        }
+
         Vector3 ret = pathfinding_utils.validate_walking_position(v, resolution, out valid);
         if (!is_allowed_at(ret)) valid = false;
         return ret;

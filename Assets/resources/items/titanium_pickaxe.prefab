@@ -52,7 +52,7 @@ MonoBehaviour:
   value: 12
   fuel_value: 0
   logistics_scale: 1
-  damage: 3
+  damage: 30
   swing_time: 0.5
   swing_length: 0.15
   max_forward_in_up: 3

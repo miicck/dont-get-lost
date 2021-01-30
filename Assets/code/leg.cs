@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿//#define LEG_DEBUG
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -256,10 +257,29 @@ public class leg : MonoBehaviour
         knee.position = new_knee_pos;
 
         // Solve orientation and scale
-        hip.rotation = Quaternion.LookRotation(d1 * khat + lambda * dhat, -hip_to_knee);
-        knee.rotation = Quaternion.LookRotation(d2 * khat - lambda * dhat, ankle_to_knee);
+        Vector3 hip_fw = d1 * khat + lambda * dhat;
+        Vector3 knee_fw = d2 * khat - lambda * dhat;
+        hip_fw -= Vector3.Project(hip_fw, hip_to_knee);
+        knee_fw -= Vector3.Project(knee_fw, ankle_to_knee);
+        hip.rotation = Quaternion.LookRotation(hip_fw, -hip_to_knee);
+        knee.rotation = Quaternion.LookRotation(knee_fw, ankle_to_knee);
         set_scales(a, b);
+
+#if LEG_DEBUG
+        debug_hip_forward = hip_fw;
+        debug_knee_forward = knee_fw;
+        debug_hip_to_knee = hip_to_knee;
+        debug_ankle_to_knee = ankle_to_knee;
+#endif
+
     }
+
+#if LEG_DEBUG
+    Vector3 debug_hip_to_knee;
+    Vector3 debug_ankle_to_knee;
+    Vector3 debug_hip_forward;
+    Vector3 debug_knee_forward;
+#endif
 
     void move_foot_towards(Vector3 position)
     {
@@ -371,6 +391,8 @@ public class leg : MonoBehaviour
             ground_normal = h.normal;
             contact_made_this_step = true;
         }
+        else
+            ground_normal = Vector3.up;
 
         if (play_footsteps)
             play_contact_sounds();
@@ -442,7 +464,14 @@ public class leg : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (hip == null || knee == null || ankle == null || foot_base == null) return;
-
+#if LEG_DEBUG
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(hip.position, hip.position + debug_hip_to_knee);
+        Gizmos.DrawLine(ankle.position, ankle.position + debug_ankle_to_knee);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(hip.position, hip.position + debug_hip_forward.normalized / 10f);
+        Gizmos.DrawLine(knee.position, knee.position + debug_knee_forward.normalized / 10f);
+#else
         Gizmos.color = Color.red;
         Gizmos.DrawLine(hip.position, knee.position);
 
@@ -463,6 +492,7 @@ public class leg : MonoBehaviour
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(grounding, 0.05f);
         Gizmos.DrawLine(grounding, grounding + ground_normal);
+#endif
     }
 
 #if UNITY_EDITOR
@@ -496,7 +526,7 @@ public class leg : MonoBehaviour
                 if (UnityEditor.EditorGUILayout.Toggle("Auto setup", false))
                 {
                     var l = (leg)target;
-                    foreach (Transform t in l.transform)
+                    foreach (Transform t in l.GetComponentsInChildren<Transform>())
                     {
                         if (t.name.Contains("ankle")) l.ankle = t;
                         else if (t.name.Contains("knee")) l.knee = t;
@@ -506,6 +536,9 @@ public class leg : MonoBehaviour
                         else if (t.name.Contains("lower")) l.knee = t;
                         else if (t.name.Contains("foot")) l.ankle = t;
                     }
+
+                    var c = l.GetComponentInParent<character>();
+                    if (c != null) l.character = c.transform;
                 }
             }
         }

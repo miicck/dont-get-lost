@@ -37,7 +37,10 @@ public class mouse_item : MonoBehaviour
     {
         if (!Cursor.visible)
         {
-            origin.add(item, count);
+            if (origin == null || !origin.gameObject.activeInHierarchy) 
+                player.current.inventory.add(item, count);
+            else
+                origin.add(item, count);
             count = 0;
         }
 
