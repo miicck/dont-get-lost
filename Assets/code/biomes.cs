@@ -67,6 +67,8 @@ public class mangroves : biome
                         p.object_to_generate = world_object.load("iron_ore");
                     else if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("flat_rock_outcrop");
+                    else if (random.range(0, 400) == 0)
+                        p.object_to_generate = world_object.load("crocodile_nest");
                 }
 
                 // On land

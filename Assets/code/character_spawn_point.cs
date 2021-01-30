@@ -10,7 +10,7 @@ public class character_spawn_point : world_object.sub_generator
 
     bool active
     {
-        get => active_spawn_points.Contains(this);
+        get => active_spawn_points != null && active_spawn_points.Contains(this);
         set
         {
             // Remove from previous set

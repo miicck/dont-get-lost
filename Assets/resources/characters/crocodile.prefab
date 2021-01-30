@@ -102,13 +102,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cabaef7eb71ea84b884de03941cd7db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bob_amplitude: 0.04
+  bob_amplitude: 0.02
   lean_into_run_amount: 0
   lean_lerp_speed: 5
   lean_velocity_scale: 5
   character: {fileID: 3041182403324420292}
   head: {fileID: 1639662321429639906}
-  head_bob_amt: 0
+  head_bob_amt: 1
   head_lean_inherit_amt: 0
 --- !u!114 &7513432425349459319
 MonoBehaviour:
