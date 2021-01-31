@@ -352,6 +352,9 @@ public class mountains : biome
 
                     else if (random.range(0, 500) == 0)
                         p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
+
+                    else if (random.range(0, 1000) == 0)
+                        p.object_to_generate = world_object.load("mountain_goat_spawner");
                 }
 
                 // Generate beach stuff

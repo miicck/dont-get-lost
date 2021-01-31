@@ -165,8 +165,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  display_name: 
-  plural_name: 
+  display_name: scorpion
+  plural_name: scorpions
   walk_speed: 1
   run_speed: 4
   max_health: 10
