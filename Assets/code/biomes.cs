@@ -496,6 +496,8 @@ public class ice_ocean : biome
                     p.object_to_generate = world_object.load("ice_sheet");
                 else if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("iceberg");
+                else if (random.range(0, 1000) == 0)
+                    p.object_to_generate = world_object.load("ice_sheet_polar_bear");
 
                 grid[i, j] = p;
             }
