@@ -552,6 +552,10 @@ public class rock_stacks : biome
                     // Generate bushes
                     else if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("bush");
+
+                    // Add nali cows
+                    else if (random.range(0, 1000) == 0)
+                        p.object_to_generate = world_object.load("nali_cow_spawner");
                 }
             }
 
