@@ -187,6 +187,8 @@ public class desert : biome
                 {
                     if (random.range(0, 200) == 0)
                         p.object_to_generate = world_object.load("cactus1");
+                    else if (random.range(0, 1000) == 0)
+                        p.object_to_generate = world_object.load("scorpion_nest");
                 }
 
                 // IF mediumly rocky, generate small rocks on a well-spaced grid

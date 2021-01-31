@@ -215,7 +215,10 @@ public class console : MonoBehaviour
                 var ray = player.current.camera_ray();
                 if (Physics.Raycast(ray, out RaycastHit hit))
                     for (int i = 0; i < count; ++i)
-                        client.create(hit.point, character_to_spawn);
+                    {
+                        var c = (character)client.create(hit.point, character_to_spawn);
+                        c.dont_despawn_automatically = true;
+                    }
 
                 return true;
             },

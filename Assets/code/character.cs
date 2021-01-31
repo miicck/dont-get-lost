@@ -186,11 +186,14 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
     // UNITY CALLBACKS //
     //#################//
 
+    public bool dont_despawn_automatically = false;
+
     private void Start()
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
-        characters.Add(this);
+        if (!dont_despawn_automatically)
+            characters.Add(this);
     }
 
     private void OnDestroy()
