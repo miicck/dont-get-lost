@@ -466,6 +466,19 @@ public class console : MonoBehaviour
 
             description = "Deletes all representations on the server with the matching prefab.",
             usage_example = "server_delete_by_prefab characters/settler"
+        },
+
+        ["clear_registered_teleporters"] = new console_info
+        {
+            command = (args) =>
+            {
+                FindObjectOfType<teleport_manager>()?.clear_registered_teleporters();
+                return true;
+            },
+
+            description = "Removes all registered teleport destinations (meaning they will need "
+                        + "to be re-added manually).",
+            usage_example = "clear_registered_teleporters"
         }
     };
 

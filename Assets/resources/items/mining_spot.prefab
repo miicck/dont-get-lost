@@ -110,7 +110,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3718422007898191127}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0.341, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4883927322680056051}
@@ -367,11 +367,11 @@ MonoBehaviour:
   display_name: mining spot
   output: {fileID: 5679265494180299747}
   search_origin: {fileID: 6493507513712573707}
-  search_radius: 1
+  search_radius: 1.18
   time_between_harvests: 1
   max_harvests: 5
   tool_type: 1
-  tool_quality: 0
+  tool_quality: 9
 --- !u!114 &5748081639992911202
 MonoBehaviour:
   m_ObjectHideFlags: 0

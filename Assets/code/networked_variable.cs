@@ -192,6 +192,12 @@ namespace networked_variables
             return false;
         }
 
+        public void clear()
+        {
+            list.Clear();
+            set_dirty();
+        }
+
         public void remove_at(int i)
         {
             list.RemoveAt(i);

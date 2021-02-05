@@ -9,6 +9,11 @@ public class teleport_manager : networked
     networked_list<networked_pair<net_string, net_vector3>> destinations =
         new networked_list<networked_pair<net_string, net_vector3>>();
 
+    public void clear_registered_teleporters()
+    {
+        destinations.clear();
+    }
+
     public void register_portal(portal p)
     {
         var net_name = new net_string();

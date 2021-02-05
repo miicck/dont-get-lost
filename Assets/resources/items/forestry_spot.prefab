@@ -371,7 +371,7 @@ MonoBehaviour:
   time_between_harvests: 0.5
   max_harvests: 20
   tool_type: 0
-  tool_quality: 0
+  tool_quality: 9
 --- !u!114 &5748081639992911202
 MonoBehaviour:
   m_ObjectHideFlags: 0
