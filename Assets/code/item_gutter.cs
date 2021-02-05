@@ -88,7 +88,7 @@ public class item_gutter : item_node
             // Ignore collisions with self/other/ignore_logistics_collisions_with things
             if (h.transform.IsChildOf(building.transform)) continue;
             if (h.transform.IsChildOf(other.building.transform)) continue;
-            if (ignore_logistics_collisions_with(h)) continue;
+            if (ignore_logistics_collisions_with(h, building.transform, other.building.transform)) continue;
 
             // Hit something in-between, don't allow the connection
             return false;

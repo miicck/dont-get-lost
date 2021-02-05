@@ -58,7 +58,7 @@ MonoBehaviour:
   max_forward_in_up: 3
   swing_audio: {fileID: 0}
   type: 0
-  quality: 3
+  quality: 5
 --- !u!54 &5033637912833396061
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -10,10 +10,20 @@ public class portal : building_material, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
+    public virtual string init_portal_name() { return "Portal"; }
+
+    protected virtual string portal_ui() { return "ui/portal"; }
+
     player_interaction[] interactions;
     public override player_interaction[] player_interactions()
     {
-        if (interactions == null) interactions = new player_interaction[] { new menu(this) };
+        if (interactions == null)
+        {
+            List<player_interaction> inter = new List<player_interaction>();
+            inter.Add(new menu(this));
+            inter.AddRange(base.player_interactions());
+            interactions = inter.ToArray();
+        }
         return interactions;
     }
 
@@ -24,7 +34,7 @@ public class portal : building_material, IPlayerInteractable
 
         protected override RectTransform create_menu()
         {
-            var ui = Resources.Load<RectTransform>("ui/portal").inst();
+            var ui = Resources.Load<RectTransform>(portal.portal_ui()).inst();
             var pr = ui.GetComponentInChildren<portal_renamer>();
 
             pr.field.onValueChanged.AddListener((new_val) =>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class town_gate : building_material, IAddsToInspectionText
+public class town_gate : portal, IAddsToInspectionText
 {
     const float SLOW_UPDATE_TIME = 1f;
     const float MAX_APPROACH_DISTANCE = 30f;
@@ -166,6 +166,9 @@ public class town_gate : building_material, IAddsToInspectionText
                "Settlers : " + settler.settler_count + "\n" +
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
+
+    public override string init_portal_name() { return "Town gate"; }
+    protected override string portal_ui() { return "ui/town_gate"; }
 
     //#########//
     // ATTACKS //

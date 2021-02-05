@@ -25,7 +25,7 @@ public class item_input : item_node
 
         // Check if the drop is possible
         foreach (var h in Physics.RaycastAll(other.output_point, delta, delta.magnitude))
-            if (!ignore_logistics_collisions_with(h))
+            if (!ignore_logistics_collisions_with(h, building.transform, other.building.transform))
                 return false; // Something in the way of the drop
 
         return true;

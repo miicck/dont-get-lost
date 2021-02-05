@@ -328,7 +328,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
     /// <summary> Returns true if the raycast hit given should be ignored
     /// when testing item logisitics paths. </summary>
-    protected static bool ignore_logistics_collisions_with(RaycastHit hit)
+    protected static bool ignore_logistics_collisions_with(RaycastHit hit, params Transform[] ignore_transforms)
     {
         // Ignore collisions with logistics items
         var itm = hit.transform.GetComponentInParent<item>();
@@ -336,6 +336,12 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
 
         // Ignore collisions with IDontBlockItemLogisitcs objects
         if (hit.transform.GetComponentInParent<IDontBlockItemLogisitcs>() != null) return true;
+
+        foreach (var t in ignore_transforms)
+        {
+            if (t.IsChildOf(hit.transform)) return true;
+            if (hit.transform.IsChildOf(t)) return true;
+        }
 
         return false;
     }

@@ -187,7 +187,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     //##############################//
 
     protected override option get_option(int i) { return menu_options[i]; }
-    protected override int options_count => menu_options.Count;
+    protected override int options_count => menu_options == null ? 0 : menu_options.Count;
 
     //#######################//
     // IAddsToInspectionText //

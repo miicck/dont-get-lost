@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4183066231069393111
+--- !u!1 &781572618251870278
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,25 +8,25 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1849496975812320664}
-  - component: {fileID: -7845326207384050824}
-  - component: {fileID: -3501409818469146156}
-  - component: {fileID: 1213581095459593720}
-  - component: {fileID: -4553750974437377852}
+  - component: {fileID: 6028286147238254669}
+  - component: {fileID: 377656643341563206}
+  - component: {fileID: -4380675486878801892}
+  - component: {fileID: -4375169952258774117}
+  - component: {fileID: 54385041574197017}
   m_Layer: 0
-  m_Name: charcoal
+  m_Name: titanium_axe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1849496975812320664
+--- !u!4 &6028286147238254669
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
+  m_GameObject: {fileID: 781572618251870278}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -34,59 +34,60 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-7845326207384050824
+--- !u!114 &377656643341563206
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
+  m_GameObject: {fileID: 781572618251870278}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-3501409818469146156
+--- !u!114 &-4380675486878801892
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
+  m_GameObject: {fileID: 781572618251870278}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  item: {fileID: 7373243042018251868, guid: a2f4f85afef5fea3d9f54b62548cc48e, type: 3}
   count: 1
---- !u!114 &1213581095459593720
+--- !u!114 &-4375169952258774117
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 2857990679801850892, guid: 1e8b0b35a88f3c14fb5b46abdc08281e, type: 3}
+  count: 1
+--- !u!114 &54385041574197017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 3463273078711589885, guid: afca0d03acdf50d40aaf5fa59af44cb4, type: 3}
+  item: {fileID: 7065318412303310117, guid: eaeeb8260448592499baa5d40289522c, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1
---- !u!114 &-4553750974437377852
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c115349308b276345950de919ec67a3c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fuel_required: 1

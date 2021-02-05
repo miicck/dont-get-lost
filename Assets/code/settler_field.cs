@@ -9,6 +9,7 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     public int x_size = 2;
     public int z_size = 2;
     public float spacing = 1f;
+    public float spot_tend_prob = 0.33f;
     public Vector3 offset = Vector3.zero;
 
     float time_spent_farming;
@@ -106,8 +107,8 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
             for (int x = 0; x < x_size; ++x)
                 for (int z = 0; z < z_size; ++z)
                 {
-                    // Only tend to 1 in 3 of the spots
-                    if (Random.Range(0, 3) != 0)
+                    // Only tend to a particular spot with the given spot_tend_prob
+                    if (Random.Range(0, 1f) > spot_tend_prob)
                         continue;
 
                     var spot = spots[x, z];

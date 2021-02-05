@@ -7,7 +7,7 @@ using UnityEngine;
 public class time_manager : networked
 {
     public const float DAY_LENGTH = 60f * 5;
-    public const float NIGHT_LENGTH = 60f * 2;
+    public const float NIGHT_LENGTH = 60f * 1;
     public const float DAWN_FRAC = 0.1f;
     public const float DUSK_FRAC = 0.1f;
 
