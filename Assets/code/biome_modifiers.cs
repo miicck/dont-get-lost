@@ -122,6 +122,7 @@ public class craters : biome_modifier
     }
 }
 
+[biome_mod_info(generation_enabled: false)]
 public class cave_system : biome_modifier
 {
     const int MAX_FAILS = 100;

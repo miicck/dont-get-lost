@@ -1137,7 +1137,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         biome = biome.at(transform.position, generate: true);
         if (biome == null) return;
 
-        point = biome.blended_point(transform.position);
+        point = biome.blended_point(transform.position, out bool valid);
         lighting.sky_color_daytime = point.sky_color;
         lighting.fog_distance = point.fog_distance;
         water.color = point.water_color;

@@ -184,8 +184,8 @@ public class chunk : MonoBehaviour
     {
         if (!console.world_generator_enabled) return;
 
-        // Enabled if the player is in range
-        enabled = in_range();
+        // Enabled if the biome is generated and player is in range
+        enabled = biome != null && biome.generation_complete && in_range();
     }
 
     void world_object_range_checks()
@@ -372,7 +372,12 @@ public class chunk : MonoBehaviour
         {
             // Get the blended point descibing this part of the world
             Vector3 world_pos = new Vector3(i, 0, j) + transform.position;
-            blended_points[i, j] = biome.blended_point(world_pos);
+            blended_points[i, j] = biome.blended_point(world_pos, out bool valid);
+
+            // Blended point was invalid (likely because a required biome wasn't generated)
+            // try again next frame (note points_i has not yet been incremented)
+            if (!valid) return false;
+
             blended_points[i, j].apply_global_rules();
         }
 

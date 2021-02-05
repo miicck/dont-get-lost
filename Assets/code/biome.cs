@@ -30,7 +30,18 @@ public abstract class biome : MonoBehaviour
 
     /// <summary> The grid of points defining the biome. </summary>
     public point[,] grid = new point[SIZE, SIZE];
-    protected abstract void generate_grid();
+    protected abstract bool continue_generate_grid();
+
+    /// <summary> Called just before the first call to <see cref="continue_generate_grid"/> </summary>
+    protected virtual void on_start_generate_grid() { }
+
+    /// <summary> Called just after the last call to <see cref="continue_generate_grid"/> </summary>
+    protected virtual void on_end_generate_grid() { }
+
+    /// <summary> True once generation is complete. </summary>
+    public bool generation_complete { get; private set; }
+
+    public biome_modifier modifier { get; private set; }
 
     //#####################//
     // NEIGHBOURING BIOMES //
@@ -197,7 +208,10 @@ public abstract class biome : MonoBehaviour
         else if (zamt < 0) zamt = -procmath.maps.smooth_max_cos(-zamt);
     }
 
-    public point blended_point(Vector3 world_position)
+    /// <summary> Returns a blended <see cref="biome.point"/> at the given <paramref name="world_position"/>.
+    /// <paramref name="valid"/> will be set to false if any of the biomes required for blending
+    /// are not yet generated, to let the calling method know to try again later. </summary>
+    public point blended_point(Vector3 world_position, out bool valid)
     {
         // Get the x and z amounts to blend
         float xamt, zamt;
@@ -218,7 +232,15 @@ public abstract class biome : MonoBehaviour
         float abs_x = Mathf.Abs(xamt);
         if (abs_x > 0)
         {
-            points[1] = get_neighbour(xamt > 0 ? 1 : -1, 0).clamped_grid(world_position);
+            var nx = get_neighbour(xamt > 0 ? 1 : -1, 0);
+
+            if (!nx.generation_complete)
+            {
+                valid = false;
+                return new point();
+            }
+
+            points[1] = nx.clamped_grid(world_position);
             weights[1] = abs_x;
         }
 
@@ -226,7 +248,15 @@ public abstract class biome : MonoBehaviour
         float abs_z = Mathf.Abs(zamt);
         if (abs_z > 0)
         {
-            points[2] = get_neighbour(0, zamt > 0 ? 1 : -1).clamped_grid(world_position);
+            var nz = get_neighbour(0, zamt > 0 ? 1 : -1);
+
+            if (!nz.generation_complete)
+            {
+                valid = false;
+                return new point();
+            }
+
+            points[2] = nz.clamped_grid(world_position);
             weights[2] = abs_z;
         }
 
@@ -234,10 +264,19 @@ public abstract class biome : MonoBehaviour
         float damt = Mathf.Min(abs_x, abs_z);
         if (damt > 0)
         {
-            points[3] = get_neighbour(xamt > 0 ? 1 : -1, zamt > 0 ? 1 : -1).clamped_grid(world_position);
+            var nd = get_neighbour(xamt > 0 ? 1 : -1, zamt > 0 ? 1 : -1);
+
+            if (!nd.generation_complete)
+            {
+                valid = false;
+                return new point();
+            }
+
+            points[3] = nd.clamped_grid(world_position);
             weights[3] = damt;
         }
 
+        valid = true;
         return point.blend(points, weights);
     }
 
@@ -406,11 +445,8 @@ public abstract class biome : MonoBehaviour
         var m = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
 
         // Set bime at 0, 0 to be the spawn biome
-        if (x == 0 && z == 0)
-            m = new spawn_biome();
-
-        // Apply the biome modification
-        m.modify(b);
+        if (x == 0 && z == 0) m = new spawn_biome();
+        b.modifier = m;
 
         // Give the biome a discriptive name
         b.name = "[" + x + ", " + z + "] " + b.GetType().Name + " + " + m.GetType().Name;
@@ -443,8 +479,33 @@ public abstract class biome : MonoBehaviour
 
         // Generate the biome
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        b.generate_grid();
+        var bg = b.gameObject.AddComponent<gradual_biome_generator>();
+        bg.biome = b;
         return b;
+    }
+
+    /// <summary> Class to spread biome generation across multiple frames. </summary>
+    class gradual_biome_generator : MonoBehaviour
+    {
+        public biome biome;
+
+        private void Start()
+        {
+            biome.on_start_generate_grid();
+        }
+
+        private void Update()
+        {
+            for (int i = 0; i < load_balancing.iter; ++i)
+                if (biome.continue_generate_grid())
+                {
+                    biome.on_end_generate_grid();
+                    biome.modifier.modify(biome); // Apply the biome modifier
+                    biome.generation_complete = true;
+                    Destroy(this);
+                    return;
+                }
+        }
     }
 
     //################//
