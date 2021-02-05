@@ -182,6 +182,8 @@ public class chunk : MonoBehaviour
 
     private void Update()
     {
+        if (!console.world_generator_enabled) return;
+
         // Enabled if the player is in range
         enabled = in_range();
     }
@@ -511,6 +513,8 @@ public class chunk : MonoBehaviour
 
         private void Update()
         {
+            if (!console.world_generator_enabled) return;
+
             // Generate max_steps every frame until
             // we need not generate any more
             int max_steps = load_balancing.iter;

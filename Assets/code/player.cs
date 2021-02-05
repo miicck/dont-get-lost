@@ -1132,6 +1132,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     /// <summary> Run the world generator around the current player position. </summary>
     void run_world_generator()
     {
+        if (!console.world_generator_enabled) return;
+
         biome = biome.at(transform.position, generate: true);
         if (biome == null) return;
 

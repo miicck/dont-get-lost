@@ -17,6 +17,8 @@ public class console : MonoBehaviour
         public string usage_example;
     };
 
+    public static bool world_generator_enabled { get; private set; } = true;
+
     public static Dictionary<string, console_info> commands = new Dictionary<string, console_info>
     {
         ["give"] = new console_info
@@ -479,6 +481,19 @@ public class console : MonoBehaviour
             description = "Removes all registered teleport destinations (meaning they will need "
                         + "to be re-added manually).",
             usage_example = "clear_registered_teleporters"
+        },
+
+        ["toggle_world_gen"] = new console_info
+        {
+            command = (args) =>
+            {
+                world_generator_enabled = !world_generator_enabled;
+                popup_message.create("World generator " + (world_generator_enabled ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggles generation of the map (when off, you can walk to the 'edge').",
+            usage_example = "toggle_world_gen"
         }
     };
 

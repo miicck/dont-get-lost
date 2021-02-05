@@ -259,6 +259,8 @@ public abstract class biome : MonoBehaviour
 
     private void Update()
     {
+        if (!console.world_generator_enabled) return;
+
         // Load neighbours if they are in range
         for (int dx = -1; dx < 2; ++dx)
             for (int dz = -1; dz < 2; ++dz)
