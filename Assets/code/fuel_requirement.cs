@@ -13,13 +13,10 @@ public class fuel_requirement : ingredient
         return (float)(log.value * fuel_required) / log.fuel_value;
     }
 
-    /// <summary> If there is enough fuel in the given inventory to satisfy the
-    /// given total fuel requirement, return a dictionary of string:int of items
-    /// and quantities needed to satisfy that requirement. Otherwise return
-    /// null. </summary>
-    public override bool find(
-        IItemCollection i, 
-        ref Dictionary<string, int> in_use)
+    bool find(
+        IItemCollection i,
+        ref Dictionary<string, int> in_use,
+        out int satisfaction)
     {
         int remaining = fuel_required;
         foreach (var kv in i.contents())
@@ -52,7 +49,7 @@ public class fuel_requirement : ingredient
             {
                 // Use up all of this item
                 remaining -= itm.fuel_value * available;
-                in_use[itm.name] = kv.Value;
+                in_use[itm.name] = kv.Value + already_in_use;
             }
             else
             {
@@ -65,7 +62,27 @@ public class fuel_requirement : ingredient
                 break;
         }
 
+        satisfaction = Mathf.Min(fuel_required, fuel_required - remaining);
         return remaining <= 0;
+    }
+
+    /// <summary> If there is enough fuel in the given inventory to satisfy the
+    /// given total fuel requirement, return a dictionary of string:int of items
+    /// and quantities needed to satisfy that requirement. Otherwise return
+    /// null. </summary>
+    public override bool find(
+        IItemCollection i,
+        ref Dictionary<string, int> in_use)
+    {
+        return find(i, ref in_use, out int ignored);
+    }
+
+    public override string satisfaction_string(
+        IItemCollection i,
+        ref Dictionary<string, int> in_use)
+    {
+        find(i, ref in_use, out int satisfaction);
+        return satisfaction + "/" + fuel_required + " units of fuel";
     }
 
     public override string str()

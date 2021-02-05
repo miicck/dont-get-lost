@@ -163,6 +163,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             if (_self_interactions == null)
                 _self_interactions = new player_interaction[]
                 {
+                    new contract.contract_menu(),
                     new inventory_interaction(),
                     new recipe_book_interaction(),
                     new options_menu_interaction(),
@@ -1248,7 +1249,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     {
         if (remote_interactions == null) remote_interactions = new player_interaction[]
         {
-            new interaction(this),
+            new give_interaction(this),
             new player_inspectable(transform)
             {
                 text = ()=> username.value
@@ -1257,10 +1258,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         return remote_interactions;
     }
 
-    class interaction : player_interaction
+    class give_interaction : player_interaction
     {
         player interacting_with;
-        public interaction(player player) { this.interacting_with = player; }
+        public give_interaction(player player) { this.interacting_with = player; }
 
         public override bool is_possible() { return current.equipped != null; }
         public override controls.BIND keybind => controls.BIND.GIVE;
@@ -1307,6 +1308,22 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     public inventory inventory { get; private set; }
     public inventory crafting_menu { get; private set; }
+
+    public List<contract> contracts
+    {
+        get
+        {
+            // Only direct child contracts count as contracts
+            // (otherwise equipped contracts would count as well)
+            List<contract> ret = new List<contract>();
+            foreach (Transform t in transform)
+            {
+                var c = t.GetComponent<contract>();
+                if (c != null) ret.Add(c);
+            }
+            return ret;
+        }
+    }
 
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
@@ -1627,6 +1644,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     {
         if (current == null) return "No local player";
         return "    Local player " + current.username.value + "\n" +
+               "    " + current.contracts.Count + " active contracts \n" +
                current.interactions.info();
     }
 }

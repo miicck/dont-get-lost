@@ -21,9 +21,10 @@ public class item_ingredient : ingredient
         return item.display_name;
     }
 
-    public override bool find(
+    bool find(
         IItemCollection i,
-        ref Dictionary<string, int> in_use)
+        ref Dictionary<string, int> in_use,
+        out int found)
     {
         if (item == null)
             throw new System.Exception("Item ingredient missing!");
@@ -34,18 +35,31 @@ public class item_ingredient : ingredient
         // Ensure the inventory contains enough of 
         // the item to satisfy the already in_use 
         // items and those required by me.
-        if (!in_use.TryGetValue(item.name, out int to_find))
-            to_find = 0;
-        to_find += count;
+        if (!in_use.TryGetValue(item.name, out int already_in_use))
+            already_in_use = 0;
 
-        if (!i.contains(item, to_find))
-            return false;
+        int in_inventory = i.count(item); // How many are in the inventory, in total
+        int spare = Mathf.Max(0, in_inventory - already_in_use); // How many are spare in the inventory
+        found = Mathf.Min(spare, count); // How many we've found to satisfy this requirement
 
-        if (in_use.ContainsKey(item.name))
-            in_use[item.name] += count;
-        else
-            in_use[item.name] = count;
+        // Update the in_use dictionary
+        if (in_use.ContainsKey(item.name)) in_use[item.name] += found;
+        else in_use[item.name] = found;
 
-        return true;
+        // Satisfied or not
+        return found >= count;
+    }
+
+    public override bool find(
+        IItemCollection i,
+        ref Dictionary<string, int> in_use)
+    {
+        return find(i, ref in_use, out int ignored);
+    }
+
+    public override string satisfaction_string(IItemCollection i, ref Dictionary<string, int> in_use)
+    {
+        find(i, ref in_use, out int found);
+        return found + "/" + count + " " + (count > 0 ? item.plural : item.display_name);
     }
 }

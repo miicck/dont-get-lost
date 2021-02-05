@@ -485,6 +485,14 @@ namespace networked_variables
             this.max_value = max_value;
         }
 
+        public net_float()
+        {
+            this.lerp_speed = 5f;
+            this.resolution = 0f;
+            this.min_value = float.NegativeInfinity;
+            this.max_value = float.PositiveInfinity;
+        }
+
         protected override float validate(float new_value)
         {
             if (new_value > max_value) return max_value;

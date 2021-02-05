@@ -398,6 +398,12 @@ public class item : networked, IPlayerInteractable
         if (item.food_values != null)
             info += "Food values: " + item.food_values.shorthand_notation() + "\n";
 
+        if (item is contract)
+        {
+            var c = (contract)item;
+            info += c.info(player.current);
+        }
+
         return utils.allign_colons(info);
     }
 

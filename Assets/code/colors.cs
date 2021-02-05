@@ -52,3 +52,32 @@ public static class character_colors
         );
     }
 }
+
+public static class ui_colors
+{
+    public static UnityEngine.UI.ColorBlock red_green_button_colors(bool green)
+    {
+        if (green)
+            return new UnityEngine.UI.ColorBlock()
+            {
+                normalColor = new Color(0, 1, 0),
+                selectedColor = new Color(0, 1, 0),
+                disabledColor = new Color(0, 1, 0),
+                highlightedColor = new Color(0, 0.9f, 0),
+                pressedColor = new Color(0, 0.6f, 0),
+                colorMultiplier = 1f,
+                fadeDuration = 0.5f,
+            };
+        else
+            return new UnityEngine.UI.ColorBlock()
+            {
+                normalColor = new Color(1, 0, 0),
+                selectedColor = new Color(1, 0, 0),
+                disabledColor = new Color(1, 0, 0),
+                highlightedColor = new Color(0.9f, 0, 0),
+                pressedColor = new Color(0.6f, 0, 0),
+                colorMultiplier = 1f,
+                fadeDuration = 0.5f,
+            };
+    }
+}

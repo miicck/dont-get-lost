@@ -163,6 +163,7 @@ public class recipe : MonoBehaviour
 public abstract class ingredient : MonoBehaviour
 {
     public abstract string str();
+    public abstract string satisfaction_string(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract bool find(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract float average_value();
 }
