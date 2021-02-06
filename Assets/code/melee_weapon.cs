@@ -98,7 +98,7 @@ public class melee_weapon : equip_in_hand
         return uses;
     }
 
-    class swing_use : player_interaction
+    class swing_use : networked_player_interaction
     {
         melee_weapon swinging;
 
@@ -112,9 +112,9 @@ public class melee_weapon : equip_in_hand
         public override bool allow_held => true;
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
-        public override bool start_interaction(player player)
+        public override bool start_networked_interaction(player player)
         {
-            if (swinging.swing_audio == null)
+             if (swinging.swing_audio == null)
             {
                 // Default audio
                 swinging.swing_audio = swinging.gameObject.AddComponent<AudioSource>();
@@ -130,7 +130,7 @@ public class melee_weapon : equip_in_hand
             return false;
         }
 
-        public override bool continue_interaction(player player)
+        public override bool continue_networked_interaction(player player)
         {
             // Item was deleted
             if (swinging == null) return true;
@@ -169,7 +169,7 @@ public class melee_weapon : equip_in_hand
             return false;
         }
 
-        public override void end_interaction(player player)
+        public override void end_networked_interaction(player player)
         {
             if (swinging == null) return;
 

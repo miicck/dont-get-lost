@@ -8,7 +8,7 @@ public interface IPlayerInteractable
     public player_interaction[] player_interactions();
 }
 
-/// <summary> An object that a player can be interacted with by the player. </summary>
+/// <summary> An interaction that a player can be carry out. </summary>
 public abstract class player_interaction
 {
     /// <summary> Returns the keybind needed to start this interaction </summary>
@@ -19,7 +19,13 @@ public abstract class player_interaction
 
     /// <summary> Returns true if this interaction is triggered 
     /// based on <see cref="keybind"/> and <see cref="allow_held"/> </summary>
-    public bool triggered() { return allow_held ? controls.held(keybind) : controls.triggered(keybind); }
+    public virtual bool triggered(player player)
+    {
+        // Don't start interactions on non-authority clients
+        // (if you want networked interactions see networked_player_interaction)
+        if (!player.has_authority) return false;
+        return allow_held ? controls.held(keybind) : controls.triggered(keybind);
+    }
 
     /// <summary> Returns false if the interaction is (temporarily) impossible. </summary>
     public virtual bool is_possible() { return true; }
@@ -59,6 +65,58 @@ public abstract class player_interaction
     /// <summary> Returns true if this interaction can be carried out 
     /// simultaneously with other interactions. Use with caution. </summary>
     public virtual bool simultaneous() { return false; }
+}
+
+/// <summary> An interaction that is mirrored on remote clients. </summary>
+public abstract class networked_player_interaction : player_interaction
+{
+    public override bool triggered(player player)
+    {
+        // Networked interactions are triggered normally on authority clients
+        // and by player.networked_interaction_underway on non-auth clients
+        if (player.has_authority) return base.triggered(player);
+        return player.networked_interaction_underway(keybind);
+    }
+
+    public sealed override bool simultaneous()
+    {
+        // Networked interactions can't be simulaneous, by virtue of the
+        // fact that they are triggered by the state of a *single* 
+        // networked variable within the player
+        return false;
+    }
+
+    public sealed override bool start_interaction(player player)
+    {
+        // On the authority client, record the fact that
+        // we've started this interaction
+        if (player.has_authority) player.start_networked_interaction(keybind);
+        return start_networked_interaction(player); // Start interaction (on all clients)
+    }
+
+    public virtual bool start_networked_interaction(player player) { return false; }
+
+    public sealed override bool continue_interaction(player player)
+    {
+        // Continue the interaction on all clients, which is considered
+        // complete when continue_networked_interaction returns true, or
+        // when a non-auth client is no longer triggered.
+        var complete = continue_networked_interaction(player);
+        if (!player.has_authority && !triggered(player)) complete = true;
+        return complete;
+    }
+
+    public virtual bool continue_networked_interaction(player player) { return true; }
+
+    public sealed override void end_interaction(player player)
+    {
+        // On the authority client, record the fact that 
+        // we've ended this interaction
+        if (player.has_authority) player.end_networked_interaction(keybind);
+        end_networked_interaction(player); // End interaction (on all clients)
+    }
+
+    public virtual void end_networked_interaction(player player) { }
 }
 
 /// <summary> A set of interactions that can be carried out simultaneously. </summary>
@@ -189,7 +247,7 @@ public class interaction_set
 
             if (underway.ContainsKey(i.keybind)) continue;
             if (!i.simultaneous() && !simultaneous()) continue;
-            if (!i.triggered()) continue;
+            if (!i.triggered(player)) continue;
 
             // Add to underway tasks. We need to do this before we call 
             // start_interaction, in case start_interaction queries 
@@ -216,7 +274,7 @@ public class interaction_set
             // Don't continue interactions on same frame that they were started
             if (Time.frameCount <= kv.Value.frame_started) continue;
 
-            // Don't end interactions that haven't finished yet
+            // Continue underway interactions
             if (!kv.Value.interaction.continue_interaction(player)) continue;
 
             // End finished interaction

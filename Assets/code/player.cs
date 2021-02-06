@@ -80,9 +80,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     private void Update()
     {
-        // Stuff that runs both on authority/non-auth clients
-        set_hand_position();
-
         if (has_authority)
         {
             // Most things require authority to run
@@ -96,9 +93,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
             if (controls.triggered(controls.BIND.UNDO)) undo_manager.undo();
             if (controls.triggered(controls.BIND.REDO)) undo_manager.redo();
-
-            add_interactions();
-            interactions.continue_underway(this);
         }
         else
         {
@@ -107,6 +101,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
         }
+
+        // Stuff that runs both on authority/non-auth clients
+        set_hand_position();
+        add_interactions();
+        interactions.continue_underway(this);
     }
 
     private void OnDrawGizmos()
@@ -127,28 +126,32 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     void add_interactions()
     {
-        tips.context_tip = "";
+        if (has_authority) tips.context_tip = "";
         List<player_interaction> all_interactions = new List<player_interaction>();
 
-        // Get UI interactions
-        foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
-            all_interactions.AddRange(ui_inter.player_interactions());
+        // Get UI interactions (only on authority client)
+        if (has_authority)
+            foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
+                all_interactions.AddRange(ui_inter.player_interactions());
 
         // Get equipped interactions
         if (equipped != null)
             all_interactions.AddRange(equipped?.item_uses());
 
-        // Get in-world interactable
-        var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-        foreach (var inter in utils.raycast_for_closests<IPlayerInteractable>(
-            cam_ray, out RaycastHit hit, max_distance: dis,
-            accept: (h, i) => !h.transform.IsChildOf(transform))) // Don't interact with myself
-            all_interactions.AddRange(inter.player_interactions());
+        // Get in-world interactable (only on authority client)
+        if (has_authority)
+        {
+            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+            foreach (var inter in utils.raycast_for_closests<IPlayerInteractable>(
+                cam_ray, out RaycastHit hit, max_distance: dis,
+                accept: (h, i) => !h.transform.IsChildOf(transform))) // Don't interact with myself
+                all_interactions.AddRange(inter.player_interactions());
+        }
 
         // Add self interactions to list
         all_interactions.AddRange(self_interactions);
 
-        interactions.add_and_start_compatible(all_interactions, this, update_context_info: true);
+        interactions.add_and_start_compatible(all_interactions, this, update_context_info: has_authority);
     }
 
     //###################//
@@ -169,7 +172,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                     new options_menu_interaction(),
                     new first_third_person_interaction(),
                     new place_marker(),
-                    new toggle_map()
+                    new toggle_map(),
+                    new inspect_networked()
                 };
             return _self_interactions;
         }
@@ -190,7 +194,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         public override bool continue_interaction(player player)
         {
-            return triggered();
+            return triggered(player);
         }
 
         public override void end_interaction(player player)
@@ -267,6 +271,40 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         {
             player.map_open = !player.map_open;
             return true;
+        }
+    }
+
+    public class inspect_networked : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.GET_NETWORK_INFO;
+        public override bool allow_held => true;
+        public override string context_tip() { return "show network info for object"; }
+        public override bool show_context_tip() { return false; }
+
+        RectTransform ui;
+
+        public override bool start_interaction(player player)
+        {
+            ui = Resources.Load<RectTransform>("ui/simple_textbox").inst();
+            ui.SetParent(FindObjectOfType<game>().main_canvas.transform);
+            ui.anchoredPosition = Vector2.zero;
+            var txt = ui.GetComponentInChildren<UnityEngine.UI.Text>();
+
+            var nw = utils.raycast_for_closest<networked>(player.camera_ray(), out RaycastHit hit);
+            if (nw == null) txt.text = "No networked object found.";
+            else txt.text = nw.networked_variables_info();
+
+            return false;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            return !triggered(player);
+        }
+
+        public override void end_interaction(player player)
+        {
+            Destroy(ui.gameObject);
         }
     }
 
@@ -1304,6 +1342,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     networked_variables.net_bool crouched;
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_color net_hair_color;
+    networked_variables.net_int networked_interaction;
+
+    public void start_networked_interaction(controls.BIND bind) { networked_interaction.value = (int)bind; }
+    public void end_networked_interaction(controls.BIND bind) { networked_interaction.value = -1; }
+    public bool networked_interaction_underway(controls.BIND bind) { return networked_interaction.value == (int)bind; }
 
     public int slot_number_equipped => slot_equipped.value;
     public string player_username => username.value;
@@ -1565,6 +1608,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                 if (al.equipped != null && al.equipped is hairstyle)
                     al.equipped.on_equip(this);
         };
+
+        // Network the current (networked_)interaction that is underway
+        networked_interaction = new networked_variables.net_int(default_value: -1);
     }
 
     public override void on_first_create()
@@ -1645,7 +1691,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public static string info()
     {
         if (current == null) return "No local player";
+
+        string net_int_string;
+        int ni = current.networked_interaction.value;
+        if (System.Enum.IsDefined(typeof(controls.BIND), ni))
+            net_int_string = "Networked interaction : " + ((controls.BIND)ni).ToString();
+        else
+            net_int_string = "No networked interaction";
+
         return "    Local player " + current.username.value + "\n" +
+               "    Slot equipped : " + current.slot_equipped.value + "\n" +
+               "    " + net_int_string + "\n" +
                "    " + current.contracts.Count + " active contracts \n" +
                current.interactions.info();
     }

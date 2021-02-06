@@ -355,7 +355,7 @@ public class rifle : equip_in_hand
             return false;
         }
 
-        public override bool continue_interaction(player player) { return !triggered(); }
+        public override bool continue_interaction(player player) { return !triggered(player); }
 
         public override void end_interaction(player player)
         {

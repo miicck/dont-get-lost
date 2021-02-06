@@ -176,7 +176,8 @@ public static class controls
         BUILDING_TRANSLATION,
         IGNORE_SNAP_POINTS,
         CYCLE_FULLSCREEN_MODES,
-        ENTER_EXIT_CAVE
+        ENTER_EXIT_CAVE,
+        GET_NETWORK_INFO
     }
 
     static Dictionary<BIND, control> default_keybinds()
@@ -251,6 +252,7 @@ public static class controls
             [BIND.IGNORE_SNAP_POINTS] = new key_control(KeyCode.LeftControl),
             [BIND.CYCLE_FULLSCREEN_MODES] = new key_control(KeyCode.F11),
             [BIND.ENTER_EXIT_CAVE] = new mouse_control(mouse_control.BUTTON.LEFT),
+            [BIND.GET_NETWORK_INFO] = new key_control(KeyCode.F2)
         };
     }
 

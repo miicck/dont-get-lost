@@ -130,8 +130,13 @@ public class networked : MonoBehaviour
 
         // Get my native networked fields
         var networked_variables = new List<networked_variable>();
+        var net_variable_names = new List<string>();
         foreach (var f in networked_fields[GetType()])
-            networked_variables.Add((networked_variable)f.GetValue(this));
+        {
+            var nv = (networked_variable)f.GetValue(this);
+            networked_variables.Add(nv);
+            net_variable_names.Add(f.Name);
+        }
 
         // Appenend any extended networked fields from my children
         var networked_children = GetComponentsInChildren<IExtendsNetworked>();
@@ -153,7 +158,11 @@ public class networked : MonoBehaviour
             {
                 c.init_networked_variables();
                 foreach (var f in networked_fields[c.GetType()])
-                    networked_variables.Add((networked_variable)f.GetValue(c));
+                {
+                    var nv = (networked_variable)f.GetValue(c);
+                    networked_variables.Add(nv);
+                    net_variable_names.Add(f.Name);
+                }
             }
         }
 
@@ -161,11 +170,23 @@ public class networked : MonoBehaviour
         this.networked_variables = networked_variables.ToArray();
         for (int i = 0; i < this.networked_variables.Length; ++i)
             this.networked_variables[i].set_owner_and_index(this, i);
+        networked_variable_names = net_variable_names.ToArray();
+    }
+
+    /// <summary> Return formatted information about my networked variables. </summary>
+    public string networked_variables_info()
+    {
+        if (networked_variables == null) return "Networked variables uninitialized";
+        string ret = "Networked variables:\n";
+        for (int i = 0; i < networked_variables.Length; ++i)
+            ret += "    " + i + " : " + networked_variable_names[i] + " " + networked_variables[i].state_info() + "\n";
+        return utils.allign_colons(ret);
     }
 
     /// <summary> All of the variables I contain that
     /// are serialized over the network. </summary>
     networked_variable[] networked_variables;
+    string[] networked_variable_names;
 
     // Networked position (used by the engine to determine visibility)
     [engine_networked_variable(engine_networked_variable.TYPE.POSITION_X)]
@@ -418,7 +439,7 @@ public class networked : MonoBehaviour
     {
         return "Network id = " + network_id + "\n" +
                "Has authority = " + has_authority + "\n" +
-               "Variables = " + networked_variables.Length;
+               "Variables = " + networked_variables?.Length;
     }
 
 #if UNITY_EDITOR

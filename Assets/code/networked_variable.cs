@@ -47,6 +47,9 @@ public abstract class networked_variable
     {
         client.queue_variable_update(this);
     }
+
+    /// <summary> Get information about the current state of this variable. </summary>
+    public abstract string state_info();
 }
 
 /// <summary> A value serialized over the network. </summary>
@@ -161,6 +164,11 @@ public abstract class networked_variable<T> : networked_variable
 
         return !last_sent.Equals(new_value);
     }
+
+    public override string state_info()
+    {
+        return value.ToString();
+    }
 }
 
 //#################//
@@ -228,6 +236,11 @@ namespace networked_variables
             foreach (var t in list) serial.AddRange(t.serialization());
             return serial.ToArray();
         }
+
+        public override string state_info()
+        {
+            return "length " + list.Count;
+        }
     }
 
     public class networked_pair<T, K> : networked_variable
@@ -259,6 +272,11 @@ namespace networked_variables
         {
             return network_utils.concat_buffers(
                 pair.Key.serialization(), pair.Value.serialization());
+        }
+
+        public override string state_info()
+        {
+            return "[" + first.state_info() + ", " + second.state_info() + "]";
         }
     }
 
@@ -322,6 +340,11 @@ namespace networked_variables
 
         public delegate void on_change_func();
         public on_change_func on_change;
+
+        public override string state_info()
+        {
+            return "[" + first.ToString() + ", " + second.ToString() + "]";
+        }
     }
 
     public class networked_int_set : networked_variable, IEnumerable<int>
@@ -362,6 +385,11 @@ namespace networked_variables
                 set.Add(network_utils.decode_int(buffer, ref offset));
             if (offset - start != length)
                 throw new System.Exception("int set not correctly deserialized!");
+        }
+
+        public override string state_info()
+        {
+            return "length " + set.Count;
         }
     }
 
@@ -738,6 +766,11 @@ namespace networked_variables
 
         public delegate void on_change_func();
         public on_change_func on_change;
+
+        public override string state_info()
+        {
+            return "length " + dict.Count;
+        }
     }
 
     public class net_dictionary<K, V> : networked_variable, IEnumerable<KeyValuePair<K, V>>
@@ -795,6 +828,11 @@ namespace networked_variables
 
                 dict[key] = val;
             }
+        }
+
+        public override string state_info()
+        {
+            return "length " + dict.Count;
         }
     }
 
@@ -883,6 +921,14 @@ namespace networked_variables
             eval_metabolic_sat();
             offset += length;
         }
+
+        public override string state_info()
+        {
+            string ret = "";
+            foreach (var g in food.all_groups)
+                ret += food.group_symbol(g) + this[g] + ";";
+            return ret;
+        }
     }
 
     public class net_job_enable_state : networked_variable
@@ -913,6 +959,13 @@ namespace networked_variables
             if (length != enabled.Length)
                 throw new System.Exception("Incorrect serialization length!");
             System.Buffer.BlockCopy(buffer, offset, enabled, 0, length);
+        }
+
+        public override string state_info()
+        {
+            int count = 0;
+            foreach (var b in enabled) count += b;
+            return count + " enabled";
         }
     }
 
@@ -1013,6 +1066,11 @@ namespace networked_variables
                 throw new System.Exception("Incorrect serialization length!");
             System.Buffer.BlockCopy(buffer, offset, priorities, 0, length);
         }
+
+        public override string state_info()
+        {
+            return " highest priority " + ordered[0].display_name;
+        }
     }
 
     public class net_skills : networked_variable
@@ -1060,6 +1118,13 @@ namespace networked_variables
 
             if (index != xps.Length)
                 Debug.LogError("Did not deserialize networked skills correctly!");
+        }
+
+        public override string state_info()
+        {
+            int total_xp = 0;
+            foreach (var i in xps) total_xp += i;
+            return "total xp : " + total_xp;
         }
     }
 }
