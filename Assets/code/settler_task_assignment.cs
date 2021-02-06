@@ -48,10 +48,6 @@ public class settler_task_assignment : networked, IAddsToInspectionText
     /// <summary> The interaction that the settler is assigned to. </summary>
     public settler_interactable interactable => networked_parent.GetComponentInChildren<settler_interactable>();
 
-    // Keep track of what assignments are present on this client
-    private void Start() { register_assignment(this); }
-    private void OnDestroy() { forget_assignment(this); }
-
     private void Update()
     {
         // Only authority client performs checks
@@ -60,7 +56,48 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         // If the settler or task I'm assigning doesn't exist 
         // on this client => get rid of the assignment
         if (settler == null || interactable == null)
+        {
             delete();
+            return;
+        }
+
+        // See if there is an assignment with my id
+        if (assignments_by_id.TryGetValue(settler_id.value, out settler_task_assignment assignment) &&
+            assignment != null)
+        {
+            if (assignment == this)
+                return; // Everything is fine, I'm in the assignment dictionary correctly
+            else
+            {
+                // Another assignment is in the assignment dictionary =>
+                // I've been superseded
+                delete();
+                return;
+            }
+        }
+
+        // There wasn't a (non-null) value in the assignments_by_id dictionary for my settler_id
+        // Register the assignment to me
+        assignments_by_id[settler_id.value] = this;
+        switch (interactable.on_assign(settler))
+        {
+            case settler_interactable.INTERACTION_RESULT.FAILED:
+            case settler_interactable.INTERACTION_RESULT.COMPLETE:
+                delete();
+                break;
+        }
+    }
+
+    public override void on_forget(bool deleted)
+    {
+        // Remove me from the assignements by id dictionary, if I'm in it
+        if (assignments_by_id.TryGetValue(settler_id.value, out settler_task_assignment assignment))
+        {
+            if (assignment == this)
+                assignments_by_id.Remove(settler_id.value);
+            else
+                return;
+        }
     }
 
     private void OnDrawGizmos()
@@ -124,30 +161,6 @@ public class settler_task_assignment : networked, IAddsToInspectionText
     public static void initialize()
     {
         assignments_by_id = new Dictionary<int, settler_task_assignment>();
-    }
-
-    static void register_assignment(settler_task_assignment a)
-    {
-        // Record this assignment
-        assignments_by_id[a.settler_id.value] = a;
-        if (a.settler != null)
-        {
-            switch (a.interactable.on_assign(a.settler))
-            {
-                case settler_interactable.INTERACTION_RESULT.FAILED:
-                case settler_interactable.INTERACTION_RESULT.COMPLETE:
-                    a.delete();
-                    break;
-            }
-        }
-    }
-
-    static void forget_assignment(settler_task_assignment a)
-    {
-        // Forget this assignment
-        assignments_by_id.Remove(a.settler_id.value);
-        if (a.settler != null)
-            a.interactable.on_unassign(a.settler);
     }
 
     public static string info()
