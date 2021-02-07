@@ -917,7 +917,7 @@ namespace networked_variables
         public override string state_info()
         {
             int count = 0;
-            foreach (var b in enabled) count += b;
+            foreach (var b in enabled) count += 1 - b;
             return count + " enabled";
         }
     }
@@ -1022,7 +1022,10 @@ namespace networked_variables
 
         public override string state_info()
         {
-            return " highest priority " + ordered[0].display_name;
+            string ret = "|";
+            foreach (var b in priorities)
+                ret += b + "|";
+            return ret;
         }
     }
 

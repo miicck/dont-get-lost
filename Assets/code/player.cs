@@ -292,7 +292,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
             var nw = utils.raycast_for_closest<networked>(player.camera_ray(), out RaycastHit hit);
             if (nw == null) txt.text = "No networked object found.";
-            else txt.text = nw.networked_variables_info();
+            else txt.text = nw.name + " (" + nw.GetType().Name + ")\n" + nw.network_info();
 
             return false;
         }

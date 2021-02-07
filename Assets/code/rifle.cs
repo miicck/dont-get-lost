@@ -301,7 +301,7 @@ public class rifle : equip_in_hand
         return uses;
     }
 
-    class fire_interaction : player_interaction
+    class fire_interaction : networked_player_interaction
     {
         rifle rifle;
         public fire_interaction(rifle rifle) { this.rifle = rifle; }
@@ -314,7 +314,7 @@ public class rifle : equip_in_hand
             return "fire";
         }
 
-        public override bool start_interaction(player player)
+        public override bool start_networked_interaction(player player)
         {
             if (player != rifle.player_using)
                 throw new System.Exception("Player using has changed!");
@@ -325,7 +325,7 @@ public class rifle : equip_in_hand
             return false;
         }
 
-        public override bool continue_interaction(player player)
+        public override bool continue_networked_interaction(player player)
         {
             // continue_interaction is defined to ensure that the player is using the
             // object for long enough to let other clients know (see the note in 

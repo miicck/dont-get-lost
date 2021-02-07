@@ -490,6 +490,7 @@ public static class client
         return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
                "    Objects            : " + networked.object_count + "\n" +
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
+               "    Queued updates     : " + queued_variable_updates.Count + "\n" +
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage() + "\n" +
                "    Effective ping     : " + ping + "\n" +

@@ -176,17 +176,6 @@ public class networked : MonoBehaviour
 
     }
 
-    /// <summary> Return formatted information about my networked variables. </summary>
-    public string networked_variables_info()
-    {
-        if (networked_variables == null) return "Networked variables uninitialized";
-        string ret = "Networked variables:\n";
-        for (int i = 0; i < networked_variables.Length; ++i)
-            ret += "    " + i + " : " + networked_variable_names[i] + " " + networked_variables[i].state_info() +
-                   " network_id : " + networked_variables[i].network_id + "\n";
-        return utils.allign_colons(ret);
-    }
-
     /// <summary> All of the variables I contain that
     /// are serialized over the network. </summary>
     networked_variable[] networked_variables;
@@ -441,9 +430,23 @@ public class networked : MonoBehaviour
     /// <summary> Get information about this networked object. </summary>
     public string network_info()
     {
-        return "Network id = " + network_id + "\n" +
-               "Has authority = " + has_authority + "\n" +
-               "Variables = " + networked_variables?.Length;
+        string net_info = "Network id : " + network_id + "\n" +
+                          "Has authority : " + has_authority + "\n" +
+                          "Variables : " + networked_variables?.Length + "\n";
+
+        if (networked_variables == null) net_info += "Networked variables uninitialized";
+        else
+        {
+            net_info += "Networked variables:\n";
+            for (int i = 0; i < networked_variables.Length; ++i)
+            {
+                net_info += "    " + i + " : " + networked_variable_names[i] + " " + networked_variables[i].state_info();
+                if (networked_variables[i].network_id != network_id) net_info += " ID MISMATCH = " + networked_variables[i].network_id;
+                net_info += "\n";
+            }
+        }
+
+        return utils.allign_colons(net_info);
     }
 
 #if UNITY_EDITOR
@@ -458,8 +461,7 @@ public class networked : MonoBehaviour
             if (Application.isPlaying)
             {
                 var nw = (networked)target;
-                UnityEditor.EditorGUILayout.TextArea("Network info\n" +
-                    nw.network_info() + "\n" + nw.networked_variables_info());
+                UnityEditor.EditorGUILayout.TextArea("Network info\n" + nw.network_info());
             }
         }
     }
@@ -538,6 +540,10 @@ public class networked : MonoBehaviour
                     System.Reflection.BindingFlags.Public |
                     System.Reflection.BindingFlags.NonPublic))
                 {
+                    // This field will be dealt with further up the inheritance chain
+                    if (f.DeclaringType != t)
+                        continue;
+
                     var ft = f.FieldType;
                     if (ft.IsAbstract) continue;
                     if (!ft.IsSubclassOf(typeof(networked_variable))) continue;
