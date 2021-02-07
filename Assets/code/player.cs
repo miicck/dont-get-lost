@@ -905,7 +905,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         if (!interactions.mouse_look_allowed) return;
 
         // Rotate the player view
-        y_rotation.value += controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity;
+        y_rotation.value = utils.minimal_modulus_angle(y_rotation.value +
+            controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity);
+
         if (!map_open)
             x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity;
         else
@@ -1343,10 +1345,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_color net_hair_color;
     networked_variables.net_int networked_interaction;
+    networked_variables.net_int tutorial_stage;
 
     public void start_networked_interaction(controls.BIND bind) { networked_interaction.value = (int)bind; }
     public void end_networked_interaction(controls.BIND bind) { networked_interaction.value = -1; }
     public bool networked_interaction_underway(controls.BIND bind) { return networked_interaction.value == (int)bind; }
+
+    public void advance_tutorial_stage() { tutorial_stage.value++; }
+    public void set_tutorial_stage(int stage) { tutorial_stage.value = stage; }
 
     public int slot_number_equipped => slot_equipped.value;
     public string player_username => username.value;
@@ -1380,7 +1386,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     player_healthbar foodbar;
 
     public void mod_x_rotation(float mod) { x_rotation.value += mod; }
-    public void mod_y_rotation(float mod) { y_rotation.value += mod; }
+    public void mod_y_rotation(float mod) { y_rotation.value = utils.minimal_modulus_angle(y_rotation.value + mod); }
 
     public void play_sound(string sound,
         float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
@@ -1611,6 +1617,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         // Network the current (networked_)interaction that is underway
         networked_interaction = new networked_variables.net_int(default_value: -1);
+
+        tutorial_stage = new networked_variables.net_int();
+        tutorial_stage.on_change = () => tutorial.set_stage(tutorial_stage.value);
     }
 
     public override void on_first_create()
@@ -1650,13 +1659,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             }
             else inventory = inv;
         }
-    }
-
-    public void lerp_towards(Vector3 position, float xrot, float yrot, float amt)
-    {
-        networked_position = Vector3.Lerp(networked_position, position, amt);
-        x_rotation.value = Mathf.Lerp(x_rotation.value, xrot, amt);
-        y_rotation.value = Mathf.Lerp(y_rotation.value, yrot, amt);
     }
 
     //################//

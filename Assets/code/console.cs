@@ -494,6 +494,36 @@ public class console : MonoBehaviour
 
             description = "Toggles generation of the map (when off, you can walk to the 'edge').",
             usage_example = "toggle_world_gen"
+        },
+
+        ["set_tutorial_stage"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+                if (!int.TryParse(args[1], out int stage)) return console_error("Could not parse int from " + args[1]);
+                player.call_when_current_player_available(() => player.current.set_tutorial_stage(stage));
+                return true;
+            },
+
+            description = "Set the stage of tutorial that the player is at.",
+            usage_example = "set_tutorial_stage 0"
+        },
+
+        ["clear_inventory"] = new console_info
+        {
+            command = (arg) =>
+            {
+                if (player.current == null) return true;
+                if (player.current.inventory == null) return true;
+                var cts = player.current.inventory.contents();
+                foreach (var kv in cts)
+                    player.current.inventory.remove(kv.Key, kv.Value);
+                return true;
+            },
+
+            description = "Clears the players inventory (no undo).",
+            usage_example = "clear_inventory",
         }
     };
 

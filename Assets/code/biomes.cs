@@ -18,6 +18,42 @@ public class empty : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
+public class tutorial_island : mangroves
+{
+    protected override bool hostile_enemies() { return false; }
+
+    float island_amount(int i, int j)
+    {
+        int dx = i - SIZE / 2;
+        int dy = j - SIZE / 2;
+        return Mathf.Exp(-(dx * dx + dy * dy) / (ISLAND_SIZE * ISLAND_SIZE));
+    }
+
+    protected override float altitude(int i, int j)
+    {
+        float ia = island_amount(i, j);
+        float island_alt = world.SEA_LEVEL + ia - 0.75f;
+        if (ia > 0.5f) return island_alt;
+
+        ia *= 2;
+        float base_alt = base.altitude(i, j);
+        return island_alt * ia + base_alt * (1f - ia);
+    }
+
+    protected override void generate_objects(int i, int j, ref point p)
+    {
+        if (island_amount(i, j) < 0.5f)
+        {
+            base.generate_objects(i, j, ref p);
+            return;
+        }
+
+        if (i == SIZE / 2 && j == SIZE / 2)
+            p.object_to_generate = world_object.load("tutorial_island");
+    }
+}
+
 public class mangroves : biome
 {
     public const float ISLAND_SIZE = 27.2f;
@@ -28,65 +64,70 @@ public class mangroves : biome
 
     int i_last = 0;
 
+    protected virtual float altitude(int i, int j) { return ISLAND_SIZE * perlin(i / ISLAND_SIZE, j / ISLAND_SIZE); }
+    protected virtual bool hostile_enemies() { return true; }
+
+    protected virtual void generate_objects(int i, int j, ref point p)
+    {
+        // Work out mangrove amount, starts slightly below sea
+        // level so mangroves go into water
+        float man_amt = 0;
+        if (p.altitude > MANGROVE_START_ALT)
+            man_amt = Mathf.Exp(
+                -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
+
+        // Generate mangroves
+        if (random.range(0, 1f) < man_amt * MANGROVE_PROB)
+            p.object_to_generate = world_object.load("mangroves");
+
+        // Generate bushes
+        else if (random.range(0, 1f) < man_amt * BUSH_PROB)
+            p.object_to_generate = world_object.load("bush");
+
+        // On the beach
+        else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
+        {
+            // Generate rocks
+            if (random.range(0, 100) == 0)
+                p.object_to_generate = world_object.load("flint");
+            else if (random.range(0, 100) == 0)
+                p.object_to_generate = world_object.load("iron_ore");
+            else if (random.range(0, 200) == 0)
+                p.object_to_generate = world_object.load("flat_rock_outcrop");
+            else if (hostile_enemies() && random.range(0, 400) == 0)
+                p.object_to_generate = world_object.load("crocodile_nest");
+        }
+
+        // On land
+        else if (p.altitude > world.SEA_LEVEL)
+        {
+            // Generate flowers
+            if (random.range(0, 25) == 0)
+                p.object_to_generate = world_object.load("flowers");
+
+            // Generate mossy logs
+            else if (random.range(0, 500) == 0)
+                p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
+
+            else if (random.range(0, 1000) == 0)
+                p.object_to_generate = world_object.load("chicken_nest");
+
+        }
+    }
+
     protected override bool continue_generate_grid()
     {
         int i = i_last;
         for (int j = 0; j < SIZE; ++j)
         {
-            var p = new point();
+            var p = grid[i, j] = new point();
 
             // Alititude is simple perlin noise
-            p.altitude = ISLAND_SIZE * perlin(i / ISLAND_SIZE, j / ISLAND_SIZE);
+            p.altitude = altitude(i, j);
             p.terrain_color = terrain_colors.grass;
             p.sky_color = sky_colors.light_blue;
             p.fog_distance = fog_distances.CLOSE;
-
-            // Work out mangrove amount, starts slightly below sea
-            // level so mangroves go into water
-            float man_amt = 0;
-            if (p.altitude > MANGROVE_START_ALT)
-                man_amt = Mathf.Exp(
-                    -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
-
-            // Generate mangroves
-            if (random.range(0, 1f) < man_amt * MANGROVE_PROB)
-                p.object_to_generate = world_object.load("mangroves");
-
-            // Generate bushes
-            else if (random.range(0, 1f) < man_amt * BUSH_PROB)
-                p.object_to_generate = world_object.load("bush");
-
-            // On the beach
-            else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
-            {
-                // Generate rocks
-                if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("flint");
-                else if (random.range(0, 100) == 0)
-                    p.object_to_generate = world_object.load("iron_ore");
-                else if (random.range(0, 200) == 0)
-                    p.object_to_generate = world_object.load("flat_rock_outcrop");
-                else if (random.range(0, 400) == 0)
-                    p.object_to_generate = world_object.load("crocodile_nest");
-            }
-
-            // On land
-            else if (p.altitude > world.SEA_LEVEL)
-            {
-                // Generate flowers
-                if (random.range(0, 25) == 0)
-                    p.object_to_generate = world_object.load("flowers");
-
-                // Generate mossy logs
-                else if (random.range(0, 500) == 0)
-                    p.object_to_generate = world_object.load(random, "mossy_log", "mossy_log_mushroom");
-
-                else if (random.range(0, 1000) == 0)
-                    p.object_to_generate = world_object.load("chicken_nest");
-
-            }
-
-            grid[i, j] = p;
+            generate_objects(i, j, ref p);
         }
 
         return ++i_last >= SIZE;

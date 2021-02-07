@@ -436,20 +436,27 @@ public abstract class biome : MonoBehaviour
         // by the biome x, z coords and the world seed
         System.Random rand = procmath.multiseed_random(x, z, world.seed);
 
-        // Use the above random number generator to pick which biome to generate
-        int i = rand.Next() % biome_list.Count;
-        var b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
+        biome b;
+        if (x == 0 && z == 0 && biome_list.Count > 1)
+        {
+            // Start in the tutorial island (if the biome override isn't in effect)
+            b = generate<tutorial_island>(0, 0, rand);
+            b.modifier = new no_modifier();
+            b.name = "[0, 0] tutorial island";
+        }
+        else
+        {
+            // Use the above random number generator to pick which biome to generate
+            int i = rand.Next() % biome_list.Count;
+            b = (biome)biome_list[i].Invoke(null, new object[] { x, z, rand });
 
-        // Use the above random number generator to pick a random biome modifier
-        i = rand.Next() % modifier_list.Count;
-        var m = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
+            // Use the above random number generator to pick a random biome modifier
+            i = rand.Next() % modifier_list.Count;
+            b.modifier = (biome_modifier)modifier_list[i].Invoke(null, new object[] { });
 
-        // Set bime at 0, 0 to be the spawn biome
-        if (x == 0 && z == 0) m = new spawn_biome();
-        b.modifier = m;
-
-        // Give the biome a discriptive name
-        b.name = "[" + x + ", " + z + "] " + b.GetType().Name + " + " + m.GetType().Name;
+            // Give the biome a discriptive name
+            b.name = "[" + x + ", " + z + "] " + b.GetType().Name + " + " + b.modifier.GetType().Name;
+        }
 
         generated_biomes.set(x, z, b);
         return b;

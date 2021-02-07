@@ -394,7 +394,7 @@ public class inventory : networked, IItemCollection
     {
         var to_remove = Resources.Load<item>("items/" + item);
         if (to_remove == null) throw new System.Exception("Could not find the item " + item);
-       return remove(to_remove, count);
+        return remove(to_remove, count);
     }
 
     public bool remove(item item, int count)
@@ -470,12 +470,36 @@ public class inventory : networked, IItemCollection
             Resources.Load<item>("items/" + item));
     }
 
+    struct change_listener_info
+    {
+        public remove_func remove_func;
+        public on_change_func callback;
+    }
+
     public delegate void on_change_func();
-    List<on_change_func> listeners = new List<on_change_func>();
-    public void add_on_change_listener(on_change_func f) { listeners.Add(f); }
+    public delegate bool remove_func();
+    List<change_listener_info> listeners = new List<change_listener_info>();
+    public void add_on_change_listener(on_change_func f, remove_func remove_listener_delegate = null)
+    {
+        listeners.Add(new change_listener_info
+        {
+            remove_func = remove_listener_delegate,
+            callback = f
+        });
+    }
 
     /// <summary> Call to invoke listeners added via <see cref="add_on_change_listener(on_change_func)"/>. </summary>
-    public void invoke_on_change() { foreach (var f in listeners) f(); }
+    public void invoke_on_change()
+    {
+        List<change_listener_info> surviving = new List<change_listener_info>();
+        foreach (var f in listeners)
+        {
+            if (f.remove_func != null && f.remove_func()) continue;
+            f.callback();
+            surviving.Add(f);
+        }
+        listeners = surviving;
+    }
 
     /// <summary> Called when an <see cref="inventory_slot_networked"/> changes contents. </summary>
     public void on_slot_change(int slot_index, item item, int count)

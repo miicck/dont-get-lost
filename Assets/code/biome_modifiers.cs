@@ -10,25 +10,6 @@ public class no_modifier : biome_modifier
 }
 
 [biome_mod_info(generation_enabled: false)]
-public class spawn_biome : biome_modifier
-{
-    const int SPAWN_REGION_SIZE = 32;
-
-    public override void modify(biome b)
-    {
-        const int MIN = biome.SIZE / 2 - SPAWN_REGION_SIZE / 2;
-        const int MAX = biome.SIZE / 2 + SPAWN_REGION_SIZE / 2;
-        for (int i = MIN; i < MAX; ++i)
-            for (int j = MIN; j < MAX; ++j)
-            {
-                // Remove objects in spawn region
-                var p = b.grid[i, j];
-                p.object_to_generate = null;
-            }
-    }
-}
-
-[biome_mod_info(generation_enabled: false)]
 public class reclaimed_city : biome_modifier
 {
     int CITY_BLOCK_SIZE = 16;
