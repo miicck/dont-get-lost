@@ -126,6 +126,8 @@ public class networked : MonoBehaviour
             }
         };
 
+        // Initialize networked variables, before 
+        // finding them all via reflection
         on_init_network_variables();
 
         // Get my native networked fields
@@ -171,6 +173,7 @@ public class networked : MonoBehaviour
         for (int i = 0; i < this.networked_variables.Length; ++i)
             this.networked_variables[i].set_owner_and_index(this, i);
         networked_variable_names = net_variable_names.ToArray();
+
     }
 
     /// <summary> Return formatted information about my networked variables. </summary>
@@ -179,7 +182,8 @@ public class networked : MonoBehaviour
         if (networked_variables == null) return "Networked variables uninitialized";
         string ret = "Networked variables:\n";
         for (int i = 0; i < networked_variables.Length; ++i)
-            ret += "    " + i + " : " + networked_variable_names[i] + " " + networked_variables[i].state_info() + "\n";
+            ret += "    " + i + " : " + networked_variable_names[i] + " " + networked_variables[i].state_info() +
+                   " network_id : " + networked_variables[i].network_id + "\n";
         return utils.allign_colons(ret);
     }
 
@@ -454,7 +458,8 @@ public class networked : MonoBehaviour
             if (Application.isPlaying)
             {
                 var nw = (networked)target;
-                UnityEditor.EditorGUILayout.TextArea("Network info\n" + nw.network_info());
+                UnityEditor.EditorGUILayout.TextArea("Network info\n" +
+                    nw.network_info() + "\n" + nw.networked_variables_info());
             }
         }
     }

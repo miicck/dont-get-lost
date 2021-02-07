@@ -256,7 +256,6 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
 
     public int remaining_health { get => health.value; }
 
-
     public void heal(int amount)
     {
         int max_heal = 100 - health.value;
@@ -401,8 +400,7 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
             transform.rotation = Quaternion.Euler(ea);
         };
 
-        health = new networked_variables.net_int();
-        health.value = max_health;
+        health = new networked_variables.net_int(default_value: max_health);
 
         health.on_change = () =>
         {

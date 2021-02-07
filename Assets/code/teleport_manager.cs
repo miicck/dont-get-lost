@@ -17,10 +17,11 @@ public class teleport_manager : networked
     public void register_portal(portal p)
     {
         var net_name = new net_string();
-        net_name.value = p.init_portal_name();
         var net_pos = new net_vector3();
-        net_pos.value = p.teleport_location.position;
         destinations.add(new networked_pair<net_string, net_vector3>(net_name, net_pos));
+
+        net_name.value = p.init_portal_name();
+        net_pos.value = p.teleport_location.position;
     }
 
     public void unregister_portal(portal p)

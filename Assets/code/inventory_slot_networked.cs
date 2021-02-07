@@ -136,7 +136,7 @@ public class inventory_slot_networked : networked
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(inventory_slot_networked), true)]
-    new class editor : UnityEditor.Editor
+    new class editor : networked.editor
     {
         public override void OnInspectorGUI()
         {

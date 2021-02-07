@@ -195,6 +195,14 @@ public static class client
         var update_next_frame = new HashSet<networked_variable>();
         foreach (var nv in queued_variable_updates)
         {
+            if (!nv.owner_set)
+            {
+                Debug.LogError("Networked variable without an owner is sending updates. If you " +
+                               "wish to use networked variables in this way send_updates must be " +
+                               "set to false!");
+                continue;
+            }
+
             if (nv.network_id <= 0)
             {
                 // Not yet registered, wait until next frame

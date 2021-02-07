@@ -23,11 +23,14 @@ public abstract class networked_variable
     {
         this.owner = owner;
         this.index = index;
+        owner_set = true;
     }
 
     networked owner;
+    public bool owner_set { get; private set; } = false;
     public int index { get; private set; }
     public int network_id => owner == null ? -1 : owner.network_id;
+    public bool send_updates = true;
 
     /// <summary> Reccive a serialization from the server. </summary>
     public void reccive_serialization(byte[] buffer, ref int offset, int length)
@@ -45,6 +48,9 @@ public abstract class networked_variable
     /// <summary> Call to let the networking engine know the serialization has changed. </summary>
     public virtual void set_dirty()
     {
+        // Don't send updates if send_updates is false (this is mainly used in networked variable
+        // collections, where responsibility for serializing variables is delegated to the collection).
+        if (!send_updates) return;
         client.queue_variable_update(this);
     }
 
@@ -187,6 +193,7 @@ namespace networked_variables
         public void add(T t)
         {
             list.Add(t);
+            t.send_updates = false;
             set_dirty();
         }
 
@@ -224,6 +231,7 @@ namespace networked_variables
             for (int i = 0; i < list_length; ++i)
             {
                 var t = new T();
+                t.send_updates = false;
                 t.reccive_serialization(buffer, ref offset, length - (offset - start));
                 list.Add(t);
             }
@@ -253,12 +261,18 @@ namespace networked_variables
 
         public networked_pair(T first, K second)
         {
+            first.send_updates = false;
+            second.send_updates = false;
             pair = new KeyValuePair<T, K>(first, second);
         }
 
         public networked_pair()
         {
-            pair = new KeyValuePair<T, K>(new T(), new K());
+            var first = new T();
+            var second = new K();
+            first.send_updates = false;
+            second.send_updates = false;
+            pair = new KeyValuePair<T, K>(first, second);
         }
 
         protected override void process_serialization(byte[] buffer, ref int offset, int length)
@@ -321,6 +335,8 @@ namespace networked_variables
         {
             net_first = first;
             net_second = second;
+            first.send_updates = false;
+            second.send_updates = false;
         }
 
         protected override void process_serialization(byte[] buffer, ref int offset, int length)
@@ -766,69 +782,6 @@ namespace networked_variables
 
         public delegate void on_change_func();
         public on_change_func on_change;
-
-        public override string state_info()
-        {
-            return "length " + dict.Count;
-        }
-    }
-
-    public class net_dictionary<K, V> : networked_variable, IEnumerable<KeyValuePair<K, V>>
-        where K : networked_variable, new()
-        where V : networked_variable, new()
-    {
-        Dictionary<K, V> dict = new Dictionary<K, V>();
-        public IEnumerator<KeyValuePair<K, V>> GetEnumerator() { return dict.GetEnumerator(); }
-        IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
-
-        public bool TryGetValue(K key, out V val) { return dict.TryGetValue(key, out val); }
-        public V this[K key]
-        {
-            get
-            {
-                if (dict.ContainsKey(key))
-                    return dict[key];
-                return null;
-            }
-            set
-            {
-                dict[key] = value;
-                set_dirty();
-            }
-        }
-
-        public override byte[] serialization()
-        {
-            List<byte> bytes = new List<byte>();
-            foreach (var kv in dict)
-            {
-                var key_serial = kv.Key.serialization();
-                bytes.AddRange(network_utils.encode_int(key_serial.Length));
-                bytes.AddRange(key_serial);
-
-                var val_serial = kv.Value.serialization();
-                bytes.AddRange(network_utils.encode_int(val_serial.Length));
-                bytes.AddRange(val_serial);
-            }
-            return bytes.ToArray();
-        }
-
-        protected override void process_serialization(byte[] buffer, ref int offset, int length)
-        {
-            int end = offset + length;
-            while (offset < end)
-            {
-                K key = new K();
-                int key_length = network_utils.decode_int(buffer, ref offset);
-                key.reccive_serialization(buffer, ref offset, key_length);
-
-                V val = new V();
-                int val_length = network_utils.decode_int(buffer, ref offset);
-                val.reccive_serialization(buffer, ref offset, val_length);
-
-                dict[key] = val;
-            }
-        }
 
         public override string state_info()
         {
