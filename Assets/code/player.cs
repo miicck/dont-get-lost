@@ -1618,7 +1618,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         // Network the current (networked_)interaction that is underway
         networked_interaction = new networked_variables.net_int(default_value: -1);
 
-        tutorial_stage = new networked_variables.net_int();
+        tutorial_stage = new networked_variables.net_int(default_value: -1);
         tutorial_stage.on_change = () => tutorial.set_stage(tutorial_stage.value);
     }
 
@@ -1631,6 +1631,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         // Player starts in the middle of the first biome
         respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL, biome.SIZE / 2);
         networked_position = respawn_point.value;
+
+        // Start the tutorial
+        tutorial_stage.value = 0;
     }
 
     public override void on_add_networked_child(networked child)
