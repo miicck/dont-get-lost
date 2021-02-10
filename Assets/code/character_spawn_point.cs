@@ -23,7 +23,7 @@ public class character_spawn_point : world_object.sub_generator
         }
     }
 
-    public override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
+    protected override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
     {
         InvokeRepeating("enable_disable", 1, 1);
     }

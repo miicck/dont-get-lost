@@ -13,7 +13,7 @@ public class random_ore : world_object.sub_generator
     public TYPE type;
     public float probability = 1f;
 
-    public override void generate(biome.point point,
+    protected override void generate(biome.point point,
         chunk chunk, int x_in_chunk, int z_in_chunk)
     {
         if (chunk.random.range(0, 1f) > probability)

@@ -1291,3 +1291,26 @@ public class mushroom_forest : biome
         return ++i_stage >= SIZE;
     }
 }
+
+public class rocky_arches : biome
+{
+    int i_stage = 0;
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.altitude = world.SEA_LEVEL + -1f + 2 * perlin(i / 32f, j / 32f);
+            p.fog_distance = 30f;
+
+            if (random.range(0, 400) == 0)
+                p.object_to_generate = world_object.load("rock_arch");
+            else if (random.range(0, 200) == 0)
+                p.object_to_generate = world_object.load("dry_pine_tree");
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}

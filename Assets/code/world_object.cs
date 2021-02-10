@@ -25,8 +25,18 @@ public abstract class world_object : MonoBehaviour
         this.terrain_normal = terrain_normal;
         on_placement();
 
-        foreach (var sg in GetComponentsInChildren<sub_generator>())
-            sg.generate(point, chunk, x_in_chunk, z_in_chunk);
+        while (true)
+        {
+            bool gen = false;
+            foreach (var sg in GetComponentsInChildren<sub_generator>())
+                if (!sg.generated)
+                {
+                    sg.on_placement(point, chunk, x_in_chunk, z_in_chunk);
+                    gen = true;
+                }
+
+            if (!gen) break; // All generators finished
+        }
     }
 
     /// <summary> Should return false if this world object is incompatible 
@@ -72,7 +82,16 @@ public abstract class world_object : MonoBehaviour
     /// ore seam. </summary>
     public abstract class sub_generator : MonoBehaviour
     {
-        public abstract void generate(biome.point point,
+        public bool generated { get; private set; } = false;
+
+        public void on_placement(biome.point point, 
+            chunk chunk, int x_in_chunk, int z_in_chunk)
+        {
+            generate(point, chunk, x_in_chunk, z_in_chunk);
+            generated = true;
+        }
+
+        protected abstract void generate(biome.point point,
             chunk chunk, int x_in_chunk, int z_in_chunk);
     }
 

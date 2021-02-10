@@ -11,7 +11,7 @@ public class random_object : world_object.sub_generator
     public float nothing_probability = 0.35f;
     public bool random_y_rotation = true;
 
-    public override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
+    protected override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
     {
         if (chunk.random.range(0, 1f) < nothing_probability) return;
 

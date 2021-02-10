@@ -1,0 +1,187 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2116609289501333724
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8515658522063757545}
+  m_Layer: 0
+  m_Name: dry_pine_tree
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8515658522063757545
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2116609289501333724}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 5137189974312122714}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5332150248087482212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4041485798421847713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f451eb843474847b1ca8620189a3b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4956417500301376674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4041485798421847713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 2857990679801850892, guid: 1e8b0b35a88f3c14fb5b46abdc08281e, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
+--- !u!114 &3084017415857367648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5425762096298929365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
+--- !u!114 &8400424343928742547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5425762096298929365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 0
+  tool_quality: 0
+--- !u!114 &4170934104216094670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5425762096298929365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1001 &4665815444889738929
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 8515658522063757545}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4683669308469848369, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 174550ddf4dceaa4ea9b6725517bd726, type: 2}
+    - target: {fileID: -1461304994638716399, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 8b10c5d03c043264994027ba9c79a80d, type: 2}
+    - target: {fileID: 919132149155446097, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+      propertyPath: m_Name
+      value: dry_pine_tree
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+--- !u!4 &5137189974312122714 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+  m_PrefabInstance: {fileID: 4665815444889738929}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5425762096298929365 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8391222552659086748, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+  m_PrefabInstance: {fileID: 4665815444889738929}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4041485798421847713 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -516098083770646512, guid: e04708fe34da1494d817bbf41be32963, type: 3}
+  m_PrefabInstance: {fileID: 4665815444889738929}
+  m_PrefabAsset: {fileID: 0}

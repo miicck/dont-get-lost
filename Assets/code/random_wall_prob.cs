@@ -7,7 +7,7 @@ public class random_wall_prob : world_object.sub_generator
     public float probability = 0.5f;
     public Material material;
 
-    public override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
+    protected override void generate(biome.point point, chunk chunk, int x_in_chunk, int z_in_chunk)
     {
         if (chunk.random.range(0, 1f) < probability)
             create_wall();
