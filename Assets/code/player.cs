@@ -216,6 +216,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         {
             player.inventory.open = state;
             player.crafting_menu.open = state;
+            player.cursor_sprite = state ? "transparent" : "default_cursor";
             if (state) player.crafting_menu.invoke_on_change();
         }
     }

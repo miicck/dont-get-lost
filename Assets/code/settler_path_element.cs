@@ -25,7 +25,12 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         // part of an unplaced building material
         var bm = GetComponentInParent<building_material>();
         if (bm != null && (bm.is_equpped || bm.is_blueprint))
+        {
+            if (bm.is_blueprint)
+                foreach (var l in links)
+                    l.update_display();
             return;
+        }
 
         // Register this element, if neccassary
         registered = true;
@@ -36,17 +41,17 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     {
         // Unregister this element, if neccassary
         if (registered)
-            forget_element(this);
+            forget_element(this, true);
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
         foreach (var l in links)
-            if (l.linked_to != null)
+            foreach (var lt in l)
             {
                 Gizmos.DrawLine(transform.position, l.transform.position);
-                Gizmos.DrawLine(l.transform.position, l.linked_to.transform.position);
+                Gizmos.DrawLine(l.transform.position, lt.transform.position);
             }
     }
 
@@ -69,12 +74,8 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     {
         List<settler_path_element> ret = new List<settler_path_element>();
         foreach (var l in links)
-            if (l.linked_to != null)
-            {
-                var rl = l.linked_to.GetComponentInParent<settler_path_element>();
-                if (rl != null)
-                    ret.Add(rl);
-            }
+            foreach (var lt in l)
+                ret.Add(lt.path_element);
         return ret;
     }
 
@@ -125,37 +126,15 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         if (other == this) return;
 
         foreach (var l in links)
-        {
-            // L already linked
-            if (l.linked_to != null) continue;
-
             foreach (var l2 in other.links)
-            {
-                // L2 already linked
-                if (l2.linked_to != null) continue;
-
-                if ((l.transform.position - l2.transform.position).magnitude <
-                    settler_path_link.LINK_DISTANCE)
-                {
-                    // Make link both ways
-                    l.linked_to = l2;
-                    l2.linked_to = l;
-                    break;
-                }
-            }
-        }
+                if (settler_path_link.can_link(l, l2))
+                    l.link_to(l2);
     }
 
-    void break_links()
+    void break_links(bool destroying = false)
     {
         foreach (var l in links)
-        {
-            if (l.linked_to != null)
-            {
-                l.linked_to.linked_to = null;
-                l.linked_to = null;
-            }
-        }
+            l.break_links(destroying);
     }
 
     float heuristic(settler_path_element other)
@@ -315,13 +294,13 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         validate_links(r);
     }
 
-    static void forget_element(settler_path_element r)
+    static void forget_element(settler_path_element r, bool destroying = false)
     {
         // Forget all the links to/from r, remove r from the collection of elements
         if (!all_elements.Remove(r))
             throw new System.Exception("Tried to forget unregistered element!");
 
-        r.break_links();
+        r.break_links(destroying);
         evaluate_groups_and_rooms();
     }
 

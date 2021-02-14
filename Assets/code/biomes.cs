@@ -1314,3 +1314,30 @@ public class rocky_arches : biome
         return ++i_stage >= SIZE;
     }
 }
+
+public class willow_lakes : biome
+{
+    int i_stage = 0;
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.altitude = world.SEA_LEVEL + -8f + 16 * perlin(i / 32f, j / 32f);
+            p.beach_color = terrain_colors.marshy_grass;
+            p.fog_distance = 30f;
+
+            if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
+            {
+                if (random.range(0, 32) == 0)
+                    p.object_to_generate = world_object.load("willow_tree");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("ground_ore");
+            }
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}

@@ -5,28 +5,20 @@ Ongoing
 TODO
 - Item flow recording should be done on link points?
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
-- Spread biome.generate across multiple frames
 - Optimize chase paths 
 	don't double back if thats what the player did
 	Make characters fall if they are following a chase path
 	Figure out how to stop enemies bunching up when chasing
-- Tutorial (maybe just some achivements to follow in the spawn biome?)
 - Awarenes meter for enemies?
-- Some sort of more-continuous version of a path (maybe generalize settler_path_link
-  to allow some sort of extended_path_link that links when overlapped...)
 - Fishing
-- Multiple items per strike for overpowered tools
-- Ready-to-assign method for settler interactlabes? (e.g shops with no materials return false)
 - Point-to-point connection building (like string or rope)
-- Re-implement remote item use
 - Production counter?
 - Filter-splitter
 
-- Networking bugs for settlers
+- Networking bugs(?) for settlers
 	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
 	  makes sense to stick with the current framework, so stuff like crop progress
 	  gets saved etc.)
 	- Control over character arms/legs is fighting between client+server - this is
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
-    - Networked floats aren't lerping properly (see growth of wheat for example)
