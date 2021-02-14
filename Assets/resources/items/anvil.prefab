@@ -181,7 +181,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7264410171171831994}
-  - component: {fileID: 5871161957040132491}
+  - component: {fileID: 7825793254458918144}
   m_Layer: 0
   m_Name: anvil
   m_TagString: Untagged
@@ -213,7 +213,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5871161957040132491
+--- !u!114 &7825793254458918144
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -222,7 +222,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4576969950555926830}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c54bba1e8999e63429a89be70419083e, type: 3}
+  m_Script: {fileID: 11500000, guid: 583fce3e2586baf5e97354e7b4ff288e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
@@ -232,6 +232,9 @@ MonoBehaviour:
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1
+  craft_time: 1
+  recipes_folder: recipes/workbenches/anvil
+  enable_when_crafting: []
 --- !u!1 &4698113465533711652
 GameObject:
   m_ObjectHideFlags: 0
