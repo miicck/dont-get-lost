@@ -43,6 +43,14 @@ public static class utils
         return 0;
     }
 
+    // i % m, but remains positive in the range [0, m)
+    // such that -1 % 10 = 9 rather than -1
+    public static int positive_mod(int i, int m)
+    {
+        int r = i % m;
+        return r < 0 ? r + m : r;
+    }
+
     // Raycast for the nearest object of the given type
     public delegate bool raycast_accept_func<T>(RaycastHit h, T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,
@@ -322,6 +330,20 @@ public static class utils
                                 if (sf(x0 + xm * xs, y0 + ym * ys, z0 + zm * zs))
                                     return;
                 }
+    }
+
+    public delegate bool search_func_2d(int x, int y);
+    public static void search_outward_2d(int x0, int y0, int max_range, search_func_2d sf)
+    {
+        for (int m = 0; m <= max_range; ++m)
+            for (int xm = 0; xm <= m; ++xm)
+            {
+                int ym = m - xm;
+                for (int xs = -1; xs < 2; xs += 2)
+                    for (int ys = -1; ys < 2; ys += 2)
+                        if (sf(x0 + xm * xs, y0 + ym * ys))
+                            return;
+            }
     }
 
     public static string int_to_quantity_string(int i)

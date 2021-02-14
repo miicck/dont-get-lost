@@ -512,7 +512,7 @@ public class console : MonoBehaviour
 
         ["clear_inventory"] = new console_info
         {
-            command = (arg) =>
+            command = (args) =>
             {
                 if (player.current == null) return true;
                 if (player.current.inventory == null) return true;
@@ -524,6 +524,61 @@ public class console : MonoBehaviour
 
             description = "Clears the players inventory (no undo).",
             usage_example = "clear_inventory",
+        },
+
+        ["jump_to_biome"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+
+                var c = biome.coords(player.current.transform.position);
+                utils.search_outward_2d(c[0], c[1], 50, (x, z) =>
+                {
+                    if (biome.peek_biome_type(x, z).Name == args[1])
+                    {
+                        player.current.teleport(new Vector3(x, 0, z) * biome.SIZE);
+                        return true;
+                    }
+                    return false;
+                });
+                return true;
+            },
+
+            description = "Jumps to the nearest biome of the given type.",
+            usage_example = "jump_to_biome mangroves"
+        },
+
+        ["run_test_method"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+
+                var asem = System.Reflection.Assembly.GetAssembly(typeof(biome));
+                var types = asem.GetTypes();
+
+                foreach (var t in types)
+                    foreach (var m in t.GetMethods(
+                        System.Reflection.BindingFlags.Static |
+                        System.Reflection.BindingFlags.Instance |
+                        System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.NonPublic))
+                        if (m.GetCustomAttributes(typeof(test_method), false).Length > 0)
+                            if (m.Name == args[1])
+                            {
+                                test_method.running_interactive = true;
+                                var success = (bool)m.Invoke(null, new object[0]);
+                                popup_message.create("Test method " + m.Name + " " + (success ? "succeeded." : "failed!"));
+                                test_method.running_interactive = false;
+                                return true;
+                            }
+
+                return false;
+            },
+
+            description = "Run the test method with the given name.",
+            usage_example = "run_test_method biome.test_ping_pong"
         }
     };
 
@@ -618,4 +673,9 @@ public class console : MonoBehaviour
 
         return info.command(args);
     }
+}
+
+public class test_method : System.Attribute
+{
+    public static bool running_interactive = false;
 }

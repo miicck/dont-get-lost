@@ -11,7 +11,8 @@ public abstract class biome : MonoBehaviour
     /// <summary> The distance at the edge of a biome that is blended.
     /// Set to slightly less than a chunk so we only need blend the 
     /// outermost chunks in a biome. </summary>
-    public const int BLEND_DISTANCE = chunk.SIZE - 1;
+    public const int TERRAIN_BLEND_DISTANCE = chunk.SIZE - 1;
+    public const int OBJECT_BLEND_DISTANCE = TERRAIN_BLEND_DISTANCE / 8;
 
     /// <summary> Biome x coordinate in the world. </summary>
     public int x { get; private set; }
@@ -117,16 +118,6 @@ public abstract class biome : MonoBehaviour
         return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
     }
 
-    /// <summary> Returns true if the given coordinates within a 
-    /// biome are in the blended region near the edge. </summary>
-    protected static bool in_blend_region(int x_in_biome, int z_in_biome)
-    {
-        return x_in_biome <= BLEND_DISTANCE ||
-               z_in_biome <= BLEND_DISTANCE ||
-               x_in_biome >= SIZE - BLEND_DISTANCE ||
-               z_in_biome >= SIZE - BLEND_DISTANCE;
-    }
-
     /// <summary> Gives the nearest coordinates to the given world 
     /// position, in my grid of biome points. </summary>
     public void get_grid_coords(Vector3 world_position, out int i, out int j)
@@ -184,6 +175,7 @@ public abstract class biome : MonoBehaviour
 
     void get_blend_amounts(
         Vector3 position, // The point at which to evaluate the blend amounts 
+        float blend_distance, // The distance from the edge of the biome that blending starts
         out float xamt,   // Abs(xamt) = amount to blend, Sign(xamt) = x direction to blend
         out float zamt    // Abs(zamt) = amount to blend, Sign(zamt) = z direction to blend
         )
@@ -194,11 +186,11 @@ public abstract class biome : MonoBehaviour
         xamt = zamt = 0;
 
         // Create a linearly increasing blend at the edge of the biome
-        if (i <= BLEND_DISTANCE) xamt = i / (float)BLEND_DISTANCE - 1f;
-        else if (i >= SIZE - 1 - BLEND_DISTANCE) xamt = 1f - (SIZE - 1 - i) / (float)BLEND_DISTANCE;
+        if (i <= blend_distance) xamt = i / (float)blend_distance - 1f;
+        else if (i >= SIZE - 1 - blend_distance) xamt = 1f - (SIZE - 1 - i) / (float)blend_distance;
 
-        if (j <= BLEND_DISTANCE) zamt = j / (float)BLEND_DISTANCE - 1f;
-        else if (j >= SIZE - 1 - BLEND_DISTANCE) zamt = 1f - (SIZE - 1 - j) / (float)BLEND_DISTANCE;
+        if (j <= blend_distance) zamt = j / (float)blend_distance - 1f;
+        else if (j >= SIZE - 1 - blend_distance) zamt = 1f - (SIZE - 1 - j) / (float)blend_distance;
 
         // Smooth the linear blend out so it has zero gradient at the very edge of the biome
         if (xamt > 0) xamt = procmath.maps.smooth_max_cos(xamt);
@@ -208,14 +200,24 @@ public abstract class biome : MonoBehaviour
         else if (zamt < 0) zamt = -procmath.maps.smooth_max_cos(-zamt);
     }
 
+    [test_method]
+    static bool test_blend_amounts()
+    {
+        var b = player.current.biome;
+        b.get_blend_amounts(player.current.transform.position, TERRAIN_BLEND_DISTANCE, out float xamt, out float zamt);
+        if (test_method.running_interactive)
+            Debug.Log("X blend: " + xamt + ", Z blend: " + zamt);
+        return true;
+    }
+
     /// <summary> Returns a blended <see cref="biome.point"/> at the given <paramref name="world_position"/>.
     /// <paramref name="valid"/> will be set to false if any of the biomes required for blending
     /// are not yet generated, to let the calling method know to try again later. </summary>
     public point blended_point(Vector3 world_position, out bool valid)
     {
         // Get the x and z amounts to blend
-        float xamt, zamt;
-        get_blend_amounts(world_position, out xamt, out zamt);
+        get_blend_amounts(world_position, TERRAIN_BLEND_DISTANCE, out float xamt_ter, out float zamt_ter);
+        get_blend_amounts(world_position, OBJECT_BLEND_DISTANCE, out float xamt_obj, out float zamt_obj);
 
         // We blend at most 4 points:
         //   one from this biome (guaranteed)
@@ -223,16 +225,18 @@ public abstract class biome : MonoBehaviour
         //   one from the neighbour in the +/- z direction
         //   one from the diaonal neighbour between the above two
         var points = new point[4];
-        var weights = new float[4];
+        var terrain_weights = new float[4];
+        var object_weights = new float[4];
 
         points[0] = clamped_grid(world_position);
-        weights[0] = 1.0f;
+        terrain_weights[0] = 1f;
+        object_weights[0] = 1f;
 
         // Blend in the neihbour in the +/- x direction
-        float abs_x = Mathf.Abs(xamt);
+        float abs_x = Mathf.Abs(xamt_ter);
         if (abs_x > 0)
         {
-            var nx = get_neighbour(xamt > 0 ? 1 : -1, 0);
+            var nx = get_neighbour(xamt_ter > 0 ? 1 : -1, 0);
 
             if (!nx.generation_complete)
             {
@@ -241,14 +245,15 @@ public abstract class biome : MonoBehaviour
             }
 
             points[1] = nx.clamped_grid(world_position);
-            weights[1] = abs_x;
+            terrain_weights[1] = abs_x;
+            object_weights[1] = Mathf.Abs(xamt_obj);
         }
 
         // Blend in the neihbour in the +/- z direction
-        float abs_z = Mathf.Abs(zamt);
+        float abs_z = Mathf.Abs(zamt_ter);
         if (abs_z > 0)
         {
-            var nz = get_neighbour(0, zamt > 0 ? 1 : -1);
+            var nz = get_neighbour(0, zamt_ter > 0 ? 1 : -1);
 
             if (!nz.generation_complete)
             {
@@ -257,14 +262,15 @@ public abstract class biome : MonoBehaviour
             }
 
             points[2] = nz.clamped_grid(world_position);
-            weights[2] = abs_z;
+            terrain_weights[2] = abs_z;
+            object_weights[2] = Mathf.Abs(zamt_obj);
         }
 
         // Blend the neihbour in the diagonal direction
         float damt = Mathf.Min(abs_x, abs_z);
         if (damt > 0)
         {
-            var nd = get_neighbour(xamt > 0 ? 1 : -1, zamt > 0 ? 1 : -1);
+            var nd = get_neighbour(xamt_ter > 0 ? 1 : -1, zamt_ter > 0 ? 1 : -1);
 
             if (!nd.generation_complete)
             {
@@ -273,11 +279,53 @@ public abstract class biome : MonoBehaviour
             }
 
             points[3] = nd.clamped_grid(world_position);
-            weights[3] = damt;
+            terrain_weights[3] = damt;
+            object_weights[3] = Mathf.Min(Mathf.Abs(xamt_obj), Mathf.Abs(zamt_obj));
         }
 
         valid = true;
-        return point.blend(points, weights);
+        return point.blend(points, terrain_weights, object_weights, Random.Range(0, 1f));
+    }
+
+    static int ping_pong_coord(int i)
+    {
+        if (i < 0) return ping_pong_coord(-i);
+        if ((i / SIZE) % 2 == 0) return utils.positive_mod(i, SIZE);
+        return SIZE - utils.positive_mod(i, SIZE) - 1;
+    }
+
+    [test_method]
+    public static bool test_ping_pong()
+    {
+        bool ret = true;
+        bool first = true;
+        int pp_last = 0;
+        string s = "";
+        for (int i = -3 * SIZE; i < 3 * SIZE; ++i)
+        {
+            int pp = ping_pong_coord(i);
+            if (!first && Mathf.Abs(pp - pp_last) > 1)
+                ret = false;
+            pp_last = pp;
+            first = false;
+            s += pp + ", ";
+        }
+        if (test_method.running_interactive)
+            Debug.Log(s);
+        return ret;
+    }
+
+    [test_method]
+    public static bool test_ping_pong_here()
+    {
+        Vector3 world_position = player.current.transform.position;
+        int xp = Mathf.FloorToInt(world_position.x);
+        int zp = Mathf.FloorToInt(world_position.z);
+        int i = ping_pong_coord(xp);
+        int j = ping_pong_coord(zp);
+        if (test_method.running_interactive)
+            Debug.Log("Ping pong coords at " + xp + ", " + zp + " = " + i + ", " + j);
+        return true;
     }
 
     /// <summary> Get a particular point in the biome grid in world
@@ -285,11 +333,25 @@ public abstract class biome : MonoBehaviour
     /// outside the range of the biome. </summary>
     point clamped_grid(Vector3 world_position)
     {
+        int i = ping_pong_coord(Mathf.FloorToInt(world_position.x));
+        int j = ping_pong_coord(Mathf.FloorToInt(world_position.z));
+
+        /*
         int i = Mathf.FloorToInt(world_position.x) - SIZE * x;
         int j = Mathf.FloorToInt(world_position.z) - SIZE * z;
         i = Mathf.Clamp(i, 0, SIZE - 1);
         j = Mathf.Clamp(j, 0, SIZE - 1);
-        return grid[i, j];
+        */
+
+        try
+        {
+            return grid[i, j];
+        }
+        catch
+        {
+            Debug.LogError("H");
+            throw new System.Exception();
+        }
     }
 
     //#################//
@@ -425,6 +487,27 @@ public abstract class biome : MonoBehaviour
         }
     }
 
+    static System.Random get_biome_rand_gen(int x, int z)
+    {
+        // Create the biome random number generator, seeded 
+        // by the biome x, z coords and the world seed
+        return procmath.multiseed_random(x, z, world.seed);
+    }
+
+    public static System.Type peek_biome_type(Vector3 world_position)
+    {
+        var c = coords(world_position);
+        return peek_biome_type(c[0], c[1]);
+    }
+
+    public static System.Type peek_biome_type(int x, int z)
+    {
+        // Get the random number generator used to pick biomes
+        var rand = get_biome_rand_gen(x, z);
+        int i = rand.Next() % biome_list.Count;
+        return biome_list[i].ReturnType;
+    }
+
     /// <summary> Generates the biome with the given biome coordinates. </summary>
     public static biome generate(int x, int z)
     {
@@ -432,9 +515,8 @@ public abstract class biome : MonoBehaviour
         if (biome_list == null)
             generate_biome_list();
 
-        // Create the biome random number generator, seeded 
-        // by the biome x, z coords and the world seed
-        System.Random rand = procmath.multiseed_random(x, z, world.seed);
+        // Get the random number generator used to pick biomes
+        var rand = get_biome_rand_gen(x, z);
 
         biome b;
         if (x == 0 && z == 0 && biome_list.Count > 1)
@@ -555,7 +637,7 @@ public abstract class biome : MonoBehaviour
         public world_object object_to_generate;
 
         /// <summary> Compute a weighted average of a list of points. </summary>
-        public static point blend(point[] pts, float[] wts)
+        public static point blend(point[] pts, float[] terrain_weights, float[] object_weights, float random_number)
         {
             point ret = new point
             {
@@ -566,16 +648,19 @@ public abstract class biome : MonoBehaviour
                 beach_color = new Color(0, 0, 0, 0)
             };
 
-            float total_weight = 0;
-            foreach (var f in wts) total_weight += f;
+            float total_terrain_weight = 0;
+            float total_object_weight = 0;
+            for (int i = 0; i < terrain_weights.Length; ++i)
+            {
+                total_terrain_weight += terrain_weights[i];
+                total_object_weight += object_weights[i];
+            }
 
-            int max_i = 0;
-            float max_w = 0;
-            for (int i = 0; i < wts.Length; ++i)
+            for (int i = 0; i < terrain_weights.Length; ++i)
             {
                 var p = pts[i];
                 if (p == null) continue;
-                float w = wts[i] / total_weight;
+                float w = terrain_weights[i] / total_terrain_weight;
 
                 ret.altitude += p.altitude * w;
                 ret.fog_distance += p.fog_distance * w;
@@ -595,16 +680,24 @@ public abstract class biome : MonoBehaviour
                 ret.beach_color.r += p.beach_color.r * w;
                 ret.beach_color.g += p.beach_color.g * w;
                 ret.beach_color.b += p.beach_color.b * w;
+            }
 
-                if (wts[i] > max_w)
+            random_number = Mathf.Clamp(random_number * total_object_weight, 0, total_object_weight);
+
+            float cumulative = 0;
+            for (int i = 0; i < object_weights.Length; ++i)
+            {
+                cumulative += object_weights[i];
+                if (cumulative > random_number)
                 {
-                    max_w = wts[i];
-                    max_i = i;
+                    if (pts[i] != null)
+                        ret.object_to_generate = pts[i].object_to_generate;
+                    break;
                 }
             }
 
-            if (pts[max_i] != null)
-                ret.object_to_generate = pts[max_i].object_to_generate;
+            //if (pts[max_i] != null)
+            //    ret.object_to_generate = pts[max_i].object_to_generate;
 
             ret.terrain_color.a = 0f;
             return ret;
