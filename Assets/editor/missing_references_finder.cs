@@ -258,11 +258,8 @@ public static class MissingReferencesFinder
 
     private static void FindMissingReferences(string context, GameObject[] gameObjects)
     {
-        if (gameObjects == null)
-        {
-            return;
-        }
-
+        bool missing_refs_found = false;
+        if (gameObjects == null) gameObjects = new GameObject[] { };
         foreach (var go in gameObjects)
         {
             var components = go.GetComponents<Component>();
@@ -272,8 +269,8 @@ public static class MissingReferencesFinder
                 // Missing components will be null, we can't find their type, etc.
                 if (!component)
                 {
-                    Debug.LogErrorFormat(go, $"Missing Component {0} in GameObject: {1}", component.GetType().FullName, GetFullPath(go));
-
+                    missing_refs_found = true;
+                    Debug.LogError("Missing component in object " + GetFullPath(go));
                     continue;
                 }
 
@@ -298,12 +295,16 @@ public static class MissingReferencesFinder
                         if (sp.objectReferenceValue == null
                             && (sp.objectReferenceInstanceIDValue != 0 || objectReferenceStringValue.StartsWith("Missing")))
                         {
+                            missing_refs_found = true;
                             ShowError(context, go, component.GetType().Name, ObjectNames.NicifyVariableName(sp.name));
                         }
                     }
                 }
             }
         }
+
+        if (!missing_refs_found)
+            Debug.Log("No missing references found.");
     }
 
     private static GameObject[] GetSceneObjects()
