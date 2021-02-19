@@ -210,24 +210,17 @@ public abstract class biome : MonoBehaviour
         return true;
     }
 
-    /// <summary> Overwite quantities relating to the terrain in 
-    /// <paramref name="to_overwrite"/> with those in 
-    /// <paramref name="overwrite_with"/>. </summary>
-    void overwrite_terrain(point to_overwrite, point overwrite_with)
-    {
-        if (to_overwrite == null) return;
-        if (overwrite_with == null) return;
-        to_overwrite.altitude = overwrite_with.altitude;
-        to_overwrite.terrain_color = overwrite_with.terrain_color;
-        to_overwrite.beach_color = overwrite_with.beach_color;
-        to_overwrite.water_color = overwrite_with.water_color;
-    }
-
     /// <summary> Returns a blended <see cref="biome.point"/> at the given <paramref name="world_position"/>.
     /// <paramref name="valid"/> will be set to false if any of the biomes required for blending
     /// are not yet generated, to let the calling method know to try again later. </summary>
     public point blended_point(Vector3 world_position, out bool valid)
     {
+        if (!generation_complete)
+        {
+            valid = false;
+            return new point();
+        }
+
         // Get the x and z amounts to blend
         get_blend_amounts(world_position, TERRAIN_BLEND_DISTANCE, out float xamt_ter, out float zamt_ter);
         get_blend_amounts(world_position, OBJECT_BLEND_DISTANCE, out float xamt_obj, out float zamt_obj);
@@ -237,12 +230,13 @@ public abstract class biome : MonoBehaviour
         //   one from the neighbour in the +/- x direction
         //   one from the neighbour in the +/- z direction
         //   one from the diaonal neighbour between the above two
-        var points = new point[4];
+        var object_points = new point[4];
+        var terrain_points = new point[4];
         var terrain_weights = new float[4];
         var object_weights = new float[4];
 
-        points[0] = periodic_grid(world_position);
-        overwrite_terrain(points[0], clamped_grid(world_position));
+        object_points[0] = periodic_grid(world_position);
+        terrain_points[0] = clamped_grid(world_position);
         terrain_weights[0] = 1f;
         object_weights[0] = 1f;
 
@@ -258,8 +252,8 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[1] = nx.periodic_grid(world_position);
-            overwrite_terrain(points[1], nx.clamped_grid(world_position));
+            object_points[1] = nx.periodic_grid(world_position);
+            terrain_points[1] = nx.clamped_grid(world_position);
             terrain_weights[1] = abs_x;
             object_weights[1] = Mathf.Abs(xamt_obj);
         }
@@ -276,8 +270,8 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[2] = nz.periodic_grid(world_position);
-            overwrite_terrain(points[2], nz.clamped_grid(world_position));
+            object_points[2] = nz.periodic_grid(world_position);
+            terrain_points[2] = nz.clamped_grid(world_position);
             terrain_weights[2] = abs_z;
             object_weights[2] = Mathf.Abs(zamt_obj);
         }
@@ -294,14 +288,15 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[3] = nd.periodic_grid(world_position);
-            overwrite_terrain(points[3], nd.clamped_grid(world_position));
+            object_points[3] = nd.periodic_grid(world_position);
+            terrain_points[3] = nd.clamped_grid(world_position);
             terrain_weights[3] = damt;
             object_weights[3] = Mathf.Min(Mathf.Abs(xamt_obj), Mathf.Abs(zamt_obj));
         }
 
         valid = true;
-        return point.blend(points, terrain_weights, object_weights, Random.Range(0, 1f));
+        var rand = procmath.multiseed_random((int)world_position.x, (int)world_position.z);
+        return point.blend(terrain_points, object_points, terrain_weights, object_weights, (float)rand.NextDouble());
     }
 
     static int ping_pong_coord(int i)
@@ -648,7 +643,7 @@ public abstract class biome : MonoBehaviour
         public world_object object_to_generate;
 
         /// <summary> Compute a weighted average of a list of points. </summary>
-        public static point blend(point[] pts, float[] terrain_weights, float[] object_weights, float random_number)
+        public static point blend(point[] terrain_points, point[] object_points, float[] terrain_weights, float[] object_weights, float random_number)
         {
             point ret = new point
             {
@@ -659,6 +654,7 @@ public abstract class biome : MonoBehaviour
                 beach_color = new Color(0, 0, 0, 0)
             };
 
+            // Work out total terrain and object weights
             float total_terrain_weight = 0;
             float total_object_weight = 0;
             for (int i = 0; i < terrain_weights.Length; ++i)
@@ -667,48 +663,46 @@ public abstract class biome : MonoBehaviour
                 total_object_weight += object_weights[i];
             }
 
+            // Weight terrain data from terrain points
             for (int i = 0; i < terrain_weights.Length; ++i)
             {
-                var p = pts[i];
-                if (p == null) continue;
+                var tp = terrain_points[i];
+                if (tp == null) continue;
                 float w = terrain_weights[i] / total_terrain_weight;
 
-                ret.altitude += p.altitude * w;
-                ret.fog_distance += p.fog_distance * w;
+                ret.altitude += tp.altitude * w;
+                ret.fog_distance += tp.fog_distance * w;
 
-                ret.terrain_color.r += p.terrain_color.r * w;
-                ret.terrain_color.g += p.terrain_color.g * w;
-                ret.terrain_color.b += p.terrain_color.b * w;
+                ret.terrain_color.r += tp.terrain_color.r * w;
+                ret.terrain_color.g += tp.terrain_color.g * w;
+                ret.terrain_color.b += tp.terrain_color.b * w;
 
-                ret.sky_color.r += p.sky_color.r * w;
-                ret.sky_color.g += p.sky_color.g * w;
-                ret.sky_color.b += p.sky_color.b * w;
+                ret.sky_color.r += tp.sky_color.r * w;
+                ret.sky_color.g += tp.sky_color.g * w;
+                ret.sky_color.b += tp.sky_color.b * w;
 
-                ret.water_color.r += p.water_color.r * w;
-                ret.water_color.g += p.water_color.g * w;
-                ret.water_color.b += p.water_color.b * w;
+                ret.water_color.r += tp.water_color.r * w;
+                ret.water_color.g += tp.water_color.g * w;
+                ret.water_color.b += tp.water_color.b * w;
 
-                ret.beach_color.r += p.beach_color.r * w;
-                ret.beach_color.g += p.beach_color.g * w;
-                ret.beach_color.b += p.beach_color.b * w;
+                ret.beach_color.r += tp.beach_color.r * w;
+                ret.beach_color.g += tp.beach_color.g * w;
+                ret.beach_color.b += tp.beach_color.b * w;
             }
 
+            // Weight object data from object points
             random_number = Mathf.Clamp(random_number * total_object_weight, 0, total_object_weight);
-
             float cumulative = 0;
             for (int i = 0; i < object_weights.Length; ++i)
             {
                 cumulative += object_weights[i];
                 if (cumulative > random_number)
                 {
-                    if (pts[i] != null)
-                        ret.object_to_generate = pts[i].object_to_generate;
+                    if (object_points[i] != null)
+                        ret.object_to_generate = object_points[i].object_to_generate;
                     break;
                 }
             }
-
-            //if (pts[max_i] != null)
-            //    ret.object_to_generate = pts[max_i].object_to_generate;
 
             ret.terrain_color.a = 0f;
             return ret;
