@@ -212,6 +212,32 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> Called whenever the outputs change. </summary>
     protected virtual void on_outputs_change() { }
 
+    public delegate bool iter_func(item_node node);
+
+    public void iterate_downstream(iter_func f)
+    {
+        HashSet<item_node> open = new HashSet<item_node> { this };
+        HashSet<item_node> closed = new HashSet<item_node>() { };
+
+        while (open.Count > 0)
+        {
+            item_node current = null;
+            foreach (var n in open) { current = n; break; }
+            if (current == null) break;
+
+            if (f(current)) break;
+            open.Remove(current);
+            closed.Add(current);
+
+            foreach (var ds in current.outputs_to)
+            {
+                if (open.Contains(ds)) continue;
+                if (closed.Contains(ds)) continue;
+                open.Add(ds);
+            }
+        }
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//

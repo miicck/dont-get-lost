@@ -482,6 +482,25 @@ public class town_gate : portal, IAddsToInspectionText
         return new HashSet<town_gate>();
     }
 
+    public static town_gate nearest_gate(Vector3 pos)
+    {
+        float min_dis = Mathf.Infinity;
+        town_gate ret = null;
+
+        foreach (var gg in town_gates_by_group)
+            foreach (var g in gg.Value)
+            {
+                float dis = (g.transform.position - pos).sqrMagnitude;
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    ret = g;
+                }
+            }
+
+        return ret;
+    }
+
     public static bool group_under_attack(int group)
     {
         foreach (var g in gate_group(group))

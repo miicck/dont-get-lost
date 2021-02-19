@@ -210,6 +210,19 @@ public abstract class biome : MonoBehaviour
         return true;
     }
 
+    /// <summary> Overwite quantities relating to the terrain in 
+    /// <paramref name="to_overwrite"/> with those in 
+    /// <paramref name="overwrite_with"/>. </summary>
+    void overwrite_terrain(point to_overwrite, point overwrite_with)
+    {
+        if (to_overwrite == null) return;
+        if (overwrite_with == null) return;
+        to_overwrite.altitude = overwrite_with.altitude;
+        to_overwrite.terrain_color = overwrite_with.terrain_color;
+        to_overwrite.beach_color = overwrite_with.beach_color;
+        to_overwrite.water_color = overwrite_with.water_color;
+    }
+
     /// <summary> Returns a blended <see cref="biome.point"/> at the given <paramref name="world_position"/>.
     /// <paramref name="valid"/> will be set to false if any of the biomes required for blending
     /// are not yet generated, to let the calling method know to try again later. </summary>
@@ -228,7 +241,8 @@ public abstract class biome : MonoBehaviour
         var terrain_weights = new float[4];
         var object_weights = new float[4];
 
-        points[0] = clamped_grid(world_position);
+        points[0] = periodic_grid(world_position);
+        overwrite_terrain(points[0], clamped_grid(world_position));
         terrain_weights[0] = 1f;
         object_weights[0] = 1f;
 
@@ -244,7 +258,8 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[1] = nx.clamped_grid(world_position);
+            points[1] = nx.periodic_grid(world_position);
+            overwrite_terrain(points[1], nx.clamped_grid(world_position));
             terrain_weights[1] = abs_x;
             object_weights[1] = Mathf.Abs(xamt_obj);
         }
@@ -261,7 +276,8 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[2] = nz.clamped_grid(world_position);
+            points[2] = nz.periodic_grid(world_position);
+            overwrite_terrain(points[2], nz.clamped_grid(world_position));
             terrain_weights[2] = abs_z;
             object_weights[2] = Mathf.Abs(zamt_obj);
         }
@@ -278,7 +294,8 @@ public abstract class biome : MonoBehaviour
                 return new point();
             }
 
-            points[3] = nd.clamped_grid(world_position);
+            points[3] = nd.periodic_grid(world_position);
+            overwrite_terrain(points[3], nd.clamped_grid(world_position));
             terrain_weights[3] = damt;
             object_weights[3] = Mathf.Min(Mathf.Abs(xamt_obj), Mathf.Abs(zamt_obj));
         }
@@ -328,30 +345,24 @@ public abstract class biome : MonoBehaviour
         return true;
     }
 
-    /// <summary> Get a particular point in the biome grid in world
-    /// coordinates. Clamps the biome point values
-    /// outside the range of the biome. </summary>
-    point clamped_grid(Vector3 world_position)
+    /// <summary> Get a particular point in the biome grid in world coordinates. 
+    /// Applies (reflected) periodic boundary conditions to the grid. </summary>
+    point periodic_grid(Vector3 world_position)
     {
         int i = ping_pong_coord(Mathf.FloorToInt(world_position.x));
         int j = ping_pong_coord(Mathf.FloorToInt(world_position.z));
+        return grid[i, j];
+    }
 
-        /*
+    /// <summary> Get a particular point in the biome grid in world coordinates.
+    /// Applies clamped boundary conditions. </summary>
+    point clamped_grid(Vector3 world_position)
+    {
         int i = Mathf.FloorToInt(world_position.x) - SIZE * x;
         int j = Mathf.FloorToInt(world_position.z) - SIZE * z;
         i = Mathf.Clamp(i, 0, SIZE - 1);
         j = Mathf.Clamp(j, 0, SIZE - 1);
-        */
-
-        try
-        {
-            return grid[i, j];
-        }
-        catch
-        {
-            Debug.LogError("H");
-            throw new System.Exception();
-        }
+        return grid[i, j];
     }
 
     //#################//

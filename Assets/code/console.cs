@@ -578,7 +578,7 @@ public class console : MonoBehaviour
             },
 
             description = "Run the test method with the given name.",
-            usage_example = "run_test_method biome.test_ping_pong"
+            usage_example = "run_test_method test_ping_pong"
         }
     };
 

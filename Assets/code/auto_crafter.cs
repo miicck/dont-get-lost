@@ -183,6 +183,9 @@ public class auto_crafter : building_material, IPlayerInteractable
 
         protected override RectTransform create_menu()
         {
+            if (crafter.outputs.Length == 0 || crafter.inputs.Length == 0)
+                return null;
+
             var recipe_buttons = new crafting_entry[crafter.recipies.Length];
 
             var left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst();

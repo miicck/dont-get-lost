@@ -285,7 +285,9 @@ public class interaction_set
     }
 }
 
-/// <summary> A menu that appears alongside the inventory, to the left. </summary>
+/// <summary> A menu that appears alongside the inventory, to the left. 
+/// If the menu created == null, then this will just open the inventory, but
+/// potentially with the additional recipes given. </summary>
 public abstract class left_player_menu : player_interaction
 {
     string name;
@@ -305,18 +307,18 @@ public abstract class left_player_menu : player_interaction
 
     public override bool start_interaction(player player)
     {
-        if (menu == null)
-            return true; // Menu generation failed
+        if (menu != null)
+        {
+            // Position the left menu at the left_expansion_point but leave 
+            // it parented to the canvas, rather than the player inventory
+            var attach_point = player.inventory.ui.GetComponentInChildren<left_menu_attach_point>();
+            menu.gameObject.SetActive(true);
+            menu.SetParent(attach_point.transform);
+            menu.anchoredPosition = Vector2.zero;
+            menu.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
+            on_open();
+        }
 
-        // Position the left menu at the left_expansion_point but leave 
-        // it parented to the canvas, rather than the player inventory
-        var attach_point = player.inventory.ui.GetComponentInChildren<left_menu_attach_point>();
-        menu.gameObject.SetActive(true);
-        menu.SetParent(attach_point.transform);
-        menu.anchoredPosition = Vector2.zero;
-        menu.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
-
-        on_open();
         inventory_opener.start_interaction(player);
         return false;
     }
@@ -329,9 +331,13 @@ public abstract class left_player_menu : player_interaction
 
     public override void end_interaction(player player)
     {
-        menu.gameObject.SetActive(false);
+        if (menu != null)
+        {
+            menu.gameObject.SetActive(false);
+            on_close();
+        }
+
         inventory_opener.end_interaction(player);
-        on_close();
     }
 
     protected RectTransform menu

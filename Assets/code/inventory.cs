@@ -382,8 +382,11 @@ public class inventory : networked, IItemCollection
         // If this is the local player inventory, display a message on success
         if (added && GetComponentInParent<player>() == player.current)
         {
-            string msg = "+ " + count.qs() + " " + (count > 1 ? item.plural : item.display_name) +
-                         " (" + contents()[item] + ")";
+            int total = 0;
+            contents().TryGetValue(item, out total);
+            string msg = "+ " + count.qs() + " " +
+                         (count > 1 ? item.plural : item.display_name) +
+                         " (" + total + ")";
             popup_message.create(msg);
         }
 

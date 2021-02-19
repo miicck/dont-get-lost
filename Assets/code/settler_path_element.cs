@@ -142,6 +142,32 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         return (transform.position - other.transform.position).magnitude;
     }
 
+    public delegate bool connected_iter_function(settler_path_element e);
+
+    public void iterate_connected(connected_iter_function f)
+    {
+        HashSet<settler_path_element> open = new HashSet<settler_path_element> { this };
+        HashSet<settler_path_element> closed = new HashSet<settler_path_element> { };
+
+        while (open.Count > 0)
+        {
+            settler_path_element current = null;
+            foreach (var s in open) { current = s; break; }
+            if (current == null) break;
+
+            if (f(current)) return;
+            closed.Add(current);
+            open.Remove(current);
+
+            foreach (var n in current.linked_elements())
+            {
+                if (open.Contains(n)) continue;
+                if (closed.Contains(n)) continue;
+                open.Add(n);
+            }
+        }
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//

@@ -716,7 +716,8 @@ public class building_material : item, IPlayerInteractable
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
                         "Hold " + controls.bind_name(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
-                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations\n" +
+                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + 
+                        " to cycle initial orientations (purple spheres)\n" +
                         "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
                 else
@@ -724,7 +725,7 @@ public class building_material : item, IPlayerInteractable
                     return
                         "Double tap " + controls.bind_name(keybind) + " to build, " + controls.bind_name(controls.BIND.ALT_USE_ITEM) + " to cancel\n" +
                         "Click and drag the arrows to translate, or the circles to rotate\n" +
-                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations\n" +
+                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations (purple spheres)\n" +
                         "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
             }
@@ -822,6 +823,9 @@ public class building_material : item, IPlayerInteractable
                     created.on_build();
                     blueprint.weld.on_finish();
                     Destroy(blueprint.gameObject);
+
+                    // Satisfy building requirements
+                    build_requirement.on_build(created);
                 }
             }
 
