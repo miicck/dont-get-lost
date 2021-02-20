@@ -13,149 +13,15 @@ public class game : MonoBehaviour
     public UnityEngine.UI.Text debug_text;
     public GameObject debug_panel;
 
-    /// <summary> Information on how to start a game. </summary>
-    public struct startup_info
-    {
-        public enum MODE
-        {
-            LOAD_AND_HOST,
-            CREATE_AND_HOST,
-            JOIN,
-        }
-
-        public MODE mode;
-        public string username;
-        public string world_name;
-        public int world_seed;
-        public string hostname;
-        public int port;
-    }
-    public static startup_info startup;
-
-    /// <summary> Load/host a game from disk. </summary>
-    public static void load_and_host_world(string world_name, string username)
-    {
-        startup = new startup_info
-        {
-            username = username,
-            mode = startup_info.MODE.LOAD_AND_HOST,
-            world_name = world_name,
-        };
-
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
-    }
-
-    /// <summary> Create/host a new world. </summary>
-    public static void create_and_host_world(string world_name, int seed, string username)
-    {
-        startup = new startup_info
-        {
-            username = username,
-            mode = startup_info.MODE.CREATE_AND_HOST,
-            world_name = world_name,
-            world_seed = seed,
-        };
-
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
-    }
-
-    /// <summary> Join a world hosted on a server. </summary>
-    public static bool join_world(string ip_port, string username)
-    {
-        var split = ip_port.Split(':');
-        if (split.Length != 2) return false;
-
-        string ip = split[0];
-        if (!int.TryParse(split[1], out int port)) return false;
-
-        startup = new startup_info
-        {
-            username = username,
-            mode = startup_info.MODE.JOIN,
-            hostname = ip,
-            port = port
-        };
-
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
-        return true;
-    }
-
-    /// <summary> Returns true if the render range is allowed
-    /// to change in the given way. </summary>
-    static bool allow_render_range_change(float old_val, float new_val)
-    {
-        if (old_val == new_val) return false;
-        if (new_val < MIN_RENDER_RANGE) return false;
-        if (new_val > old_val &&
-            chunk.enabled_and_generating >= chunk.generating_limit) return false;
-        return true;
-    }
-
-    public const float DEFAULT_RENDER_RANGE = chunk.SIZE;
-
-    /// <summary> The target render range, which the actual render range will lerp to. </summary>
-    public static float render_range_target
-    {
-        get { return _render_range_target; }
-        set
-        {
-            if (!allow_render_range_change(_render_range_target, value)) return;
-            _render_range_target = value;
-        }
-    }
-    private static float _render_range_target = DEFAULT_RENDER_RANGE;
-
-    /// <summary> How far the player can see. </summary>
-    public static float render_range
-    {
-        get { return _render_range; }
-        set
-        {
-            if (!allow_render_range_change(_render_range, value)) return;
-            _render_range = value;
-            player.current.update_render_range();
-            water_reflections.water_range = value;
-        }
-    }
-    private static float _render_range = DEFAULT_RENDER_RANGE;
-
-    /// <summary> True if we don't want/don't have 
-    /// time to wait before closing the server. </summary>
-    bool am_hard_disconnecting = false;
-    string hard_disconnect_message = "";
-
-    void hard_disconnect()
-    {
-        am_hard_disconnecting = true;
-        on_client_disconnect(hard_disconnect_message);
-    }
-
-    void on_client_disconnect(string message_from_server)
-    {
-        if (server.started)
-        {
-            if (am_hard_disconnecting)
-                server.stop();
-            else
-            {
-                // Don't close the server for a little bit so we can
-                // process messages that were sent during the disconnect
-                // (for example, the DISCONNECT message from the player)
-                hard_disconnect_message = message_from_server;
-                Invoke("hard_disconnect", 1f);
-                return;
-            }
-        }
-
-        // Go back to the world menu
-        if (message_from_server != null)
-            world_menu.message_to_display = "Disconnected: " + message_from_server;
-
-        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/world_menu");
-    }
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     void Start()
     {
+        // Get static reference to canvas
+        canvas = main_canvas;
+
         // Various startup modes
         switch (startup.mode)
         {
@@ -312,11 +178,162 @@ public class game : MonoBehaviour
         save_and_quit();
     }
 
+    /// <summary> True if we don't want/don't have 
+    /// time to wait before closing the server. </summary>
+    bool am_hard_disconnecting = false;
+    string hard_disconnect_message = "";
+
+    void hard_disconnect()
+    {
+        am_hard_disconnecting = true;
+        on_client_disconnect(hard_disconnect_message);
+    }
+
+    void on_client_disconnect(string message_from_server)
+    {
+        if (server.started)
+        {
+            if (am_hard_disconnecting)
+                server.stop();
+            else
+            {
+                // Don't close the server for a little bit so we can
+                // process messages that were sent during the disconnect
+                // (for example, the DISCONNECT message from the player)
+                hard_disconnect_message = message_from_server;
+                Invoke("hard_disconnect", 1f);
+                return;
+            }
+        }
+
+        // Go back to the world menu
+        if (message_from_server != null)
+            world_menu.message_to_display = "Disconnected: " + message_from_server;
+
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/world_menu");
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static Canvas canvas { get; private set; }
+
+    /// <summary> Information on how to start a game. </summary>
+    public struct startup_info
+    {
+        public enum MODE
+        {
+            LOAD_AND_HOST,
+            CREATE_AND_HOST,
+            JOIN,
+        }
+
+        public MODE mode;
+        public string username;
+        public string world_name;
+        public int world_seed;
+        public string hostname;
+        public int port;
+    }
+    public static startup_info startup;
+
+    /// <summary> Load/host a game from disk. </summary>
+    public static void load_and_host_world(string world_name, string username)
+    {
+        startup = new startup_info
+        {
+            username = username,
+            mode = startup_info.MODE.LOAD_AND_HOST,
+            world_name = world_name,
+        };
+
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
+
+    /// <summary> Create/host a new world. </summary>
+    public static void create_and_host_world(string world_name, int seed, string username)
+    {
+        startup = new startup_info
+        {
+            username = username,
+            mode = startup_info.MODE.CREATE_AND_HOST,
+            world_name = world_name,
+            world_seed = seed,
+        };
+
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+    }
+
+    /// <summary> Join a world hosted on a server. </summary>
+    public static bool join_world(string ip_port, string username)
+    {
+        var split = ip_port.Split(':');
+        if (split.Length != 2) return false;
+
+        string ip = split[0];
+        if (!int.TryParse(split[1], out int port)) return false;
+
+        startup = new startup_info
+        {
+            username = username,
+            mode = startup_info.MODE.JOIN,
+            hostname = ip,
+            port = port
+        };
+
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+        return true;
+    }
+
+    /// <summary> Returns true if the render range is allowed
+    /// to change in the given way. </summary>
+    static bool allow_render_range_change(float old_val, float new_val)
+    {
+        if (old_val == new_val) return false;
+        if (new_val < MIN_RENDER_RANGE) return false;
+        if (new_val > old_val &&
+            chunk.enabled_and_generating >= chunk.generating_limit) return false;
+        return true;
+    }
+
+    public const float DEFAULT_RENDER_RANGE = chunk.SIZE;
+
+    /// <summary> The target render range, which the actual render range will lerp to. </summary>
+    public static float render_range_target
+    {
+        get { return _render_range_target; }
+        set
+        {
+            if (!allow_render_range_change(_render_range_target, value)) return;
+            _render_range_target = value;
+        }
+    }
+    private static float _render_range_target = DEFAULT_RENDER_RANGE;
+
+    /// <summary> How far the player can see. </summary>
+    public static float render_range
+    {
+        get { return _render_range; }
+        set
+        {
+            if (!allow_render_range_change(_render_range, value)) return;
+            _render_range = value;
+            player.current.update_render_range();
+            water_reflections.water_range = value;
+        }
+    }
+    private static float _render_range = DEFAULT_RENDER_RANGE;
+
     public static void save_and_quit(bool delete_player = false)
     {
         // Disconnect from the network
         client.disconnect(true, delete_player: delete_player);
     }
+
+    //######//
+    // INFO //
+    //######//
 
     public string graphics_info()
     {

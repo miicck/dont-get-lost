@@ -16,7 +16,7 @@ public class item_requirement_tracker : MonoBehaviour
     public static item_requirement_tracker create(string hint_text, Dictionary<string, int> requirements, on_complete_func on_complete = null)
     {
         var ui = Resources.Load<RectTransform>("ui/item_requirement_tracker").inst();
-        ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        ui.transform.SetParent(game.canvas.transform);
         ui.anchoredPosition = Vector2.zero;
         var ret = ui.GetComponent<item_requirement_tracker>();
 

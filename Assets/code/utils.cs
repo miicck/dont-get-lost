@@ -51,6 +51,50 @@ public static class utils
         return r < 0 ? r + m : r;
     }
 
+    // Get the screen point of the given world position for the given camera
+    public static Vector3 clamped_screen_point(Camera cam, Vector3 world_position, out bool on_edge)
+    {
+        Vector3 sp = cam.WorldToScreenPoint(world_position);
+        on_edge = false;
+
+        // Clamp to screen in x direction
+        if (sp.x > Screen.width)
+        {
+            on_edge = true;
+            sp.x = Screen.width;
+        }
+        else if (sp.x < 0)
+        {
+            on_edge = true;
+            sp.x = 0;
+        }
+
+        // Clamp to screen in y direction
+        if (sp.y > Screen.height)
+        {
+            on_edge = true;
+            sp.y = Screen.height;
+        }
+        else if (sp.y < 0)
+        {
+            on_edge = true;
+            sp.y = 0;
+        }
+
+        if (sp.z < 0)
+        {
+            on_edge = true;
+
+            // Behind the camera, this hack seems to look ok
+            if (sp.x < Screen.width / 2) sp.x = Screen.width;
+            else sp.x = 0;
+
+            sp.y = Screen.height - sp.y;
+        }
+
+        return sp;
+    }
+
     // Raycast for the nearest object of the given type
     public delegate bool raycast_accept_func<T>(RaycastHit h, T t);
     public static T raycast_for_closest<T>(Ray ray, out RaycastHit hit,

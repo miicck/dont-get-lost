@@ -258,13 +258,15 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
 
     public void heal(int amount)
     {
-        int max_heal = 100 - health.value;
+        int max_heal = max_health - health.value;
         health.value += Mathf.Min(amount, max_heal);
     }
 
     public void take_damage(int damage)
     {
         int health_before = health.value;
+        var hm = hit_marker.create("-" + damage);
+        hm.transform.position = transform.position + Vector3.up * height;
 
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;

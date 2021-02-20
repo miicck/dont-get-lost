@@ -364,7 +364,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             {
                 //Create the ui
                 ui = Resources.Load<task_manager>("ui/task_manager").inst();
-                ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                ui.transform.SetParent(game.canvas.transform);
                 ui.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 ui.set_target(settler);
                 ui.open = false; // ui starts closed

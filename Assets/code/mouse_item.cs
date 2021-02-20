@@ -50,7 +50,7 @@ public class mouse_item : MonoBehaviour
     public static mouse_item create(item item, int count, inventory origin)
     {
         var ret = Resources.Load<mouse_item>("ui/mouse_item").inst();
-        ret.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        ret.transform.SetParent(game.canvas.transform);
         ret.origin = origin;
         ret.item = item;
         ret.count = count;

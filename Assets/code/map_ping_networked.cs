@@ -15,7 +15,7 @@ public class map_ping_networked : networked
         // exist for the color.on_change function). It will be in the
         // wrong place until on_create() is called, so disable it for now.
         ui = Resources.Load<ping_indicator>("ui/ping_indicator").inst();
-        ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        ui.transform.SetParent(game.canvas.transform);
         ui.gameObject.SetActive(false);
         Invoke("timeout", PING_TIMEOUT);
 

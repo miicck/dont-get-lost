@@ -36,7 +36,7 @@ public class build_requirement : MonoBehaviour
             "right of the screen for building tips)";
 
         var rt = br.GetComponent<RectTransform>();
-        rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        rt.SetParent(game.canvas.transform);
         rt.anchoredPosition = Vector2.zero;
 
         br.on_built = on_built;

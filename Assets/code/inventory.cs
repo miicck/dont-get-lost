@@ -128,7 +128,7 @@ public class inventory : networked, IItemCollection
     {
         // Create the ui element
         _ui = ui_prefab.inst();
-        _ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        _ui.transform.SetParent(game.canvas.transform);
         _ui.anchoredPosition = Vector2.zero;
 
         // Setup the ui slots to link to this inventory

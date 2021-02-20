@@ -134,7 +134,7 @@ public class recipe : MonoBehaviour
                 _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();
                 var text = _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>();
 
-                _recipe_book.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                _recipe_book.transform.SetParent(game.canvas.transform);
                 _recipe_book.anchoredPosition = Vector2.zero; // Middle of screen
                 _recipe_book.gameObject.SetActive(false); // Recipe book starts closed
 

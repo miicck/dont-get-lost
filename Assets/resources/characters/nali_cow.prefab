@@ -99,7 +99,7 @@ MonoBehaviour:
   plural_name: nali cows
   walk_speed: 1
   run_speed: 4
-  max_health: 10
+  max_health: 400
   pathfinding_resolution: 0.65
   height: 1.08
   agro_range: 5

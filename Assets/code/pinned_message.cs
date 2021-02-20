@@ -20,7 +20,7 @@ public class pinned_message : MonoBehaviour
             {
                 // Create the ui
                 ui = Resources.Load<RectTransform>("ui/pinned_message").inst();
-                ui.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                ui.SetParent(game.canvas.transform);
 
                 foreach (RectTransform child in ui)
                 {

@@ -256,7 +256,7 @@ public class options_menu : MonoBehaviour
             if (_menu == null && value)
             {
                 _menu = Resources.Load<options_menu>("ui/options_menu").inst();
-                _menu.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+                _menu.transform.SetParent(game.canvas.transform);
                 _menu.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
                 _menu.change_content(_menu.main_menu);
             }

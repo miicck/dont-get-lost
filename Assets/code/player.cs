@@ -287,7 +287,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         public override bool start_interaction(player player)
         {
             ui = Resources.Load<RectTransform>("ui/simple_textbox").inst();
-            ui.SetParent(FindObjectOfType<game>().main_canvas.transform);
+            ui.SetParent(game.canvas.transform);
             ui.anchoredPosition = Vector2.zero;
             var txt = ui.GetComponentInChildren<UnityEngine.UI.Text>();
 
@@ -1259,7 +1259,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         // Create the respawn timer
         var timer = Resources.Load<respawn_timer>("ui/respawn_timer").inst();
-        timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        timer.transform.SetParent(game.canvas.transform);
         timer.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
         timer.to_respawn = this;
         is_dead = true;
@@ -1430,7 +1430,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         // Create the crosshairs
         crosshairs = new GameObject("corsshairs").AddComponent<UnityEngine.UI.Image>();
-        crosshairs.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        crosshairs.transform.SetParent(game.canvas.transform);
         crosshairs.color = new Color(1, 1, 1, 0.5f);
         var crt = crosshairs.GetComponent<RectTransform>();
         crt.sizeDelta = new Vector2(64, 64);
@@ -1736,7 +1736,7 @@ public class popup_message : MonoBehaviour
         var m = new GameObject("message").AddComponent<popup_message>();
         m.text = m.gameObject.AddComponent<UnityEngine.UI.Text>();
 
-        var canv = FindObjectOfType<game>().main_canvas;
+        var canv = game.canvas;
 
         m.transform = m.GetComponent<RectTransform>();
         m.transform.SetParent(canv.transform);

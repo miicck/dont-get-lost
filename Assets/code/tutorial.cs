@@ -10,7 +10,7 @@ class confirm_window : MonoBehaviour
     public static confirm_window create(string message, confirm_func on_confirm = null)
     {
         var ui = Resources.Load<RectTransform>("ui/confirm_window").inst();
-        ui.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        ui.transform.SetParent(game.canvas.transform);
         ui.anchoredPosition = Vector2.zero;
         ui.GetComponentInChildren<UnityEngine.UI.Text>().text = message;
         ui.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
@@ -49,7 +49,7 @@ class basic_camp_requirement : MonoBehaviour
     public static basic_camp_requirement create(finished_func on_finish)
     {
         var rt = Resources.Load<RectTransform>("ui/basic_camp_requirement").inst();
-        rt.SetParent(FindObjectOfType<game>().main_canvas.transform);
+        rt.SetParent(game.canvas.transform);
         rt.anchoredPosition = Vector3.zero;
         var bcr = rt.gameObject.AddComponent<basic_camp_requirement>();
         bcr.on_finish = on_finish;

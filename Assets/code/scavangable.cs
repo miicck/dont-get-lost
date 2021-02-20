@@ -50,7 +50,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
         {
             if (timer != null) Destroy(timer.gameObject);
             timer = Resources.Load<scavange_timer>("ui/scavange_timer").inst();
-            timer.transform.SetParent(FindObjectOfType<game>().main_canvas.transform);
+            timer.transform.SetParent(game.canvas.transform);
             timer.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             timer.scavanging = scavangable;
             controls.disabled = true;

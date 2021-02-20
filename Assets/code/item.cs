@@ -153,7 +153,10 @@ public class item : networked, IPlayerInteractable
         public override bool start_interaction(player player)
         {
             if (player.inventory.remove(item, 1))
+            {
                 player.modify_hunger(item.food_values.metabolic_value());
+                player.play_sound("sounds/munch1", 0.95f, 1.05f);
+            }
             return true;
         }
     }

@@ -315,7 +315,7 @@ public abstract class left_player_menu : player_interaction
             menu.gameObject.SetActive(true);
             menu.SetParent(attach_point.transform);
             menu.anchoredPosition = Vector2.zero;
-            menu.SetParent(Object.FindObjectOfType<game>().main_canvas.transform);
+            menu.SetParent(game.canvas.transform);
             on_open();
         }
 
