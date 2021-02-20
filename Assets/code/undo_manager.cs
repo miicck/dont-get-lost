@@ -28,7 +28,7 @@ public static class undo_manager
             redo_levels.RemoveAt(0);
     }
 
-    public static void undo()
+    public static bool undo()
     {
         // Carry out the most recent undo actions until one succeeds
         while (undo_levels.Count > 0)
@@ -42,12 +42,13 @@ public static class undo_manager
                 // A successful undo, register the correspoding redo
                 register_redo_level(redo);
                 popup_message.create("Undo");
-                break;
+                return true;
             }
         }
+        return false;
     }
 
-    public static void redo()
+    public static bool redo()
     {
         // Carry out the most recent redo actions until one succeeds
         while (redo_levels.Count > 0)
@@ -61,8 +62,9 @@ public static class undo_manager
                 // A successful redo, register the correspoding undo
                 register_undo_level(undo);
                 popup_message.create("Redo");
-                break;
+                return true;
             }
         }
+        return false;
     }
 }

@@ -120,7 +120,7 @@ public class melee_weapon : equip_in_hand
                 swinging.swing_audio = swinging.gameObject.AddComponent<AudioSource>();
                 swinging.swing_audio.spatialBlend = player.has_authority ? 0.75f : 1f; // 3D amount
                 swinging.swing_audio.clip = Resources.Load<AudioClip>("sounds/swoosh_1");
-                swinging.swing_audio.volume = 0.35f;
+                swinging.swing_audio.volume = 0.15f;
             }
 
             swinging.swing_audio.Play();

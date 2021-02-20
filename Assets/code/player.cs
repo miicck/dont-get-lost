@@ -91,8 +91,16 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
             run_movement();
             run_teleports();
 
-            if (controls.triggered(controls.BIND.UNDO)) undo_manager.undo();
-            if (controls.triggered(controls.BIND.REDO)) undo_manager.redo();
+            if (controls.triggered(controls.BIND.UNDO))
+            {
+                if (undo_manager.undo())
+                    play_sound("sounds/undo_sound");
+            }
+            if (controls.triggered(controls.BIND.REDO))
+            {
+                if (undo_manager.redo())
+                    play_sound("sounds/undo_sound");
+            }
         }
         else
         {
@@ -1380,6 +1388,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public player_body body { get; private set; }
     public Transform eye_transform { get; private set; }
     AudioSource sound_source;
+    float sound_source_time_last_played;
     arm right_arm;
     arm left_arm;
     water_reflections water;
@@ -1390,19 +1399,41 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public void mod_y_rotation(float mod) { y_rotation.value = utils.minimal_modulus_angle(y_rotation.value + mod); }
 
     public void play_sound(string sound,
-        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
+        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f,
+        Vector3? location = null,
+        float min_time_since_last = 0f)
     {
         play_sound(Resources.Load<AudioClip>(sound),
                    min_pitch: min_pitch,
                    max_pitch: max_pitch,
-                   volume: volume);
+                   volume: volume,
+                   location: location,
+                   min_time_since_last: min_time_since_last);
     }
 
     public void play_sound(AudioClip sound,
-        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
+        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f,
+        Vector3? location = null, float min_time_since_last = 0f)
     {
+        if (min_time_since_last > 0)
+            if (Time.realtimeSinceStartup - sound_source_time_last_played < min_time_since_last)
+                return;
+        sound_source_time_last_played = Time.realtimeSinceStartup;
+
         sound_source.Stop();
         sound_source.pitch = Random.Range(min_pitch, max_pitch);
+
+        if (location == null)
+        {
+            sound_source.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, WIDTH / 2f);
+            sound_source.spatialBlend = 0f;
+        }
+        else
+        {
+            sound_source.transform.position = (Vector3)location;
+            sound_source.spatialBlend = 1f;
+        }
+
         sound_source.PlayOneShot(sound, volume);
     }
 

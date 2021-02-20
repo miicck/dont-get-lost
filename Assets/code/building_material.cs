@@ -67,6 +67,7 @@ public class building_material : item, IPlayerInteractable
         public override bool start_interaction(player player)
         {
             material.pick_up(true);
+            player.current.play_sound("sounds/hammer_wood_lowpass", 0.9f, 1.1f, 0.5f, location: material.transform.position);
             return true;
         }
 
@@ -255,8 +256,12 @@ public class building_material : item, IPlayerInteractable
                 Quaternion saved_rotation = pivot.transform.rotation;
                 pivot_index += pivot_change_dir > 0 ? 1 : -1;
                 set_pivot_rotation(saved_rotation);
+                player.current.play_sound("sounds/adjustment_click", 1f, 1f, 0.5f, location: weld_location, min_time_since_last: 0.05f);
             }
         }
+
+        float adjustment_sound_accumulated = 1;
+        float adjustment_sound_last_played = 0;
 
         /// <summary> Rotate the building using the mouse. Returns true 
         /// when the orientation is confirmed. </summary>
@@ -300,8 +305,9 @@ public class building_material : item, IPlayerInteractable
 
             Vector3? new_closest_point = null;
             Vector3? rotation_axis = null;
-            accumulated_rotation += 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) +
-                                          controls.delta(controls.BIND.ROTATION_AMOUNT_Y));
+            float delta_rot_control = 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) +
+                                            controls.delta(controls.BIND.ROTATION_AMOUNT_Y));
+            accumulated_rotation += delta_rot_control;
 
             switch (mouse_mode)
             {
@@ -349,16 +355,19 @@ public class building_material : item, IPlayerInteractable
                 if (controls.held(controls.BIND.FINE_ROTATION))
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, accumulated_rotation);
+                    adjustment_sound_accumulated += Mathf.Abs(delta_rot_control) / 15f;
                     accumulated_rotation = 0;
                 }
                 else if (accumulated_rotation > 20f)
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, 45);
+                    adjustment_sound_accumulated += 1.01f;
                     accumulated_rotation = 0;
                 }
                 else if (accumulated_rotation < -20f)
                 {
                     to_weld.transform.RotateAround(pivot.transform.position, rot_axis, -45);
+                    adjustment_sound_accumulated += 1.01f;
                     accumulated_rotation = 0;
                 }
             }
@@ -369,7 +378,24 @@ public class building_material : item, IPlayerInteractable
             {
                 Vector3 delta = (Vector3)new_closest_point - (Vector3)last_closest_point;
                 translate(delta);
+                adjustment_sound_accumulated += delta.magnitude / 0.1f;
                 last_closest_point = new_closest_point;
+            }
+
+            if (!controls.held(controls.BIND.USE_ITEM))
+            {
+                adjustment_sound_last_played = 0f;
+                adjustment_sound_accumulated = 1f;
+            }
+
+            if (adjustment_sound_accumulated > adjustment_sound_last_played + 1f)
+            {
+                adjustment_sound_last_played = adjustment_sound_accumulated;
+                float x = Mathf.Max(adjustment_sound_accumulated - 1f, 0f);
+                float pitch = 1.5f - 0.5f * Mathf.Exp(-x / 10f);
+
+                player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f, 
+                    location: weld_location, min_time_since_last: 0.05f);
             }
 
             return false;
@@ -688,6 +714,7 @@ public class building_material : item, IPlayerInteractable
 
             last_time_deleting = Time.realtimeSinceStartup;
             found_same.pick_up(register_undo: true);
+            player.current.play_sound("sounds/hammer_wood_lowpass", 0.9f, 1.1f, 0.5f, location: hit.point);
             return true;
         }
     }
@@ -716,7 +743,7 @@ public class building_material : item, IPlayerInteractable
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_DOWN) + " and " +
                         controls.bind_name(controls.BIND.MANIPULATE_BUILDING_UP) + " to rotate the building\n" +
                         "Hold " + controls.bind_name(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
-                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + 
+                        "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) +
                         " to cycle initial orientations (purple spheres)\n" +
                         "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
                 }
@@ -772,6 +799,7 @@ public class building_material : item, IPlayerInteractable
             // Move onto rotation stage if something was spawned
             if (blueprint != null)
             {
+                player.current.play_sound("sounds/hammer_wood_lowpass", 0.9f, 1.1f, 0.5f, location: hit.point);
                 if (!controls.key_based_building) player.current.cursor_sprite = cursors.DEFAULT;
                 return false;
             }
@@ -815,6 +843,8 @@ public class building_material : item, IPlayerInteractable
                 // Remove the object we're building from the inventory
                 if (player.current.inventory.remove(blueprint, 1))
                 {
+                    player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f, location: blueprint.weld.weld_location);
+
                     // Create a proper, networked version of the spawned object
                     var created = (building_material)create(blueprint.name,
                         blueprint.transform.position, blueprint.transform.rotation,
@@ -826,6 +856,7 @@ public class building_material : item, IPlayerInteractable
 
                     // Satisfy building requirements
                     build_requirement.on_build(created);
+
                 }
             }
 

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2349953653536493290}
   - component: {fileID: 6921483486457238970}
   m_Layer: 0
-  m_Name: bark1
+  m_Name: bark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hit_sound: {fileID: 8300000, guid: 942f0a76d1950da4cb44cb411fe7be9d, type: 3}
-  hit_volume: 0.5
+  hit_volume: 0.3
   step_sound: {fileID: 8300000, guid: 5b728a7727a76a34594038f4cac22590, type: 3}
   step_volume: 0.1
