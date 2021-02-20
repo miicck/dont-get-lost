@@ -243,7 +243,7 @@ public static class tutorial
                 () => confirm_window.create(
                     "Great job - now we've got a base camp set up, it might\n"+
                     "be a good idea to go explore for a nice place to set up\n"+
-                    "our first outpost. But it's up to you from here, good luck!")
+                    "our first outpost. But it's up to you from here, good luck!", advance_stage)
             };
             return _tutorial_stages;
         }

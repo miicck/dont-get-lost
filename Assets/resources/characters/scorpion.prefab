@@ -24,11 +24,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!114 &4255820572150909840
 MonoBehaviour:
@@ -54,11 +54,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!114 &8103663972935078560
 MonoBehaviour:
@@ -84,11 +84,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!114 &1767887126577097485
 MonoBehaviour:
@@ -114,11 +114,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!1 &4986425168613806398
 GameObject:
@@ -209,11 +209,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!114 &7831711070357871137
 MonoBehaviour:
@@ -259,11 +259,11 @@ MonoBehaviour:
   max_step_length_boost: 1
   max_boost_at_speed: 4
   max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
+  custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
+  footstep_volume_multiplier: 0.1
   play_footsteps: 1
   min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
+  max_footsetp_pitch: 1.3
   step_length_boost: 0
 --- !u!1001 &8102226384761899163
 PrefabInstance:
