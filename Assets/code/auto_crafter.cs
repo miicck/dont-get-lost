@@ -12,6 +12,8 @@ public class auto_crafter : building_material, IPlayerInteractable
 
     public float craft_time = 1f;
     public string recipes_folder;
+    public AudioClip custom_crafting_sound;
+    public float custom_crafting_sound_volume = 1f;
     public List<GameObject> enable_when_crafting = new List<GameObject>();
 
     recipe[] recipies;
@@ -175,9 +177,11 @@ public class auto_crafter : building_material, IPlayerInteractable
         auto_crafter crafter;
         public menu(auto_crafter crafter) : base(crafter.display_name) { this.crafter = crafter; }
 
-        public override recipe[] additional_recipes(out string name)
+        public override recipe[] additional_recipes(out string name, out AudioClip crafting_sound, out float crafting_sound_vol)
         {
             name = crafter.display_name;
+            crafting_sound = crafter.custom_crafting_sound;
+            crafting_sound_vol = crafter.custom_crafting_sound_volume;
             return crafter.recipies;
         }
 

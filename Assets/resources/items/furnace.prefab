@@ -312,6 +312,8 @@ MonoBehaviour:
   axes_scale: 1
   craft_time: 1
   recipes_folder: recipes/workbenches/furnace
+  custom_crafting_sound: {fileID: 8300000, guid: d1fab81da96d86846b4de973b459abd7, type: 3}
+  custom_crafting_sound_volume: 0.25
   enable_when_crafting:
   - {fileID: 8844632565118912347}
 --- !u!1 &6712449088207452527

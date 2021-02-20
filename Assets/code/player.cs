@@ -1392,9 +1392,18 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     public void play_sound(string sound,
         float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
     {
+        play_sound(Resources.Load<AudioClip>(sound),
+                   min_pitch: min_pitch,
+                   max_pitch: max_pitch,
+                   volume: volume);
+    }
+
+    public void play_sound(AudioClip sound,
+        float min_pitch = 1f, float max_pitch = 1f, float volume = 1f)
+    {
         sound_source.Stop();
         sound_source.pitch = Random.Range(min_pitch, max_pitch);
-        sound_source.PlayOneShot(Resources.Load<AudioClip>(sound), volume);
+        sound_source.PlayOneShot(sound, volume);
     }
 
     public override void on_loose_authority()

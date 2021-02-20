@@ -54,7 +54,16 @@ public abstract class player_interaction
 
     /// <summary> Additioanl recipes available to the player when 
     /// interacting with this. </summary>
-    public virtual recipe[] additional_recipes(out string name) { name = null; return null; }
+    public virtual recipe[] additional_recipes(
+        out string name,
+        out AudioClip crafting_sound,
+        out float crafting_sound_vol)
+    {
+        name = null;
+        crafting_sound = null;
+        crafting_sound_vol = 1f;
+        return null;
+    }
 
     /// <summary> Can the player move whilst carrying out this interaction? </summary>
     public virtual bool allows_movement() { return true; }
@@ -184,16 +193,23 @@ public class interaction_set
 
     /// <summary> Gets all of the additional recipes due
     /// to currently underway interactions. </summary>
-    public recipe[] additional_recipes(out string name)
+    public recipe[] additional_recipes(out string name, out AudioClip crafting_sound, out float crafting_sound_vol)
     {
         recipe[] ret = null;
         name = null;
+        crafting_sound = null;
+        crafting_sound_vol = 1f;
 
         foreach (var kv in underway)
         {
-            var recs = kv.Value.interaction.additional_recipes(out string iname);
+            var recs = kv.Value.interaction.additional_recipes(out string iname, out AudioClip ics, out float vol);
             if (recs == null || recs.Length == 0) continue;
             name += iname + " ";
+            if (ics != null)
+            {
+                crafting_sound = ics;
+                crafting_sound_vol = vol;
+            }
 
             if (ret == null) ret = recs;
             else ret = ret.append(recs);

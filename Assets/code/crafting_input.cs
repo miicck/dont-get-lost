@@ -26,6 +26,16 @@ public class crafting_input : MonoBehaviour
             throw new System.Exception("No recipe folder specified for " + name);
     }
 
+    protected virtual AudioClip crafting_sound()
+    {
+        return Resources.Load<AudioClip>("sounds/click_2");
+    }
+
+    protected virtual float crafting_sound_volume()
+    {
+        return 1f;
+    }
+
     public void update_recipies()
     {
         load_recipies();
@@ -40,6 +50,7 @@ public class crafting_input : MonoBehaviour
                 entry.transform.SetParent(options_go_here);
                 entry.button.onClick.AddListener(() =>
                 {
+                    player.current.play_sound(crafting_sound(), volume: crafting_sound_volume());
                     int to_craft = controls.held(controls.BIND.CRAFT_FIVE) ? 5 : 1;
                     for (int n = 0; n < to_craft; ++n)
                         rec.craft(craft_from, craft_to);
