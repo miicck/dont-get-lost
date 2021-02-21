@@ -75,13 +75,6 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
         AFRAID
     }
 
-    public void lerp_forward(Vector3 new_forward)
-    {
-        // Lerp forward look direction
-        new_forward = Vector3.Lerp(transform.forward, new_forward, run_speed * Time.deltaTime);
-        if (new_forward.magnitude > 10e-4) transform.forward = new_forward;
-    }
-
     //#####################//
     // IPlayerInteractable //
     //#####################//
