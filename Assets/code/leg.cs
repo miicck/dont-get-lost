@@ -51,6 +51,13 @@ public class leg : MonoBehaviour
     Vector3 test_start;
     Vector3 test_end;
 
+    public enum STATE
+    {
+        NORMAL,        // Normal walking legs
+        BIRD_TUCKED,   // Legs tucked up (when flying)
+    }
+    public STATE state = STATE.NORMAL;
+
     bool grounded { get => (foot_base.position - grounding).magnitude < 0.25f; }
 
     // The amount a body should bob up and down because of this leg
@@ -408,6 +415,21 @@ public class leg : MonoBehaviour
     }
 
     private void Update()
+    {
+        switch (state)
+        {
+            case STATE.NORMAL:
+                update_normal();
+                break;
+
+            case STATE.BIRD_TUCKED:
+                move_foot_towards(hip.position - Vector3.up * thigh_length / 2f);
+                solve_leg();
+                break;
+        }
+    }
+
+    private void update_normal()
     {
         Vector3 delta = step_centre.position - position_last;
         position_last = step_centre.position;
