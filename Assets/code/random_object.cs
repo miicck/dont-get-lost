@@ -26,7 +26,7 @@ public class random_object : world_object.sub_generator
         generated.transform.localRotation = Quaternion.identity;
         generated.transform.localScale = Vector3.one * chunk.random.range(min_scale, max_scale);
         if (random_y_rotation)
-            generated.transform.Rotate(Vector3.up, chunk.random.range(0f, 360f), Space.World);
+            generated.transform.Rotate(transform.up, chunk.random.range(0f, 360f), Space.World);
     }
 
     private void OnDrawGizmos()
