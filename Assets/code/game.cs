@@ -47,6 +47,7 @@ public class game : MonoBehaviour
                     w.networked_name.value = startup.world_name;
 
                     // Create the various always-loaded objects
+                    client.create(Vector3.zero, "misc/tech_tree");
                     client.create(Vector3.zero, "misc/time_manager");
                     client.create(Vector3.zero, "misc/teleport_manager");
                 }

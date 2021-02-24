@@ -181,7 +181,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                     new first_third_person_interaction(),
                     new place_marker(),
                     new toggle_map(),
-                    new inspect_networked()
+                    new inspect_networked(),
+                    new open_tech_tree(),
                 };
             return _self_interactions;
         }
@@ -280,6 +281,29 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         {
             player.map_open = !player.map_open;
             return true;
+        }
+    }
+
+    public class open_tech_tree : menu_interaction
+    {
+        static RectTransform ui;
+
+        public override controls.BIND keybind => controls.BIND.TOGGLE_TECH_TREE;
+        public override string context_tip() { return "toggle tech tree"; }
+        public override bool show_context_tip() { return false; }
+
+        protected override void set_menu_state(player player, bool state)
+        {
+            if (ui == null)
+                ui = tech_tree.generate_tech_tree();
+
+            ui.gameObject.SetActive(state);
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            tech_tree.run_solver();
+            return base.continue_interaction(player);
         }
     }
 
