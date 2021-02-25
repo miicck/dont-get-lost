@@ -84,6 +84,7 @@ public class item : networked, IPlayerInteractable
 
         public override bool start_interaction(player player)
         {
+            player.play_sound("sounds/click_1", volume: 0.5f);
             item.pick_up();
             return true;
         }

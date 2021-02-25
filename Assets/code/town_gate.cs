@@ -139,7 +139,7 @@ public class town_gate : portal, IAddsToInspectionText
         unregister_gate(this);
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         enemy_approach_path?.draw_gizmos();
     }

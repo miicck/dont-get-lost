@@ -67,7 +67,8 @@ public abstract class path
     {
         SEARCHING,
         FAILED,
-        COMPLETE
+        COMPLETE,
+        PARTIALLY_COMPLETE,
     }
 
     /// <summary> The current state of the path. </summary>
@@ -75,8 +76,10 @@ public abstract class path
 
     public path(Vector3 start, Vector3 goal, IPathingAgent agent)
     {
-        this.start = start;
-        this.goal = goal;
+        // Slightly randomize the start/goal positions to try and avoid getting
+        // stuck when trying to find a valid start or end point
+        this.start = start + Random.insideUnitSphere * agent.resolution / 5f;
+        this.goal = goal + Random.insideUnitSphere * agent.resolution / 5f;
         this.agent = agent;
         state = STATE.SEARCHING;
     }
@@ -91,11 +94,15 @@ public class astar_path : path
     protected HashSet<waypoint> closed_set;
     protected waypoint start_waypoint;
     protected waypoint goal_waypoint;
+    protected waypoint current_waypoint;
     protected int endpoint_search_stage = 0;
     protected int max_iterations;
+    protected int max_steps_to_startpoint;
     protected int total_iterations = 0;
     protected int last_validate_step = 0;
     protected int last_optimize_step = 0;
+    protected bool accept_best_incomplete_path = false;
+    protected bool require_valid_endpoint = true;
 
     /// <summary> The path found. </summary>
     protected List<Vector3> path;
@@ -113,10 +120,21 @@ public class astar_path : path
     /// <summary> The current pathfinding stage. </summary>
     protected STAGE stage;
 
-    public astar_path(Vector3 start, Vector3 goal, IPathingAgent agent, int max_iterations = 1000)
+    public astar_path(Vector3 start, Vector3 goal, IPathingAgent agent,
+        int max_iterations = 1000, int max_steps_to_startpoint = 2,
+        bool accept_best_incomplete_path = false,
+        bool require_valid_endpoint = true)
         : base(start, goal, agent)
     {
         this.max_iterations = max_iterations;
+        this.max_steps_to_startpoint = max_steps_to_startpoint;
+        this.accept_best_incomplete_path = accept_best_incomplete_path;
+        this.require_valid_endpoint = require_valid_endpoint;
+
+        if (!require_valid_endpoint && !accept_best_incomplete_path)
+            Debug.LogError("Paths that don't require a valid endpoint, but " +
+                           "also won't accept incomplete paths will always fail!");
+
         open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
         closed_set = new HashSet<waypoint>();
         stage = STAGE.START_SEARCH;
@@ -173,37 +191,53 @@ public class astar_path : path
         {
             if (++total_iterations > max_iterations)
             {
+                // Reconstruct incomplete path
+                if (accept_best_incomplete_path && current_waypoint != null)
+                {
+                    reconstruct_path(current_waypoint);
+                    state = STATE.PARTIALLY_COMPLETE;
+                    return;
+                }
+
                 state = STATE.FAILED;
                 return;
             }
 
             if (open_set.Count == 0)
             {
+                // Reconstruct incomplete path
+                if (accept_best_incomplete_path && current_waypoint != null)
+                {
+                    reconstruct_path(current_waypoint);
+                    state = STATE.PARTIALLY_COMPLETE;
+                    return;
+                }
+
                 state = STATE.FAILED;
                 return;
             }
 
             // Find the lowest heuristic in the open set
-            waypoint current = open_set.First().Value;
+            current_waypoint = open_set.First().Value;
 
             // Check for success
-            if (success(current))
+            if (success(current_waypoint))
             {
-                reconstruct_path(current);
+                reconstruct_path(current_waypoint);
                 return;
             }
 
             // Move current to closed set
-            open_set.Remove(current);
-            closed_set.Add(current);
+            open_set.Remove(current_waypoint);
+            closed_set.Add(current_waypoint);
 
             for (int j = 0; j < utils.neighbouring_dxs_3d.Length; ++j)
             {
                 // Attempt to find neighbour if they alreaddy exist
                 waypoint n = new waypoint(
-                    current.x + utils.neighbouring_dxs_3d[j],
-                    current.y + utils.neighbouring_dys_3d[j],
-                    current.z + utils.neighbouring_dzs_3d[j]
+                    current_waypoint.x + utils.neighbouring_dxs_3d[j],
+                    current_waypoint.y + utils.neighbouring_dys_3d[j],
+                    current_waypoint.z + utils.neighbouring_dzs_3d[j]
                 );
 
                 // Neighbour already closed
@@ -214,15 +248,15 @@ public class astar_path : path
                     n = already_present;
 
                 // Check if this is potentially a better route to the neighbour
-                int tentative_distance = current.best_distance_to_start + 1;
+                int tentative_distance = current_waypoint.best_distance_to_start + 1;
                 if (tentative_distance < n.best_distance_to_start)
                 {
-                    if (!can_link(current, n, out Vector3 entrypoint))
+                    if (!can_link(current_waypoint, n, out Vector3 entrypoint))
                         continue;
 
                     // Update the path to n
                     n.entrypoint = entrypoint;
-                    n.came_from = current;
+                    n.came_from = current_waypoint;
                     n.best_distance_to_start = tentative_distance;
 
                     // Re-open n
@@ -324,8 +358,15 @@ public class astar_path : path
             return;
 
         // Check if we've searched too far
-        if (endpoint_search_stage > 32)
+        if (endpoint_search_stage > max_steps_to_startpoint)
         {
+            // If we don't require a valid endpoint, then we haven't failed
+            if (stage == STAGE.GOAL_SEARCH && !require_valid_endpoint)
+            {
+                stage = STAGE.PATHFIND;
+                return;
+            }
+
             state = STATE.FAILED;
             return;
         }
@@ -452,11 +493,17 @@ public class astar_path : path
     /// <summary> Draw information about the path. </summary>
     public override void draw_gizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(start, 0.1f);
-        Gizmos.DrawSphere(goal, 0.1f);
-        if (start_waypoint != null) Gizmos.DrawWireSphere(start_waypoint.entrypoint, 0.1f);
-        if (goal_waypoint != null) Gizmos.DrawWireSphere(goal_waypoint.entrypoint, 0.1f);
+        // Draw the start + start waypoint
+        Gizmos.color = start_waypoint == null ? Color.red : Color.green;
+        Gizmos.DrawWireSphere(start, 0.05f);
+        if (start_waypoint != null)
+            Gizmos.DrawLine(start, start_waypoint.entrypoint);
+
+        // Draw the goal + goal waypoint
+        Gizmos.color = goal_waypoint == null ? Color.red : Color.green;
+        Gizmos.DrawWireSphere(goal, 0.05f);
+        if (goal_waypoint != null)
+            Gizmos.DrawLine(goal, goal_waypoint.entrypoint);
 
         if (length > 0)
         {
@@ -623,7 +670,13 @@ public class chase_path : path
             if (i < base_path.length)
                 return base_path[i];
 
-            return follow_path[i - base_path.length];
+            // Link up with the follow path (if the base
+            // path was successful)
+            if (base_path.state == STATE.COMPLETE)
+                return follow_path[i - base_path.length];
+
+            // Just clamp to the last point in the base path
+            return base_path[base_path.length - 1];
         }
     }
 
@@ -647,7 +700,8 @@ public class chase_path : path
         this.target = target;
         if (goal_distance < 0) this.goal_distance = agent.resolution;
         else this.goal_distance = goal_distance;
-        base_path = new astar_path(start, target.position, agent, max_iterations: max_iterations);
+        base_path = new astar_path(start, target.position, agent, max_iterations: max_iterations,
+            accept_best_incomplete_path: true, require_valid_endpoint: false);
         follow_path = new List<Vector3> { target.position };
         state = STATE.SEARCHING;
     }

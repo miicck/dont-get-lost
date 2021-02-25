@@ -14,12 +14,9 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Production counter?
 - Filter-splitter
-- Leave item in inventory when equipping with Q?
+- Leave item in inventory when equipping with Q (rather than moving it to the toolbelt)?
 
 - Networking bugs(?) for settlers
-	- Items creation by settlers isn't networked (remote procedure call? - no, it actually
-	  makes sense to stick with the current framework, so stuff like crop progress
-	  gets saved etc.)
 	- Control over character arms/legs is fighting between client+server - this is
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
