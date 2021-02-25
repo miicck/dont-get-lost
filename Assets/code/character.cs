@@ -140,6 +140,9 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
 
     public void play_random_sound(character_sound.TYPE type)
     {
+        // Don't play sounds if dead
+        if (is_dead) return;
+
         List<character_sound> sound_list;
         if (!sounds.TryGetValue(type, out sound_list))
         {
@@ -238,14 +241,68 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
     // NETWORKING //
     //############//
 
+    networked_variables.net_float y_rotation;
+    networked_variables.net_int health;
+    inventory loot;
+
+    public override void on_init_network_variables()
+    {
+        y_rotation = new networked_variables.net_float(resolution: 5f);
+        y_rotation.on_change = () =>
+        {
+            var ea = transform.rotation.eulerAngles;
+            ea.y = y_rotation.value;
+            transform.rotation = Quaternion.Euler(ea);
+        };
+
+        health = new networked_variables.net_int(default_value: max_health);
+
+        health.on_change = () =>
+        {
+            if (health.value >= max_health)
+            {
+                if (_healthbar != null)
+                    Destroy(_healthbar.gameObject);
+            }
+            else
+                healthbar.belongs_to = this;
+
+            if (health.value <= 0)
+                die();
+        };
+    }
+
+    public override void on_network_update()
+    {
+        if (has_authority)
+        {
+            networked_position = transform.position;
+            y_rotation.value = transform.rotation.eulerAngles.y;
+        }
+    }
+
+    public override void on_add_networked_child(networked child)
+    {
+        if (child is inventory)
+        {
+            var inv = (inventory)child;
+            if (inv.name.Contains("loot"))
+            {
+                loot = inv;
+                loot.ui.GetComponentInChildren<UnityEngine.UI.Text>().text = "Dead " + display_name;
+            }
+        }
+    }
+
     public override bool persistant()
     {
         // Characters despawn when not loaded
         return false;
     }
 
-    networked_variables.net_float y_rotation;
-    networked_variables.net_int health;
+    //########//
+    // HEALTH //
+    //########//
 
     public int remaining_health { get => health.value; }
 
@@ -257,26 +314,71 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
 
     public void take_damage(int damage)
     {
-        int health_before = health.value;
         var hm = hit_marker.create("-" + damage);
         hm.transform.position = transform.position + Vector3.up * height;
 
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;
+    }
 
-        if (health.value <= 0 && health_before > 0)
+    healthbar healthbar
+    {
+        get
         {
-            // Create loot in player inventory only on this client
-            foreach (var p in GetComponents<product>())
-                p.create_in(player.current.inventory);
+            if (_healthbar == null)
+            {
+                _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
+                _healthbar.transform.SetParent(transform);
+                _healthbar.transform.position = transform.position + Vector3.up * height;
+                _healthbar.belongs_to = this;
+            }
+            return _healthbar;
+        }
+    }
+    healthbar _healthbar;
+
+    //#######//
+    // DEATH //
+    //#######//
+
+    dead_character dead_version;
+    bool is_dead => dead_version != null;
+
+    void die()
+    {
+        if (!is_dead)
+        {
+            dead_version = dead_character.create(this);
+            on_death();
         }
     }
 
-    public class dead_character : MonoBehaviour, INotPathBlocking
+    protected virtual void on_death() { }
+
+    public class dead_character : MonoBehaviour, INotPathBlocking, IPlayerInteractable
     {
-        private void Start()
+        character character;
+
+        player_interaction[] _interactions;
+        public player_interaction[] player_interactions()
         {
-            InvokeRepeating("gradual_decay", 1f, 1f);
+            if (_interactions == null) _interactions = new player_interaction[]
+            {
+                new player_inspectable(transform)
+                {
+                    text = ()=> "Dead "+character.display_name
+                },
+                new loot_menu(this)
+            };
+            return _interactions;
+        }
+
+        class loot_menu : left_player_menu
+        {
+            dead_character dc;
+            public loot_menu(dead_character dc) : base("dead " + dc.character.display_name) { this.dc = dc; }
+            protected override RectTransform create_menu() { return dc.character.loot?.ui; }
+            public override inventory editable_inventory() { return dc.character.loot; }
         }
 
         void gradual_decay()
@@ -312,112 +414,77 @@ public class character : networked, INotPathBlocking, IDontBlockItemLogisitcs, I
                     if (c is Transform) continue;
                     if (c is MeshRenderer) continue;
                     if (c is MeshFilter) continue;
+                    if (c is MeshCollider)
+                    {
+                        // Make sure all colliders are convex so we
+                        // can add rigidbodies later
+                        var mc = (MeshCollider)c;
+                        mc.convex = true;
+                        continue;
+                    }
                     Destroy(c);
                 }
 
                 // Make the copy a child of this dead_character and
                 // give it a simple collider
                 rcopy.transform.SetParent(transform);
-                var bc = rcopy.gameObject.AddComponent<BoxCollider>();
-                bc.size = 0.1f * new Vector3(
-                    1f / rcopy.transform.localScale.x,
-                    1f / rcopy.transform.localScale.y,
-                    1f / rcopy.transform.localScale.z
-                );
 
                 // Make the character invisisble (do this after
                 // we copy, so the copied version isn't invisible)
                 r.enabled = false;
             }
 
-            // Delay rigidbodies so they have time to register the new box colliders
+            // Delay rigidbodies so they have time to register the new colliders
             Invoke("add_rigidbodies", 0.1f);
         }
 
         void add_rigidbodies()
         {
             foreach (Transform c in transform)
-                c.gameObject.AddComponent<Rigidbody>();
+            {
+                var rb = c.gameObject.AddComponent<Rigidbody>();
+
+                // Don't let the body parts ping around everywhere
+                // (as fun as that is)
+                rb.maxAngularVelocity = 1f;
+                rb.maxDepenetrationVelocity = 0.25f;
+            }
         }
 
         public static dead_character create(character to_copy)
         {
+            // Create the dead version
             var dead_version = new GameObject("dead_" + to_copy.name).AddComponent<dead_character>();
+            dead_version.character = to_copy;
             dead_version.transform.position = to_copy.transform.position;
             dead_version.transform.rotation = to_copy.transform.rotation;
             dead_version.on_create(to_copy);
+
+            // Deactivate the alive version
+            foreach (var r in to_copy.GetComponentsInChildren<Renderer>()) r.enabled = false;
+            foreach (var c in to_copy.GetComponentsInChildren<Collider>()) c.enabled = false;
+            to_copy.healthbar.gameObject.SetActive(false);
+
+            // Create loot on the authority client
+            if (to_copy.has_authority)
+            {
+                // Create the looting inventory
+                var loot = (inventory)client.create(
+                    to_copy.transform.position,
+                    "inventories/character_loot",
+                    parent: to_copy);
+
+                // Add loot to the above inventory once it's registered
+                loot.add_register_listener(() =>
+                {                   
+                    foreach (var p in to_copy.GetComponents<product>())
+                        p.create_in(loot);
+                });
+            }
+
+            // Parent the dead version to the character so they get despawned together
+            dead_version.transform.SetParent(to_copy.transform);
             return dead_version;
-        }
-    }
-
-    bool dead = false;
-    void die()
-    {
-        if (!dead)
-        {
-            dead = true;
-            dead_character.create(this);
-            on_death();
-            Invoke("delayed_delete", 1f);
-        }
-    }
-
-    protected virtual void on_death() { }
-
-    void delayed_delete()
-    {
-        delete();
-    }
-
-    healthbar healthbar
-    {
-        get
-        {
-            if (_healthbar == null)
-            {
-                _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
-                _healthbar.transform.SetParent(transform);
-                _healthbar.transform.position = transform.position + Vector3.up * height;
-                _healthbar.belongs_to = this;
-            }
-            return _healthbar;
-        }
-    }
-    healthbar _healthbar;
-
-    public override void on_init_network_variables()
-    {
-        y_rotation = new networked_variables.net_float(resolution: 5f);
-        y_rotation.on_change = () =>
-        {
-            var ea = transform.rotation.eulerAngles;
-            ea.y = y_rotation.value;
-            transform.rotation = Quaternion.Euler(ea);
-        };
-
-        health = new networked_variables.net_int(default_value: max_health);
-
-        health.on_change = () =>
-        {
-            if (health.value >= max_health)
-            {
-                if (_healthbar != null)
-                    Destroy(_healthbar.gameObject);
-            }
-            else
-                healthbar.belongs_to = this;
-
-            if (health.value <= 0)
-                die();
-        };
-    }
-
-    public override void on_network_update()
-    {
-        if (has_authority)
-        {
-            networked_position = transform.position;
-            y_rotation.value = transform.rotation.eulerAngles.y;
         }
     }
 
