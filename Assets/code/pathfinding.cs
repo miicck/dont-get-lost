@@ -90,11 +90,12 @@ public abstract class path
 /// <summary> Carry out pathfinding using the A* algorithm. </summary>
 public class astar_path : path
 {
+    // These would ideally be sorted hash sets, but that doesn't exist yet?
+    // (they will in a future version of C#)
     protected SortedDictionary<waypoint, waypoint> open_set;
-    protected HashSet<waypoint> closed_set;
+    protected SortedDictionary<waypoint, waypoint> closed_set;
     protected waypoint start_waypoint;
     protected waypoint goal_waypoint;
-    protected waypoint current_waypoint;
     protected int endpoint_search_stage = 0;
     protected int max_iterations;
     protected int max_steps_to_startpoint;
@@ -136,7 +137,7 @@ public class astar_path : path
                            "also won't accept incomplete paths will always fail!");
 
         open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
-        closed_set = new HashSet<waypoint>();
+        closed_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
         stage = STAGE.START_SEARCH;
     }
 
@@ -145,7 +146,8 @@ public class astar_path : path
         return found.Equals(goal_waypoint);
     }
 
-    protected void reconstruct_path(waypoint end)
+    protected void reconstruct_path(waypoint end,
+        bool add_goal = true, bool add_start = true)
     {
         if (end == null)
         {
@@ -153,20 +155,29 @@ public class astar_path : path
             return;
         }
 
-        if (agent.validate_move(end.entrypoint, goal))
-            path = new List<Vector3> { goal, end.entrypoint };
-        else
-            path = new List<Vector3> { end.entrypoint };
+        path = new List<Vector3>();
 
+        // Validate + add the move from the last waypoint to the goal
+        Vector3 goal_validated = goal;
+        if (add_goal) goal_validated = agent.validate_position(goal, out add_goal);
+        if (add_goal && agent.validate_move(end.entrypoint, goal_validated))
+            path.Add(goal_validated);
+
+        // Add the waypoint path (which is already validated)
+        path.Add(end.entrypoint);
         while (end.came_from != null)
         {
             end = end.came_from;
             path.Add(end.entrypoint);
         }
 
-        if (agent.validate_move(start, end.entrypoint))
+        // Validate + add the move from the first waypoint to the start
+        Vector3 start_validated = start;
+        if (add_start) start_validated = agent.validate_position(start, out add_start);
+        if (add_start && agent.validate_move(start, end.entrypoint))
             path.Add(start);
 
+        // Return the path in the start-to-finish order
         path.Reverse();
         state = STATE.COMPLETE;
         return;
@@ -192,11 +203,15 @@ public class astar_path : path
             if (++total_iterations > max_iterations)
             {
                 // Reconstruct incomplete path
-                if (accept_best_incomplete_path && current_waypoint != null)
+                if (accept_best_incomplete_path && closed_set.Count > 0)
                 {
-                    reconstruct_path(current_waypoint);
-                    state = STATE.PARTIALLY_COMPLETE;
-                    return;
+                    var best = closed_set.First().Value;
+                    if (best != null)
+                    {
+                        reconstruct_path(best, add_goal: false);
+                        state = STATE.PARTIALLY_COMPLETE;
+                        return;
+                    }
                 }
 
                 state = STATE.FAILED;
@@ -206,11 +221,15 @@ public class astar_path : path
             if (open_set.Count == 0)
             {
                 // Reconstruct incomplete path
-                if (accept_best_incomplete_path && current_waypoint != null)
+                if (accept_best_incomplete_path && closed_set.Count > 0)
                 {
-                    reconstruct_path(current_waypoint);
-                    state = STATE.PARTIALLY_COMPLETE;
-                    return;
+                    var best = closed_set.First().Value;
+                    if (best != null)
+                    {
+                        reconstruct_path(best, add_goal: false);
+                        state = STATE.PARTIALLY_COMPLETE;
+                        return;
+                    }
                 }
 
                 state = STATE.FAILED;
@@ -218,45 +237,45 @@ public class astar_path : path
             }
 
             // Find the lowest heuristic in the open set
-            current_waypoint = open_set.First().Value;
+            waypoint current = open_set.First().Value;
 
             // Check for success
-            if (success(current_waypoint))
+            if (success(current))
             {
-                reconstruct_path(current_waypoint);
+                reconstruct_path(current);
                 return;
             }
 
             // Move current to closed set
-            open_set.Remove(current_waypoint);
-            closed_set.Add(current_waypoint);
+            open_set.Remove(current);
+            closed_set[current] = current;
 
             for (int j = 0; j < utils.neighbouring_dxs_3d.Length; ++j)
             {
                 // Attempt to find neighbour if they alreaddy exist
                 waypoint n = new waypoint(
-                    current_waypoint.x + utils.neighbouring_dxs_3d[j],
-                    current_waypoint.y + utils.neighbouring_dys_3d[j],
-                    current_waypoint.z + utils.neighbouring_dzs_3d[j]
+                    current.x + utils.neighbouring_dxs_3d[j],
+                    current.y + utils.neighbouring_dys_3d[j],
+                    current.z + utils.neighbouring_dzs_3d[j]
                 );
 
                 // Neighbour already closed
-                if (closed_set.Contains(n)) continue;
+                if (closed_set.ContainsKey(n)) continue;
 
                 // See if the neighbour already exists, if load them instead
                 if (open_set.TryGetValue(n, out waypoint already_present))
                     n = already_present;
 
                 // Check if this is potentially a better route to the neighbour
-                int tentative_distance = current_waypoint.best_distance_to_start + 1;
+                int tentative_distance = current.best_distance_to_start + 1;
                 if (tentative_distance < n.best_distance_to_start)
                 {
-                    if (!can_link(current_waypoint, n, out Vector3 entrypoint))
+                    if (!can_link(current, n, out Vector3 entrypoint))
                         continue;
 
                     // Update the path to n
                     n.entrypoint = entrypoint;
-                    n.came_from = current_waypoint;
+                    n.came_from = current;
                     n.best_distance_to_start = tentative_distance;
 
                     // Re-open n
@@ -514,7 +533,7 @@ public class astar_path : path
         }
 
         Gizmos.color = Color.cyan;
-        foreach (KeyValuePair<waypoint, waypoint> kv in open_set)
+        foreach (var kv in open_set)
         {
             waypoint w = kv.Value;
             if (w.came_from != null)
@@ -522,9 +541,12 @@ public class astar_path : path
         }
 
         Gizmos.color = Color.blue;
-        foreach (waypoint w in closed_set)
+        foreach (var kv in closed_set)
+        {
+            waypoint w = kv.Value;
             if (w.came_from != null)
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
+        }
     }
 
     /// <summary> Get information about the current path. </summary>
@@ -610,7 +632,7 @@ public class random_path : astar_path
 
             // Move current to closed set
             open_set.Remove(current);
-            closed_set.Add(current);
+            closed_set[current] = current;
 
             for (int j = 0; j < utils.neighbouring_dxs_3d.Length; ++j)
             {
@@ -622,7 +644,7 @@ public class random_path : astar_path
                 );
 
                 // Already explored
-                if (closed_set.Contains(n)) continue;
+                if (closed_set.ContainsKey(n)) continue;
 
                 // Already open
                 if (open_set.ContainsKey(n)) continue;
