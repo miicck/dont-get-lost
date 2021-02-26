@@ -133,8 +133,7 @@ public class astar_path : path
         this.require_valid_endpoint = require_valid_endpoint;
 
         if (!require_valid_endpoint && !accept_best_incomplete_path)
-            Debug.LogError("Paths that don't require a valid endpoint, but " +
-                           "also won't accept incomplete paths will always fail!");
+            Debug.LogError("Paths that don't require a valid endpoint should accept incomplete paths!");
 
         open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
         closed_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
@@ -177,7 +176,7 @@ public class astar_path : path
         if (add_start && agent.validate_move(start, end.entrypoint))
             path.Add(start);
 
-        // Return the path in the start-to-finish order
+        // Return the path to get start-to-finish order
         path.Reverse();
         state = STATE.COMPLETE;
         return;
@@ -200,36 +199,16 @@ public class astar_path : path
 
         for (int i = 0; i < iterations; ++i)
         {
-            if (++total_iterations > max_iterations)
+            // Failure cases
+            if (++total_iterations > max_iterations || open_set.Count == 0)
             {
-                // Reconstruct incomplete path
+                // Reconstruct best incomplete path
                 if (accept_best_incomplete_path && closed_set.Count > 0)
                 {
                     var best = closed_set.First().Value;
-                    if (best != null)
-                    {
-                        reconstruct_path(best, add_goal: false);
-                        state = STATE.PARTIALLY_COMPLETE;
-                        return;
-                    }
-                }
-
-                state = STATE.FAILED;
-                return;
-            }
-
-            if (open_set.Count == 0)
-            {
-                // Reconstruct incomplete path
-                if (accept_best_incomplete_path && closed_set.Count > 0)
-                {
-                    var best = closed_set.First().Value;
-                    if (best != null)
-                    {
-                        reconstruct_path(best, add_goal: false);
-                        state = STATE.PARTIALLY_COMPLETE;
-                        return;
-                    }
+                    reconstruct_path(best, add_goal: false);
+                    state = STATE.PARTIALLY_COMPLETE;
+                    return;
                 }
 
                 state = STATE.FAILED;
@@ -417,8 +396,20 @@ public class astar_path : path
                                 // Check if this grid point is valid
                                 Vector3 centre = grid_centre(x, y, z);
                                 centre = agent.validate_position(centre, out bool valid);
-
                                 if (!valid) continue;
+
+                                // Check if the move to the grid point from
+                                // the start/goal point is valid
+                                if (stage == STAGE.START_SEARCH)
+                                {
+                                    if (!agent.validate_move(start, centre))
+                                        continue;
+                                }
+                                else if (stage == STAGE.GOAL_SEARCH)
+                                {
+                                    if (!agent.validate_move(centre, goal))
+                                        continue;
+                                }
 
                                 // Found a valid point, move to the next pathfinding stage
                                 endpoint_search_stage = 0;
@@ -515,12 +506,14 @@ public class astar_path : path
         // Draw the start + start waypoint
         Gizmos.color = start_waypoint == null ? Color.red : Color.green;
         Gizmos.DrawWireSphere(start, 0.05f);
+        Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, 1);
         if (start_waypoint != null)
             Gizmos.DrawLine(start, start_waypoint.entrypoint);
 
         // Draw the goal + goal waypoint
         Gizmos.color = goal_waypoint == null ? Color.red : Color.green;
         Gizmos.DrawWireSphere(goal, 0.05f);
+        Gizmos.color = new Color(Gizmos.color.r, Gizmos.color.g, 1);
         if (goal_waypoint != null)
             Gizmos.DrawLine(goal, goal_waypoint.entrypoint);
 
@@ -789,19 +782,25 @@ public static class pathfinding_utils
     /// for grounding within the gridpoint with the given 
     /// <paramref name="centre"/>. </summary>
     static Vector3 boxcast_position_validate(Vector3 centre, float resolution,
-        out bool valid)
+        out bool valid, float max_angle = 45)
     {
         Vector3 size = Vector3.one * resolution;
         Vector3 start_pos = centre + Vector3.up * resolution;
         Vector3 end_pos = centre;
-
         Vector3 move = end_pos - start_pos;
+
         foreach (var h in Physics.BoxCastAll(start_pos, size / 2f,
            move.normalized, Quaternion.identity, move.magnitude))
             if (h.transform.GetComponentInParent<INotPathBlocking>() == null)
             {
+                // BoxCastAll returns h.point = [0,0,0] if the collider
+                // was already inside the starting box position
+                if (h.point == default) continue;
+
+                if (Vector3.Angle(h.normal, Vector3.up) > max_angle)
+                    continue; // Too steep
+
                 valid = true;
-                if (h.point == default) return centre;
                 return h.point;
             }
 
@@ -911,8 +910,17 @@ public static class pathfinding_utils
     /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
     /// <paramref name="ground_clearance"/> walking. </summary>
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance, out string reason)
+        float width, float height, float ground_clearance, out string reason,
+        float max_angle = 45)
     {
+        Vector3 delta = b - a;
+        Vector3 delta_xz = delta; delta_xz.y = 0;
+        if (Vector3.Angle(delta, delta_xz) > max_angle)
+        {
+            reason = "Too steep";
+            return false;
+        }
+
         bool overlap_test = validate_move_overlap(a, b, width, height, ground_clearance, out reason);
         if (!overlap_test) return false;
 
