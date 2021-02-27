@@ -914,6 +914,23 @@ public class chase_controller : ICharacterController
             int max_iter = (int)(c.transform.position - chasing.transform.position).magnitude;
             max_iter = Mathf.Min(500, 10 + max_iter * max_iter);
             path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter);
+            path.on_state_change_listener = (s) =>
+            {
+                return;
+                if (s == path.STATE.COMPLETE || s == path.STATE.PARTIALLY_COMPLETE)
+                {
+                    // Ensure the path actually goes somewhere
+                    if (path.length < 2)
+                    {
+                        path = null;
+                        return;
+                    }
+
+                    // Ensure the end isn't right next to the start
+                    Vector3 delta = path[path.length - 1] - path[0];
+                    if (delta.magnitude < c.pathfinding_resolution) path = null;
+                }
+            };
             index = 0;
         }
 

@@ -72,7 +72,20 @@ public abstract class path
     }
 
     /// <summary> The current state of the path. </summary>
-    public STATE state { get; protected set; }
+    public STATE state
+    {
+        get => _state;
+        protected set
+        {
+            if (_state == value) return; // No change
+            _state = value;
+            on_state_change_listener?.Invoke(value);
+        }
+    }
+    STATE _state;
+
+    public delegate void on_state_change(STATE new_state);
+    public on_state_change on_state_change_listener;
 
     public path(Vector3 start, Vector3 goal, IPathingAgent agent)
     {
@@ -173,8 +186,8 @@ public class astar_path : path
         // Validate + add the move from the first waypoint to the start
         Vector3 start_validated = start;
         if (add_start) start_validated = agent.validate_position(start, out add_start);
-        if (add_start && agent.validate_move(start, end.entrypoint))
-            path.Add(start);
+        if (add_start && agent.validate_move(start_validated, end.entrypoint))
+            path.Add(start_validated);
 
         // Return the path to get start-to-finish order
         path.Reverse();
@@ -398,37 +411,46 @@ public class astar_path : path
                                 centre = agent.validate_position(centre, out bool valid);
                                 if (!valid) continue;
 
-                                // Check if the move to the grid point from
-                                // the start/goal point is valid
-                                if (stage == STAGE.START_SEARCH)
+                                switch (stage)
                                 {
-                                    if (!agent.validate_move(start, centre))
-                                        continue;
-                                }
-                                else if (stage == STAGE.GOAL_SEARCH)
-                                {
-                                    if (!agent.validate_move(centre, goal))
-                                        continue;
-                                }
+                                    case STAGE.START_SEARCH:
 
-                                // Found a valid point, move to the next pathfinding stage
-                                endpoint_search_stage = 0;
-                                if (stage == STAGE.START_SEARCH)
-                                {
-                                    start_waypoint = new waypoint(x, y, z)
-                                    {
-                                        entrypoint = centre,
-                                        best_distance_to_start = 0
-                                    };
-                                    open_set[start_waypoint] = start_waypoint;
-                                    stage = STAGE.GOAL_SEARCH;
+                                        // Check that the move to the grid point 
+                                        // from the start point is valid
+                                        if (!agent.validate_move(start, centre))
+                                            continue;
+
+                                        // Set+add the start waypoint
+                                        start_waypoint = new waypoint(x, y, z)
+                                        {
+                                            entrypoint = centre,
+                                            best_distance_to_start = 0
+                                        };
+                                        open_set[start_waypoint] = start_waypoint;
+
+                                        // Advance the stage
+                                        endpoint_search_stage = 0;
+                                        stage = STAGE.GOAL_SEARCH;
+                                        return;
+
+                                    case STAGE.GOAL_SEARCH:
+
+                                        // Check that the move to the goal point 
+                                        // from the grid point is valid
+                                        if (!agent.validate_move(centre, goal))
+                                            continue;
+
+                                        // Set the goal waypoint
+                                        goal_waypoint = new waypoint(x, y, z) { entrypoint = centre };
+
+                                        // Advance the stage
+                                        endpoint_search_stage = 0;
+                                        stage = STAGE.PATHFIND;
+                                        return;
+
+                                    default:
+                                        throw new System.Exception("Invalid pathing stage!");
                                 }
-                                else if (stage == STAGE.GOAL_SEARCH)
-                                {
-                                    goal_waypoint = new waypoint(x, y, z) { entrypoint = centre };
-                                    stage = STAGE.PATHFIND;
-                                }
-                                return;
                             }
                 }
 
@@ -494,6 +516,28 @@ public class astar_path : path
         }
     }
 
+    [test_method]
+    public static bool test_waypoint_hash()
+    {
+        var dict = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
+        for (int x = -10; x <= 10; ++x)
+            for (int y = -10; y <= 10; ++y)
+                for (int z = -10; z <= 10; ++z)
+                {
+                    var w = new waypoint(x, y, z);
+                    w.entrypoint = new Vector3(x, y, z);
+                    if (dict.TryGetValue(w, out waypoint found))
+                    {
+                        int hash_1 = w.GetHashCode();
+                        int hash_2 = found.GetHashCode();
+                        return false;
+                    }
+                    dict[w] = w;
+                }
+
+        return true;
+    }
+
     /// <summary> Class to order waypoints by their hash code. </summary>
     class increasing_hash_code : IComparer<waypoint>
     {
@@ -533,10 +577,22 @@ public class astar_path : path
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
 
+        int min_hash_code = int.MaxValue;
+        int max_hash_code = int.MinValue;
+        foreach (var kv in closed_set)
+        {
+            int hc = kv.Value.GetHashCode();
+            if (hc < min_hash_code) min_hash_code = hc;
+            if (hc > max_hash_code) max_hash_code = hc;
+        }
+
         Gizmos.color = Color.blue;
         foreach (var kv in closed_set)
         {
             waypoint w = kv.Value;
+            float rescaled_hc = w.GetHashCode() - min_hash_code;
+            rescaled_hc /= (max_hash_code - min_hash_code);
+            Gizmos.color = new Color(rescaled_hc, 0, 1 - rescaled_hc);
             if (w.came_from != null)
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
