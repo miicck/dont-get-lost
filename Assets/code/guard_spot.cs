@@ -87,7 +87,7 @@ public class guard_spot : settler_interactable
             if (this == null || target == null)
                 return;
 
-            if (utils.move_towards(transform, target.projectile_target.position, Time.deltaTime * 20f))
+            if (utils.move_towards(transform, target.projectile_target(), Time.deltaTime * 20f))
             {
                 target.take_damage(10);
                 Destroy(gameObject);

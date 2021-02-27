@@ -375,7 +375,7 @@ public class town_gate : portal, IAddsToInspectionText
             }
 
             Vector3 disp = fighting.transform.position - c.transform.position;
-            if (disp.magnitude > Mathf.Max(c.melee_range, fighting.melee_range))
+            if (disp.magnitude > Mathf.Max(c.pathfinding_resolution, fighting.pathfinding_resolution))
             {
                 complete = true;
                 return;
@@ -388,7 +388,7 @@ public class town_gate : portal, IAddsToInspectionText
             forward.y = 0;
             c.transform.forward = forward;
 
-            c.transform.position = fight_centre - fight_axis * 0.5f * c.melee_range;
+            c.transform.position = fight_centre - fight_axis * 0.5f * c.pathfinding_resolution;
 
             foreach (var arm in c.GetComponentsInChildren<arm>())
             {
@@ -429,18 +429,18 @@ public class town_gate : portal, IAddsToInspectionText
 
             // Run melee cooldown
             timer += Time.deltaTime * 1f;
-            if (timer > c.melee_cooldown)
+            if (timer > c.attack_cooldown)
             {
-                fighting.take_damage(c.melee_damage);
+                fighting.take_damage(c.attack_damage);
                 timer = 0;
             }
 
             // Apply fight animation
-            float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * timer / c.melee_cooldown), 10);
-            float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.melee_cooldown), 10);
+            float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * timer / c.attack_cooldown), 10);
+            float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.attack_cooldown), 10);
 
             c.transform.position = fight_centre +
-                fight_axis * 0.5f * c.melee_range * (0.2f * Mathf.Max(cos, sin) - 1f);
+                fight_axis * 0.5f * c.pathfinding_resolution * (0.2f * Mathf.Max(cos, sin) - 1f);
 
             for (int i = 0; i < arm_targets.Count; ++i)
             {

@@ -30,6 +30,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &5176787700270193536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,6 +61,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &5177377472906439661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,6 +92,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &4311103593533355090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,6 +143,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1 &7589039340740881012
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,23 +191,20 @@ MonoBehaviour:
   is_client_side: 0
   display_name: crocodile
   plural_name: crocodiles
-  walk_speed: 1
-  run_speed: 2
-  max_health: 150
   pathfinding_resolution: 1
   height: 0.91
-  agro_range: 5
+  walk_speed: 1
+  run_speed: 2
   rotation_lerp_speed: 1
-  idle_walk_distance: 10
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 3
-  melee_damage: 60
-  friendliness: 0
   can_walk: 1
   can_swim: 1
   align_to_terrain: 1
-  projectile_target: {fileID: 0}
+  max_health: 150
+  friendliness: 0
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
+  dont_despawn_automatically: 0
 --- !u!1001 &6860058261669453103
 PrefabInstance:
   m_ObjectHideFlags: 0

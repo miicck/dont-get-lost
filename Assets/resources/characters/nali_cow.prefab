@@ -30,6 +30,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &5769069357815354398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,23 +98,19 @@ MonoBehaviour:
   is_client_side: 0
   display_name: nali cow
   plural_name: nali cows
-  walk_speed: 1
-  run_speed: 4
-  max_health: 400
   pathfinding_resolution: 0.65
   height: 1.08
-  agro_range: 5
+  walk_speed: 1
+  run_speed: 4
   rotation_lerp_speed: 1
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 1
-  melee_damage: 10
-  friendliness: 1
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  projectile_target: {fileID: 0}
+  max_health: 400
+  friendliness: 1
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
   dont_despawn_automatically: 0
 --- !u!114 &1678239474845649265
 MonoBehaviour:
@@ -145,6 +142,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1001 &2815020537152091421
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -99,23 +99,20 @@ MonoBehaviour:
   is_client_side: 0
   display_name: thin zombie
   plural_name: thin zombies
-  walk_speed: 0.5
-  run_speed: 3
-  max_health: 150
   pathfinding_resolution: 0.5
   height: 1.55
-  agro_range: 5
+  walk_speed: 0.5
+  run_speed: 3
   rotation_lerp_speed: 4
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.75
-  melee_cooldown: 1
-  melee_damage: 10
-  friendliness: 0
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  projectile_target: {fileID: 0}
+  max_health: 150
+  friendliness: 0
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 70
+  dont_despawn_automatically: 0
 --- !u!114 &3755732905841746269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,6 +160,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &6281305333925251998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -233,6 +231,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1001 &6710866136331910359
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -240,6 +239,22 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 9189744706963915491}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5209026
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5209026
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5209026
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -251,6 +266,10 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70710784
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_LocalRotation.x
@@ -265,14 +284,6 @@ PrefabInstance:
       value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.70710784
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
@@ -283,18 +294,6 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.5209026
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.5209026
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.5209026
       objectReference: {fileID: 0}
     - target: {fileID: -7215238579474460519, guid: 1ed32b1d6869c2649b92dacc854cbde9, type: 3}
       propertyPath: m_RootOrder

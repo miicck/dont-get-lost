@@ -20,26 +20,30 @@ public class character : networked,
     INotPathBlocking, IDontBlockItemLogisitcs,
     IAcceptsDamage, IPlayerInteractable, IPathingAgent
 {
-    // Character behaviour
+    //############################################//
+    // Parameters determining character behaviour //
+    //############################################//
+
+    public const float AGRO_RANGE = 8f;
+    public const float IDLE_WALK_RANGE = 5f;
+
     public string display_name;
     public string plural_name;
-    public float walk_speed = 1f;
-    public float run_speed = 4f;
-    public int max_health = 10;
+
     public float pathfinding_resolution = 0.5f;
     public float height = 2f;
-    public float agro_range = 5f;
+    public float walk_speed = 1f;
+    public float run_speed = 4f;
     public float rotation_lerp_speed = 1f;
-    public float idle_walk_distance = 4f;
-    public float flee_distance = 4f;
-    public float melee_range = 0.5f;
-    public float melee_cooldown = 1f;
-    public int melee_damage = 10;
-    public FRIENDLINESS friendliness;
     public bool can_walk = true;
     public bool can_swim = false;
     public bool align_to_terrain = false;
-    public Transform projectile_target;
+
+    public int max_health = 10;
+    public FRIENDLINESS friendliness;
+    public float attack_time = 1f;
+    public float attack_cooldown = 1f;
+    public int attack_damage = 50;
 
     /// <summary> The object currently controlling this character. </summary>
     public ICharacterController controller
@@ -209,7 +213,7 @@ public class character : networked,
         if (chunk.at(transform.position, true) == null) return;
 
         // Don't do anything if dead
-        if (health.value <= 0) return;
+        if (is_dead) return;
 
         controller?.control(this);
     }
@@ -342,7 +346,7 @@ public class character : networked,
     //#######//
 
     dead_character dead_version;
-    bool is_dead => dead_version != null;
+    public bool is_dead => dead_version != null;
 
     void die()
     {
@@ -497,20 +501,16 @@ public class character : networked,
         return new default_character_control();
     }
 
-    float last_attack_time = 0;
-    public void melee_attack(player p)
-    {
-        if (Time.realtimeSinceStartup - last_attack_time > melee_cooldown)
-        {
-            p.take_damage(melee_damage);
-            last_attack_time = Time.realtimeSinceStartup;
-        }
-    }
-
     public bool check_agro(player p)
     {
         if (p.fly_mode) return false; // Don't agro in fly mode
-        return (p.transform.position - transform.position).magnitude < agro_range;
+        return (p.transform.position - transform.position).magnitude < AGRO_RANGE;
+    }
+
+    public bool check_deagro(player p)
+    {
+        if (p.fly_mode) return true;
+        return (p.transform.position - transform.position).magnitude > 2f * AGRO_RANGE;
     }
 
     /// <summary> Call to put the character somewhere sensible. </summary>
@@ -528,8 +528,11 @@ public class character : networked,
         }
     }
 
-    public bool move_towards(Vector3 point, float speed, out bool failed, float arrive_distance = 0.25f)
+    public bool move_towards(Vector3 point, float speed, out bool failed, float arrive_distance = -1)
     {
+        if (arrive_distance < 0)
+            arrive_distance = pathfinding_resolution / 2f;
+
         // Work out how far to the point
         Vector3 delta = point - transform.position;
         float dis = Time.deltaTime * speed;
@@ -584,6 +587,11 @@ public class character : networked,
         }
 
         return (point - new_pos).magnitude < arrive_distance;
+    }
+
+    public Vector3 projectile_target()
+    {
+        return transform.position + Vector3.up * height / 2f;
     }
 
     //###############//
@@ -688,6 +696,7 @@ public class character : networked,
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(character), true)]
+    [UnityEditor.CanEditMultipleObjects]
     new public class editor : networked.editor
     {
         public override void OnInspectorGUI()
@@ -777,7 +786,7 @@ public class idle_wander : ICharacterController
         if (path == null)
         {
             Vector3 start = c.transform.position;
-            random_path.success_func sf = (v) => (v - start).magnitude > c.idle_walk_distance;
+            random_path.success_func sf = (v) => (v - start).magnitude > character.IDLE_WALK_RANGE;
             path = new random_path(start, sf, sf, c);
             path.on_invalid_start = () => c?.unstuck();
             index = 0;
@@ -916,21 +925,35 @@ public class chase_controller : ICharacterController
     chase_path path;
     int index;
     Transform chasing;
+    IAcceptsDamage to_damage;
+    attack_point attack;
 
-    public chase_controller(Transform chasing)
+    public chase_controller(Transform chasing, IAcceptsDamage to_damage)
     {
         this.chasing = chasing;
+        this.to_damage = to_damage;
     }
 
     public void control(character c)
     {
+        if (attack != null && attack.state == attack_point.STATE.ATTACKING)
+        {
+            // I'm attacking
+            attack.set_animation(c);
+            return;
+        }
+
         if (path == null)
         {
             // Decrease allowed pathfinding iterations for closer targets 
             // (so we fail more quickly in hopeless pathing cases)
             int max_iter = (int)(c.transform.position - chasing.transform.position).magnitude;
             max_iter = Mathf.Min(500, 10 + max_iter * max_iter);
-            path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter);
+
+            float goal_distance = c.pathfinding_resolution * 0.8f;
+            if (attack != null) goal_distance *= 4; // Don't need to get so close if attack isn't ready
+
+            path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter, goal_distance: goal_distance);
 
             path.on_state_change_listener = (s) =>
             {
@@ -989,6 +1012,18 @@ public class chase_controller : ICharacterController
         if (c.move_towards(path[index], c.run_speed, out bool failed))
             ++index;
 
+        if (attack == null)
+            if (c.distance_to(chasing) < c.pathfinding_resolution)
+            {
+                attack = attack_point.create(c, chasing);
+                attack.on_strike = () =>
+                {
+                    if (c.is_dead) return;
+                    if (c.distance_to(chasing) < c.pathfinding_resolution * 2f)
+                        to_damage.take_damage(c.attack_damage);
+                };
+            }
+
         if (failed) path = null;
     }
 
@@ -996,6 +1031,158 @@ public class chase_controller : ICharacterController
     public void draw_gizmos() { path?.draw_gizmos(); }
     public void draw_inspector_gui() { }
     public string inspect_info() { return "Chasing"; }
+}
+
+public class attack_point : MonoBehaviour
+{
+    public float cooldown_time { get; private set; }
+    public float attack_time { get; private set; }
+
+    public float elapsed_time
+    {
+        get => _elapsed_time;
+        set
+        {
+            _elapsed_time = value;
+            if (_elapsed_time > attack_time + cooldown_time) state = STATE.COMPLETE;
+            else if (_elapsed_time > attack_time) state = STATE.COOLDOWN;
+            else state = STATE.ATTACKING;
+        }
+    }
+    float _elapsed_time;
+
+    public enum STATE
+    {
+        ATTACKING,
+        COOLDOWN,
+        COMPLETE
+    }
+
+    public STATE state
+    {
+        get => _state;
+        set
+        {
+            if (_state == value) return; // No change
+            _state = value;
+            switch (_state)
+            {
+                case STATE.COOLDOWN:
+                    on_strike?.Invoke();
+                    break;
+
+                case STATE.COMPLETE:
+                    Destroy(gameObject);
+                    break;
+            }
+        }
+    }
+    STATE _state;
+
+    public void set_animation(character c)
+    {
+        float a = Mathf.Clamp(elapsed_time / attack_time, 0f, 1f);
+        float s = Mathf.Sin(a * a * Mathf.PI);
+        c.transform.position = transform.position - transform.forward * s;
+        c.transform.forward = transform.forward;
+    }
+
+    public delegate void callback();
+    public callback on_strike;
+
+    public static attack_point create(character c, Transform target_transform)
+    {
+        var ret = new GameObject(c.name + "_attack_point").AddComponent<attack_point>();
+        ret.elapsed_time = 0f;
+        ret.cooldown_time = c.attack_cooldown;
+        ret.attack_time = c.attack_time;
+
+        ret.transform.position = c.transform.position;
+        ret.transform.forward = (target_transform.position - c.transform.position);
+
+        return ret;
+    }
+
+    private void Update()
+    {
+        // Destroy myself when attack is over
+        elapsed_time += Time.deltaTime;
+    }
+
+    private void OnDrawGizmos()
+    {
+        switch (state)
+        {
+            case STATE.ATTACKING:
+                Gizmos.color = Color.red;
+                break;
+
+            case STATE.COOLDOWN:
+                Gizmos.color = Color.green;
+                break;
+
+            case STATE.COMPLETE:
+                Gizmos.color = Color.blue;
+                break;
+        }
+
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward);
+    }
+}
+
+public class attack_controller : ICharacterController
+{
+    Transform target;
+    float timer = 0;
+    string info = "Attacking";
+
+    Vector3 attack_position;
+    Vector3 attack_direction;
+
+    public bool triggered { get; private set; }
+    public void trigger(character c)
+    {
+        triggered = true;
+        attack_position = target.position;
+        attack_direction = (target.position - c.transform.position).normalized;
+    }
+
+    public attack_controller(Transform target)
+    {
+        this.target = target;
+    }
+
+    public void control(character c)
+    {
+        // Increment the timer
+        timer += Time.deltaTime;
+
+        // Attack is over
+        if (timer > c.attack_time)
+        {
+            float cooldown = timer - c.attack_time;
+            if (cooldown < c.attack_cooldown)
+            {
+                info = "Attack on cooldown";
+                return; // Attack on cooldown
+            }
+
+            // Attack has cooled down
+            triggered = false;
+            timer = 0;
+        }
+
+        float t = timer / c.attack_time;
+        float s = Mathf.Sin(t * Mathf.PI);
+        info = "Attacking " + t;
+
+        c.transform.position = attack_position - attack_direction * (s + 0.5f);
+    }
+
+    public void draw_gizmos() { }
+    public void draw_inspector_gui() { }
+    public void on_end_control(character c) { }
+    public string inspect_info() { return info; }
 }
 
 public class default_character_control : ICharacterController
@@ -1007,30 +1194,30 @@ public class default_character_control : ICharacterController
         if (subcontroller == null)
             subcontroller = new idle_wander();
 
+        if (player.current == null) return;
+
         if (subcontroller is idle_wander)
         {
-            if (player.current != null)
-                switch (c.friendliness)
-                {
-                    case character.FRIENDLINESS.FRIENDLY:
-                        break; // Just wander around idly
+            switch (c.friendliness)
+            {
+                case character.FRIENDLINESS.FRIENDLY:
+                    break; // Just wander around idly
 
-                    case character.FRIENDLINESS.AFRAID:
-                        if (c.distance_to(player.current) < c.agro_range)
-                            subcontroller = new flee_controller(player.current.transform);
-                        break;
+                case character.FRIENDLINESS.AFRAID:
+                    if (c.check_agro(player.current))
+                        subcontroller = new flee_controller(player.current.transform);
+                    break;
 
-                    case character.FRIENDLINESS.AGRESSIVE:
-                        if (c.distance_to(player.current) < c.agro_range)
-                            subcontroller = new chase_controller(player.current.transform);
-                        break;
-                }
+                case character.FRIENDLINESS.AGRESSIVE:
+                    if (c.check_agro(player.current))
+                        subcontroller = new chase_controller(player.current.transform, player.current);
+                    break;
+            }
         }
         else
         {
-            if (player.current != null)
-                if (c.distance_to(player.current) > c.agro_range * 2f)
-                    subcontroller = new idle_wander();
+            if (c.check_deagro(player.current))
+                subcontroller = new idle_wander();
         }
 
         subcontroller.control(c);
@@ -1040,247 +1227,4 @@ public class default_character_control : ICharacterController
     public void draw_gizmos() { subcontroller?.draw_gizmos(); }
     public void draw_inspector_gui() { subcontroller?.draw_inspector_gui(); }
     public string inspect_info() { return subcontroller?.inspect_info(); }
-}
-
-public class default_character_control_old : ICharacterController
-{
-    // The character being controlled
-    character character
-    {
-        get => _character;
-        set
-        {
-            if (_character == null) _character = value;
-            if (_character != value)
-                throw new System.Exception("Tried to overwrite character!");
-        }
-    }
-    character _character;
-
-    // The path we walk along idly
-    path idle_path
-    {
-        get => _idle_path;
-        set
-        {
-            _idle_path = value;
-            idle_path_point = 0;
-            idle_path_direction = 1;
-        }
-    }
-    path _idle_path;
-    int idle_path_point = 0;
-    int idle_path_direction = 1;
-
-    // The path that we're chasing/fleeing from the player
-    path agro_path
-    {
-        get => _agro_path;
-        set
-        {
-            _agro_path = value;
-            agro_path_progress = 0;
-        }
-    }
-    path _agro_path;
-    int agro_path_progress;
-    int agro_path_idle_link = 0; // Where, in the idle path, the agro path begins
-
-    public void control(character c)
-    {
-        character = c;
-
-        // Ensure we have an idle path to walk
-        if (idle_path == null)
-        {
-            random_path.success_func f = (v) =>
-                (v - character.transform.position).magnitude > character.idle_walk_distance;
-            idle_path = new random_path(character.transform.position, f, f, character);
-            return;
-        }
-
-        // If we're not already agro to a player/a player is in agro range
-        if (agro_path == null && c.check_agro(player.current))
-            switch (character.friendliness)
-            {
-                case character.FRIENDLINESS.AGRESSIVE:
-
-                    // Find the nearest point along the idle path to the player
-                    float min_dis = Mathf.Infinity;
-                    for (int i = 0; i < idle_path.length; ++i)
-                    {
-                        float dis = (idle_path[i] - player.current.transform.position).magnitude;
-                        if (dis < min_dis)
-                        {
-                            min_dis = dis;
-                            agro_path_idle_link = i;
-                        }
-                    }
-
-                    // Path from that point, to the player
-                    agro_path = new chase_path(idle_path[agro_path_idle_link],
-                        player.current.transform, character,
-                        max_iterations: 100,
-                        goal_distance: character.melee_range * 0.8f);
-
-                    break;
-
-                case character.FRIENDLINESS.AFRAID:
-
-                    // Find the furthest point along the idle path to the player
-                    float max_dis = Mathf.Infinity;
-                    for (int i = 0; i < idle_path.length; ++i)
-                    {
-                        float dis = (idle_path[i] - player.current.transform.position).magnitude;
-                        if (dis > max_dis)
-                        {
-                            max_dis = dis;
-                            agro_path_idle_link = i;
-                        }
-                    }
-
-                    // Path from that point, away from the player
-                    agro_path = new flee_path(character.transform.position,
-                        player.current.transform, character);
-
-                    break;
-            }
-
-        if (agro_path != null)
-        {
-            if (player.current == null || player.current.is_dead)
-            {
-                // Stop chasing
-                agro_path = null;
-                idle_path = null;
-                return;
-            }
-
-            switch (agro_path.state)
-            {
-                // Chase path failed, reset to no chasing
-                case path.STATE.FAILED:
-                    agro_path = null;
-                    break;
-
-                // Continue chase pathfinding
-                case path.STATE.SEARCHING:
-                    agro_path.pathfind(load_balancing.iter);
-                    break;
-
-                // Chase the player
-                case path.STATE.COMPLETE:
-
-                    if (idle_path_point != agro_path_idle_link)
-                    {
-                        // Get to the point in the idle path where the
-                        // chase path starts from
-                        if (character.move_towards(idle_path[idle_path_point],
-                            character.run_speed, out bool failed))
-                        {
-                            if (failed) agro_path = null;
-                            int dir = agro_path_idle_link - idle_path_point;
-                            if (dir > 0) idle_path_point += 1;
-                            else if (dir < 0) idle_path_point -= 1;
-                        }
-                    }
-                    else
-                    {
-                        float agro_path_speed = character.run_speed;
-                        if (agro_path_progress == agro_path.length - 1)
-                        {
-                            // Got to the end of the path             
-                            switch (character.friendliness)
-                            {
-                                case character.FRIENDLINESS.AGRESSIVE:
-                                    // Close to the player, slow down 
-                                    // just enough to keep up
-                                    agro_path_speed = Mathf.Min(
-                                        character.run_speed,
-                                        player.BASE_SPEED * 1.2f);
-                                    break;
-
-                                case character.FRIENDLINESS.AFRAID:
-                                    // Keep fleeing
-                                    agro_path = new flee_path(character.transform.position,
-                                        player.current.transform, character);
-                                    return;
-                            }
-                        }
-
-                        if (character.move_towards(agro_path[agro_path_progress],
-                            agro_path_speed, out bool failed))
-                        {
-                            if (failed) agro_path = null;
-                            agro_path_progress = Mathf.Min(
-                                agro_path_progress + 1,
-                                agro_path.length - 1);
-                        }
-
-                        // Attack the player if we're close enough
-                        if ((player.current.transform.position -
-                            character.transform.position).magnitude < character.melee_range)
-                            character.melee_attack(player.current);
-                    }
-                    return;
-
-            }
-        }
-
-        // Move around idly
-        switch (idle_path.state)
-        {
-            // Walk back and forth along the idle path
-            case path.STATE.COMPLETE:
-                if (character.move_towards(idle_path[idle_path_point],
-                    character.walk_speed, out bool failed))
-                {
-                    idle_path_point += idle_path_direction;
-                    if (idle_path_point < 0)
-                    {
-                        idle_path_point = 0;
-                        idle_path_direction = 1;
-                    }
-                    else if (idle_path_point >= idle_path.length)
-                    {
-                        idle_path_point = idle_path.length - 1;
-                        idle_path_direction = -1;
-                    }
-
-                }
-                if (failed) idle_path = null;
-                return;
-
-            // Couldn't create an idle path, delete the character
-            case path.STATE.FAILED:
-                character.delete();
-                idle_path = null;
-                return;
-
-            // Continue idle pathfinding
-            case path.STATE.SEARCHING:
-                idle_path.pathfind(load_balancing.iter);
-                return;
-        }
-    }
-
-    public void on_end_control(character c) { }
-
-    public void draw_gizmos()
-    {
-        idle_path?.draw_gizmos();
-        agro_path?.draw_gizmos();
-    }
-
-    public string inspect_info()
-    {
-        return "";
-    }
-
-    public void draw_inspector_gui()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorGUILayout.TextArea(idle_path?.info_text());
-#endif
-    }
 }

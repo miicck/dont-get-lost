@@ -30,6 +30,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!114 &4255820572150909840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,6 +61,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!114 &8103663972935078560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,6 +92,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!114 &1767887126577097485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,6 +123,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!1 &4986425168613806398
 GameObject:
   m_ObjectHideFlags: 0
@@ -167,23 +171,19 @@ MonoBehaviour:
   is_client_side: 0
   display_name: scorpion
   plural_name: scorpions
-  walk_speed: 1
-  run_speed: 4
-  max_health: 10
   pathfinding_resolution: 0.8
   height: 1.24
-  agro_range: 5
+  walk_speed: 1
+  run_speed: 4
   rotation_lerp_speed: 1
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 1
-  melee_damage: 10
-  friendliness: 0
   can_walk: 1
   can_swim: 0
   align_to_terrain: 1
-  projectile_target: {fileID: 0}
+  max_health: 10
+  friendliness: 0
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
   dont_despawn_automatically: 0
 --- !u!114 &8870207612371569771
 MonoBehaviour:
@@ -215,6 +215,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!114 &7831711070357871137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,6 +266,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.3
   step_length_boost: 0
+  state: 0
 --- !u!1001 &8102226384761899163
 PrefabInstance:
   m_ObjectHideFlags: 0

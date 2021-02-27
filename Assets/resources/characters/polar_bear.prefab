@@ -30,6 +30,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &5238600132218561938
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,6 +61,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1 &2890881953215256343
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,23 +109,19 @@ MonoBehaviour:
   is_client_side: 0
   display_name: polar bear
   plural_name: polar bears
-  walk_speed: 1
-  run_speed: 3
-  max_health: 200
   pathfinding_resolution: 0.5
   height: 2
-  agro_range: 5
+  walk_speed: 1
+  run_speed: 3
   rotation_lerp_speed: 1
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 3
-  melee_damage: 50
-  friendliness: 0
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  projectile_target: {fileID: 0}
+  max_health: 200
+  friendliness: 0
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
   dont_despawn_automatically: 0
 --- !u!114 &4016653115268046177
 MonoBehaviour:
@@ -155,6 +153,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &7621273039995082526
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -205,6 +204,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1001 &5695223708984364114
 PrefabInstance:
   m_ObjectHideFlags: 0

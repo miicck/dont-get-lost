@@ -108,6 +108,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!1 &3868724998239185475
 GameObject:
   m_ObjectHideFlags: 0
@@ -182,8 +183,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character: {fileID: 8846711120022476090}
   wing_tip: {fileID: 0}
+  is_flying: 0
   max_angle: 48.77
   min_angle: -37.17
+  flap_period: 0.25
   fold_back_angles_min: {x: 18.6, y: -53.56, z: 45.18}
   fold_back_angles_max: {x: 59.41, y: -66.82, z: 26.6}
   leg_flap_inherit: 0.25
@@ -220,6 +223,7 @@ MonoBehaviour:
   min_footstep_pitch: 0.95
   max_footsetp_pitch: 1.05
   step_length_boost: 0
+  state: 0
 --- !u!114 &421950273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -234,8 +238,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character: {fileID: 8846711120022476090}
   wing_tip: {fileID: 0}
+  is_flying: 0
   max_angle: 48.77
   min_angle: -37.17
+  flap_period: 0.25
   fold_back_angles_min: {x: 18.6, y: -53.56, z: 45.18}
   fold_back_angles_max: {x: 59.41, y: -66.82, z: 26.6}
   leg_flap_inherit: 0.25
@@ -363,23 +369,19 @@ MonoBehaviour:
   is_client_side: 0
   display_name: chicken
   plural_name: chickens
-  walk_speed: 1
-  run_speed: 4
-  max_health: 25
   pathfinding_resolution: 0.5
   height: 1
-  agro_range: 5
+  walk_speed: 1
+  run_speed: 4
   rotation_lerp_speed: 1
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 0.5
-  melee_damage: 5
-  friendliness: 2
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  projectile_target: {fileID: 2078055932527563833}
+  max_health: 25
+  friendliness: 2
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
   dont_despawn_automatically: 0
 --- !u!114 &2836216397017315443
 MonoBehaviour:
