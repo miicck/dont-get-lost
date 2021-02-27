@@ -916,7 +916,6 @@ public class chase_controller : ICharacterController
             path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter);
             path.on_state_change_listener = (s) =>
             {
-                return;
                 if (s == path.STATE.COMPLETE || s == path.STATE.PARTIALLY_COMPLETE)
                 {
                     // Ensure the path actually goes somewhere

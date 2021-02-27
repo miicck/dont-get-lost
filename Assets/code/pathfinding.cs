@@ -103,8 +103,8 @@ public abstract class path
 /// <summary> Carry out pathfinding using the A* algorithm. </summary>
 public class astar_path : path
 {
-    // These would ideally be sorted hash sets, but that doesn't exist yet?
-    // (they will in a future version of C#)
+    // Once SortedSet gets a TryGet method (.NET Framework 4.7.2) 
+    // these can be made into SortedSets.
     protected SortedDictionary<waypoint, waypoint> open_set;
     protected SortedDictionary<waypoint, waypoint> closed_set;
     protected waypoint start_waypoint;
@@ -148,8 +148,10 @@ public class astar_path : path
         if (!require_valid_endpoint && !accept_best_incomplete_path)
             Debug.LogError("Paths that don't require a valid endpoint should accept incomplete paths!");
 
-        open_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
-        closed_set = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
+        // Sort by increasing waypoint magnitude, so that the first 
+        // elements of these dictionaries are closest to the goal
+        open_set = new SortedDictionary<waypoint, waypoint>(new waypoint.increasing_magnitude());
+        closed_set = new SortedDictionary<waypoint, waypoint>(new waypoint.increasing_magnitude());
         stage = STAGE.START_SEARCH;
     }
 
@@ -480,6 +482,7 @@ public class astar_path : path
         public int x { get; private set; }
         public int y { get; private set; }
         public int z { get; private set; }
+        public int square_magnitude { get; private set; }
 
         public Vector3 entrypoint;
         public waypoint came_from;
@@ -489,6 +492,7 @@ public class astar_path : path
         public waypoint(int x, int y, int z)
         {
             this.x = x; this.y = y; this.z = z;
+            this.square_magnitude = x * x + y * y + z * z;
         }
 
         /// <summary> Returns true if the given waypoint is
@@ -500,48 +504,42 @@ public class astar_path : path
             return false;
         }
 
-        /// <summary> A unique hash code that increases as we move away 
-        /// from the origin. This means that it can be used as both a 
-        /// heuristic and as a location in a hash table. </summary>
+        /// <summary> A simple hash code (pathfinding does not actually use this - 
+        /// objects are compared by the IComparers defined below) </summary>
         public override int GetHashCode()
         {
-            int xh = x >= 0 ? 2 * x : 2 * (-x) - 1;
-            int yh = y >= 0 ? 2 * y : 2 * (-y) - 1;
-            int zh = z >= 0 ? 2 * z : 2 * (-z) - 1;
-            int mxy = xh > yh ? xh : yh;
-            int m = mxy > zh ? mxy : zh;
-            int s = m * m * m;
-            if (mxy == m) return s + xh + (m - yh) + (2 * m + 1) * z;
-            else return s + (2 * m + 1) * (m + 1) + mxy * (mxy + 1) + yh - xh;
+            return x ^ y ^ z;
         }
-    }
 
-    [test_method]
-    public static bool test_waypoint_hash()
-    {
-        var dict = new SortedDictionary<waypoint, waypoint>(new increasing_hash_code());
-        for (int x = -10; x <= 10; ++x)
-            for (int y = -10; y <= 10; ++y)
-                for (int z = -10; z <= 10; ++z)
-                {
-                    var w = new waypoint(x, y, z);
-                    w.entrypoint = new Vector3(x, y, z);
-                    if (dict.TryGetValue(w, out waypoint found))
-                    {
-                        int hash_1 = w.GetHashCode();
-                        int hash_2 = found.GetHashCode();
-                        return false;
-                    }
-                    dict[w] = w;
-                }
+        /// <summary> Class used to sort waypoints into increasing magnitude order. </summary>
+        public class increasing_magnitude : IComparer<waypoint>
+        {
+            public static int CompareStatic(waypoint a, waypoint b)
+            {
+                // First, sort by increasing magnitude
+                int mc = a.square_magnitude.CompareTo(b.square_magnitude);
+                if (mc != 0) return mc;
 
-        return true;
-    }
+                // Then, sort by increasing coordinates
+                int xc = a.x.CompareTo(b.x); if (xc != 0) return xc;
+                int yc = a.y.CompareTo(b.y); if (yc != 0) return yc;
+                int zc = a.z.CompareTo(b.z); if (zc != 0) return zc;
 
-    /// <summary> Class to order waypoints by their hash code. </summary>
-    class increasing_hash_code : IComparer<waypoint>
-    {
-        public int Compare(waypoint a, waypoint b) { return a.GetHashCode().CompareTo(b.GetHashCode()); }
+                // These are the same
+                return 0;
+            }
+
+            public int Compare(waypoint a, waypoint b) { return CompareStatic(a, b); }
+        }
+
+        /// <summary> Class used to sort waypoints into decreasing magnitude order. </summary>
+        public class decreasing_magnitude : IComparer<waypoint>
+        {
+            public int Compare(waypoint a, waypoint b)
+            {
+                return increasing_magnitude.CompareStatic(b, a);
+            }
+        }
     }
 
     /// <summary> Draw information about the path. </summary>
@@ -577,22 +575,22 @@ public class astar_path : path
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
 
-        int min_hash_code = int.MaxValue;
-        int max_hash_code = int.MinValue;
+        int min_mag = int.MaxValue;
+        int max_mag = int.MinValue;
         foreach (var kv in closed_set)
         {
-            int hc = kv.Value.GetHashCode();
-            if (hc < min_hash_code) min_hash_code = hc;
-            if (hc > max_hash_code) max_hash_code = hc;
+            int mag = kv.Key.square_magnitude;
+            if (mag < min_mag) min_mag = mag;
+            if (mag > max_mag) max_mag = mag;
         }
 
         Gizmos.color = Color.blue;
         foreach (var kv in closed_set)
         {
             waypoint w = kv.Value;
-            float rescaled_hc = w.GetHashCode() - min_hash_code;
-            rescaled_hc /= (max_hash_code - min_hash_code);
-            Gizmos.color = new Color(rescaled_hc, 0, 1 - rescaled_hc);
+            float scaled = w.square_magnitude - min_mag;
+            scaled /= (max_mag - min_mag);
+            Gizmos.color = new Color(scaled, 0, 1 - scaled);
             if (w.came_from != null)
                 Gizmos.DrawLine(w.entrypoint, w.came_from.entrypoint);
         }
@@ -629,15 +627,9 @@ public class random_path : astar_path
 
         // Sort by decreasing distance from goal (which is set to start)
         // so that we are attempting to maximize distance from start.
-        open_set = new SortedDictionary<waypoint, waypoint>(new decreasing_hash_code());
+        open_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
         this.endpoint_successful = endpoint_successful;
         this.midpoint_successful = midpoint_successful;
-    }
-
-    /// <summary> Class to order waypoints by the negative of their hash code. </summary>
-    class decreasing_hash_code : IComparer<waypoint>
-    {
-        public int Compare(waypoint a, waypoint b) { return b.GetHashCode().CompareTo(a.GetHashCode()); }
     }
 
     public override void pathfind(int iterations)
