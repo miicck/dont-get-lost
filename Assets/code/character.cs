@@ -513,6 +513,21 @@ public class character : networked,
         return (p.transform.position - transform.position).magnitude < agro_range;
     }
 
+    /// <summary> Call to put the character somewhere sensible. </summary>
+    public void unstuck()
+    {
+        var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(
+            transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
+            out RaycastHit hit);
+
+        if (tc == null)
+            Debug.LogError("No terrain found to unstick " + name);
+        else
+        {
+            transform.position = hit.point;
+        }
+    }
+
     public bool move_towards(Vector3 point, float speed, out bool failed, float arrive_distance = 0.25f)
     {
         // Work out how far to the point
@@ -753,7 +768,7 @@ class healthbar : MonoBehaviour
 
 public class idle_wander : ICharacterController
 {
-    path path;
+    random_path path;
     int index;
     bool going_forward;
 
@@ -764,21 +779,22 @@ public class idle_wander : ICharacterController
             Vector3 start = c.transform.position;
             random_path.success_func sf = (v) => (v - start).magnitude > c.idle_walk_distance;
             path = new random_path(start, sf, sf, c);
+            path.on_invalid_start = () => c?.unstuck();
             index = 0;
             going_forward = true;
         }
 
         switch (path.state)
         {
-            case path.STATE.SEARCHING:
+            case global::path.STATE.SEARCHING:
                 path.pathfind(load_balancing.iter);
                 break;
 
-            case path.STATE.FAILED:
+            case global::path.STATE.FAILED:
                 path = null;
                 break;
 
-            case path.STATE.COMPLETE:
+            case global::path.STATE.COMPLETE:
                 walk_path(c);
                 break;
 
@@ -827,7 +843,7 @@ public class idle_wander : ICharacterController
 
 public class flee_controller : ICharacterController
 {
-    path path;
+    flee_path path;
     int index;
     Transform fleeing;
 
@@ -849,20 +865,21 @@ public class flee_controller : ICharacterController
         {
             // Get a new fleeing path
             path = new flee_path(c.transform.position, fleeing, c);
+            path.on_invalid_start = () => c?.unstuck();
             index = 0;
         }
 
         switch (path.state)
         {
-            case path.STATE.SEARCHING:
+            case global::path.STATE.SEARCHING:
                 path.pathfind(load_balancing.iter * 2);
                 break;
 
-            case path.STATE.FAILED:
+            case global::path.STATE.FAILED:
                 path = null;
                 break;
 
-            case path.STATE.COMPLETE:
+            case global::path.STATE.COMPLETE:
                 walk_path(c);
                 break;
 
@@ -896,7 +913,7 @@ public class flee_controller : ICharacterController
 
 public class chase_controller : ICharacterController
 {
-    path path;
+    chase_path path;
     int index;
     Transform chasing;
 
@@ -914,9 +931,10 @@ public class chase_controller : ICharacterController
             int max_iter = (int)(c.transform.position - chasing.transform.position).magnitude;
             max_iter = Mathf.Min(500, 10 + max_iter * max_iter);
             path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter);
+
             path.on_state_change_listener = (s) =>
             {
-                if (s == path.STATE.COMPLETE || s == path.STATE.PARTIALLY_COMPLETE)
+                if (s == global::path.STATE.COMPLETE || s == global::path.STATE.PARTIALLY_COMPLETE)
                 {
                     // Ensure the path actually goes somewhere
                     if (path.length < 2)
@@ -930,21 +948,25 @@ public class chase_controller : ICharacterController
                     if (delta.magnitude < c.pathfinding_resolution) path = null;
                 }
             };
+
+            // Unstick the character if we fail to find a valid start point
+            path.on_invalid_start = () => c?.unstuck();
+
             index = 0;
         }
 
         switch (path.state)
         {
-            case path.STATE.SEARCHING:
+            case global::path.STATE.SEARCHING:
                 path.pathfind(load_balancing.iter * 2);
                 break;
 
-            case path.STATE.FAILED:
+            case global::path.STATE.FAILED:
                 path = null;
                 break;
 
-            case path.STATE.COMPLETE:
-            case path.STATE.PARTIALLY_COMPLETE:
+            case global::path.STATE.COMPLETE:
+            case global::path.STATE.PARTIALLY_COMPLETE:
                 walk_path(c);
                 break;
 

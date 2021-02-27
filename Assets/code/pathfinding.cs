@@ -118,6 +118,10 @@ public class astar_path : path
     protected bool accept_best_incomplete_path = false;
     protected bool require_valid_endpoint = true;
 
+    public delegate void callback();
+    public callback on_invalid_start;
+    public callback on_invalid_end;
+
     /// <summary> The path found. </summary>
     protected List<Vector3> path;
     public override int length => path == null ? 0 : path.Count;
@@ -378,6 +382,18 @@ public class astar_path : path
             {
                 stage = STAGE.PATHFIND;
                 return;
+            }
+
+            // Call invalid start/end callbacks
+            switch(stage)
+            {
+                case STAGE.START_SEARCH:
+                    on_invalid_start?.Invoke();
+                    break;
+
+                case STAGE.GOAL_SEARCH:
+                    on_invalid_end?.Invoke();
+                    break;
             }
 
             state = STATE.FAILED;
@@ -715,6 +731,19 @@ public class chase_path : path
     List<Vector3> follow_path;
     Transform target;
     float goal_distance;
+    bool lost_target = false;
+
+    public astar_path.callback on_invalid_start
+    {
+        get => base_path.on_invalid_start;
+        set => base_path.on_invalid_start = value;
+    }
+
+    public astar_path.callback on_invalid_end
+    {
+        get => base_path.on_invalid_end;
+        set => base_path.on_invalid_end = value;
+    }
 
     public override int length
     {
@@ -751,10 +780,43 @@ public class chase_path : path
             return;
         }
 
+        if (lost_target) return;
+
         // See if the target has moved far enough to extend the path
         Vector3 delta = target.position - follow_path[follow_path.Count - 1];
         if (delta.magnitude > goal_distance)
-            follow_path.Add(target.position);
+        {
+            // Validate the new target position
+            Vector3 new_pos = agent.validate_position(target.position, out bool valid);
+            if (!valid)
+            {
+                // Invalid new posiiton
+                state = STATE.PARTIALLY_COMPLETE;
+                lost_target = true;
+                return;
+            }
+
+            // Validate the move to the new target position
+            Vector3 last_pos;
+            if (follow_path.Count > 0) last_pos = follow_path[follow_path.Count - 1];
+            else if (base_path.length > 0) last_pos = base_path[base_path.length - 1];
+            else
+            {
+                Debug.LogError("This probably shouldn't be possible");
+                lost_target = true;
+                return;
+            }
+
+            if (!agent.validate_move(last_pos, new_pos))
+            {
+                // Invalid move to new position
+                state = STATE.PARTIALLY_COMPLETE;
+                lost_target = true;
+                return;
+            }
+
+            follow_path.Add(new_pos);
+        }
     }
 
     public chase_path(Vector3 start, Transform target, IPathingAgent agent,
