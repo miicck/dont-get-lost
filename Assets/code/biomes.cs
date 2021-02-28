@@ -1341,3 +1341,36 @@ public class willow_lakes : biome
         return ++i_stage >= SIZE;
     }
 }
+
+public class haunted_forest : biome
+{
+    int i_stage = 0;
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.altitude = world.SEA_LEVEL + -2f + 6 * perlin(i / 32f, j / 32f);
+            p.beach_color = terrain_colors.charred_earth;
+            p.terrain_color = terrain_colors.charred_earth;
+            p.sky_color = sky_colors.smoke_grey;
+            p.water_color = water_colors.blood_red;
+            p.fog_distance = 5f;
+
+            if (random.range(0, 200) == 0)
+                p.object_to_generate = world_object.load("boulder_spiderwebs");
+            else if (random.range(0, 200) == 0)
+                p.object_to_generate = world_object.load("dead_tree_1_large_spiderwebs");
+            else if (random.range(0, 200) == 0)
+                p.object_to_generate = world_object.load("dead_tree_2");
+            else if (random.range(0, 500) == 0)
+                p.object_to_generate = world_object.load("small_smoke_spider_spawner");
+            else if (random.range(0, 500) == 0)
+                p.object_to_generate = world_object.load("skeleton_spawner");
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}

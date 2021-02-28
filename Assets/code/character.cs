@@ -1288,7 +1288,6 @@ public class attack_controller : ICharacterController
 public class default_character_control : ICharacterController
 {
     ICharacterController subcontroller;
-    float delta_awareness = 0;
 
     public void control(character c)
     {

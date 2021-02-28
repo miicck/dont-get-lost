@@ -39,6 +39,7 @@ public static class water_colors
     public static readonly Color cyan = new Color(0.5f, 1f, 0.95f);
     public static readonly Color swampy_green = new Color(0.41f, 0.51f, 0.10f);
     public static readonly Color mushroom_red = new Color(0.61f, 0.31f, 0.10f);
+    public static readonly Color blood_red = new Color(1f, 0.1f, 0.1f);
 }
 
 public static class character_colors

@@ -25,7 +25,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -56,7 +56,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -87,7 +87,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -118,7 +118,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -197,7 +197,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -258,7 +258,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -324,9 +324,9 @@ MonoBehaviour:
   align_to_terrain: 1
   max_health: 50
   friendliness: 0
-  attack_time: 1
-  attack_cooldown: 1
-  attack_damage: 50
+  attack_time: 0.25
+  attack_cooldown: 0.5
+  attack_damage: 10
   dont_despawn_automatically: 0
 --- !u!114 &7771279036862464209
 MonoBehaviour:
@@ -370,7 +370,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
@@ -401,7 +401,7 @@ MonoBehaviour:
   max_boost_at_speed: 7
   max_leg_stretch: 1.5
   custom_footstep_sound: {fileID: 8300000, guid: 5fd5096b61df6c34e833132699418100, type: 3}
-  footstep_volume_multiplier: 0.05
+  footstep_volume_multiplier: 0.01
   play_footsteps: 1
   min_footstep_pitch: 0.6
   max_footsetp_pitch: 1.4
