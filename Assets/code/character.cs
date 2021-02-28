@@ -247,6 +247,7 @@ public class character : networked,
 
     networked_variables.net_float y_rotation;
     networked_variables.net_int health;
+    networked_variables.net_int awareness;
     inventory loot;
 
     public override void on_init_network_variables()
@@ -259,20 +260,25 @@ public class character : networked,
             transform.rotation = Quaternion.Euler(ea);
         };
 
-        health = new networked_variables.net_int(default_value: max_health);
+        health = new networked_variables.net_int(
+            default_value: max_health,
+            min_value: 0, max_value: max_health);
 
         health.on_change = () =>
         {
-            if (health.value >= max_health)
-            {
-                if (_healthbar != null)
-                    Destroy(_healthbar.gameObject);
-            }
-            else
-                healthbar.belongs_to = this;
-
+            healthbar.set_fraction(health.value / (float)max_health);
+            healthbar.gameObject.SetActive(health.value != 0 && health.value != max_health);
             if (health.value <= 0)
                 die();
+        };
+
+        awareness = new networked_variables.net_int(
+            default_value: 0, min_value: 0, max_value: 100);
+
+        awareness.on_change = () =>
+        {
+            awareness_meter.set_fraction(awareness.value / 100f);
+            awareness_meter.gameObject.SetActive(awareness.value != 0 && awareness.value != 100);
         };
     }
 
@@ -320,7 +326,7 @@ public class character : networked,
     {
         var hm = hit_marker.create("-" + damage);
         hm.transform.position = transform.position + Vector3.up * height;
-
+        awareness.value = 100;
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;
     }
@@ -334,12 +340,106 @@ public class character : networked,
                 _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
                 _healthbar.transform.SetParent(transform);
                 _healthbar.transform.position = transform.position + Vector3.up * height;
-                _healthbar.belongs_to = this;
             }
             return _healthbar;
         }
     }
     healthbar _healthbar;
+
+    //###########//
+    // AWARENESS //
+    //###########//
+
+    public void modify_awareness(int delta) { awareness.value += delta; }
+    public bool is_aware => awareness.value > 99;
+
+    healthbar awareness_meter
+    {
+        get
+        {
+            if (_awareness_meter == null)
+            {
+                _awareness_meter = new GameObject("awareness_meter").AddComponent<healthbar>();
+                _awareness_meter.transform.SetParent(transform);
+                _awareness_meter.transform.position = transform.position + Vector3.up * (height + 0.1f);
+                _awareness_meter.height = 5;
+                _awareness_meter.foreground_color = Color.yellow;
+                _awareness_meter.background_color = Color.black;
+            }
+            return _awareness_meter;
+        }
+    }
+    healthbar _awareness_meter;
+
+    float delta_awareness
+    {
+        get => _delta_awareness;
+        set
+        {
+            _delta_awareness = value;
+
+            if (_delta_awareness > 1f)
+            {
+                int da = Mathf.FloorToInt(_delta_awareness);
+                _delta_awareness -= da;
+                modify_awareness(da);
+            }
+            else if (_delta_awareness < -1f)
+            {
+                int da = Mathf.FloorToInt(-_delta_awareness);
+                _delta_awareness += da;
+                modify_awareness(-da);
+            }
+        }
+    }
+    float _delta_awareness;
+
+    public void run_awareness_checks(player p)
+    {
+        const float CUTOFF_RADIUS = 16f;    // Ignore players beyond this
+        const float MIN_AWARE_TIME = 0.25f; // The minimum amount of time it takes to become aware
+        const float DEAWARE_TIME = 4f;      // The amount of time it takes to become fully un-aware              
+
+        // If we're aware, stay that way
+        if (is_aware) return;
+
+        Vector3 delta = p.transform.position - transform.position;
+
+        if (delta.magnitude > CUTOFF_RADIUS)
+        {
+            // Not in sight (too far away)
+            delta_awareness -= 100f * Time.deltaTime / DEAWARE_TIME;
+            return;
+        }
+
+        // A measure of proximity 1 => very close, 0 => very far
+        float prox = 1f - delta.magnitude / CUTOFF_RADIUS;
+        prox = prox * prox;
+
+        // Field of view for awareness (increases as we get closer)
+        float fov = 90f + (360 - 90) * prox;
+
+        if (Vector3.Angle(delta, transform.forward) > fov / 2f)
+        {
+            // Not in sight (out of fov)
+            delta_awareness -= 100f * Time.deltaTime / DEAWARE_TIME;
+            return;
+        }
+
+        var ray = new Ray(transform.position + height * Vector3.up / 2f, delta);
+        foreach (var hit in Physics.RaycastAll(ray, delta.magnitude))
+        {
+            if (hit.transform.IsChildOf(transform)) continue; // Can't block my own vision
+            if (hit.transform.IsChildOf(p.transform)) break; // Found the player
+
+            // Vision is blocked
+            delta_awareness -= 100f * Time.deltaTime / DEAWARE_TIME;
+            return;
+        }
+
+        // I can see the player, increase awareness at a rate depending on proximity
+        delta_awareness += 100f * Time.deltaTime * prox / MIN_AWARE_TIME;
+    }
 
     //#######//
     // DEATH //
@@ -468,6 +568,7 @@ public class character : networked,
             foreach (var r in to_copy.GetComponentsInChildren<Renderer>()) r.enabled = false;
             foreach (var c in to_copy.GetComponentsInChildren<Collider>()) c.enabled = false;
             to_copy.healthbar.gameObject.SetActive(false);
+            to_copy.awareness_meter.gameObject.SetActive(false);
 
             // Create loot on the authority client
             if (to_copy.has_authority)
@@ -715,34 +816,41 @@ public class character : networked,
 
 class healthbar : MonoBehaviour
 {
-    public const int WIDTH = 100;
-    public const int HEIGHT = 10;
+    public int width = 100;
+    public int height = 10;
+    public Color background_color = Color.red;
+    public Color foreground_color = Color.green;
 
-    Canvas canv;
     RectTransform canv_rect;
-    public character belongs_to;
-
-    UnityEngine.UI.Image background;
     UnityEngine.UI.Image foreground;
-    RectTransform background_rect;
-    RectTransform foreground_rect;
 
-    private void Start()
+    public void set_fraction(float f)
     {
-        canv = gameObject.AddComponent<Canvas>();
+        if (foreground == null) create();
+
+        f = Mathf.Clamp(f, 0, 1f);
+        foreground.GetComponent<RectTransform>().sizeDelta = new Vector2(
+            canv_rect.sizeDelta.x * f,
+            canv_rect.sizeDelta.y
+        );
+    }
+
+    private void create()
+    {
+        var canv = gameObject.AddComponent<Canvas>();
         canv.renderMode = RenderMode.WorldSpace;
         canv.worldCamera = player.current.camera;
         canv_rect = canv.GetComponent<RectTransform>();
         canv_rect.SetParent(transform);
         canv_rect.localRotation = Quaternion.identity;
-        canv_rect.sizeDelta = new Vector2(WIDTH, HEIGHT);
+        canv_rect.sizeDelta = new Vector2(width, height);
 
-        background = new GameObject("background").AddComponent<UnityEngine.UI.Image>();
+        var background = new GameObject("background").AddComponent<UnityEngine.UI.Image>();
         foreground = new GameObject("foreground").AddComponent<UnityEngine.UI.Image>();
-        background.color = Color.red;
-        foreground.color = Color.green;
-        background_rect = background.GetComponent<RectTransform>();
-        foreground_rect = foreground.GetComponent<RectTransform>();
+        background.color = background_color;
+        foreground.color = foreground_color;
+        var background_rect = background.GetComponent<RectTransform>();
+        var foreground_rect = foreground.GetComponent<RectTransform>();
 
         background_rect.SetParent(canv_rect);
         foreground_rect.SetParent(canv_rect);
@@ -759,15 +867,7 @@ class healthbar : MonoBehaviour
         background_rect.localRotation = Quaternion.identity;
         foreground_rect.localRotation = Quaternion.identity;
 
-        canv_rect.transform.localScale = new Vector3(1f, 1f, 1f) / (float)WIDTH;
-    }
-
-    private void Update()
-    {
-        foreground.GetComponent<RectTransform>().sizeDelta = new Vector2(
-            canv_rect.sizeDelta.x * belongs_to.remaining_health / belongs_to.max_health,
-            canv_rect.sizeDelta.y
-        );
+        canv_rect.transform.localScale = new Vector3(1f, 1f, 1f) / (float)width;
     }
 }
 
@@ -1188,6 +1288,7 @@ public class attack_controller : ICharacterController
 public class default_character_control : ICharacterController
 {
     ICharacterController subcontroller;
+    float delta_awareness = 0;
 
     public void control(character c)
     {
@@ -1196,27 +1297,29 @@ public class default_character_control : ICharacterController
 
         if (player.current == null) return;
 
+        // Apply awareness modifications
+        c.run_awareness_checks(player.current);
+
         if (subcontroller is idle_wander)
         {
-            switch (c.friendliness)
-            {
-                case character.FRIENDLINESS.FRIENDLY:
-                    break; // Just wander around idly
+            if (c.is_aware)
+                switch (c.friendliness)
+                {
+                    case character.FRIENDLINESS.FRIENDLY:
+                        break; // Just wander around idly
 
-                case character.FRIENDLINESS.AFRAID:
-                    if (c.check_agro(player.current))
+                    case character.FRIENDLINESS.AFRAID:
                         subcontroller = new flee_controller(player.current.transform);
-                    break;
+                        break;
 
-                case character.FRIENDLINESS.AGRESSIVE:
-                    if (c.check_agro(player.current))
+                    case character.FRIENDLINESS.AGRESSIVE:
                         subcontroller = new chase_controller(player.current.transform, player.current);
-                    break;
-            }
+                        break;
+                }
         }
         else
         {
-            if (c.check_deagro(player.current))
+            if (!c.is_aware)
                 subcontroller = new idle_wander();
         }
 

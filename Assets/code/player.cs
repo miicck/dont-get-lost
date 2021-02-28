@@ -114,6 +114,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         set_hand_position();
         add_interactions();
         interactions.continue_underway(this);
+
+        if (interactions.underway_count == 0)
+        {
+            var ct = utils.raycast_for_closest<ICursorText>(camera_ray(), out RaycastHit hit);
+            game.cursor_text = ct?.cursor_text();
+        }
     }
 
     private void OnDrawGizmos()
@@ -1783,6 +1789,11 @@ public static class cursors
     public const string DEFAULT_INTERACTION = "default_interact_cursor";
     public const string GRAB_OPEN = "default_interact_cursor";
     public const string GRAB_CLOSED = "grab_closed_cursor";
+}
+
+public interface ICursorText
+{
+    string cursor_text();
 }
 
 public class popup_message : MonoBehaviour

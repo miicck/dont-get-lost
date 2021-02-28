@@ -263,7 +263,7 @@ MonoBehaviour:
   butt: {fileID: 3780049617420365419}
   sight: {fileID: 7145026216378741801}
   grip: {fileID: 4726273760403303435}
-  per_shot_damage: 50
+  per_shot_damage: 20
   magazine_size: 1
   fire_delay: 0.12
   reload_time: 1

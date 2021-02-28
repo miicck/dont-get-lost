@@ -9,7 +9,6 @@ TODO
 	don't double back if thats what the player did
 	Make characters fall if they are following a chase path
 	Figure out how to stop enemies bunching up when chasing
-- Awarenes meter for enemies?
 - Fishing
 - Point-to-point connection building (like string or rope)
 - Production counter?

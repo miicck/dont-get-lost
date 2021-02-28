@@ -11,6 +11,7 @@ public class game : MonoBehaviour
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
+    public UnityEngine.UI.Text cursor_text_element;
     public GameObject debug_panel;
 
     //#################//
@@ -21,6 +22,7 @@ public class game : MonoBehaviour
     {
         // Get static reference to canvas
         canvas = main_canvas;
+        cursor_text_static = cursor_text_element;
 
         // Various startup modes
         switch (startup.mode)
@@ -219,6 +221,17 @@ public class game : MonoBehaviour
     //##############//
 
     public static Canvas canvas { get; private set; }
+
+    public static string cursor_text
+    {
+        get => cursor_text_static?.text;
+        set
+        {
+            if (cursor_text_static != null)
+                cursor_text_static.text = value;
+        }
+    }
+    static UnityEngine.UI.Text cursor_text_static;
 
     /// <summary> Information on how to start a game. </summary>
     public struct startup_info
