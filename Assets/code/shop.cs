@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IExtendsNetworked
+public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IExtendsNetworked, IBuildListener
 {
     public settler_path_element cashier_spot;
 
@@ -33,6 +33,16 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         stock = new networked_variables.net_string_counts();
         stock_listeners = new Dictionary<string, stock_listener>();
         stock.on_change = invoke_stock_listeners;
+    }
+
+    //################//
+    // IBuildListener //
+    //################//
+
+    bool need_stock_reset = false;
+    public void on_first_built()
+    {
+        need_stock_reset = true;
     }
 
     //##########//
@@ -155,7 +165,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         return INTERACTION_RESULT.UNDERWAY;
     }
 
-    enum STAGE
+    public enum STAGE
     {
         GET_MATERIALS,
         CRAFT,
@@ -213,13 +223,23 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
                 while (left_to_stock > 0)
                 {
-                    // Increment the first item not in full stock
+                    // Increment the first sold item not in full stock
                     --left_to_stock;
                     foreach (var item_name in type_of_shop.items_sold())
                     {
                         if (stock[item_name] >= 10) continue;
                         stock[item_name] += 1;
                         break;
+                    }
+
+                    // Decrement the first bought item with stock
+                    foreach (var item_name in type_of_shop.items_bought())
+                    {
+                        if (stock[item_name] > 0)
+                        {
+                            stock[item_name] -= 1;
+                            break;
+                        }
                     }
                 }
 
@@ -273,14 +293,39 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
         protected override void on_open()
         {
+            if (shop.need_stock_reset)
+            {
+                shop.need_stock_reset = false;
+
+                // Start with no stock of sold items
+                foreach (var item_name in shop.type_of_shop.items_sold())
+                    if (shop.stock[item_name] != 0)
+                        shop.stock[item_name] = 0;
+
+                // Start with full stock of bought items (so player can't 
+                // just delete/remake the shop to sell more stuff).
+                foreach (var item_name in shop.type_of_shop.items_bought())
+                    if (shop.stock[item_name] < 10)
+                        shop.stock[item_name] = 10;
+            }
+
             // Update options
-            var sr = menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+            RectTransform sell_content = null;
+            RectTransform buy_content = null;
+            foreach (var rt in menu.GetComponentsInChildren<UnityEngine.UI.ScrollRect>())
+            {
+                var content = rt.content;
+                if (content.name.Contains("sell")) sell_content = content;
+                else buy_content = content;
+            }
 
             // Clear previous options
-            foreach (RectTransform child in sr)
-                Destroy(child.gameObject);
+            foreach (RectTransform child in sell_content) Destroy(child.gameObject);
+            foreach (RectTransform child in buy_content) Destroy(child.gameObject);
 
             var template = Resources.Load<RectTransform>("ui/shop_option");
+
+            // Create the buy options
             foreach (var item_name in shop.type_of_shop.items_sold())
             {
                 var itm = Resources.Load<item>("items/" + item_name);
@@ -291,7 +336,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 }
 
                 var option = template.inst();
-                option.transform.SetParent(sr);
+                option.transform.SetParent(buy_content);
 
                 var sprite = option.get_child_with_name<UnityEngine.UI.Image>("sprite");
                 sprite.sprite = itm.sprite;
@@ -329,6 +374,74 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 });
             }
 
+            // Create the sell options
+            foreach (var item_name in shop.type_of_shop.items_bought())
+            {
+                var itm = Resources.Load<item>("items/" + item_name);
+                if (itm == null)
+                {
+                    Debug.LogError("Unkown item in shop: " + item_name);
+                    continue;
+                }
+
+                var option = template.inst();
+                option.transform.SetParent(sell_content);
+
+                var sprite = option.get_child_with_name<UnityEngine.UI.Image>("sprite");
+                sprite.sprite = itm.sprite;
+
+                var text = option.get_child_with_name<UnityEngine.UI.Text>("text");
+                text.text = item_name;
+
+                var price_text = option.get_child_with_name<UnityEngine.UI.Text>("price_text");
+                int price = Mathf.Max(1, itm.value);
+                price_text.text = price.qs();
+
+                var but = option.GetComponentInChildren<UnityEngine.UI.Button>();
+                but.onClick.AddListener(() =>
+                {
+                    int count = controls.held(controls.BIND.CRAFT_FIVE) ? 5 : 1;
+                    int stock = shop.stock[item_name];
+
+                    // Check the shop still wants to buy this
+                    if (stock >= 10)
+                    {
+                        popup_message.create("The shop will not buy any more " + itm.plural + "!");
+                        return;
+                    }
+
+                    // Don't let player overstock the shop
+                    count = Mathf.Min(count, 10 - stock);
+
+                    // Check the player has this
+                    int in_inv = player.current.inventory.count(item_name);
+                    if (in_inv < count)
+                    {
+                        if (count < 2)
+                            popup_message.create("You do not have " + utils.a_or_an(itm.name) + " " + itm.name + " to sell!");
+                        else
+                            popup_message.create("You do not have " + count + " " + itm.plural + " to sell!");
+                        return;
+                    }
+
+                    // Sell to the shop
+                    if (player.current.inventory.remove(item_name, count))
+                    {
+                        player.current.inventory.add("coin", count * price);
+                        shop.stock[item_name] = shop.stock[item_name] + count;
+                    }
+                    else Debug.LogError("Failed to remove sold items from player inventory!");
+
+                });
+
+                shop.add_stock_change_listener(item_name, (count) =>
+                {
+                    if (text == null) return;
+                    text.text = item_name + " (" + count.qs() + ")";
+                });
+            }
+
+
             shop.invoke_stock_listeners();
         }
     }
@@ -337,7 +450,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
     // SHOP TYPES //
     //############//
 
-    abstract class shop_type
+    public abstract class shop_type
     {
         public static shop_type get_type(shop_fitting crafter)
         {
@@ -346,17 +459,24 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             return null;
         }
 
+        public abstract string shop_name();
         public abstract string[] items_sold();
+        public abstract string[] items_bought();
         public abstract string inspection_text();
         public abstract string required_material();
         public abstract string task_info(STAGE stage);
     }
 
-    class carpenter : shop_type
+    public class carpenter : shop_type
     {
+        public override string shop_name()
+        {
+            return "Carpenter's shop";
+        }
+
         public override string inspection_text()
         {
-            return "This is a carpenters shop.";
+            return "This is a carpenter's shop.";
         }
 
         public override string required_material()
@@ -369,6 +489,14 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             return new string[]
             {
                 "plank",
+            };
+        }
+
+        public override string[] items_bought()
+        {
+            return new string[]
+            {
+                "log"
             };
         }
 
@@ -386,5 +514,14 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                     throw new System.Exception("Unknown stage!");
             }
         }
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static List<shop_type> all_shop_types()
+    {
+        return new List<shop_type> { new carpenter() };
     }
 }

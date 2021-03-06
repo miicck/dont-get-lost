@@ -173,7 +173,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             path_element = settler_path_element.nearest_element(transform.position);
             path = new settler_path_element.path(path_element, assignment.interactable.path_element(group));
 
-            if (path == null)
+            if (path == null || !path.valid)
             {
                 // Couldn't path to assignment, delete it
                 assignment.delete();
@@ -214,6 +214,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     protected override void on_death()
     {
         temporary_object.create(60f).gameObject.add_pinned_message("The settler " + name + " died!", Color.red);
+        delete();
     }
 
     //#################//
@@ -341,10 +342,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             return settler.name.capitalize() + "\n\n" +
                    "Health " + settler.remaining_health + "/" + settler.max_health + "\n" +
-                   settler.tiredness.value + "% tired\n" +
-                   "Group " + settler.group + " room " + settler.room + "\n\n" +
-                   settler.assignement_info() + "\n\n" +
-                   settler.nutrition_info();
+                   settler.tiredness.value + "% tired\n\n" +
+                   settler.nutrition_info() + "\n\n" +
+                   "Group " + settler.group + " room " + settler.room + "\n" +
+                   settler.assignement_info();
         }
     }
 
@@ -417,7 +418,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             ret += "  " + name + " " + Mathf.Round(nutrition[g] * 100f / 255f) + "%\n";
         }
 
-        return ret;
+        return ret.Trim();
     }
 
     //############//
@@ -440,7 +441,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public override float position_resolution() { return 0.1f; }
     public override float position_lerp_speed() { return 2f; }
-    public override bool persistant() { return true; }
+    public override bool persistant() { return !is_dead; }
 
     public inventory inventory { get; private set; }
 

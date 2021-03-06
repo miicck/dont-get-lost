@@ -94,6 +94,16 @@ public class town_gate : portal, IAddsToInspectionText
     {
         if (is_equpped || is_blueprint) return;
 
+        // Remove dead, or null characters from under_attack_by collection
+        bool attackers_changed = false;
+        foreach (var c in new List<character>(under_attack_by))
+            if (c.is_dead || c == null)
+            {
+                under_attack_by.Remove(c);
+                attackers_changed = true;
+            }
+        if (attackers_changed) update_attack_message();
+
         if (enemy_approach_path == null)
         {
             refresh_drawn_approach_path();
@@ -238,8 +248,8 @@ public class town_gate : portal, IAddsToInspectionText
         if (child is character)
         {
             var c = (character)child;
-            under_attack_by.Remove(c);
-            update_attack_message();
+            if (under_attack_by.Remove(c))
+                update_attack_message();
         }
     }
 
@@ -320,6 +330,12 @@ public class town_gate : portal, IAddsToInspectionText
                 if (s.group != current_element.group) return Mathf.Infinity;
                 return (s.transform.position - c.transform.position).magnitude + Random.Range(0, 5f);
             });
+
+            if (target == null)
+            {
+                // No targets
+                return;
+            }
 
             var target_element = settler_path_element.nearest_element(target.transform.position);
 
@@ -413,7 +429,7 @@ public class town_gate : portal, IAddsToInspectionText
 
         public void control(character c)
         {
-            if (fighting == null) // Enemy has died
+            if (fighting == null || fighting.is_dead) // Enemy has died
                 complete = true;
 
             if (complete)

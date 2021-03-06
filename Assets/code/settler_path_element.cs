@@ -241,8 +241,9 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             {
                 // Get the first open element
                 var to_expand = open.First();
-                closed.Add(to_expand);
+                if (to_expand == null) break;
                 open.Remove(to_expand);
+                closed.Add(to_expand);
 
                 // Add all linked elements to the open set 
                 // (if they arent in the closed set)
@@ -276,6 +277,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             {
                 // Get the first open element
                 var to_expand = open.First();
+                if (to_expand == null) break;
                 closed.Add(to_expand);
                 open.Remove(to_expand);
 

@@ -446,11 +446,11 @@ public class character : networked,
     //#######//
 
     dead_character dead_version;
-    public bool is_dead => dead_version != null;
+    public bool is_dead => dead_version != null || (health != null && health.value <= 0);
 
     void die()
     {
-        if (!is_dead)
+        if (dead_version == null)
         {
             dead_version = dead_character.create(this);
             on_death();

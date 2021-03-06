@@ -101,6 +101,7 @@ public class recipe : MonoBehaviour
     {
         string text = "Recipes\n";
 
+        // Add all recipes to the recipe book
         foreach (var kv in all_recipies())
         {
             string entry = "";
@@ -114,6 +115,58 @@ public class recipe : MonoBehaviour
                 {
                     entry += "  " + line + "\n";
                     found = true;
+                }
+            }
+
+            if (found)
+                text += entry;
+        }
+
+        // Add all items sold at shops to the recipe book
+        foreach (var s in shop.all_shop_types())
+        {
+            string entry = "\n" + s.shop_name() + "\n";
+
+            bool found = false;
+            foreach (var item_name in s.items_sold())
+            {
+                var i = Resources.Load<item>("items/" + item_name);
+                if (i == null)
+                {
+                    Debug.LogError("Could not find the item " + item_name);
+                    continue;
+                }
+                string line = i.display_name + " < " + i.value + (i.value > 1 ? " coins" : " coin");
+                if (line.Contains(find))
+                {
+                    found = true;
+                    entry += "  " + line + "\n";
+                }
+            }
+
+            if (found)
+                text += entry;
+        }
+
+        // Add all items bought by shop
+        foreach (var s in shop.all_shop_types())
+        {
+            string entry = "\n" + s.shop_name() + "\n";
+
+            bool found = false;
+            foreach (var item_name in s.items_bought())
+            {
+                var i = Resources.Load<item>("items/" + item_name);
+                if (i == null)
+                {
+                    Debug.LogError("Could not find the item " + item_name);
+                    continue;
+                }
+                string line = i.value + (i.value > 1 ? " coins" : " coin") + " < " + i.display_name;
+                if (line.Contains(find))
+                {
+                    found = true;
+                    entry += "  " + line + "\n";
                 }
             }
 

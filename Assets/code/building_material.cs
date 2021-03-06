@@ -4,6 +4,11 @@ using UnityEngine;
 
 public interface INonBlueprintable { }
 
+public interface IBuildListener 
+{
+    void on_first_built();
+}
+
 public class building_material : item, IPlayerInteractable
 {
     public const float BUILD_RANGE = 5f;
@@ -27,6 +32,17 @@ public class building_material : item, IPlayerInteractable
             controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
             "This will also orient the building to the world " +
             "axes, rather than to the parent building.");
+    }
+
+    //############//
+    // NETWORKING //
+    //############//
+
+    public override void on_first_create()
+    {
+        base.on_first_create();
+        foreach (var bl in GetComponentsInChildren<IBuildListener>())
+            bl.on_first_built();
     }
 
     //#####################//
