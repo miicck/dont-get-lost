@@ -94,6 +94,10 @@ public class town_gate : portal, IAddsToInspectionText
     {
         if (is_equpped || is_blueprint) return;
 
+        // Don't do anything until the chunk is loaded
+        if (!chunk.generation_complete(outside_link.position))
+            return;
+
         // Remove dead, or null characters from under_attack_by collection
         bool attackers_changed = false;
         foreach (var c in new List<character>(under_attack_by))
@@ -108,26 +112,19 @@ public class town_gate : portal, IAddsToInspectionText
         {
             refresh_drawn_approach_path();
             var pfd = new town_gate_pathfinder(outside_link);
-            Vector3 start = pfd.validate_position(outside_link.position, out bool valid);
+            Vector3 start = outside_link.position;
             float target_distance = Mathf.Min(game.render_range, MAX_APPROACH_DISTANCE);
-            random_path.success_func test = (v) => (v - start).magnitude > target_distance;
-            enemy_approach_path = new random_path(start, test, test, pfd);
+            random_path.success_func midpoint_success = (v) => (v - start).magnitude > target_distance;
+            random_path.success_func endpoint_success = (v) => (v - start).magnitude > pfd.resolution;
+            enemy_approach_path = new random_path(start, midpoint_success, endpoint_success, pfd);
         }
 
         switch (enemy_approach_path.state)
         {
             case path.STATE.COMPLETE:
-                if (enemy_approach_path.optimize(load_balancing.iter))
-                {
-                    // Path has been optimized, redraw approach path if needed
-                    refresh_drawn_approach_path();
-                }
-                else
-                {
-                    // Path can't be optimized any more, ensure that it remains valid
-                    if (!enemy_approach_path.validate(load_balancing.iter))
-                        enemy_approach_path = null;
-                }
+                // Ensure path remains valid that it remains valid
+                if (!enemy_approach_path.validate(load_balancing.iter))
+                    enemy_approach_path = null;
                 break;
 
             case path.STATE.SEARCHING:

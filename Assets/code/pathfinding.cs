@@ -626,8 +626,6 @@ public class astar_path : path
 
 public class random_path : astar_path
 {
-    protected waypoint current;
-
     public delegate bool success_func(Vector3 v);
     success_func endpoint_successful;
     success_func midpoint_successful;
@@ -644,6 +642,7 @@ public class random_path : astar_path
         // Sort by decreasing distance from goal (which is set to start)
         // so that we are attempting to maximize distance from start.
         open_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
+        closed_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
         this.endpoint_successful = endpoint_successful;
         this.midpoint_successful = midpoint_successful;
     }
@@ -667,13 +666,18 @@ public class random_path : astar_path
         {
             if (open_set.Count == 0)
             {
-                if (current != null && endpoint_successful(current.entrypoint))
-                    reconstruct_path(current);
+                // Nothing left to search - check if the best
+                // waypoint found is good enough as an endpoint
+                var best = closed_set.First().Value;
+                if (endpoint_successful(best.entrypoint))
+                    reconstruct_path(best);
                 else
                     state = STATE.FAILED;
                 return;
             }
-            else if (open_set.Count <= utils.neighbouring_dxs_3d.Length)
+
+            waypoint current = null;
+            if (open_set.Count <= utils.neighbouring_dxs_3d.Length)
             {
                 // Randomize the starting direction
                 current = open_set.ElementAt(Random.Range(0, open_set.Count)).Value;

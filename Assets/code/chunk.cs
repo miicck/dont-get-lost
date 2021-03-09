@@ -132,6 +132,12 @@ public class chunk : MonoBehaviour
         return at(c[0], c[1], generated_only);
     }
 
+    /// <summary> Returns true if the chunk at the given position is fully generated.</summary>
+    public static bool generation_complete(Vector3 position)
+    {
+        return at(position, generated_only: true) != null;
+    }
+
     // Returns the chunk at the given chunk coordinates
     public static chunk at(int x_chunk, int z_chunk, bool generated_only = false)
     {

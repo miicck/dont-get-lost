@@ -342,7 +342,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 sprite.sprite = itm.sprite;
 
                 var text = option.get_child_with_name<UnityEngine.UI.Text>("text");
-                text.text = item_name;
+                text.text = itm.display_name;
 
                 var price_text = option.get_child_with_name<UnityEngine.UI.Text>("price_text");
                 int price = Mathf.Max(1, itm.value);
@@ -370,7 +370,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 shop.add_stock_change_listener(item_name, (count) =>
                 {
                     if (text == null) return;
-                    text.text = item_name + " (" + count.qs() + ")";
+                    text.text = Resources.Load<item>("items/"+item_name).display_name + " (" + count.qs() + ")";
                 });
             }
 
@@ -391,7 +391,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 sprite.sprite = itm.sprite;
 
                 var text = option.get_child_with_name<UnityEngine.UI.Text>("text");
-                text.text = item_name;
+                text.text = itm.display_name;
 
                 var price_text = option.get_child_with_name<UnityEngine.UI.Text>("price_text");
                 int price = Mathf.Max(1, itm.value);
@@ -437,7 +437,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 shop.add_stock_change_listener(item_name, (count) =>
                 {
                     if (text == null) return;
-                    text.text = item_name + " (" + count.qs() + ")";
+                    text.text = Resources.Load<item>("items/" + item_name).display_name + " (" + count.qs() + ")";
                 });
             }
 
@@ -489,6 +489,8 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             return new string[]
             {
                 "plank",
+                "reinforced_wood_panel",
+                "window_panel"
             };
         }
 

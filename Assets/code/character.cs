@@ -210,7 +210,7 @@ public class character : networked,
         if (!has_authority) return;
 
         // Don't do anyting unless the chunk is generated
-        if (chunk.at(transform.position, true) == null) return;
+        if (!chunk.generation_complete(transform.position)) return;
 
         // Don't do anything if dead
         if (is_dead) return;
