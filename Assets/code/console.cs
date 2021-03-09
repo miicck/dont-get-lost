@@ -579,7 +579,22 @@ public class console : MonoBehaviour
 
             description = "Run the test method with the given name.",
             usage_example = "run_test_method test_ping_pong"
-        }
+        },
+
+        ["mod_settler_nutrition"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+                if (!int.TryParse(args[1], out int delta)) return console_error("could not parse an amount from: " + args[1]);
+                foreach (var s in settler.all_settlers())
+                    s.nutrition.modify_every_satisfaction(delta);
+                return true;
+            },
+
+            description = "Modify the nutrition values for all settlers by the amount given.",
+            usage_example = "mod_settler_nutrition -255"
+        },
     };
 
     /// <summary> True if the console window is open/selected. </summary>

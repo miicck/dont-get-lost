@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class fractal_tree : MonoBehaviour
 {
+    public Material bark_material;
+
     class branch
     {
         branch parent;
@@ -166,8 +168,19 @@ public class fractal_tree : MonoBehaviour
         mf.mesh.RecalculateNormals();
 
         var mr = gameObject.AddComponent<MeshRenderer>();
-        var mat = Resources.Load<Material>("materials/standard_shader/bark");
-        mr.materials = new Material[] { mat };
+        mr.materials = new Material[] { bark_material };
+
+        var ir = mr.gameObject.AddComponent<item_requirement>();
+        ir.tool_type = tool.TYPE.AXE;
+        ir.tool_quality = tool.QUALITY.TERRIBLE;
+
+        var prod = mr.gameObject.AddComponent<product>();
+        prod.mode = product.MODE.SIMPLE;
+        prod.item = Resources.Load<item>("items/log");
+        prod.min_count = 1;
+        prod.max_count = 1;
+
+        var h = mr.gameObject.AddComponent<harvestable>();
 
         var mc = gameObject.AddComponent<MeshCollider>();
     }

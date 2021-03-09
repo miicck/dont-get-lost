@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class settler : character, IPlayerInteractable, ICanEquipArmour
 {
-    public const float HUNGER_PER_SECOND = 0.2f;
-    public const float HEAL_RATE = 100f / 120f;
-    public const float TIREDNESS_PER_SECOND = 100f / time_manager.DAY_LENGTH;
     public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
     public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
     public const int XP_PER_LEVEL = 1000;
+
+    public const float TIME_TO_STARVE = 240f;
+    public const float TIME_TO_REGEN = 120f;
+    public const float TIME_TO_TIRED = time_manager.DAY_LENGTH;
 
     public List<Renderer> skin_renderers = new List<Renderer>();
     public List<Renderer> top_underclothes = new List<Renderer>();
@@ -69,10 +70,19 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     /// <summary> The path element that I am currently moving 
     /// towards. </summary>
-    settler_path_element path_element
+    public settler_path_element path_element
     {
-        get => _path_element;
-        set
+        get
+        {
+            if (_path_element == null)
+            {
+                _path_element = settler_path_element.nearest_element(transform.position);
+                if (_path_element == null) return null;
+                _path_element.on_settler_enter(this);
+            }
+            return _path_element;
+        }
+        private set
         {
             if (_path_element == value)
                 return;
@@ -86,9 +96,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public int group => path_element == null ? -1 : path_element.group;
     public int room => path_element == null ? -1 : path_element.room;
-    float delta_hunger = 0;
-    float delta_tired = 0;
-    float delta_heal = 0;
     float delta_xp = 0;
     settler_task_assignment assignment;
 
@@ -114,30 +121,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         // Authority-only control from here
 
-        // Get hungry/tired/heal
-        delta_hunger += HUNGER_PER_SECOND * Time.deltaTime;
-        delta_tired += TIREDNESS_PER_SECOND * Time.deltaTime;
-
-        delta_heal += HEAL_RATE * Time.deltaTime;
-
-        if (delta_hunger > 1f)
-        {
-            delta_hunger = 0f;
-            nutrition.modify_every_satisfaction(-1);
-        }
-
-        if (delta_tired > 1f)
-        {
-            delta_tired = 0f;
-            tiredness.value += 1;
-        }
-
-        if (delta_heal > 1f)
-        {
-            delta_heal = 0f;
-            heal(1);
-        }
-
         // Look for a new assignment if I don't have one
         if (assignment == null)
         {
@@ -156,7 +139,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                     return;
             }
 
-            // No suitable interaction found
+            // No suitable interaction found - create idle wander
+            settler_task_assignment.assign_idle(this);
             return;
         }
 
@@ -170,7 +154,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path_element = settler_path_element.nearest_element(transform.position);
             path = new settler_path_element.path(path_element, assignment.interactable.path_element(group));
 
             if (path == null || !path.valid)
@@ -217,6 +200,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         delete();
     }
 
+    protected override bool create_dead_body()
+    {
+        return false;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -243,6 +231,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             }
 
         settlers.Add(this);
+
+        InvokeRepeating("get_hungry", TIME_TO_STARVE / byte.MaxValue, TIME_TO_STARVE / byte.MaxValue);
+        InvokeRepeating("regen_health", TIME_TO_REGEN / max_health, TIME_TO_REGEN / max_health);
+        InvokeRepeating("get_tired", TIME_TO_TIRED / 100f, TIME_TO_TIRED / 100f);
     }
 
     private void OnDestroy()
@@ -258,6 +250,38 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         Gizmos.DrawWireSphere(path_element.transform.position, 0.1f);
     }
 
+    void get_hungry()
+    {
+        if (nutrition.metabolic_satisfaction > 0)
+        {
+            nutrition.modify_every_satisfaction(-1);
+            foreach (var pm in gameObject.GetComponents<pinned_message>())
+                if (pm.message.Contains("starving"))
+                    Destroy(pm);
+        }
+        else
+        {
+            take_damage(1);
+            foreach (var pm in gameObject.GetComponents<pinned_message>())
+                if (pm.message.Contains("starving"))
+                    return;
+            gameObject.add_pinned_message("The settler " + name + " is starving!", Color.red);
+        }
+    }
+
+    void regen_health()
+    {
+        if (nutrition.metabolic_satisfaction < 100)
+            return; // Don't heal if hungry
+        else
+            heal(1);
+    }
+
+    void get_tired()
+    {
+        tiredness.value += 1;
+    }
+
     //#################//
     // ICanEquipArmour //
     //#################//
@@ -269,6 +293,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     //#####################//
     // IPlayerInteractable //
     //#####################//
+
+    public int hunger_percent()
+    {
+        return Mathf.RoundToInt(100f * (1f - nutrition.metabolic_satisfaction / (float)byte.MaxValue));
+    }
 
     player_interaction[] interactions;
     public override player_interaction[] player_interactions()
@@ -284,7 +313,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                     return name.capitalize() + "\n" +
                        "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                        "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-                       "    " + Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n" +
+                       "    " + hunger_percent() + "% hungry\n" +
                        assignement_info() + "\n" +
                        "    interacting with " + players_interacting_with.value + " players";
                 }
@@ -409,7 +438,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             if (food.group_name(g).Length > max_length)
                 max_length = food.group_name(g).Length;
 
-        string ret = Mathf.Round(nutrition.hunger * 100f / 255f) + "% hungry\n";
+        string ret = hunger_percent() + "% hungry\n";
         ret += "Diet satisfaction\n";
         foreach (food.GROUP g in food.all_groups)
         {
@@ -578,6 +607,20 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     static HashSet<settler> settlers;
 
     public static int settler_count => settlers.Count;
+
+    public static HashSet<settler> all_settlers()
+    {
+        return new HashSet<settler>(settlers);
+    }
+
+    public static HashSet<settler> get_settlers_by_group(int group)
+    {
+        HashSet<settler> ret = new HashSet<settler>();
+        foreach (var s in settlers)
+            if (s.group == group)
+                ret.Add(s);
+        return ret;
+    }
 
     new public static void initialize()
     {

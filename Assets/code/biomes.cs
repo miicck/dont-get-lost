@@ -1361,10 +1361,12 @@ public class haunted_forest : biome
 
             if (random.range(0, 200) == 0)
                 p.object_to_generate = world_object.load("boulder_spiderwebs");
-            else if (random.range(0, 200) == 0)
+            else if (random.range(0, 300) == 0)
                 p.object_to_generate = world_object.load("dead_tree_1_large_spiderwebs");
-            else if (random.range(0, 200) == 0)
+            else if (random.range(0, 300) == 0)
                 p.object_to_generate = world_object.load("dead_tree_2");
+            else if (random.range(0, 300) == 0)
+                p.object_to_generate = world_object.load("fractal_tree_dead");
             else if (random.range(0, 500) == 0)
                 p.object_to_generate = world_object.load("small_smoke_spider_spawner");
             else if (random.range(0, 500) == 0)

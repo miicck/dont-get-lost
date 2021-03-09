@@ -800,6 +800,7 @@ namespace networked_variables
                 var ret = new net_food_satisfaction();
                 for (int i = 0; i < ret.group_values.Length; ++i)
                     ret.group_values[i] = byte.MaxValue;
+                ret.metabolic_satisfaction = byte.MaxValue;
                 return ret;
             }
         }
@@ -818,8 +819,6 @@ namespace networked_variables
                         max = this[g];
             metabolic_satisfaction = max;
         }
-
-        public byte hunger => (byte)(byte.MaxValue - metabolic_satisfaction);
 
         public byte this[food.GROUP group]
         {

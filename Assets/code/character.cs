@@ -450,13 +450,13 @@ public class character : networked,
 
     void die()
     {
-        if (dead_version == null)
-        {
+        if (dead_version == null && create_dead_body())
             dead_version = dead_character.create(this);
-            on_death();
-        }
+
+        on_death();
     }
 
+    protected virtual bool create_dead_body() { return true; }
     protected virtual void on_death() { }
 
     public class dead_character : MonoBehaviour, INotPathBlocking, IPlayerInteractable

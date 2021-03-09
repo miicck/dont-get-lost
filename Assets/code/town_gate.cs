@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class town_gate : portal, IAddsToInspectionText
 {
-    const float SLOW_UPDATE_TIME = 1f;
+    const float SPAWN_SETTLER_TIME = 30f;
     const float MAX_APPROACH_DISTANCE = 30f;
 
     public settler_path_element path_element;
@@ -87,7 +87,7 @@ public class town_gate : portal, IAddsToInspectionText
 
         update_gate_group(this);
         path_element.add_group_change_listener(() => update_gate_group(this));
-        InvokeRepeating("slow_update", SLOW_UPDATE_TIME, SLOW_UPDATE_TIME);
+        InvokeRepeating("attempt_spawn_settler", SPAWN_SETTLER_TIME, SPAWN_SETTLER_TIME);
     }
 
     private void Update()
@@ -151,10 +151,14 @@ public class town_gate : portal, IAddsToInspectionText
         enemy_approach_path?.draw_gizmos();
     }
 
-    void slow_update()
+    void attempt_spawn_settler()
     {
         // Only spawn settlers on auth client
         if (!has_authority)
+            return;
+
+        // Don't do anything until the chunk is loaded
+        if (!chunk.generation_complete(outside_link.position))
             return;
 
         var elements = settler_path_element.element_group(path_element.group);
@@ -163,14 +167,20 @@ public class town_gate : portal, IAddsToInspectionText
             if (e.interactable is bed)
                 bed_count += 1;
 
-        if (settler.settler_count < bed_count)
-            client.create(transform.position, "characters/settler");
+        var settlers = settler.get_settlers_by_group(path_element.group);
+
+        if (settlers.Count >= bed_count) return; // Not enough beds for another settler
+        foreach (var s in settlers)
+            if (s.nutrition.metabolic_satisfaction == 0)
+                return; // Settlers are starving
+
+        client.create(transform.position, "characters/settler");
     }
 
     public string added_inspection_text()
     {
         return "Beds     : " + bed_count + "\n" +
-               "Settlers : " + settler.settler_count + "\n" +
+               "Settlers : " + settler.get_settlers_by_group(path_element.group).Count + "\n" +
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
 

@@ -46,7 +46,18 @@ public class settler_task_assignment : networked, IAddsToInspectionText
     }
 
     /// <summary> The interaction that the settler is assigned to. </summary>
-    public settler_interactable interactable => networked_parent.GetComponentInChildren<settler_interactable>();
+    public settler_interactable interactable
+    {
+        get
+        {
+            // Standalone assignment
+            var stand_alone = GetComponent<settler_interactable>(); 
+            if (stand_alone != null) return stand_alone;
+
+            // Assign to parent
+            return networked_parent.GetComponentInChildren<settler_interactable>();
+        }
+    }
 
     private void Update()
     {
@@ -102,6 +113,8 @@ public class settler_task_assignment : networked, IAddsToInspectionText
 
     private void OnDrawGizmos()
     {
+        if (!Application.isPlaying) return;
+
         var s = settler;
         if (s == null) return;
         var i = interactable;
@@ -158,6 +171,14 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         return true;
     }
 
+    public static void assign_idle(settler s)
+    {
+        // Create an idle wander assignment
+        var assignment = (settler_task_assignment)client.create(
+            s.transform.position + Random.insideUnitSphere * 5, "misc/wander_task_assignment");
+        assignment.settler_id.value = s.network_id;
+    }
+
     public static void initialize()
     {
         assignments_by_id = new Dictionary<int, settler_task_assignment>();
@@ -178,6 +199,7 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+            if (!Application.isPlaying) return;
 
             var ta = (settler_task_assignment)target;
             var settler = ta.settler;
