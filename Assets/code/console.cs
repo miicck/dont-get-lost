@@ -595,6 +595,22 @@ public class console : MonoBehaviour
             description = "Modify the nutrition values for all settlers by the amount given.",
             usage_example = "mod_settler_nutrition -255"
         },
+
+        ["infinite_health"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.infinite_health = !player.current.infinite_health;
+                    popup_message.create("Infinite health " + (player.current.infinite_health ? "enabled" : "disabled"));
+                });
+                return true;
+            },
+
+            description = "Toggle infinite health for the player.",
+            usage_example = "infinite health"
+        }
     };
 
     /// <summary> True if the console window is open/selected. </summary>

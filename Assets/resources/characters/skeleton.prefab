@@ -55,11 +55,12 @@ MonoBehaviour:
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  max_health: 100
+  max_health: 400
   friendliness: 0
-  attack_time: 1
+  attack_range: 0.77
+  attack_time: 0.5
   attack_cooldown: 1
-  attack_damage: 70
+  attack_damage: 15
   dont_despawn_automatically: 0
 --- !u!114 &8466629237959316230
 MonoBehaviour:

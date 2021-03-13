@@ -109,9 +109,10 @@ MonoBehaviour:
   align_to_terrain: 0
   max_health: 150
   friendliness: 0
-  attack_time: 1
+  attack_range: 0.57
+  attack_time: 0.5
   attack_cooldown: 1
-  attack_damage: 70
+  attack_damage: 20
   dont_despawn_automatically: 0
 --- !u!114 &3755732905841746269
 MonoBehaviour:

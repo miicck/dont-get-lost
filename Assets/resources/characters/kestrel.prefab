@@ -74,23 +74,20 @@ MonoBehaviour:
   is_client_side: 0
   display_name: kestrel
   plural_name: kestrels
-  walk_speed: 0.5
-  run_speed: 1
-  max_health: 10
   pathfinding_resolution: 0.5
   height: 0.39
-  agro_range: 5
+  walk_speed: 0.5
+  run_speed: 1
   rotation_lerp_speed: 1
-  idle_walk_distance: 4
-  flee_distance: 4
-  melee_range: 0.5
-  melee_cooldown: 1
-  melee_damage: 10
-  friendliness: 1
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  projectile_target: {fileID: 0}
+  max_health: 10
+  friendliness: 1
+  attack_range: 0.51
+  attack_time: 1
+  attack_cooldown: 1
+  attack_damage: 50
   dont_despawn_automatically: 0
   flight_speed: 5
 --- !u!114 &3420202736743976360

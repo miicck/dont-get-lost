@@ -452,15 +452,15 @@ public class town_gate : portal, IAddsToInspectionText
 
             // Run melee cooldown
             timer += Time.deltaTime * 1f;
-            if (timer > c.attack_cooldown)
+            if (timer > c.attack_time)
             {
                 fighting.take_damage(c.attack_damage);
                 timer = 0;
             }
 
             // Apply fight animation
-            float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * timer / c.attack_cooldown), 10);
-            float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.attack_cooldown), 10);
+            float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * timer / c.attack_time), 10);
+            float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.attack_time), 10);
 
             c.transform.position = fight_centre +
                 fight_axis * 0.5f * c.pathfinding_resolution * (0.2f * Mathf.Max(cos, sin) - 1f);

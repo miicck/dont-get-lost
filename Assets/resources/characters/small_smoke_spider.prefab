@@ -324,6 +324,7 @@ MonoBehaviour:
   align_to_terrain: 1
   max_health: 50
   friendliness: 0
+  attack_range: 0.59
   attack_time: 0.25
   attack_cooldown: 0.5
   attack_damage: 10

@@ -1227,7 +1227,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     //########//
 
     public bool is_dead = false;
-
+    public bool infinite_health = false;
     float last_damaged_time = 0;
 
     void indicate_damage()
@@ -1619,6 +1619,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
             if (health.value <= 0)
             {
+                if (infinite_health)
+                {
+                    health.value = 100;
+                    return;
+                }
+
                 if (this == current) die();
                 popup_message.create(username.value + " has died!");
             }

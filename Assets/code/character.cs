@@ -41,8 +41,8 @@ public class character : networked,
 
     public int max_health = 10;
     public FRIENDLINESS friendliness;
+    public float attack_range = 1f;
     public float attack_time = 1f;
-    public float attack_cooldown = 1f;
     public int attack_damage = 50;
 
     /// <summary> The object currently controlling this character. </summary>
@@ -207,7 +207,7 @@ public class character : networked,
     private void Update()
     {
         // Characters are controlled by the authority client
-        if (!has_authority) return;
+        if (!has_authority || this == null) return;
 
         // Don't do anyting unless the chunk is generated
         if (!chunk.generation_complete(transform.position)) return;
@@ -239,6 +239,9 @@ public class character : networked,
             Gizmos.DrawLine(square[i - 1], square[i]);
 
         Gizmos.DrawLine(transform.position, transform.position + Vector3.up * height);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(transform.position, 2 * new Vector3(attack_range, 0, attack_range));
     }
 
     //############//
@@ -339,7 +342,7 @@ public class character : networked,
             {
                 _healthbar = new GameObject("healthbar").AddComponent<healthbar>();
                 _healthbar.transform.SetParent(transform);
-                _healthbar.transform.position = transform.position + Vector3.up * height;
+                _healthbar.transform.position = transform.position + transform.up * height;
             }
             return _healthbar;
         }
@@ -1020,13 +1023,91 @@ public class flee_controller : ICharacterController
     public string inspect_info() { return "Fleeing"; }
 }
 
+public class attack_controller : ICharacterController
+{
+    Transform target;
+    float attack_progress = 0;
+    bool striked_this_cycle = false;
+    IAcceptsDamage to_damage;
+
+    List<arm> arms;
+    List<Transform> arm_targets;
+
+    public attack_controller(character c, Transform target, IAcceptsDamage to_damage)
+    {
+        this.target = target;
+        this.to_damage = to_damage;
+        arms = new List<arm>(c.GetComponentsInChildren<arm>());
+        arm_targets = new List<Transform>();
+        foreach (var a in arms)
+        {
+            var at = new GameObject("arm_target").transform;
+            arm_targets.Add(at);
+            a.to_grab = at;
+            at.transform.position = a.shoulder.position + c.transform.forward * a.total_length / 2f;
+        }
+    }
+
+    public void control(character c)
+    {
+        attack_progress += Time.deltaTime / c.attack_time;
+        if (attack_progress > 1f)
+        {
+            // Move to next cycle
+            striked_this_cycle = false;
+            attack_progress = 0f;
+        }
+
+        if (!striked_this_cycle && attack_progress > 0.5f)
+        {
+            // Strike
+            striked_this_cycle = true;
+            to_damage.take_damage(c.attack_damage);
+        }
+
+        // s = 1 at strike, s = 0  at start/end of attack cycle
+        float s = Mathf.Abs(Mathf.Sin(attack_progress * Mathf.PI));
+        Vector3 target_pos = target.position + target.forward * c.attack_range * (1.5f - 0.5f * s);
+
+        // Arm animation
+        for (int i = 0; i < arms.Count; ++i)
+        {
+            var a = arms[i];
+            var at = arm_targets[i];
+            float amp = i % 2 == 0 ? s : 1 - s;
+
+            Vector3 delta = c.transform.forward * (amp + 0.1f) + Vector3.up * (0.5f - amp) * 0.5f;
+            if (delta.magnitude > 1f) delta /= delta.magnitude;
+
+            at.position = a.shoulder.position + a.total_length * delta;
+        }
+
+        utils.move_towards(c.transform, target_pos, c.run_speed * Time.deltaTime);
+        c.transform.forward = target.position - c.transform.position;
+    }
+
+    public void on_end_control(character c)
+    {
+        foreach (var at in arm_targets)
+            Object.Destroy(at.gameObject);
+    }
+
+    public string inspect_info() { return "attacking"; }
+    public void draw_gizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(target.position, 0.1f);
+    }
+    public void draw_inspector_gui() { }
+}
+
 public class chase_controller : ICharacterController
 {
     chase_path path;
     int index;
     Transform chasing;
     IAcceptsDamage to_damage;
-    attack_point attack;
+    attack_controller attack;
 
     public chase_controller(Transform chasing, IAcceptsDamage to_damage)
     {
@@ -1036,10 +1117,27 @@ public class chase_controller : ICharacterController
 
     public void control(character c)
     {
-        if (attack != null && attack.state == attack_point.STATE.ATTACKING)
+        if (attack == null)
+        {
+            if (c.distance_to(chasing) < c.attack_range)
+            {
+                attack = new attack_controller(c, chasing, to_damage);
+                path = null;
+            }
+        }
+        else
+        {
+            if (c.distance_to(chasing) > c.attack_range * 1.5f)
+            {
+                attack.on_end_control(c);
+                attack = null;
+            }
+        }
+
+        if (attack != null)
         {
             // I'm attacking
-            attack.set_animation(c);
+            attack.control(c);
             return;
         }
 
@@ -1051,8 +1149,6 @@ public class chase_controller : ICharacterController
             max_iter = Mathf.Min(500, 10 + max_iter * max_iter);
 
             float goal_distance = c.pathfinding_resolution * 0.8f;
-            if (attack != null) goal_distance *= 4; // Don't need to get so close if attack isn't ready
-
             path = new chase_path(c.transform.position, chasing, c, max_iterations: max_iter, goal_distance: goal_distance);
 
             path.on_state_change_listener = (s) =>
@@ -1112,177 +1208,22 @@ public class chase_controller : ICharacterController
         if (c.move_towards(path[index], c.run_speed, out bool failed))
             ++index;
 
-        if (attack == null)
-            if (c.distance_to(chasing) < c.pathfinding_resolution)
-            {
-                attack = attack_point.create(c, chasing);
-                attack.on_strike = () =>
-                {
-                    if (c.is_dead) return;
-                    if (c.distance_to(chasing) < c.pathfinding_resolution * 2f)
-                        to_damage.take_damage(c.attack_damage);
-                };
-            }
-
         if (failed) path = null;
     }
 
     public void on_end_control(character c) { }
-    public void draw_gizmos() { path?.draw_gizmos(); }
+    public void draw_gizmos()
+    {
+        if (attack != null)
+        {
+            attack.draw_gizmos();
+            return;
+        }
+
+        path?.draw_gizmos();
+    }
     public void draw_inspector_gui() { }
     public string inspect_info() { return "Chasing"; }
-}
-
-public class attack_point : MonoBehaviour
-{
-    public float cooldown_time { get; private set; }
-    public float attack_time { get; private set; }
-
-    public float elapsed_time
-    {
-        get => _elapsed_time;
-        set
-        {
-            _elapsed_time = value;
-            if (_elapsed_time > attack_time + cooldown_time) state = STATE.COMPLETE;
-            else if (_elapsed_time > attack_time) state = STATE.COOLDOWN;
-            else state = STATE.ATTACKING;
-        }
-    }
-    float _elapsed_time;
-
-    public enum STATE
-    {
-        ATTACKING,
-        COOLDOWN,
-        COMPLETE
-    }
-
-    public STATE state
-    {
-        get => _state;
-        set
-        {
-            if (_state == value) return; // No change
-            _state = value;
-            switch (_state)
-            {
-                case STATE.COOLDOWN:
-                    on_strike?.Invoke();
-                    break;
-
-                case STATE.COMPLETE:
-                    Destroy(gameObject);
-                    break;
-            }
-        }
-    }
-    STATE _state;
-
-    public void set_animation(character c)
-    {
-        float a = Mathf.Clamp(elapsed_time / attack_time, 0f, 1f);
-        float s = Mathf.Sin(a * a * Mathf.PI);
-        c.transform.position = transform.position - transform.forward * s;
-        c.transform.forward = transform.forward;
-    }
-
-    public delegate void callback();
-    public callback on_strike;
-
-    public static attack_point create(character c, Transform target_transform)
-    {
-        var ret = new GameObject(c.name + "_attack_point").AddComponent<attack_point>();
-        ret.elapsed_time = 0f;
-        ret.cooldown_time = c.attack_cooldown;
-        ret.attack_time = c.attack_time;
-
-        ret.transform.position = c.transform.position;
-        ret.transform.forward = (target_transform.position - c.transform.position);
-
-        return ret;
-    }
-
-    private void Update()
-    {
-        // Destroy myself when attack is over
-        elapsed_time += Time.deltaTime;
-    }
-
-    private void OnDrawGizmos()
-    {
-        switch (state)
-        {
-            case STATE.ATTACKING:
-                Gizmos.color = Color.red;
-                break;
-
-            case STATE.COOLDOWN:
-                Gizmos.color = Color.green;
-                break;
-
-            case STATE.COMPLETE:
-                Gizmos.color = Color.blue;
-                break;
-        }
-
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward);
-    }
-}
-
-public class attack_controller : ICharacterController
-{
-    Transform target;
-    float timer = 0;
-    string info = "Attacking";
-
-    Vector3 attack_position;
-    Vector3 attack_direction;
-
-    public bool triggered { get; private set; }
-    public void trigger(character c)
-    {
-        triggered = true;
-        attack_position = target.position;
-        attack_direction = (target.position - c.transform.position).normalized;
-    }
-
-    public attack_controller(Transform target)
-    {
-        this.target = target;
-    }
-
-    public void control(character c)
-    {
-        // Increment the timer
-        timer += Time.deltaTime;
-
-        // Attack is over
-        if (timer > c.attack_time)
-        {
-            float cooldown = timer - c.attack_time;
-            if (cooldown < c.attack_cooldown)
-            {
-                info = "Attack on cooldown";
-                return; // Attack on cooldown
-            }
-
-            // Attack has cooled down
-            triggered = false;
-            timer = 0;
-        }
-
-        float t = timer / c.attack_time;
-        float s = Mathf.Sin(t * Mathf.PI);
-        info = "Attacking " + t;
-
-        c.transform.position = attack_position - attack_direction * (s + 0.5f);
-    }
-
-    public void draw_gizmos() { }
-    public void draw_inspector_gui() { }
-    public void on_end_control(character c) { }
-    public string inspect_info() { return info; }
 }
 
 public class default_character_control : ICharacterController

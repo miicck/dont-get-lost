@@ -109,7 +109,7 @@ MonoBehaviour:
   is_client_side: 0
   display_name: polar bear
   plural_name: polar bears
-  pathfinding_resolution: 0.5
+  pathfinding_resolution: 0.75
   height: 2
   walk_speed: 1
   run_speed: 3
@@ -119,6 +119,7 @@ MonoBehaviour:
   align_to_terrain: 0
   max_health: 200
   friendliness: 0
+  attack_range: 0.91
   attack_time: 1
   attack_cooldown: 1
   attack_damage: 50
@@ -246,7 +247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4e14b2bc862c14a4aa5751368db1be02, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -1.085
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4e14b2bc862c14a4aa5751368db1be02, type: 3}
       propertyPath: m_LocalRotation.w
