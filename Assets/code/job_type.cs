@@ -5,6 +5,7 @@ using UnityEngine;
 public class job_type : MonoBehaviour
 {
     public int default_priority = 1;
+    public float assign_prob = 1f;
     public bool can_set_priority = true;
     public bool stop_when_attack_begins = true;
     public List<settler.SKILL> relevant_skills = new List<settler.SKILL>();

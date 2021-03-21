@@ -131,8 +131,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             // Attempt to find an interaction - go through job types in priority order
             for (int i = 0; i < job_priorities.ordered.Length; ++i)
             {
-                if (Random.Range(0, 2) == 0) continue; // Add some randomness
                 var j = job_priorities.ordered[i];
+                if (Random.Range(0, 1f) > j.assign_prob) continue; // Add some randomness
                 if (!job_enabled_state[j]) continue; // Job type disabled
                 var job = settler_interactable.proximity_weighted_ramdon(j, transform.position);
                 if (settler_task_assignment.try_assign(this, job))

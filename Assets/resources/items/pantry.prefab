@@ -403,7 +403,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   job: {fileID: 7915786716127770993, guid: 01bfa47034d0a304db1e90de81b0f234, type: 3}
-  max_simultaneous_users: 1
+  max_simultaneous_users: 4
   input: {fileID: 8201370757359320454}
   overflow_output: {fileID: 5186162351503079427}
   specific_material: {fileID: 0}

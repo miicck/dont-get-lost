@@ -43,7 +43,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa822c40410bfa140821816bb4a2983b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  default_priority: 7
+  default_priority: 8
+  assign_prob: 0.5
   can_set_priority: 1
   stop_when_attack_begins: 1
   relevant_skills: 07000000
