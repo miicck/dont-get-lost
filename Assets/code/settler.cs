@@ -523,9 +523,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (male.value) net_name.value = names.random_male_name();
         else net_name.value = names.random_female_name();
         skin_color.value = character_colors.random_skin_color();
-        top_color.value = Random.ColorHSV();
-        bottom_color.value = Random.ColorHSV();
-        net_hair_color.value = Random.ColorHSV();
+        top_color.value = character_colors.clothing_brown;
+        bottom_color.value = character_colors.clothing_brown;
+        net_hair_color.value = character_colors.random_hair_color();
         height.value = Random.Range(0.8f, 1.2f);
 
         foreach (var j in skill.all)

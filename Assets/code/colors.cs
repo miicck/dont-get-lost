@@ -52,6 +52,17 @@ public static class character_colors
             Random.Range(0.23f, 1f)
         );
     }
+
+    public static Color random_hair_color()
+    {
+        return Color.HSVToRGB(
+            Random.Range(0f, 59f / 360f),
+            Random.Range(0, 1f),
+            Random.Range(0, 1f)
+        );
+    }
+
+    public static readonly Color clothing_brown = new Color(0.4f, 0.3f, 0.2f);
 }
 
 public static class ui_colors

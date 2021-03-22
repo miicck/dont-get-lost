@@ -469,6 +469,8 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         {
             if (crafter.name == "sawmill")
                 return new carpenter();
+            if (crafter.name == "furnace")
+                return new blacksmith();
             return null;
         }
 
@@ -532,7 +534,65 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 case STAGE.STOCK:
                     return "Stocking carpenters shop";
                 default:
-                    throw new System.Exception("Unknown stage!");
+                    return "Carpentry";
+            }
+        }
+    }
+
+    public class blacksmith : shop_type
+    {
+        public override skill relevant_skill()
+        {
+            return Resources.Load<skill>("skills/smithing");
+        }
+
+        public override string shop_name()
+        {
+            return "Blacksmith's shop";
+        }
+
+        public override string inspection_text()
+        {
+            return "This is a Blacksmith's shop";
+        }
+
+        public override string required_material()
+        {
+            return "coal";
+        }
+
+        public override string[] items_sold()
+        {
+            return new string[]
+            {
+                "iron",
+                "iron_sword",
+                "iron_axe",
+                "iron_pickaxe"
+            };
+        }
+
+        public override string[] items_bought()
+        {
+            return new string[]
+            {
+                "coal",
+                "iron_ore",
+            };
+        }
+
+        public override string task_info(STAGE stage)
+        {
+            switch(stage)
+            {
+                case STAGE.GET_MATERIALS:
+                    return "Fueling the furnace.";
+                case STAGE.CRAFT:
+                    return "Smithing.";
+                case STAGE.STOCK:
+                    return "Stocking the blacksmith's shop.";
+                default:
+                    return "Smithing";
             }
         }
     }
