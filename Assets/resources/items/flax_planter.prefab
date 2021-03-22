@@ -492,13 +492,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b835dd1ec918da345b0a31c6497b0991, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  job: {fileID: 7915786716127770993, guid: 669215a1aa3375143bd20f0093e4f1ce, type: 3}
+  skill: {fileID: 7915786716127770993, guid: 0ab7d34d23177694290e7c9b79471089, type: 3}
   max_simultaneous_users: 1
   output: {fileID: 807333976542593736}
   field_spot_prefab: crops/flax
   x_size: 2
   z_size: 4
   spacing: 0.5
+  spot_tend_prob: 0.33
   offset: {x: 0, y: 0.4, z: 0}
 --- !u!1 &7019886654996518704
 GameObject:

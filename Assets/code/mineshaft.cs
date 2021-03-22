@@ -34,10 +34,10 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
     // IAddsToInspectionText //
     //#######################//
 
-    public string added_inspection_text()
+    public override string added_inspection_text()
     {
-        if (!on_valid_ground) return "Must be placed on terrain to operate!";
-        return "Operating normally.";
+        return base.added_inspection_text() + "\n" +
+            (on_valid_ground ? "Operating normally." : "Must be placed on terrain to operate!");
     }
 
     //##############################//

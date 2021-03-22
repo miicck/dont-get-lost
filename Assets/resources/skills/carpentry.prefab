@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 308037861202758188}
   - component: {fileID: 7915786716127770993}
   m_Layer: 0
-  m_Name: dont_assign
+  m_Name: carpentry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,8 +43,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa822c40410bfa140821816bb4a2983b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  default_priority: 9
-  assign_prob: 0
-  can_set_priority: 0
+  default_priority: 7
+  assign_prob: 0.5
+  is_visible: 1
   stop_when_attack_begins: 1
-  relevant_skills: 
+  noun_form: 

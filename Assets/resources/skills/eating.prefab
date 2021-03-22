@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 308037861202758188}
   - component: {fileID: 7915786716127770993}
   m_Layer: 0
-  m_Name: shopkeep
+  m_Name: eating
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,8 +43,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa822c40410bfa140821816bb4a2983b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  default_priority: 8
-  assign_prob: 0.5
-  can_set_priority: 1
+  default_priority: 0
+  assign_prob: 1
+  is_visible: 0
   stop_when_attack_begins: 1
-  relevant_skills: 07000000
+  noun_form: 

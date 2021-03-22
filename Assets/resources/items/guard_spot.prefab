@@ -82,7 +82,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c2a824d74658f7408ea49ac943c281c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  job: {fileID: 7915786716127770993, guid: d5bc1b0f68e1f8b4cac3237243aaa755, type: 3}
+  skill: {fileID: 7915786716127770993, guid: 6b45f5a086abfdb48bd1bdad3f9f7afb, type: 3}
   max_simultaneous_users: 1
 --- !u!1 &2386203665121055914
 GameObject:

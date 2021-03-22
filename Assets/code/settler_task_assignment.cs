@@ -139,7 +139,7 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         // Stop all tasks that should be stopped when an attack starts
         var copy = new Dictionary<int, settler_task_assignment>(assignments_by_id);
         foreach (var kv in copy)
-            if (kv.Value.interactable.job.stop_when_attack_begins)
+            if (kv.Value.interactable.skill.stop_when_attack_begins)
                 kv.Value.delete();
     }
 

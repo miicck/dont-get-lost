@@ -452,7 +452,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba6832ad64ed4ef408db7e0403fdb285, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  job: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
+  skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
   max_simultaneous_users: 1
   options:
   - {fileID: 7941835153524549527, guid: 81b2a388cfa2d414baa71092aaf032b6, type: 3}

@@ -19,29 +19,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform left_hand { get; private set; }
     public Transform right_hand { get; private set; }
 
-    //########//
-    // SKILLS //
-    //########//
-
-    public enum SKILL
-    {
-        // Please append new skills to the end of the
-        // list, so it doesn't fuck up serialized values.
-        // They should also retain the default values, as
-        // they are used to index arrays.
-        COOKING,
-        CARPENTRY,
-        FARMING,
-        WOODCUTTING,
-        MELEE_COMBAT,
-        RANGED_COMBAT,
-        MINING,
-        SOCIAL,
-    }
-
-    public static SKILL[] all_skills => (SKILL[])System.Enum.GetValues(typeof(SKILL));
-    public static string skill_name(SKILL s) => s.ToString().Replace("_", " ").ToLower().capitalize();
-
     //###################//
     // CHARACTER CONTROL //
     //###################//
@@ -134,7 +111,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 var j = job_priorities.ordered[i];
                 if (Random.Range(0, 1f) > j.assign_prob) continue; // Add some randomness
                 if (!job_enabled_state[j]) continue; // Job type disabled
-                var job = settler_interactable.proximity_weighted_ramdon(j, transform.position);
+                var job = settler_interactable.random(j);
                 if (settler_task_assignment.try_assign(this, job))
                     return;
             }
@@ -180,8 +157,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (delta_xp > 1f)
         {
             delta_xp = 0;
-            foreach (var s in assignment.interactable.job.relevant_skills)
-                skills[s] += Random.Range(0, 100); // Random so xp doesnt just stay in fixed intervals
+            skills[assignment.interactable.skill] += Random.Range(0, 100); // Random so xp doesnt just stay in fixed intervals
         }
 
         switch (assignment.interactable.on_interact(this))
@@ -543,8 +519,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         net_hair_color.value = Random.ColorHSV();
         height.value = Random.Range(0.8f, 1.2f);
 
-        foreach (var s in all_skills)
-            skills[s] = Random.Range(0, 10 * XP_PER_LEVEL);
+        foreach (var j in skill.all)
+            skills[j] = Random.Range(0, 10 * XP_PER_LEVEL);
     }
 
     float armour_location_fill_probability(armour_piece.LOCATION loc)

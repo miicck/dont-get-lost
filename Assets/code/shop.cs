@@ -49,7 +49,19 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
     // FITTINGS //
     //##########//
 
-    shop_type type_of_shop;
+    shop_type type_of_shop
+    {
+        get => _type_of_shop;
+        set
+        {
+            _type_of_shop = value;
+            if (_type_of_shop == null) skill = null;
+            else skill = _type_of_shop.relevant_skill();
+        }
+    }
+    shop_type _type_of_shop;
+
+
     shop_fitting fitting;
     item_dispenser materials_cupboard;
 
@@ -254,11 +266,12 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
     // IAddsToInspectionText //
     //#######################//
 
-    public string added_inspection_text()
+    public override string added_inspection_text()
     {
         validate_fittings();
-        if (type_of_shop == null) return "Shop is missing fittings.";
-        return type_of_shop.inspection_text();
+        return base.added_inspection_text() + "\n" +
+            ((type_of_shop == null) ? "Shop is missing fittings." :
+            type_of_shop.inspection_text());
     }
 
     //#####################//
@@ -370,7 +383,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
                 shop.add_stock_change_listener(item_name, (count) =>
                 {
                     if (text == null) return;
-                    text.text = Resources.Load<item>("items/"+item_name).display_name + " (" + count.qs() + ")";
+                    text.text = Resources.Load<item>("items/" + item_name).display_name + " (" + count.qs() + ")";
                 });
             }
 
@@ -459,6 +472,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             return null;
         }
 
+        public abstract skill relevant_skill();
         public abstract string shop_name();
         public abstract string[] items_sold();
         public abstract string[] items_bought();
@@ -469,6 +483,11 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
     public class carpenter : shop_type
     {
+        public override skill relevant_skill()
+        {
+            return Resources.Load<skill>("skills/carpentry");
+        }
+
         public override string shop_name()
         {
             return "Carpenter's shop";

@@ -57,5 +57,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67a3106dbdcc3e74383bef681913e134, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  job: {fileID: 7915786716127770993, guid: dc732faed634b224a9c4ae5dd251de53, type: 3}
+  skill: {fileID: 7915786716127770993, guid: dc732faed634b224a9c4ae5dd251de53, type: 3}
   max_simultaneous_users: 1

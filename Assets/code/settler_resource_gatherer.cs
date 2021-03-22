@@ -193,11 +193,11 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     // IAddsToInspectionText //
     //#######################//
 
-    public string added_inspection_text()
+    public override string added_inspection_text()
     {
-        if (harvesting == null)
-            return "    Nothing in harvest range.";
-        return "    Harvesting " + product.product_plurals_list(harvesting.products);
+        return base.added_inspection_text() + "\n" +
+         ((harvesting == null) ? "Nothing in harvest range." :
+         "Harvesting " + product.product_plurals_list(harvesting.products));
     }
 
     //######################//

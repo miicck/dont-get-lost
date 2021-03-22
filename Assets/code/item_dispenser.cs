@@ -117,15 +117,17 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     // IAddsToInspectionText //
     //#######################//
 
-    public string added_inspection_text()
+    public override string added_inspection_text()
     {
         switch (mode)
         {
             case MODE.SHOP_MATERIALS_CUPBOARD:
-                if (specific_material == null) return "Not providing anything to shop.";
-                else return "Providing " + specific_material.plural + " to the shop.";
+                return base.added_inspection_text() + "\n" +
+                    ((specific_material == null) ?
+                    "Not providing anything to shop." :
+                    "Providing " + specific_material.plural + " to the shop.");
         }
-        return null;
+        return base.added_inspection_text();
     }
 
     //##############//

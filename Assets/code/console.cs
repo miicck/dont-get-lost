@@ -610,6 +610,26 @@ public class console : MonoBehaviour
 
             description = "Toggle infinite health for the player.",
             usage_example = "infinite health"
+        },
+
+        ["starter_items"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.inventory.add("wooden_town_gate", 10);
+                    player.current.inventory.add("stone_path", 100);
+                    player.current.inventory.add("plank_gutter", 1000);
+                    player.current.inventory.add("pantry", 100);
+                    player.current.inventory.add("cabbage_planter", 100);
+                    player.current.inventory.add("bed", 100);
+                });
+                return true;
+            },
+
+            description = "Give the player some starter items.",
+            usage_example = "starter_items"
         }
     };
 

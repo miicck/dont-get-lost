@@ -64,7 +64,11 @@ public class player_inspectable : player_interaction
     {
         string str = text?.Invoke();
         foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
-            str += "\n" + add.added_inspection_text();
+        {
+            var txt = add.added_inspection_text();
+            if (txt == null) continue;
+            str += "\n" + txt.Trim();
+        }
         inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
         return !controls.held(controls.BIND.INSPECT);
     }

@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Assets\editor\what_uses_this.cs" />
     <Compile Include="Assets\editor\missing_references_finder.cs" />
+    <Compile Include="Assets\editor\component_search.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

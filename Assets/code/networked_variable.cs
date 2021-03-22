@@ -887,9 +887,9 @@ namespace networked_variables
     {
         // 0 if the job is enabled, 1 if not 
         // (just so the default is all-enabled)
-        byte[] enabled = new byte[job_type.all.Length];
+        byte[] enabled = new byte[skill.all.Length];
 
-        public bool this[job_type j]
+        public bool this[skill j]
         {
             get => enabled[j.default_priority] == 0;
             set
@@ -909,7 +909,10 @@ namespace networked_variables
         protected override void process_serialization(byte[] buffer, ref int offset, int length)
         {
             if (length != enabled.Length)
-                throw new System.Exception("Incorrect serialization length!");
+            {
+                Debug.LogError("Incorrect serialization length in job enable state!");
+                return;
+            }
             System.Buffer.BlockCopy(buffer, offset, enabled, 0, length);
         }
 
@@ -925,10 +928,10 @@ namespace networked_variables
     {
         /// <summary> The position in the priority list of each job type,
         /// indexed by the default priority of the job. </summary>
-        byte[] priorities = new byte[job_type.all.Length];
+        byte[] priorities = new byte[skill.all.Length];
 
         /// <summary> The job types ordered according to <see cref="priorities"/>. </summary>
-        public job_type[] ordered
+        public skill[] ordered
         {
             get
             {
@@ -936,9 +939,9 @@ namespace networked_variables
                 return _ordered;
             }
         }
-        job_type[] _ordered;
+        skill[] _ordered;
 
-        public int priority(job_type j)
+        public int priority(skill j)
         {
             return priorities[j.default_priority];
         }
@@ -946,8 +949,8 @@ namespace networked_variables
         void work_out_order()
         {
             // Work out the job type order
-            _ordered = new job_type[job_type.all.Length];
-            foreach (var j in job_type.all)
+            _ordered = new skill[skill.all.Length];
+            foreach (var j in skill.all)
                 _ordered[priorities[j.default_priority]] = j;
         }
 
@@ -957,25 +960,25 @@ namespace networked_variables
             base.set_dirty();
         }
 
-        public void switch_priority(job_type j1, job_type j2)
+        public void switch_priority(skill j1, skill j2)
         {
-            if (!j1.can_set_priority || !j2.can_set_priority) return;
+            if (!j1.is_visible || !j2.is_visible) return;
             var tmp = priorities[j1.default_priority];
             priorities[j1.default_priority] = priorities[j2.default_priority];
             priorities[j2.default_priority] = tmp;
             set_dirty();
         }
 
-        public void decrease_priority(job_type j)
+        public void decrease_priority(skill j)
         {
-            if (!j.can_set_priority) return;
+            if (!j.is_visible) return;
             byte old_priority = priorities[j.default_priority];
 
             // Find the job type this will be overtaking
             for (int i = 0; i < priorities.Length; ++i)
                 if (priorities[i] == old_priority + 1)
                 {
-                    if (!job_type.all[i].can_set_priority) return;
+                    if (!skill.all[i].is_visible) return;
                     priorities[i] = old_priority;
                     priorities[j.default_priority] = (byte)(old_priority + 1);
                     set_dirty();
@@ -983,16 +986,16 @@ namespace networked_variables
                 }
         }
 
-        public void increase_priority(job_type j)
+        public void increase_priority(skill j)
         {
-            if (!j.can_set_priority) return;
+            if (!j.is_visible) return;
             byte old_priority = priorities[j.default_priority];
 
             // Find the job type this will be undertaking
             for (int i = 0; i < priorities.Length; ++i)
                 if (priorities[i] == old_priority - 1)
                 {
-                    if (!job_type.all[i].can_set_priority) return;
+                    if (!skill.all[i].is_visible) return;
                     priorities[i] = old_priority;
                     priorities[j.default_priority] = (byte)(old_priority - 1);
                     set_dirty();
@@ -1030,7 +1033,7 @@ namespace networked_variables
 
     public class net_skills : networked_variable
     {
-        int[] xps = new int[settler.all_skills.Length];
+        int[] xps = new int[skill.all.Length];
 
         public delegate void on_change_func();
         public on_change_func on_change;
@@ -1041,14 +1044,14 @@ namespace networked_variables
             base.set_dirty();
         }
 
-        public int this[settler.SKILL s]
+        public int this[skill j]
         {
-            get => xps[(int)s];
+            get => xps[j.default_priority];
             set
             {
                 if (value < 0) return; // Not allowed
-                if (value == this[s]) return; // No change
-                xps[(int)s] = value;
+                if (value == this[j]) return; // No change
+                xps[j.default_priority] = value;
                 set_dirty();
             }
         }
