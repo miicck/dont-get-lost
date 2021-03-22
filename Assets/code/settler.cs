@@ -158,6 +158,15 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             delta_xp = 0;
             skills[assignment.interactable.skill] += Random.Range(0, 100); // Random so xp doesnt just stay in fixed intervals
+
+            // Gradual decay of learned progress to next level
+            foreach (var s in skill.all)
+            {
+                int level = skills[s] / XP_PER_LEVEL;
+                int prog = skills[s] - level * XP_PER_LEVEL;
+                if (prog > 0)
+                    skills[s] -= 5;
+            }
         }
 
         switch (assignment.interactable.on_interact(this))
@@ -520,7 +529,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         height.value = Random.Range(0.8f, 1.2f);
 
         foreach (var j in skill.all)
-            skills[j] = Random.Range(0, 10 * XP_PER_LEVEL);
+            skills[j] = Random.Range(0, 10) * XP_PER_LEVEL;
     }
 
     float armour_location_fill_probability(armour_piece.LOCATION loc)

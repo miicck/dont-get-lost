@@ -24,10 +24,18 @@ public class task_manager : MonoBehaviour
         }
     }
 
+    delegate void callback();
+    List<callback> skill_update_funcs = new List<callback>();
+
     private void Start()
     {
         // Build the job panels
         job_panel job_panel_template = GetComponentInChildren<job_panel>();
+
+        settler.skills.on_change += () =>
+        {
+            foreach (var c in skill_update_funcs) c();
+        };
 
         foreach (var j in skill.all)
         {
@@ -38,11 +46,15 @@ public class task_manager : MonoBehaviour
             job_panel.job_type = j;
             job_panel.name = j.name;
 
-            int level = settler.skills[j] / settler.XP_PER_LEVEL;
-            int perc_to_next = 100 * (settler.skills[j] - level * settler.XP_PER_LEVEL) / settler.XP_PER_LEVEL;
-            job_panel.skill_level.text = "Level " + level;
-            job_panel.skill_progress.rectTransform.sizeDelta = new Vector2(perc_to_next,
-                job_panel.skill_progress.rectTransform.sizeDelta.y);
+            skill_update_funcs.Add(() =>
+            {
+                int level = settler.skills[j] / settler.XP_PER_LEVEL;
+                int perc_to_next = 100 * (settler.skills[j] - level * settler.XP_PER_LEVEL) / settler.XP_PER_LEVEL;
+                Vector2 sd = job_panel.skill_progress.rectTransform.sizeDelta;
+                job_panel.skill_level_lower.text = "Level " + level;
+                job_panel.skill_level_upper.text = "" + (level + 1);
+                job_panel.skill_progress.rectTransform.sizeDelta = new Vector2(perc_to_next, sd.y);
+            });
 
             job_panel.increase_priority.onClick.AddListener(() =>
             {
@@ -68,6 +80,7 @@ public class task_manager : MonoBehaviour
         job_panel_template.transform.SetParent(null);
         Destroy(job_panel_template.gameObject);
         update_priorities();
+        foreach (var c in skill_update_funcs) c();
     }
 
     public int job_priority(job_panel j)
