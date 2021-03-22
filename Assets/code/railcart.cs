@@ -7,6 +7,11 @@ public class railcart : item
     public float max_speed = 10f;
     public float acceleration = 1f;
 
+    public override player_interaction[] item_uses()
+    {
+        return new player_interaction[] { new ride_interaction(this) };
+    }
+
     class ride_interaction : player_interaction
     {
         railcart riding;
@@ -20,7 +25,8 @@ public class railcart : item
 
         public override string context_tip()
         {
-            return "ride";
+            if (current != null) return "Stop riding";
+            return "Ride";
         }
 
         public override bool start_interaction(player player)
@@ -36,8 +42,8 @@ public class railcart : item
             speed = 0;
 
             // Get the rail the player clicked on
-            current = utils.raycast_for_closest<rail>(player.camera_ray(),
-                out RaycastHit hit, player.INTERACTION_RANGE);
+            var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
+            current = utils.raycast_for_closest<rail>(ray, out RaycastHit hit, dis);
             if (current == null)
                 return true; // No rail found
 
