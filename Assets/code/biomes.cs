@@ -1376,3 +1376,48 @@ public class haunted_forest : biome
         return ++i_stage >= SIZE;
     }
 }
+
+public class tabletop_mountain : biome
+{
+    int i_stage = 0;
+
+    const float FOOTPRINT = 38f;
+    const float ROUGH = 32f;
+    const float HEIGHT = 48f;
+    const float SEA_DEPTH = 4f;
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.fog_distance = 32;
+
+            // Work out altitude as a stepped, offset guassiuan
+            float di = i - SIZE / 2 + 32 * perlin(i / ROUGH, j / ROUGH);
+            float dj = j - SIZE / 2 + 32 * perlin(0.3f + i / ROUGH, 0.19f + j / ROUGH);
+            float x = (di * di + dj * dj) / (FOOTPRINT * FOOTPRINT);
+            float xf = Mathf.Floor(x);
+            float diff = x - xf;
+            diff = Mathf.Pow(diff, 6);
+            xf += diff;
+            float alt = (HEIGHT + SEA_DEPTH) * Mathf.Exp(-xf);
+            p.altitude = world.SEA_LEVEL + alt - SEA_DEPTH;
+
+            // Work out how cliffy it is here, based on the
+            // difference between the stepped+smooth guassians
+            float cliffness = diff * 2f;
+            if (diff > 0.5f) cliffness = (1f - diff) * 2f;
+            cliffness = Mathf.Pow(cliffness, 0.25f);
+            p.terrain_color = Color.Lerp(terrain_colors.grass, terrain_colors.chalky_stone, cliffness);
+
+            if (diff > 0.75f && i % 2 == 0 && j % 2 == 0)
+                p.object_to_generate = world_object.load("overhanging_tree");
+            else if (random.range(0, 600) == 0)
+                p.object_to_generate = world_object.load("flat_top_tree");
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}
