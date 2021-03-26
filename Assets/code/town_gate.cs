@@ -12,6 +12,7 @@ public class town_gate : portal, IAddsToInspectionText
 
     path enemy_approach_path;
     int bed_count;
+    float next_attack_time;
 
     class town_gate_pathfinder : IPathingAgent
     {
@@ -79,11 +80,18 @@ public class town_gate : portal, IAddsToInspectionText
         draw_approach_path = settler_path_element.draw_links;
     }
 
+    float random_attack_interval()
+    {
+        return Random.Range(60, 3 * 60);
+    }
+
     private void Start()
     {
         // Don't spawn settlers if this is the 
         // equipped or blueprint version
         if (is_equpped || is_blueprint) return;
+
+        next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
 
         update_gate_group(this);
         path_element.add_group_change_listener(() => update_gate_group(this));
@@ -97,6 +105,13 @@ public class town_gate : portal, IAddsToInspectionText
         // Don't do anything until the chunk is loaded
         if (!chunk.generation_complete(outside_link.position))
             return;
+
+        // Trigger attacks
+        if (Time.realtimeSinceStartup > next_attack_time)
+        {
+            trigger_scaled_attack();
+            next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
+        }
 
         // Remove dead, or null characters from under_attack_by collection
         bool attackers_changed = false;
@@ -181,6 +196,8 @@ public class town_gate : portal, IAddsToInspectionText
     {
         return "Beds     : " + bed_count + "\n" +
                "Settlers : " + settler.get_settlers_by_group(path_element.group).Count + "\n" +
+               "Town combat level : " + Mathf.Round(town_combat_level()) + "\n" +
+               "Next attack in : " + Mathf.Round(next_attack_time - Time.realtimeSinceStartup) + "s\n" +
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
 
@@ -193,6 +210,35 @@ public class town_gate : portal, IAddsToInspectionText
 
     pinned_message attack_message;
     HashSet<character> under_attack_by = new HashSet<character>();
+
+    public float town_combat_level()
+    {
+        // Work out the total combat level of the settlers
+        var townsfolk = settler.get_settlers_by_group(path_element.group);
+        float total_level = 0;
+        foreach (var t in townsfolk)
+            total_level += t.combat_level;
+        return total_level;
+    }
+
+    public void trigger_scaled_attack()
+    {
+        float total_level = town_combat_level();
+
+        // Generate a set of attackers whos total
+        // combat level is <= the town combat level
+        var attackers = Resources.LoadAll<town_attacker>("characters/");
+        List<string> to_spawn = new List<string>();
+        while (total_level > 0)
+        {
+            var att = attackers[Random.Range(0, attackers.Length)];
+            if (att.character.combat_level > total_level) break; // Would overshoot
+            total_level -= att.character.combat_level;
+            to_spawn.Add(att.name);
+        }
+
+        trigger_attack(to_spawn);
+    }
 
     public void trigger_attack(IEnumerable<string> characters_to_spawn)
     {

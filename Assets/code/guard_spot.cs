@@ -27,7 +27,7 @@ public class guard_spot : settler_interactable
 
     public override INTERACTION_RESULT on_interact(settler s)
     {
-        if (target == null || !in_range(target))
+        if (target == null || !in_range(target) || target.is_dead)
         {
             // Identify a new target
             town_gate.iterate_over_attackers(s.group, (c) =>
@@ -40,18 +40,18 @@ public class guard_spot : settler_interactable
                 return false;
             });
 
-            return INTERACTION_RESULT.UNDERWAY;
         }
-
-        // We have an in-range target, attack it
-        attack_timer += Time.deltaTime;
-        if (attack_timer > 1f)
+        else
         {
-            attack_timer = 0f;
-            projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target);
+            // We have an in-range target, attack it
+            attack_timer += Time.deltaTime;
+            if (attack_timer > 1f)
+            {
+                attack_timer = 0f;
+                projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target);
+            }
+            s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;
         }
-
-        s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;
 
         // Continue defending whilst attack is underway
         if (town_gate.group_under_attack(s.group))

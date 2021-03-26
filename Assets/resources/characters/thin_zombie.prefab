@@ -60,6 +60,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9189744706963915491}
   - component: {fileID: 3261361371971382002}
+  - component: {fileID: -1710959580140873441}
   - component: {fileID: 3755732905841746269}
   m_Layer: 0
   m_Name: thin_zombie
@@ -111,9 +112,20 @@ MonoBehaviour:
   friendliness: 0
   attack_range: 0.57
   attack_time: 0.5
-  attack_cooldown: 1
   attack_damage: 20
   dont_despawn_automatically: 0
+--- !u!114 &-1710959580140873441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4540856014604781863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ace621aa245ddd4fb3432f22c45099b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3755732905841746269
 MonoBehaviour:
   m_ObjectHideFlags: 0

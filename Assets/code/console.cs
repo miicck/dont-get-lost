@@ -384,7 +384,8 @@ public class console : MonoBehaviour
                         console_error("Could not find a town gate to attack!");
                         return;
                     }
-                    gate.trigger_attack(args);
+                    if (args.Length > 1) gate.trigger_attack(args);
+                    else gate.trigger_scaled_attack();
                 });
                 return true;
             },

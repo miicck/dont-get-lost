@@ -77,6 +77,8 @@ public class character : networked,
         AFRAID
     }
 
+    public float combat_level => 0.01f * attack_damage * max_health / attack_time;
+
     //#####################//
     // IPlayerInteractable //
     //#####################//
@@ -90,6 +92,7 @@ public class character : networked,
                 text= () =>
                 {
                     return display_name.capitalize() + "\n" +
+                           "Combat level : "+combat_level + "\n"+
                            controller?.inspect_info();
                 }
             }
@@ -449,7 +452,7 @@ public class character : networked,
     //#######//
 
     dead_character dead_version;
-    public bool is_dead => dead_version != null || (health != null && health.value <= 0);
+    public bool is_dead => (dead_version != null) || (health != null && health.value <= 0);
 
     void die()
     {

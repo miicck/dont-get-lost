@@ -296,6 +296,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 text = () =>
                 {
                     return name.capitalize() + "\n" +
+                       "    " + "Combat level : " + combat_level + "\n" +
                        "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                        "    " + Mathf.Round(tiredness.value) + "% tired\n" +
                        "    " + hunger_percent() + "% hungry\n" +

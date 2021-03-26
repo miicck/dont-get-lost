@@ -46,5 +46,5 @@ MonoBehaviour:
   default_priority: 9
   assign_prob: 0.5
   is_visible: 1
-  stop_when_attack_begins: 1
+  possible_when_under_attack: 1
   noun_form: 

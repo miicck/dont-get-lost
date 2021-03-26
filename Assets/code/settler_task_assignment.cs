@@ -139,7 +139,7 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         // Stop all tasks that should be stopped when an attack starts
         var copy = new Dictionary<int, settler_task_assignment>(assignments_by_id);
         foreach (var kv in copy)
-            if (kv.Value.interactable.skill.stop_when_attack_begins)
+            if (!kv.Value.interactable.skill.possible_when_under_attack)
                 kv.Value.delete();
     }
 
@@ -155,6 +155,10 @@ public class settler_task_assignment : networked, IAddsToInspectionText
         // Ensure everything we need exists, including a registered network
         // parent for the interactable i
         if (s == null || i == null || i.networked_parent == null || i.networked_parent.network_id < 0)
+            return false;
+
+        // Can't do this task type when under attack
+        if (town_gate.group_under_attack(s.group) && !i.skill.possible_when_under_attack)
             return false;
 
         if (!i.ready_to_assign(s)) return false; // Not ready to assign

@@ -733,7 +733,7 @@ MonoBehaviour:
   friendliness: 0
   attack_range: 1
   attack_time: 1
-  attack_damage: 10
+  attack_damage: 15
   dont_despawn_automatically: 0
   skin_renderers:
   - {fileID: 3949877153424257102}

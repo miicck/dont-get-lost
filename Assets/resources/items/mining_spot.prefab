@@ -362,11 +362,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f83aff79d3cd4697bb108f98272bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skill: {fileID: 0}
+  skill: {fileID: 7915786716127770993, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
   max_simultaneous_users: 1
   display_name: mining spot
   output: {fileID: 5679265494180299747}
-  search_origin: {fileID: 308037861202758188, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
+  search_origin: {fileID: 6493507513712573707}
   search_radius: 1.18
   time_between_harvests: 1
   max_harvests: 5

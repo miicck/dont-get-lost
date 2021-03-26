@@ -7,7 +7,7 @@ public class skill : MonoBehaviour
     public int default_priority = 1;
     public float assign_prob = 1f;
     public bool is_visible = true;
-    public bool stop_when_attack_begins = true;
+    public bool possible_when_under_attack = false;
     public string noun_form;
 
     public string display_name => name.Replace("_", " ").ToLower().capitalize();

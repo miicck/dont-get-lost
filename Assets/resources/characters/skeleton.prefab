@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5567330319485740853}
   - component: {fileID: 7003214144474807545}
+  - component: {fileID: -3540526029178272352}
   m_Layer: 0
   m_Name: skeleton
   m_TagString: Untagged
@@ -59,9 +60,20 @@ MonoBehaviour:
   friendliness: 0
   attack_range: 0.77
   attack_time: 0.5
-  attack_cooldown: 1
   attack_damage: 15
   dont_despawn_automatically: 0
+--- !u!114 &-3540526029178272352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884878067133990306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ace621aa245ddd4fb3432f22c45099b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8466629237959316230
 MonoBehaviour:
   m_ObjectHideFlags: 0
