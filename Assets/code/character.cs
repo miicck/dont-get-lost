@@ -331,7 +331,7 @@ public class character : networked,
     public void take_damage(int damage)
     {
         var hm = hit_marker.create("-" + damage);
-        hm.transform.position = transform.position + Vector3.up * height;
+        hm.transform.position = transform.position + transform.up * height;
         awareness.value = 100;
         play_random_sound(character_sound.TYPE.INJURY);
         health.value -= damage;
@@ -491,14 +491,6 @@ public class character : networked,
             public override inventory editable_inventory() { return dc.character.loot; }
         }
 
-        void gradual_decay()
-        {
-            if (transform.childCount == 0)
-                Destroy(gameObject);
-            else
-                Destroy(transform.GetChild(Random.Range(0, transform.childCount)).gameObject);
-        }
-
         void on_create(character to_copy)
         {
             foreach (var r in to_copy.GetComponentsInChildren<MeshRenderer>())
@@ -595,7 +587,13 @@ public class character : networked,
 
             // Parent the dead version to the character so they get despawned together
             dead_version.transform.SetParent(to_copy.transform);
+            dead_version.Invoke("decay", 60);
             return dead_version;
+        }
+
+        void decay()
+        {
+            character.delete();
         }
     }
 
