@@ -70,7 +70,7 @@ public class colony_tasks : MonoBehaviour
                 if (tra == null) Debug.LogError("Could not find skill entry for " + sk);
                 var but = tra.GetComponentInChildren<UnityEngine.UI.Button>();
                 var txt = but.GetComponentInChildren<UnityEngine.UI.Text>();
-                txt.text = (s.skills[sk] / settler.XP_PER_LEVEL).ToString();
+                txt.text = skill.xp_to_level(s.skills[sk]).ToString();
                 but.image.color = skill.priority_color(s.job_priorities[sk]);
 
                 but.onClick.AddListener(() =>

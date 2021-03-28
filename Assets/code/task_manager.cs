@@ -48,8 +48,11 @@ public class task_manager : MonoBehaviour
 
             skill_update_funcs.Add(() =>
             {
-                int level = settler.skills[j] / settler.XP_PER_LEVEL;
-                int perc_to_next = 100 * (settler.skills[j] - level * settler.XP_PER_LEVEL) / settler.XP_PER_LEVEL;
+                int level = skill.xp_to_level(settler.skills[j]);
+                int xp_current = skill.level_to_xp(level);
+                int xp_next = skill.level_to_xp(level + 1);
+                int perc_to_next = 100 * (settler.skills[j] - xp_current) / (xp_next - xp_current);
+
                 Vector2 sd = job_panel.skill_progress.rectTransform.sizeDelta;
                 job_panel.skill_level_lower.text = "Level " + level;
                 job_panel.skill_level_upper.text = "" + (level + 1);

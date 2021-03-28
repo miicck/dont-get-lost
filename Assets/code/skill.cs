@@ -19,6 +19,58 @@ public class skill : MonoBehaviour
         HIGH = 3
     };
 
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public const int XP_GAIN_PER_SEC = 10;
+    public const int MAX_LEVEL = 99;
+    const int TIME_TO_MAX = 24 * 60 * 60;
+    const int TIME_TO_1 = 3;
+
+    public static int level_to_xp(int level)
+    {
+        if (level > MAX_LEVEL) level = MAX_LEVEL;
+        int beta = (TIME_TO_MAX - MAX_LEVEL * TIME_TO_1) / (MAX_LEVEL * MAX_LEVEL - MAX_LEVEL);
+        int alpha = TIME_TO_1 - beta;
+        return (alpha * level + beta * level * level) * XP_GAIN_PER_SEC;
+    }
+
+    public static int xp_to_level(int xp)
+    {
+        float beta = (TIME_TO_MAX - MAX_LEVEL * TIME_TO_1) / (MAX_LEVEL * MAX_LEVEL - MAX_LEVEL);
+        float alpha = TIME_TO_1 - beta;
+        float t = xp / (float)XP_GAIN_PER_SEC;
+        float aoverb = alpha / (2 * beta);
+        return Mathf.Min((int)(Mathf.Sqrt(t / beta + aoverb * aoverb) - aoverb), MAX_LEVEL);
+    }
+
+    [test_method]
+    public static bool test_xp_per_level()
+    {
+        for (int x = 0; x <= level_to_xp(99); ++x)
+        {
+            int l = xp_to_level(x);
+            int lx = level_to_xp(l);
+            if (lx > x)
+                return false;
+        }
+
+        string str = "";
+        for (int i = 0; i < 100; ++i)
+        {
+            int xp = level_to_xp(i);
+            int level = xp_to_level(xp);
+            if (level != i) return false;
+            int xp_next = level_to_xp(i + 1);
+            int tnext = (xp_next - xp) / XP_GAIN_PER_SEC;
+            str += "Level " + i + ": " + xp + " xp (" + tnext + " seconds to next)\n";
+        }
+        Debug.Log(str);
+
+        return true;
+    }
+
     /// <summary> Returns the next priority in the cycle. </summary>
     public static PRIORITY cycle_priority(PRIORITY p)
     {
@@ -59,10 +111,6 @@ public class skill : MonoBehaviour
             default: throw new System.Exception("Unkown priority level: " + p);
         }
     }
-
-    //##############//
-    // STATIC STUFF //
-    //##############//
 
     public static skill[] all
     {

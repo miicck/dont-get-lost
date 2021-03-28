@@ -6,7 +6,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 {
     public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
     public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
-    public const int XP_PER_LEVEL = 1000;
 
     public const float TIME_TO_STARVE = 5f * 60f;
     public const float TIME_TO_REGEN = 120f;
@@ -113,8 +112,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 if (settler_task_assignment.try_assign(this, job)) return;
             }
 
-            // No suitable interaction found - create idle wander
-            settler_task_assignment.assign_idle(this);
+            // Set an idle task with low priority
+            if (skill.priority_test(skill.PRIORITY.LOW))
+                settler_task_assignment.assign_idle(this);
+
             return;
         }
 
@@ -154,16 +155,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (delta_xp > 1f)
         {
             delta_xp = 0;
-            skills[assignment.interactable.skill] += Random.Range(0, 100); // Random so xp doesnt just stay in fixed intervals
-
-            // Gradual decay of learned progress to next level
-            foreach (var s in skill.all)
-            {
-                int level = skills[s] / XP_PER_LEVEL;
-                int prog = skills[s] - level * XP_PER_LEVEL;
-                if (prog > 0)
-                    skills[s] -= 5;
-            }
+            skills[assignment.interactable.skill] += skill.XP_GAIN_PER_SEC;
         }
 
         switch (assignment.interactable.on_interact(this))
@@ -483,7 +475,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         height.value = Random.Range(0.8f, 1.2f);
 
         foreach (var j in skill.all)
-            skills[j] = Random.Range(0, 10) * XP_PER_LEVEL;
+            skills[j] = skill.level_to_xp(Random.Range(0, 10));
     }
 
     float armour_location_fill_probability(armour_piece.LOCATION loc)
