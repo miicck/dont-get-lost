@@ -109,7 +109,7 @@ public class town_gate : portal, IAddsToInspectionText
         // Trigger attacks
         if (Time.realtimeSinceStartup > next_attack_time)
         {
-            trigger_scaled_attack();
+            if (attacks_enabled) trigger_scaled_attack();
             next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
         }
 
@@ -208,6 +208,7 @@ public class town_gate : portal, IAddsToInspectionText
     // ATTACKS //
     //#########//
 
+    public static bool attacks_enabled = true;
     pinned_message attack_message;
     HashSet<character> under_attack_by = new HashSet<character>();
 

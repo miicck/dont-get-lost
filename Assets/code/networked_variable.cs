@@ -883,131 +883,29 @@ namespace networked_variables
         }
     }
 
-    public class net_job_enable_state : networked_variable
-    {
-        // 0 if the job is enabled, 1 if not 
-        // (just so the default is all-enabled)
-        byte[] enabled = new byte[skill.all.Length];
-
-        public bool this[skill j]
-        {
-            get => enabled[j.default_priority] == 0;
-            set
-            {
-                byte new_val = (byte)(value ? 0 : 1);
-                if (new_val == enabled[j.default_priority]) return; // No change
-                enabled[j.default_priority] = new_val;
-                set_dirty();
-            }
-        }
-
-        public override byte[] serialization()
-        {
-            return enabled;
-        }
-
-        protected override void process_serialization(byte[] buffer, ref int offset, int length)
-        {
-            if (length != enabled.Length)
-            {
-                Debug.LogError("Incorrect serialization length in job enable state!");
-                return;
-            }
-            System.Buffer.BlockCopy(buffer, offset, enabled, 0, length);
-        }
-
-        public override string state_info()
-        {
-            int count = 0;
-            foreach (var b in enabled) count += 1 - b;
-            return count + " enabled";
-        }
-    }
-
     public class net_job_priorities : networked_variable
     {
         /// <summary> The position in the priority list of each job type,
         /// indexed by the default priority of the job. </summary>
         byte[] priorities = new byte[skill.all.Length];
 
-        /// <summary> The job types ordered according to <see cref="priorities"/>. </summary>
-        public skill[] ordered
+        public skill.PRIORITY this[skill j]
         {
-            get
+            get => (skill.PRIORITY)priorities[j.default_priority];
+            set
             {
-                if (_ordered == null) work_out_order();
-                return _ordered;
+                var old_val = priorities[j.default_priority];
+                if (old_val == (byte)value) return;
+                priorities[j.default_priority] = (byte)value;
+                set_dirty();
             }
-        }
-        skill[] _ordered;
-
-        public int priority(skill j)
-        {
-            return priorities[j.default_priority];
-        }
-
-        void work_out_order()
-        {
-            // Work out the job type order
-            _ordered = new skill[skill.all.Length];
-            foreach (var j in skill.all)
-                _ordered[priorities[j.default_priority]] = j;
-        }
-
-        public override void set_dirty()
-        {
-            work_out_order();
-            base.set_dirty();
-        }
-
-        public void switch_priority(skill j1, skill j2)
-        {
-            if (!j1.is_visible || !j2.is_visible) return;
-            var tmp = priorities[j1.default_priority];
-            priorities[j1.default_priority] = priorities[j2.default_priority];
-            priorities[j2.default_priority] = tmp;
-            set_dirty();
-        }
-
-        public void decrease_priority(skill j)
-        {
-            if (!j.is_visible) return;
-            byte old_priority = priorities[j.default_priority];
-
-            // Find the job type this will be overtaking
-            for (int i = 0; i < priorities.Length; ++i)
-                if (priorities[i] == old_priority + 1)
-                {
-                    if (!skill.all[i].is_visible) return;
-                    priorities[i] = old_priority;
-                    priorities[j.default_priority] = (byte)(old_priority + 1);
-                    set_dirty();
-                    return;
-                }
-        }
-
-        public void increase_priority(skill j)
-        {
-            if (!j.is_visible) return;
-            byte old_priority = priorities[j.default_priority];
-
-            // Find the job type this will be undertaking
-            for (int i = 0; i < priorities.Length; ++i)
-                if (priorities[i] == old_priority - 1)
-                {
-                    if (!skill.all[i].is_visible) return;
-                    priorities[i] = old_priority;
-                    priorities[j.default_priority] = (byte)(old_priority - 1);
-                    set_dirty();
-                    return;
-                }
         }
 
         public net_job_priorities()
         {
             // Start with default order
             for (byte i = 0; i < priorities.Length; ++i)
-                priorities[i] = i;
+                priorities[i] = (byte)skill.PRIORITY.HIGH;
         }
 
         public override byte[] serialization()
@@ -1020,6 +918,10 @@ namespace networked_variables
             if (length != priorities.Length)
                 throw new System.Exception("Incorrect serialization length!");
             System.Buffer.BlockCopy(buffer, offset, priorities, 0, length);
+
+            for (int i = 0; i < priorities.Length; ++i)
+                if (priorities[i] > (byte)skill.PRIORITY.HIGH)
+                    priorities[i] = (byte)skill.PRIORITY.HIGH;
         }
 
         public override string state_info()

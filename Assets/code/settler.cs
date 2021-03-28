@@ -106,14 +106,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             delta_xp = 0;
 
             // Attempt to find an interaction - go through job types in priority order
-            for (int i = 0; i < job_priorities.ordered.Length; ++i)
+            foreach (var s in skill.all)
             {
-                var j = job_priorities.ordered[i];
-                if (Random.Range(0, 1f) > j.assign_prob) continue; // Add some randomness
-                if (!job_enabled_state[j]) continue; // Job type disabled
-                var job = settler_interactable.random(j);
-                if (settler_task_assignment.try_assign(this, job))
-                    return;
+                if (!skill.priority_test(job_priorities[s])) continue;
+                var job = settler_interactable.random(s);
+                if (settler_task_assignment.try_assign(this, job)) return;
             }
 
             // No suitable interaction found - create idle wander
@@ -290,7 +287,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (interactions == null) interactions = new player_interaction[]
         {
             new left_menu(this),
-            new task_management(this),
             new player_inspectable(transform)
             {
                 text = () =>
@@ -364,47 +360,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
     }
 
-    class task_management : player_interaction
-    {
-        task_manager ui;
-        settler settler;
-        public task_management(settler settler) { this.settler = settler; }
-        public override controls.BIND keybind => controls.BIND.OPEN_TASK_MANAGER;
-        public override string context_tip() { return "manage tasks"; }
-        public override bool allows_mouse_look() { return false; }
-        public override bool allows_movement() { return false; }
-
-        public override bool start_interaction(player player)
-        {
-            if (ui == null)
-            {
-                //Create the ui
-                ui = Resources.Load<task_manager>("ui/task_manager").inst();
-                ui.transform.SetParent(game.canvas.transform);
-                ui.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-                ui.set_target(settler);
-                ui.open = false; // ui starts closed
-            }
-
-            // Open the ui
-            ui.open = true;
-            settler.players_interacting_with.value += 1;
-            return false;
-        }
-
-        public override bool continue_interaction(player player)
-        {
-            return controls.triggered(keybind);
-        }
-
-        public override void end_interaction(player player)
-        {
-            // Close the ui
-            settler.players_interacting_with.value -= 1;
-            ui.open = false;
-        }
-    }
-
     //#######################//
     // Formatted information //
     //#######################//
@@ -450,7 +405,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color net_hair_color;
     public networked_variables.net_color bottom_color;
     public networked_variables.net_job_priorities job_priorities;
-    public networked_variables.net_job_enable_state job_enabled_state;
     public networked_variables.net_skills skills;
     new public networked_variables.net_float height;
 
@@ -474,7 +428,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
         job_priorities = new networked_variables.net_job_priorities();
-        job_enabled_state = new networked_variables.net_job_enable_state();
         skills = new networked_variables.net_skills();
 
         net_name.on_change = () => name = net_name.value;

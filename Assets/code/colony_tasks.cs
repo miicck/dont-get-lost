@@ -71,6 +71,14 @@ public class colony_tasks : MonoBehaviour
                 var but = tra.GetComponentInChildren<UnityEngine.UI.Button>();
                 var txt = but.GetComponentInChildren<UnityEngine.UI.Text>();
                 txt.text = (s.skills[sk] / settler.XP_PER_LEVEL).ToString();
+                but.image.color = skill.priority_color(s.job_priorities[sk]);
+
+                but.onClick.AddListener(() =>
+                {
+                    if (s == null) return;
+                    s.job_priorities[sk] = skill.cycle_priority(s.job_priorities[sk]);
+                    refresh();
+                });
             }
         }
 

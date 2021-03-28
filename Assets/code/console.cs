@@ -631,6 +631,19 @@ public class console : MonoBehaviour
 
             description = "Give the player some starter items.",
             usage_example = "starter_items"
+        },
+
+        ["toggle_attacks"] = new console_info
+        {
+            command = (args) =>
+            {
+                town_gate.attacks_enabled = !town_gate.attacks_enabled;
+                popup_message.create("Attacks " + (town_gate.attacks_enabled ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle attacks on settlements.",
+            usage_example = "toggle_attacks"
         }
     };
 

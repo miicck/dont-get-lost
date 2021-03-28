@@ -5,12 +5,60 @@ using UnityEngine;
 public class skill : MonoBehaviour
 {
     public int default_priority = 1;
-    public float assign_prob = 1f;
     public bool is_visible = true;
     public bool possible_when_under_attack = false;
     public string noun_form;
 
     public string display_name => name.Replace("_", " ").ToLower().capitalize();
+
+    public enum PRIORITY : byte
+    {
+        OFF = 0,
+        LOW = 1,
+        MED = 2,
+        HIGH = 3
+    };
+
+    /// <summary> Returns the next priority in the cycle. </summary>
+    public static PRIORITY cycle_priority(PRIORITY p)
+    {
+        switch (p)
+        {
+            case PRIORITY.OFF: return PRIORITY.LOW;
+            case PRIORITY.LOW: return PRIORITY.MED;
+            case PRIORITY.MED: return PRIORITY.HIGH;
+            case PRIORITY.HIGH: return PRIORITY.OFF;
+            default: throw new System.Exception("Unkown priority level: " + p);
+        }
+    }
+
+    /// <summary> Returns a color for UI elements 
+    /// reflecting the given priority. </summary>
+    public static Color priority_color(PRIORITY p)
+    {
+        switch (p)
+        {
+            case PRIORITY.OFF: return new Color(0.5f, 0.5f, 0.5f);
+            case PRIORITY.LOW: return new Color(1f, 0.7f, 0.7f);
+            case PRIORITY.MED: return new Color(0.7f, 0.7f, 1f);
+            case PRIORITY.HIGH: return new Color(0.7f, 1f, 0.7f);
+            default: throw new System.Exception("Unkown priority level: " + p);
+        }
+    }
+
+    /// <summary> Returns true with a probability 
+    /// reflecting the given priority. </summary>
+    public static bool priority_test(PRIORITY p)
+    {
+        switch (p)
+        {
+            case PRIORITY.OFF: return false;
+            case PRIORITY.LOW: return Random.Range(0, 8) == 0;
+            case PRIORITY.MED: return Random.Range(0, 4) == 0;
+            case PRIORITY.HIGH: return Random.Range(0, 2) == 0;
+            default: throw new System.Exception("Unkown priority level: " + p);
+        }
+    }
 
     //##############//
     // STATIC STUFF //

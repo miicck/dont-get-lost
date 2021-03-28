@@ -58,45 +58,20 @@ public class task_manager : MonoBehaviour
 
             job_panel.increase_priority.onClick.AddListener(() =>
             {
-                settler.job_priorities.increase_priority(j);
-                update_priorities();
             });
 
             job_panel.decrease_priority.onClick.AddListener(() =>
             {
-                settler.job_priorities.decrease_priority(j);
-                update_priorities();
             });
 
             job_panel.enabled_toggle.onValueChanged.AddListener((val) =>
             {
-                settler.job_enabled_state[j] = val;
-                update_priorities();
             });
-
         }
 
         // Destroy template + update ui to reflect priorities
         job_panel_template.transform.SetParent(null);
         Destroy(job_panel_template.gameObject);
-        update_priorities();
         foreach (var c in skill_update_funcs) c();
-    }
-
-    public int job_priority(job_panel j)
-    {
-        return settler.job_priorities.priority(j.job_type);
-    }
-
-    public void update_priorities()
-    {
-        var jps = new List<job_panel>(GetComponentsInChildren<job_panel>());
-        jps.Sort((j1, j2) => job_priority(j1).CompareTo(job_priority(j2)));
-
-        foreach (var jp in jps)
-        {
-            jp.transform.SetAsLastSibling();
-            jp.enabled_toggle.isOn = settler.job_enabled_state[jp.job_type];
-        }
     }
 }
