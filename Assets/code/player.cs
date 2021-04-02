@@ -429,7 +429,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         }
     }
 
-    public inventory_slot_networked quickbar_slot(int n)
+    public inventory_slot_networked inventory_slot(int n)
     {
         // Move to zero-offset array
         return inventory?.nth_slot(n - 1);
@@ -437,7 +437,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     public void validate_equip()
     {
-        var slot = quickbar_slot(slot_equipped.value);
+        var slot = inventory_slot(slot_equipped.value);
 
         if (slot == null || slot.count == 0 || slot.item == null)
         {
@@ -492,7 +492,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
                 // Stop if we've hit a slot with an item, or if we've scrolled
                 // off the end (in which case we will equip nothing)
-                if (quickbar_slot(new_slot)?.item != null || new_slot == 0)
+                if (inventory_slot(new_slot)?.item != null || new_slot == 0)
                 {
                     slot_equipped.value = new_slot;
                     break;
@@ -503,35 +503,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
     public void equip_matching(item itm)
     {
-        // If we've already got the item in the quickbar, just equip it
-        for (int i = 1; i <= QUICKBAR_SLOTS_COUNT; ++i)
-            if (quickbar_slot(i)?.item?.name == itm.name)
-            {
-                slot_equipped.value = i;
-                return;
-            }
-
         var slot_found = inventory.find_slot_by_item(itm);
-        if (slot_found != null)
-        {
-            // We've found the item in our inventory
-            // Switch with the currently equipped slot
-            // (or the first slot if nothing is equipped)             
-            int swith_with_slot = Mathf.Max(slot_equipped.value, 1);
-            var switch_with = quickbar_slot(swith_with_slot);
-
-            if (switch_with == null)
-            {
-                // Inventory slot doesn't exist, create one
-                switch_with = (inventory_slot_networked)client.create(
-                    transform.position, "misc/networked_inventory_slot", inventory);
-                switch_with.set_item_count_index(null, 0, swith_with_slot - 1);
-            }
-
-            slot_found.switch_with(switch_with);
-            slot_equipped.value = swith_with_slot;
-            validate_equip();
-        }
+        if (slot_found == null) return;
+        slot_equipped.value = slot_found.index + 1;
     }
 
     //###########//
@@ -1672,7 +1646,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         slot_equipped = new networked_variables.net_int();
         slot_equipped.on_change = () =>
         {
-            equipped = quickbar_slot(slot_equipped.value)?.item;
+            equipped = inventory_slot(slot_equipped.value)?.item;
             if (this == current)
                 toolbar_display_slot.update_selected(slot_equipped.value);
         };

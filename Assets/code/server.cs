@@ -729,8 +729,6 @@ public static class server
         // Start listening
         try
         {
-            if (Application.isEditor) // Allow address re-use by editor
-                tcp.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             tcp.Start();
         }
         catch (System.Exception e)

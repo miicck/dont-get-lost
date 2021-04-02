@@ -167,7 +167,6 @@ public class inventory : networked, IItemCollection
     }
     inventory_slot[] _slots;
 
-    //HashSet<inventory_slot_networked> networked_slots = new HashSet<inventory_slot_networked>();
     inventory_slot_networked[] networked_slots => GetComponentsInChildren<inventory_slot_networked>();
 
     public inventory_slot_networked nth_slot(int n)

@@ -3,7 +3,6 @@ Ongoing
 - More foliage? (small plants/flowers)
 
 TODO
-- Group task manager
 - Item flow recording should be done on link points?
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Optimize chase paths 
@@ -13,7 +12,6 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Production counter?
 - Filter-splitter
-- Leave item in inventory when equipping with Q (rather than moving it to the toolbelt)?
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
