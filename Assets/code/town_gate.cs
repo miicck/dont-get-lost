@@ -370,7 +370,7 @@ public class town_gate : portal, IAddsToInspectionText
             // Walk a path if we have one
             if (path != null)
             {
-                if (path.walk(c.transform, c.run_speed * local_speed_mod))
+                if (path.walk(c.transform, c.run_speed * local_speed_mod, c) == null)
                     path = null;
                 return;
             }

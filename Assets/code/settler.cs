@@ -142,11 +142,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            town_path_element element_walking_towards;
-            if (path.walk(transform, assignment.interactable.move_to_speed(this), out element_walking_towards))
-                path = null;
-            path_element = element_walking_towards;
-            path_element?.on_settler_move_towards(this);
+            var next_element = path.walk(transform, assignment.interactable.move_to_speed(this), this);
+            if (next_element == null) path = null;
+            else path_element = next_element;
             return;
         }
 

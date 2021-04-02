@@ -442,22 +442,16 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             // Pathfinding failed
         }
 
-        public bool walk(Transform transform, float speed)
-        {
-            return walk(transform, speed, out town_path_element ignored);
-        }
-
-        public bool walk(Transform transform, float speed, out town_path_element next_element)
+        public town_path_element walk(Transform transform, float speed, character walking = null)
         {
             if (this[0] == null)
             {
                 // Path has been destroyed or we've walked all of it
-                next_element = null;
-                return true;
+                return null;
             }
 
             // Walk the path to completion
-            next_element = this[0];
+            var next_element = this[0];
             Vector3 next_point = next_element.transform.position;
             Vector3 forward = next_point - transform.position;
 
@@ -466,7 +460,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 if (this[1] == null)
                 {
                     // Path has been destroyed                 
-                    return true;
+                    return next_element;
                 }
 
                 // Gradually turn towards the next direction, to make
@@ -494,7 +488,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
                 remove_at(0);
 
-            return false;
+            return next_element;
         }
 
         public void draw_gizmos(Color color)

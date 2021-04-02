@@ -159,7 +159,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         else
         {
             // Walk the path
-            if (path.walk(s.transform, s.walk_speed))
+            if (path.walk(s.transform, s.walk_speed, s) == null)
             {
                 stage_timer += Time.deltaTime;
                 if (stage_timer > 1f)
