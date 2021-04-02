@@ -134,6 +134,9 @@ MonoBehaviour:
   animations:
   - {fileID: 5365124555822003073}
   - {fileID: 5674291016006491495}
+  fire_time: 0.2
+  reset_time: 1
+  progress: 0
 --- !u!1 &3880953845561990392
 GameObject:
   m_ObjectHideFlags: 0
@@ -326,7 +329,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 8213e98dd752e844c94c72c3b1af6c9c, type: 3}
+  sprite: {fileID: 21300000, guid: ca5a5aa1e2e3efd47832a718bd3a3520, type: 3}
   plural: hammer swings
   value: 0
   fuel_value: 0
