@@ -15,8 +15,8 @@ public class doorway : town_path_element, IAddsToInspectionText
     bool opening => in_use_by > 0 || (player.current != null && player.current.distance_to(this) < 2f);
     float door_angle = 0;
 
-    public override void on_settler_enter(settler s) { ++in_use_by; }
-    public override void on_settler_leave(settler s) { --in_use_by; }
+    public override void on_character_enter(character s) { ++in_use_by; }
+    public override void on_character_leave(character s) { --in_use_by; }
 
     public override bool seperates_rooms() { return true; }
 

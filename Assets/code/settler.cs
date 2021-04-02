@@ -44,28 +44,20 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     town_path_element.path path;
 
-    /// <summary> The path element that I am currently moving 
-    /// towards. </summary>
+    /// <summary> The path element that I am currently moving towards. </summary>
     public town_path_element path_element
     {
         get
         {
+            // If our path element has been deleted, find the nearest one
             if (_path_element == null)
-            {
                 _path_element = town_path_element.nearest_element(transform.position);
-                if (_path_element == null) return null;
-                _path_element.on_settler_enter(this);
-            }
             return _path_element;
         }
         private set
         {
-            if (_path_element == value)
-                return;
-
-            _path_element?.on_settler_leave(this);
+            if (_path_element == value) return; // No change
             _path_element = value;
-            _path_element?.on_settler_enter(this);
         }
     }
     town_path_element _path_element;

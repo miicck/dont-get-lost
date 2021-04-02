@@ -9,9 +9,9 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
 {
     public settler_interactable interactable => GetComponentInParent<settler_interactable>();
 
-    public virtual void on_settler_enter(settler s) { }
-    public virtual void on_settler_move_towards(settler s) { }
-    public virtual void on_settler_leave(settler s) { }
+    public virtual void on_character_enter(character c) { }
+    public virtual void on_character_move_towards(character c) { }
+    public virtual void on_character_leave(character c) { }
     public virtual bool seperates_rooms() { return false; }
 
     //#################//
@@ -442,16 +442,33 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             // Pathfinding failed
         }
 
+        town_path_element element_walking_towards;
+        void on_walk_towards(town_path_element next, character walking)
+        {
+            if (element_walking_towards != next)
+            {
+                if (walking != null)
+                {
+                    element_walking_towards?.on_character_leave(walking);
+                    next?.on_character_enter(walking);
+                }
+                element_walking_towards = next;
+            }
+
+            element_walking_towards?.on_character_move_towards(walking);
+        }
+
         public town_path_element walk(Transform transform, float speed, character walking = null)
         {
-            if (this[0] == null)
+            // Walk the path to completion
+            var next_element = this[0];
+            if (next_element == null)
             {
                 // Path has been destroyed or we've walked all of it
+                on_walk_towards(null, walking);
                 return null;
             }
 
-            // Walk the path to completion
-            var next_element = this[0];
             Vector3 next_point = next_element.transform.position;
             Vector3 forward = next_point - transform.position;
 
@@ -459,8 +476,9 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             {
                 if (this[1] == null)
                 {
-                    // Path has been destroyed                 
-                    return next_element;
+                    // Path has been destroyed
+                    on_walk_towards(null, walking);
+                    return null;
                 }
 
                 // Gradually turn towards the next direction, to make
@@ -484,6 +502,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                     transform.forward = Vector3.Lerp(transform.forward, forward, Time.deltaTime * 5f);
             }
 
+            on_walk_towards(next_element, walking);
             if (utils.move_towards(transform, next_point,
                 Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
                 remove_at(0);
