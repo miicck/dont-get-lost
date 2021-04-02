@@ -91,7 +91,7 @@ public class game : MonoBehaviour
         item_node.initialize();
         biome.initialize();
         chunk.initialize();
-        settler_path_element.initialize();
+        town_path_element.initialize();
         character_spawn_point.initialize();
         character.initialize();
         settler.initialize();

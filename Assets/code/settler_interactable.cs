@@ -6,9 +6,9 @@ public class has_path_elements : MonoBehaviour
 {
     /// <summary> Returns the path element that a settler from the
     /// given group can use to access this interactable </summary>
-    public virtual settler_path_element path_element(int group)
+    public virtual town_path_element path_element(int group)
     {
-        foreach (var e in GetComponentsInChildren<settler_path_element>())
+        foreach (var e in GetComponentsInChildren<town_path_element>())
             if (e.group == group)
                 return e;
         return null;

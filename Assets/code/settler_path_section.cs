@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_path_section : settler_path_link
+public class settler_path_section : town_path_link
 {
     new public BoxCollider collider;
     public float max_distance = Mathf.Infinity;

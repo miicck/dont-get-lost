@@ -602,8 +602,8 @@ public class building_material : item, IPlayerInteractable
         if (player.has_authority)
         {
             // Draw links if a path element is equipped
-            if (GetComponentInChildren<settler_path_element>() != null)
-                settler_path_element.draw_links = true;
+            if (GetComponentInChildren<town_path_element>() != null)
+                town_path_element.draw_links = true;
         }
     }
 
@@ -614,7 +614,7 @@ public class building_material : item, IPlayerInteractable
         if (player.has_authority)
         {
             // Stop drawing debug-type things
-            settler_path_element.draw_links = false;
+            town_path_element.draw_links = false;
             item_node.display_enabled = false;
         }
     }

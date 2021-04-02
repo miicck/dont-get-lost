@@ -312,7 +312,7 @@ public class console : MonoBehaviour
             command = (args) =>
             {
                 item_node.display_enabled = !item_node.display_enabled;
-                settler_path_element.draw_links = item_node.display_enabled;
+                town_path_element.draw_links = item_node.display_enabled;
                 return true;
             },
 
@@ -439,7 +439,7 @@ public class console : MonoBehaviour
 
                 player.call_when_current_player_available(() =>
                 {
-                    var elms = settler_path_element.elements_in_room(room_id);
+                    var elms = town_path_element.elements_in_room(room_id);
                     if (elms.Count == 0)
                         console_error("No elements in room " + room_id);
                     else

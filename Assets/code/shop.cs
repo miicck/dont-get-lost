@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IExtendsNetworked, IBuildListener
 {
-    public settler_path_element cashier_spot;
+    public town_path_element cashier_spot;
 
     //###################//
     // IExtendsNetworked //
@@ -81,7 +81,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         if (cashier_spot == null)
             Debug.LogError("Shop requires a cashier spot!");
 
-        foreach (var e in settler_path_element.elements_in_room(cashier_spot.room))
+        foreach (var e in town_path_element.elements_in_room(cashier_spot.room))
         {
             if (type_of_shop == null)
             {
@@ -123,7 +123,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
     STAGE stage;
     item item_carrying;
-    settler_path_element.path path;
+    town_path_element.path path;
     float stage_timer = 0;
     int stock_crafted = 0;
     int left_to_stock = 0;
@@ -201,7 +201,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
                 // Go to the craft stage
                 stage = STAGE.CRAFT;
-                path = new settler_path_element.path(
+                path = new town_path_element.path(
                     materials_cupboard.path_element(s.group),
                     fitting.path_element(s.group)
                 );
@@ -219,7 +219,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
                 // Move to the stocking stage
                 stage = STAGE.STOCK;
-                path = new settler_path_element.path(
+                path = new town_path_element.path(
                     fitting.path_element(s.group),
                     path_element(s.group)
                 );
@@ -228,7 +228,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
             case STAGE.STOCK:
                 stage = STAGE.GET_MATERIALS;
-                path = new settler_path_element.path(
+                path = new town_path_element.path(
                     path_element(s.group),
                     materials_cupboard.path_element(s.group)
                 );

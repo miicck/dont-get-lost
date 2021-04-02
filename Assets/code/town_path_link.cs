@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_path_link : MonoBehaviour, IEnumerable<settler_path_link>
+public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>
 {
     public const float LINK_DISPLAY_ALT = 0.25f;
     public const float LINK_WIDTH = 0.05f;
     public const float POINT_WIDTH = 0.1f;
 
-    public settler_path_element path_element => GetComponentInParent<settler_path_element>();
+    public town_path_element path_element => GetComponentInParent<town_path_element>();
 
-    public void link_to(settler_path_link other)
+    public void link_to(town_path_link other)
     {
         // Create the link both ways
         linked_to.Add(other);
@@ -31,8 +31,8 @@ public class settler_path_link : MonoBehaviour, IEnumerable<settler_path_link>
         if (!destroying) update_display();
     }
 
-    HashSet<settler_path_link> linked_to = new HashSet<settler_path_link>();
-    public IEnumerator<settler_path_link> GetEnumerator() { return linked_to.GetEnumerator(); }
+    HashSet<town_path_link> linked_to = new HashSet<town_path_link>();
+    public IEnumerator<town_path_link> GetEnumerator() { return linked_to.GetEnumerator(); }
     IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 
     GameObject display;
@@ -70,7 +70,7 @@ public class settler_path_link : MonoBehaviour, IEnumerable<settler_path_link>
             Resources.Load<Material>("materials/red");
 
         // Sstate depends on if drawing is enabled
-        display.SetActive(settler_path_element.draw_links);
+        display.SetActive(town_path_element.draw_links);
     }
 
     public bool display_enabled
@@ -108,7 +108,7 @@ public class settler_path_link : MonoBehaviour, IEnumerable<settler_path_link>
     // STATIC STUFF //
     //##############//
 
-    public static bool can_link(settler_path_link a, settler_path_link b)
+    public static bool can_link(town_path_link a, town_path_link b)
     {
         if (a is settler_path_section)
         {

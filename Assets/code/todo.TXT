@@ -12,6 +12,7 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Production counter?
 - Filter-splitter
+- Remove the off-by-one thing happenng with player.slot_equipped
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

@@ -7,7 +7,7 @@ public class town_gate : portal, IAddsToInspectionText
     const float SPAWN_SETTLER_TIME = 30f;
     const float MAX_APPROACH_DISTANCE = 30f;
 
-    public settler_path_element path_element;
+    public town_path_element path_element;
     public Transform outside_link;
 
     path enemy_approach_path;
@@ -77,7 +77,7 @@ public class town_gate : portal, IAddsToInspectionText
     void refresh_drawn_approach_path()
     {
         draw_approach_path = false;
-        draw_approach_path = settler_path_element.draw_links;
+        draw_approach_path = town_path_element.draw_links;
     }
 
     float random_attack_interval()
@@ -151,7 +151,7 @@ public class town_gate : portal, IAddsToInspectionText
                 break;
         }
 
-        draw_approach_path = settler_path_element.draw_links;
+        draw_approach_path = town_path_element.draw_links;
     }
 
     private void OnDestroy()
@@ -176,7 +176,7 @@ public class town_gate : portal, IAddsToInspectionText
         if (!chunk.generation_complete(outside_link.position))
             return;
 
-        var elements = settler_path_element.element_group(path_element.group);
+        var elements = town_path_element.element_group(path_element.group);
         bed_count = 0;
         foreach (var e in elements)
             if (e.interactable is bed)
@@ -349,7 +349,7 @@ public class town_gate : portal, IAddsToInspectionText
 
     class attack_controller : ICharacterController
     {
-        settler_path_element.path path;
+        town_path_element.path path;
         float local_speed_mod = 1.0f;
         town_gate gate;
 
@@ -376,7 +376,7 @@ public class town_gate : portal, IAddsToInspectionText
             }
 
             // Get the current element that I'm at
-            var current_element = settler_path_element.nearest_element(c.transform.position, gate.path_element.group);
+            var current_element = town_path_element.nearest_element(c.transform.position, gate.path_element.group);
 
             // Find the nearest (to within some random noize) target in the same group as me
             var target = settler.find_to_min((s) =>
@@ -391,7 +391,7 @@ public class town_gate : portal, IAddsToInspectionText
                 return;
             }
 
-            var target_element = settler_path_element.nearest_element(target.transform.position);
+            var target_element = town_path_element.nearest_element(target.transform.position);
 
             if (target_element == current_element)
             {
@@ -401,7 +401,7 @@ public class town_gate : portal, IAddsToInspectionText
                 return;
             }
 
-            path = new settler_path_element.path(current_element, target_element);
+            path = new town_path_element.path(current_element, target_element);
         }
 
         public void on_end_control(character c) { }

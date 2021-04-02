@@ -4,8 +4,8 @@ using UnityEngine;
 using System.Linq;
 
 /// <summary> An object that can be connected to other objects of 
-/// the same kind via <see cref="settler_path_link"/>s. </summary>
-public class settler_path_element : MonoBehaviour, IAddsToInspectionText
+/// the same kind via <see cref="town_path_link"/>s. </summary>
+public class town_path_element : MonoBehaviour, IAddsToInspectionText
 {
     public settler_interactable interactable => GetComponentInParent<settler_interactable>();
 
@@ -59,20 +59,20 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     // LINKING //
     //#########//
 
-    public settler_path_link[] links
+    public town_path_link[] links
     {
         get
         {
             if (_links == null)
-                _links = GetComponentsInChildren<settler_path_link>();
+                _links = GetComponentsInChildren<town_path_link>();
             return _links;
         }
     }
-    settler_path_link[] _links;
+    town_path_link[] _links;
 
-    public List<settler_path_element> linked_elements()
+    public List<town_path_element> linked_elements()
     {
-        List<settler_path_element> ret = new List<settler_path_element>();
+        List<town_path_element> ret = new List<town_path_element>();
         foreach (var l in links)
             foreach (var lt in l)
                 ret.Add(lt.path_element);
@@ -120,14 +120,14 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         return "Group " + group + " room " + room;
     }
 
-    void try_link(settler_path_element other)
+    void try_link(town_path_element other)
     {
         // Can't link to self
         if (other == this) return;
 
         foreach (var l in links)
             foreach (var l2 in other.links)
-                if (settler_path_link.can_link(l, l2))
+                if (town_path_link.can_link(l, l2))
                     l.link_to(l2);
     }
 
@@ -137,21 +137,21 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             l.break_links(destroying);
     }
 
-    float heuristic(settler_path_element other)
+    float heuristic(town_path_element other)
     {
         return (transform.position - other.transform.position).magnitude;
     }
 
-    public delegate bool connected_iter_function(settler_path_element e);
+    public delegate bool connected_iter_function(town_path_element e);
 
     public void iterate_connected(connected_iter_function f)
     {
-        HashSet<settler_path_element> open = new HashSet<settler_path_element> { this };
-        HashSet<settler_path_element> closed = new HashSet<settler_path_element> { };
+        HashSet<town_path_element> open = new HashSet<town_path_element> { this };
+        HashSet<town_path_element> closed = new HashSet<town_path_element> { };
 
         while (open.Count > 0)
         {
-            settler_path_element current = null;
+            town_path_element current = null;
             foreach (var s in open) { current = s; break; }
             if (current == null) break;
 
@@ -172,17 +172,17 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     // STATIC STUFF //
     //##############//
 
-    static HashSet<settler_path_element> all_elements;
-    static Dictionary<int, HashSet<settler_path_element>> grouped_elements;
-    static Dictionary<int, HashSet<settler_path_element>> roomed_elements;
+    static HashSet<town_path_element> all_elements;
+    static Dictionary<int, HashSet<town_path_element>> grouped_elements;
+    static Dictionary<int, HashSet<town_path_element>> roomed_elements;
 
-    public static settler_path_element nearest_element(Vector3 v)
+    public static town_path_element nearest_element(Vector3 v)
     {
         return utils.find_to_min(all_elements,
             (e) => (e.transform.position - v).sqrMagnitude);
     }
 
-    public static settler_path_element nearest_element(Vector3 v, int group)
+    public static town_path_element nearest_element(Vector3 v, int group)
     {
         return utils.find_to_min(all_elements,
             (e) =>
@@ -192,21 +192,21 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
             });
     }
 
-    public static HashSet<settler_path_element> element_group(int group)
+    public static HashSet<town_path_element> element_group(int group)
     {
-        if (grouped_elements.TryGetValue(group, out HashSet<settler_path_element> elms))
+        if (grouped_elements.TryGetValue(group, out HashSet<town_path_element> elms))
             return elms;
-        return new HashSet<settler_path_element>();
+        return new HashSet<town_path_element>();
     }
 
-    public static HashSet<settler_path_element> elements_in_room(int room)
+    public static HashSet<town_path_element> elements_in_room(int room)
     {
-        if (roomed_elements.TryGetValue(room, out HashSet<settler_path_element> elms))
+        if (roomed_elements.TryGetValue(room, out HashSet<town_path_element> elms))
             return elms;
-        return new HashSet<settler_path_element>();
+        return new HashSet<town_path_element>();
     }
 
-    public static settler_path_element find_nearest(Vector3 position)
+    public static town_path_element find_nearest(Vector3 position)
     {
         return utils.find_to_min(all_elements,
             (r) => (r.transform.position - position).sqrMagnitude);
@@ -215,9 +215,9 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     public static void initialize()
     {
         // Initialize theelements collection
-        all_elements = new HashSet<settler_path_element>();
-        grouped_elements = new Dictionary<int, HashSet<settler_path_element>>();
-        roomed_elements = new Dictionary<int, HashSet<settler_path_element>>();
+        all_elements = new HashSet<town_path_element>();
+        grouped_elements = new Dictionary<int, HashSet<town_path_element>>();
+        roomed_elements = new Dictionary<int, HashSet<town_path_element>>();
     }
 
     static void evaluate_groups_and_rooms()
@@ -229,13 +229,13 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     static void evaluate_groups()
     {
         int group = 0;
-        HashSet<settler_path_element> ungrouped = new HashSet<settler_path_element>(all_elements);
+        HashSet<town_path_element> ungrouped = new HashSet<town_path_element>(all_elements);
 
         while (ungrouped.Count > 0)
         {
             // Create an open set from the first ungrouped element
-            HashSet<settler_path_element> open = new HashSet<settler_path_element> { ungrouped.First() };
-            HashSet<settler_path_element> closed = new HashSet<settler_path_element>();
+            HashSet<town_path_element> open = new HashSet<town_path_element> { ungrouped.First() };
+            HashSet<town_path_element> closed = new HashSet<town_path_element>();
 
             while (open.Count > 0)
             {
@@ -265,13 +265,13 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     static void evaluate_rooms()
     {
         int room = 0;
-        HashSet<settler_path_element> unroomed = new HashSet<settler_path_element>(all_elements);
+        HashSet<town_path_element> unroomed = new HashSet<town_path_element>(all_elements);
 
         while (unroomed.Count > 0)
         {
             // Create an open set from the first unroomed element
-            HashSet<settler_path_element> open = new HashSet<settler_path_element> { unroomed.First() };
-            HashSet<settler_path_element> closed = new HashSet<settler_path_element>();
+            HashSet<town_path_element> open = new HashSet<town_path_element> { unroomed.First() };
+            HashSet<town_path_element> closed = new HashSet<town_path_element>();
 
             while (open.Count > 0)
             {
@@ -303,7 +303,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         }
     }
 
-    static void validate_links(settler_path_element r)
+    static void validate_links(town_path_element r)
     {
         // Re-make all links to/from r
         r.break_links();
@@ -313,7 +313,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         evaluate_groups_and_rooms();
     }
 
-    static void register_element(settler_path_element r)
+    static void register_element(town_path_element r)
     {
         // Create links to/from r, add r to the collection of elements.
         if (!all_elements.Add(r))
@@ -322,7 +322,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
         validate_links(r);
     }
 
-    static void forget_element(settler_path_element r, bool destroying = false)
+    static void forget_element(town_path_element r, bool destroying = false)
     {
         // Forget all the links to/from r, remove r from the collection of elements
         if (!all_elements.Remove(r))
@@ -351,12 +351,12 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
     {
         public const float ARRIVE_DISTANCE = 0.25f;
 
-        List<settler_path_element> element_path;
+        List<town_path_element> element_path;
 
         public bool valid => element_path != null;
         public int Count => element_path == null ? 0 : element_path.Count;
 
-        public settler_path_element this[int i]
+        public town_path_element this[int i]
         {
             get
             {
@@ -374,23 +374,23 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
                 throw new System.Exception("Tried to remove out of range path element!");
         }
 
-        public path(Vector3 v, settler_path_element goal) :
+        public path(Vector3 v, town_path_element goal) :
             this(nearest_element(v), goal)
         { }
 
         /// <summary> Find a path between the start and end elements, using 
         /// the A* algorithm. Returns null if no such path exists. </summary>
-        public path(settler_path_element start, settler_path_element goal)
+        public path(town_path_element start, town_path_element goal)
         {
             if (start == null || goal == null) return;
             if (start.group != goal.group) return;
 
             // Setup pathfinding state
-            var open_set = new HashSet<settler_path_element>();
-            var closed_set = new HashSet<settler_path_element>();
-            var came_from = new Dictionary<settler_path_element, settler_path_element>();
-            var fscore = new Dictionary<settler_path_element, float>();
-            var gscore = new Dictionary<settler_path_element, float>();
+            var open_set = new HashSet<town_path_element>();
+            var closed_set = new HashSet<town_path_element>();
+            var came_from = new Dictionary<town_path_element, town_path_element>();
+            var fscore = new Dictionary<town_path_element, float>();
+            var gscore = new Dictionary<town_path_element, float>();
 
             // Initialize pathfinding with just start open
             open_set.Add(start);
@@ -405,7 +405,7 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
                 if (current == goal)
                 {
                     // Success - reconstruct path
-                    element_path = new List<settler_path_element> { current };
+                    element_path = new List<town_path_element> { current };
                     while (came_from.TryGetValue(current, out current))
                         element_path.Add(current);
                     element_path.Reverse();
@@ -444,10 +444,10 @@ public class settler_path_element : MonoBehaviour, IAddsToInspectionText
 
         public bool walk(Transform transform, float speed)
         {
-            return walk(transform, speed, out settler_path_element ignored);
+            return walk(transform, speed, out town_path_element ignored);
         }
 
-        public bool walk(Transform transform, float speed, out settler_path_element next_element)
+        public bool walk(Transform transform, float speed, out town_path_element next_element)
         {
             if (this[0] == null)
             {

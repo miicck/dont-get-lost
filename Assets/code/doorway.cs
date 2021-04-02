@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary> Seperates connected sections of
 /// path elements into rooms. </summary>
-public class doorway : settler_path_element, IAddsToInspectionText
+public class doorway : town_path_element, IAddsToInspectionText
 {
     public Transform door;
     public AXIS door_axis;

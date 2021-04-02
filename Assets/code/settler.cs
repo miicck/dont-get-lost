@@ -42,17 +42,17 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
     }
 
-    settler_path_element.path path;
+    town_path_element.path path;
 
     /// <summary> The path element that I am currently moving 
     /// towards. </summary>
-    public settler_path_element path_element
+    public town_path_element path_element
     {
         get
         {
             if (_path_element == null)
             {
-                _path_element = settler_path_element.nearest_element(transform.position);
+                _path_element = town_path_element.nearest_element(transform.position);
                 if (_path_element == null) return null;
                 _path_element.on_settler_enter(this);
             }
@@ -68,7 +68,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             _path_element?.on_settler_enter(this);
         }
     }
-    settler_path_element _path_element;
+    town_path_element _path_element;
 
     public int group => path_element == null ? -1 : path_element.group;
     public int room => path_element == null ? -1 : path_element.room;
@@ -129,7 +129,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path = new settler_path_element.path(path_element, assignment.interactable.path_element(group));
+            path = new town_path_element.path(path_element, assignment.interactable.path_element(group));
 
             if (path == null || !path.valid)
             {
@@ -142,7 +142,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            settler_path_element element_walking_towards;
+            town_path_element element_walking_towards;
             if (path.walk(transform, assignment.interactable.move_to_speed(this), out element_walking_towards))
                 path = null;
             path_element = element_walking_towards;
