@@ -946,16 +946,19 @@ namespace networked_variables
             base.set_dirty();
         }
 
-        public int this[skill j]
+        public skill.proficiency this[skill j]
         {
-            get => xps[j.default_priority];
-            set
-            {
-                if (value < 0) return; // Not allowed
-                if (value == this[j]) return; // No change
-                xps[j.default_priority] = value;
-                set_dirty();
-            }
+            get => new skill.proficiency(xps[j.default_priority]);
+        }
+
+        public void modify_xp(skill s, int delta)
+        {
+            int new_xp = xps[s.default_priority] + delta;
+            if (new_xp < 0) new_xp = 0;
+            if (new_xp > skill.max_xp) new_xp = skill.max_xp;
+            if (xps[s.default_priority] == new_xp) return; // No change
+            xps[s.default_priority] = new_xp;
+            set_dirty();
         }
 
         public override byte[] serialization()

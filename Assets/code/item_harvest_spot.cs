@@ -28,20 +28,20 @@ public class item_harvest_spot : settler_interactable_options
 
     item_output output => GetComponentInChildren<item_output>();
 
-    float elapsed_time = 0;
+    float work_completed = 0;
     int harvested_count = 0;
 
     public override INTERACTION_RESULT on_assign(settler s)
     {
-        elapsed_time = 0;
+        work_completed = 0;
         harvested_count = 0;
         return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override INTERACTION_RESULT on_interact(settler s)
     {
-        elapsed_time += Time.deltaTime;
-        if (elapsed_time > (harvested_count + 1) * harvest_time)
+        work_completed += Time.deltaTime * s.skills[skill].speed_multiplier;
+        if (work_completed > (harvested_count + 1) * harvest_time)
         {
             harvested_count += 1;
             var itm = options[selected_option];
@@ -49,7 +49,7 @@ public class item_harvest_spot : settler_interactable_options
                 output.transform.rotation, logistics_version: true));
         }
 
-        if (elapsed_time > 5f) return INTERACTION_RESULT.COMPLETE;
+        if (work_completed > 5f) return INTERACTION_RESULT.COMPLETE;
         return INTERACTION_RESULT.UNDERWAY;
     }
 }

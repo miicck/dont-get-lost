@@ -99,7 +99,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             // Attempt to find an interaction - go through job types in priority order
             foreach (var s in skill.all)
             {
-                if (!skill.priority_test(job_priorities[s])) continue;
+                // If the skill is visible, then assign it according to visibility
+                if (s.is_visible)
+                    if (!skill.priority_test(job_priorities[s]))
+                        continue;
+
                 var job = settler_interactable.random(s);
                 if (settler_task_assignment.try_assign(this, job)) return;
             }
@@ -145,7 +149,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (delta_xp > 1f)
         {
             delta_xp = 0;
-            skills[assignment.interactable.skill] += skill.XP_GAIN_PER_SEC;
+            skills.modify_xp(assignment.interactable.skill, skill.XP_GAIN_PER_SEC);
         }
 
         switch (assignment.interactable.on_interact(this))
@@ -350,7 +354,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     {
         string ass_string = "No assignment.";
         if (assignment != null)
-            ass_string = "Assignment: " + assignment.interactable.task_info();
+        {
+            var i = assignment.interactable;
+            int perc = skills[i.skill].speed_mult_perc;
+            ass_string = "Assignment: \n";
+            string ti = i.task_info().Trim();
+            if (ti.Length > 0) ass_string += ti + "\n";
+            if (i.skill.is_visible) ass_string += "Skill speed multiplier: " + perc + "%";
+        }
         return ass_string;
     }
 
@@ -465,7 +476,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         height.value = Random.Range(0.8f, 1.2f);
 
         foreach (var j in skill.all)
-            skills[j] = skill.level_to_xp(Random.Range(0, 10));
+            skills.modify_xp(j, skill.level_to_xp(Random.Range(0, 10)));
     }
 
     float armour_location_fill_probability(armour_piece.LOCATION loc)

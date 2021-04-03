@@ -132,7 +132,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         }
     }
 
-    float time_harvesting;
+    float work_done;
     int harvested_count = 0;
 
     private void OnDrawGizmos()
@@ -210,7 +210,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             return INTERACTION_RESULT.FAILED;
 
         // Reset stuff 
-        time_harvesting = 0f;
+        work_done = 0f;
         harvested_count = 0;
         return INTERACTION_RESULT.UNDERWAY;
     }
@@ -221,9 +221,9 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             return INTERACTION_RESULT.FAILED;
 
         // Record how long has been spent harvesting
-        time_harvesting += Time.deltaTime;
+        work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
 
-        if (time_harvesting > harvested_count)
+        if (work_done > harvested_count)
         {
             harvested_count += 1;
 

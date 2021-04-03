@@ -10,9 +10,8 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     public int z_size = 2;
     public float spacing = 1f;
     public float spot_tend_prob = 0.33f;
+    public float base_tend_time = 4f;
     public Vector3 offset = Vector3.zero;
-
-    float time_spent_farming;
 
     // Get the spots indexed by their coordinates
     settler_field_spot[,] spots
@@ -84,18 +83,20 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
     // INTERACTABLE //
     //##############//
 
+    float work_done;
+
     public override INTERACTION_RESULT on_assign(settler s)
     {
         // Reset stuff
-        time_spent_farming = 0f;
+        work_done = 0f;
         return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override INTERACTION_RESULT on_interact(settler s)
     {
         // Record the amount of time spent farming
-        time_spent_farming += Time.deltaTime;
-        if (time_spent_farming > 1f)
+        work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
+        if (work_done > base_tend_time)
         {
             // Only grow field on authority client
             if (!s.has_authority) return INTERACTION_RESULT.COMPLETE;

@@ -19,6 +19,15 @@ public class skill : MonoBehaviour
         HIGH = 3
     };
 
+    public struct proficiency
+    {
+        public proficiency(int xp) { this.xp = xp; }
+        public int xp { get; private set; }
+        public int level => xp_to_level(xp);
+        public float speed_multiplier => xp_to_speed_multiplier(xp);
+        public int speed_mult_perc => (int)(speed_multiplier * 100);
+    };
+
     //##############//
     // STATIC STUFF //
     //##############//
@@ -27,6 +36,8 @@ public class skill : MonoBehaviour
     public const int MAX_LEVEL = 99;
     const int TIME_TO_MAX = 24 * 60 * 60;
     const int TIME_TO_1 = 3;
+
+    public static int max_xp => level_to_xp(MAX_LEVEL);
 
     public static int level_to_xp(int level)
     {
@@ -43,6 +54,12 @@ public class skill : MonoBehaviour
         float t = xp / (float)XP_GAIN_PER_SEC;
         float aoverb = alpha / (2 * beta);
         return Mathf.Min((int)(Mathf.Sqrt(t / beta + aoverb * aoverb) - aoverb), MAX_LEVEL);
+    }
+
+    public static float xp_to_speed_multiplier(int xp)
+    {
+        float frac_xp = xp / (float)level_to_xp(MAX_LEVEL);
+        return 1 + 4f * Mathf.Sqrt(frac_xp);
     }
 
     [test_method]

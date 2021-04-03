@@ -124,7 +124,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
     STAGE stage;
     item item_carrying;
     town_path_element.path path;
-    float stage_timer = 0;
+    float stage_work_done = 0;
     int stock_crafted = 0;
     int left_to_stock = 0;
 
@@ -134,7 +134,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
     {
         // Starts in the stock stage
         stage = STAGE.STOCK;
-        stage_timer = 0;
+        stage_work_done = 0;
         stock_crafted = 0;
         left_to_stock = 0;
         path = null;
@@ -161,10 +161,10 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             // Walk the path
             if (path.walk(s.transform, s.walk_speed, s) == null)
             {
-                stage_timer += Time.deltaTime;
-                if (stage_timer > 1f)
+                stage_work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
+                if (stage_work_done > 1f)
                 {
-                    stage_timer = 0f;
+                    stage_work_done = 0f;
                     path = null;
                 }
             }
@@ -583,7 +583,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
         public override string task_info(STAGE stage)
         {
-            switch(stage)
+            switch (stage)
             {
                 case STAGE.GET_MATERIALS:
                     return "Fueling the furnace.";

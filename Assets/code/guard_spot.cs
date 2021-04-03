@@ -48,7 +48,8 @@ public class guard_spot : settler_interactable
             if (attack_timer > 1f)
             {
                 attack_timer = 0f;
-                projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target);
+                int damage = (int)(s.skills[skill].speed_multiplier * 10);
+                projectile.create(s.transform.position + Vector3.up * s.height.value * 1.5f, target, damage: damage);
             }
             s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;
         }
@@ -68,12 +69,14 @@ public class guard_spot : settler_interactable
     class projectile : MonoBehaviour
     {
         character target;
+        int damage;
 
-        public static projectile create(Vector3 start_pos, character target, float max_time = 2f)
+        public static projectile create(Vector3 start_pos, character target, float max_time = 2f, int damage = 10)
         {
             var p = temporary_object.create(max_time).gameObject.AddComponent<projectile>();
             p.name = "projectile";
             p.target = target;
+            p.damage = damage;
             p.transform.position = start_pos;
 
             var proj = Resources.Load<GameObject>("particle_systems/guard_spot_projectile").inst(p.transform.position);
@@ -89,7 +92,7 @@ public class guard_spot : settler_interactable
 
             if (utils.move_towards(transform, target.projectile_target(), Time.deltaTime * 20f))
             {
-                target.take_damage(10);
+                target.take_damage(damage);
                 Destroy(gameObject);
             }
         }

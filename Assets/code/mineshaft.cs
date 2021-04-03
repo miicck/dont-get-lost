@@ -60,18 +60,20 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
     // settler_interactable //
     //######################//
 
-    float time_mining;
+    float work_done;
 
     public override INTERACTION_RESULT on_assign(settler s)
     {
-        time_mining = 0;
+        work_done = 0;
         if (!on_valid_ground) return INTERACTION_RESULT.FAILED;
         return INTERACTION_RESULT.UNDERWAY;
     }
 
     public override INTERACTION_RESULT on_interact(settler s)
     {
-        if (time_mining + Time.deltaTime >= 1f && time_mining < 1f)
+        float delta_work = Time.deltaTime * s.skills[skill].speed_multiplier;
+
+        if (work_done + delta_work >= 1f && work_done < 1f)
         {
             // This is the tick that will take us past mining
             // time, create the item
@@ -83,7 +85,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
             return INTERACTION_RESULT.COMPLETE;
         }
 
-        time_mining += Time.deltaTime;
+        work_done += delta_work;
         return INTERACTION_RESULT.UNDERWAY;
     }
 
