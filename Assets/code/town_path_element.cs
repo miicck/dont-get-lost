@@ -79,6 +79,16 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
         return ret;
     }
 
+    public List<town_path_element> linked_elements_in_same_room()
+    {
+        List<town_path_element> ret = new List<town_path_element>();
+        foreach (var l in links)
+            foreach (var lt in l)
+                if (lt.path_element.room == room)
+                    ret.Add(lt.path_element);
+        return ret;
+    }
+
     public int group
     {
         get => _group;
