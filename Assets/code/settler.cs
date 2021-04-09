@@ -7,7 +7,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
     public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
 
-    public const float TIME_TO_STARVE = 5f * 60f;
+    public const float TIME_TO_STARVE = 10f * 60f;
     public const float TIME_TO_REGEN = 120f;
     public const float TIME_TO_TIRED = time_manager.DAY_LENGTH;
 

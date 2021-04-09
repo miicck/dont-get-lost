@@ -13,6 +13,9 @@ TODO
 - Production counter?
 - Filter-splitter
 - Remove the off-by-one thing happenng with player.slot_equipped
+- Make settler_interactable return a task object, this will make it
+  easier to make settler_interactables work for multiple settlers (see
+  the way that lootboxes work at the moment)
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
