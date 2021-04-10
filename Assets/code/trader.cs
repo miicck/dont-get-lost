@@ -91,6 +91,9 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
                 var entry_template = ui.GetComponentInChildren<trade_entry>();
                 foreach (var kv in trader.get_stock())
                 {
+                    // Don't allow direct trade of coins
+                    if (kv.Key == "coin") continue;
+
                     // Create, position and initialize the trade entry for this item
                     var item = Resources.Load<item>("items/" + kv.Key);
                     var entry = entry_template.inst();

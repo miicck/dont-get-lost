@@ -6,7 +6,7 @@ public class wandering_trader : trader, IExtendsNetworked
 {
     public override int get_stock(string item) { return stock[item]; }
     public override void set_stock(string item, int count)
-    { 
+    {
         stock[item] = count;
     }
 
@@ -37,7 +37,16 @@ public class wandering_trader : trader, IExtendsNetworked
         if (stock.count == 0)
         {
             // Stock needs initializing
-            stock["apple"] = 10;
+            stock["coin"] = 500;
+
+            var itms = Resources.LoadAll<item>("items/");
+            for (int n = 0; n < 25; ++n)
+            {
+                var i = itms[Random.Range(0, itms.Length)];
+                int val = Mathf.Max(i.value, 1);
+                int count = Mathf.Max(200 / val, 1);
+                stock[i.name] = count;
+            }
         }
     }
 }
