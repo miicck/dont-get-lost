@@ -50,7 +50,7 @@ public class settler_path_section : town_path_link
         return (collider.ClosestPoint(p) - p).magnitude;
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (collider == null) return;
         Gizmos.color = Color.green;

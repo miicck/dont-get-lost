@@ -102,6 +102,7 @@ public class settler_task_assignment : networked, IAddsToInspectionText
     public override void on_forget(bool deleted)
     {
         // Remove me from the assignements by id dictionary, if I'm in it
+        interactable.on_unassign(settler);
         if (assignments_by_id.TryGetValue(settler_id.value, out settler_task_assignment assignment))
         {
             if (assignment == this)

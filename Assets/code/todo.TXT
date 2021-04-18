@@ -12,7 +12,8 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Production counter?
 - Filter-splitter
-- Remove the off-by-one thing happenng with player.slot_equipped
+- Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
+  at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Make settler_interactable return a task object, this will make it
   easier to make settler_interactables work for multiple settlers (see
   the way that lootboxes work at the moment)

@@ -267,6 +267,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return Mathf.RoundToInt(100f * (1f - nutrition.metabolic_satisfaction / (float)byte.MaxValue));
     }
 
+    public int total_mood()
+    {
+        int ret = 0;
+        foreach (var me in mood_effect.get_all(this)) ret += me.delta_mood;
+        return ret;
+    }
+
     player_interaction[] interactions;
     public override player_interaction[] player_interactions()
     {
@@ -282,8 +289,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                        "    " + "Health " + remaining_health + "/" + max_health + "\n" +
                        "    " + Mathf.Round(tiredness.value) + "% tired\n" +
                        "    " + hunger_percent() + "% hungry\n" +
-                       assignement_info() + "\n" +
-                       "    interacting with " + players_interacting_with.value + " players";
+                       "    mood " + total_mood() + "\n" +
+                       assignement_info();
                 }
             }
         };
@@ -341,7 +348,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                    "Health " + settler.remaining_health + "/" + settler.max_health + "\n" +
                    settler.tiredness.value + "% tired\n\n" +
                    settler.nutrition_info() + "\n\n" +
-                   "Group " + settler.group + " room " + settler.room + "\n" +
+                   "Group " + settler.group + " room " + settler.room + "\n\n" +
+                   settler.mood_info() + "\n\n" +
                    settler.assignement_info();
         }
     }
@@ -349,6 +357,19 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     //#######################//
     // Formatted information //
     //#######################//
+
+    public string mood_info()
+    {
+        string ret = "";
+        int total_mood = 0;
+        foreach (var me in mood_effect.get_all(this))
+        {
+            ret += "  " + me.display_name + " " + me.delta_mood + "\n";
+            total_mood += me.delta_mood;
+        }
+
+        return "Mood " + total_mood + "\n" + ret;
+    }
 
     public string assignement_info()
     {
@@ -406,6 +427,20 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override bool persistant() { return !is_dead; }
 
     public inventory inventory { get; private set; }
+
+    public void add_mood_effect(string name)
+    {
+        // Can't add mood effects from non-auth client
+        if (!has_authority) return; 
+
+        // Mood effect doesn't exist (mood_effect.load will flag a warning)
+        if (mood_effect.load(name) == null) return;
+
+        // Don't allow the same effect more than once
+        foreach (var me in mood_effect.get_all(this)) if (me.name == name) return; 
+
+        client.create(transform.position, "mood_effects/" + name, parent: this);
+    }
 
     public override void on_init_network_variables()
     {

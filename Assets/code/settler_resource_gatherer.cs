@@ -243,6 +243,4 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         return "Harvesting " + product.product_plurals_list(harvesting.products) +
             " (" + harvested_count + "/" + max_harvests + ")";
     }
-
-    public override void on_unassign(settler s) { }
 }

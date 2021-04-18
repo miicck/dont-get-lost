@@ -59,6 +59,7 @@ public class bed : settler_interactable
     {
         // Un-lie down
         s.transform.rotation = Quaternion.identity;
+        s.add_mood_effect("just_got_up");
     }
 
     public override string task_info()
