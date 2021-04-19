@@ -1,26 +1,69 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using System.IO;
+using System.Threading;
 
 #if STANDALONE_SERVER
 public static class standalone_server
 {
     public static void Main(string[] args)
     {
-        server.start(server.DEFAULT_PORT, args[0], "misc/player", out string err);
+        // Clear the log
+        if (File.Exists("log"))
+            File.Delete("log");
 
-        System.Console.CancelKeyPress += new System.ConsoleCancelEventHandler(stop);
+        // Check args
+        if (args.Length < 1)
+        {
+            log("Please provide the savename.");
+            return;
+        }
 
-        while (true)
+        // Attempt to start the server
+        if (!server.start(server.DEFAULT_PORT, args[0], "misc/player", out string err))
+        {
+            log("The server failed to start: "+err);
+            return;
+        }
+
+        // Run server updates, processing commands from
+        // the cmd file + logging to the log file
+        while(true)
         {
             server.update();
-            if (!server.started)
-                break;
+            Thread.Sleep(17);
+            if (!server.started) break;
+
+            if (File.Exists("cmd"))
+            {
+                log(process_command(File.ReadAllText("cmd")));
+                File.Delete("cmd");
+            }
         }
     }
 
-    static void stop(object sender, System.ConsoleCancelEventArgs args)
+    // Process a standalone server command
+    static string process_command(string cmd)
     {
-        server.stop();
+        if (cmd == null) return null;
+        cmd = cmd.Trim();
+
+        if (cmd == "stop")
+        {
+            server.stop();
+            return "Stopping server...";
+        }
+
+        if (cmd == "info")
+            return server.info();
+
+        return null;
+    }
+
+    // Log a message to the log file
+    static void log<T>(T message)
+    {
+        using (var sw = File.AppendText("log"))
+            sw.WriteLine(message);
     }
 }
 #endif
