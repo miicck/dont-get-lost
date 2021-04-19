@@ -1,7 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Net.Sockets;
+
+#if STANDALONE_SERVER
+#else
+using UnityEngine;
+#endif
 
 public static class client
 {
@@ -21,7 +25,7 @@ public static class client
 
 #if STANDALONE_SERVER
 #else
-// Stuff below here is not used by the standalone server
+    // Stuff below here is not used by the standalone server
 
     /// <summary> How many milliseconds to wait when attempting to connect. </summary>
     public const int CONNECTION_TIMEOUT_MS = 2000;
