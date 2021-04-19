@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 308037861202758188}
   - component: {fileID: 7915786716127770993}
   m_Layer: 0
-  m_Name: forestry
+  m_Name: looting
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa822c40410bfa140821816bb4a2983b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  default_priority: 5
+  default_priority: 9
   is_visible: 1
   possible_when_under_attack: 0
   noun_form: 

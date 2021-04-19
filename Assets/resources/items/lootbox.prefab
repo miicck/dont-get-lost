@@ -336,7 +336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a50815acbb124143bc31ccb7cb45b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
+  skill: {fileID: 7915786716127770993, guid: eaad723b0984e504898c2530d4a6f383, type: 3}
   max_simultaneous_users: 1
 --- !u!65 &7707463802257312042
 BoxCollider:

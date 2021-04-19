@@ -44,7 +44,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   default_priority: 0
-  assign_prob: 1
   is_visible: 0
-  stop_when_attack_begins: 1
+  possible_when_under_attack: 0
   noun_form: 
