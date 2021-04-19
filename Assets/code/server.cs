@@ -1186,57 +1186,56 @@ public static class server
         PLAYER_UPDATE,     // Sent to clients to update info about connected players
     }
 
+    // Send a payload to a client
+    static void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
+    {
+        byte[] to_send = network_utils.concat_buffers(
+            network_utils.encode_int(payload.Length),
+            new byte[] { (byte)msg_type },
+            payload
+        );
+
+        if (immediate)
+        {
+            // Send the message immediately
+            // this results in lower throughput and should only
+            // be used when absolutely neccassary
+            try
+            {
+                client.stream.Write(to_send, 0, to_send.Length);
+            }
+            catch
+            {
+                // Client was found to have disconnected
+                // during immediate message send (message
+                // = null because there would be no point
+                // trying to contact them, given they just
+                // disconnected).
+                client.disconnect(null);
+            }
+            return;
+        }
+
+        // Queue the message, creating the queue for this
+        // client if it doesn't already exist
+        Queue<pending_message> queue;
+        if (!message_queues.TryGetValue(client, out queue))
+        {
+            queue = new Queue<pending_message>();
+            message_queues[client] = queue;
+        }
+
+        queue.Enqueue(new pending_message
+        {
+            bytes = to_send,
+            send_time = Time.realtimeSinceStartup
+        });
+    }
+
     /// <summary> Send a message with the given type to the 
     /// given client with the given arguments </summary>
     static void send_message(MESSAGE type, client client, params object[] args)
     {
-        // Send a payload to a client
-        void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
-        {
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                new byte[] { (byte)msg_type },
-                payload
-            );
-
-            if (immediate)
-            {
-                // Send the message immediately
-                // this results in lower throughput and should only
-                // be used when absolutely neccassary
-                try
-                {
-                    client.stream.Write(to_send, 0, to_send.Length);
-                }
-                catch
-                {
-                    // Client was found to have disconnected
-                    // during immediate message send (message
-                    // = null because there would be no point
-                    // trying to contact them, given they just
-                    // disconnected).
-                    client.disconnect(null);
-                }
-                return;
-            }
-
-            // Queue the message, creating the queue for this
-            // client if it doesn't already exist
-            Queue<pending_message> queue;
-            if (!message_queues.TryGetValue(client, out queue))
-            {
-                queue = new Queue<pending_message>();
-                message_queues[client] = queue;
-            }
-
-            queue.Enqueue(new pending_message
-            {
-                bytes = to_send,
-                send_time = Time.realtimeSinceStartup
-            });
-        }
-
-
         switch (type)
         {
             case MESSAGE.CREATE:
