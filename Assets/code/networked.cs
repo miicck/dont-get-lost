@@ -506,10 +506,10 @@ public class networked : MonoBehaviour
     }
 
     /// <summary> Look up a networked prefab from the prefab path. </summary>
-    public static networked look_up(string path)
+    public static networked look_up(string path, bool error_on_fail = true)
     {
         var found = Resources.Load<networked>(path);
-        if (found == null) Debug.LogError("Could not find networked prefab " + path);
+        if (found == null && error_on_fail) Debug.LogError("Could not find networked prefab " + path);
         return found;
     }
 

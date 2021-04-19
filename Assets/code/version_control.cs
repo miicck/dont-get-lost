@@ -23,6 +23,9 @@ public static class version_control
     {
 #if UNITY_EDITOR
 
+        // Generate server data
+        generate_server_data();
+
         // Get version info from git repo
         string git = find_git();
         if (git == null)
@@ -138,5 +141,21 @@ public static class version_control
 
             return stdout;
         }
+    }
+
+    public static void generate_server_data()
+    {
+        // Loop over all networked prefabs
+        string to_write = "";
+        foreach (var path in UnityEditor.AssetDatabase.GetAllAssetPaths())
+        {
+            if (!path.StartsWith("Assets/resources/")) continue;
+            string lookup_path = path.Replace(".prefab", "").Replace("Assets/resources/", "");
+            var nw = networked.look_up(lookup_path, error_on_fail: false);
+            if (nw == null) continue;
+
+            to_write += path + " " + nw.network_radius() + " " + nw.persistant() + "\n";
+        }
+        System.IO.File.WriteAllText(Application.dataPath + "/server_data", to_write);
     }
 }

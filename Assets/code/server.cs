@@ -726,10 +726,6 @@ public static class server
         deleted_representations = new hierarchy_element();
         truncated_read_messages = new Dictionary<client, byte[]>();
 
-        // Check that server configuration is valid
-        if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
-            throw new System.Exception("Local player object must be a networked_player!");
-
         // Start listening
         try
         {
@@ -754,6 +750,10 @@ public static class server
             error_message = "Save file not present.";
             return false;
         }
+#       else
+        // Check that server configuration is valid
+        if (!networked.look_up(player_prefab).GetType().IsSubclassOf(typeof(networked_player)))
+            throw new System.Exception("Local player object must be a networked_player!");
 #       endif
 
         // Server started successfully
@@ -1536,7 +1536,12 @@ public static class server
     }
 
 #if STANDALONE_SERVER
-    // Implementations of unity things
+
+    //#######################################//
+    // Standalone-server versions of various //
+    // things that rely on the unity engine. //
+    //#######################################//
+
     public class Vector3
     {
         public float x;
@@ -1609,5 +1614,45 @@ public static class server
             get => System.Environment.CurrentDirectory;
         }
     }
+
+    class network_lookup
+    {
+        public network_lookup(float radius, bool persist)
+        {
+            this.radius = radius;
+            this.persist = persist;
+        }
+
+        float radius;
+        bool persist;
+
+        public float network_radius() { return radius; }
+        public bool persistant() { return persist; }
+    }
+
+    static class networked
+    {
+        static Dictionary<string, network_lookup> data;
+
+        public static network_lookup look_up(string path)
+        {
+            if (data == null)
+            {
+                data = new Dictionary<string, network_lookup>();
+                foreach (var s in System.IO.File.ReadAllLines("server_data"))
+                {
+                    var splt = s.Split();
+                    if (splt.Length != 3) throw new System.Exception("Incorrect entry length in server_data!");
+                    data[splt[0]] = new network_lookup(float.Parse(splt[1]), bool.Parse(splt[2]));
+                }
+            }
+
+            if (!data.TryGetValue(path, out network_lookup ret))
+                throw new System.Exception("Could not find entry in server_data: " + path);
+
+            return ret;
+        }
+    }
+
 #endif
 }
