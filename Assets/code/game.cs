@@ -281,17 +281,22 @@ public class game : MonoBehaviour
     /// <summary> Join a world hosted on a server. </summary>
     public static bool join_world(string ip_port, string username)
     {
-        var split = ip_port.Split(':');
-        if (split.Length != 2) return false;
+        int port = server.DEFAULT_PORT;
+        string host = ip_port;
 
-        string ip = split[0];
-        if (!int.TryParse(split[1], out int port)) return false;
+        if (ip_port.Contains(":"))
+        {
+            var split = ip_port.Split(':');
+            if (split.Length != 2) return false;
+            host = split[0];
+            if (!int.TryParse(split[1], out port)) return false;
+        }
 
         startup = new startup_info
         {
             username = username,
             mode = startup_info.MODE.JOIN,
-            hostname = ip,
+            hostname = host,
             port = port
         };
 
