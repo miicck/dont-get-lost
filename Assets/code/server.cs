@@ -1656,3 +1656,18 @@ public static class server
 
 #endif
 }
+
+/// <summary> Tag a networked variable with a predefined type, because 
+/// it has a special meaning to the network engine. </summary>
+public class engine_networked_variable : System.Attribute
+{
+    public enum TYPE : int
+    {
+        POSITION_X,
+        POSITION_Y,
+        POSITION_Z,
+    }
+
+    public TYPE type;
+    public engine_networked_variable(TYPE type) { this.type = type; }
+}

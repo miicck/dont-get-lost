@@ -2,21 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> Tag a networked variable with a predefined type, because 
-/// it has a special meaning to the network engine. </summary>
-public class engine_networked_variable : System.Attribute
-{
-    public enum TYPE : int
-    {
-        POSITION_X,
-        POSITION_Y,
-        POSITION_Z,
-    }
-
-    public TYPE type;
-    public engine_networked_variable(TYPE type) { this.type = type; }
-}
-
 public abstract class networked_variable
 {
     public void set_owner_and_index(networked owner, int index)
