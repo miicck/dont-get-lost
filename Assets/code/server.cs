@@ -1,7 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Net.Sockets;
+
+#if STANDALONE_SERVER
+#else
+using UnityEngine;
+#endif
 
 public static class server
 {
@@ -740,6 +744,17 @@ public static class server
         // Load the world
         if (System.IO.File.Exists(save_file()))
             load();
+
+#       if STANDALONE_SERVER
+        // Error out if the save file does not exist
+        else
+        {
+            Debug.LogError("Save file does not exist: " + save_file());
+            Debug.LogError("The standalone server requires an existing savefile.");
+            error_message = "Save file not present.";
+            return false;
+        }
+#       endif
 
         // Server started successfully
         error_message = "";
@@ -1520,4 +1535,80 @@ public static class server
                 throw new System.Exception("Unkown message type!");
         };
     }
+
+#if STANDALONE_SERVER
+    // Implementations of unity things
+    public class Vector3
+    {
+        public float x;
+        public float y;
+        public float z;
+
+        public Vector3(float x, float y, float z)
+        {
+            this.x = x; this.y = y; this.z = z;
+        }
+
+        public float sqrMagnitude { get => x * x + y * y + z * z; }
+        public float magnitude { get => (float)System.Math.Sqrt(sqrMagnitude); }
+
+        // STATIC METHODS //
+
+        public static Vector3 operator -(Vector3 lhs, Vector3 rhs)
+        {
+            return new Vector3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
+        }
+
+        public static Vector3 zero
+        {
+            get => new Vector3(0, 0, 0);
+        }
+    }
+
+    public static class Time
+    {
+        static System.DateTime start_time
+        {
+            get
+            {
+                if (_start_time == null)
+                    _start_time = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+                return _start_time;
+            }
+        }
+        static System.DateTime _start_time;
+
+        public static float realtimeSinceStartup
+        {
+            get => (float)(System.DateTime.UtcNow - start_time).TotalSeconds;
+        }
+
+    }
+
+    static class Debug
+    {
+        public static void Log<T>(T message)
+        {
+            System.Console.WriteLine(message);
+        }
+
+        public static void LogWarning<T>(T message)
+        {
+            System.Console.WriteLine("WARNING: " + message);
+        }
+
+        public static void LogError<T>(T message)
+        {
+            System.Console.WriteLine("ERROR: " + message);
+        }
+    }
+
+    static class Application
+    {
+        public static string persistentDataPath
+        {
+            get => System.Environment.CurrentDirectory;
+        }
+    }
+#endif
 }

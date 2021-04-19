@@ -17,6 +17,9 @@ TODO
 - Make settler_interactable return a task object, this will make it
   easier to make settler_interactables work for multiple settlers (see
   the way that lootboxes work at the moment)
+- Pickup/dropoff points for settlers to move items around
+- Some better method of raising items long distances (if the above doesn't solve this problem)
+- Standalone server (+running on rasperry pi)
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

@@ -916,7 +916,11 @@ namespace networked_variables
         protected override void process_serialization(byte[] buffer, ref int offset, int length)
         {
             if (length != priorities.Length)
-                throw new System.Exception("Incorrect serialization length!");
+            {
+                Debug.LogError("Number of skills has changed!");
+                return;
+            }
+
             System.Buffer.BlockCopy(buffer, offset, priorities, 0, length);
 
             for (int i = 0; i < priorities.Length; ++i)
