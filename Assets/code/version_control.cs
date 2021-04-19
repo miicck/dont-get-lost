@@ -154,7 +154,7 @@ public static class version_control
             var nw = networked.look_up(lookup_path, error_on_fail: false);
             if (nw == null) continue;
 
-            to_write += path + " " + nw.network_radius() + " " + nw.persistant() + "\n";
+            to_write += lookup_path + " " + nw.network_radius() + " " + nw.persistant() + "\n";
         }
         System.IO.File.WriteAllText(Application.dataPath + "/server_data", to_write);
     }
