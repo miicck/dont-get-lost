@@ -1542,7 +1542,7 @@ public static class server
     // things that rely on the unity engine. //
     //#######################################//
 
-    public class Vector3
+    public struct Vector3
     {
         public float x;
         public float y;
