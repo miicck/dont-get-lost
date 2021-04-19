@@ -5,6 +5,24 @@ using System.Net.Sockets;
 
 public static class client
 {
+    /// <summary> Message types sent by the client. </summary>
+    public enum MESSAGE : byte
+    {
+        // Numbering starts at 1 so erroneous 0's are caught
+        LOGIN = 1,           // Client has logged in
+        HEARTBEAT,           // Heartbeat response
+        DISCONNECT,          // Disconnect this client
+        CREATE,              // Create an object on the server
+        DELETE,              // Delete an object from the server
+        RENDER_RANGE_UPDATE, // Client render range has changed
+        VARIABLE_UPDATE,     // A networked_variable has changed
+        TRIGGER,             // A networked event has been triggered
+    }
+
+#if STANDALONE_SERVER
+#else
+// Stuff below here is not used by the standalone server
+
     /// <summary> How many milliseconds to wait when attempting to connect. </summary>
     public const int CONNECTION_TIMEOUT_MS = 2000;
 
@@ -511,19 +529,6 @@ public static class client
     // MESSAGING //
     //###########//
 
-    public enum MESSAGE : byte
-    {
-        // Numbering starts at 1 so erroneous 0's are caught
-        LOGIN = 1,           // Client has logged in
-        HEARTBEAT,           // Heartbeat response
-        DISCONNECT,          // Disconnect this client
-        CREATE,              // Create an object on the server
-        DELETE,              // Delete an object from the server
-        RENDER_RANGE_UPDATE, // Client render range has changed
-        VARIABLE_UPDATE,     // A networked_variable has changed
-        TRIGGER,             // A networked event has been triggered
-    }
-
     /// <summary> Queue a message of the given <paramref name="type"/> 
     /// and <paramref name="args"/> to the server. </summary>
     static void queue_message(MESSAGE type, params object[] args)
@@ -531,7 +536,7 @@ public static class client
         // Send a message type + payload
         void send(MESSAGE msg_type, byte[] payload)
         {
-#           if NETWORK_DEBUG
+#if NETWORK_DEBUG
             // Add a stack trace to every message
             var st = network_utils.encode_string(System.Environment.StackTrace);
             byte[] to_send = network_utils.concat_buffers(
@@ -804,4 +809,6 @@ public static class client
                 throw new System.Exception("Unkown message type!");
         }
     }
+
+#endif
 }
