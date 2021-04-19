@@ -741,8 +741,8 @@ public static class server
         if (System.IO.File.Exists(save_file()))
             load();
 
-#       if STANDALONE_SERVER
-        // Error out if the save file does not exist
+#if STANDALONE_SERVER
+                // Error out if the save file does not exist
         else
         {
             Debug.LogError("Save file does not exist: " + save_file());
@@ -1575,12 +1575,16 @@ public static class server
         {
             get
             {
-                if (_start_time == null)
+                if (!start_time_calculated)
+                {
                     _start_time = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+                    start_time_calculated = true;
+                }
                 return _start_time;
             }
         }
         static System.DateTime _start_time;
+        static bool start_time_calculated = false;
 
         public static float realtimeSinceStartup
         {
