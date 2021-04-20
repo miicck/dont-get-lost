@@ -125,7 +125,10 @@ public static class server
         /// otherwise no DISCONNECT message is sent to the server. </summary>
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
-            Debug.Log("Client " + username + " disconnected, message: " + message);
+            if (message != null && message.Length > 0)
+                log("Client " + username + " disconnected, message: " + message);
+            else
+                log("Client " + username + " disconnected.");
             Vector3 disconnect_position = player.local_position;
 
             // Unload representations (only top-level, lower level will
