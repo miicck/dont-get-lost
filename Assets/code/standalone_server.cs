@@ -33,6 +33,15 @@ public static class standalone_server
             Thread.Sleep(17);
             if (!server.started) break;
 
+            while(true)
+            {
+                string to_log = server.pop_log_queue();
+                if (to_log == null) break;
+                to_log = to_log.Trim();
+                if (to_log.Length == 0) continue;
+                log(to_log);
+            }
+
             if (File.Exists("cmd"))
             {
                 log(process_command(File.ReadAllText("cmd")));

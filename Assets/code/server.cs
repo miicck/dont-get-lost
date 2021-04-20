@@ -745,8 +745,8 @@ public static class server
                 // Error out if the save file does not exist
         else
         {
-            Debug.LogError("Save file does not exist: " + save_file());
-            Debug.LogError("The standalone server requires an existing savefile.");
+            log_error("Save file does not exist: " + save_file());
+            log_error("The standalone server requires an existing savefile.");
             error_message = "Save file not present.";
             return false;
         }
@@ -1129,7 +1129,7 @@ public static class server
             // Couldn't find and wasn't recently deleted, throw an error/warning
             string msg = "Could not find the representation with id " + rep;
             if (error_on_fail) throw new System.Exception(msg);
-            else Debug.LogWarning(msg);
+            else log_warning(msg);
             return null;
         }
 
@@ -1461,7 +1461,7 @@ public static class server
                 if (representations.TryGetValue(network_id, out representation rep))
                     rep.trigger_network_event(client, event_number);
                 else
-                    Debug.Log("Reccived trigger for non-existant network ID!");
+                    log_warning("Reccived trigger for non-existant network ID!");
                 break;
 
             case global::client.MESSAGE.RENDER_RANGE_UPDATE:
@@ -1519,7 +1519,7 @@ public static class server
                     if (!recently_deleted.ContainsKey(network_id))
                     {
                         // This should only happend in high-latency edge cases
-                        Debug.Log("Deleting non-existant id " + network_id +
+                        log_warning("Deleting non-existant id " + network_id +
                         " (was not recently deleted)\n" + last_stack_trace);
                     }
 
@@ -1533,6 +1533,46 @@ public static class server
             default:
                 throw new System.Exception("Unkown message type!");
         };
+    }
+
+    //#########//
+    // LOGGING //
+    //#########//
+
+#if STANDALONE_SERVER
+    static Queue<string> log_queue = new Queue<string>();
+    public static string pop_log_queue()
+    {
+        if (log_queue.Count == 0) return null;
+        return log_queue.Dequeue();
+    }
+#endif
+
+    public static void log<T>(T message)
+    {
+#if STANDALONE_SERVER
+        log_queue.Enqueue(message.ToString());
+#else
+        Debug.Log(message);
+#endif
+    }
+
+    public static void log_error<T>(T message)
+    {
+#if STANDALONE_SERVER
+        log_queue.Enqueue("ERROR: " + message.ToString());
+#else
+        Debug.LogError(message);
+#endif
+    }
+
+    public static void log_warning<T>(T message)
+    {
+#if STANDALONE_SERVER
+        log_queue.Enqueue("WARNING: " + message.ToString());
+#else
+        Debug.LogWarning(message);
+#endif
     }
 
 #if STANDALONE_SERVER
@@ -1591,24 +1631,6 @@ public static class server
             get => (float)(System.DateTime.UtcNow - start_time).TotalSeconds;
         }
 
-    }
-
-    static class Debug
-    {
-        public static void Log<T>(T message)
-        {
-            System.Console.WriteLine(message);
-        }
-
-        public static void LogWarning<T>(T message)
-        {
-            System.Console.WriteLine("WARNING: " + message);
-        }
-
-        public static void LogError<T>(T message)
-        {
-            System.Console.WriteLine("ERROR: " + message);
-        }
     }
 
     static class Application
