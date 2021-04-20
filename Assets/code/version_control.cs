@@ -143,6 +143,7 @@ public static class version_control
         }
     }
 
+#if UNITY_EDITOR
     public static void generate_server_data()
     {
         // Loop over all networked prefabs
@@ -158,4 +159,5 @@ public static class version_control
         }
         System.IO.File.WriteAllText(Application.dataPath + "/server_data", to_write);
     }
+#endif
 }

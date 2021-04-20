@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class settler_path_section : town_path_link
 {
+#if UNITY_EDITOR
     new public BoxCollider collider;
+#else
+    public BoxCollider collider;
+#endif
     public float max_distance = Mathf.Infinity;
 
     const float EDGE_THICKNESS = 0.05f;

@@ -1692,7 +1692,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         networked_interaction = new networked_variables.net_int(default_value: -1);
 
         tutorial_stage = new networked_variables.net_int(default_value: -1);
-        tutorial_stage.on_change = () => tutorial.set_stage(tutorial_stage.value);
+        tutorial_stage.on_change = () =>
+        {
+            // We have to wait for current player to be set
+            // (so we know if we have authority over this
+            //  player or not)
+            call_when_current_player_available(() =>
+            {
+                if (has_authority)
+                    tutorial.set_stage(tutorial_stage.value);
+            });
+        };
     }
 
     public override void on_first_create()
