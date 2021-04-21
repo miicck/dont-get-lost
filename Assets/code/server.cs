@@ -244,7 +244,7 @@ public static class server
                 }
             }
 
-#if UNITY_EDITOR
+#if (UNITY_EDITOR || NO_SERVER_TIMEOUT)
             // Don't time out clients if the server is the editor, so that
             // we don't time people out if the editor is paused.
 #else
