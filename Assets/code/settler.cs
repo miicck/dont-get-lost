@@ -199,10 +199,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             }
 
         settlers.Add(this);
-
-        InvokeRepeating("get_hungry", TIME_TO_STARVE / byte.MaxValue, TIME_TO_STARVE / byte.MaxValue);
-        InvokeRepeating("regen_health", TIME_TO_REGEN / max_health, TIME_TO_REGEN / max_health);
-        InvokeRepeating("get_tired", TIME_TO_TIRED / 100f, TIME_TO_TIRED / 100f);
     }
 
     private void OnDestroy()
@@ -216,38 +212,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (path_element == null) return;
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(path_element.transform.position, 0.1f);
-    }
-
-    void get_hungry()
-    {
-        if (nutrition.metabolic_satisfaction > 0)
-        {
-            nutrition.modify_every_satisfaction(-1);
-            foreach (var pm in gameObject.GetComponents<pinned_message>())
-                if (pm.message.Contains("starving"))
-                    Destroy(pm);
-        }
-        else
-        {
-            take_damage(1);
-            foreach (var pm in gameObject.GetComponents<pinned_message>())
-                if (pm.message.Contains("starving"))
-                    return;
-            gameObject.add_pinned_message("The settler " + name + " is starving!", Color.red);
-        }
-    }
-
-    void regen_health()
-    {
-        if (nutrition.metabolic_satisfaction < 100)
-            return; // Don't heal if hungry
-        else
-            heal(1);
-    }
-
-    void get_tired()
-    {
-        tiredness.value += 1;
     }
 
     //#################//
@@ -565,6 +529,58 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         base.on_add_networked_child(child);
         if (child is inventory)
             inventory = (inventory)child;
+    }
+
+    public override void on_gain_authority()
+    {
+        base.on_gain_authority();
+
+        // Invoke repeating callbacks that need authority
+        InvokeRepeating("get_hungry", TIME_TO_STARVE / byte.MaxValue, TIME_TO_STARVE / byte.MaxValue);
+        InvokeRepeating("regen_health", TIME_TO_REGEN / max_health, TIME_TO_REGEN / max_health);
+        InvokeRepeating("get_tired", TIME_TO_TIRED / 100f, TIME_TO_TIRED / 100f);
+    }
+
+    public override void on_loose_authority()
+    {
+        base.on_loose_authority();
+
+        // Cancel repeating callbacks that need authority
+        CancelInvoke("get_hungry");
+        CancelInvoke("regen_health");
+        CancelInvoke("get_tired");
+    }
+
+    void get_hungry()
+    {
+        if (nutrition.metabolic_satisfaction > 0)
+        {
+            nutrition.modify_every_satisfaction(-1);
+            foreach (var pm in gameObject.GetComponents<pinned_message>())
+                if (pm.message.Contains("starving"))
+                    Destroy(pm);
+        }
+        else
+        {
+            take_damage(1);
+            foreach (var pm in gameObject.GetComponents<pinned_message>())
+                if (pm.message.Contains("starving"))
+                    return;
+            gameObject.add_pinned_message("The settler " + name + " is starving!", Color.red);
+        }
+    }
+
+    void regen_health()
+    {
+        if (nutrition.metabolic_satisfaction < 100)
+            return; // Don't heal if hungry
+        else
+            heal(1);
+    }
+
+    void get_tired()
+    {
+        tiredness.value += 1;
     }
 
     //##############//

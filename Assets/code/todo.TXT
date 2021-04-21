@@ -19,9 +19,10 @@ TODO
   the way that lootboxes work at the moment)
 - Pickup/dropoff points for settlers to move items around
 - Some better method of raising items long distances (if the above doesn't solve this problem)
-- Standalone server (+running on rasperry pi)
+- Remove/improve player food mechanic
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
+	- Settlers sleep standing up on non-auth clients
