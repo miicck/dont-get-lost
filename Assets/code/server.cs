@@ -17,6 +17,9 @@ public static class server
     /// <summary> Clients that have been silent for longer than this are disconnected </summary>
     public const float CLIENT_TIMEOUT = 6f;
 
+    /// <summary> Autosave every this many seconds. </summary>
+    public const float AUTOSAVE_PERIOD = 5 * 60f;
+
     /// <summary> Clients that have been inactive for longer than this are disconnected </summary>
     public const float CLIENT_ACTIVITY_TIMEOUT = 60f;
 
@@ -690,6 +693,9 @@ public static class server
     /// message reccived, if NETWORK_DEBUG is set. </summary>
     static string last_stack_trace = "Define NETWORK_DEBUG for stack trace.";
 
+    /// <summary> The time the server was last autosaved. </summary>
+    static float last_autosave_time;
+
     // END STATE VARIABLES //
 
 
@@ -725,6 +731,7 @@ public static class server
         inactive_representations = new hierarchy_element();
         deleted_representations = new hierarchy_element();
         truncated_read_messages = new Dictionary<client, byte[]>();
+        last_autosave_time = Time.realtimeSinceStartup;
 
         // Start listening
         try
@@ -941,6 +948,13 @@ public static class server
         // to have disconnected during message writing
         foreach (var d in disconnected_during_write)
             d.disconnect(null);
+
+        // Autosave
+        if (Time.realtimeSinceStartup > last_autosave_time + AUTOSAVE_PERIOD)
+        {
+            last_autosave_time = Time.realtimeSinceStartup;
+            save(autosave: true);
+        }
     }
 
     //################//
@@ -1018,10 +1032,11 @@ public static class server
         }
     }
 
-    static void save()
+    static void save(bool autosave = false)
     {
         // The file containing the savegame
-        using (var file = System.IO.File.OpenWrite(save_file()))
+        string filename = autosave ? autosave_file() : save_file();
+        using (var file = System.IO.File.OpenWrite(filename))
         using (var compressor = new System.IO.Compression.GZipStream(file,
             System.IO.Compression.CompressionLevel.Optimal))
         {
@@ -1096,16 +1111,29 @@ public static class server
         return saves_dir;
     }
 
-    /// <summary> The directory that this session is saved in. </summary>
+    /// <summary> The file that this session is saved in. </summary>
     public static string save_file()
     {
         return saves_dir() + "/" + savename + ".save";
     }
 
-    /// <summary> Get an array of all the save files on this machine. </summary>
-    public static string[] existing_saves()
+    /// <summary> The file that this session is autosaved to. </summary>
+    public static string autosave_file()
     {
-        return System.IO.Directory.GetFiles(saves_dir());
+        return saves_dir() + "/" + savename + "_autosave.save";
+    }
+
+    /// <summary> Get an array of all the save files on this machine. </summary>
+    public static string[] existing_saves(bool include_autosaves = false)
+    {
+        List<string> saves = new List<string>();
+        foreach (var f in System.IO.Directory.GetFiles(saves_dir()))
+        {
+            if (!f.EndsWith(".save")) continue;
+            if (!include_autosaves && f.Contains("autosave")) continue;
+            saves.Add(f);
+        }
+        return saves.ToArray();
     }
 
     /// <summary> Returns true if the save with the given name already exists. </summary>
