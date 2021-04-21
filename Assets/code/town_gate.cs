@@ -98,6 +98,16 @@ public class town_gate : portal, IAddsToInspectionText
         InvokeRepeating("attempt_spawn_settler", SPAWN_SETTLER_TIME, SPAWN_SETTLER_TIME);
     }
 
+    private void authority_update()
+    {
+        // Trigger attacks
+        if (Time.realtimeSinceStartup > next_attack_time)
+        {
+            if (attacks_enabled) trigger_scaled_attack();
+            next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
+        }
+    }
+
     private void Update()
     {
         if (is_equpped || is_blueprint) return;
@@ -106,12 +116,8 @@ public class town_gate : portal, IAddsToInspectionText
         if (!chunk.generation_complete(outside_link.position))
             return;
 
-        // Trigger attacks
-        if (Time.realtimeSinceStartup > next_attack_time)
-        {
-            if (attacks_enabled) trigger_scaled_attack();
-            next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
-        }
+        // Do authority-requiring things
+        if (has_authority) authority_update();
 
         // Remove dead, or null characters from under_attack_by collection
         bool attackers_changed = false;

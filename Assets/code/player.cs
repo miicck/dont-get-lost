@@ -115,7 +115,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         add_interactions();
         interactions.continue_underway(this);
 
-        if (interactions.underway_count == 0)
+        // Run mouse text (authority client only)
+        if (interactions.underway_count == 0 && has_authority)
         {
             var ct = utils.raycast_for_closest<ICursorText>(camera_ray(), out RaycastHit hit);
             game.cursor_text = ct?.cursor_text();
