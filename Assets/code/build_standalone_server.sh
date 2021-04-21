@@ -4,5 +4,5 @@ mkdir server 2> /dev/null
 cp $SRC server
 cp ../server_data server
 cd server
-mcs -out:server -langversion:latest -define:STANDALONE_SERVER *cs
+mcs $@ -out:server -langversion:latest -define:STANDALONE_SERVER *cs
 rm $SRC

@@ -128,8 +128,10 @@ public static class server
         /// otherwise no DISCONNECT message is sent to the server. </summary>
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
-            Debug.Log("Client " + username + " disconnected, message: " + message);
-            Vector3 disconnect_position = player.local_position;
+            if (message != null && message.Length > 0)
+                log("Client " + username + " disconnected: " + message);
+            else
+                log("Client " + username + " disconnected.");
 
             // Unload representations (only top-level, lower level will
             // be automatically unloaded using the unload function)
@@ -149,21 +151,34 @@ public static class server
             stream.Close((int)(timeout * 1000));
             tcp.Close();
 
+            // Disconnect the player if there is one loaded
+            // (the player isn't loaded if, for example, this
+            // client attempted to login with an in-use username)
+            if (player != null) disconnect_player(delete_player);
+        }
+
+        /// <summary> Called when the player on this client is 
+        ///  unloaded as the result of a disconnect. </summary>
+        void disconnect_player(bool delete_player)
+        {
+            // Remember the position that the player disonnected at
+            Vector3 disconnect_position = player.local_position;
+
             if (delete_player)
+                // Delete the player
                 player.delete();
             else
-                // Unload the player (also remove it from representations
+                // Just unload the player (also remove it from representations
                 // so that it doens't just get re-loaded based on proximity)
                 foreach (var c in connected_clients)
                     if (c.has_loaded(player))
                         c.unload(player, false);
 
             if (player.parent == deleted_representations)
-            {
                 // Player has been deleted, remove it from player representations
                 player_representations.Remove(username);
-            }
             else
+                // Player has not been deleted (just logged out), move to inactive
                 player.parent = inactive_representations;
 
             // Let other clients know that we've disconnected
