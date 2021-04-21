@@ -969,6 +969,7 @@ public static class server
         {
             last_autosave_time = Time.realtimeSinceStartup;
             save(autosave: true);
+            log("Server has autosaved.");
         }
     }
 
