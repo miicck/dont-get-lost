@@ -3,13 +3,13 @@ Ongoing
 - More foliage? (small plants/flowers)
 
 TODO
-- Item flow recording should be done on link points?
+- Item flow recording/reproducing if out of range?
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
-- Optimize chase paths 
+- Optimize chase paths
 	don't double back if thats what the player did
 	Make characters fall if they are following a chase path
 	Figure out how to stop enemies bunching up when chasing
-- Point-to-point connection building (like string or rope)
+- Point-to-point connection building (e.g ropes for a rope bridge)
 - Production counter?
 - Filter-splitter
 - Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
@@ -20,10 +20,10 @@ TODO
   the way that lootboxes work at the moment)
 - Pickup/dropoff points for settlers to move items around?
 - Remove/improve player food mechanic
-- Make the points pathed to on ladders more sensible (top/bottom rather than middle)
 - Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
 - Mining spots sometimes forget what is in range - perhaps something to do
   with loading/unloading on different clients?
+- Make more things work sensibly with buffer chests (e.g small_crane_box, gutters)
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
