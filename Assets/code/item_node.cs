@@ -8,7 +8,7 @@ using UnityEngine;
 public interface IDontBlockItemLogisitcs { }
 
 /// <summary> A node in the item logistics network. </summary>
-public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipableCallback
+public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipableCallback, IAddsToInspectionText
 {
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;
@@ -21,6 +21,13 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         if (player.has_authority)
             display_enabled = true;
     }
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
+
+    public abstract string node_description(int item_count);
+    public string added_inspection_text() { return node_description(item_count); }
 
     //#######//
     // ITEMS //

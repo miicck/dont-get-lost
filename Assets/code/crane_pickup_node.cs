@@ -17,6 +17,8 @@ public class crane_pickup_node : item_node, IAddsToInspectionText
     public bool ready_for_pickup => item_count == capacity;
     public bool box_docked => box.parent == box_reset_parent;
 
+    public override string node_description(int item_count) { return "Crane box contains " + item_count + " items"; }
+
     //#################//
     // Unity callbacks //
     //#################//

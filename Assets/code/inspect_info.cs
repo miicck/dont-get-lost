@@ -60,7 +60,7 @@ public class player_inspectable : player_interaction
     public override controls.BIND keybind => controls.BIND.INSPECT;
     public override bool simultaneous() { return true; }
 
-    public override bool start_interaction(player player)
+    void update()
     {
         string str = text?.Invoke();
         foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
@@ -70,11 +70,17 @@ public class player_inspectable : player_interaction
             str += "\n" + txt.Trim();
         }
         inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
+    }
+
+    public override bool start_interaction(player player)
+    {
+        update();
         return !controls.held(controls.BIND.INSPECT);
     }
 
     public override bool continue_interaction(player player)
     {
+        update();
         return !controls.held(controls.BIND.INSPECT);
     }
 

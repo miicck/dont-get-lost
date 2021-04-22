@@ -5,6 +5,8 @@ using UnityEngine;
 /// <summary> An item input node to an object, such as an autocrafter. </summary>
 public class item_input : item_node
 {
+    public override string node_description(int item_count) { return item_count + " items waiting at input"; }
+
     public int max_items_waiting = 1;
 
     protected override bool can_input_from(item_node other)

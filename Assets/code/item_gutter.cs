@@ -6,6 +6,8 @@ using UnityEngine;
 /// as an extended item node. </summary>
 public class item_gutter : item_node
 {
+    public override string node_description(int item_count) { return item_count + " items on gutter"; }
+
     static item_gutter()
     {
         tips.add("Items will flow downhill along gutters.");

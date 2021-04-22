@@ -8,6 +8,8 @@ public class crane_node : item_node
     public item_output dropoff_node;
     public float dropoff_period = 1f;
 
+    public override string node_description(int item_count) { return null; }
+
     //###############//
     // Crane control //
     //###############//
@@ -108,7 +110,7 @@ public class crane_node : item_node
         {
             // Not connected - reset state
             state = STATE.AWAITING_PICKUP;
-            return; 
+            return;
         }
 
         switch (state)
