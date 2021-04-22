@@ -12,17 +12,22 @@ TODO
 - Point-to-point connection building (like string or rope)
 - Production counter?
 - Filter-splitter
+- Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Make settler_interactable return a task object, this will make it
   easier to make settler_interactables work for multiple settlers (see
   the way that lootboxes work at the moment)
-- Pickup/dropoff points for settlers to move items around
-- Some better method of raising items long distances (if the above doesn't solve this problem)
+- Pickup/dropoff points for settlers to move items around?
 - Remove/improve player food mechanic
+- Make the points pathed to on ladders more sensible (top/bottom rather than middle)
+- Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
+- Mining spots sometimes forget what is in range - perhaps something to do
+  with loading/unloading on different clients?
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
 	  actually an artifact of the character position lerping. Putting a ceiling on
 	  how fast the arms are allowed to move has lessened this problem.
 	- Settlers sleep standing up on non-auth clients
+	- Settlers always show "no assigment" when inspected on non-auth clients

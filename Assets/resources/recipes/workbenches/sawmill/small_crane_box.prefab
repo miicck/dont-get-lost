@@ -10,11 +10,12 @@ GameObject:
   m_Component:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
-  - component: {fileID: 37089541926742898}
-  - component: {fileID: 3282664245569110894}
+  - component: {fileID: -2021015714377011041}
+  - component: {fileID: 4804513667436067195}
+  - component: {fileID: -8532879928859691432}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
-  m_Name: dock
+  m_Name: small_crane_box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca427f47a178e49a48768a898899ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &37089541926742898
+--- !u!114 &-2021015714377011041
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -58,9 +59,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 1606099014804353193, guid: 844f676d40e43964e82cdf446f9a3ef3, type: 3}
+  item: {fileID: 5347891140114106896, guid: 7dac6be468eac79409a44a10be47d7a3, type: 3}
   count: 1
---- !u!114 &3282664245569110894
+--- !u!114 &4804513667436067195
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -73,7 +74,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  count: 3
+  count: 1
+--- !u!114 &-8532879928859691432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 2857990679801850892, guid: 1e8b0b35a88f3c14fb5b46abdc08281e, type: 3}
+  count: 4
 --- !u!114 &4228508087393313574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -87,7 +102,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 7119949115906502147, guid: ffad3d73a071ec54a8a14f323c9957e4, type: 3}
+  item: {fileID: 6613907357923352422, guid: 35fbf753faa67104b9e4254aaa16084d, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1

@@ -174,12 +174,27 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> Called whenever the inputs change. </summary>
     protected virtual void on_inputs_change() { }
 
+    /// <summary> Get the next input node, in a cyclic fashion. </summary>
+    public item_node next_input()
+    {
+        if (input_count == 0) return null;
+        input_number = (input_number + 1) % input_count;
+        return inputs_from[input_number];
+    }
+    int input_number = 0;
+
     //#########//
     // OUTPUTS //
     //#########//
 
     /// <summary> Should return true if this node can output
-    /// to the given <paramref name="other"/> node. </summary>
+    /// to the given <paramref name="other"/> node. Note that
+    /// both <see cref="can_output_to(item_node)"/> and
+    /// <paramref name="other"/>.<see cref="can_input_from(item_node)"/>
+    /// must return true for the connection to be made; so there is
+    /// a choice about which of these functions should contain
+    /// the more involved connection logic. By convention, heavy
+    /// lifting should be done in <see cref="can_input_from(item_node)"/>.</summary>
     protected abstract bool can_output_to(item_node other);
 
     /// <summary> The item nodes that this node outputs to. </summary>

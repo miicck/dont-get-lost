@@ -525,7 +525,9 @@ public static class client
     {
         string ret = "";
         foreach (var kv in player_infos)
-            ret += "    " + kv.Key + " " + (kv.Value.connected ? "connected" : "disconnected") + " at " + kv.Value.position;
+            ret += "    " + kv.Key + " " +
+                  (kv.Value.connected ? "connected" : "disconnected") +
+                 " at " + kv.Value.position + "\n";
         return ret;
     }
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> An item output node from an object, such as a miner. </summary>
+/// <summary> An item output node from an object, such as a mining spot. </summary>
 public class item_output : item_node
 {
     private void Update()

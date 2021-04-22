@@ -11,9 +11,12 @@ public class crane : MonoBehaviour, IPlayerInteractable
     public Transform extender;
     public Transform extender_bottom;
 
-    public delegate void arrive_func();
+    /// <summary> Called when the hook arrives at (or at least, is 
+    /// as close as possible to) <see cref="target"/>. </summary>
     public arrive_func on_arrive;
+    public delegate void arrive_func();
 
+    /// <summary> The desired location for the hook. </summary>
     public Vector3 target
     {
         get => _target;

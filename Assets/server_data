@@ -48,6 +48,7 @@ mood_effects/just_got_up 1 True
 items/doorway 1 True
 items/corner_saw 1 True
 items/mushroom 1 True
+items/crane 1 True
 items/cabbage 1 True
 items/sawmill 1 True
 items/iron_axe 1 True
@@ -55,6 +56,7 @@ items/flax_plant 1 True
 misc/map_ping Infinity False
 inventories/buffer_chest 1 True
 items/arrow 1 False
+items/small_crane_box 1 True
 items/flint_pickaxe 1 True
 items/flour 1 True
 items/afro_hairstyle 1 True
