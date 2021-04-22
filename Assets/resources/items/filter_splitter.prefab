@@ -240,7 +240,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 3ae5fd98afc63b245bc9a08fee3ab930, type: 3}
+  sprite: {fileID: 21300000, guid: f9a205fd6b7e05748a2139a7f7078f19, type: 3}
   plural: filter splitters
   value: 0
   fuel_value: 0
@@ -262,7 +262,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   read_split_from: {fileID: 412803505892082773}
   input: {fileID: 8321475380079877915}
-  split_output: {fileID: 6008928103819696474}
+  filtered_output: {fileID: 6008928103819696474}
   other_output: {fileID: 6942332129753390174}
   item_filtering_spot: {fileID: 4870556833802423287}
   item_processing_spot: {fileID: 6623519421976879542}
@@ -398,7 +398,7 @@ GameObject:
   - component: {fileID: 8768917097110568979}
   - component: {fileID: 6008928103819696474}
   m_Layer: 0
-  m_Name: split_output
+  m_Name: filtered_output
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

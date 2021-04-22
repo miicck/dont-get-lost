@@ -839,7 +839,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   crane: {fileID: 4898728316560997909}
   dropoff_node: {fileID: 6928597440686343717}
-  dropoff_period: 1
+  dropoff_period: 0.25
 --- !u!1 &8593281405389527743
 GameObject:
   m_ObjectHideFlags: 0

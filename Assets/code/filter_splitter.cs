@@ -6,7 +6,7 @@ public class filter_splitter : MonoBehaviour
 {
     public chest read_split_from;
     public item_input input;
-    public item_output split_output;
+    public item_output filtered_output;
     public item_output other_output;
     public Transform item_filtering_spot;
     public Transform item_processing_spot;
@@ -54,8 +54,6 @@ public class filter_splitter : MonoBehaviour
             _item_processing = value;
             if (_item_processing == null) return;
             _item_processing.transform.SetParent(item_processing_spot);
-            _item_processing.transform.localPosition = Vector3.zero;
-            _item_processing.transform.localRotation = Quaternion.identity;
         }
     }
     item _item_processing;
@@ -63,10 +61,13 @@ public class filter_splitter : MonoBehaviour
     bool listener_set = false;
     Quaternion scales_reset_local_rot;
     float stage_progress = 0;
+    bool direct_to_filtered = false;
 
     enum STAGE
     {
         WAITING,
+        LOADING,
+        UNLOADING,
         ROTATING,
         UNROTATING
     }
@@ -108,24 +109,31 @@ public class filter_splitter : MonoBehaviour
             // Release next item from input
             item_processing = input.release_item(0);
 
-            if (item_processing.name == item_filtering?.name)
-            {
-                // Item is of the filtered type, output immediately
-                // and stay in the waiting stage
-                split_output.add_item(item_processing);
-                item_processing = null;
-                return;
-            }
-
-            // Item is not of the filtered type - we need
-            // to rotate the scales.
-            stage = STAGE.ROTATING;
+            // Load the item onto the weiging scales
+            stage = STAGE.LOADING;
         }
 
         // Increment stage progress / potentially the stage itself
         stage_progress += Time.deltaTime / rotation_period;
         switch (stage)
         {
+            case STAGE.LOADING:
+                // Move item towards stage
+                if (utils.move_towards(item_processing.transform,
+                    item_processing_spot.position, Time.deltaTime * 2f))
+                    stage_progress = 1.01f; // Arived, complete this stage
+                break;
+
+            case STAGE.UNLOADING:
+                // Move item towards correct output
+                Vector3 target = direct_to_filtered ?
+                    filtered_output.input_point(item_processing.transform.position) :
+                    other_output.input_point(item_processing.transform.position);
+                if (utils.move_towards(item_processing.transform,
+                    target, Time.deltaTime * 2f))
+                    stage_progress = 1.01f; // Arrived, complete this stage
+                break;
+
             case STAGE.ROTATING:
                 // Rotate towards rotated position
                 scales.localRotation = Quaternion.Lerp(
@@ -143,20 +151,43 @@ public class filter_splitter : MonoBehaviour
                 break;
         }
 
-        if (stage_progress > 1f)
+        if (stage_progress >= 1f)
         {
             stage_progress = 0f;
             switch (stage)
             {
-                case STAGE.ROTATING:
-                    // Rotation complete, drop off item
-                    other_output.add_item(item_processing);
+                case STAGE.LOADING:
+
+                    if (item_processing.name == item_filtering?.name)
+                    {
+                        // Item is of the filtered type, move to unloading stage immediately
+                        direct_to_filtered = true;
+                        stage = STAGE.UNLOADING;
+                        return;
+                    }
+
+                    // Item is not of the filtered type, we need
+                    // to rotate it down to the unfiltered output
+                    // before unloading
+                    direct_to_filtered = false;
+                    stage = STAGE.ROTATING;
+                    break;
+
+                case STAGE.UNLOADING:
+                    // Unload item to the correct output
+                    if (direct_to_filtered) filtered_output.add_item(item_processing);
+                    else other_output.add_item(item_processing);
                     item_processing = null;
-                    stage = STAGE.UNROTATING;
+                    stage = direct_to_filtered ? STAGE.WAITING : STAGE.UNROTATING;
+                    break;
+
+                case STAGE.ROTATING:
+                    // Rotation complete, unload item
+                    stage = STAGE.UNLOADING;
                     break;
 
                 case STAGE.UNROTATING:
-                    // Cycle complete, return to waiting
+                    // Un-rotation complete, return to waiting
                     stage = STAGE.WAITING;
                     break;
 
