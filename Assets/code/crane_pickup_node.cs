@@ -42,14 +42,12 @@ public class crane_pickup_node : item_node, IAddsToInspectionText
 
     private void Update()
     {
-        // No pending items
-        if (input_node.item_count == 0) return;
+        if (input_node.item_count == 0) return; // No pending items
+        if (item_count >= capacity) return; // Full
+        if (!box_docked) return; // Box is away
 
-        foreach (var i in input_node.relesae_all_items())
-        {
-            if (item_count < capacity && box_docked) add_item(i);
-            else item_dropper.create(i, i.transform.position, null);
-        }
+        // Accept the next pending input
+        add_item(input_node.release_item(0));
     }
 
     protected override void OnDestroy()
@@ -88,7 +86,7 @@ public class crane_pickup_node : item_node, IAddsToInspectionText
     // IAddsToInspectionText //
     //#######################//
 
-    public string added_inspection_text()
+    new public string added_inspection_text()
     {
         return "Contains " + item_count + "/" + capacity + " items";
     }

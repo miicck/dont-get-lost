@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface INonBlueprintable { }
 
-public interface IBuildListener 
+public interface IBuildListener
 {
     void on_first_built();
 }
@@ -410,7 +410,7 @@ public class building_material : item, IPlayerInteractable
                 float x = Mathf.Max(adjustment_sound_accumulated - 1f, 0f);
                 float pitch = 1.5f - 0.5f * Mathf.Exp(-x / 10f);
 
-                player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f, 
+                player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f,
                     location: weld_location, min_time_since_last: 0.05f);
             }
 

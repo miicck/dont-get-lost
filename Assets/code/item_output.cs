@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary> An item output node from an object, such as a mining spot. </summary>
 public class item_output : item_node
 {
-    public override string node_description(int item_count) { return item_count + " items waiting at output"; }
+    public override string node_description(int item_count) { return null; }
 
     private void Update()
     {

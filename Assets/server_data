@@ -20,6 +20,7 @@ mood_effects/ravenous 1 True
 items/iron_plate_shinpad 1 True
 items/railcart 1 True
 items/sawblade 1 True
+inventories/filter_splitter 1 True
 items/stone 1 True
 items/titanium_ore 1 True
 crops/wheat 1 True
@@ -83,6 +84,7 @@ mood_effects/well_fed 1 True
 items/flax_fibers 1 True
 misc/tech_tree Infinity True
 items/digging_stick 1 True
+items/filter_splitter 1 True
 misc/networked_inventory_slot 1 True
 items/iron_ore 1 True
 characters/thin_zombie 1 False

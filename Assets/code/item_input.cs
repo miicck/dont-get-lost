@@ -35,10 +35,10 @@ public class item_input : item_node
 
     protected override bool on_add_item(item i)
     {
-        // Only one item allowed in input
+        // Only max_items_waiting items allowed at input
         if (item_count >= max_items_waiting)
         {
-            Destroy(i.gameObject);
+            item_dropper.create(i, i.transform.position, null);
             return false;
         }
         return true;

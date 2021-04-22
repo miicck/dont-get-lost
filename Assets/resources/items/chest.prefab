@@ -309,6 +309,7 @@ MonoBehaviour:
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1
+  automatic_input: {fileID: 7141389777453485819}
   chest_inventory_prefab: inventories/chest
 --- !u!65 &7707463802257312042
 BoxCollider:

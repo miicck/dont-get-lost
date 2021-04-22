@@ -62,6 +62,7 @@ public class player_inspectable : player_interaction
 
     void update()
     {
+        if (transform == null) return; // Deleted
         string str = text?.Invoke();
         foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
         {
@@ -80,6 +81,7 @@ public class player_inspectable : player_interaction
 
     public override bool continue_interaction(player player)
     {
+        if (transform == null) return true; // Deleted
         update();
         return !controls.held(controls.BIND.INSPECT);
     }

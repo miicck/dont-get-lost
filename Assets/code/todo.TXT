@@ -11,7 +11,6 @@ TODO
 	Figure out how to stop enemies bunching up when chasing
 - Point-to-point connection building (e.g ropes for a rope bridge)
 - Production counter?
-- Filter-splitter
 - Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
@@ -24,6 +23,9 @@ TODO
 - Mining spots sometimes forget what is in range - perhaps something to do
   with loading/unloading on different clients?
 - Make more things work sensibly with buffer chests (e.g small_crane_box, gutters)
+- Make buffer chest work more like filter-splitter (i.e a component that interacts
+  with a chest, rather than modifying the chest logic itself)
+- Fuel value should be an attachable component, rather than a value for every item
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

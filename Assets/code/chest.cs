@@ -4,26 +4,26 @@ using UnityEngine;
 
 public class chest : building_with_inventory, IPlayerInteractable
 {
+    public item_input automatic_input;
+
     public string chest_inventory_prefab = "inventories/chest";
     protected override string inventory_prefab()
     {
         return chest_inventory_prefab;
     }
 
-    item_input input;
     item_buffer_output buffer_output; // For buffer chests only
 
     private void Start()
     {
-        input = GetComponentInChildren<item_input>();
         buffer_output = GetComponentInChildren<item_buffer_output>();
     }
 
     void run_input()
     {
         // Transfer input into chest inventory
-        if (input == null) return;
-        var next_input_item = input.release_next_item();
+        if (automatic_input == null) return;
+        var next_input_item = automatic_input.release_next_item();
         if (next_input_item == null) return;
         if (has_authority) inventory?.add(next_input_item, 1);
         Destroy(next_input_item.gameObject);

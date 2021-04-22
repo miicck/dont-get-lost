@@ -141,6 +141,7 @@ MonoBehaviour:
   fuel_value: 0
   logistics_scale: 1
   axes_scale: 1
+  automatic_input: {fileID: 401635595973192010}
   chest_inventory_prefab: inventories/buffer_chest
 --- !u!1 &8994982254478096252
 GameObject:
