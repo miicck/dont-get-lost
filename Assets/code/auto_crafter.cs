@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> A building material that can automatically craft recipes via
+/// the item logistics system. Can also be used by hand. </summary>
 public class auto_crafter : building_material, IPlayerInteractable
 {
     static auto_crafter()

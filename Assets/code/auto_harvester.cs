@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> An object that automatically harvests <see cref="harvestable"/> things, 
+/// with no input from <see cref="player"/>s or <see cref="settler"/>s. </summary>
 public class auto_harvester : building_material, IPlayerInteractable
 {
     // Determines where we check for harvestable objects

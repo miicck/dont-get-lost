@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> A set of XYZ axes. </summary>
 public class axes : MonoBehaviour, IDontBlockItemLogisitcs
 {
     // #pragma is to stop it complaining about these 

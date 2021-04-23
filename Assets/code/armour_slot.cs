@@ -2,42 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface ICanEquipArmour
-{
-    armour_locator[] armour_locators();
-    float armour_scale();
-    Color hair_color();
-}
-
-public static class armour_extensions
-{
-    public static void clear_armour(this ICanEquipArmour entity,
-        armour_piece.LOCATION location, armour_piece.HANDEDNESS handedness)
-    {
-        foreach (var al in entity.armour_locators())
-            if (al.location == location && al.handedness == handedness)
-            {
-                al.equipped = null;
-                return;
-            }
-
-        string err = "Could not find armour_locator with the location ";
-        err += location + " and handedness " + handedness;
-        throw new System.Exception(err);
-    }
-
-    public static void set_armour(this ICanEquipArmour entity,
-        armour_piece armour, armour_piece.HANDEDNESS handedness)
-    {
-        foreach (var al in entity.armour_locators())
-            if (al.location == armour.location && al.handedness == handedness)
-            {
-                al.equipped = armour;
-                al.equipped?.on_equip(entity);
-            }
-    }
-}
-
 /// <summary> A special slot in an inventory for armour. </summary>
 public class armour_slot : inventory_slot
 {
@@ -83,5 +47,46 @@ public class armour_slot : inventory_slot
         // slot is unoccupied, so that we can see
         // the equipment background illustration.
         return null;
+    }
+}
+
+/// <summary> An object that can equip armour. These objects are essentially
+/// thought of as a collection of <see cref="armour_locator"/>s. </summary>
+public interface ICanEquipArmour
+{
+    armour_locator[] armour_locators();
+    float armour_scale();
+    Color hair_color();
+}
+
+
+/// <summary> Extension methods relating to armour. In particular,
+/// relating to <see cref="ICanEquipArmour"/>. </summary>
+public static class armour_extensions
+{
+    public static void clear_armour(this ICanEquipArmour entity,
+        armour_piece.LOCATION location, armour_piece.HANDEDNESS handedness)
+    {
+        foreach (var al in entity.armour_locators())
+            if (al.location == location && al.handedness == handedness)
+            {
+                al.equipped = null;
+                return;
+            }
+
+        string err = "Could not find armour_locator with the location ";
+        err += location + " and handedness " + handedness;
+        throw new System.Exception(err);
+    }
+
+    public static void set_armour(this ICanEquipArmour entity,
+        armour_piece armour, armour_piece.HANDEDNESS handedness)
+    {
+        foreach (var al in entity.armour_locators())
+            if (al.location == armour.location && al.handedness == handedness)
+            {
+                al.equipped = armour;
+                al.equipped?.on_equip(entity);
+            }
     }
 }

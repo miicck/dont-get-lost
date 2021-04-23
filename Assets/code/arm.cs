@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> Like a leg, but higher. </summary>
 public class arm : MonoBehaviour
 {
     public Transform shoulder;

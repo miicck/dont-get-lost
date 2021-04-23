@@ -29,6 +29,7 @@ TODO
 - Make it more obvious which side of a ladder is the front
 - Make time command work from non-auth clients
 - PvP hit markers
+- Player health desyncs on different clients on death (sometimes?)
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

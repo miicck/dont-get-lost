@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary> An object that will rotate constantly at 
+/// the  given speed arond the given axis. </summary>
 public class always_rotates : MonoBehaviour
 {
     public float speed = 30;

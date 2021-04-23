@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> Used to locate a piece of armour on the player model. </summary>
+/// <summary> Used to locate a piece of armour on an object. </summary>
 public class armour_locator : MonoBehaviour
 {
     /// <summary> The size of the bounding box that armour pieces will be stretched to fill. </summary>
