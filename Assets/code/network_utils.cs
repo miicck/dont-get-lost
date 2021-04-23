@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 #if STANDALONE_SERVER
 #else
-    using UnityEngine;
+using UnityEngine;
 #endif
 
 public static class network_utils
@@ -156,6 +156,15 @@ public static class network_utils
         }
 
         public void log_bytes(int bytes) { bytes_since_last += bytes; }
+    }
+
+    public static string serial_info(byte[] serial)
+    {
+        string ret = "Length = " + serial.Length + " bytes = ";
+        for (int i = 0; i < serial.Length && i < 10; ++i)
+            ret += serial[i] + " ";
+        if (serial.Length <= 10) return ret;
+        return ret + "...";
     }
 
 

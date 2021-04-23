@@ -644,6 +644,22 @@ public class console : MonoBehaviour
 
             description = "Toggle attacks on settlements.",
             usage_example = "toggle_attacks"
+        },
+
+        ["network_info"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+                if (!int.TryParse(args[1], out int id))
+                    return console_error("Could not parse network_id from: " + args[1]);
+                Debug.Log(server.info(id));
+                popup_message.create("Network info printed to Debug.Log");
+                return true;
+            },
+
+            description = "Prints information stored on the server about the given network id.",
+            usage_example = "network_info 559"
         }
     };
 

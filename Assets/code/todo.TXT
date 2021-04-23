@@ -26,6 +26,9 @@ TODO
 - Make buffer chest work more like filter-splitter (i.e a component that interacts
   with a chest, rather than modifying the chest logic itself)
 - Fuel value should be an attachable component, rather than a value for every item
+- Make it more obvious which side of a ladder is the front
+- Make time command work from non-auth clients
+- PvP hit markers
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is
@@ -33,3 +36,5 @@ TODO
 	  how fast the arms are allowed to move has lessened this problem.
 	- Settlers sleep standing up on non-auth clients
 	- Settlers always show "no assigment" when inspected on non-auth clients
+	- Fishing dock not doing anything on non-auth clients (also doesn't check for water)
+	- Guard spots not doing anything on non-auth clients

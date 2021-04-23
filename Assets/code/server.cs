@@ -334,6 +334,12 @@ public static class server
     /// <summary> Allows the storage of objects in a parent-child type hierarchy. </summary>
     class hierarchy_element : IEnumerable<hierarchy_element>
     {
+        public hierarchy_element(string display_name)
+        {
+            this.display_name = display_name;
+        }
+        public string display_name { get; private set; }
+
         public hierarchy_element parent
         {
             get => _parent;
@@ -598,7 +604,31 @@ public static class server
 
         /// <summary> Representations can only be made using the 
         /// <see cref="create(byte[], int, int, out int)"/> method. </summary>
-        private representation() { }
+        private representation(string display_name) : base(display_name) { }
+
+        /// <summary> Return some nicely formatted information 
+        /// about this representation. </summary>
+        public string info()
+        {
+            string ret = "";
+            ret += string.Format("Network id     : {0}\n", network_id);
+            ret += string.Format("Authority      : {0}\n", authority.username);
+            ret += string.Format("Parent id      : {0}\n", parent.display_name);
+            ret += string.Format("Local position : {0}\n", local_position);
+            ret += string.Format("Persistant     : {0}\n", persistant);
+            ret += string.Format("Prefab         : {0}\n", prefab);
+            ret += string.Format("Radius         : {0}\n", radius);
+            ret += "Serializations:\n";
+            for (int i = 0; i < serializations.Count; ++i)
+                ret += "  [" + i + "] " + network_utils.serial_info(serializations[i]) + "\n";
+            return ret;
+        }
+
+        //##############//
+        // STATIC STUFF //
+        //##############//
+
+        public static int last_network_id_assigned = 0;
 
         /// <summary>  Create a network representation. This does not load the
         /// representation on any clients, or send creation messages. </summary>
@@ -616,26 +646,25 @@ public static class server
             if (networked.look_up(prefab) == null)
                 return null;
 
+            // Figure out the network id to create
+            int network_id = input_id;
+
+            // This was a local id, assign a new, unique id
+            if (network_id < 0)
+                network_id = ++last_network_id_assigned;
+
+            // Ensure last_network_id_assigned remains >= all assigned network ids
+            else if (network_id > last_network_id_assigned)
+                last_network_id_assigned = network_id;
+
             // Create the representation
-            representation rep = new representation();
+            representation rep = new representation(network_id.ToString());
             if (parent_id > 0) rep.parent = representations[parent_id];
             else rep.parent = active_representations;
-
             rep.prefab = prefab;
-            if (input_id < 0)
-            {
-                // This was a local id, assign a unique network id
-                rep.network_id = ++last_network_id_assigned; // Network id's start at 1
-            }
-            else
-            {
-                // Restore the given network id
-                rep.network_id = input_id;
-                if (input_id > last_network_id_assigned)
-                    last_network_id_assigned = input_id;
-            }
+            rep.network_id = network_id;
 
-            // Everything else is networked variables to deserialize
+            // Everything else in serialisation is networked variables to deserialize
             int index = 0;
             while (offset < end)
             {
@@ -648,8 +677,6 @@ public static class server
 
             return rep;
         }
-
-        public static int last_network_id_assigned = 0;
     }
 
 
@@ -742,9 +769,9 @@ public static class server
         recently_deleted = new Dictionary<int, float>();
         player_representations = new Dictionary<string, representation>();
         message_queues = new Dictionary<client, Queue<pending_message>>();
-        active_representations = new hierarchy_element();
-        inactive_representations = new hierarchy_element();
-        deleted_representations = new hierarchy_element();
+        active_representations = new hierarchy_element("Active representations");
+        inactive_representations = new hierarchy_element("Inactive representations");
+        deleted_representations = new hierarchy_element("Deleted representations");
         truncated_read_messages = new Dictionary<client, byte[]>();
         last_autosave_time = Time.realtimeSinceStartup;
 
@@ -1198,6 +1225,7 @@ public static class server
         public float send_time;
     }
 
+    /// <summary> Returns general information about the server. </summary>
     public static string info()
     {
         if (!started) return "Server not started.";
@@ -1207,6 +1235,16 @@ public static class server
                "    Recently deleted   : " + recently_deleted.Count + "\n" +
                "    Upload             : " + traffic_up.usage() + "\n" +
                "    Download           : " + traffic_down.usage();
+    }
+
+    /// <summary> Returns infromation stored on the server
+    /// about a particular network id. </summary>
+    public static string info(int network_id)
+    {
+        if (!started) return "Server must be started to use this method.";
+        if (!representations.TryGetValue(network_id, out representation rep))
+            return "No representation with this id found on the server";
+        return rep.info();
     }
 
     //###########//
@@ -1650,6 +1688,11 @@ public static class server
         public static Vector3 zero
         {
             get => new Vector3(0, 0, 0);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("[{0},{1},{2}]", x.ToString("F2"), y.ToString("F2"), z.ToString("F2"));
         }
     }
 
