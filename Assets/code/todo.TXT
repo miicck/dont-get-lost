@@ -21,8 +21,6 @@ TODO
 - Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
 - Mining spots sometimes forget what is in range - perhaps something to do
   with loading/unloading on different clients?
-- Make buffer chest work more like filter-splitter (i.e a component that interacts
-  with a chest, rather than modifying the chest logic itself)
 - Fuel value should be an attachable component, rather than a value for every item
 - Make it more obvious which side of a ladder is the front
 - Make time command work from non-auth clients

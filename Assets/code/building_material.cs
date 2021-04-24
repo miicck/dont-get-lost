@@ -287,10 +287,12 @@ public class building_material : item, IPlayerInteractable
 
             if (controls.triggered(controls.BIND.USE_ITEM))
             {
+                // Check for double-click to place
                 if (Time.realtimeSinceStartup - last_click_time < 0.5f)
                     return true;
 
                 last_click_time = Time.realtimeSinceStartup;
+
                 var ray = player.current.camera_ray();
                 mouse_mode = MOUSE_MODE.NONE;
 
