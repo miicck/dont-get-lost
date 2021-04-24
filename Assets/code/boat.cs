@@ -97,6 +97,8 @@ public class boat : networked, IPlayerInteractable
                 {
                     contents["coin"] -= 1;
                     var co = dock.coins_output;
+                    production_tracker.register_product("coin");
+
                     co.add_item(item.create(
                         "coin", co.transform.position,
                         Quaternion.identity, logistics_version: true));

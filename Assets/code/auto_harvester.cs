@@ -55,6 +55,8 @@ public class auto_harvester : building_material, IPlayerInteractable
             current_product = (current_product + 1) % harvesting.products.Length;
             var next_harvest = harvesting.products[current_product].auto_item;
 
+            production_tracker.register_product(next_harvest);
+
             // Create output product
             output.add_item(create(
                 next_harvest.name, output.transform.position,

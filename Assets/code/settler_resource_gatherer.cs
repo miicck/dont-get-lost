@@ -229,7 +229,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
             // Create the products
             foreach (var p in harvesting.products)
-                p.create_in_node(output);
+                p.create_in_node(output, true);
         }
 
         if (harvested_count >= max_harvests)

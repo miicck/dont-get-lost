@@ -660,6 +660,18 @@ public class console : MonoBehaviour
 
             description = "Prints information stored on the server about the given network id.",
             usage_example = "network_info 559"
+        },
+
+        ["current_production"] = new console_info
+        {
+            command = (args) =>
+            {
+                Debug.Log(production_tracker.current_production_info());
+                return true;
+            },
+
+            description = "Prints information about current production.",
+            usage_example = "current_production"
         }
     };
 

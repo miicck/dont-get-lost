@@ -99,6 +99,9 @@ public class auto_crafter : building_material, IPlayerInteractable
                 output_number = (output_number + 1) % outputs.Length;
                 var op = outputs[output_number];
 
+                // Track production
+                production_tracker.register_product(itm);
+
                 // Create the item in the output
                 op.add_item(create(itm.name,
                             op.transform.position,

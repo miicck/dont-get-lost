@@ -139,7 +139,7 @@ public class product : MonoBehaviour
         }
     }
 
-    public virtual void create_in_node(item_node node)
+    public virtual void create_in_node(item_node node, bool track_production=false)
     {
         int count = 0;
 
@@ -162,7 +162,7 @@ public class product : MonoBehaviour
         }
 
         if (count == 0) return;
-
+        if (track_production) production_tracker.register_product(item, count);
         for (int i = 0; i < count; ++i)
         {
             var itm = item.create(item.name, node.transform.position,

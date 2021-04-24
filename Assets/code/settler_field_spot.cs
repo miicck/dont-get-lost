@@ -22,7 +22,7 @@ public class settler_field_spot : networked, IPlayerInteractable
                 var field = GetComponentInParent<settler_field>();
                 if (field != null)
                     foreach (var p in products)
-                        p.create_in_node(field.output);
+                        p.create_in_node(field.output, true);
             }
 
             grown_object.transform.localScale = Vector3.one * progress_scale;

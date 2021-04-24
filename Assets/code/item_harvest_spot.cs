@@ -45,6 +45,7 @@ public class item_harvest_spot : settler_interactable_options
         {
             harvested_count += 1;
             var itm = options[selected_option];
+            production_tracker.register_product(itm);
             output.add_item(item.create(itm.name, output.transform.position,
                 output.transform.rotation, logistics_version: true));
         }

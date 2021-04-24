@@ -185,6 +185,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
                     new inventory_interaction(),
                     new recipe_book_interaction(),
                     new options_menu_interaction(),
+                    new production_menu_interaction(),
                     new first_third_person_interaction(),
                     new place_marker(),
                     new toggle_map(),
@@ -210,6 +211,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         public override bool continue_interaction(player player)
         {
+            if (continue_menu_interaction()) return true;
             return triggered(player);
         }
 
@@ -222,6 +224,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
         public override bool allows_mouse_look() { return false; }
         public override bool show_context_tip() { return false; }
+        public virtual bool continue_menu_interaction() { return false; }
     }
 
     public class inventory_interaction : menu_interaction
@@ -249,6 +252,18 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         public override controls.BIND keybind => controls.BIND.TOGGLE_OPTIONS;
         public override string context_tip() { return "toggle options menu"; }
         protected override void set_menu_state(player player, bool state) { options_menu.open = state; }
+    }
+
+    public class production_menu_interaction : menu_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.TOGGLE_PRODUCTION_INFO;
+        public override string context_tip() { return "toggle production menu"; }
+        protected override void set_menu_state(player player, bool state) { production_tracker.set_ui_state(state); }
+        public override bool continue_menu_interaction()
+        {
+            production_tracker.update_ui();
+            return false;
+        }
     }
 
     public class first_third_person_interaction : player_interaction

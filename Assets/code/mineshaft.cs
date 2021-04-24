@@ -79,6 +79,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
             // time, create the item
             var itm = minable_items[selected_option];
             var op = output;
+            production_tracker.register_product(itm);
             op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
 
