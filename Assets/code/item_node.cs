@@ -215,7 +215,7 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
         (o) => (o.input_point(output_point) - output_point).magnitude);
 
     /// <summary> Get the next output, in a cyclic fashion. </summary>
-    protected item_node next_output()
+    public item_node next_output()
     {
         if (output_count == 0) return null;
         output_number = (output_number + 1) % output_count;

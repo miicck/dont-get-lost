@@ -98,6 +98,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1974988180400149565}
   - component: {fileID: 5347891140114106896}
+  - component: {fileID: 1136428420354318682}
   m_Layer: 0
   m_Name: buffer_chest
   m_TagString: Untagged
@@ -143,6 +144,20 @@ MonoBehaviour:
   axes_scale: 1
   automatic_input: {fileID: 401635595973192010}
   chest_inventory_prefab: inventories/buffer_chest
+--- !u!114 &1136428420354318682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7664008693999971038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be57468f2f8892c4387b874d0982e4b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buffering: {fileID: 5347891140114106896}
+  output: {fileID: 3873374943578764657}
 --- !u!1 &8994982254478096252
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,9 +167,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8943510625311978842}
-  - component: {fileID: 3634380424868219035}
+  - component: {fileID: 3873374943578764657}
   m_Layer: 0
-  m_Name: buffer_output
+  m_Name: output
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -175,7 +190,7 @@ Transform:
   m_Father: {fileID: 1974988180400149565}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3634380424868219035
+--- !u!114 &3873374943578764657
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -184,7 +199,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8994982254478096252}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c86c958fdb752c64b939c4ab2d2690c6, type: 3}
+  m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &9083482518457688896
