@@ -20,13 +20,21 @@ public class has_path_elements : MonoBehaviour
     }
 }
 
+/*
+/// <summary> An interaction dispensed by a <see cref="settler_interactable"/>. </summary>
+public abstract class settler_interaction
+{
+
+}
+*/
+
 public class settler_interactable : has_path_elements, INonBlueprintable, INonEquipable, IAddsToInspectionText
 {
     /// <summary> Returns the networked object to which I belong. </summary>
     public networked networked_parent => GetComponentInParent<networked>();
 
-    /// <summary> Returns the assignments of settlers to this interactable, if they exist. </summary>
-    public settler_task_assignment[] assignments => networked_parent?.GetComponentsInChildren<settler_task_assignment>();
+    /// <summary> The network ID of my parent (or -1 if I have none) - used to identify me. </summary>
+    public int network_id => networked_parent == null ? -1 : networked_parent.network_id;
 
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>
@@ -88,6 +96,12 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
 
         if (possibilities.Count == 0) return null;
         return possibilities[Random.Range(0, possibilities.Count)];
+    }
+
+    public static settler_interactable try_find_by_id(int network_id)
+    {
+        if (network_id <= 0) return null;
+        return networked.try_find_by_id(network_id)?.GetComponentInChildren<settler_interactable>();
     }
 
     static void register_interactable(settler_interactable i)

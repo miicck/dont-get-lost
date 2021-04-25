@@ -43,7 +43,6 @@ items/flowers 1 True
 characters/settler 1 True
 items/triangular_plank_(equilateral) 1 True
 items/coal 1 True
-misc/wander_task_assignment 1 False
 items/long_flowing_hairstyle 1 True
 mood_effects/just_got_up 1 True
 items/doorway 1 True
@@ -76,7 +75,6 @@ items/shop_counter 1 True
 characters/smoke_spider 1 False
 items/saltpeter 1 True
 items/iron_plate_shoulder 1 True
-misc/task_assignment 1 False
 items/spinning_wheel 1 True
 items/short_shaggy_hairstyle 1 True
 items/half_log 1 True

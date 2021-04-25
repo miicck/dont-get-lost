@@ -65,7 +65,39 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public int group => path_element == null ? -1 : path_element.group;
     public int room => path_element == null ? -1 : path_element.room;
     float delta_xp = 0;
-    settler_task_assignment assignment;
+
+    bool try_assign(settler_interactable inter)
+    {
+        if (this == null) return false; // I've been deleted
+        if (inter == null) return false; // The interaction has been deleted
+        if (inter.network_id < 0) return false; // Unregistered
+
+        if (town_gate.group_under_attack(group) && !inter.skill.possible_when_under_attack)
+            return false; // Task is impossible when under attack
+
+        if (!inter.ready_to_assign(this))
+            return false; // Task isn't ready for me
+
+        // How many people are already assigned?
+        // - this is sort of client-dependent; we
+        //   should track this somewhere else.
+        int assigned_already = 0;
+        foreach (var s in settlers)
+            if (s.interactable_id.value == inter.network_id)
+                ++assigned_already;
+
+        if (assigned_already >= inter.max_simultaneous_users)
+            return false; // Already maxed user count
+
+        interactable_id.value = inter.network_id;
+        return true;
+    }
+
+    void assign_idle()
+    {
+        // TODO
+        Debug.Log("TODO: idle assignments.");
+    }
 
     void default_control()
     {
@@ -73,16 +105,17 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (players_interacting_with.value > 0)
             return;
 
-        // Look for my current assignment
-        assignment = settler_task_assignment.current_assignment(this);
+        // Get my current interaction
+        var inter = interactable;
 
+        // Mimic interaction on non-auth client
         if (!has_authority)
         {
-            if (assignment != null)
+            if (inter != null)
             {
                 // Mimic assignment on non-authority client
-                if ((transform.position - assignment.transform.position).magnitude < 0.5f)
-                    assignment.interactable.on_interact(this);
+                if ((transform.position - inter.transform.position).magnitude < 0.5f)
+                    inter.on_interact(this);
             }
             return;
         }
@@ -90,7 +123,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Authority-only control from here
 
         // Look for a new assignment if I don't have one
-        if (assignment == null)
+        if (inter == null)
         {
             // Reset stuff
             path = null;
@@ -99,25 +132,17 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             // Attempt to find an interaction - go through job types in priority order
             foreach (var s in skill.all)
             {
-                // If the skill is visible, then assign it according to visibility
-                if (s.is_visible)
-                    if (!skill.priority_test(job_priorities[s]))
-                        continue;
-
-                var job = settler_interactable.random(s);
-                if (settler_task_assignment.try_assign(this, job)) return;
+                // If the skill is visible, then assign it according to priority
+                if (s.is_visible && !skill.priority_test(job_priorities[s])) continue;
+                if (try_assign(settler_interactable.random(s))) return;
             }
 
             // Set an idle task with low priority
             if (skill.priority_test(skill.PRIORITY.LOW))
-                settler_task_assignment.assign_idle(this);
+                assign_idle();
 
             return;
         }
-
-        // Wait for assignment to be registered
-        if (assignment.network_id < 0)
-            return;
 
         // We have an assignment, attempt to carry it out
 
@@ -125,12 +150,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path = new town_path_element.path(path_element, assignment.interactable.path_element(group));
+            path = new town_path_element.path(path_element, inter.path_element(group));
 
             if (path == null || !path.valid)
             {
                 // Couldn't path to assignment, delete it
-                assignment.delete();
+                interactable_id.value = -1;
                 return;
             }
         }
@@ -138,7 +163,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            var next_element = path.walk(transform, assignment.interactable.move_to_speed(this), this);
+            var next_element = path.walk(transform, inter.move_to_speed(this), this);
             if (next_element == null) path = null;
             else path_element = next_element;
             return;
@@ -149,17 +174,26 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (delta_xp > 1f)
         {
             delta_xp = 0;
-            skills.modify_xp(assignment.interactable.skill, skill.XP_GAIN_PER_SEC);
+            skills.modify_xp(inter.skill, skill.XP_GAIN_PER_SEC);
         }
 
-        switch (assignment.interactable.on_interact(this))
+        switch (inter.on_interact(this))
         {
             case settler_interactable.INTERACTION_RESULT.COMPLETE:
             case settler_interactable.INTERACTION_RESULT.FAILED:
                 // Remove my assignment
-                assignment.delete();
+                interactable_id.value = -1;
                 return;
         }
+    }
+
+    public void on_attack_begin()
+    {
+        // Stop interactions that aren't possible when under attack
+        var inter = interactable;
+        if (inter == null) return;
+        if (!inter.skill.possible_when_under_attack)
+            interactable_id.value = -1;
     }
 
     protected override void on_death()
@@ -337,15 +371,16 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public string assignement_info()
     {
+        // hehe
         string ass_string = "No assignment.";
-        if (assignment != null)
+        var inter = interactable;
+        if (interactable != null)
         {
-            var i = assignment.interactable;
-            int perc = skills[i.skill].speed_mult_perc;
+            int perc = skills[inter.skill].speed_mult_perc;
             ass_string = "Assignment: \n";
-            string ti = i.task_info().Trim();
+            string ti = inter.task_info().Trim();
             if (ti.Length > 0) ass_string += ti + "\n";
-            if (i.skill.is_visible) ass_string += "Skill speed multiplier: " + perc + "%";
+            if (inter.skill.is_visible) ass_string += "Skill speed multiplier: " + perc + "%";
         }
         return ass_string;
     }
@@ -382,6 +417,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color top_color;
     public networked_variables.net_color net_hair_color;
     public networked_variables.net_color bottom_color;
+    public networked_variables.net_int interactable_id;
     public networked_variables.net_job_priorities job_priorities;
     public networked_variables.net_skills skills;
     new public networked_variables.net_float height;
@@ -391,17 +427,18 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override bool persistant() { return !is_dead; }
 
     public inventory inventory { get; private set; }
+    public settler_interactable interactable => settler_interactable.try_find_by_id(interactable_id.value);
 
     public void add_mood_effect(string name)
     {
         // Can't add mood effects from non-auth client
-        if (!has_authority) return; 
+        if (!has_authority) return;
 
         // Mood effect doesn't exist (mood_effect.load will flag a warning)
         if (mood_effect.load(name) == null) return;
 
         // Don't allow the same effect more than once
-        foreach (var me in mood_effect.get_all(this)) if (me.name == name) return; 
+        foreach (var me in mood_effect.get_all(this)) if (me.name == name) return;
 
         client.create(transform.position, "mood_effects/" + name, parent: this);
     }
@@ -419,6 +456,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         net_hair_color = new networked_variables.net_color();
         height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
+        interactable_id = new networked_variables.net_int(default_value: -1);
         job_priorities = new networked_variables.net_job_priorities();
         skills = new networked_variables.net_skills();
 
@@ -454,6 +492,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             transform.localScale = Vector3.one * height.value;
             base.height = height.value * 1.5f + 0.2f;
+        };
+
+        interactable_id.on_change_old_new = (old_val, new_val) =>
+        {
+            var old_inter = settler_interactable.try_find_by_id(old_val);
+            old_inter?.on_unassign(this);
+            var new_inter = settler_interactable.try_find_by_id(new_val);
+            new_inter?.on_assign(this);
         };
     }
 

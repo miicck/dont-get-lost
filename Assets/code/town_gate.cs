@@ -257,7 +257,8 @@ public class town_gate : portal, IAddsToInspectionText
             if (Resources.Load<character>("characters/" + c) != null)
                 client.create(spawn_point, "characters/" + c, parent: this);
 
-        settler_task_assignment.on_attack_begin();
+        foreach (var s in settler.get_settlers_by_group(path_element.group))
+            s.on_attack_begin();
     }
 
     void update_attack_message()
