@@ -13,9 +13,6 @@ TODO
 - Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
-- Make settler_interactable return a task object, this will make it
-  easier to make settler_interactables work for multiple settlers (see
-  the way that lootboxes work at the moment)
 - Pickup/dropoff points for settlers to move items around?
 - Remove/improve player food mechanic
 - Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
@@ -27,7 +24,9 @@ TODO
 - PvP hit markers
 - Player health desyncs on different clients on death (sometimes?)
 - Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
-  allow the simplification of the code in a lot of places)
+  allow the simplification of the code in a lot of places) - does the new callbacks structure of 
+  IExtendsNetworked cover these use cases?
+- Move the walking-to-interactable code to the interactable, rather than the settler.
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

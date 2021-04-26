@@ -20,7 +20,8 @@ public class has_path_elements : MonoBehaviour
     }
 }
 
-public class settler_interactable : has_path_elements, INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked
+public class settler_interactable : has_path_elements, 
+    INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked
 {
     const float MISSING_WORKER_TIMEOUT = 5f;
 
@@ -39,22 +40,22 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
     // Timer for automatic unassign if we loose track of asignee
     float force_unassign_time = float.MaxValue;
 
-    void trigger_unassign_timeout()
+    void trigger_missing_worker_timeout()
     {
         if (force_unassign_time > Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT)
             force_unassign_time = Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT;
     }
 
-    void cancel_unassign_timeout()
+    void cancel_missing_worker_timeout()
     {
         force_unassign_time = float.MaxValue;
     }
 
-    bool check_unassign_timeout()
+    bool check_missing_worker_timeout()
     {
         if (force_unassign_time < Time.realtimeSinceStartup)
         {
-            cancel_unassign_timeout();
+            cancel_missing_worker_timeout();
             unassign();
             return true;
         }
@@ -63,7 +64,7 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
 
     public RESULT interact(settler s)
     {
-        cancel_unassign_timeout();
+        cancel_missing_worker_timeout();
         return on_interact(s);
     }
 
@@ -76,7 +77,7 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
         {
             if (settler != null)
             {
-                cancel_unassign_timeout();
+                cancel_missing_worker_timeout();
                 return false; // Already assigned to someone else
             }
             else
@@ -86,9 +87,9 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
                 // someone else's client. But, if they don't show up
                 // for work soon, they might not be loaded on
                 // any clients; unassign them.
-                if (!check_unassign_timeout())
+                if (!check_missing_worker_timeout())
                 {
-                    trigger_unassign_timeout();
+                    trigger_missing_worker_timeout();
                     return false;
                 }
             }
@@ -178,7 +179,7 @@ public class settler_interactable : has_path_elements, INonBlueprintable, INonEq
 
     public virtual string added_inspection_text()
     {
-        check_unassign_timeout();
+        check_missing_worker_timeout();
         if (settler != null) return settler.net_name.value.capitalize() + " is assigned to this.";
         else if (settler_id.value > 0)
         {
