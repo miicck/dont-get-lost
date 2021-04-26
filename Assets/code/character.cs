@@ -210,7 +210,7 @@ public class character : networked,
     private void Update()
     {
         // Characters are controlled by the authority client
-        if (!has_authority || this == null) return;
+        if (this == null || !has_authority) return;
 
         // Don't do anyting unless the chunk is generated
         if (!chunk.generation_complete(transform.position)) return;

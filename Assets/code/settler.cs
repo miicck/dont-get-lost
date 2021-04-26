@@ -22,25 +22,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     // CHARACTER CONTROL //
     //###################//
 
-    protected override ICharacterController default_controller() { return new settler_control(); }
-
-    class settler_control : ICharacterController
-    {
-        public void control(character c)
-        {
-            var s = (settler)c;
-            s.default_control();
-        }
-
-        public void on_end_control(character c) { }
-        public void draw_gizmos() { }
-        public void draw_inspector_gui() { }
-
-        public string inspect_info()
-        {
-            return "";
-        }
-    }
+    protected override ICharacterController default_controller() { return null; }
 
     /// <summary> The path element that I am currently moving towards. </summary>
     public town_path_element path_element
@@ -62,54 +44,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public int group => path_element == null ? -1 : path_element.group;
     public int room => path_element == null ? -1 : path_element.room;
-    float delta_xp = 0;
-
-    void default_control()
-    {
-        // Don't do anything if there is a player interacting with me
-        if (players_interacting_with.value > 0)
-            return;
-
-        // Mimic interaction on non-auth client
-        if (!has_authority)
-        {
-            if (interaction != null)
-            {
-                // Mimic assignment on non-authority client
-                if ((transform.position - interaction.transform.position).magnitude < 0.5f)
-                    interaction.interact(this);
-            }
-            return;
-        }
-
-        // Authority-only control from here
-
-        // Look for a new interaction if I don't have one
-        if (interaction == null)
-        {
-            // Reset stuff
-            delta_xp = 0;
-            settler_interactable.try_assign_interaction(this);
-            return;
-        }
-
-        // Carry out the interaction
-        delta_xp += Time.deltaTime;
-        if (delta_xp > 1f)
-        {
-            delta_xp = 0;
-            skills.modify_xp(interaction.skill, skill.XP_GAIN_PER_SEC);
-        }
-
-        interaction.interact(this);
-    }
 
     public void on_attack_begin()
     {
         // Stop interactions that aren't possible when under attack
-        var inter = interaction;
-        if (inter == null) return;
-        if (!inter.skill.possible_when_under_attack)
+        if (interaction?.skill.possible_when_under_attack == false)
             interaction.unassign();
     }
 
@@ -150,6 +89,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             }
 
         settlers.Add(this);
+    }
+
+    private void Update()
+    {
+        // Don't do anything if I'm interacting with players
+        // Otherwise run my current interaction
+        if (players_interacting_with.value > 0) return;
+        interaction?.interact(this);
     }
 
     private void OnDestroy()

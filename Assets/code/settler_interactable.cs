@@ -36,8 +36,21 @@ public abstract class settler_interactable : has_path_elements,
     public virtual string task_info() { return name; }
     public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
+    float delta_xp = 0;
+
     public void interact(settler s)
     {
+        if (s.has_authority)
+        {
+            // Gain XP
+            delta_xp += Time.deltaTime;
+            if (delta_xp > 1f)
+            {
+                delta_xp = 0;
+                settler.skills.modify_xp(skill, skill.XP_GAIN_PER_SEC);
+            }
+        }
+
         cancel_missing_worker_timeout();
         switch (on_interact(s, stage.value))
         {
@@ -84,9 +97,6 @@ public abstract class settler_interactable : has_path_elements,
             }
         }
 
-        if (assigned_to(s) != null)
-            return false; // S is already assigned to something else
-
         if (!skill.possible_when_under_attack && town_gate.group_under_attack(s.group))
             return false; // Not possible when under attack
 
@@ -97,18 +107,13 @@ public abstract class settler_interactable : has_path_elements,
 
         // Assign the new settler
         settler_id.value = s.network_id;
-        stage.value = 0;
-        on_assign(s);
-
         return true;
     }
 
     public void unassign()
     {
         // Unassign the settler
-        on_unassign(settler);
         settler_id.value = -1;
-        stage.value = 0;
     }
 
     //########################//
@@ -194,6 +199,18 @@ public abstract class settler_interactable : has_path_elements,
                 // Initialize the settler id/stage
                 settler_id = new networked_variables.net_int(default_value: -1);
                 stage = new networked_variables.net_int();
+
+                settler_id.on_change_old_new = (old_val, new_val) =>
+                {
+                    stage.value = 0;
+                    delta_xp = 0;
+
+                    var old_user = networked.try_find_by_id(old_val, false);
+                    if (old_user is settler) on_unassign((settler)old_user);
+
+                    var new_user = networked.try_find_by_id(new_val, false);
+                    if (new_user is settler) on_assign((settler)new_user);
+                };
             },
 
             on_auth_change = (has_auth) =>
@@ -243,10 +260,11 @@ public abstract class settler_interactable : has_path_elements,
         interactables.Remove(i);
     }
 
-    // Public static //
-
-    public static bool try_assign_interaction(settler s)
+    static settler_interactable try_assign_interaction(settler s)
     {
+        // Can't assign interactions on non-auth clients
+        if (!s.has_authority) return null;
+
         foreach (var sk in skill.all)
         {
             // Skip visible skills that fail the priority test
@@ -262,19 +280,28 @@ public abstract class settler_interactable : has_path_elements,
 
             for (int i = 0; i < load_balancing.iter; ++i)
             {
-                if (possibilities[Random.Range(0, possibilities.Count)].try_assign(s))
-                    return true;
+                var to_try = possibilities[Random.Range(0, possibilities.Count)];
+                if (to_try.try_assign(s)) return to_try;
             }
         }
 
-        return false;
+        return null;
     }
+
+    // Public static //
 
     public static settler_interactable assigned_to(settler s)
     {
+        // Look for existing interaction
         foreach (var i in interactables)
             if (i.settler_id.value == s.network_id)
                 return i;
+
+        // None found, attempt to assign interaction
+        // if we're on the authority client
+        if (s.has_authority)
+            try_assign_interaction(s);
+
         return null;
     }
 
@@ -309,7 +336,16 @@ public abstract class walk_to_settler_interactable : settler_interactable
     protected sealed override STAGE_RESULT on_interact(settler s, int stage)
     {
         // Delegate control to implementation once I have arrived
-        if (stage > 0) return on_interact_arrived(s, stage - 1);
+        if (stage > 0)
+        {
+            if (!arrived)
+            {
+                arrived = true;
+                on_arrive(s);
+            }
+
+            return on_interact_arrived(s, stage - 1);
+        }
 
         // Only authority clients control the settler
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
@@ -322,12 +358,7 @@ public abstract class walk_to_settler_interactable : settler_interactable
         }
 
         // Path walking complete
-        if (path.Count == 0)
-        {
-            arrived = true;
-            on_arrive(s);
-            return STAGE_RESULT.STAGE_COMPLETE;
-        }
+        if (path.Count == 0) return STAGE_RESULT.STAGE_COMPLETE;
 
         var next_element = path.walk(s.transform, move_to_speed(s), s);
         if (next_element != null) s.path_element = next_element;
