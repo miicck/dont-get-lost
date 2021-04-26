@@ -134,7 +134,7 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
     // INTERACTABLE //
     //##############//
 
-    public override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(settler s)
     {
         switch (mode)
         {
@@ -146,14 +146,13 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
         }
     }
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override void on_assign(settler s)
     {
         // Reset stuff
         time_dispensing = 0f;
-        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override INTERACTION_RESULT on_interact(settler s)
+    protected override RESULT on_interact(settler s)
     {
         time_dispensing += Time.deltaTime;
 
@@ -168,7 +167,7 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
                     // Search for food
                     var food = find_food();
                     if (food == null)
-                        return INTERACTION_RESULT.FAILED;
+                        return RESULT.FAILED;
                     else
                     {
                         // Eat food on authority client, delete food on all clients
@@ -181,18 +180,18 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
 
                         // Complete if we've eaten enough
                         if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
-                            return INTERACTION_RESULT.COMPLETE;
+                            return RESULT.COMPLETE;
                         else
-                            return INTERACTION_RESULT.UNDERWAY;
+                            return RESULT.UNDERWAY;
                     }
 
                 default:
                     Debug.LogError("Unkown item dispenser mode!");
-                    return INTERACTION_RESULT.FAILED;
+                    return RESULT.FAILED;
             }
         }
 
-        return INTERACTION_RESULT.UNDERWAY;
+        return RESULT.UNDERWAY;
     }
 
     public override string task_info()

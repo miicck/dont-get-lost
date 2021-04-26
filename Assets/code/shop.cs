@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IExtendsNetworked, IBuildListener
+public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IBuildListener
 {
     public town_path_element cashier_spot;
 
@@ -28,11 +28,16 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             kv.Value(stock[kv.Key]);
     }
 
-    public void init_networked_variables()
+    public override IExtendsNetworked.callbacks get_callbacks()
     {
-        stock = new networked_variables.net_string_counts();
-        stock_listeners = new Dictionary<string, stock_listener>();
-        stock.on_change = invoke_stock_listeners;
+        var ret = base.get_callbacks();
+        ret.init_networked_variables += () =>
+        {
+            stock = new networked_variables.net_string_counts();
+            stock_listeners = new Dictionary<string, stock_listener>();
+            stock.on_change = invoke_stock_listeners;
+        };
+        return ret;
     }
 
     //################//
@@ -130,7 +135,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
     public override string task_info() { return type_of_shop?.task_info(stage); }
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override void on_assign(settler s)
     {
         // Starts in the stock stage
         stage = STAGE.STOCK;
@@ -138,20 +143,19 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         stock_crafted = 0;
         left_to_stock = 0;
         path = null;
-        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override void on_unassign(settler s)
+    protected override void on_unassign(settler s)
     {
         // Ensure we don't leave materials behind
         if (item_carrying != null)
             Destroy(item_carrying.gameObject);
     }
 
-    public override INTERACTION_RESULT on_interact(settler s)
+    protected override RESULT on_interact(settler s)
     {
         if (!validate_fittings())
-            return INTERACTION_RESULT.FAILED;
+            return RESULT.FAILED;
 
         // No path, move to next stage
         if (path == null)
@@ -171,10 +175,10 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
         }
 
         if (stage == STAGE.GET_MATERIALS && !materials_cupboard.has_items_to_dispense)
-            return INTERACTION_RESULT.FAILED;
+            return RESULT.FAILED;
 
-        if (stock_crafted >= 4) return INTERACTION_RESULT.COMPLETE;
-        return INTERACTION_RESULT.UNDERWAY;
+        if (stock_crafted >= 4) return RESULT.COMPLETE;
+        return RESULT.UNDERWAY;
     }
 
     public enum STAGE

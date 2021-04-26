@@ -11,12 +11,16 @@ public class settler_wander_target : settler_interactable
 
     town_path_element found_element;
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override bool ready_to_assign(settler s)
     {
         found_element = town_path_element.nearest_element(transform.position);
         if (found_element == null || found_element.group != s.group)
-            return INTERACTION_RESULT.FAILED;
+            return false;
+        return true;
+    }
+
+    protected override void on_assign(settler s)
+    {
         transform.position = found_element.transform.position;
-        return INTERACTION_RESULT.UNDERWAY;
     }
 }

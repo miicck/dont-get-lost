@@ -26,6 +26,8 @@ TODO
 - Make time command work from non-auth clients
 - PvP hit markers
 - Player health desyncs on different clients on death (sometimes?)
+- Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
+  allow the simplification of the code in a lot of places)
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

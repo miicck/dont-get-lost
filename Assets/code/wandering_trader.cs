@@ -26,10 +26,16 @@ public class wandering_trader : trader, IExtendsNetworked
 
     networked_variables.net_string_counts stock;
 
-    public void init_networked_variables()
+    public IExtendsNetworked.callbacks get_callbacks()
     {
-        stock = new networked_variables.net_string_counts();
-        GetComponent<character>().add_register_listener(init_stock);
+        return new IExtendsNetworked.callbacks
+        {
+            init_networked_variables = () =>
+            {
+                stock = new networked_variables.net_string_counts();
+                GetComponent<character>().add_register_listener(init_stock);
+            }
+        };
     }
 
     void init_stock()

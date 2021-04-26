@@ -72,8 +72,9 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
         return ret;
     }
 
-    private void OnDrawGizmos()
+    protected override void OnDrawGizmos()
     {
+        base.OnDrawGizmos();
         Gizmos.color = Color.green;
         foreach (var v in locations())
             Gizmos.DrawLine(v, v + Vector3.up / 2f);
@@ -85,21 +86,20 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
 
     float work_done;
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override void on_assign(settler s)
     {
         // Reset stuff
         work_done = 0f;
-        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override INTERACTION_RESULT on_interact(settler s)
+    protected override RESULT on_interact(settler s)
     {
         // Record the amount of time spent farming
         work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
         if (work_done > base_tend_time)
         {
             // Only grow field on authority client
-            if (!s.has_authority) return INTERACTION_RESULT.COMPLETE;
+            if (!s.has_authority) return RESULT.COMPLETE;
 
             // When completed, tend/harvest the field
             var spots = this.spots;
@@ -128,9 +128,9 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
                     }
                 }
 
-            return INTERACTION_RESULT.COMPLETE;
+            return RESULT.COMPLETE;
         }
-        return INTERACTION_RESULT.UNDERWAY;
+        return RESULT.UNDERWAY;
     }
 
     public override string task_info()

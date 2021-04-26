@@ -10,8 +10,10 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     bool on_valid_ground = false;
 
-    private void OnDrawGizmos()
+    protected override void OnDrawGizmos()
     {
+        base.OnDrawGizmos();
+
         Gizmos.color = Color.green;
         Gizmos.DrawLine(transform.position, transform.position - Vector3.up * test_depth);
     }
@@ -62,14 +64,18 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     float work_done;
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override bool ready_to_assign(settler s)
     {
-        work_done = 0;
-        if (!on_valid_ground) return INTERACTION_RESULT.FAILED;
-        return INTERACTION_RESULT.UNDERWAY;
+        return on_valid_ground;
     }
 
-    public override INTERACTION_RESULT on_interact(settler s)
+    protected override void on_assign(settler s)
+    {
+        // Reset stuff
+        work_done = 0;
+    }
+
+    protected override RESULT on_interact(settler s)
     {
         float delta_work = Time.deltaTime * s.skills[skill].speed_multiplier;
 
@@ -83,11 +89,11 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
             op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
 
-            return INTERACTION_RESULT.COMPLETE;
+            return RESULT.COMPLETE;
         }
 
         work_done += delta_work;
-        return INTERACTION_RESULT.UNDERWAY;
+        return RESULT.UNDERWAY;
     }
 
     //##############//

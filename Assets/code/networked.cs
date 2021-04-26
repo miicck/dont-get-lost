@@ -6,7 +6,18 @@ using UnityEngine;
 /// itself has networked member variables. </summary>
 public interface IExtendsNetworked
 {
-    void init_networked_variables();
+    callbacks get_callbacks();
+
+    // Workaround because we don't have
+    // default-implementations for interfaces
+    public struct callbacks
+    {
+        public delegate void callback();
+        public delegate void bool_callback(bool val);
+
+        public callback init_networked_variables;
+        public bool_callback on_forget;
+    }
 }
 
 /// <summary> An object with a unique <see cref="networked.network_id"/> that is reproduced
@@ -72,6 +83,9 @@ public class networked : MonoBehaviour
 
     /// <summary> Set to true if networking should be disabled for this object. </summary>
     public bool is_client_side = false;
+
+    /// <summary> Children that implement <see cref="IExtendsNetworked"/>. </summary>
+    IExtendsNetworked[] network_extenders = new IExtendsNetworked[0];
 
     /// <summary> Called just before we create this object. </summary>
     public void init_network_variables()
@@ -141,12 +155,12 @@ public class networked : MonoBehaviour
         }
 
         // Appenend any extended networked fields from my children
-        var networked_children = GetComponentsInChildren<IExtendsNetworked>();
-        if (networked_children.Length > 0)
+        var extenders = GetComponentsInChildren<IExtendsNetworked>();
+        if (extenders.Length > 0)
         {
             // Sort extending children dererministically
-            var sorted_children = new List<IExtendsNetworked>(networked_children);
-            sorted_children.Sort((a, b) =>
+            var sorted_extenders = new List<IExtendsNetworked>(extenders);
+            sorted_extenders.Sort((a, b) =>
             {
                 // Sort alphabetically by type
                 var type_comp = a.GetType().Name.CompareTo(b.GetType().Name);
@@ -156,9 +170,9 @@ public class networked : MonoBehaviour
                 throw new System.NotImplementedException("Multiple IExtendsNetowrked children of the same type!");
             });
 
-            foreach (var c in sorted_children)
+            foreach (var c in sorted_extenders)
             {
-                c.init_networked_variables();
+                c.get_callbacks().init_networked_variables?.Invoke();
                 foreach (var f in networked_fields[c.GetType()])
                 {
                     var nv = (networked_variable)f.GetValue(c);
@@ -166,6 +180,8 @@ public class networked : MonoBehaviour
                     net_variable_names.Add(f.Name);
                 }
             }
+
+            network_extenders = sorted_extenders.ToArray();
         }
 
         // Slightly faster/lower memory usage if we deal with an array from here on
@@ -275,6 +291,8 @@ public class networked : MonoBehaviour
 
     //###############//
     // NETWORK STATE //
+    //###############//
+
     /// client and indicate that I'm awating a network-wide id. </summary>
     public int network_id
     {
@@ -378,6 +396,7 @@ public class networked : MonoBehaviour
     /// forgotten temporarily (i.e has gone out of range). </summary>
     public void forget(bool deleting)
     {
+        foreach (var ex in network_extenders) ex.get_callbacks().on_forget?.Invoke(deleting);
         on_forget(deleting);
         on_forget(this);
         transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);

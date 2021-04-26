@@ -54,7 +54,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 _path_element = town_path_element.nearest_element(transform.position);
             return _path_element;
         }
-        private set
+        set
         {
             if (_path_element == value) return; // No change
             _path_element = value;
@@ -66,56 +66,20 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public int room => path_element == null ? -1 : path_element.room;
     float delta_xp = 0;
 
-    bool try_assign(settler_interactable inter)
-    {
-        if (this == null) return false; // I've been deleted
-        if (inter == null) return false; // The interaction has been deleted
-        if (inter.network_id < 0) return false; // Unregistered
-
-        if (town_gate.group_under_attack(group) && !inter.skill.possible_when_under_attack)
-            return false; // Task is impossible when under attack
-
-        if (!inter.ready_to_assign(this))
-            return false; // Task isn't ready for me
-
-        // How many people are already assigned?
-        // - this is sort of client-dependent; we
-        //   should track this somewhere else.
-        int assigned_already = 0;
-        foreach (var s in settlers)
-            if (s.interactable_id.value == inter.network_id)
-                ++assigned_already;
-
-        if (assigned_already >= inter.max_simultaneous_users)
-            return false; // Already maxed user count
-
-        interactable_id.value = inter.network_id;
-        return true;
-    }
-
-    void assign_idle()
-    {
-        // TODO
-        Debug.Log("TODO: idle assignments.");
-    }
-
     void default_control()
     {
         // Don't do anything if there is a player interacting with me
         if (players_interacting_with.value > 0)
             return;
 
-        // Get my current interaction
-        var inter = interactable;
-
         // Mimic interaction on non-auth client
         if (!has_authority)
         {
-            if (inter != null)
+            if (interaction != null)
             {
                 // Mimic assignment on non-authority client
-                if ((transform.position - inter.transform.position).magnitude < 0.5f)
-                    inter.on_interact(this);
+                if ((transform.position - interaction.transform.position).magnitude < 0.5f)
+                    interaction.interact(this);
             }
             return;
         }
@@ -123,24 +87,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Authority-only control from here
 
         // Look for a new assignment if I don't have one
-        if (inter == null)
+        if (interaction == null)
         {
             // Reset stuff
             path = null;
             delta_xp = 0;
-
-            // Attempt to find an interaction - go through job types in priority order
-            foreach (var s in skill.all)
-            {
-                // If the skill is visible, then assign it according to priority
-                if (s.is_visible && !skill.priority_test(job_priorities[s])) continue;
-                if (try_assign(settler_interactable.random(s))) return;
-            }
-
-            // Set an idle task with low priority
-            if (skill.priority_test(skill.PRIORITY.LOW))
-                assign_idle();
-
+            settler_interactable.try_assign_interaction(this);
             return;
         }
 
@@ -150,12 +102,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (path == null)
         {
             // Find a path to the assignment
-            path = new town_path_element.path(path_element, inter.path_element(group));
+            path = new town_path_element.path(path_element, interaction.path_element(group));
 
             if (path == null || !path.valid)
             {
                 // Couldn't path to assignment, delete it
-                interactable_id.value = -1;
+                interaction.unassign();
                 return;
             }
         }
@@ -163,7 +115,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Check if there is any of the path left to walk
         if (path.Count > 0)
         {
-            var next_element = path.walk(transform, inter.move_to_speed(this), this);
+            var next_element = path.walk(transform, interaction.move_to_speed(this), this);
             if (next_element == null) path = null;
             else path_element = next_element;
             return;
@@ -174,15 +126,15 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (delta_xp > 1f)
         {
             delta_xp = 0;
-            skills.modify_xp(inter.skill, skill.XP_GAIN_PER_SEC);
+            skills.modify_xp(interaction.skill, skill.XP_GAIN_PER_SEC);
         }
 
-        switch (inter.on_interact(this))
+        switch (interaction.interact(this))
         {
-            case settler_interactable.INTERACTION_RESULT.COMPLETE:
-            case settler_interactable.INTERACTION_RESULT.FAILED:
+            case settler_interactable.RESULT.COMPLETE:
+            case settler_interactable.RESULT.FAILED:
                 // Remove my assignment
-                interactable_id.value = -1;
+                interaction.unassign();
                 return;
         }
     }
@@ -190,10 +142,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public void on_attack_begin()
     {
         // Stop interactions that aren't possible when under attack
-        var inter = interactable;
+        var inter = interaction;
         if (inter == null) return;
         if (!inter.skill.possible_when_under_attack)
-            interactable_id.value = -1;
+            interaction.unassign();
     }
 
     protected override void on_death()
@@ -373,8 +325,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     {
         // hehe
         string ass_string = "No assignment.";
-        var inter = interactable;
-        if (interactable != null)
+        var inter = interaction;
+        if (interaction != null)
         {
             int perc = skills[inter.skill].speed_mult_perc;
             ass_string = "Assignment: \n";
@@ -417,7 +369,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color top_color;
     public networked_variables.net_color net_hair_color;
     public networked_variables.net_color bottom_color;
-    public networked_variables.net_int interactable_id;
     public networked_variables.net_job_priorities job_priorities;
     public networked_variables.net_skills skills;
     new public networked_variables.net_float height;
@@ -427,7 +378,35 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override bool persistant() { return !is_dead; }
 
     public inventory inventory { get; private set; }
-    public settler_interactable interactable => settler_interactable.try_find_by_id(interactable_id.value);
+
+    /// <summary> The interactable object that we are currently interacting with. </summary>
+    public settler_interactable interaction => settler_interactable.assigned_to(this);
+    /*
+    {
+        get
+        {
+            if (_interaction == null)
+            {
+                // Try to load the interaction
+                _interaction = settler_interactable.assigned_to(this);
+            }
+            return _interaction;
+        }
+        set
+        {
+            if (value == interaction) return; // No change
+
+            // Unassign the old interactable
+            _interaction?.unassign(this);
+
+            // Try to assign the new interactable
+            _interaction = value;
+            if (_interaction != null && !_interaction.try_assign(this))
+                _interaction = null;
+        }
+    }
+    settler_interactable _interaction;
+    */
 
     public void add_mood_effect(string name)
     {
@@ -456,7 +435,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         net_hair_color = new networked_variables.net_color();
         height = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
-        interactable_id = new networked_variables.net_int(default_value: -1);
         job_priorities = new networked_variables.net_job_priorities();
         skills = new networked_variables.net_skills();
 
@@ -492,14 +470,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             transform.localScale = Vector3.one * height.value;
             base.height = height.value * 1.5f + 0.2f;
-        };
-
-        interactable_id.on_change_old_new = (old_val, new_val) =>
-        {
-            var old_inter = settler_interactable.try_find_by_id(old_val);
-            old_inter?.on_unassign(this);
-            var new_inter = settler_interactable.try_find_by_id(new_val);
-            new_inter?.on_assign(this);
         };
     }
 

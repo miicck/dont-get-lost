@@ -954,6 +954,43 @@ public class Dictionary<K1, K2, K3, V>
     }
 }
 
+public class two_way_dictionary<T, V>
+{
+    Dictionary<T, V> forward = new Dictionary<T, V>();
+    Dictionary<V, T> backward = new Dictionary<V, T>();
+
+    public void set(T t, V v)
+    {
+        removeForward(t);
+        removeBackward(v);
+        forward[t] = v;
+        backward[v] = t;
+    }
+
+    public void removeForward(T t)
+    {
+        if (forward.TryGetValue(t, out V v))
+        {
+            forward.Remove(t);
+            backward.Remove(v);
+        }
+    }
+
+    public void removeBackward(V v)
+    {
+        if (backward.TryGetValue(v, out T t))
+        {
+            backward.Remove(v);
+            forward.Remove(t);
+        }
+    }
+
+    public bool TryGetValueForward(T t, out V v) => forward.TryGetValue(t, out v);
+    public bool TryGetValueBackward(V v, out T t) => backward.TryGetValue(v, out t);
+    public bool ContainsForward(T t) => forward.ContainsKey(t);
+    public bool ContainsBackward(V v) => backward.ContainsKey(v);
+}
+
 public class int_rect
 {
     public int_rect(int left, int right, int bottom, int top)
@@ -993,7 +1030,6 @@ class temporary_object : MonoBehaviour
 
     void delete_temp_object() { Destroy(gameObject); }
 }
-
 
 public class kd_tree<T>
 {

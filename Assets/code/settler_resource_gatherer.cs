@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class settler_interactable_options : settler_interactable, IPlayerInteractable, IExtendsNetworked
+public abstract class settler_interactable_options : settler_interactable, IPlayerInteractable
 {
     //###################//
     // IExtendsNetworked //
@@ -13,9 +13,14 @@ public abstract class settler_interactable_options : settler_interactable, IPlay
 
     networked_variables.net_int option_index;
 
-    public void init_networked_variables()
+    public override IExtendsNetworked.callbacks get_callbacks()
     {
-        option_index = new networked_variables.net_int();
+        var ret = base.get_callbacks();
+        ret.init_networked_variables += () =>
+        {
+            option_index = new networked_variables.net_int();
+        };
+        return ret;
     }
 
     //##################//
@@ -135,8 +140,10 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     float work_done;
     int harvested_count = 0;
 
-    private void OnDrawGizmos()
+    protected override void OnDrawGizmos()
     {
+        base.OnDrawGizmos();
+
         // Draw the harvesting ray
         if (search_origin == null) return;
 
@@ -204,21 +211,23 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     // SETTLER_INTERACTABLE //
     //######################//
 
-    public override INTERACTION_RESULT on_assign(settler s)
+    protected override bool ready_to_assign(settler s)
     {
-        if (harvesting == null)
-            return INTERACTION_RESULT.FAILED;
+        // Check we have something to harvest
+        return harvesting != null;
+    }
 
+    protected override void on_assign(settler s)
+    {
         // Reset stuff 
         work_done = 0f;
         harvested_count = 0;
-        return INTERACTION_RESULT.UNDERWAY;
     }
 
-    public override INTERACTION_RESULT on_interact(settler s)
+    protected override RESULT on_interact(settler s)
     {
         if (harvesting == null)
-            return INTERACTION_RESULT.FAILED;
+            return RESULT.FAILED;
 
         // Record how long has been spent harvesting
         work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
@@ -233,8 +242,8 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         }
 
         if (harvested_count >= max_harvests)
-            return INTERACTION_RESULT.COMPLETE;
-        return INTERACTION_RESULT.UNDERWAY;
+            return RESULT.COMPLETE;
+        return RESULT.UNDERWAY;
     }
 
     public override string task_info()

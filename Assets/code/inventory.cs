@@ -458,6 +458,7 @@ public class inventory : networked, IItemCollection
         {
             if (isn == null) continue; // Destroyed
             if (isn.item == null) continue; // No item
+            if (isn.count < 1) continue; // No quantity
 
             // Add the contents to the dictionary
             if (!ret.ContainsKey(isn.item)) ret[isn.item] = isn.count;
