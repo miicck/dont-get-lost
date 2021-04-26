@@ -54,21 +54,16 @@ public abstract class networked_variable<T> : networked_variable
             // Before we do anything, validate the value
             value = validate(value);
 
-            if (_value.Equals(default))
-            {
-                if (value.Equals(default))
-                    return; // No change, still default
-            }
-            else if (_value.Equals(value))
+            if (check_equality(value, _value))
                 return; // No change
 
             T old_value = _value;
             _value = value;
 
-            if (should_send(last_sent_value, _value))
+            if (should_send(last_networked_value, _value))
             {
                 set_dirty();
-                last_sent_value = value;
+                last_networked_value = value;
             }
 
             on_change?.Invoke();
@@ -78,24 +73,28 @@ public abstract class networked_variable<T> : networked_variable
     }
     protected T _value;
 
-    /// <summary> The hash code is inherited from 
-    /// the underlying type <typeparamref name="T"/>. </summary>
-    public override int GetHashCode() { return value.GetHashCode(); }
-
-    /// <summary> Equality is inherited from the underlying 
-    /// type <typeparamref name="T"/>. </summary>
-    public override bool Equals(object obj)
+    /// <summary> Allow setting of a different default starting value for _value. </summary>
+    public networked_variable(T default_value)
     {
-        if (obj is networked_variable<T>)
-        {
-            var other = (networked_variable<T>)obj;
-            return value.Equals(other.value);
-        }
-        return false;
+        // Ensure that the default value is valid
+        default_value = validate(default_value);
+
+        // we also set last_networked_value to default_value so that changes
+        // to _value away from default_value properly trigger set_dirty().
+        _value = default_value;
+        last_networked_value = default_value;
     }
 
-    /// <summary> The last value that was sent. </summary>
-    T last_sent_value;
+    /// <summary> Equality check that also deals with null cases. </summary>
+    bool check_equality(T a, T b)
+    {
+        if (a == null) return b == null;
+        if (b == null) return a == null;
+        return a.Equals(b);
+    }
+
+    /// <summary> The last value that was sent to/reccived from the network. </summary>
+    T last_networked_value;
 
     /// <summary> Checks <paramref name="new_value"/> for validity, 
     /// should return the nearest valid T. By default, just returns
@@ -119,12 +118,9 @@ public abstract class networked_variable<T> : networked_variable
     /// <summary> Called when a serialization of this variable is reccived </summary>
     protected override void process_serialization(byte[] buffer, ref int offset, int length)
     {
-        // Set the value directly to avoid sending another update
-        T old_value = _value;
-
         try
         {
-            _value = deserialize(buffer, ref offset, length);
+            last_networked_value = deserialize(buffer, ref offset, length);
         }
         catch (System.Exception e)
         {
@@ -132,12 +128,10 @@ public abstract class networked_variable<T> : networked_variable
             return;
         }
 
-        if (!initialized || !_value.Equals(old_value))
-        {
-            on_change?.Invoke();
-            on_change_old_new?.Invoke(old_value, _value);
-        }
-        initialized = true;
+        // Note that because we are setting value to last_networked_value
+        // we will not invoke set_dirty() in the value.set method (hence
+        // this will not trigger an update message to the server).
+        value = last_networked_value;
     }
 
     /// <summary> Recover a value from its serialization. </summary>
@@ -145,15 +139,10 @@ public abstract class networked_variable<T> : networked_variable
 
     /// <summary> Returns true if the new value is different 
     /// enough from the last sent value to warrant sending. 
-    /// This is useful for reducing network traffic by only
-    /// sending sufficiently large changes. </summary>
+    /// By default, any change is sufficient. </summary>
     protected virtual bool should_send(T last_sent, T new_value)
     {
-        if (last_sent == null) return new_value != null;
-        if (new_value == null) return last_sent != null;
-        if (last_sent.Equals(default)) return !new_value.Equals(default);
-
-        return !last_sent.Equals(new_value);
+        return !check_equality(last_sent, new_value);
     }
 
     public override string state_info()
@@ -397,11 +386,8 @@ namespace networked_variables
     /// <summary> A networked boolean value. </summary>
     public class net_bool : networked_variable<bool>
     {
-        public net_bool() { }
-        public net_bool(bool default_value = false)
-        {
-            _value = default_value;
-        }
+        public net_bool() : base(default) { }
+        public net_bool(bool default_value = default) : base(default_value) { }
 
         public override byte[] serialization()
         {
@@ -417,23 +403,17 @@ namespace networked_variables
     /// <summary> A simple networked integer. </summary>
     public class net_int : networked_variable<int>
     {
-        int min_value;
-        int max_value;
+        int min_value = int.MinValue;
+        int max_value = int.MaxValue;
 
-        public net_int(int default_value = 0,
+        public net_int() : base(default) { }
+
+        public net_int(int default_value = default,
             int min_value = int.MinValue,
-            int max_value = int.MaxValue) : base()
+            int max_value = int.MaxValue) : base(default_value)
         {
             this.min_value = min_value;
             this.max_value = max_value;
-            _value = validate(default_value);
-        }
-
-        public net_int() : base()
-        {
-            this.min_value = int.MinValue;
-            this.max_value = int.MaxValue;
-            _value = 0;
         }
 
         protected override int validate(int new_value)
@@ -457,15 +437,8 @@ namespace networked_variables
     /// <summary> A networked string. </summary>
     public class net_string : networked_variable<string>
     {
-        public net_string(string default_value)
-        {
-            _value = default_value;
-        }
-
-        public net_string()
-        {
-            _value = "";
-        }
+        public net_string(string default_value = default) : base(default_value) { }
+        public net_string() : base(default) { }
 
         public override byte[] serialization()
         {
@@ -475,6 +448,14 @@ namespace networked_variables
         protected override string deserialize(byte[] buffer, ref int offset, int length)
         {
             return network_utils.decode_string(buffer, ref offset);
+        }
+
+        protected override string validate(string new_value)
+        {
+            // Replace null values with empty strings
+            // so that encode/decode methods work.
+            if (new_value == null) return "";
+            return base.validate(new_value);
         }
     }
 
@@ -499,27 +480,21 @@ namespace networked_variables
             _lerp_value = value;
         }
 
-        float lerp_speed;
-        float resolution;
-        float max_value;
-        float min_value;
+        float lerp_speed = 5f;
+        float resolution = 0f;
+        float max_value = float.PositiveInfinity;
+        float min_value = float.NegativeInfinity;
+
+        public net_float() : base(default) { }
 
         public net_float(float lerp_speed = 5f, float resolution = 0f,
             float max_value = float.PositiveInfinity,
-            float min_value = float.NegativeInfinity)
+            float min_value = float.NegativeInfinity) : base(default)
         {
             this.lerp_speed = lerp_speed;
             this.resolution = resolution;
             this.min_value = min_value;
             this.max_value = max_value;
-        }
-
-        public net_float()
-        {
-            this.lerp_speed = 5f;
-            this.resolution = 0f;
-            this.min_value = float.NegativeInfinity;
-            this.max_value = float.PositiveInfinity;
         }
 
         protected override float validate(float new_value)
@@ -566,13 +541,12 @@ namespace networked_variables
             _lerped_value = value;
         }
 
-        public net_vector3() { }
+        public net_vector3() : base(default) { reset_lerp(); }
 
-        public net_vector3(float lerp_speed = 5f, Vector3 default_value = default)
+        public net_vector3(float lerp_speed = 5f, Vector3 default_value = default) : base(default_value)
         {
             this.lerp_speed = lerp_speed;
-            _value = default_value;
-            _lerped_value = default_value;
+            reset_lerp();
         }
 
         public override byte[] serialization()
@@ -597,8 +571,8 @@ namespace networked_variables
     /// <summary> A networked color. </summary>
     public class net_color : networked_variable<Color>
     {
-        public net_color() { }
-        public net_color(Color default_value) { _value = default_value; }
+        public net_color() : base(default) { }
+        public net_color(Color default_value = default) : base(default_value) { }
 
         public override byte[] serialization()
         {
@@ -636,16 +610,12 @@ namespace networked_variables
         }
         Quaternion _lerped_value = Quaternion.identity;
 
-        public net_quaternion() { }
+        public net_quaternion() : base(Quaternion.identity) { }
 
-        public net_quaternion(float lerp_speed = 5f, Quaternion default_value = default)
+        public net_quaternion(float lerp_speed = 5f, Quaternion default_value = default) : base(default_value)
         {
             this.lerp_speed = lerp_speed;
-            if (default_value.Equals(default))
-                default_value = Quaternion.identity;
-
-            _lerped_value = default_value;
-            _value = default_value;
+            _lerped_value = value;
         }
 
         public override byte[] serialization()
@@ -666,6 +636,14 @@ namespace networked_variables
                 network_utils.decode_float(buffer, ref offset),
                 network_utils.decode_float(buffer, ref offset)
             );
+        }
+
+        protected override Quaternion validate(Quaternion new_value)
+        {
+            // This will essentially replace default Quaternions with
+            // the identity as far as the network code is concerned
+            if (new_value == default) return Quaternion.identity;
+            return base.validate(new_value);
         }
     }
 
