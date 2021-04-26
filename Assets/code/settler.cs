@@ -381,32 +381,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public settler_interactable interaction => settler_interactable.assigned_to(this);
-    /*
-    {
-        get
-        {
-            if (_interaction == null)
-            {
-                // Try to load the interaction
-                _interaction = settler_interactable.assigned_to(this);
-            }
-            return _interaction;
-        }
-        set
-        {
-            if (value == interaction) return; // No change
-
-            // Unassign the old interactable
-            _interaction?.unassign(this);
-
-            // Try to assign the new interactable
-            _interaction = value;
-            if (_interaction != null && !_interaction.try_assign(this))
-                _interaction = null;
-        }
-    }
-    settler_interactable _interaction;
-    */
 
     public void add_mood_effect(string name)
     {
