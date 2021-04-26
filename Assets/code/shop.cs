@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteractable, IBuildListener
+public class shop : walk_to_settler_interactable, 
+    IAddsToInspectionText, IPlayerInteractable, IBuildListener
 {
     public town_path_element cashier_spot;
 
@@ -135,7 +136,7 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
 
     public override string task_info() { return type_of_shop?.task_info(stage); }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Starts in the stock stage
         stage = STAGE.STOCK;
@@ -152,10 +153,10 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             Destroy(item_carrying.gameObject);
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         if (!validate_fittings())
-            return RESULT.FAILED;
+            return STAGE_RESULT.TASK_FAILED;
 
         // No path, move to next stage
         if (path == null)
@@ -174,11 +175,11 @@ public class shop : settler_interactable, IAddsToInspectionText, IPlayerInteract
             }
         }
 
-        if (stage == STAGE.GET_MATERIALS && !materials_cupboard.has_items_to_dispense)
-            return RESULT.FAILED;
+        if (this.stage == STAGE.GET_MATERIALS && !materials_cupboard.has_items_to_dispense)
+            return STAGE_RESULT.TASK_FAILED;
 
-        if (stock_crafted >= 4) return RESULT.COMPLETE;
-        return RESULT.UNDERWAY;
+        if (stock_crafted >= 4) return STAGE_RESULT.TASK_COMPLETE;
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     public enum STAGE

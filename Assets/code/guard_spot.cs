@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class guard_spot : settler_interactable
+public class guard_spot : walk_to_settler_interactable
 {
     character target;
     float attack_timer = 0;
@@ -18,14 +18,14 @@ public class guard_spot : settler_interactable
         return town_gate.group_under_attack(s.group);
     }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff
         target = null;
         attack_timer = 0;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         if (target == null || !in_range(target) || target.is_dead)
         {
@@ -56,8 +56,8 @@ public class guard_spot : settler_interactable
 
         // Continue defending whilst attack is underway
         if (town_gate.group_under_attack(s.group))
-            return RESULT.UNDERWAY;
-        return RESULT.COMPLETE;
+            return STAGE_RESULT.STAGE_UNDERWAY;
+        return STAGE_RESULT.TASK_COMPLETE;
     }
 
     public override float move_to_speed(settler s)

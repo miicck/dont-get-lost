@@ -20,52 +20,41 @@ public class has_path_elements : MonoBehaviour
     }
 }
 
-public class settler_interactable : has_path_elements, 
+public abstract class settler_interactable : has_path_elements,
     INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked
 {
-    const float MISSING_WORKER_TIMEOUT = 5f;
-
     /// <summary> The type of interaction this is. This will determine when 
     /// a settler decides to use this interactable object. </summary>
     public skill skill;
 
     // Overrideable stuff
     protected virtual bool ready_to_assign(settler s) { return true; }
-    protected virtual RESULT on_interact(settler s) { return RESULT.COMPLETE; }
     protected virtual void on_assign(settler s) { }
+    protected virtual STAGE_RESULT on_interact(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
     protected virtual void on_unassign(settler s) { }
+
     public virtual string task_info() { return name; }
     public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
-    // Timer for automatic unassign if we loose track of asignee
-    float force_unassign_time = float.MaxValue;
-
-    void trigger_missing_worker_timeout()
-    {
-        if (force_unassign_time > Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT)
-            force_unassign_time = Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT;
-    }
-
-    void cancel_missing_worker_timeout()
-    {
-        force_unassign_time = float.MaxValue;
-    }
-
-    bool check_missing_worker_timeout()
-    {
-        if (force_unassign_time < Time.realtimeSinceStartup)
-        {
-            cancel_missing_worker_timeout();
-            unassign();
-            return true;
-        }
-        return false;
-    }
-
-    public RESULT interact(settler s)
+    public void interact(settler s)
     {
         cancel_missing_worker_timeout();
-        return on_interact(s);
+        switch (on_interact(s, stage.value))
+        {
+            case STAGE_RESULT.TASK_COMPLETE:
+            case STAGE_RESULT.TASK_FAILED:
+                unassign();
+                return;
+
+            case STAGE_RESULT.STAGE_COMPLETE:
+                ++stage.value;
+                return;
+
+            case STAGE_RESULT.STAGE_UNDERWAY:
+                return;
+
+            default: throw new System.Exception("Unkown stage result!");
+        }
     }
 
     bool try_assign(settler s)
@@ -107,8 +96,9 @@ public class settler_interactable : has_path_elements,
             return false; // Not ready to assign anything
 
         // Assign the new settler
-        on_assign(s);
         settler_id.value = s.network_id;
+        stage.value = 0;
+        on_assign(s);
 
         return true;
     }
@@ -118,6 +108,38 @@ public class settler_interactable : has_path_elements,
         // Unassign the settler
         on_unassign(settler);
         settler_id.value = -1;
+        stage.value = 0;
+    }
+
+    //########################//
+    // Missing worker timeout //
+    //########################//
+
+    const float MISSING_WORKER_TIMEOUT = 5f;
+
+    // Timer for automatic unassign if we loose track of asignee
+    float force_unassign_time = float.MaxValue;
+
+    void trigger_missing_worker_timeout()
+    {
+        if (force_unassign_time > Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT)
+            force_unassign_time = Time.realtimeSinceStartup + MISSING_WORKER_TIMEOUT;
+    }
+
+    void cancel_missing_worker_timeout()
+    {
+        force_unassign_time = float.MaxValue;
+    }
+
+    bool check_missing_worker_timeout()
+    {
+        if (force_unassign_time < Time.realtimeSinceStartup)
+        {
+            cancel_missing_worker_timeout();
+            unassign();
+            return true;
+        }
+        return false;
     }
 
     //#################//
@@ -145,7 +167,8 @@ public class settler_interactable : has_path_elements,
     // IExtendsNetworked //
     //###################//
 
-    public networked_variables.net_int settler_id;
+    networked_variables.net_int settler_id;
+    networked_variables.net_int stage;
 
     public settler settler
     {
@@ -168,7 +191,16 @@ public class settler_interactable : has_path_elements,
         {
             init_networked_variables = () =>
             {
+                // Initialize the settler id/stage
                 settler_id = new networked_variables.net_int(default_value: -1);
+                stage = new networked_variables.net_int();
+            },
+
+            on_auth_change = (has_auth) =>
+            {
+                // Reset assignment on authority change
+                settler_id.value = -1;
+                stage.value = 0;
             }
         };
     }
@@ -251,10 +283,55 @@ public class settler_interactable : has_path_elements,
         return "Total interactions : " + interactables.Count;
     }
 
-    public enum RESULT
+    protected enum STAGE_RESULT
     {
-        COMPLETE,
-        FAILED,
-        UNDERWAY,
+        STAGE_COMPLETE,
+        TASK_COMPLETE,
+        TASK_FAILED,
+        STAGE_UNDERWAY,
+    }
+}
+
+public abstract class walk_to_settler_interactable : settler_interactable
+{
+    town_path_element.path path;
+    protected bool arrived { get; private set; }
+
+    protected virtual void on_arrive(settler s) { }
+    protected virtual STAGE_RESULT on_interact_arrived(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
+
+    protected sealed override void on_assign(settler s)
+    {
+        arrived = false;
+        path = null;
+    }
+
+    protected sealed override STAGE_RESULT on_interact(settler s, int stage)
+    {
+        // Delegate control to implementation once I have arrived
+        if (stage > 0) return on_interact_arrived(s, stage - 1);
+
+        // Only authority clients control the settler
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        // Get a path
+        if (path == null)
+        {
+            path = new town_path_element.path(s.path_element, path_element(s.group));
+            if (!path.valid) return STAGE_RESULT.TASK_FAILED; // Pathfinding failed
+        }
+
+        // Path walking complete
+        if (path.Count == 0)
+        {
+            arrived = true;
+            on_arrive(s);
+            return STAGE_RESULT.STAGE_COMPLETE;
+        }
+
+        var next_element = path.walk(s.transform, move_to_speed(s), s);
+        if (next_element != null) s.path_element = next_element;
+
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 }

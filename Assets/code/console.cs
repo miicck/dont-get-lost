@@ -672,6 +672,23 @@ public class console : MonoBehaviour
 
             description = "Prints information about current production.",
             usage_example = "current_production"
+        },
+
+        ["make_tired"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    var s = utils.raycast_for_closest<settler>(player.current.camera_ray(), out RaycastHit hit);
+                    if (s == null) return;
+                    s.tiredness.value = 100;
+                });
+                return true;
+            },
+
+            description = "Makes the settler you are looking at 100% tired.",
+            usage_example = "make_tired"
         }
     };
 

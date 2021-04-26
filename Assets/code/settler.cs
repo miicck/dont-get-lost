@@ -42,8 +42,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
     }
 
-    town_path_element.path path;
-
     /// <summary> The path element that I am currently moving towards. </summary>
     public town_path_element path_element
     {
@@ -86,42 +84,16 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         // Authority-only control from here
 
-        // Look for a new assignment if I don't have one
+        // Look for a new interaction if I don't have one
         if (interaction == null)
         {
             // Reset stuff
-            path = null;
             delta_xp = 0;
             settler_interactable.try_assign_interaction(this);
             return;
         }
 
-        // We have an assignment, attempt to carry it out
-
-        // Check if we have a path
-        if (path == null)
-        {
-            // Find a path to the assignment
-            path = new town_path_element.path(path_element, interaction.path_element(group));
-
-            if (path == null || !path.valid)
-            {
-                // Couldn't path to assignment, delete it
-                interaction.unassign();
-                return;
-            }
-        }
-
-        // Check if there is any of the path left to walk
-        if (path.Count > 0)
-        {
-            var next_element = path.walk(transform, interaction.move_to_speed(this), this);
-            if (next_element == null) path = null;
-            else path_element = next_element;
-            return;
-        }
-
-        // Carry out the assignment
+        // Carry out the interaction
         delta_xp += Time.deltaTime;
         if (delta_xp > 1f)
         {
@@ -129,14 +101,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             skills.modify_xp(interaction.skill, skill.XP_GAIN_PER_SEC);
         }
 
-        switch (interaction.interact(this))
-        {
-            case settler_interactable.RESULT.COMPLETE:
-            case settler_interactable.RESULT.FAILED:
-                // Remove my assignment
-                interaction.unassign();
-                return;
-        }
+        interaction.interact(this);
     }
 
     public void on_attack_begin()

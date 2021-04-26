@@ -69,13 +69,13 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
         return on_valid_ground;
     }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff
         work_done = 0;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         float delta_work = Time.deltaTime * s.skills[skill].speed_multiplier;
 
@@ -89,11 +89,11 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
             op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
 
-            return RESULT.COMPLETE;
+            return STAGE_RESULT.TASK_COMPLETE;
         }
 
         work_done += delta_work;
-        return RESULT.UNDERWAY;
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     //##############//

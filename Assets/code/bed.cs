@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class bed : settler_interactable
+public class bed : walk_to_settler_interactable
 {
     public const float TIREDNESS_RECOVERY_RATE = 100f / 60f;
     public Transform sleep_orientation;
@@ -20,26 +20,26 @@ public class bed : settler_interactable
         return s.tiredness.value > 80;
     }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff
         time_slept = 0f;
         delta_tired = 0f;
         start_tiredness = s.tiredness.value;
         last_tiredness = start_tiredness;
-    }
 
-    protected override RESULT on_interact(settler s)
-    {
         // Lie down
         s.transform.position = sleep_orientation.position;
         s.transform.rotation = sleep_orientation.rotation;
+    }
 
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    {
         time_slept += Time.deltaTime;
         last_tiredness = s.tiredness.value;
 
         // Only modify tiredness on authority client
-        if (!s.has_authority) return RESULT.UNDERWAY;
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Beomce un-tired
         delta_tired -= TIREDNESS_RECOVERY_RATE * Time.deltaTime;
@@ -50,8 +50,8 @@ public class bed : settler_interactable
         }
 
         if (s.tiredness.value < 20 && time_slept > 5f)
-            return RESULT.COMPLETE;
-        return RESULT.UNDERWAY;
+            return STAGE_RESULT.TASK_COMPLETE;
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     protected override void on_unassign(settler s)
@@ -63,6 +63,7 @@ public class bed : settler_interactable
 
     public override string task_info()
     {
+        if (!arrived) return "Walking to bed";
         return "Sleeping\n" +
                "    Slept for " + Mathf.Round(time_slept) + "s\n" +
                "    " + less_tired_amount + "% less tired";

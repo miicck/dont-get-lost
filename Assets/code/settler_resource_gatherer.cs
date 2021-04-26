@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class settler_interactable_options : settler_interactable, IPlayerInteractable
+public abstract class settler_interactable_options : walk_to_settler_interactable, IPlayerInteractable
 {
     //###################//
     // IExtendsNetworked //
@@ -217,17 +217,17 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         return harvesting != null;
     }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff 
         work_done = 0f;
         harvested_count = 0;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         if (harvesting == null)
-            return RESULT.FAILED;
+            return STAGE_RESULT.TASK_FAILED;
 
         // Record how long has been spent harvesting
         work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
@@ -242,8 +242,8 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         }
 
         if (harvested_count >= max_harvests)
-            return RESULT.COMPLETE;
-        return RESULT.UNDERWAY;
+            return STAGE_RESULT.TASK_COMPLETE;
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     public override string task_info()

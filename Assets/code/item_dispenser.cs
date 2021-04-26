@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_dispenser : settler_interactable, IAddsToInspectionText
+public class item_dispenser : walk_to_settler_interactable, IAddsToInspectionText
 {
     public item_input input;
     public item_output overflow_output;
@@ -146,52 +146,43 @@ public class item_dispenser : settler_interactable, IAddsToInspectionText
         }
     }
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff
         time_dispensing = 0f;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        // Run dispenser timer
         time_dispensing += Time.deltaTime;
+        if (time_dispensing < TIME_TO_DISPENSE) 
+            return STAGE_RESULT.STAGE_UNDERWAY;
+        time_dispensing = 0f;
 
-        if (time_dispensing > TIME_TO_DISPENSE)
+        // Item dispense possible
+        switch (mode)
         {
-            // Reset dispensing timer
-            time_dispensing = 0;
+            case MODE.FOOD:
 
-            switch (mode)
-            {
-                case MODE.FOOD:
-                    // Search for food
-                    var food = find_food();
-                    if (food == null)
-                        return RESULT.FAILED;
-                    else
-                    {
-                        // Eat food on authority client, delete food on all clients
-                        if (s.has_authority)
-                        {
-                            // Eat food
-                            s.nutrition.consume_food(food.item.food_values);
-                        }
-                        Destroy(food.release_item().gameObject);
+                // Search for food
+                var food = find_food();
+                if (food == null) return STAGE_RESULT.TASK_FAILED;
 
-                        // Complete if we've eaten enough
-                        if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
-                            return RESULT.COMPLETE;
-                        else
-                            return RESULT.UNDERWAY;
-                    }
+                // Eat food on authority client, delete food on all clients
+                if (s.has_authority) s.nutrition.consume_food(food.item.food_values);
+                Destroy(food.release_item().gameObject);
 
-                default:
-                    Debug.LogError("Unkown item dispenser mode!");
-                    return RESULT.FAILED;
-            }
+                // Complete if we've eaten enough
+                if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
+                    return STAGE_RESULT.TASK_COMPLETE;
+                else
+                    return STAGE_RESULT.STAGE_UNDERWAY;
+
+            default:
+                Debug.LogError("Unkown item dispenser mode!");
+                return STAGE_RESULT.TASK_FAILED;
         }
-
-        return RESULT.UNDERWAY;
     }
 
     public override string task_info()

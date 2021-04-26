@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class lootbox : settler_interactable
+public class lootbox : walk_to_settler_interactable
 {
     town_gate gate;
     character looting;
@@ -48,10 +48,10 @@ public class lootbox : settler_interactable
         return true;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        if (looting == null) return RESULT.FAILED; // Nothing to loot
-        if (path == null || !path.valid) return RESULT.FAILED; // No path somehow
+        if (looting == null) return STAGE_RESULT.TASK_FAILED; // Nothing to loot
+        if (path == null || !path.valid) return STAGE_RESULT.TASK_FAILED; // No path somehow
 
         var next_element = path.walk(s.transform, s.walk_speed, s);
         if (next_element == null)
@@ -63,22 +63,19 @@ public class lootbox : settler_interactable
                 var this_inv = GetComponent<chest>().inventory;
                 foreach (var kv in inv.contents())
                     if (inv.remove(kv.Key, kv.Value))
-                    {
                         this_inv.add(kv.Key, kv.Value);
-                        Debug.Log(kv.Key + " x " + kv.Value);
-                    }
 
-                return RESULT.COMPLETE;
+                return STAGE_RESULT.TASK_COMPLETE;
             }
             else
             {
                 // Got to character we're looting - walk back to lootbox
                 walking_back = true;
                 path = new town_path_element.path(looting_path_element, path_element(looting_path_element.group));
-                return RESULT.UNDERWAY;
+                return STAGE_RESULT.STAGE_UNDERWAY;
             }
         }
 
-        return RESULT.UNDERWAY;
+        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 }

@@ -16,6 +16,7 @@ public interface IExtendsNetworked
         public delegate void bool_callback(bool val);
 
         public callback init_networked_variables;
+        public bool_callback on_auth_change;
         public bool_callback on_forget;
     }
 }
@@ -340,12 +341,14 @@ public class networked : MonoBehaviour
     {
         has_authority = true;
         on_gain_authority();
+        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change(true);
     }
 
     public void lose_authority()
     {
         has_authority = false;
         on_loose_authority();
+        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change(false);
     }
 
     /// <summary> The first networked object in the 

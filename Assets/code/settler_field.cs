@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field : settler_interactable, INonBlueprintable, INonEquipable
+public class settler_field : walk_to_settler_interactable, INonBlueprintable, INonEquipable
 {
     public item_output output;
     public string field_spot_prefab;
@@ -86,51 +86,49 @@ public class settler_field : settler_interactable, INonBlueprintable, INonEquipa
 
     float work_done;
 
-    protected override void on_assign(settler s)
+    protected override void on_arrive(settler s)
     {
         // Reset stuff
         work_done = 0f;
     }
 
-    protected override RESULT on_interact(settler s)
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        // Only grow the field on the authority client
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
         // Record the amount of time spent farming
         work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
-        if (work_done > base_tend_time)
-        {
-            // Only grow field on authority client
-            if (!s.has_authority) return RESULT.COMPLETE;
+        if (work_done < base_tend_time) return STAGE_RESULT.STAGE_UNDERWAY;
 
-            // When completed, tend/harvest the field
-            var spots = this.spots;
-            var locations = this.locations();
+        // We've spent enough time harvesting, grow/harvest crops
+        var spots = this.spots;
+        var locations = this.locations();
 
-            for (int x = 0; x < x_size; ++x)
-                for (int z = 0; z < z_size; ++z)
+        for (int x = 0; x < x_size; ++x)
+            for (int z = 0; z < z_size; ++z)
+            {
+                // Only tend to a particular spot with the given spot_tend_prob
+                if (Random.Range(0, 1f) > spot_tend_prob)
+                    continue;
+
+                var spot = spots[x, z];
+                if (spot == null)
                 {
-                    // Only tend to a particular spot with the given spot_tend_prob
-                    if (Random.Range(0, 1f) > spot_tend_prob)
-                        continue;
-
-                    var spot = spots[x, z];
-                    if (spot == null)
-                    {
-                        // Create a networked spot here
-                        client.create(locations[x, z], field_spot_prefab,
-                            rotation: transform.rotation, parent: GetComponent<networked>());
-                    }
-                    else
-                    {
-                        // Farm the spot here
-                        spot.tend();
-                        if (spot.grown)
-                            spot.harvest();
-                    }
+                    // Create a networked spot here
+                    client.create(locations[x, z], field_spot_prefab,
+                        rotation: transform.rotation, parent: GetComponent<networked>());
                 }
+                else
+                {
+                    // Farm the spot here
+                    spot.tend();
+                    if (spot.grown)
+                        spot.harvest();
+                }
+            }
 
-            return RESULT.COMPLETE;
-        }
-        return RESULT.UNDERWAY;
+        return STAGE_RESULT.TASK_COMPLETE;
     }
 
     public override string task_info()
