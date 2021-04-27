@@ -207,7 +207,7 @@ public class character : networked,
         play_idle_sounds();
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         // Characters are controlled by the authority client
         if (this == null || !has_authority) return;

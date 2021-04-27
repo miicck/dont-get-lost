@@ -1261,17 +1261,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         }
     }
 
-    int passive_effect_counter = 0;
     void passive_effect_update()
     {
-        if (is_dead || fly_mode) return;
-
-        ++passive_effect_counter;
-        if (hunger.value > 50) heal(1);
-        else if (hunger.value == 0) take_damage(1);
-
-        if (passive_effect_counter % 20 == 0)
-            modify_hunger(-1);
+        heal(1);
     }
 
     public void take_damage(int damage)
@@ -1284,11 +1276,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     {
         if (is_dead) return;
         health.value = Mathf.Min(100, health.value + amount);
-    }
-
-    public void modify_hunger(int amount)
-    {
-        hunger.value = Mathf.Clamp(hunger.value + amount, 0, 100);
     }
 
     void die()
@@ -1324,9 +1311,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     {
         teleport(respawn_point.value);
         is_dead = false;
-
         heal(100);
-        modify_hunger(100);
 
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
             throw new System.Exception("No ColorAdjustments override on global volume!");
@@ -1387,7 +1372,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     //############//
 
     networked_variables.net_int health;
-    networked_variables.net_int hunger;
     networked_variables.net_int slot_equipped;
     networked_variables.net_float y_rotation;
     networked_variables.net_float x_rotation;
@@ -1521,25 +1505,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         crt.anchoredPosition = Vector2.zero;
         cursor_sprite = "default_cursor";
 
-        // Find the healthbars
-        foreach (var hb in FindObjectsOfType<player_healthbar>())
-        {
-            switch (hb.type)
-            {
-                case player_healthbar.TYPE.HEALTH:
-                    healthbar = hb;
-                    healthbar.set(health.value, 100);
-                    break;
-
-                case player_healthbar.TYPE.FOOD:
-                    foodbar = hb;
-                    foodbar.set(hunger.value, 100);
-                    break;
-
-                default:
-                    throw new System.Exception("Unkown healthbar type!");
-            }
-        }
+        // Find the healthbar
+        healthbar = FindObjectOfType<player_healthbar>();
+        healthbar.set(health.value, 100);
 
         // Create the water
         water = new GameObject("water").AddComponent<water_reflections>();
@@ -1647,15 +1615,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
         {
             if (new_health < old_health)
                 last_damaged_time = Time.realtimeSinceStartup;
-        };
-
-        // How fed the player is
-        hunger = new networked_variables.net_int(default_value: 100);
-        hunger.on_change = () =>
-        {
-            foodbar?.set(hunger.value, 100);
-            if (hunger.value <= 0 && this == current)
-                popup_message.create("You are starving!");
         };
 
         // The currently-equipped quickbar slot number

@@ -84,23 +84,6 @@ public class console : MonoBehaviour
             usage_example = "time 0"
         },
 
-        ["hunger"] = new console_info
-        {
-            command = (args) =>
-            {
-                if (args.Length < 2) return console_error("Too few arguments specified!");
-                if (!int.TryParse(args[1], out int hunger))
-                    return console_error("Could not parse an integer from the arguement " + args[1]);
-
-                player.current.modify_hunger(hunger);
-                return true;
-            },
-
-            description = "Modifies the current players hunger by the amount" +
-                          " given (negative values make the player more hungry).",
-            usage_example = "hunger 100\nhunger -10"
-        },
-
         ["kill_all"] = new console_info
         {
             command = (args) =>

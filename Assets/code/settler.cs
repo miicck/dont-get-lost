@@ -91,8 +91,15 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         settlers.Add(this);
     }
 
-    private void Update()
+    protected override void Update()
     {
+        if (controller != null)
+        {
+            // Under control by a character controller
+            base.Update();
+            return;
+        }
+
         // Don't do anything if I'm interacting with players
         // Otherwise run my current interaction
         if (players_interacting_with.value > 0) return;
@@ -238,7 +245,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // hehe
         string ass_string = "No assignment.";
         var inter = interaction;
-        if (interaction != null)
+        if (inter != null)
         {
             int perc = skills[inter.skill].speed_mult_perc;
             ass_string = "Assignment: \n";

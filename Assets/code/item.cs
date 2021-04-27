@@ -126,7 +126,6 @@ public class item : networked, IPlayerInteractable
         {
             interactions = new player_interaction[]
             {
-                new eat_interaction(this),
                 new place_on_gutter(this)
             };
         }
@@ -137,29 +136,6 @@ public class item : networked, IPlayerInteractable
     {
         protected item item { get; private set; }
         public player_item_interaction(item item) { this.item = item; }
-    }
-
-    class eat_interaction : player_item_interaction
-    {
-        public eat_interaction(item i) : base(i) { }
-
-        public override bool is_possible() { return item.food_values != null; }
-        public override controls.BIND keybind => controls.BIND.USE_ITEM;
-
-        public override string context_tip()
-        {
-            return "eat " + item.display_name;
-        }
-
-        public override bool start_interaction(player player)
-        {
-            if (player.inventory.remove(item, 1))
-            {
-                player.modify_hunger(item.food_values.metabolic_value());
-                player.play_sound("sounds/munch1", 0.95f, 1.05f);
-            }
-            return true;
-        }
     }
 
     class place_on_gutter : player_item_interaction
