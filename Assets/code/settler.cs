@@ -124,7 +124,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     //#################//
 
     public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
-    public float armour_scale() { return height.value; }
+    public float armour_scale() { return height_scale.value; }
     public Color hair_color() { return net_hair_color.value; }
 
     //#####################//
@@ -290,7 +290,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_color bottom_color;
     public networked_variables.net_job_priorities job_priorities;
     public networked_variables.net_skills skills;
-    new public networked_variables.net_float height;
+    public networked_variables.net_float height_scale;
 
     public override float position_resolution() { return 0.1f; }
     public override float position_lerp_speed() { return 2f; }
@@ -326,7 +326,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         top_color = new networked_variables.net_color();
         bottom_color = new networked_variables.net_color();
         net_hair_color = new networked_variables.net_color();
-        height = new networked_variables.net_float();
+        height_scale = new networked_variables.net_float();
         players_interacting_with = new networked_variables.net_int();
         job_priorities = new networked_variables.net_job_priorities();
         skills = new networked_variables.net_skills();
@@ -359,10 +359,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                     al.equipped.on_equip(this);
         };
 
-        height.on_change = () =>
+        height_scale.on_change = () =>
         {
-            transform.localScale = Vector3.one * height.value;
-            base.height = height.value * 1.5f + 0.2f;
+            transform.localScale = Vector3.one * height_scale.value;
+            base.height = height_scale.value * 1.5f + 0.2f;
         };
     }
 
@@ -381,7 +381,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         top_color.value = character_colors.clothing_brown;
         bottom_color.value = character_colors.clothing_brown;
         net_hair_color.value = character_colors.random_hair_color();
-        height.value = Random.Range(0.8f, 1.2f);
+        height_scale.value = Random.Range(0.8f, 1.2f);
 
         foreach (var j in skill.all)
             skills.modify_xp(j, skill.level_to_xp(Random.Range(0, 10)));
@@ -527,5 +527,88 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     new public static string info()
     {
         return "    Total settler count : " + settlers.Count;
+    }
+}
+
+//###########//
+// ANIMATION //
+//###########//
+
+namespace settler_animations
+{
+    public abstract class animation : IArmController
+    {
+        private int last_frame_played;
+
+        protected settler settler { get; private set; }
+        protected arm left_arm { get; private set; }
+        protected arm right_arm { get; private set; }
+        protected Vector3 left_hand_pos;
+        protected Vector3 right_hand_pos;
+        protected float timer { get; private set; }
+
+        public animation(settler s)
+        {
+            settler = s;
+            foreach (var a in s.GetComponentsInChildren<arm>())
+            {
+                Vector3 delta = a.transform.position - s.transform.position;
+                if (Vector3.Dot(delta, s.transform.right) > 0) right_arm = a;
+                else left_arm = a;
+                a.controller = this;
+            }
+        }
+
+        public void play()
+        {
+            if (settler == null) return;
+            timer += Time.deltaTime;
+            last_frame_played = Time.frameCount;
+            animate();
+        }
+
+        public bool arm_control_ended()
+        {
+            return Time.frameCount > last_frame_played + 1;
+        }
+
+        public void control_arm(arm arm)
+        {
+            if (arm == left_arm) arm.update_to_grab(left_hand_pos);
+            else if (arm == right_arm) arm.update_to_grab(right_hand_pos);
+            else Debug.LogError("Unkown arm!");
+        }
+
+        public virtual void draw_gizmos() { }
+
+        protected abstract void animate();
+    }
+
+    public class simple_work : animation
+    {
+        float period;
+
+        public simple_work(settler s, float period = 1f) : base(s)
+        {
+            this.period = period;
+        }
+
+        protected override void animate()
+        {
+            float min_dist = 0.3f * settler.height_scale.value;
+            float max_dist = 0.5f * settler.height_scale.value;
+            float range = max_dist - min_dist;
+
+            float sin = Mathf.Sin(Mathf.PI * 2 * timer / period);
+            Vector3 fw = settler.transform.forward;
+            Vector3 left_delta = fw * (min_dist + range * (sin + 1f) / 2f);
+            Vector3 right_delta = fw * (min_dist + range * (1f - sin) / 2f);
+
+            left_delta -= settler.transform.up * settler.height_scale.value * 0.25f;
+            right_delta -= settler.transform.up * settler.height_scale.value * 0.25f;
+
+            left_hand_pos = left_arm.shoulder.position + left_delta;
+            right_hand_pos = right_arm.shoulder.position + right_delta;
+        }
     }
 }

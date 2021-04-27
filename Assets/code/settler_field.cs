@@ -85,15 +85,21 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
     //##############//
 
     float work_done;
+    settler_animations.simple_work work_anim;
 
     protected override void on_arrive(settler s)
     {
         // Reset stuff
         work_done = 0f;
+        work_anim = new settler_animations.simple_work(s,
+            period: 1f / s.skills[skill].speed_multiplier);
     }
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        // Play the work animation
+        work_anim.play();
+
         // Only grow the field on the authority client
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 

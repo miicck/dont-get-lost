@@ -440,6 +440,11 @@ public class town_gate : portal, IAddsToInspectionText
         List<Transform> arm_targets = new List<Transform>();
         List<Vector3> arm_initial_pos = new List<Vector3>();
 
+        float distance_from_fight_centre(character c)
+        {
+            return c.pathfinding_resolution;
+        }
+
         public melee_fight_controller(character c, character fighting, ICharacterController return_control_to = null)
         {
             this.fighting = fighting;
@@ -447,17 +452,23 @@ public class town_gate : portal, IAddsToInspectionText
 
             if (fighting == null)
             {
+                // Target has been deleted
                 complete = true;
                 return;
             }
 
             Vector3 disp = fighting.transform.position - c.transform.position;
-            if (disp.magnitude > Mathf.Max(c.pathfinding_resolution, fighting.pathfinding_resolution))
+
+            if (disp.magnitude > 1.5f * Mathf.Max(
+                distance_from_fight_centre(c),
+                distance_from_fight_centre(fighting)))
             {
+                // Have left the fight
                 complete = true;
                 return;
             }
 
+            // Get the centre/axis that the fight takes place along
             fight_centre = (c.transform.position + fighting.transform.position) / 2f;
             fight_axis = disp.normalized;
 
@@ -465,7 +476,7 @@ public class town_gate : portal, IAddsToInspectionText
             forward.y = 0;
             c.transform.forward = forward;
 
-            c.transform.position = fight_centre - fight_axis * 0.5f * c.pathfinding_resolution;
+            c.transform.position = fight_centre - fight_axis * distance_from_fight_centre(c);
 
             foreach (var arm in c.GetComponentsInChildren<arm>())
             {
@@ -517,7 +528,7 @@ public class town_gate : portal, IAddsToInspectionText
             float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.attack_time), 10);
 
             c.transform.position = fight_centre +
-                fight_axis * 0.5f * c.pathfinding_resolution * (0.2f * Mathf.Max(cos, sin) - 1f);
+                fight_axis * distance_from_fight_centre(c) * (0.2f * Mathf.Max(cos, sin) - 1f);
 
             for (int i = 0; i < arm_targets.Count; ++i)
             {

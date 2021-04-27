@@ -827,7 +827,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
 
             // Disable (or re-enable) ui things
             healthbar.gameObject.SetActive(!_fly_mode);
-            foodbar.gameObject.SetActive(!_fly_mode);
             toolbar_display_slot.toolbar_active = !_fly_mode;
             compass.active = !_fly_mode;
             if (!_fly_mode)
@@ -1419,7 +1418,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDont
     arm left_arm;
     water_reflections water;
     player_healthbar healthbar;
-    player_healthbar foodbar;
 
     public void mod_x_rotation(float mod) { x_rotation.value += mod; }
     public void mod_y_rotation(float mod) { y_rotation.value = utils.minimal_modulus_angle(y_rotation.value + mod); }

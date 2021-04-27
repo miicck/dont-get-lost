@@ -1019,6 +1019,8 @@ public class int_rect
     }
 }
 
+/// <summary> An object that will destroy itself 
+/// after the given lifetime has elapsed. </summary>
 class temporary_object : MonoBehaviour
 {
     public static temporary_object create(float lifetime)
@@ -1029,6 +1031,32 @@ class temporary_object : MonoBehaviour
     }
 
     void delete_temp_object() { Destroy(gameObject); }
+}
+
+/// <summary> An object that will destroy itself unless 
+/// <see cref="keep_alive_object.keep_alive"/> is called every frame. </summary>
+class keep_alive_object : MonoBehaviour
+{
+    public static keep_alive_object create(string name = "keep_alive_object")
+    {
+        var ka = new GameObject(name).AddComponent<keep_alive_object>();
+        ka.last_alive_frame = Time.frameCount;
+        return ka;
+    }
+
+    int last_alive_frame = 0;
+
+    public void keep_alive()
+    {
+        last_alive_frame = Time.frameCount;
+    }
+
+    protected virtual void Update()
+    {
+        // Die if keep_alive hasn't been called in the previous frame
+        if (Time.frameCount > last_alive_frame + 1)
+            Destroy(gameObject);
+    }
 }
 
 public class kd_tree<T>

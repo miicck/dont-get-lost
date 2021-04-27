@@ -6,6 +6,7 @@ public class body : MonoBehaviour
 {
     public float bob_amplitude = 0.1f;
     public float lean_into_run_amount = 20f;
+    public float lean_with_arms_amount = 45f;
     public float lean_lerp_speed = 5f;
     public float lean_velocity_scale = 5f;
     public Transform character;
@@ -14,6 +15,7 @@ public class body : MonoBehaviour
     public float head_lean_inherit_amt = 0f;
 
     leg[] legs;
+    arm[] arms;
     Vector3 init_local_pos;
     float lean = 0;
 
@@ -29,6 +31,7 @@ public class body : MonoBehaviour
         base.transform.SetParent(transform);
 
         legs = character.GetComponentsInChildren<leg>();
+        arms = character.GetComponentsInChildren<arm>();
         init_local_pos = transform.localPosition;
     }
 
@@ -53,12 +56,18 @@ public class body : MonoBehaviour
         transform.localPosition = init_local_pos + Vector3.up * bob_amt() * bob_amplitude;
 
         // Work out how much we want to lean
-        float lean_target = lean_into_run_amount * utils.tanh(
-            Vector3.Dot(legs[0].velocity, transform.forward) / lean_velocity_scale);
+        float lean_target = 0f;
+        float vdot = Vector3.Dot(legs[0].velocity, transform.forward);
+        lean_target += lean_into_run_amount * utils.tanh(vdot / lean_velocity_scale);
+        float av_in_front = 0;
+        foreach (var a in arms) av_in_front += a.in_front_amount;
+        av_in_front /= arms.Length;
+        lean_target += lean_with_arms_amount * av_in_front;
         if (float.IsNaN(lean_target)) lean_target = lean;
 
         // Lerp the actual lean amount
         lean = Mathf.Lerp(lean, lean_target, Time.deltaTime * lean_lerp_speed);
+        if (float.IsNaN(lean)) lean = 0;
 
         // Apply the lean
         transform.localRotation = Quaternion.Euler(
@@ -81,7 +90,7 @@ public class body : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(
-            base.transform.position, 
+            base.transform.position,
             base.transform.position + Vector3.up * bob_amplitude);
     }
 }

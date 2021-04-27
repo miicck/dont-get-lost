@@ -134,6 +134,8 @@ public class item_dispenser : walk_to_settler_interactable, IAddsToInspectionTex
     // INTERACTABLE //
     //##############//
 
+    settler_animations.simple_work work_anim;
+
     protected override bool ready_to_assign(settler s)
     {
         switch (mode)
@@ -150,13 +152,16 @@ public class item_dispenser : walk_to_settler_interactable, IAddsToInspectionTex
     {
         // Reset stuff
         time_dispensing = 0f;
+        work_anim = new settler_animations.simple_work(s);
     }
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        work_anim.play();
+
         // Run dispenser timer
         time_dispensing += Time.deltaTime;
-        if (time_dispensing < TIME_TO_DISPENSE) 
+        if (time_dispensing < TIME_TO_DISPENSE)
             return STAGE_RESULT.STAGE_UNDERWAY;
         time_dispensing = 0f;
 

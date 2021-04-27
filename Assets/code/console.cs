@@ -664,8 +664,13 @@ public class console : MonoBehaviour
                 player.call_when_current_player_available(() =>
                 {
                     var s = utils.raycast_for_closest<settler>(player.current.camera_ray(), out RaycastHit hit);
-                    if (s == null) return;
+                    if (s == null)
+                    {
+                        popup_message.create("Could not find a settler to make tired!");
+                        return;
+                    }
                     s.tiredness.value = 100;
+                    popup_message.create("Made " + s.net_name.value + " tired");
                 });
                 return true;
             },

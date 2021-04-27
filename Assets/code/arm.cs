@@ -2,9 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary> Like a leg, but higher. </summary>
-public class arm : MonoBehaviour
+public interface IArmController
 {
+    public void control_arm(arm a);
+    public bool arm_control_ended();
+}
+
+/// <summary> Like a leg, but higher. </summary>
+public class arm : MonoBehaviour, IArmController
+{
+    //##############//
+    // Public state //
+    //##############//
+
     public Transform shoulder;
     public Transform elbow;
     public Transform hand;
@@ -16,13 +26,52 @@ public class arm : MonoBehaviour
     public Transform to_grab;
     public bool elbow_bends_backwards = false;
 
+    public IArmController controller
+    {
+        get
+        {
+            if (_controller == null ||
+                _controller.arm_control_ended())
+                _controller = this;
+            return _controller;
+        }
+
+        set => _controller = value;
+    }
+    IArmController _controller;
+
+    public float total_length => bicep_length + forearm_length;
+    public float extension => (hand.position - shoulder.position).magnitude / total_length;
+    public float in_front_amount => Vector3.Dot(hand.position - shoulder.position, shoulder.forward) / total_length;
+
+    //###############//
+    // Private state //
+    //###############//
+
     float bicep_length;
     float forearm_length;
 
-    public float total_length => bicep_length + forearm_length;
-
     Transform initial_shoulder;
     Transform initial_elbow;
+
+    //#########//
+    // Methods //
+    //#########//
+
+    private void Update()
+    {
+        // Run the controller
+        controller.control_arm(this);
+    }
+
+    public void control_arm(arm arm)
+    {
+        // Default control
+        if (arm.to_grab == null) arm.update_with_leg();
+        else arm.update_to_grab(arm.to_grab.position);
+    }
+
+    public bool arm_control_ended() { return false; }
 
     private void Start()
     {
@@ -99,10 +148,10 @@ public class arm : MonoBehaviour
 
     /// <summary> The arm grabs grab_position. Maths is 
     /// simmilar to <see cref="leg.solve_leg"/> </summary>
-    void update_to_grab()
+    public void update_to_grab(Vector3 to_grab)
     {
-        Vector3 dvec = to_grab.position - shoulder.position;
-        float d = dvec.magnitude;      
+        Vector3 dvec = to_grab - shoulder.position;
+        float d = dvec.magnitude;
 
         Vector3 shoulder_elbow;
         Vector3 elbow_bend_dir = Vector3.Cross(initial_shoulder.right, dvec.normalized);
@@ -142,7 +191,7 @@ public class arm : MonoBehaviour
         Vector3 sholder_fw = Vector3.Cross(right, shoulder_up);
         shoulder.rotation = Quaternion.LookRotation(sholder_fw, shoulder_up);
 
-        Vector3 elbow_up = elbow.position - to_grab.position;
+        Vector3 elbow_up = elbow.position - to_grab;
         Vector3 elbow_fw = Vector3.Cross(right, elbow_up);
         elbow.rotation = Quaternion.LookRotation(elbow_fw, elbow_up);
 
@@ -154,12 +203,6 @@ public class arm : MonoBehaviour
         if (dvec.magnitude > total_length)
             dvec = dvec.normalized * total_length;
         return dvec + shoulder.transform.position;
-    }
-
-    private void Update()
-    {
-        if (to_grab == null) update_with_leg();
-        else update_to_grab();
     }
 
     private void OnDrawGizmos()

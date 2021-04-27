@@ -333,6 +333,14 @@ public abstract class walk_to_settler_interactable : settler_interactable
         path = null;
     }
 
+    void lerp_look(settler s, float amt)
+    {
+        // Lerp settler so they are facing towards this
+        Vector3 delta = transform.position - s.transform.position;
+        delta.y = 0;
+        s.transform.forward = Vector3.Lerp(s.transform.forward, delta, amt);
+    }
+
     protected sealed override STAGE_RESULT on_interact(settler s, int stage)
     {
         // Delegate control to implementation once I have arrived
@@ -341,6 +349,7 @@ public abstract class walk_to_settler_interactable : settler_interactable
             if (!arrived)
             {
                 arrived = true;
+                lerp_look(s, 1f); // Look at target
                 on_arrive(s);
             }
 
@@ -359,6 +368,12 @@ public abstract class walk_to_settler_interactable : settler_interactable
 
         // Path walking complete
         if (path.Count == 0) return STAGE_RESULT.STAGE_COMPLETE;
+
+        if (path.Count == 1)
+        {
+            // Turn towards the target on the last path segment
+            lerp_look(s, Time.deltaTime * 5f);
+        }
 
         var next_element = path.walk(s.transform, move_to_speed(s), s);
         if (next_element != null) s.path_element = next_element;
