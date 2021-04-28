@@ -179,7 +179,7 @@ public abstract class settler_interactable : has_path_elements,
     {
         get
         {
-            if (settler_id.value <= 0) return null;
+            if (settler_id == null || settler_id.value <= 0) return null;
             var nw = networked.try_find_by_id(settler_id.value, false);
             if (nw == null) return null; // Settler is not loaded on this client
             if (nw is settler) return (settler)nw;
@@ -376,7 +376,8 @@ public abstract class walk_to_settler_interactable : settler_interactable
         }
 
         var next_element = path.walk(s.transform, move_to_speed(s), s);
-        if (next_element != null) s.path_element = next_element;
+        if (next_element == null) return STAGE_RESULT.TASK_FAILED;
+        else s.path_element = next_element;
 
         return STAGE_RESULT.STAGE_UNDERWAY;
     }

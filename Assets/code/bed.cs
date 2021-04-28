@@ -49,7 +49,7 @@ public class bed : walk_to_settler_interactable
             s.tiredness.value -= 1;
         }
 
-        if (s.tiredness.value < 20 && time_slept > 5f)
+        if (s.tiredness.value < 5 && time_slept > 5f)
             return STAGE_RESULT.TASK_COMPLETE;
         return STAGE_RESULT.STAGE_UNDERWAY;
     }

@@ -84,7 +84,12 @@ public class item_dispenser : walk_to_settler_interactable, IAddsToInspectionTex
                 if (overflow_output == null)
                     Destroy(itm.gameObject);
                 else
+                {
+                    Vector3 delta = overflow_output.transform.position - itm.transform.position;
+                    delta.x = 0; delta.z = 0;
+                    itm.transform.position += delta;
                     overflow_items.Add(itm);
+                }
                 continue;
             }
 
