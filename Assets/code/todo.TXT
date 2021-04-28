@@ -22,13 +22,13 @@ TODO
 - Make it more obvious which side of a ladder is the front
 - Make time command work from non-auth clients
 - PvP hit markers
-- Player health desyncs on different clients on death (sometimes?)
+- Player health desyncs on different clients on death (sometimes?) - was this down to the default-value
+  bug recently fixed?
 - Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
   allow the simplification of the code in a lot of places) - does the new callbacks structure of 
   IExtendsNetworked cover these use cases?
 - Brewing!
 - Just make foundary stuff/see if a use for the metal becomes apparent
-- Bed test for covered
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

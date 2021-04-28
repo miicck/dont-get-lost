@@ -18,6 +18,9 @@ public class buffer_chest : MonoBehaviour
         if (no == null) return; // No output
         if (no.item_count > 0) return; // Don't release item unless output is free (buffering)
 
+        if (Time.frameCount <= buffering.inventory.last_frame_changed)
+            return; // Wait until at least 1 frame after chest input to allow network updates to propagate
+
         var to_buffer = buffering.has_authority ?
             buffering.inventory.remove_first() :
             buffering.inventory.get_first();

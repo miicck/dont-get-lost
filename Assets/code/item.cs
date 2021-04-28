@@ -82,6 +82,11 @@ public class item : networked, IPlayerInteractable
 
         public override controls.BIND keybind => controls.BIND.PICK_UP_ITEM;
 
+        public override bool is_possible()
+        {
+            return item != null && !item.is_logistics_version;
+        }
+
         public override bool start_interaction(player player)
         {
             player.play_sound("sounds/click_1", volume: 0.5f);

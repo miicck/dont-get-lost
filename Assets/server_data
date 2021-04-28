@@ -47,6 +47,7 @@ items/long_flowing_hairstyle 1 True
 mood_effects/just_got_up 1 True
 items/doorway 1 True
 items/corner_saw 1 True
+mood_effects/uncovered_bed 1 True
 items/mushroom 1 True
 items/crane 1 True
 items/cabbage 1 True
@@ -84,6 +85,7 @@ misc/tech_tree Infinity True
 items/digging_stick 1 True
 items/filter_splitter 1 True
 misc/networked_inventory_slot 1 True
+mood_effects/partially_covered_bed 1 True
 items/iron_ore 1 True
 characters/thin_zombie 1 False
 inventories/sack 1 True

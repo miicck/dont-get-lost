@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class bed : walk_to_settler_interactable
+public interface IDoesntCoverBeds { }
+
+public class bed : walk_to_settler_interactable, IAddsToInspectionText
 {
     public const float TIREDNESS_RECOVERY_RATE = 100f / 60f;
     public Transform sleep_orientation;
+    public List<Transform> covered_test_points = new List<Transform>();
 
     float delta_tired;
     float time_slept;
@@ -13,6 +16,27 @@ public class bed : walk_to_settler_interactable
     int last_tiredness;
 
     int less_tired_amount => Mathf.Max(0, start_tiredness - last_tiredness);
+
+    float covered_amt
+    {
+        get
+        {
+            float covered = 0f;
+            foreach (var t in covered_test_points)
+                foreach (var h in Physics.RaycastAll(t.position, Vector3.up))
+                {
+                    if (h.collider.gameObject.GetComponentInParent<IDoesntCoverBeds>() != null) continue;
+                    covered += 1f;
+                    break;
+                }
+            return covered / covered_test_points.Count;
+        }
+    }
+
+    public override string added_inspection_text()
+    {
+        return base.added_inspection_text() + "\n" + ((int)(100 * covered_amt)) + "% covered";
+    }
 
     protected override bool ready_to_assign(settler s)
     {
@@ -58,7 +82,12 @@ public class bed : walk_to_settler_interactable
     {
         // Un-lie down
         s.transform.rotation = Quaternion.identity;
+
+        // Add mood effects
         s.add_mood_effect("just_got_up");
+        float covered_amt = this.covered_amt;
+        if (covered_amt < 0.25f) s.add_mood_effect("uncovered_bed");
+        else if (covered_amt < 0.99f) s.add_mood_effect("partially_covered_bed");
     }
 
     public override string task_info()

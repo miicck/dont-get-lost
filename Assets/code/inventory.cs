@@ -45,6 +45,14 @@ public static class item_collection_extensions
         return 0;
     }
 
+    public static int total_item_count(this IItemCollection col)
+    {
+        int ret = 0;
+        foreach (var kv in col.contents())
+            ret += kv.Value;
+        return ret;
+    }
+
     public static item remove_first(this IItemCollection col)
     {
         foreach (var kv in col.contents())
@@ -504,6 +512,8 @@ public class inventory : networked, IItemCollection
         listeners = surviving;
     }
 
+    public int last_frame_changed { get; private set; }
+
     /// <summary> Called when an <see cref="inventory_slot_networked"/> changes contents. </summary>
     public void on_slot_change(int slot_index, item item, int count)
     {
@@ -512,6 +522,7 @@ public class inventory : networked, IItemCollection
             throw new System.Exception("UI should create itself!");
 
         slots[slot_index].update(item, count, this);
+        last_frame_changed = Time.frameCount;
         invoke_on_change();
     }
 }

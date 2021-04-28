@@ -18,7 +18,8 @@ public interface IAcceptsDamage
 
 public class character : networked,
     INotPathBlocking, IDontBlockItemLogisitcs,
-    IAcceptsDamage, IPlayerInteractable, IPathingAgent
+    IAcceptsDamage, IPlayerInteractable, IPathingAgent,
+    IDoesntCoverBeds
 {
     //############################################//
     // Parameters determining character behaviour //

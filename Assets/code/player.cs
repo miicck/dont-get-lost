@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking, ICanEquipArmour, IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable
+public class player : networked_player, INotPathBlocking, ICanEquipArmour, 
+    IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, IDoesntCoverBeds
 {
     //###########//
     // CONSTANTS //

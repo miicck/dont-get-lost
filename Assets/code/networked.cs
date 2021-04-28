@@ -164,11 +164,20 @@ public class networked : MonoBehaviour
             sorted_extenders.Sort((a, b) =>
             {
                 // Sort alphabetically by type
-                var type_comp = a.GetType().Name.CompareTo(b.GetType().Name);
+                int type_comp = a.GetType().Name.CompareTo(b.GetType().Name);
                 if (type_comp != 0) return type_comp;
 
+                if (!(a is Component) || !(b is Component))
+                    throw new System.Exception("Only unity components should implement IExtendsNetworked!");
+
+                // Then alphabetically by component name
+                var ac = (Component)a;
+                var bc = (Component)b;
+                int name_comp = ac.name.CompareTo(bc.name);
+                if (name_comp != 0) return name_comp;
+
                 // Not implemented
-                throw new System.NotImplementedException("Multiple IExtendsNetowrked children of the same type!");
+                throw new System.NotImplementedException("Could not distinguish two IExtendsNetworked");
             });
 
             foreach (var c in sorted_extenders)
@@ -341,14 +350,14 @@ public class networked : MonoBehaviour
     {
         has_authority = true;
         on_gain_authority();
-        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change(true);
+        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change?.Invoke(true);
     }
 
     public void lose_authority()
     {
         has_authority = false;
         on_loose_authority();
-        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change(false);
+        foreach (var ex in network_extenders) ex.get_callbacks().on_auth_change?.Invoke(false);
     }
 
     /// <summary> The first networked object in the 
