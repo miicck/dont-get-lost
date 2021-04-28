@@ -4,17 +4,44 @@ using UnityEngine;
 
 public class settler_field_spot : networked, IPlayerInteractable
 {
-    networked_variables.net_float progress;
-    float progress_scale => progress.value * (1f - min_scale) + min_scale;
+    /// <summary> Only modify networked variables if this much progress has been made. </summary>
+    const float GROWTH_RESOLUTION = 0.05f;
+
+    public bool grown => networked_progress.value >= 1f;
+    public GameObject to_grow;
+    public product[] products => GetComponents<product>();
+    public float growth_time = 30f;
+    public float min_scale = 0.2f;
+
+    /// <summary> Local progress in [0, GROWTH_RESOLUTION], will be added to 
+    /// networked_progress if set to a value above GROWTH_RESOLUTION. </summary>
+    float local_progress
+    {
+        get => _local_progress;
+        set
+        {
+            _local_progress = value;
+            if (_local_progress > GROWTH_RESOLUTION)
+            {
+                networked_progress.value += _local_progress;
+                _local_progress = 0;
+            }
+        }
+    }
+    float _local_progress;
+
+    /// <summary> How far through the growth process are we. </summary>
+    networked_variables.net_float networked_progress;
+    float progress_scale => networked_progress.value * (1f - min_scale) + min_scale;
 
     public override void on_init_network_variables()
     {
-        progress = new networked_variables.net_float(
-            resolution: 0.05f,
+        networked_progress = new networked_variables.net_float(
+            resolution: GROWTH_RESOLUTION * 0.99f,
             min_value: 0f,
             max_value: 1f);
 
-        progress.on_change = () =>
+        networked_progress.on_change = () =>
         {
             // If progress has been reduced, that means we've been harvested
             if (progress_scale < grown_object.transform.localScale.x)
@@ -28,13 +55,6 @@ public class settler_field_spot : networked, IPlayerInteractable
             grown_object.transform.localScale = Vector3.one * progress_scale;
         };
     }
-
-    public bool grown => progress.value >= 1f;
-    public GameObject to_grow;
-    public product[] products => GetComponents<product>();
-    public float growth_time = 30f;
-    public float min_scale = 0.2f;
-
 
     GameObject grown_object
     {
@@ -56,23 +76,24 @@ public class settler_field_spot : networked, IPlayerInteractable
     private void Update()
     {
         if (!has_authority) return;
-        progress.value += Time.deltaTime / growth_time;
+        local_progress += Time.deltaTime / growth_time;
     }
 
     public void harvest()
     {
-        progress.value = 0f;
+        local_progress = 0f;
+        networked_progress.value = 0f;
     }
 
     public void tend()
     {
-        progress.value += 10f / growth_time;
+        local_progress += 10f / growth_time;
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.color = Color.Lerp(Color.red, Color.green, progress.value);
+        Gizmos.color = Color.Lerp(Color.red, Color.green, networked_progress.value);
         Gizmos.DrawWireCube(Vector3.zero, new Vector3(1f, 0.05f, 1f));
     }
 
@@ -86,7 +107,7 @@ public class settler_field_spot : networked, IPlayerInteractable
         {
             new player_inspectable(transform)
             {
-                text = () => Mathf.Round(progress.value * 100f) + "% grown"
+                text = () => Mathf.Round(networked_progress.value * 100f) + "% grown"
             }
         };
     }

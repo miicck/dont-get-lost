@@ -221,7 +221,7 @@ public class networked : MonoBehaviour
     public void network_update()
     {
         if (is_client_side) return;
-        if (this == null) return; // Been destroyed
+        //if (this == null) return; // Been destroyed
 
         if (!has_authority)
         {
@@ -263,9 +263,15 @@ public class networked : MonoBehaviour
         {
             transform.position = value;
             if (is_client_side) return;
-            x_local.value = transform.localPosition.x;
-            y_local.value = transform.localPosition.y;
-            z_local.value = transform.localPosition.z;
+
+            if (Mathf.Abs(x_local.value - transform.localPosition.x) > position_resolution())
+                x_local.value = transform.localPosition.x;
+
+            if (Mathf.Abs(y_local.value - transform.localPosition.y) > position_resolution())
+                y_local.value = transform.localPosition.y;
+
+            if (Mathf.Abs(z_local.value - transform.localPosition.z) > position_resolution())
+                z_local.value = transform.localPosition.z;
         }
     }
 

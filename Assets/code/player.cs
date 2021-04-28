@@ -142,7 +142,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     void add_interactions()
     {
-        if (has_authority) tips.context_tip = "";
         List<player_interaction> all_interactions = new List<player_interaction>();
 
         // Get UI interactions (only on authority client)

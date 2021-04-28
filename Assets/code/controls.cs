@@ -14,12 +14,15 @@ public static class controls
         tips.add("You can switch between using the mouse or keyboard to rotate/translate buildings in the options menu.");
     }
 
-    abstract class control
+    public abstract class control
     {
         public abstract bool triggered();   // Returns true on the frame that control is activated
         public abstract bool untriggered(); // Returns true on the frame that control is deactivated
         public abstract bool held();        // Returns true if the control is currently active
         public abstract string name();      // Returns human-readable name for control
+
+        public abstract override bool Equals(object obj);
+        public abstract override int GetHashCode();
 
         /// <summary> Returns the change in control this frame. By default is +1 
         /// if <see cref="triggered"/> this frame or -1 if <see cref="untriggered"/>
@@ -32,13 +35,21 @@ public static class controls
         }
     }
 
-    class key_control : control
+    public class key_control : control
     {
         KeyCode key;
         public key_control(KeyCode key) { this.key = key; }
         public override bool triggered() { return Input.GetKeyDown(key); }
         public override bool untriggered() { return Input.GetKeyUp(key); }
         public override bool held() { return Input.GetKey(key); }
+
+        public override int GetHashCode() { return key.GetHashCode(); }
+        public override bool Equals(object obj)
+        {
+            if (obj is key_control)
+                return ((key_control)obj).key == key;
+            return false;
+        }
 
         public override string name()
         {
@@ -67,7 +78,7 @@ public static class controls
         }
     }
 
-    class mouse_control : control
+    public class mouse_control : control
     {
         public enum BUTTON : int
         {
@@ -82,6 +93,14 @@ public static class controls
         public override bool untriggered() { return Input.GetMouseButtonUp((int)button); }
         public override bool held() { return Input.GetMouseButton((int)button); }
 
+        public override int GetHashCode() { return button.GetHashCode(); }
+        public override bool Equals(object obj)
+        {
+            if (obj is mouse_control)
+                return ((mouse_control)obj).button == button;
+            return false;
+        }
+
         public override string name()
         {
             switch (button)
@@ -94,7 +113,7 @@ public static class controls
         }
     }
 
-    class axis_control : control
+    public class axis_control : control
     {
         string axis;
         public axis_control(string axis) { this.axis = axis; }
@@ -105,6 +124,14 @@ public static class controls
         public override bool untriggered() { return !triggered(); }
         public override bool held() { return triggered(); }
         public override string name() { return axis; }
+
+        public override int GetHashCode() { return axis.GetHashCode(); }
+        public override bool Equals(object obj)
+        {
+            if (obj is axis_control)
+                return ((axis_control)obj).axis == axis;
+            return false;
+        }
     }
 
     public enum BIND
@@ -293,6 +320,11 @@ public static class controls
     public static string bind_name(BIND b)
     {
         return keybinds[b].name();
+    }
+
+    public static control current_control(BIND b)
+    {
+        return keybinds[b];
     }
 
     /// <summary> If <paramref name="value"/> is true, then will tell the 

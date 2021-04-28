@@ -210,6 +210,9 @@ public abstract class settler_interactable : has_path_elements,
 
                     var new_user = networked.try_find_by_id(new_val, false);
                     if (new_user is settler) on_assign((settler)new_user);
+
+                    assignments.Remove(old_val);
+                    assignments[new_val] = this;
                 };
             },
 
@@ -248,16 +251,21 @@ public abstract class settler_interactable : has_path_elements,
 
     // Private static //
 
-    static HashSet<settler_interactable> interactables = new HashSet<settler_interactable>();
+    static Dictionary<skill, List<settler_interactable>> interactables =
+        new Dictionary<skill, List<settler_interactable>>();
+
+    static Dictionary<int, settler_interactable> assignments =
+        new Dictionary<int, settler_interactable>();
 
     static void register_interactable(settler_interactable i)
     {
-        interactables.Add(i);
+        if (interactables.TryGetValue(i.skill, out List<settler_interactable> hs)) hs.Add(i);
+        else interactables[i.skill] = new List<settler_interactable> { i };
     }
 
     static void forget_interactable(settler_interactable i)
     {
-        interactables.Remove(i);
+        if (interactables.TryGetValue(i.skill, out List<settler_interactable> hs)) hs.Remove(i);
     }
 
     static settler_interactable try_assign_interaction(settler s)
@@ -269,14 +277,8 @@ public abstract class settler_interactable : has_path_elements,
         {
             // Skip visible skills that fail the priority test
             if (sk.is_visible && !skill.priority_test(s.job_priorities[sk])) continue;
-
-            var possibilities = new List<settler_interactable>();
-            foreach (var i in interactables)
-                if (i.skill == sk)
-                    possibilities.Add(i);
-
-            if (possibilities.Count == 0)
-                continue;
+            if (!interactables.TryGetValue(sk, out List<settler_interactable> possibilities)) continue;
+            if (possibilities.Count == 0) continue;
 
             for (int i = 0; i < load_balancing.iter; ++i)
             {
@@ -293,9 +295,8 @@ public abstract class settler_interactable : has_path_elements,
     public static settler_interactable assigned_to(settler s)
     {
         // Look for existing interaction
-        foreach (var i in interactables)
-            if (i.settler_id.value == s.network_id)
-                return i;
+        if (assignments.TryGetValue(s.network_id, out settler_interactable i))
+            return i;
 
         // None found, attempt to assign interaction
         // if we're on the authority client

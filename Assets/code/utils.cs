@@ -160,66 +160,59 @@ public static class utils
         return ret;
     }
 
+    /// <summary> The graphic raycaster in the scene. </summary>
+    static UnityEngine.UI.GraphicRaycaster graphic_raycaster
+    {
+        get
+        {
+            if (_graphic_raycaster == null)
+                _graphic_raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
+            return _graphic_raycaster;
+        }
+    }
+    static UnityEngine.UI.GraphicRaycaster _graphic_raycaster;
+
     /// <summary> Raycast for a <typeparamref name="T"/> under the mouse. </summary>
     public static T raycast_ui_under_mouse<T>(bool require_cursor_visible = true)
     {
-        if (!Cursor.visible && require_cursor_visible) return default;
-
-        // Setup the raycast
-        var event_system = UnityEngine.EventSystems.EventSystem.current;
-        var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)
-        {
-            position = Input.mousePosition
-        };
-
-        var hits = new List<UnityEngine.EventSystems.RaycastResult>();
-
-        // This never seems to work, but I guess it might as well stay
-        event_system.RaycastAll(pointer_data, hits);
-
-        // Find the graphic raycaster and use it to find ui elements below the pointer
-        var raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
-        raycaster.Raycast(pointer_data, hits);
-
-        // Find an object with the given component type
-        foreach (var h in hits)
-        {
-            var t = h.gameObject.GetComponentInChildren<T>();
-            if (t != null) return t;
-        }
-
-        return default;
+        var arr = raycast_all_ui_under_mouse<T>(require_cursor_visible: require_cursor_visible, return_first: true);
+        if (arr.Length == 0) return default;
+        return arr[0];
     }
 
     /// <summary> Raycast for all <typeparamref name="T"/>s under the mouse. </summary>
-    public static T[] raycast_all_ui_under_mouse<T>(bool require_cursor_visible = true)
+    public static T[] raycast_all_ui_under_mouse<T>(bool require_cursor_visible = true, bool return_first = false)
     {
         if (!Cursor.visible && require_cursor_visible) return new T[0];
 
         // Setup the raycast
-        var event_system = UnityEngine.EventSystems.EventSystem.current;
-        var pointer_data = new UnityEngine.EventSystems.PointerEventData(event_system)
+        var pointer_data = new
+            UnityEngine.EventSystems.PointerEventData(
+            UnityEngine.EventSystems.EventSystem.current)
         {
             position = Input.mousePosition
         };
 
         var hits = new List<UnityEngine.EventSystems.RaycastResult>();
 
-        // This never seems to work, but I guess it might as well stay
-        // event_system.RaycastAll(pointer_data, hits);
-
         // Find the graphic raycaster and use it to find ui elements below the pointer
-        var raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
-        raycaster.Raycast(pointer_data, hits);
+        graphic_raycaster.Raycast(pointer_data, hits);
 
-        // Find an object with the given component type
-        List<T> ret = new List<T>();
+        // Find objects with the given component type
+        List<T> ret = null;
+
         foreach (var h in hits)
         {
             var t = h.gameObject.GetComponentInChildren<T>();
-            if (t != null) ret.Add(t);
+            if (t != null)
+            {
+                if (return_first) return new T[] { t };
+                if (ret == null) ret = new List<T>();
+                ret.Add(t);
+            }
         }
 
+        if (ret == null) return new T[] { };
         return ret.ToArray();
     }
 

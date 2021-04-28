@@ -233,17 +233,17 @@ public class interaction_set
         player player, bool update_context_info = false)
     {
         // Get the possible interactions with unique keybinds
-        var unique_interactions = new Dictionary<string, player_interaction>();
+        var unique_interactions = new Dictionary<controls.control, player_interaction>();
         foreach (var i in interactions)
         {
-            var bn = controls.bind_name(i.keybind);
-            if (unique_interactions.ContainsKey(bn)) continue;
+            var c = controls.current_control(i.keybind);
+            if (unique_interactions.ContainsKey(c)) continue;
             if (!i.is_possible()) continue;
-            unique_interactions[bn] = i;
+            unique_interactions[c] = i;
         }
 
         // Reset context tip
-        if (update_context_info) tips.context_tip = "";
+        string new_context_tip = "";
 
         // Consider unique interactions for addition
         foreach (var kv in unique_interactions)
@@ -255,9 +255,9 @@ public class interaction_set
                 string ct = i.context_tip()?.Trim();
                 if (ct != null && ct.Length > 0)
                 {
-                    if (i.allow_held) ct = "[hold " + kv.Key + "] " + ct;
-                    else ct = "[" + kv.Key + "] " + ct;
-                    tips.context_tip += "\n" + ct;
+                    if (i.allow_held) ct = "[hold " + kv.Key.name() + "] " + ct;
+                    else ct = "[" + kv.Key.name() + "] " + ct;
+                    new_context_tip += "\n" + ct;
                 }
             }
 
@@ -279,6 +279,9 @@ public class interaction_set
             if (i.start_interaction(player))
                 underway.Remove(i.keybind); // Immediately completed, remove from underway
         }
+
+        if (update_context_info && tips.context_tip != new_context_tip)
+            tips.context_tip = new_context_tip;
     }
 
     /// <summary> Continue underway interactions </summary>
