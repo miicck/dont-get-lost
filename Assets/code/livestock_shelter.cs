@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class livestock_shelter : MonoBehaviour
+public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable, IAddsToInspectionText
 {
     public character livestock_type;
     public int pasture_per_animal = 2;
@@ -14,6 +14,9 @@ public class livestock_shelter : MonoBehaviour
     item_output output => GetComponentInChildren<item_output>();
     float last_produce_time = float.MinValue;
 
+    int connected_pasture = 0;
+    bool disabled_by_other_shelter;
+
     private void Update()
     {
         // Only update every 10 frames on auth client
@@ -22,15 +25,28 @@ public class livestock_shelter : MonoBehaviour
 
         // Work out how much pasture we have
         var room_elms = town_path_element.elements_in_room(path_element.room);
-        int pasture_elements = 0;
+        connected_pasture = 0;
+        disabled_by_other_shelter = false;
         foreach (var e in room_elms)
+        {
             if (e.name == "pasture")
-                pasture_elements += 1;
+            {
+                connected_pasture += 1;
+                continue;
+            }
+
+            var other_shelter = e.GetComponentInParent<livestock_shelter>();
+            if (other_shelter == null || other_shelter == this) continue;
+            if (other_shelter.networked_element.network_id < networked_element.network_id)
+            {
+                disabled_by_other_shelter = true;
+                return;
+            }
+        }
 
         // Get the current livestock, spawning any additional animals
         var livestock = new List<character>(this.livestock);
-        int max_animals = pasture_elements / pasture_per_animal;
-        if (livestock.Count < max_animals)
+        if (livestock.Count < connected_pasture / pasture_per_animal)
         {
             var new_animal = (character)client.create(
                 path_element.transform.position,
@@ -54,6 +70,13 @@ public class livestock_shelter : MonoBehaviour
             foreach (var p in GetComponents<product>())
                 p.create_in_node(output);
         }
+    }
+
+    public string added_inspection_text()
+    {
+        if (disabled_by_other_shelter)
+            return "Disabled (another livestock shelter in room)";
+        return connected_pasture + " squares of pasture";
     }
 
     class livestock_controller : ICharacterController
