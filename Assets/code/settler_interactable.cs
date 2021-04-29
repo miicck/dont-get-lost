@@ -298,6 +298,16 @@ public abstract class settler_interactable : has_path_elements,
         if (assignments.TryGetValue(s.network_id, out settler_interactable i))
             return i;
 
+        // As a fallback, search all interactions for one assigend to s
+        foreach (var kv in interactables)
+            foreach (var inter in kv.Value)
+                if (inter.settler_id.value == s.network_id)
+                {
+                    Debug.Log("Assignement fallback triggered!");
+                    assignments[s.network_id] = inter;
+                    return inter;
+                }
+
         // None found, attempt to assign interaction
         // if we're on the authority client
         if (s.has_authority)
