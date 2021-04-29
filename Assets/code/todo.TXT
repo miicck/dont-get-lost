@@ -29,6 +29,7 @@ TODO
   IExtendsNetworked cover these use cases?
 - Brewing!
 - Just make foundary stuff/see if a use for the metal becomes apparent
+- Spread the cost of town_path_element.path across multiple frames
 
 - Networking bugs(?) for settlers
 	- Control over character arms/legs is fighting between client+server - this is

@@ -226,7 +226,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3441483242861332332}
+  - component: {fileID: 5072368999620579598}
   - component: {fileID: 9141947211428673963}
+  - component: {fileID: 2464017604190687040}
   m_Layer: 0
   m_Name: ladder
   m_TagString: Untagged
@@ -254,6 +256,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5072368999620579598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3441483242861332338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0101c21fe00f2de46bd21858cf4e0e13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  is_client_side: 0
+  sprite: {fileID: 21300000, guid: 8c8f6239d066c2d4ca18a140b17f9b1d, type: 3}
+  plural: ladders
+  value: 0
+  fuel_value: 0
+  logistics_scale: 1
+  axes_scale: 1
 --- !u!114 &9141947211428673963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -266,13 +287,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c811c317cccc9d44793100824aa3a9e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  is_client_side: 0
-  sprite: {fileID: 21300000, guid: 8c8f6239d066c2d4ca18a140b17f9b1d, type: 3}
-  plural: ladders
-  value: 31
-  fuel_value: 0
-  logistics_scale: 1
-  axes_scale: 1
+  ladder_collider: {fileID: 2464017604190687040}
+--- !u!65 &2464017604190687040
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3441483242861332338}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.2, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5784162903755249375
 GameObject:
   m_ObjectHideFlags: 0

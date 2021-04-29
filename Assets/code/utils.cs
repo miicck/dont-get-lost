@@ -855,8 +855,7 @@ public class Dictionary<K1, K2, V>
             return;
 
         inner.Remove(k2);
-        if (inner.Count == 0)
-            dict.Remove(k1);
+        if (inner.Count == 0) dict.Remove(k1);
     }
 
     public delegate void iter_func(K1 k1, K2 k2, V v);
@@ -931,6 +930,7 @@ public class Dictionary<K1, K2, K3, V>
             return;
 
         inner.clear(k2, k3);
+        if (inner.count == 0) dict.Remove(k1);
     }
 
     public delegate void iter_func(K1 k1, K2 k2, K3 k3, V v);
@@ -1337,5 +1337,130 @@ public class kd_tree<T>
             tree.add(Random.insideUnitSphere);
 
         Debug.Log(tree.nearest_neighbour(Vector3.zero, (a, b) => (a - b).magnitude));
+    }
+}
+
+/// <summary> A collection of objects that can be quickly found by spatial location. </summary>
+public abstract class spatial_collection<T>
+{
+    protected abstract Vector3 get_centre(T t);
+    protected abstract bool test_intersection(T t, Bounds bounds);
+    protected abstract bool test_intersection(T t, Vector3 point);
+    protected abstract float grid_resolution { get; }
+
+    /// <summary> A dictionary dividing the world into cubes of size 
+    /// <see cref="grid_resolution"/>, indexed by x, y, z coordinates. </summary>
+    Dictionary<int, int, int, HashSet<T>> dict = new Dictionary<int, int, int, HashSet<T>>();
+
+    /// <summary> Get the coordinates of the gridsquare that 
+    /// contains the point <paramref name="v"/>. </summary>
+    void get_coords(Vector3 v, out int x, out int y, out int z)
+    {
+        x = Mathf.FloorToInt(v.x / grid_resolution);
+        y = Mathf.FloorToInt(v.y / grid_resolution);
+        z = Mathf.FloorToInt(v.z / grid_resolution);
+    }
+
+    /// <summary> Get the bounding box for the 
+    /// gridsquare with coordinates x,y,z. </summary>
+    Bounds get_bounds(int x, int y, int z)
+    {
+        return new Bounds(
+            new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * grid_resolution,
+            Vector3.one * grid_resolution);
+    }
+
+    void add_recursive(T t, int x, int y, int z)
+    {
+        // Add t to the dictionary at x, y, z
+        var hs = dict.get(x, y, z);
+        if (hs == null)
+        {
+            hs = new HashSet<T> { t };
+            dict.set(x, y, z, hs);
+        }
+        else
+        {
+            if (hs.Contains(t)) return; // Already added here, stop recursion
+            hs.Add(t);
+        }
+
+        // Check for intersection with neighbours
+        for (int dx = -1; dx < 2; ++dx)
+            for (int dy = -1; dy < 2; ++dy)
+                for (int dz = -1; dz < 2; ++dz)
+                {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    if (test_intersection(t, get_bounds(x + dx, y + dy, z + dz)))
+                        add_recursive(t, x + dx, y + dy, z + dz);
+                }
+    }
+
+    void remove_recursive(T t, int x, int y, int z)
+    {
+        var hs = dict.get(x, y, z);
+
+        // Not found here, stop recursion
+        if (hs == null) return;
+        if (!hs.Remove(t)) return;
+
+        // Clear the dictionary at x, y, z if t was the last T
+        if (hs.Count == 0) dict.clear(x, y, z);
+
+        // Remove from neighbours recursively
+        for (int dx = -1; dx < 2; ++dx)
+            for (int dy = -1; dy < 2; ++dy)
+                for (int dz = -1; dz < 2; ++dz)
+                {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    remove_recursive(t, x + dx, y + dy, z + dz);
+                }
+    }
+
+    //################//
+    // PUBLIC METHODS //
+    //################//
+
+    /// <summary> Adds <paramref name="t"/> to the collection. </summary>
+    public void add(T t)
+    {
+        get_coords(get_centre(t), out int xc, out int yc, out int zc);
+        add_recursive(t, xc, yc, zc);
+    }
+
+    /// <summary> Removes <paramref name="t"/> from the collection. </summary>
+    public void remove(T t)
+    {
+        get_coords(get_centre(t), out int xc, out int yc, out int zc);
+        remove_recursive(t, xc, yc, zc);
+    }
+
+    /// <summary> Returns the objects in the collection
+    /// that overlap with the given point. </summary>
+    public List<T> overlapping(Vector3 point)
+    {
+        get_coords(point, out int xc, out int yc, out int zc);
+        var ret = new List<T>();
+
+        var hs = dict.get(xc, yc, zc);
+        if (hs != null)
+            foreach (var t in hs)
+                if (test_intersection(t, point))
+                    ret.Add(t);
+
+        return ret;
+    }
+
+    /// <summary> Returns true if there are items in the collection 
+    /// that overlap with the given point. </summary>
+    public bool has_overlapping(Vector3 point)
+    {
+        get_coords(point, out int xc, out int yc, out int zc);
+        var hs = dict.get(xc, yc, zc);
+        if (hs == null) return false;
+        foreach (var t in hs)
+            if (test_intersection(t, point))
+                return true;
+        return false;
     }
 }

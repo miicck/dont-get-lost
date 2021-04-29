@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : networked_player, INotPathBlocking, ICanEquipArmour, 
+public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, IDoesntCoverBeds
 {
     //###########//
@@ -28,7 +28,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public const float ROTATION_SPEED = 90f;
     public const float JUMP_VEL = 5f;
     public const float THROW_VELOCITY = 6f;
-    public const float LADDER_TEST_DISTANCE = 0.25f;
     public const float LADDER_SPEED_MULT = 0.5f;
 
     // Where does the hand appear
@@ -622,20 +621,16 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         bool climbing_ladder = false;
         if (controls.held(controls.BIND.WALK_FORWARD) ||
             controls.held(controls.BIND.PAUSE_ON_LADDER))
-            foreach (var hit in
-            Physics.CapsuleCastAll(transform.position + Vector3.up * WIDTH / 2f,
-                                    transform.position + Vector3.up * (HEIGHT - WIDTH / 2f),
-                                    WIDTH / 2f, transform.forward, LADDER_TEST_DISTANCE))
+        {
+            Vector3 ladder_test_point = transform.position + Vector3.up * 0.1f + transform.forward * WIDTH * 0.6f;
+            if (ladder.in_ladder_volume(ladder_test_point))
             {
-                var lad = hit.collider.GetComponentInParent<ladder>();
-                if (lad != null)
-                {
-                    climbing_ladder = true;
-                    velocity.y = speed * LADDER_SPEED_MULT;
-                    if (controls.held(controls.BIND.PAUSE_ON_LADDER))
-                        velocity.y = 0;
-                }
+                climbing_ladder = true;
+                velocity.y = speed * LADDER_SPEED_MULT;
+                if (controls.held(controls.BIND.PAUSE_ON_LADDER))
+                    velocity.y = 0;
             }
+        }
 
         // Turn on/off crouch
         if (climbing_ladder)
