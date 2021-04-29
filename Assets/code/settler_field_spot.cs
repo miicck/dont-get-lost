@@ -33,6 +33,7 @@ public class settler_field_spot : networked, IPlayerInteractable
     /// <summary> How far through the growth process are we. </summary>
     networked_variables.net_float networked_progress;
     float progress_scale => networked_progress.value * (1f - min_scale) + min_scale;
+    bool first_load = true;
 
     public override void on_init_network_variables()
     {
@@ -44,7 +45,7 @@ public class settler_field_spot : networked, IPlayerInteractable
         networked_progress.on_change = () =>
         {
             // If progress has been reduced, that means we've been harvested
-            if (progress_scale < grown_object.transform.localScale.x)
+            if (!first_load && progress_scale < grown_object.transform.localScale.x)
             {
                 var field = GetComponentInParent<settler_field>();
                 if (field != null)
@@ -52,6 +53,7 @@ public class settler_field_spot : networked, IPlayerInteractable
                         p.create_in_node(field.output, true);
             }
 
+            first_load = false;
             grown_object.transform.localScale = Vector3.one * progress_scale;
         };
     }
