@@ -325,14 +325,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4174816289648077782}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.00000008940696, y: -0.70710677, z: -0.7071069, w: -0.000000029802319}
   m_LocalPosition: {x: 0.00104, y: 0, z: -0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children:
   - {fileID: 1411082439366131628}
   m_Father: {fileID: 8653635241760609350}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: -180}
 --- !u!114 &8998243555125965264
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -657,13 +657,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 82f027a10de16cc44bd0ea2f0d32202e, type: 3}
-  max_simultaneous_users: 1
   output: {fileID: 8998243555125965264}
   field_spot_prefab: crops/pine_tree
   x_size: 1
   z_size: 1
   spacing: 1.21
   spot_tend_prob: 1
+  base_tend_time: 4
   offset: {x: 0, y: 0, z: 0}
 --- !u!1 &7790678638878898613
 GameObject:
@@ -689,13 +689,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7790678638878898613}
-  m_LocalRotation: {x: 0.707107, y: -0.000000029802319, z: 0.000000029802319, w: 0.70710665}
-  m_LocalPosition: {x: 1.7462298e-10, y: 0.000000020563602, z: -0.0029200208}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -0.00278, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4323719499307313405}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9045907996147358573
 MonoBehaviour:
   m_ObjectHideFlags: 0

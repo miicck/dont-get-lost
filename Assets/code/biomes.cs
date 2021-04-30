@@ -177,7 +177,9 @@ public class desert : biome
         large_rocks = null;
     }
 
-    void create_oasis(int x, int z, int scale)
+    public static void create_oasis(
+        point[,] grid, System.Random random,
+        int x, int z, int scale)
     {
         // Ensure we're in range
         int x_min = x - scale / 2; if (x_min < 0) return;
@@ -288,7 +290,7 @@ public class desert : biome
         if (remaining_oases > 0)
         {
             --remaining_oases;
-            create_oasis(random.range(0, SIZE),
+            create_oasis(grid, random, random.range(0, SIZE),
                          random.range(0, SIZE),
                          random.range(16, 32));
             return false;
@@ -1419,5 +1421,85 @@ public class tabletop_mountain : biome
         }
 
         return ++i_stage >= SIZE;
+    }
+}
+
+public class desert_2 : biome
+{
+    const float DUNE_DENSITY = 1 / (35f * 35f);
+    const float OASIS_DENSITY = 1 / (70f * 70f);
+    const int MIN_DUNE_FOOTPRINT = 64;
+    const int MAX_DUNE_FOOTPRINT = 128;
+    const float MAX_DUNE_HEIGHT = 16f;
+
+    int remaining_dunes = (int)(DUNE_DENSITY * SIZE * SIZE);
+    int remaining_oases = (int)(OASIS_DENSITY * SIZE * SIZE);
+
+    float[,] alt = new float[SIZE, SIZE];
+
+    int i_stage = 0;
+    bool rescaled = false;
+
+    protected override void on_end_generate_grid()
+    {
+        // Free memory
+        alt = null;
+    }
+
+    protected override bool continue_generate_grid()
+    {
+        // Add a bunch of sand dunes to create the terrain
+        if (remaining_dunes > 0)
+        {
+            --remaining_dunes;
+            int footprint = random.range(MIN_DUNE_FOOTPRINT, MAX_DUNE_FOOTPRINT);
+            int x = random.range(0, SIZE);
+            int z = random.range(0, SIZE);
+            procmath.float_2D_tools.add_sand_dune(ref alt, x, z, footprint, footprint / 4);
+            return false;
+        }
+
+        // Rescale the altitiude to the range [0, MAX_DUNE_HEIGHT]
+        if (!rescaled)
+        {
+            procmath.float_2D_tools.rescale(ref alt, 0, MAX_DUNE_HEIGHT);
+            rescaled = true;
+            return false;
+        }
+
+        if (i_stage < SIZE)
+        {
+            int i = i_stage;
+            for (int j = 0; j < SIZE; ++j)
+            {
+                var p = grid[i, j] = new point();
+                p.fog_distance = 16;
+                p.altitude = world.SEA_LEVEL + alt[i, j] - MAX_DUNE_HEIGHT / 8f;
+                p.terrain_color = terrain_colors.sand_dune;
+
+                if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("desert_rocks_6");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("cactus1");
+                else if (random.range(0, 300) == 0)
+                    p.object_to_generate = world_object.load("thin_desert_rock");
+                else if (p.altitude < world.SEA_LEVEL + 2f && random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("palm_tree_beach_only");
+            }
+            ++i_stage;
+            return false;
+        }
+
+        // Add oases
+        if (remaining_oases > 0)
+        {
+            --remaining_oases;
+            desert.create_oasis(grid, random, random.range(0, SIZE),
+                         random.range(0, SIZE),
+                         random.range(16, 32));
+            return false;
+        }
+
+        return true;
     }
 }
