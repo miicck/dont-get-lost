@@ -32,6 +32,14 @@ public class axes : MonoBehaviour, IDontBlockItemLogisitcs
         }
     }
 
+    public AXIS test_is_part_of_axis(Transform t)
+    {
+        if (t.IsChildOf(x_axis.transform)) return AXIS.X;
+        if (t.IsChildOf(y_axis.transform)) return AXIS.Y;
+        if (t.IsChildOf(z_axis.transform)) return AXIS.Z;
+        return AXIS.NONE;
+    }
+
     Dictionary<Renderer, Color> initial_colors
     {
         get

@@ -303,15 +303,21 @@ public class building_material : item, IPlayerInteractable
                 {
                     if (trans.IsChildOf(axes.transform))
                     {
-                        if (trans.name.Contains("x")) mouse_mode = MOUSE_MODE.X_TRANSLATE;
-                        else if (trans.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_TRANSLATE;
-                        else if (trans.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_TRANSLATE;
+                        switch (axes.test_is_part_of_axis(trans))
+                        {
+                            case axes.AXIS.X: mouse_mode = MOUSE_MODE.X_TRANSLATE; break;
+                            case axes.AXIS.Y: mouse_mode = MOUSE_MODE.Y_TRANSLATE; break;
+                            case axes.AXIS.Z: mouse_mode = MOUSE_MODE.Z_TRANSLATE; break;
+                        }
                     }
                     else if (trans.IsChildOf(rotation_axes.transform))
                     {
-                        if (trans.name.Contains("x")) mouse_mode = MOUSE_MODE.X_ROTATE;
-                        else if (trans.name.Contains("y")) mouse_mode = MOUSE_MODE.Y_ROTATE;
-                        else if (trans.name.Contains("z")) mouse_mode = MOUSE_MODE.Z_ROTATE;
+                        switch (rotation_axes.test_is_part_of_axis(trans))
+                        {
+                            case axes.AXIS.X: mouse_mode = MOUSE_MODE.X_ROTATE; break;
+                            case axes.AXIS.Y: mouse_mode = MOUSE_MODE.Y_ROTATE; break;
+                            case axes.AXIS.Z: mouse_mode = MOUSE_MODE.Z_ROTATE; break;
+                        }
                     }
                 }
             }

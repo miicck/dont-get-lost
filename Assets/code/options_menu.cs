@@ -143,7 +143,8 @@ public class options_menu : MonoBehaviour
             case "field_of_view":
                 player.call_when_current_player_available(() =>
                 {
-                    player.current.camera.fieldOfView = val;
+                    foreach (var c in player.current.camera.GetComponentsInChildren<Camera>())
+                        c.fieldOfView = val;
                 });
                 break;
 
@@ -182,7 +183,7 @@ public class options_menu : MonoBehaviour
         {
             case "vsync":
                 QualitySettings.vSyncCount = value ? 1 : 0;
-                break;       
+                break;
 
             case "water_reflections":
                 water_reflections.reflections_enabled = value;
