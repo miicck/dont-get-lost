@@ -54,7 +54,7 @@ public abstract class networked_variable<T> : networked_variable
             // Before we do anything, validate the value
             value = validate(value);
 
-            if (check_equality(value, _value))
+            if (initialized && check_equality(value, _value))
                 return; // No change
 
             T old_value = _value;
