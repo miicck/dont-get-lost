@@ -21,6 +21,7 @@ public class item_harvest_spot : settler_interactable_options
     }
 
     protected override int options_count => options.Count;
+    protected override string options_title => "Harvesting";
 
     //######################//
     // SETTLER_INTERACTABLE //

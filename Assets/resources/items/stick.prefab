@@ -140,7 +140,7 @@ MonoBehaviour:
   plural: sticks
   value: 3
   fuel_value: 0
-  logistics_scale: 1
+  logistics_scale: 0.25
   axes_scale: 0.5
 --- !u!1 &6331017533348891075
 GameObject:

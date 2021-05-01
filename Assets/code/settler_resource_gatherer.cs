@@ -45,7 +45,9 @@ public abstract class settler_interactable_options : walk_to_settler_interactabl
 
         protected override RectTransform create_menu()
         {
-            return Resources.Load<RectTransform>("ui/resource_gatherer").inst();
+            var ret = Resources.Load<RectTransform>("ui/resource_gatherer").inst();
+            ret.GetComponentInChildren<UnityEngine.UI.Text>().text = options.options_title;
+            return ret;
         }
 
         protected override void on_open()
@@ -109,6 +111,7 @@ public abstract class settler_interactable_options : walk_to_settler_interactabl
 
     protected abstract option get_option(int i);
     protected abstract int options_count { get; }
+    protected abstract string options_title { get; }
 }
 
 public class settler_resource_gatherer : settler_interactable_options, IAddsToInspectionText
@@ -195,6 +198,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
     protected override option get_option(int i) { return menu_options[i]; }
     protected override int options_count => menu_options == null ? 0 : menu_options.Count;
+    protected override string options_title => "Harvesting";
 
     //#######################//
     // IAddsToInspectionText //

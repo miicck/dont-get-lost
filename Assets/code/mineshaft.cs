@@ -47,6 +47,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
     //##############################//
 
     protected override int options_count => minable_items.Count;
+    protected override string options_title => "Mining";
 
     protected override option get_option(int i)
     {

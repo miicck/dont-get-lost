@@ -17,7 +17,7 @@ public class recipe : MonoBehaviour
         return ce;
     }
 
-    string craft_string()
+    public string craft_string()
     {
         string ret = "";
         foreach (var i in ingredients)
