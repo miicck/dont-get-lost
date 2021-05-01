@@ -57,6 +57,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return false;
     }
 
+    public void look_at(Vector3 v, bool stay_upright = true)
+    {
+        Vector3 delta = v - transform.position;
+        if (stay_upright) delta.y = 0;
+        if (delta.magnitude < 0.001f) return;
+        transform.forward = delta;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//

@@ -70,8 +70,9 @@ public class item_dispenser : MonoBehaviour, IItemCollection
         foreach (var l in locators)
             if (l.item != null)
             {
-                if (ret.ContainsKey(l.item)) ret[l.item] += 1;
-                else ret[l.item] = 1;
+                var i = Resources.Load<item>("items/" + l.item.name);
+                if (ret.ContainsKey(i)) ret[i] += 1;
+                else ret[i] = 1;
             }
         return ret;
     }
