@@ -142,6 +142,7 @@ public class auto_crafter : building_material, IPlayerInteractable
             new menu(this),
             new player_inspectable(transform)
             {
+                sprite = () => sprite,
                 text = () =>
                 {
                     string info = display_name + "\n";
@@ -171,7 +172,7 @@ public class auto_crafter : building_material, IPlayerInteractable
                             product.product_plurals_list(currently_crafting.products) + "\n";
                     }
 
-                    return info;
+                    return info.Trim();
                 }
             });
         return interactions;

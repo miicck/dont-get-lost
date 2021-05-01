@@ -37,12 +37,48 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
+    /// <summary> Check if this recipe is craftable from the given item collection.
+    /// If so, the dictionary <paramref name="to_use"/> will contain the
+    /// ingredients/quantities that can be used from the collection to
+    /// fulfil the recipe. </summary>
     public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use)
     {
         to_use = new Dictionary<string, int>();
         foreach (var ing in ingredients)
             if (!ing.find(i, ref to_use))
                 return false;
+
+        return true;
+    }
+
+    /// <summary> Check if this recipe is craftable from the given item collections.
+    /// If so, the dictionary <paramref name="to_use"/> will contain the
+    /// ingredients/quantities that can be used from each collection to
+    /// fulfil the recipe. Note: this only distributes distinct ingredients
+    /// across multiple collections; indivudual ingredients must be satisfied
+    /// by an individual collection. </summary>
+    public bool can_craft(IEnumerable<IItemCollection> ics, out Dictionary<IItemCollection, Dictionary<string, int>> to_use)
+    {
+        // Initialise the dictionary-of-dictionaries
+        to_use = new Dictionary<IItemCollection, Dictionary<string, int>>();
+        foreach (var i in ics) to_use[i] = new Dictionary<string, int>();
+
+        // Check for each ingredient
+        foreach (var ing in ingredients)
+        {
+            // Search each collection for this ingredient
+            bool found = false;
+            foreach (var i in ics)
+            {
+                var tu = to_use[i];
+                if (ing.find(i, ref tu))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
 
         return true;
     }
