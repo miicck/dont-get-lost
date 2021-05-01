@@ -19,7 +19,7 @@ public interface IAcceptsDamage
 public class character : networked,
     INotPathBlocking, IDontBlockItemLogisitcs,
     IAcceptsDamage, IPlayerInteractable, IPathingAgent,
-    IDoesntCoverBeds
+    IDoesntCoverBeds, town_path_element.path.ITownWalker
 {
     //############################################//
     // Parameters determining character behaviour //
@@ -98,6 +98,37 @@ public class character : networked,
                 }
             }
         };
+    }
+
+    //####################################//
+    // town_path_element.path.ITownWalker //
+    //####################################//
+
+    public virtual town_path_element town_path_element
+    {
+        get => _town_path_element;
+        set
+        {
+            if (_town_path_element == value)
+                _town_path_element?.on_character_move_towards(this);
+            else
+            {
+                _town_path_element?.on_character_leave(this);
+                _town_path_element = value;
+                _town_path_element?.on_character_enter(this);
+            }
+        }
+    }
+    town_path_element _town_path_element;
+
+    public void on_walk_towards(town_path_element element)
+    {
+        town_path_element = element;
+    }
+
+    public void on_end_walk()
+    {
+        town_path_element?.on_character_leave(this);
     }
 
     //########//
@@ -200,6 +231,7 @@ public class character : networked,
 
     private void OnDestroy()
     {
+        town_path_element = null;
         characters.Remove(this);
     }
 
@@ -226,7 +258,7 @@ public class character : networked,
     {
         if (is_dead) return;
 
-        controller.draw_gizmos();
+        controller?.draw_gizmos();
         Vector3 f = transform.forward * pathfinding_resolution * 0.5f;
         Vector3 r = transform.right * pathfinding_resolution * 0.5f;
         Vector3[] square = new Vector3[]

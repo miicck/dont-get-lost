@@ -25,25 +25,19 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     protected override ICharacterController default_controller() { return null; }
 
     /// <summary> The path element that I am currently moving towards. </summary>
-    public town_path_element path_element
+    public override town_path_element town_path_element
     {
         get
         {
-            // If our path element has been deleted, find the nearest one
-            if (_path_element == null)
-                _path_element = town_path_element.nearest_element(transform.position);
-            return _path_element;
+            if (base.town_path_element == null)
+                base.town_path_element = town_path_element.nearest_element(transform.position);
+            return base.town_path_element;
         }
-        set
-        {
-            if (_path_element == value) return; // No change
-            _path_element = value;
-        }
+        set => base.town_path_element = value;
     }
-    town_path_element _path_element;
 
-    public int group => path_element == null ? -1 : path_element.group;
-    public int room => path_element == null ? -1 : path_element.room;
+    public int group => town_path_element == null ? -1 : town_path_element.group;
+    public int room => town_path_element == null ? -1 : town_path_element.room;
 
     public void on_attack_begin()
     {
@@ -108,15 +102,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     private void OnDestroy()
     {
-        path_element = null;
         settlers.Remove(this);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (path_element == null) return;
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(path_element.transform.position, 0.1f);
     }
 
     //#################//

@@ -373,23 +373,25 @@ public abstract class walk_to_settler_interactable : settler_interactable
         // Get a path
         if (path == null)
         {
-            path = new town_path_element.path(s.path_element, path_element(s.group));
-            if (!path.valid) return STAGE_RESULT.TASK_FAILED; // Pathfinding failed
+            path = town_path_element.path.get(s.town_path_element, path_element(s.group));
+            if (path == null) return STAGE_RESULT.TASK_FAILED; // Pathfinding failed
         }
 
-        // Path walking complete
-        if (path.Count == 0) return STAGE_RESULT.STAGE_COMPLETE;
-
-        if (path.Count == 1)
+        switch (path.walk(s, move_to_speed(s)))
         {
-            // Turn towards the target on the last path segment
-            lerp_look(s, Time.deltaTime * 5f);
+            case town_path_element.path.WALK_STATE.COMPLETE:
+                return STAGE_RESULT.STAGE_COMPLETE;
+
+            case town_path_element.path.WALK_STATE.UNDERWAY:
+                if (path.index == path.count - 1)
+                {
+                    // Turn towards the target on the last path segment
+                    lerp_look(s, Time.deltaTime * 5f);
+                }
+                return STAGE_RESULT.STAGE_UNDERWAY;
+
+            default:
+                return STAGE_RESULT.TASK_FAILED;
         }
-
-        var next_element = path.walk(s.transform, move_to_speed(s), s);
-        if (next_element == null) return STAGE_RESULT.TASK_FAILED;
-        else s.path_element = next_element;
-
-        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 }

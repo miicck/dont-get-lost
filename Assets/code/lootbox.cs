@@ -42,8 +42,8 @@ public class lootbox : walk_to_settler_interactable
         if (looting == null || looting_path_element == null) return false; // No character to loot, or path element
 
         // Path from lootbox to character to loot
-        path = new town_path_element.path(path_element(s.group), looting_path_element);
-        if (!path.valid) return false; // No path to loot
+        path = town_path_element.path.get(path_element(s.group), looting_path_element);
+        if (path == null) return false; // No path to loot
 
         return true;
     }
@@ -51,31 +51,32 @@ public class lootbox : walk_to_settler_interactable
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         if (looting == null) return STAGE_RESULT.TASK_FAILED; // Nothing to loot
-        if (path == null || !path.valid) return STAGE_RESULT.TASK_FAILED; // No path somehow
+        if (path == null) return STAGE_RESULT.TASK_FAILED; // No path somehow
 
-        var next_element = path.walk(s.transform, s.walk_speed, s);
-        if (next_element == null)
+        switch (path.walk(s, s.walk_speed, forwards: !walking_back))
         {
-            if (walking_back)
-            {
-                // Made our way back - transfer items    
-                var inv = looting.GetComponentInChildren<inventory>();
-                var this_inv = GetComponent<chest>().inventory;
-                foreach (var kv in inv.contents())
-                    if (inv.remove(kv.Key, kv.Value))
-                        this_inv.add(kv.Key, kv.Value);
+            case town_path_element.path.WALK_STATE.COMPLETE:
 
-                return STAGE_RESULT.TASK_COMPLETE;
-            }
-            else
-            {
-                // Got to character we're looting - walk back to lootbox
-                walking_back = true;
-                path = new town_path_element.path(looting_path_element, path_element(looting_path_element.group));
-                return STAGE_RESULT.STAGE_UNDERWAY;
-            }
+                if (walking_back)
+                {
+                    // Made our way back - transfer items    
+                    var inv = looting.GetComponentInChildren<inventory>();
+                    var this_inv = GetComponent<chest>().inventory;
+                    foreach (var kv in inv.contents())
+                        if (inv.remove(kv.Key, kv.Value))
+                            this_inv.add(kv.Key, kv.Value);
+
+                    return STAGE_RESULT.TASK_COMPLETE;
+                }
+                else
+                {
+                    // Got to character we're looting - walk back to lootbox
+                    walking_back = true;
+                    return STAGE_RESULT.STAGE_UNDERWAY;
+                }
+
+            case town_path_element.path.WALK_STATE.UNDERWAY: return STAGE_RESULT.STAGE_UNDERWAY;
+            default: return STAGE_RESULT.TASK_FAILED;
         }
-
-        return STAGE_RESULT.STAGE_UNDERWAY;
     }
 }

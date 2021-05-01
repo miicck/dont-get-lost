@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class shop : walk_to_settler_interactable, 
+public class shop : walk_to_settler_interactable,
     IAddsToInspectionText, IPlayerInteractable, IBuildListener
 {
     public town_path_element cashier_spot;
@@ -153,14 +153,18 @@ public class shop : walk_to_settler_interactable,
         else
         {
             // Walk the path
-            if (path.walk(s.transform, s.walk_speed, s) == null)
+            switch (path.walk(s, s.walk_speed))
             {
-                stage_work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
-                if (stage_work_done > 1f)
-                {
-                    stage_work_done = 0f;
-                    path = null;
-                }
+                case town_path_element.path.WALK_STATE.COMPLETE:
+                    stage_work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
+                    if (stage_work_done > 1f)
+                    {
+                        stage_work_done = 0f;
+                        path = null;
+                    }
+                    break;
+
+                default: return STAGE_RESULT.TASK_FAILED;
             }
         }
 
@@ -195,7 +199,7 @@ public class shop : walk_to_settler_interactable,
 
                 // Go to the craft stage
                 stage = STAGE.CRAFT;
-                path = new town_path_element.path(
+                path = town_path_element.path.get(
                     materials_cupboard.GetComponentInChildren<town_path_element>(),
                     fitting.path_element(s.group)
                 );
@@ -213,7 +217,7 @@ public class shop : walk_to_settler_interactable,
 
                 // Move to the stocking stage
                 stage = STAGE.STOCK;
-                path = new town_path_element.path(
+                path = town_path_element.path.get(
                     fitting.path_element(s.group),
                     path_element(s.group)
                 );
@@ -222,7 +226,7 @@ public class shop : walk_to_settler_interactable,
 
             case STAGE.STOCK:
                 stage = STAGE.GET_MATERIALS;
-                path = new town_path_element.path(
+                path = town_path_element.path.get(
                     path_element(s.group),
                     materials_cupboard.GetComponentInChildren<town_path_element>()
                 );

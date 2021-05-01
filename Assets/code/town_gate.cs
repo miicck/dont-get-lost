@@ -376,11 +376,11 @@ public class town_gate : portal, IAddsToInspectionText
 
             // Walk a path if we have one
             if (path != null)
-            {
-                if (path.walk(c.transform, c.run_speed * local_speed_mod, c) == null)
-                    path = null;
-                return;
-            }
+                switch (path.walk(c, c.run_speed * local_speed_mod))
+                {
+                    case town_path_element.path.WALK_STATE.UNDERWAY: return;
+                    default: path = null; return;
+                }
 
             // Get the current element that I'm at
             var current_element = town_path_element.nearest_element(c.transform.position, gate.path_element.group);
@@ -408,7 +408,7 @@ public class town_gate : portal, IAddsToInspectionText
                 return;
             }
 
-            path = new town_path_element.path(current_element, target_element);
+            path = town_path_element.path.get(current_element, target_element);
         }
 
         public void on_end_control(character c) { }

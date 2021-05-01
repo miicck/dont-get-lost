@@ -362,38 +362,27 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
         public const float ARRIVE_DISTANCE = 0.25f;
 
         List<town_path_element> element_path;
-
-        public bool valid => element_path != null;
-        public int Count => element_path == null ? 0 : element_path.Count;
+        public int index { get; private set; }
 
         public town_path_element this[int i]
         {
             get
             {
+                if (i < 0) return null;
                 if (element_path == null) return null;
-                if (element_path.Count <= i) return null;
+                if (i >= element_path.Count) return null;
                 return element_path[i];
             }
         }
 
-        public void remove_at(int i)
-        {
-            if (i >= 0 && i < element_path.Count)
-                element_path.RemoveAt(i);
-            else
-                throw new System.Exception("Tried to remove out of range path element!");
-        }
-
-        public path(Vector3 v, town_path_element goal) :
-            this(nearest_element(v), goal)
-        { }
+        public int count => element_path == null ? 0 : element_path.Count;
 
         /// <summary> Find a path between the start and end elements, using 
         /// the A* algorithm. Returns null if no such path exists. </summary>
-        public path(town_path_element start, town_path_element goal)
+        public static path get(town_path_element start, town_path_element goal)
         {
-            if (start == null || goal == null) return;
-            if (start.group != goal.group) return;
+            if (start == null || goal == null) return null;
+            if (start.group != goal.group) return null;
 
             // Setup pathfinding state
             var open_set = new HashSet<town_path_element>();
@@ -415,11 +404,12 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 if (current == goal)
                 {
                     // Success - reconstruct path
-                    element_path = new List<town_path_element> { current };
+                    var p = new path();
+                    p.element_path = new List<town_path_element> { current };
                     while (came_from.TryGetValue(current, out current))
-                        element_path.Add(current);
-                    element_path.Reverse();
-                    return;
+                        p.element_path.Add(current);
+                    p.element_path.Reverse();
+                    return p;
                 }
 
                 // Close current
@@ -450,54 +440,67 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             }
 
             // Pathfinding failed
+            return null;
         }
 
-        town_path_element element_walking_towards;
-        void on_walk_towards(town_path_element next, character walking)
+        public static path get(Vector3 v, town_path_element goal) => get(nearest_element(v), goal);
+
+        // Private constructor, paths should be created with the get method
+        private path() { }
+
+        public enum WALK_STATE
         {
-            if (element_walking_towards != next)
+            COMPLETE,
+            UNDERWAY,
+            FAILED
+        }
+
+        public interface ITownWalker
+        {
+            public void on_walk_towards(town_path_element element);
+            public void on_end_walk();
+            public Transform transform { get; }
+        }
+
+        public WALK_STATE walk(ITownWalker walking, float speed, bool forwards = true)
+        {
+            // There is no path/thing walking
+            if (count == 0) return WALK_STATE.FAILED;
+            if (walking == null) return WALK_STATE.FAILED;
+
+            if (index >= element_path.Count) // Walked off the end of the path
             {
-                if (walking != null)
-                {
-                    element_walking_towards?.on_character_leave(walking);
-                    next?.on_character_enter(walking);
-                }
-                element_walking_towards = next;
+                if (forwards) return WALK_STATE.COMPLETE;
+                else index = element_path.Count - 1;
+            }
+            else if (index < 0) // Walked off the start of the path
+            {
+                if (forwards) index = 0;
+                else return WALK_STATE.COMPLETE;
             }
 
-            element_walking_towards?.on_character_move_towards(walking);
-        }
-
-        public town_path_element walk(Transform transform, float speed, character walking = null)
-        {
             // Walk the path to completion
-            var next_element = this[0];
+            var next_element = this[index];
             if (next_element == null)
             {
-                // Path has been destroyed or we've walked all of it
-                on_walk_towards(null, walking);
-                return null;
+                // Path has been destroyed
+                walking.on_end_walk();
+                return WALK_STATE.FAILED;
             }
 
             Vector3 next_point = next_element.transform.position;
-            Vector3 forward = next_point - transform.position;
+            Vector3 forward = next_point - walking.transform.position;
 
-            if (Count > 1)
+            var next_next_element = this[index + (forwards ? 1 : -1)];
+            if (next_next_element != null)
             {
-                if (this[1] == null)
-                {
-                    // Path has been destroyed
-                    on_walk_towards(null, walking);
-                    return null;
-                }
-
                 // Gradually turn towards the next direction, to make
                 // going round sharp corners look natural
-                Vector3 next_next_point = this[1].transform.position;
+                Vector3 next_next_point = next_next_element.transform.position;
                 Vector3 next_forward = next_next_point - next_point;
 
-                float w1 = (transform.position - next_point).magnitude;
-                float w2 = (transform.position - next_next_point).magnitude;
+                float w1 = (walking.transform.position - next_point).magnitude;
+                float w2 = (walking.transform.position - next_next_point).magnitude;
                 forward = forward.normalized * w1 + next_forward.normalized * w2;
                 forward /= (w1 + w2);
             }
@@ -506,24 +509,27 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             if (forward.magnitude > 10e-3f)
             {
                 // If we need to do > 90 degree turn, just do it instantly
-                if (Vector3.Dot(transform.forward, forward) < 0)
-                    transform.forward = forward;
+                if (Vector3.Dot(walking.transform.forward, forward) < 0)
+                    walking.transform.forward = forward;
                 else // Otherwise, lerp our forward vector
-                    transform.forward = Vector3.Lerp(transform.forward, forward, Time.deltaTime * 5f);
+                    walking.transform.forward = Vector3.Lerp(walking.transform.forward, forward, Time.deltaTime * 5f);
             }
 
-            on_walk_towards(next_element, walking);
-            if (utils.move_towards(transform, next_point,
+            walking.on_walk_towards(next_element);
+            if (utils.move_towards(walking.transform, next_point,
                 Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
-                remove_at(0);
+            {
+                if (forwards) ++index;
+                else --index;
+            }
 
-            return next_element;
+            return WALK_STATE.UNDERWAY;
         }
 
         public void draw_gizmos(Color color)
         {
             Gizmos.color = color;
-            for (int i = 1; i < Count; ++i)
+            for (int i = 1; i < count; ++i)
                 Gizmos.DrawLine(this[i].transform.position, this[i - 1].transform.position);
         }
     }

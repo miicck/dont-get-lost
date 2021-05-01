@@ -11,7 +11,6 @@ public class item_dispenser : MonoBehaviour, IItemCollection
     public item_accept_func accept_item = (i) => true;
 
     item_locator[] locators;
-    float time_dispensing = 0f;
 
     public bool has_items_to_dispense
     {

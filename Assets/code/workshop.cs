@@ -20,7 +20,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         public building_material building { get; private set; }
         public town_path_element.path path { get; private set; }
 
-        public bool valid => building != null && path.valid;
+        public bool valid => building != null && path != null;
     }
 
     List<dispenser> dispensers = new List<dispenser>();
@@ -125,8 +125,8 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
 
                 if (!already_found)
                 {
-                    var p = new town_path_element.path(path_element, l);
-                    if (p.valid) dispensers.Add(new dispenser(d, p));
+                    var p = town_path_element.path.get(path_element, l);
+                    if (p != null) dispensers.Add(new dispenser(d, p));
                 }
             }
 
@@ -137,8 +137,8 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
             {
                 if (found_fixtures[i]?.valid == true) continue; // Already found
                 if (b.name != required_fixtures[i].name) continue; // Not the right building
-                var path = new town_path_element.path(path_element, l);
-                if (!path.valid) continue; // Not pathable
+                var path = town_path_element.path.get(path_element, l);
+                if (path == null) continue; // Not pathable
 
                 // Found matching pathable fixture
                 found_fixtures[i] = new fixture(b, path);
