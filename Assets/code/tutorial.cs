@@ -71,7 +71,7 @@ class basic_camp_requirement : MonoBehaviour
         bool path_from_gate_to_pantry = false;
         bool planter_connected_to_pantry = false;
 
-        item_dispenser pantry = null;
+        food_dipsenser pantry = null;
         settler_field planter = null;
 
         if (player.current != null)
@@ -87,10 +87,10 @@ class basic_camp_requirement : MonoBehaviour
                         path_from_gate_to_planter = true;
                         planter = (settler_field)e.interactable;
                     }
-                    if (e.interactable is item_dispenser)
+                    if (e.interactable is food_dipsenser)
                     {
                         path_from_gate_to_pantry = true;
-                        pantry = (item_dispenser)e.interactable;
+                        pantry = (food_dipsenser)e.interactable;
                     }
                 }
                 return path_from_gate_to_bed && path_from_gate_to_planter && path_from_gate_to_pantry;
@@ -101,7 +101,7 @@ class basic_camp_requirement : MonoBehaviour
         {
             planter.output.iterate_downstream((n) =>
             {
-                if (n == pantry.input)
+                if (n == pantry.item_dispenser.input)
                 {
                     planter_connected_to_pantry = true;
                     return true;

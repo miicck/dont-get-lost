@@ -105,22 +105,11 @@ public class shop : walk_to_settler_interactable,
             {
                 // Identify the materials dispenser
                 var dispenser = e.GetComponentInParent<item_dispenser>();
-                if (dispenser != null && dispenser.mode == item_dispenser.MODE.SHOP_MATERIALS_CUPBOARD)
-                    materials_cupboard = dispenser;
+                materials_cupboard = dispenser;
             }
         }
 
-        if (!fittings_exist())
-        {
-            // Failed to setup the shop properly, reset everything
-            if (materials_cupboard != null)
-                materials_cupboard.specific_material = null;
-            return false;
-        }
-
-        // Shop setup successful, setup everything accordingly
-        materials_cupboard.specific_material = Resources.Load<item>("items/" + type_of_shop.required_material());
-        return true;
+        return fittings_exist();
     }
 
     //##############//
@@ -207,7 +196,7 @@ public class shop : walk_to_settler_interactable,
                 // Go to the craft stage
                 stage = STAGE.CRAFT;
                 path = new town_path_element.path(
-                    materials_cupboard.path_element(s.group),
+                    materials_cupboard.GetComponentInChildren<town_path_element>(),
                     fitting.path_element(s.group)
                 );
 
@@ -235,7 +224,7 @@ public class shop : walk_to_settler_interactable,
                 stage = STAGE.GET_MATERIALS;
                 path = new town_path_element.path(
                     path_element(s.group),
-                    materials_cupboard.path_element(s.group)
+                    materials_cupboard.GetComponentInChildren<town_path_element>()
                 );
 
                 while (left_to_stock > 0)

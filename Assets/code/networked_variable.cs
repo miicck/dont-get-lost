@@ -799,6 +799,8 @@ namespace networked_variables
 
         public void consume_food(food f)
         {
+            if (f == null) return;
+
             bool dirty = false;
             foreach (var g in food.all_groups)
             {

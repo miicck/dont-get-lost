@@ -315,6 +315,7 @@ GameObject:
   - component: {fileID: 6421924047134959934}
   - component: {fileID: 487338210768889780}
   - component: {fileID: 5236319225037003954}
+  - component: {fileID: 5316860410289383866}
   m_Layer: 0
   m_Name: pantry
   m_TagString: Untagged
@@ -402,11 +403,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df2018799559758408e0ed363fa51e4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skill: {fileID: 7915786716127770993, guid: 01bfa47034d0a304db1e90de81b0f234, type: 3}
   input: {fileID: 8201370757359320454}
   overflow_output: {fileID: 5186162351503079427}
-  specific_material: {fileID: 0}
-  mode: 0
+--- !u!114 &5316860410289383866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5217897828336745901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e94ff34f99b7a446a675fba5adc1441, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skill: {fileID: 7915786716127770993, guid: 01bfa47034d0a304db1e90de81b0f234, type: 3}
+  item_dispenser: {fileID: 5236319225037003954}
 --- !u!1 &5345871938004798809
 GameObject:
   m_ObjectHideFlags: 0
