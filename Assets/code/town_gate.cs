@@ -82,7 +82,7 @@ public class town_gate : portal, IAddsToInspectionText
 
     float random_attack_interval()
     {
-        return Random.Range(60, 3 * 60);
+        return Random.Range(3 * 60, 10 * 60);
     }
 
     private void Start()

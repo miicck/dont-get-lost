@@ -11,11 +11,9 @@ GameObject:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
   - component: {fileID: 37089541926742898}
-  - component: {fileID: -2883028437363985245}
-  - component: {fileID: -3675095248087102708}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
-  m_Name: autochopper
+  m_Name: wooden_path
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -59,35 +57,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  count: 2
---- !u!114 &-2883028437363985245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781572618251870278}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
   item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
-  count: 2
---- !u!114 &-3675095248087102708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781572618251870278}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 7065318412303310117, guid: d42050e3acc45e048baa8234afb2df42, type: 3}
   count: 1
 --- !u!114 &4228508087393313574
 MonoBehaviour:
@@ -102,7 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 6681906854725600606, guid: e0556ad018ecea94bb38d059b02df936, type: 3}
+  item: {fileID: 5032644002433172250, guid: b6860f66ebc45814290907d70f6686b1, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1

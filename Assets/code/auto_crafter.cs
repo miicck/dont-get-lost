@@ -13,7 +13,6 @@ public class auto_crafter : building_material, IPlayerInteractable
     }
 
     public float craft_time = 1f;
-    public string recipes_folder;
     public AudioClip custom_crafting_sound;
     public float custom_crafting_sound_volume = 1f;
     public List<GameObject> enable_when_crafting = new List<GameObject>();
@@ -49,7 +48,7 @@ public class auto_crafter : building_material, IPlayerInteractable
             return;
 
         // Load the recipes
-        recipies = Resources.LoadAll<recipe>(recipes_folder);
+        recipies = Resources.LoadAll<recipe>("recipes/autocrafters/" + name);
 
         // Setup input listeners
         foreach (var ip in inputs)

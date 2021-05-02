@@ -141,6 +141,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     void add_interactions()
     {
+        if (fly_mode) return; // Don't add interactions in fly mode
+
         List<player_interaction> all_interactions = new List<player_interaction>();
 
         // Get UI interactions (only on authority client)
@@ -820,16 +822,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             _fly_mode = value;
             cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
-            // Disable (or re-enable) ui things
-            healthbar.gameObject.SetActive(!_fly_mode);
-            toolbar_display_slot.toolbar_active = !_fly_mode;
-            compass.active = !_fly_mode;
-            if (!_fly_mode)
-            {
-                cinematic_recording.stop_playback();
-                disable_next_fall_damage = true;
-            }
-
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
@@ -837,6 +829,20 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                 if (r.transform.IsChildOf(physical_sky.transform)) continue;
                 if (r.transform.IsChildOf(water.transform)) continue;
                 r.enabled = !_fly_mode;
+            }
+
+            // Disable (or re-enable) ui things
+            healthbar.gameObject.SetActive(!_fly_mode);
+            toolbar_display_slot.toolbar_active = !_fly_mode;
+            compass.active = !_fly_mode;
+
+            if (_fly_mode)
+                interactions.continue_underway(this, force_stop: true);
+            else
+            {
+                cinematic_recording.stop_playback();
+                disable_next_fall_damage = true;
+                validate_equip();
             }
         }
     }

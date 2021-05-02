@@ -285,22 +285,28 @@ public class interaction_set
     }
 
     /// <summary> Continue underway interactions </summary>
-    public void continue_underway(player player)
+    public void continue_underway(player player, bool force_stop = false)
     {
         // Continue underway interactions
         foreach (var kv in new Dictionary<controls.BIND, started_info>(underway))
         {
-            // Don't continue interactions on same frame that they were started
-            if (Time.frameCount <= kv.Value.frame_started) continue;
+            if (!force_stop)
+            {
+                // Don't continue interactions on same frame that they were started
+                if (Time.frameCount <= kv.Value.frame_started) continue;
 
-            // Continue underway interactions
-            if (!kv.Value.interaction.continue_interaction(player)) continue;
+                // Continue underway interactions
+                if (!kv.Value.interaction.continue_interaction(player)) continue;
+            }
 
             // End finished interaction
             kv.Value.interaction.end_interaction(player);
             underway.Remove(kv.Key);
             last_frame_completed_interaction = Time.frameCount;
         }
+
+        if (force_stop)
+            tips.context_tip = "";
     }
 }
 

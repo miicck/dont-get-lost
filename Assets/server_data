@@ -72,6 +72,7 @@ inventories/workbench 1 True
 misc/player 1 True
 items/zombie_flesh 1 True
 items/window_panel 1 True
+items/wooden_path 1 True
 items/fishing_dock 1 True
 items/shop_counter 1 True
 characters/smoke_spider 1 False

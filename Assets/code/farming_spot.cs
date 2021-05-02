@@ -151,6 +151,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 
         public override bool start_interaction(player player)
         {
+            player.play_sound("sounds/click_1");
             spot.harvest();
             return true;
         }

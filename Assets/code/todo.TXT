@@ -29,18 +29,9 @@ TODO
   IExtendsNetworked cover these use cases?
 - Brewing!
 - Just make foundary stuff/see if a use for the metal becomes apparent
-- Tidy town_path_element.path code/spread load across multiple frames. When
-  tidying, consider adding a .create method that can return null for invalid start/end points
-  and update the walk method to automatically update settler.path_element/return information about
-  progress (finished/failed/underway).
+- town_path_element.path spread load across multiple frames.
 - Make settlers use tools (which wear out) for certain tasks - should constitue a use for metals etc.
-- Stop physical equip of non-equipables when exiting fly mode
-
-- Networking bugs(?) for settlers
-	- Control over character arms/legs is fighting between client+server - this is
-	  actually an artifact of the character position lerping. Putting a ceiling on
-	  how fast the arms are allowed to move has lessened this problem.
-	- Settlers sleep standing up on non-auth clients
-	- Settlers always show "no assigment" when inspected on non-auth clients
-	- Fishing dock not doing anything on non-auth clients (also doesn't check for water)
-	- Guard spots not doing anything on non-auth clients
+- Make autocrafters work with buffer chests
+- Settlers heads move over to their shoulder with time
+- Fishing dock not doing anything on non-auth clients? (also doesn't check for water)
+- Guard spots not doing anything on non-auth clients?

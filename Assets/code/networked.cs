@@ -221,7 +221,7 @@ public class networked : MonoBehaviour
     public void network_update()
     {
         if (is_client_side) return;
-        //if (this == null) return; // Been destroyed
+        if (this == null) return; // Been destroyed
 
         if (!has_authority)
         {
