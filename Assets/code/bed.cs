@@ -11,11 +11,6 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
     public List<Transform> covered_test_points = new List<Transform>();
 
     float delta_tired;
-    float time_slept;
-    int start_tiredness;
-    int last_tiredness;
-
-    int less_tired_amount => Mathf.Max(0, start_tiredness - last_tiredness);
 
     float covered_amt
     {
@@ -47,10 +42,7 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
     protected override void on_arrive(settler s)
     {
         // Reset stuff
-        time_slept = 0f;
         delta_tired = 0f;
-        start_tiredness = s.tiredness.value;
-        last_tiredness = start_tiredness;
 
         // Lie down
         s.transform.position = sleep_orientation.position;
@@ -59,9 +51,6 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        time_slept += Time.deltaTime;
-        last_tiredness = s.tiredness.value;
-
         // Only modify tiredness on authority client
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
@@ -73,7 +62,7 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
             s.tiredness.value -= 1;
         }
 
-        if (s.tiredness.value < 5 && time_slept > 5f)
+        if (s.tiredness.value < 5)
             return STAGE_RESULT.TASK_COMPLETE;
         return STAGE_RESULT.STAGE_UNDERWAY;
     }
@@ -90,11 +79,9 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
         else if (covered_amt < 0.99f) s.add_mood_effect("partially_covered_bed");
     }
 
-    public override string task_info()
+    public override string task_summary()
     {
         if (!arrived) return "Walking to bed";
-        return "Sleeping\n" +
-               "    Slept for " + Mathf.Round(time_slept) + "s\n" +
-               "    " + less_tired_amount + "% less tired";
+        return "Sleeping";
     }
 }

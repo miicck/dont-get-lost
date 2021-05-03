@@ -36,3 +36,4 @@ TODO
 - Fishing dock not doing anything on non-auth clients? (also doesn't check for water)
 - Guard spots not doing anything on non-auth clients?
 - Player skin color
+- Remove gender entirely (I think there is still an associated variable)

@@ -148,12 +148,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 text = () =>
                 {
                     return name.capitalize() + "\n" +
-                       "    " + "Combat level : " + combat_level + "\n" +
-                       "    " + "Health " + remaining_health + "/" + max_health + "\n" +
-                       "    " + Mathf.Round(tiredness.value) + "% tired\n" +
-                       "    " + hunger_percent() + "% hungry\n" +
-                       "    mood " + total_mood() + "\n" +
-                       assignement_info();
+                       "  " + "Combat level : " + combat_level + "\n" +
+                       "  " + "Health " + remaining_health + "/" + max_health + "\n" +
+                       "  " + Mathf.Round(tiredness.value) + "% tired\n" +
+                       "  " + hunger_percent() + "% hungry\n" +
+                       "  mood " + total_mood() + "\n" +
+                       assignment_summary();
                 }
             }
         };
@@ -207,13 +207,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         string left_menu_text()
         {
-            return settler.name.capitalize() + "\n\n" +
+            return settler.name.capitalize() + "\n" +
+                   "Group " + settler.group + " room " + settler.room + "\n\n" +
                    "Health " + settler.remaining_health + "/" + settler.max_health + "\n" +
                    settler.tiredness.value + "% tired\n\n" +
                    settler.nutrition_info() + "\n\n" +
-                   "Group " + settler.group + " room " + settler.room + "\n\n" +
-                   settler.mood_info() + "\n\n" +
-                   settler.assignement_info();
+                   settler.mood_info() + "\n" +
+                   settler.assignment_details();
         }
     }
 
@@ -234,20 +234,24 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return "Mood " + total_mood + "\n" + ret;
     }
 
-    public string assignement_info()
+    public string assignment_summary()
     {
-        // hehe
-        string ass_string = "No assignment.";
         var inter = interaction;
-        if (inter != null)
-        {
-            int perc = skills[inter.skill].speed_mult_perc;
-            ass_string = "Assignment: \n";
-            string ti = inter.task_info().Trim();
-            if (ti.Length > 0) ass_string += ti + "\n";
-            if (inter.skill.is_visible) ass_string += "Skill speed multiplier: " + perc + "%";
-        }
-        return ass_string;
+        if (inter == null) return "No assignment";
+
+        return "Assignment:\n" +
+            inter.task_summary().Trim() + "\n" +
+            inter.proficiency_summary(this).Trim();
+    }
+
+    public string assignment_details()
+    {
+        var inter = interaction;
+        if (inter == null) return "No assignment";
+
+        return "Assignment:\n" +
+            inter.task_summary().Trim() + "\n" +
+            inter.proficiency_breakdown(this).Trim();
     }
 
     public string nutrition_info()

@@ -10,6 +10,11 @@ public class lootbox : walk_to_settler_interactable
     town_path_element.path path;
     bool walking_back = false;
 
+    public override string task_summary()
+    {
+        return "Looting dead bodies";
+    }
+
     protected override bool ready_to_assign(settler s)
     {
         // Reset everything

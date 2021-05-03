@@ -287,10 +287,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 332e887aa10bbc64a9f79f645024c605, type: 3}
+  crafting_options_title: forging
+  workshop_task_summary: forging
   path_element: {fileID: 6169609716872315261}
+  product_output: {fileID: 5962450161299020290}
   required_fixtures:
   - {fileID: 7825793254458918144, guid: 9949fafe6c2a5d94f9d082c9962db564, type: 3}
-  product_output: {fileID: 5962450161299020290}
 --- !u!1 &7648628389212792017
 GameObject:
   m_ObjectHideFlags: 0

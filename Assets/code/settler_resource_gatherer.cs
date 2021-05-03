@@ -234,7 +234,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             return STAGE_RESULT.TASK_FAILED;
 
         // Record how long has been spent harvesting
-        work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
+        work_done += Time.deltaTime * total_proficiency_multiplier(s);
 
         if (work_done > harvested_count)
         {
@@ -250,10 +250,25 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
-    public override string task_info()
+    public override string task_summary()
     {
         if (harvesting == null) return "Harvesting nothing!!!";
         return "Harvesting " + product.product_plurals_list(harvesting.products) +
             " (" + harvested_count + "/" + max_harvests + ")";
+    }
+
+    public override List<proficiency> proficiencies(settler s)
+    {
+        var ret = base.proficiencies(s);
+        tool tool = tool.find_best_in(s.inventory, tool_type);
+        if (tool == null) return ret;
+
+        ret.Add(new proficiency
+        {
+            description = tool.display_name,
+            percent_modifier = tool.proficiency
+        });
+
+        return ret;
     }
 }

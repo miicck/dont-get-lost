@@ -12,6 +12,12 @@ public class guard_spot : walk_to_settler_interactable
         return (c.transform.position - transform.position).magnitude < 20f;
     }
 
+    public override string task_summary()
+    {
+        if (target != null) return "Defending the town from a " + target.display_name;
+        return "Defending the town";
+    }
+
     protected override bool ready_to_assign(settler s)
     {
         // Only need to defend if under attack
@@ -48,7 +54,7 @@ public class guard_spot : walk_to_settler_interactable
             if (attack_timer > 1f)
             {
                 attack_timer = 0f;
-                int damage = (int)(s.skills[skill].speed_multiplier * 10);
+                int damage = (int)(10 * total_proficiency_multiplier(s));
                 projectile.create(s.transform.position + Vector3.up * s.height_scale.value * 1.5f, target, damage: damage);
             }
             s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;

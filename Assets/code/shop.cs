@@ -123,7 +123,7 @@ public class shop : walk_to_settler_interactable,
     int stock_crafted = 0;
     int left_to_stock = 0;
 
-    public override string task_info() { return type_of_shop?.task_info(stage); }
+    public override string task_summary() { return type_of_shop?.task_summary(stage); }
 
     protected override void on_arrive(settler s)
     {
@@ -156,7 +156,7 @@ public class shop : walk_to_settler_interactable,
             switch (path.walk(s, s.walk_speed))
             {
                 case town_path_element.path.WALK_STATE.COMPLETE:
-                    stage_work_done += Time.deltaTime * s.skills[skill].speed_multiplier;
+                    stage_work_done += Time.deltaTime * total_proficiency_multiplier(s);
                     if (stage_work_done > 1f)
                     {
                         stage_work_done = 0f;
@@ -478,7 +478,7 @@ public class shop : walk_to_settler_interactable,
         public abstract string[] items_bought();
         public abstract string inspection_text();
         public abstract string required_material();
-        public abstract string task_info(STAGE stage);
+        public abstract string task_summary(STAGE stage);
     }
 
     public class carpenter : shop_type
@@ -521,14 +521,14 @@ public class shop : walk_to_settler_interactable,
             };
         }
 
-        public override string task_info(STAGE stage)
+        public override string task_summary(STAGE stage)
         {
             switch (stage)
             {
                 case STAGE.GET_MATERIALS:
-                    return "Getting logs needed for carpentry.";
+                    return "Getting logs needed for carpentry";
                 case STAGE.CRAFT:
-                    return "Carrying out carpentry.";
+                    return "Carrying out carpentry";
                 case STAGE.STOCK:
                     return "Stocking carpenters shop";
                 default:
@@ -579,16 +579,16 @@ public class shop : walk_to_settler_interactable,
             };
         }
 
-        public override string task_info(STAGE stage)
+        public override string task_summary(STAGE stage)
         {
             switch (stage)
             {
                 case STAGE.GET_MATERIALS:
-                    return "Fueling the furnace.";
+                    return "Fueling the furnace";
                 case STAGE.CRAFT:
-                    return "Smithing.";
+                    return "Smithing";
                 case STAGE.STOCK:
-                    return "Stocking the blacksmith's shop.";
+                    return "Stocking the blacksmith's shop";
                 default:
                     return "Smithing";
             }

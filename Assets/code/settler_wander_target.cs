@@ -23,4 +23,9 @@ public class settler_wander_target : settler_interactable
     {
         transform.position = found_element.transform.position;
     }
+
+    public override string task_summary()
+    {
+        return "wandering";
+    }
 }

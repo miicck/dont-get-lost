@@ -109,6 +109,11 @@ public class tool_rack : walk_to_settler_interactable
     // walk_to_settler_interactable //
     //##############################//
 
+    public override string task_summary()
+    {
+        return "Getting tools";
+    }
+
     Dictionary<tool.TYPE, tool> tools_needed_by(settler set)
     {
         var ret = new Dictionary<tool.TYPE, tool>();

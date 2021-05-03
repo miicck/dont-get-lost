@@ -65,6 +65,12 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     float work_done;
 
+    public override string task_summary()
+    {
+        var itm = minable_items[selected_option];
+        return "Mining " + itm.plural;
+    }
+
     protected override bool ready_to_assign(settler s)
     {
         return on_valid_ground;
@@ -78,7 +84,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        float delta_work = Time.deltaTime * s.skills[skill].speed_multiplier;
+        float delta_work = Time.deltaTime * total_proficiency_multiplier(s);
 
         if (work_done + delta_work >= 1f && work_done < 1f)
         {
@@ -95,6 +101,21 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
         work_done += delta_work;
         return STAGE_RESULT.STAGE_UNDERWAY;
+    }
+
+    public override List<proficiency> proficiencies(settler s)
+    {
+        var ret = base.proficiencies(s);
+        tool tool = tool.find_best_in(s.inventory, tool.TYPE.PICKAXE);
+        if (tool == null) return ret;
+
+        ret.Add(new proficiency
+        {
+            description = tool.display_name,
+            percent_modifier = tool.proficiency
+        });
+
+        return ret;
     }
 
     //##############//

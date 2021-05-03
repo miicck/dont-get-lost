@@ -28,8 +28,7 @@ public abstract class settler_interactable : has_path_elements,
     protected virtual void on_assign(settler s) { }
     protected virtual STAGE_RESULT on_interact(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
     protected virtual void on_unassign(settler s) { }
-
-    public virtual string task_info() { return name; }
+    public abstract string task_summary();
     public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
     float delta_xp = 0;
@@ -116,6 +115,73 @@ public abstract class settler_interactable : has_path_elements,
     {
         // Unassign the settler
         settler_id.value = -1;
+    }
+
+    //#############//
+    // Proficiency //
+    //#############//
+
+    public struct proficiency
+    {
+        public int percent_modifier;
+        public string description;
+    }
+
+    public virtual List<proficiency> proficiencies(settler s)
+    {
+        var ret = new List<proficiency>();
+        ret.Add(new proficiency
+        {
+            percent_modifier = s.skills[skill].proficiency_modifier,
+            description = "skill level"
+        });
+
+        int total_mood = s.total_mood();
+        if (total_mood != 0)
+            ret.Add(new proficiency
+            {
+                percent_modifier = total_mood * 5,
+                description = "mood"
+            });
+
+        return ret;
+    }
+
+    public int total_proficiency(settler s)
+    {
+        int ret = 0;
+        foreach (var sm in proficiencies(s))
+            ret += sm.percent_modifier;
+        if (ret < -100) return -100;
+        return ret;
+    }
+
+    public float total_proficiency_multiplier(settler s)
+    {
+        return 1f + total_proficiency(s) * 0.01f;
+    }
+
+    public string proficiency_summary(settler s)
+    {
+        if (!skill.is_visible) return "";
+
+        int total = total_proficiency(s);
+        return "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
+    }
+
+    public string proficiency_breakdown(settler s)
+    {
+        if (!skill.is_visible) return "";
+
+        int total = total_proficiency(s);
+        string ret = "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
+
+        foreach (var sm in proficiencies(s))
+            ret += "\n  " + sm.description +
+                (sm.percent_modifier >= 0 ? " +" : " ") +
+                sm.percent_modifier + "%";
+
+        return ret;
     }
 
     //########################//

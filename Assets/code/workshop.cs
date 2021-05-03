@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class workshop : settler_interactable_options, IAddsToInspectionText
 {
+    public string crafting_options_title = "crafting";
+    public float base_craft_time = 10f;
     new public town_path_element path_element;
     public item_output product_output;
     public List<building_material> required_fixtures;
@@ -57,7 +59,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
     recipe current_recipe => recipes[selected_option];
 
     protected override int options_count => recipes.Length;
-    protected override string options_title => "Forging";
+    protected override string options_title => crafting_options_title;
 
     protected override option get_option(int i)
     {
@@ -66,6 +68,13 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
             text = recipes[i].craft_string(),
             sprite = recipes[i].products[0].sprite()
         };
+    }
+
+    public override string task_summary()
+    {
+        string prod = current_recipe.products[0].product_name();
+        string loc = GetComponentInParent<building_material>().display_name;
+        return "making " + utils.a_or_an(prod) + " " + prod + " at " + utils.a_or_an(loc) + " " + loc;
     }
 
     protected override bool ready_to_assign(settler s)
@@ -122,12 +131,12 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         {
             s.look_at(transform.position);
             work_anim = new settler_animations.simple_work(
-                s, 1f / s.skills[skill].speed_multiplier);
+                s, 1f / total_proficiency_multiplier(s));
         }
         work_anim.play();
 
-        timer += Time.deltaTime;
-        if (timer < 1) return STAGE_RESULT.STAGE_UNDERWAY;
+        timer += Time.deltaTime * total_proficiency_multiplier(s);
+        if (timer < base_craft_time) return STAGE_RESULT.STAGE_UNDERWAY;
 
         foreach (var p in current_recipe.products)
             p.create_in_node(product_output, track_production: true);

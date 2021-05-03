@@ -62,7 +62,7 @@ public class food_dipsenser : walk_to_settler_interactable
             return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
-    public override string task_info()
+    public override string task_summary()
     {
         return "Getting food";
     }

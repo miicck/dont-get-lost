@@ -24,8 +24,7 @@ public class skill : MonoBehaviour
         public proficiency(int xp) { this.xp = xp; }
         public int xp { get; private set; }
         public int level => xp_to_level(xp);
-        public float speed_multiplier => xp_to_speed_multiplier(xp);
-        public int speed_mult_perc => (int)(speed_multiplier * 100);
+        public int proficiency_modifier => xp_to_proficiency_mod(xp);
     };
 
     //##############//
@@ -56,14 +55,14 @@ public class skill : MonoBehaviour
         return Mathf.Min((int)(Mathf.Sqrt(t / beta + aoverb * aoverb) - aoverb), MAX_LEVEL);
     }
 
-    public static float xp_to_speed_multiplier(int xp)
+    static int xp_to_proficiency_mod(int xp)
     {
         float frac_xp = xp / (float)level_to_xp(MAX_LEVEL);
-        return 1 + 4f * Mathf.Sqrt(frac_xp);
+        return (int)(400 * Mathf.Sqrt(frac_xp));
     }
 
     [test_method]
-    public static bool test_xp_per_level()
+    static bool test_xp_per_level()
     {
         for (int x = 0; x <= level_to_xp(99); ++x)
         {
