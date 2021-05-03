@@ -157,16 +157,20 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     protected override void Start()
     {
         base.Start();
-
-        // Wait for a little bit after chunk generation to load harvesting objects
-        chunk.add_generation_listener(transform, (c) =>
-        {
-            Invoke("load_harvesting", 1);
-        });
+        load_harvesting();
     }
 
     void load_harvesting()
     {
+        if (!chunk.generation_complete(search_origin.position, search_radius + 16f))
+        {
+            // Search range not yet generated, wait for generation to complete
+            // (note we test quite a bit further than the search_radius in case
+            //  objects from neighbouring chunks overhang into this chunk)
+            Invoke("load_harvesting", 1);
+            return;
+        }
+
         // Search for harvestable objects within range
         harvest_options = new List<harvestable>();
         foreach (var c in Physics.OverlapSphere(search_origin.position, search_radius))
@@ -206,6 +210,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
     public override string added_inspection_text()
     {
+        if (harvest_options == null) return "Waiting for chunks to generate";
         return base.added_inspection_text() + "\n" +
          ((harvesting == null) ? "Nothing in harvest range." :
          "Harvesting " + product.product_plurals_list(harvesting.products));

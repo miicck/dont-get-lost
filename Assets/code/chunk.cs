@@ -138,6 +138,39 @@ public class chunk : MonoBehaviour
         return at(position, generated_only: true) != null;
     }
 
+    /// <summary> Returns true if all of the chunks within the given radius are fully generated.</summary>
+    public static bool generation_complete(Vector3 position, float radius)
+    {
+        if (radius < 0) throw new System.Exception("radius should be +ve!");
+
+        // Work out the range of chunks to consider
+        int max_chunk = 1 + Mathf.FloorToInt(radius / SIZE);
+
+        // Get the coordinates of the centre chunk/of circle centred at position
+        Vector2 circle_centre = new Vector2(position.x, position.z);
+        var centre_chunk = coords(position);
+
+        // Figure out which chunks intersect with the circle
+        for (int dx = -max_chunk; dx <= max_chunk; ++dx)
+            for (int dz = -max_chunk; dz <= max_chunk; ++dz)
+            {
+                int x = centre_chunk[0] + dx;
+                int z = centre_chunk[1] + dz;
+                Vector2 chunk_xz = new Vector2(x + 0.5f, z + 0.5f) * SIZE;
+
+                // Doesn't intersect
+                if (!utils.circle_intersects_square(circle_centre, radius, chunk_xz, SIZE, SIZE)) continue;
+                
+                // Already generated
+                if (at(x, z, generated_only: true) != null) continue;
+                
+                // Intersects, but is not generated => generation not complete
+                return false;
+            }
+
+        return true;
+    }
+
     // Returns the chunk at the given chunk coordinates
     public static chunk at(int x_chunk, int z_chunk, bool generated_only = false)
     {

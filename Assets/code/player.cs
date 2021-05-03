@@ -1532,11 +1532,15 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     void add_controller()
     {
-        var c = chunk.at(transform.position, true);
-        if (c == null)
+#       if UNITY_EDITOR
+        // Perform a shorter-range generation test in the editor
+        if (chunk.at(transform.position, generated_only: true) == null)
+#       else
+        if (!chunk.generation_complete(transform.position, chunk.SIZE / 4f))
+#       endif
         {
-            // Wait until the chunk has generated
-            Invoke("add_controller", 0.1f);
+            // Wait until nearby chunks have generated
+            Invoke("add_controller", 0.5f);
             return;
         }
 

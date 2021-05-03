@@ -11,7 +11,7 @@ public static class load_balancing
     static float smoothed_dt = 1 / (float)TARGET_FPS;
     static int smoothed_fps = TARGET_FPS;
     static int extra_fps => Mathf.Max(0, smoothed_fps - TARGET_FPS);
-    static int max_iter => 1 + extra_fps * ITER_PER_EXTRA_FPS;
+    static int max_iter => 4 + extra_fps * ITER_PER_EXTRA_FPS;
 
     /// <summary> Update the timing information needed to perform load balancing. </summary>
     public static void update()
