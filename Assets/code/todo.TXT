@@ -34,3 +34,5 @@ TODO
 - Guard spots not doing anything on non-auth clients?
 - Player skin color
 - Remove gender entirely (I think there is still an associated variable)
+- Add cowering spots to various things (beds)
+- Increase sawmill crafting time

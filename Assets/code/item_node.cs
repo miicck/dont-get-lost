@@ -8,7 +8,9 @@ using UnityEngine;
 public interface IDontBlockItemLogisitcs { }
 
 /// <summary> A node in the item logistics network. </summary>
-public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipableCallback, IAddsToInspectionText
+public abstract class item_node : MonoBehaviour,
+    INonBlueprintable, INonEquipableCallback,
+    IAddsToInspectionText, IItemCollection
 {
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;
@@ -96,6 +98,9 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> Releases the first item from the from this node. </summary>
     public item release_next_item() { return release_item(0); }
 
+    public item peek_item(int i) { return i < items.Count && i >= 0 ? items[i] : null; }
+    public item peek_next_item() { return peek_item(0); }
+
     /// <summary> Releases all items from this node. </summary>
     public List<item> relesae_all_items()
     {
@@ -162,6 +167,39 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
             path.transform.localScale = new Vector3(0.02f, 0.02f, delta.magnitude);
         }
     }
+
+    //#################//
+    // IItemCollection //
+    //#################//
+
+    public Dictionary<item, int> contents()
+    {
+        Dictionary<item, int> ret = new Dictionary<item, int>();
+        foreach (var i in items)
+        {
+            var itm = Resources.Load<item>("items/" + i.name);
+            if (ret.ContainsKey(itm)) ret[itm] += 1;
+            else ret[itm] = 1;
+        }
+        return ret;
+    }
+
+    public bool add(item i, int count)
+    {
+        throw new System.Exception("Please use the add_item method for item nodes!");
+    }
+
+    public bool remove(item i, int count)
+    {
+        for (int n = items.Count - 1; n >= 0; --n)
+            if (items[n].name == i.name)
+            {
+                Destroy(release_item(n).gameObject);
+                if (--count <= 0) return true;
+            }
+        return false;
+    }
+
 
     //########//
     // INPUTS //

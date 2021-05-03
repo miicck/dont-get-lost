@@ -17,104 +17,110 @@ public class auto_crafter : building_material, IPlayerInteractable
     public float custom_crafting_sound_volume = 1f;
     public List<GameObject> enable_when_crafting = new List<GameObject>();
 
-    recipe[] recipies;
+    float crafting_time_left = -1f;
 
-    simple_item_collection pending_inputs = new simple_item_collection();
-    simple_item_collection pending_outputs = new simple_item_collection();
+    recipe[] recipies;
 
     item_input[] inputs => GetComponentsInChildren<item_input>();
     item_output[] outputs => GetComponentsInChildren<item_output>();
 
-    /// <summary> The recipe that is currently being crafted. </summary>
-    recipe currently_crafting
+    recipe.checklist ingredients
     {
-        get => _currently_crafting;
-        set
+        get
         {
-            _currently_crafting = value;
-
-            if (value != null) Invoke("complete_crafting", craft_time);
-
-            foreach (var ec in enable_when_crafting)
-                ec.SetActive(value != null);
+            if (_ingredients == null)
+                _ingredients = new recipe.checklist(recipies[chosen_recipe.value]);
+            return _ingredients;
         }
+        set => _ingredients = value;
     }
-    recipe _currently_crafting;
+    recipe.checklist _ingredients;
 
-    void Start()
+    simple_item_collection next_crafted_products;
+
+    private void Update()
     {
-        // Don't start the crafting updates if this isn't the placed version
-        if (is_blueprint || is_equpped)
-            return;
-
-        // Load the recipes
-        recipies = Resources.LoadAll<recipe>("recipes/autocrafters/" + name);
-
+        // Accept new inputs that complete the recipe
         // Setup input listeners
         foreach (var ip in inputs)
-            ip.add_on_change_listener(() =>
-            {
-                // Put all inputs intp pending inputs
-                foreach (var itm in ip.relesae_all_items())
-                {
-                    pending_inputs.add(itm, 1);
-                    Destroy(itm.gameObject);
-                }
-
-                // Chosen recipe is out of range
-                if (chosen_recipe.value < 0 ||
-                    chosen_recipe.value >= recipies.Length)
-                    return;
-
-                // See if we can craft the chosen recipe
-                var rec = recipies[chosen_recipe.value];
-                if (rec.can_craft(pending_inputs))
-                    currently_crafting = rec;
-            });
-
-        // Initially, not crafting anything
-        currently_crafting = null;
-    }
-
-    void complete_crafting()
-    {
-        if (currently_crafting == null)
-            return;
-
-        if (currently_crafting.craft(pending_inputs, pending_outputs))
         {
-            // Crafting success
-            int output_number = -1;
-            while (true)
+            if (ip.item_count == 0) continue;
+
+            // Search inputs for useful ingredients
+            bool complete = false;
+            switch (ingredients.try_check_off(ip.peek_next_item()))
             {
-                // Nothing to output to
-                if (outputs.Length == 0) break;
+                case recipe.checklist.CHECK_OFF_RESULT.NOT_ADDED:
+                    break;
 
-                // Get the next item to output
-                var itm = pending_outputs.remove_first();
-                if (itm == null) break; // No items left
+                case recipe.checklist.CHECK_OFF_RESULT.ADDED:
+                    Destroy(ip.release_next_item().gameObject);
+                    break;
 
-                // Cycle items to sequential outputs
-                output_number = (output_number + 1) % outputs.Length;
-                var op = outputs[output_number];
+                case recipe.checklist.CHECK_OFF_RESULT.NOT_NEEDED:
+                    Destroy(ip.release_next_item().gameObject);
+                    break;
 
-                // Track production
-                production_tracker.register_product(itm);
+                case recipe.checklist.CHECK_OFF_RESULT.ALREADY_COMPLETE:
+                    complete = true;
+                    break;
 
-                // Create the item in the output
-                op.add_item(create(itm.name,
-                            op.transform.position,
-                            op.transform.rotation,
-                            logistics_version: true));
+                case recipe.checklist.CHECK_OFF_RESULT.ADDED_AND_COMPLETED:
+                    Destroy(ip.release_next_item().gameObject);
+                    complete = true;
+                    break;
+            }
+
+            // Still crafting
+            if (crafting_time_left > 0) continue;
+
+            if (complete)
+            {
+                next_crafted_products = new simple_item_collection();
+                if (ingredients.craft_to(next_crafted_products))
+                {
+                    ingredients.clear();
+                    crafting_time_left = craft_time;
+                }
+                else throw new System.Exception("This should not be possible!");
             }
         }
 
-        // If we can immedately craft again, do so, otherwise
-        // set the currently crafting recipe to null
-        if (currently_crafting.can_craft(pending_inputs))
-            Invoke("complete_crafting", craft_time);
-        else
-            currently_crafting = null;
+        // If crafting_time_left > 0, then we are currently crafting
+        foreach (var e in enable_when_crafting)
+            e.SetActive(crafting_time_left > 0);
+
+        // Not crafting anything
+        if (crafting_time_left < 0) return;
+
+        // Continue crafting
+        crafting_time_left -= Time.deltaTime;
+        if (crafting_time_left > 0) return; // Crafting not complete
+
+        // Crafting success
+        int output_number = -1;
+        while (true)
+        {
+            // Nothing to output to
+            if (outputs.Length == 0) break;
+
+            // Get the next item to output
+            var itm = next_crafted_products.remove_first();
+            if (itm == null) break; // No items left
+
+            // Cycle items to sequential outputs
+            output_number = (output_number + 1) % outputs.Length;
+            var op = outputs[output_number];
+
+            // Track production
+            production_tracker.register_product(itm);
+
+            // Create the item in the output
+            op.add_item(create(itm.name,
+                        op.transform.position,
+                        op.transform.rotation,
+                        logistics_version: true));
+        }
     }
 
     //############//
@@ -127,7 +133,16 @@ public class auto_crafter : building_material, IPlayerInteractable
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
+
+        // Load the recipes
+        recipies = Resources.LoadAll<recipe>("recipes/autocrafters/" + name);
+
         chosen_recipe = new networked_variables.net_int();
+
+        chosen_recipe.on_change = () =>
+        {
+            ingredients = new recipe.checklist(recipies[chosen_recipe.value]);
+        };
     }
 
     //#####################//
@@ -146,29 +161,13 @@ public class auto_crafter : building_material, IPlayerInteractable
                 {
                     string info = display_name + "\n";
 
-                    var pi = pending_inputs.contents();
-                    var po = pending_outputs.contents();
+                    info += "Added ingredients " + ingredients.stored.contents_string() + "\n";
 
-                    if (pi.Count > 0)
+                    if (crafting_time_left > 0)
                     {
-                        info += "Pending inputs:\n";
-                        foreach (var kv in pi)
-                            info += "    " + kv.Value + " " +
-                                kv.Key.singular_or_plural(kv.Value) + "\n";
-                    }
-
-                    if (po.Count > 0)
-                    {
-                        info += "Pending outputs:\n";
-                        foreach (var kv in po)
-                            info += "    " + kv.Value + " " +
-                                kv.Key.singular_or_plural(kv.Value) + "\n";
-                    }
-
-                    if (currently_crafting != null)
-                    {
-                        info += "Currently crafting " +
-                            product.product_plurals_list(currently_crafting.products) + "\n";
+                        float completion = 100f * (1f - crafting_time_left / craft_time);
+                        info += "Crafting " + next_crafted_products.contents_string() +
+                                " (" + completion.ToString("F0") + "%)";
                     }
 
                     return info.Trim();

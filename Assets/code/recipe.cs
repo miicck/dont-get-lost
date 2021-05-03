@@ -41,14 +41,17 @@ public class recipe : MonoBehaviour
     /// If so, the dictionary <paramref name="to_use"/> will contain the
     /// ingredients/quantities that can be used from the collection to
     /// fulfil the recipe. </summary>
-    public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use)
+    public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use, bool maximal_use = false)
     {
         to_use = new Dictionary<string, int>();
+        bool complete = true;
         foreach (var ing in ingredients)
             if (!ing.find(i, ref to_use))
-                return false;
-
-        return true;
+            {
+                complete = false;
+                if (!maximal_use) return false;
+            }
+        return complete;
     }
 
     /// <summary> Check if this recipe is craftable from the given item collections.
@@ -57,13 +60,15 @@ public class recipe : MonoBehaviour
     /// fulfil the recipe. Note: this only distributes distinct ingredients
     /// across multiple collections; indivudual ingredients must be satisfied
     /// by an individual collection. </summary>
-    public bool can_craft(IEnumerable<IItemCollection> ics, out Dictionary<IItemCollection, Dictionary<string, int>> to_use)
+    public bool can_craft(IEnumerable<IItemCollection> ics,
+        out Dictionary<IItemCollection, Dictionary<string, int>> to_use, bool maximal_use = false)
     {
         // Initialise the dictionary-of-dictionaries
         to_use = new Dictionary<IItemCollection, Dictionary<string, int>>();
         foreach (var i in ics) to_use[i] = new Dictionary<string, int>();
 
         // Check for each ingredient
+        bool complete = true;
         foreach (var ing in ingredients)
         {
             // Search each collection for this ingredient
@@ -77,10 +82,13 @@ public class recipe : MonoBehaviour
                     break;
                 }
             }
-            if (!found) return false;
+            if (!found)
+            {
+                complete = false;
+                if (!maximal_use) return false;
+            }
         }
-
-        return true;
+        return complete;
     }
 
     public bool can_craft(IItemCollection i)
@@ -244,6 +252,68 @@ public class recipe : MonoBehaviour
         }
     }
     static RectTransform _recipe_book;
+
+    public class checklist
+    {
+        public recipe recipe { get; private set; }
+        public simple_item_collection stored { get; private set; }
+
+        public checklist(recipe recipe)
+        {
+            stored = new simple_item_collection();
+            this.recipe = recipe;
+        }
+
+        public enum CHECK_OFF_RESULT
+        {
+            ALREADY_COMPLETE,
+            NOT_NEEDED,
+            NOT_ADDED,
+            ADDED,
+            ADDED_AND_COMPLETED
+        }
+
+        public CHECK_OFF_RESULT try_check_off(item i)
+        {
+            // Check if this item can't be used for the recipe
+            simple_item_collection needed_check = new simple_item_collection();
+            needed_check.add(i, 1);
+            recipe.can_craft(needed_check, out Dictionary<string, int> to_use, maximal_use: true);
+            if (to_use.Count == 0) return CHECK_OFF_RESULT.NOT_NEEDED;
+
+            if (recipe.can_craft(stored, out Dictionary<string, int> in_use_before, maximal_use: true))
+                return CHECK_OFF_RESULT.ALREADY_COMPLETE; // I don't need any more items    
+
+            stored.add(i, 1);
+            if (recipe.can_craft(stored, out Dictionary<string, int> in_use_after, maximal_use: true))
+                return CHECK_OFF_RESULT.ADDED_AND_COMPLETED; // I completed the recipe
+
+            if (in_use_before.TryGetValue(i.name, out int i_used_before))
+            {
+                if (!in_use_after.TryGetValue(i.name, out int i_used_after))
+                    throw new System.Exception("This should not be possible");
+
+                if (i_used_after > i_used_before)
+                    return CHECK_OFF_RESULT.ADDED; // I added to the useful item total
+            }
+            else if (in_use_after.ContainsKey(i.name))
+                return CHECK_OFF_RESULT.ADDED; // I am a new ingredient that was useful for the recipe
+
+            // I was not useful, remove me from the collection
+            stored.remove(i, 1);
+            return CHECK_OFF_RESULT.NOT_ADDED;
+        }
+
+        public bool craft_to(IItemCollection col)
+        {
+            return recipe.craft(stored, col);
+        }
+
+        public void clear()
+        {
+            stored = new simple_item_collection();
+        }
+    }
 }
 
 public abstract class ingredient : MonoBehaviour

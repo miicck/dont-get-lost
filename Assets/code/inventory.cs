@@ -90,7 +90,7 @@ public static class item_collection_extensions
 
 /// <summary> A simple, dictionary-based
 /// implementation of an item collection. </summary>
-class simple_item_collection : IItemCollection
+public class simple_item_collection : IItemCollection
 {
     Dictionary<string, int> items = new Dictionary<string, int>();
 
@@ -125,6 +125,22 @@ class simple_item_collection : IItemCollection
             return found == count;
         }
         else return false;
+    }
+
+    public string contents_string()
+    {
+        string ret = "";
+        int i = 0;
+        var cts = contents();
+        foreach (var kv in cts)
+        {
+            if (kv.Value > 1) ret += kv.Value + " " + kv.Key.plural;
+            else if (kv.Value == 1) ret += "1 " + kv.Key.display_name;
+            if (i < cts.Count - 2) ret += ", ";
+            else if (i == cts.Count - 2) ret += " and ";
+            ++i;
+        }
+        return ret;
     }
 }
 
