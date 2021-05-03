@@ -53,4 +53,9 @@ public class tool : melee_weapon
 
     /// <summary> The quality of this tool. </summary>
     public QUALITY quality;
+
+    /// <summary> The point that the tool hangs from in racks. </summary>
+    public Transform hanging_point;
+
+    public Vector3 hanging_point_offset => transform.position - hanging_point.position;
 }

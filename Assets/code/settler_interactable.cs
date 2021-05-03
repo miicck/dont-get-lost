@@ -36,6 +36,12 @@ public abstract class settler_interactable : has_path_elements,
 
     public void interact(settler s)
     {
+        if (this == null)
+        {
+            unassign();
+            return;
+        }
+
         if (s.has_authority)
         {
             // Gain XP

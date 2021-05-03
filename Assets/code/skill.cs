@@ -157,6 +157,9 @@ public class skill : MonoBehaviour
         {
             base.OnInspectorGUI();
 
+            if (UnityEngine.GUILayout.Button("Refresh"))
+                _all = null;
+
             UnityEditor.EditorGUILayout.TextField("Default priority order:");
             for (int i = 0; i < all.Length; ++i)
             {

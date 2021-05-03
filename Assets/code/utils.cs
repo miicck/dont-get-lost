@@ -735,6 +735,16 @@ public static class utils
         return mean + stdDev * Mathf.Pow(-2f * Mathf.Log(u1), 0.5f) * Mathf.Cos(2 * Mathf.PI * u2);
     }
 
+    public static Vector3 nearest_point_on_line(Vector3 point, Vector3 line_start, Vector3 line_direction)
+    {
+        // Rename things
+        Vector3 a = line_start;
+        Vector3 n = line_direction.normalized;
+        Vector3 p = point;
+
+        return a + Vector3.Dot(p - a, n) * n;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

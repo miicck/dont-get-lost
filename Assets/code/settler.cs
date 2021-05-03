@@ -494,9 +494,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public static int settler_count => settlers.Count;
 
-    public static HashSet<settler> all_settlers()
+    public static List<settler> all_settlers()
     {
-        return new HashSet<settler>(settlers);
+        var ret = new List<settler>(settlers);
+        ret.Sort((a, b) => a.name.CompareTo(b.name));
+        return ret;
     }
 
     public static HashSet<settler> get_settlers_by_group(int group)

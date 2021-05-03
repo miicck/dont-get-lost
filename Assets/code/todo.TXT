@@ -35,3 +35,4 @@ TODO
 - Settlers heads move over to their shoulder with time
 - Fishing dock not doing anything on non-auth clients? (also doesn't check for water)
 - Guard spots not doing anything on non-auth clients?
+- Player skin color
