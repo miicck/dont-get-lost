@@ -37,25 +37,8 @@ public abstract class item_node : MonoBehaviour,
 
     /// <summary> The items this node point is currently responsible for. </summary>
     List<item> items = new List<item>();
-    public int item_count
-    {
-        get
-        {
-            remove_deleted_items();
-            return items.Count;
-        }
-    }
-
-    protected item get_item(int i)
-    {
-        remove_deleted_items();
-        return items[i];
-    }
-
-    void remove_deleted_items()
-    {
-        items.RemoveAll((i) => i == null);
-    }
+    public int item_count => items.Count;
+    protected item get_item(int i) => items[i];
 
     /// <summary> Add an item to this node. </summary>
     public void add_item(item i)

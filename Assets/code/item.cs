@@ -40,8 +40,7 @@ public class item : networked, IPlayerInteractable
 
         // Remove components that are incompatible with the logistics version
         foreach (var c in GetComponentsInChildren<Component>())
-            if (c is INonLogistical)
-                Destroy(c);
+            if (c is INonLogistical) Destroy(c);
     }
 
     public bool is_logistics_version { get; private set; }
