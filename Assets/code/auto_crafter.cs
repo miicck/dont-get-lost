@@ -36,68 +36,59 @@ public class auto_crafter : building_material, IPlayerInteractable
     }
     recipe.checklist _ingredients;
 
-    simple_item_collection next_crafted_products;
-
-    private void Update()
+    void process_inputs()
     {
+        foreach (var e in enable_when_crafting)
+            e.SetActive(false);
+
         // Accept new inputs that complete the recipe
-        // Setup input listeners
         foreach (var ip in inputs)
         {
+            // No items at this input
             if (ip.item_count == 0) continue;
 
-            // Search inputs for useful ingredients
-            bool complete = false;
+            // Attempt to complete the recipe with the item from this input
             switch (ingredients.try_check_off(ip.peek_next_item()))
             {
-                case recipe.checklist.CHECK_OFF_RESULT.NOT_ADDED:
+                // Recipe is complete, wait until ingredients
+                // have been used to pass judgement
+                case recipe.checklist.CHECK_OFF_RESULT.ALREADY_COMPLETE:
                     break;
 
+                // Input was used to partially complete the recipe
+                // => suck it into the machine
                 case recipe.checklist.CHECK_OFF_RESULT.ADDED:
                     Destroy(ip.release_next_item().gameObject);
                     break;
 
-                case recipe.checklist.CHECK_OFF_RESULT.NOT_NEEDED:
-                    Destroy(ip.release_next_item().gameObject);
-                    break;
-
-                case recipe.checklist.CHECK_OFF_RESULT.ALREADY_COMPLETE:
-                    complete = true;
-                    break;
-
+                // Input was used to complete the recipe
+                // => suck it into the machine and mark recipe as complete
                 case recipe.checklist.CHECK_OFF_RESULT.ADDED_AND_COMPLETED:
                     Destroy(ip.release_next_item().gameObject);
-                    complete = true;
+                    crafting_time_left = craft_time;
+                    break;
+
+                // All other cases - reject the item
+                default:
+                    item_rejector.create(ip.release_next_item());
                     break;
             }
-
-            // Still crafting
-            if (crafting_time_left > 0) continue;
-
-            if (complete)
-            {
-                next_crafted_products = new simple_item_collection();
-                if (ingredients.craft_to(next_crafted_products))
-                {
-                    ingredients.clear();
-                    crafting_time_left = craft_time;
-                }
-                else throw new System.Exception("This should not be possible!");
-            }
         }
+    }
 
-        // If crafting_time_left > 0, then we are currently crafting
+    void continue_crafting()
+    {
         foreach (var e in enable_when_crafting)
-            e.SetActive(crafting_time_left > 0);
-
-        // Not crafting anything
-        if (crafting_time_left < 0) return;
+            e.SetActive(true);
 
         // Continue crafting
         crafting_time_left -= Time.deltaTime;
         if (crafting_time_left > 0) return; // Crafting not complete
 
         // Crafting success
+        ingredients.craft_to(outputs[0], track_production: true);
+
+        /*
         int output_number = -1;
         while (true)
         {
@@ -121,6 +112,15 @@ public class auto_crafter : building_material, IPlayerInteractable
                         op.transform.rotation,
                         logistics_version: true));
         }
+        */
+    }
+
+    private void Update()
+    {
+        // If crafting_time_left >= 0, then we are crafting
+        // otherwise, we are processing inputs.
+        if (crafting_time_left < 0) process_inputs();
+        else continue_crafting();
     }
 
     //############//
@@ -159,15 +159,19 @@ public class auto_crafter : building_material, IPlayerInteractable
                 sprite = () => sprite,
                 text = () =>
                 {
-                    string info = display_name + "\n";
-
-                    info += "Added ingredients " + ingredients.stored.contents_string() + "\n";
+                    string info = display_name.capitalize() + "\n";
 
                     if (crafting_time_left > 0)
                     {
+                        info += "Crafting " +
+                            product.product_quantities_list(ingredients.recipe.products) + " from " +
+                            ingredients.stored.contents_string();
                         float completion = 100f * (1f - crafting_time_left / craft_time);
-                        info += "Crafting " + next_crafted_products.contents_string() +
-                                " (" + completion.ToString("F0") + "%)";
+                        info += " (" + completion.ToString("F0") + "%)";
+                    }
+                    else if (!ingredients.stored.empty)
+                    {
+                        info += "Contents: " + ingredients.stored.contents_string();
                     }
 
                     return info.Trim();

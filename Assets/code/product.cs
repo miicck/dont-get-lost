@@ -98,25 +98,28 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public virtual void create_in(IItemCollection inv, int count = 1)
+    public virtual void create_in(IItemCollection inv, int count = 1, bool track_production=false)
     {
+        int to_add = 0;
         switch (mode)
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
-                inv.add(item, Random.Range(min_count * count, max_count * count + 1));
+                to_add = Random.Range(min_count * count, max_count * count + 1);      
                 break;
 
             case MODE.PROBABILITY:
-                float prob = 1f / one_in_chance;
-                if (Random.Range(0, 1f) < prob)
-                    inv.add(item, Random.Range(min_count * count, max_count * count + 1));
+                if (Random.Range(0, 1f) > 1f / one_in_chance) return;
+                to_add = Random.Range(min_count * count, max_count * count + 1);
                 break;
 
             default:
                 Debug.LogError("Unkown product mode!");
-                break;
+                return;
         }
+
+        inv.add(item, to_add);
+        if (track_production) production_tracker.register_product(item, to_add);
     }
 
     public virtual float average_amount_produced(item i)

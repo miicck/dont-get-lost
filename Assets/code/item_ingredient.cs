@@ -44,7 +44,7 @@ public class item_ingredient : ingredient
 
         // Update the in_use dictionary
         if (in_use.ContainsKey(item.name)) in_use[item.name] += found;
-        else in_use[item.name] = found;
+        else if (found > 0) in_use[item.name] = found;
 
         // Satisfied or not
         return found >= count;

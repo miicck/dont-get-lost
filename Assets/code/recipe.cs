@@ -96,11 +96,11 @@ public class recipe : MonoBehaviour
         return can_craft(i, out Dictionary<string, int> ignored);
     }
 
-    public bool craft(IItemCollection from, IItemCollection to)
+    public bool craft(IItemCollection from, IItemCollection to, bool track_production = false)
     {
         if (!can_craft(from, out Dictionary<string, int> to_use)) return false;
         foreach (var kv in to_use) from.remove(kv.Key, kv.Value);
-        foreach (var p in products) p.create_in(to);
+        foreach (var p in products) p.create_in(to, track_production: track_production);
         return true;
     }
 
@@ -267,8 +267,8 @@ public class recipe : MonoBehaviour
         public enum CHECK_OFF_RESULT
         {
             ALREADY_COMPLETE,
-            NOT_NEEDED,
-            NOT_ADDED,
+            NEVER_NEEDED,
+            NOT_NEEDED_RIGHT_NOW,
             ADDED,
             ADDED_AND_COMPLETED
         }
@@ -279,7 +279,7 @@ public class recipe : MonoBehaviour
             simple_item_collection needed_check = new simple_item_collection();
             needed_check.add(i, 1);
             recipe.can_craft(needed_check, out Dictionary<string, int> to_use, maximal_use: true);
-            if (to_use.Count == 0) return CHECK_OFF_RESULT.NOT_NEEDED;
+            if (to_use.Count == 0) return CHECK_OFF_RESULT.NEVER_NEEDED;
 
             if (recipe.can_craft(stored, out Dictionary<string, int> in_use_before, maximal_use: true))
                 return CHECK_OFF_RESULT.ALREADY_COMPLETE; // I don't need any more items    
@@ -301,12 +301,12 @@ public class recipe : MonoBehaviour
 
             // I was not useful, remove me from the collection
             stored.remove(i, 1);
-            return CHECK_OFF_RESULT.NOT_ADDED;
+            return CHECK_OFF_RESULT.NOT_NEEDED_RIGHT_NOW;
         }
 
-        public bool craft_to(IItemCollection col)
+        public bool craft_to(IItemCollection col, bool track_production = false)
         {
-            return recipe.craft(stored, col);
+            return recipe.craft(stored, col, track_production: track_production);
         }
 
         public void clear()

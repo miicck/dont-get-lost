@@ -94,6 +94,8 @@ public class simple_item_collection : IItemCollection
 {
     Dictionary<string, int> items = new Dictionary<string, int>();
 
+    public bool empty => items.Count == 0;
+
     public Dictionary<item, int> contents()
     {
         Dictionary<item, int> ret = new Dictionary<item, int>();

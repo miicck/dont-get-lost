@@ -186,7 +186,28 @@ public abstract class item_node : MonoBehaviour,
 
     public bool add(item i, int count)
     {
-        throw new System.Exception("Please use the add_item method for item nodes!");
+        if (i == null) return false;
+
+        if (i.is_prefab())
+        {
+            // Create the neccassary items in the node from the given prefab
+            for (int n = 0; n < count; ++n)
+                add_item(item.create(i.name,
+                    input_point(transform.position),
+                    transform.rotation,
+                    logistics_version: true));
+            return true;
+        }
+
+        if (i.is_logistics_version && count == 1)
+        {
+            // We're just adding one logistics item to the node
+            // this is the normal use case of add_item(item i)
+            add_item(i);
+            return true;
+        }
+
+        throw new System.Exception("Tried to add non-logistics/multiple items to node!");
     }
 
     public bool remove(item i, int count)

@@ -60,6 +60,8 @@ public class item_rejector : MonoBehaviour
     Vector3 velocity;
     float time_created;
 
+    public static item_rejector create(item i) => create(i, i.transform.position);
+
     public static item_rejector create(item i, Vector3 from)
     {
         var ret = new GameObject("rejector").AddComponent<item_rejector>();

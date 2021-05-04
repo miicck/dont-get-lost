@@ -745,6 +745,8 @@ public static class utils
         return a + Vector3.Dot(p - a, n) * n;
     }
 
+    public static bool is_prefab(this Component g) => !g.gameObject.scene.IsValid();
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable
