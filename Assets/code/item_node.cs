@@ -96,6 +96,13 @@ public abstract class item_node : MonoBehaviour, INonBlueprintable, INonEquipabl
     /// <summary> Releases the first item from the from this node. </summary>
     public item release_next_item() { return release_item(0); }
 
+    /// <summary> Take a peek at, but don't release the
+    /// <paramref name="i"/>th item from this node. </summary>
+    public item peek_item(int i) => i < items.Count && i >= 0 ? items[i] : null;
+
+    /// <summary> Take a peek at, but don't release the next (0th) item.</summary>
+    public item peek_next_item() => peek_item(0);
+
     /// <summary> Releases all items from this node. </summary>
     public List<item> relesae_all_items()
     {

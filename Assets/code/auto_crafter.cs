@@ -33,7 +33,7 @@ public class auto_crafter : building_material, IPlayerInteractable
         {
             _currently_crafting = value;
 
-            if (value != null) Invoke("complete_crafting", craft_time);
+            if (value != null) start_crafting();
 
             foreach (var ec in enable_when_crafting)
                 ec.SetActive(value != null);
@@ -74,6 +74,21 @@ public class auto_crafter : building_material, IPlayerInteractable
 
         // Initially, not crafting anything
         currently_crafting = null;
+    }
+
+    float remaining_craft_time = -1f;
+
+    private void Update()
+    {
+        if (remaining_craft_time < 0) return; // Not crafting
+        remaining_craft_time -= Time.deltaTime;
+        if (remaining_craft_time < 0) complete_crafting();
+    }
+
+    void start_crafting()
+    {
+        if (remaining_craft_time > 0) return; // Already crafting
+        remaining_craft_time = craft_time;
     }
 
     void complete_crafting()
