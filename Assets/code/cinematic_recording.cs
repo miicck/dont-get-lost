@@ -110,6 +110,7 @@ public static class cinematic_recording
 
         private void OnDestroy()
         {
+            if (player.current == null) return;
             player.current.camera.enabled = true;
         }
 

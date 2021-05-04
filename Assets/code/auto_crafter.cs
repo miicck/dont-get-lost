@@ -68,6 +68,12 @@ public class auto_crafter : building_material, IPlayerInteractable
                     crafting_time_left = craft_time;
                     break;
 
+                // This input isn't needed right now, so leave it there
+                // for now, but replace it if something else comes along
+                case recipe.checklist.CHECK_OFF_RESULT.NOT_NEEDED_RIGHT_NOW:
+                    ip.set_replace_next();
+                    break;
+
                 // All other cases - reject the item
                 default:
                     item_rejector.create(ip.release_next_item());

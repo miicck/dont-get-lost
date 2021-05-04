@@ -67,13 +67,15 @@ public class body : MonoBehaviour
 
         // Lerp the actual lean amount
         lean = Mathf.Lerp(lean, lean_target, Time.deltaTime * lean_lerp_speed);
-        if (float.IsNaN(lean)) lean = 0;
+        if (float.IsNaN(lean) || float.IsInfinity(lean)) lean = 0;
 
-        // Apply the lean
-        transform.localRotation = Quaternion.Euler(
+        var new_lean = Quaternion.Euler(
             lean,
             transform.localRotation.eulerAngles.y,
             transform.localRotation.eulerAngles.z);
+
+        // Apply the lean
+        transform.localRotation = new_lean;
 
         if (head != null)
         {

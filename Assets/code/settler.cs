@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class settler : character, IPlayerInteractable, ICanEquipArmour
 {
-    public const byte MAX_METABOLIC_SATISFACTION_TO_EAT = 220;
-    public const byte GUARANTEED_EAT_METABOLIC_SATISFACTION = 64;
-
     public const float TIME_TO_STARVE = 10f * 60f;
     public const float TIME_TO_REGEN = 120f;
     public const float TIME_TO_TIRED = time_manager.DAY_LENGTH;
@@ -293,6 +290,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override float position_resolution() { return 0.1f; }
     public override float position_lerp_speed() { return 2f; }
     public override bool persistant() { return !is_dead; }
+    public bool starving => nutrition.metabolic_satisfaction <= 0;
 
     public inventory inventory { get; private set; }
 
@@ -460,20 +458,22 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     void get_hungry()
     {
-        if (nutrition.metabolic_satisfaction > 0)
-        {
-            nutrition.modify_every_satisfaction(-1);
-            foreach (var pm in gameObject.GetComponents<pinned_message>())
-                if (pm.message.Contains("starving"))
-                    Destroy(pm);
-        }
-        else
+        nutrition.modify_every_satisfaction(-1);
+
+        if (starving)
         {
             take_damage(1);
             foreach (var pm in gameObject.GetComponents<pinned_message>())
                 if (pm.message.Contains("starving"))
-                    return;
+                    return; // Already have starving message
             gameObject.add_pinned_message("The settler " + name + " is starving!", Color.red);
+        }
+
+        else
+        {
+            foreach (var pm in gameObject.GetComponents<pinned_message>())
+                if (pm.message.Contains("starving"))
+                    Destroy(pm); // Remove starving message
         }
     }
 

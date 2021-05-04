@@ -35,7 +35,7 @@ public abstract class settler_interactable : has_path_elements,
 
     public void interact(settler s)
     {
-        if (this == null)
+        if (this == null || !possible_checks(s))
         {
             unassign();
             return;
@@ -71,6 +71,19 @@ public abstract class settler_interactable : has_path_elements,
         }
     }
 
+    bool possible_checks(settler s)
+    {
+        if (s == null) return false; // Settler has been deleted
+
+        if (!skill.possible_when_under_attack && town_gate.group_under_attack(s.group))
+            return false; // Not possible when under attack
+
+        if (s.starving && skill.name != "eating" && group_has_food_available(s.group))
+            return false; // Not possible when starving/there is food available (unless this is an eating task)
+
+        return true;
+    }
+
     bool try_assign(settler s)
     {
         if (s == null) return false; // Settler has been deleted
@@ -98,13 +111,12 @@ public abstract class settler_interactable : has_path_elements,
             }
         }
 
-        if (!skill.possible_when_under_attack && town_gate.group_under_attack(s.group))
-            return false; // Not possible when under attack
+        // Check if this is possible
+        if (!possible_checks(s)) return false;
 
         // This should be called last so that we can assume within
         // ready_to_assign that the above conditions are met.
-        if (!ready_to_assign(s))
-            return false; // Not ready to assign anything
+        if (!ready_to_assign(s)) return false;
 
         // Assign the new settler
         settler_id.value = s.network_id;
@@ -273,14 +285,16 @@ public abstract class settler_interactable : has_path_elements,
                     stage.value = 0;
                     delta_xp = 0;
 
+                    assignments.Remove(old_val);
+                    if (this == null) return;
+
+                    assignments[new_val] = this;
+
                     var old_user = networked.try_find_by_id(old_val, false);
                     if (old_user is settler) on_unassign((settler)old_user);
 
                     var new_user = networked.try_find_by_id(new_val, false);
                     if (new_user is settler) on_assign((settler)new_user);
-
-                    assignments.Remove(old_val);
-                    assignments[new_val] = this;
                 };
             },
 
@@ -344,7 +358,7 @@ public abstract class settler_interactable : has_path_elements,
         foreach (var sk in skill.all)
         {
             // Skip visible skills that fail the priority test
-            if (sk.is_visible && !skill.priority_test(s.job_priorities[sk])) continue;
+            if (sk.is_visible && !sk.priority_test(s)) continue;
             if (!interactables.TryGetValue(sk, out List<settler_interactable> possibilities)) continue;
             if (possibilities.Count == 0) continue;
 
@@ -382,6 +396,31 @@ public abstract class settler_interactable : has_path_elements,
             try_assign_interaction(s);
 
         return null;
+    }
+
+    public static bool group_has_food_available(int group)
+    {
+        if (!interactables.TryGetValue(Resources.Load<skill>("skills/eating"),
+            out List<settler_interactable> dispensers))
+            return false; // No dispensers available
+
+        // Check for interactables that have food +
+        // are accessible from this group
+        foreach (var d in dispensers)
+        {
+            if (d.settler != null) continue; // Already reserverd
+            if (d.path_element(group) == null) continue; // Not in this group
+
+            if (d is food_dipsenser)
+            {
+                var fd = (food_dipsenser)d;
+                if (!fd.food_available) continue; // No food available in
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     public static string info()

@@ -63,7 +63,8 @@ public class mood_effect : networked
         else if (t < 25) ret.Add(load("well_rested"));
 
         int ms = s.nutrition.metabolic_satisfaction;
-        if (ms < 64) ret.Add(load("ravenous"));
+        if (s.starving) ret.Add(load("starving"));
+        else if (ms < 64) ret.Add(load("ravenous"));
         else if (ms < 128) ret.Add(load("hungry"));
         else if (ms > 190) ret.Add(load("well_fed"));
 

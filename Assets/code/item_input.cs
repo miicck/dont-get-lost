@@ -5,6 +5,9 @@ using UnityEngine;
 /// <summary> An item input node to an object, such as an autocrafter. </summary>
 public class item_input : item_node
 {
+    public void set_replace_next() { replace_next = true; }
+    bool replace_next = false;
+
     public override string node_description(int item_count)
     {
         if (item_count == 0) return "Input free";
@@ -40,8 +43,16 @@ public class item_input : item_node
         // Only one items allowed to wait at input
         if (item_count > 0)
         {
+            if (replace_next)
+            {
+                // A replace has been requested - replace
+                // the waiting item with the added one
+                replace_next = false;
+                item_rejector.create(release_next_item());
+                return true;
+            }
+
             item_rejector.create(i, i.transform.position);
-            //item_dropper.create(i, i.transform.position, null);
             return false;
         }
         return true;

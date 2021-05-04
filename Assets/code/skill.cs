@@ -11,21 +11,11 @@ public class skill : MonoBehaviour
 
     public string display_name => name.Replace("_", " ").ToLower().capitalize();
 
-    public enum PRIORITY : byte
+    public virtual bool priority_test(settler s)
     {
-        OFF = 0,
-        LOW = 1,
-        MED = 2,
-        HIGH = 3
-    };
-
-    public struct proficiency
-    {
-        public proficiency(int xp) { this.xp = xp; }
-        public int xp { get; private set; }
-        public int level => xp_to_level(xp);
-        public int proficiency_modifier => xp_to_proficiency_mod(xp);
-    };
+        if (s == null) return false;
+        return priority_test(s.job_priorities[this]);
+    }
 
     //##############//
     // STATIC STUFF //
@@ -147,6 +137,22 @@ public class skill : MonoBehaviour
         }
     }
     static skill[] _all;
+
+    public enum PRIORITY : byte
+    {
+        OFF = 0,
+        LOW = 1,
+        MED = 2,
+        HIGH = 3
+    };
+
+    public struct proficiency
+    {
+        public proficiency(int xp) { this.xp = xp; }
+        public int xp { get; private set; }
+        public int level => xp_to_level(xp);
+        public int proficiency_modifier => xp_to_proficiency_mod(xp);
+    };
 
 #if UNITY_EDITOR
     [UnityEditor.CustomEditor(typeof(skill))]

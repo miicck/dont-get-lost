@@ -35,4 +35,4 @@ TODO
 - Player skin color
 - Remove gender entirely (I think there is still an associated variable)
 - Add cowering spots to various things (beds)
-- Increase sawmill crafting time
+- Priority splitter (just a hole in a gutter?)

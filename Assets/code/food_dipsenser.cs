@@ -9,8 +9,6 @@ public class food_dipsenser : walk_to_settler_interactable
     protected override void Start()
     {
         base.Start();
-
-
         item_dispenser.accept_item = (i) => i.GetComponent<food>() != null;
     }
 
@@ -18,17 +16,34 @@ public class food_dipsenser : walk_to_settler_interactable
     // INTERACTABLE //
     //##############//
 
+    const byte GUARANTEED_FULL = 220;
+    const byte GUARANTEED_EAT = 64;
+
     settler_animations.simple_work work_anim;
     float time_dispensing;
 
+    public bool food_available => item_dispenser.has_items_to_dispense;
+
     protected override bool ready_to_assign(settler s)
     {
+        int ms = s.nutrition.metabolic_satisfaction;
+
         // Not hungry
-        if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
+        if (ms > GUARANTEED_FULL) return false;
+        if (ms > GUARANTEED_EAT)
+        {
+            float probability = ms - GUARANTEED_EAT;
+            probability /= (GUARANTEED_FULL - GUARANTEED_EAT);
+            probability = 1 - probability;
+            if (probability < Random.Range(0, 1f)) return false;
+        }
+
+        // Don't eat if one of my friends is starving
+        if (!s.starving && town_gate.group_has_starvation(s.group))
             return false;
 
-        // No food
-        return item_dispenser.has_items_to_dispense;
+        // Check if food is available 
+        return food_available;
     }
 
     protected override void on_arrive(settler s)
@@ -56,7 +71,7 @@ public class food_dipsenser : walk_to_settler_interactable
         Destroy(food.gameObject);
 
         // Complete if we've eaten enough
-        if (s.nutrition.metabolic_satisfaction > settler.MAX_METABOLIC_SATISFACTION_TO_EAT)
+        if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL)
             return STAGE_RESULT.TASK_COMPLETE;
         else
             return STAGE_RESULT.STAGE_UNDERWAY;

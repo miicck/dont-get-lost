@@ -597,6 +597,14 @@ public class town_gate : portal, IAddsToInspectionText
         return false;
     }
 
+    public static bool group_has_starvation(int group)
+    {
+        foreach (var s in settler.get_settlers_by_group(group))
+            if (s.starving)
+                return true;
+        return false;
+    }
+
     public delegate bool attacker_delegate(character c);
     public static void iterate_over_attackers(int group, attacker_delegate del)
     {

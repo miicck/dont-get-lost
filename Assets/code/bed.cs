@@ -62,9 +62,7 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
             s.tiredness.value -= 1;
         }
 
-        if (s.tiredness.value < 5)
-            return STAGE_RESULT.TASK_COMPLETE;
-        return STAGE_RESULT.STAGE_UNDERWAY;
+        return s.tiredness.value < 5 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     protected override void on_unassign(settler s)

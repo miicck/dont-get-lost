@@ -176,6 +176,7 @@ items/balding_hairstyle 1 True
 items/mineralogy_table 1 True
 items/guard_spot 1 True
 items/bedraggled_hairstyle 1 True
+mood_effects/starving 1 True
 items/drill_bit 1 True
 crops/cabbage 1 True
 items/small_lumber_contract 1 True

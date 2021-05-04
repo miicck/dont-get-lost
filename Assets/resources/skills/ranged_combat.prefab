@@ -46,4 +46,5 @@ MonoBehaviour:
   default_priority: 11
   is_visible: 1
   possible_when_under_attack: 1
+  possible_when_starving: 1
   noun_form: 
