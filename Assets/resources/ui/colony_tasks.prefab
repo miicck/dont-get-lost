@@ -104,8 +104,8 @@ MonoBehaviour:
   m_VerticalScrollbar: {fileID: 2818804619821518414}
   m_HorizontalScrollbarVisibility: 2
   m_VerticalScrollbarVisibility: 2
-  m_HorizontalScrollbarSpacing: -3
-  m_VerticalScrollbarSpacing: -3
+  m_HorizontalScrollbarSpacing: -1
+  m_VerticalScrollbarSpacing: -10
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1547,7 +1547,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 0}
+  m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &5438586674813080306
 CanvasRenderer:
@@ -1673,7 +1673,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 20}
+  m_SizeDelta: {x: 0, y: 10}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &1230570635690230238
 CanvasRenderer:
@@ -1757,7 +1757,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 8645629988293538823}
   m_Direction: 0
   m_Value: 0
-  m_Size: 0.73339844
+  m_Size: 0.75
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

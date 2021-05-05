@@ -156,7 +156,7 @@ public class shop : walk_to_settler_interactable,
             switch (path.walk(s, s.walk_speed))
             {
                 case town_path_element.path.WALK_STATE.COMPLETE:
-                    stage_work_done += Time.deltaTime * total_proficiency_multiplier(s);
+                    stage_work_done += Time.deltaTime * current_proficiency.total_multiplier;
                     if (stage_work_done > 1f)
                     {
                         stage_work_done = 0f;

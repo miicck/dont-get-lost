@@ -131,11 +131,11 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         {
             s.look_at(transform.position);
             work_anim = new settler_animations.simple_work(
-                s, 1f / total_proficiency_multiplier(s));
+                s, 1f / current_proficiency.total_multiplier);
         }
         work_anim.play();
 
-        timer += Time.deltaTime * total_proficiency_multiplier(s);
+        timer += Time.deltaTime * current_proficiency.total_multiplier;
         if (timer < base_craft_time) return STAGE_RESULT.STAGE_UNDERWAY;
 
         foreach (var p in current_recipe.products)

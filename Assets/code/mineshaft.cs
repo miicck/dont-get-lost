@@ -84,7 +84,7 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        float delta_work = Time.deltaTime * total_proficiency_multiplier(s);
+        float delta_work = Time.deltaTime * current_proficiency.total_multiplier;
 
         if (work_done + delta_work >= 1f && work_done < 1f)
         {
@@ -103,17 +103,15 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
         return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
-    public override List<proficiency> proficiencies(settler s)
+    protected override List<proficiency> proficiencies(settler s)
     {
         var ret = base.proficiencies(s);
         tool tool = tool.find_best_in(s.inventory, tool.TYPE.PICKAXE);
         if (tool == null) return ret;
 
-        ret.Add(new proficiency
-        {
-            description = tool.display_name,
-            percent_modifier = tool.proficiency
-        });
+        ret.Add(new item_based_proficiency(
+            tool.proficiency, tool.display_name, 
+            s.inventory, tool, 0.1f));
 
         return ret;
     }

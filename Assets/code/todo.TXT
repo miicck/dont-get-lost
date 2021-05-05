@@ -10,7 +10,6 @@ TODO
 	Make characters fall if they are following a chase path
 	Figure out how to stop enemies bunching up when chasing
 - Point-to-point connection building (e.g ropes for a rope bridge)
-- Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Pickup/dropoff points for settlers to move items around?
@@ -26,8 +25,8 @@ TODO
   IExtendsNetworked cover these use cases?
 - Brewing!
 - Just make foundary stuff/see if a use for the metal becomes apparent
+  Make settlers use tools (which wear out) for certain tasks - should constitue a use for metals etc.
 - town_path_element.path spread load across multiple frames.
-- Make settlers use tools (which wear out) for certain tasks - should constitue a use for metals etc.
 - Make autocrafters work with buffer chests
 - Settlers heads move over to their shoulder with time
 - Fishing dock not doing anything on non-auth clients? (also doesn't check for water)
@@ -36,3 +35,4 @@ TODO
 - Remove gender entirely (I think there is still an associated variable)
 - Add cowering spots to various things (beds)
 - Priority splitter (just a hole in a gutter?)
+  Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).

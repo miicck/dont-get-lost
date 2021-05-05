@@ -92,7 +92,7 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
         // Reset stuff
         work_done = 0f;
         work_anim = new settler_animations.simple_work(s,
-            period: 1f / total_proficiency_multiplier(s));
+            period: 1f / current_proficiency.total_multiplier);
     }
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
@@ -104,7 +104,7 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Record the amount of time spent farming
-        work_done += Time.deltaTime * total_proficiency_multiplier(s);
+        work_done += Time.deltaTime * current_proficiency.total_multiplier;
         if (work_done < base_tend_time) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // We've spent enough time harvesting, grow/harvest crops

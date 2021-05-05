@@ -54,7 +54,7 @@ public class guard_spot : walk_to_settler_interactable
             if (attack_timer > 1f)
             {
                 attack_timer = 0f;
-                int damage = (int)(10 * total_proficiency_multiplier(s));
+                int damage = (int)(10 * current_proficiency.total_multiplier);
                 projectile.create(s.transform.position + Vector3.up * s.height_scale.value * 1.5f, target, damage: damage);
             }
             s.transform.position = transform.position + Mathf.Sin(attack_timer * Mathf.PI) * transform.forward * 0.1f;

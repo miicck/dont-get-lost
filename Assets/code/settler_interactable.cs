@@ -28,14 +28,14 @@ public abstract class settler_interactable : has_path_elements,
     protected virtual void on_assign(settler s) { }
     protected virtual STAGE_RESULT on_interact(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
     protected virtual void on_unassign(settler s) { }
+
     public abstract string task_summary();
-    public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
     float delta_xp = 0;
 
     public void interact(settler s)
     {
-        if (this == null || !possible_checks(s))
+        if (!possible_checks(s))
         {
             unassign();
             return;
@@ -73,6 +73,7 @@ public abstract class settler_interactable : has_path_elements,
 
     bool possible_checks(settler s)
     {
+        if (this == null) return false; // This has been deleted
         if (s == null) return false; // Settler has been deleted
 
         if (!skill.possible_when_under_attack && town_gate.group_under_attack(s.group))
@@ -119,6 +120,7 @@ public abstract class settler_interactable : has_path_elements,
         if (!ready_to_assign(s)) return false;
 
         // Assign the new settler
+        current_proficiency = new proficiency_info(s, this);
         settler_id.value = s.network_id;
         return true;
     }
@@ -127,65 +129,100 @@ public abstract class settler_interactable : has_path_elements,
     {
         // Unassign the settler
         settler_id.value = -1;
+        current_proficiency.on_unassign();
+        current_proficiency = null;
     }
 
     //#############//
     // Proficiency //
     //#############//
 
-    public struct proficiency
+    protected proficiency_info current_proficiency { get; private set; }
+
+    protected class proficiency_info
     {
-        public int percent_modifier;
-        public string description;
+        public float total_multiplier { get; private set; }
+        public int total_proficiency { get; private set; }
+        List<proficiency> proficiencies;
+
+        public proficiency_info(settler s, settler_interactable i)
+        {
+            // Work out the total persentage proficiency modifier
+            total_proficiency = 0;
+            proficiencies = i.proficiencies(s);
+            foreach (var p in proficiencies)
+                total_proficiency += p.percent_modifier;
+            if (total_proficiency < -100) total_proficiency = -100;
+
+            // From the above, work out the multiplier
+            total_multiplier = 1f + total_proficiency * 0.01f;
+        }
+
+        public void on_unassign()
+        {
+            foreach (var p in proficiencies) p.on_unassign();
+        }
     }
 
-    public virtual List<proficiency> proficiencies(settler s)
+    protected class proficiency
+    {
+        public int percent_modifier { get; private set; }
+        public string description { get; private set; }
+
+        public proficiency(int percent_modifier, string description)
+        {
+            this.percent_modifier = percent_modifier;
+            this.description = description;
+        }
+
+        public virtual void on_unassign() { }
+    }
+
+    protected class item_based_proficiency : proficiency
+    {
+        item item;
+        inventory container;
+        float break_prob;
+
+        public item_based_proficiency(int modifier, string description,
+            inventory container, item item, float break_prob) : base(modifier, description)
+        {
+            this.container = container;
+            this.item = item;
+            this.break_prob = break_prob;
+        }
+
+        public override void on_unassign()
+        {
+            if (container == null) return;
+            if (item == null) return;
+            if (Random.Range(0, 1f) < break_prob)
+                container.remove(item, 1);
+        }
+    }
+
+    protected virtual List<proficiency> proficiencies(settler s)
     {
         var ret = new List<proficiency>();
-        ret.Add(new proficiency
-        {
-            percent_modifier = s.skills[skill].proficiency_modifier,
-            description = "skill level"
-        });
-
+        ret.Add(new proficiency(s.skills[skill].proficiency_modifier, "skill level"));
         int total_mood = s.total_mood();
-        if (total_mood != 0)
-            ret.Add(new proficiency
-            {
-                percent_modifier = total_mood * 5,
-                description = "mood"
-            });
-
+        if (total_mood != 0) ret.Add(new proficiency(total_mood * 5, "mood"));
         return ret;
-    }
-
-    public int total_proficiency(settler s)
-    {
-        int ret = 0;
-        foreach (var sm in proficiencies(s))
-            ret += sm.percent_modifier;
-        if (ret < -100) return -100;
-        return ret;
-    }
-
-    public float total_proficiency_multiplier(settler s)
-    {
-        return 1f + total_proficiency(s) * 0.01f;
     }
 
     public string proficiency_summary(settler s)
     {
-        if (!skill.is_visible) return "";
+        if (!skill.is_visible || current_proficiency == null) return "";
 
-        int total = total_proficiency(s);
+        int total = current_proficiency.total_proficiency;
         return "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
     }
 
     public string proficiency_breakdown(settler s)
     {
-        if (!skill.is_visible) return "";
+        if (!skill.is_visible || current_proficiency == null) return "";
 
-        int total = total_proficiency(s);
+        int total = current_proficiency.total_proficiency;
         string ret = "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
 
         foreach (var sm in proficiencies(s))
@@ -444,6 +481,7 @@ public abstract class walk_to_settler_interactable : settler_interactable
 
     protected virtual void on_arrive(settler s) { }
     protected virtual STAGE_RESULT on_interact_arrived(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
+    public virtual float move_to_speed(settler s) { return s.walk_speed; }
 
     protected sealed override void on_assign(settler s)
     {

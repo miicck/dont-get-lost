@@ -46,7 +46,7 @@ public class item_harvest_spot : settler_interactable_options
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        work_completed += Time.deltaTime * total_proficiency_multiplier(s);
+        work_completed += Time.deltaTime * current_proficiency.total_multiplier;
         if (work_completed > (harvested_count + 1) * harvest_time)
         {
             harvested_count += 1;
