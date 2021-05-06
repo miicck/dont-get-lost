@@ -192,14 +192,14 @@ public class leg : MonoBehaviour
         footstep_source.spatialBlend = 1f; // 3D
     }
 
-    void set_scales(float hip_length, float shin_length)
+    void set_scales(float thigh_length, float shin_length)
     {
         Vector3 ls = hip.localScale;
-        ls.y = init_hip_scale * hip_length / thigh_length;
+        ls.y = init_hip_scale * thigh_length / this.thigh_length;
         hip.localScale = ls;
 
         ls = knee.localScale;
-        ls.y = init_knee_scale * shin_length / shin_length;
+        ls.y = init_knee_scale * shin_length / this.shin_length;
         knee.localScale = ls;
     }
 
@@ -304,7 +304,7 @@ public class leg : MonoBehaviour
         Vector3 new_pos = ankle.position + delta;
         float new_leg_length = (new_pos - hip.position).magnitude;
         if (new_leg_length / (shin_length + thigh_length) > max_leg_stretch)
-            return;
+                return;
 
         ankle.position += delta;
     }

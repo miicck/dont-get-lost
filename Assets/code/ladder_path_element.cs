@@ -8,23 +8,28 @@ public class ladder_path_element : town_path_element
     {
         // If the ladder is sufficiently flat, no need animate
         if (Vector3.Angle(transform.up, Vector3.up) > 45) return null;
-        return new climb_ladder(s, this);
+        return new climb_ladder(s);
+    }
+
+    public override void on_character_move_towards(character c)
+    {
+        // If sufficienctly flat, no need to face the ladder
+        if (Vector3.Angle(transform.up, Vector3.up) > 45) return;
+
+        // Face towards the ladder
+        Vector3 fw = transform.forward; fw.y = 0; fw.Normalize();
+        c.transform.forward = Vector3.Lerp(c.transform.forward, fw, Time.deltaTime * 10);
+
+        base.on_character_move_towards(c);
     }
 
     public class climb_ladder : settler_animations.animation
     {
-        ladder_path_element ladder;
-
-        public climb_ladder(settler s, ladder_path_element ladder) : base(s)
-        {
-            this.ladder = ladder;
-        }
+        public climb_ladder(settler s) : base(s) { }
 
         protected override void animate()
         {
-            // Face the ladder
-            Vector3 fw = ladder.transform.forward; fw.y = 0;
-            settler.transform.forward = fw;
+            Vector3 fw = settler.transform.forward;
 
             var ls = Mathf.Sin(left_arm.following.progress * Mathf.PI);
             var rs = Mathf.Sin(right_arm.following.progress * Mathf.PI);

@@ -367,7 +367,6 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
         public const float ARRIVE_DISTANCE = 0.25f;
 
         List<town_path_element> element_path;
-        settler_animations.animation settler_animation;
         public int index { get; private set; }
 
         public town_path_element this[int i]
@@ -520,6 +519,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
 
             return WALK_STATE.UNDERWAY;
         }
+
+        settler_animations.animation settler_animation;
 
         void run_animations(ITownWalker walking, bool forwards)
         {
