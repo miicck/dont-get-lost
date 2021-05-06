@@ -6,6 +6,7 @@ public interface IArmController
 {
     public void control_arm(arm a);
     public bool arm_control_ended();
+    public void draw_arm_control_gizmos();
 }
 
 /// <summary> Like a leg, but higher. </summary>
@@ -72,6 +73,13 @@ public class arm : MonoBehaviour, IArmController
     }
 
     public bool arm_control_ended() { return false; }
+
+    public void draw_arm_control_gizmos()
+    {
+        if (to_grab == null) return;
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(to_grab.position, 0.025f);
+    }
 
     private void Start()
     {
@@ -207,6 +215,8 @@ public class arm : MonoBehaviour, IArmController
 
     private void OnDrawGizmos()
     {
+        controller?.draw_arm_control_gizmos();
+
         if (shoulder != null && elbow != null)
         {
             Gizmos.color = Color.blue;

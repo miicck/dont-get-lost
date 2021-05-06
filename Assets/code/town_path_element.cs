@@ -13,6 +13,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
     public virtual void on_character_move_towards(character c) { }
     public virtual void on_character_leave(character c) { }
     public virtual bool seperates_rooms() { return false; }
+    public virtual settler_animations.animation settler_animation(settler s) { return null; }
 
     //#################//
     // UNITY CALLBACKS //
@@ -357,11 +358,16 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
     }
     static bool _draw_links;
 
+    //#############//
+    // PATHFINDING //
+    //#############//
+
     public class path
     {
         public const float ARRIVE_DISTANCE = 0.25f;
 
         List<town_path_element> element_path;
+        settler_animations.animation settler_animation;
         public int index { get; private set; }
 
         public town_path_element this[int i]
@@ -465,19 +471,34 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
         public WALK_STATE walk(ITownWalker walking, float speed, bool forwards = true)
         {
             // There is no path/thing walking
-            if (count == 0) return WALK_STATE.FAILED;
             if (walking == null) return WALK_STATE.FAILED;
+            if (count == 0)
+            {
+                walking.on_end_walk();
+                return WALK_STATE.FAILED;
+            }
 
             if (index >= element_path.Count) // Walked off the end of the path
             {
-                if (forwards) return WALK_STATE.COMPLETE;
+                if (forwards)
+                {
+                    walking.on_end_walk();
+                    return WALK_STATE.COMPLETE;
+                }
                 else index = element_path.Count - 1;
             }
             else if (index < 0) // Walked off the start of the path
             {
                 if (forwards) index = 0;
-                else return WALK_STATE.COMPLETE;
+                else
+                {
+                    walking.on_end_walk();
+                    return WALK_STATE.COMPLETE;
+                }
             }
+
+            // Run animations based on the current element
+            run_animations(walking, forwards);
 
             // Walk the path to completion
             var next_element = this[index];
@@ -488,35 +509,9 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 return WALK_STATE.FAILED;
             }
 
-            Vector3 next_point = next_element.transform.position;
-            Vector3 forward = next_point - walking.transform.position;
-
-            var next_next_element = this[index + (forwards ? 1 : -1)];
-            if (next_next_element != null)
-            {
-                // Gradually turn towards the next direction, to make
-                // going round sharp corners look natural
-                Vector3 next_next_point = next_next_element.transform.position;
-                Vector3 next_forward = next_next_point - next_point;
-
-                float w1 = (walking.transform.position - next_point).magnitude;
-                float w2 = (walking.transform.position - next_next_point).magnitude;
-                forward = forward.normalized * w1 + next_forward.normalized * w2;
-                forward /= (w1 + w2);
-            }
-
-            forward.y = 0;
-            if (forward.magnitude > 10e-3f)
-            {
-                // If we need to do > 90 degree turn, just do it instantly
-                if (Vector3.Dot(walking.transform.forward, forward) < 0)
-                    walking.transform.forward = forward;
-                else // Otherwise, lerp our forward vector
-                    walking.transform.forward = Vector3.Lerp(walking.transform.forward, forward, Time.deltaTime * 5f);
-            }
-
             walking.on_walk_towards(next_element);
-            if (utils.move_towards(walking.transform, next_point,
+
+            if (utils.move_towards(walking.transform, next_element.transform.position,
                 Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
             {
                 if (forwards) ++index;
@@ -524,6 +519,64 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
             }
 
             return WALK_STATE.UNDERWAY;
+        }
+
+        void run_animations(ITownWalker walking, bool forwards)
+        {
+            if (walking is settler)
+            {
+                // Select the animation based on current element first, then on next element
+                var next_anim = this[index - 1]?.settler_animation((settler)walking);
+                if (next_anim == null)
+                    next_anim = this[index]?.settler_animation((settler)walking);
+
+                // Animation changed, switch to the new one
+                if (settler_animation?.GetType() != next_anim?.GetType())
+                    settler_animation = next_anim;
+
+                if (settler_animation != null)
+                {
+                    settler_animation.play();
+                    return;
+                }
+            }
+
+            default_animation(walking, forwards);
+        }
+
+        void default_animation(ITownWalker walking, bool forwards)
+        {
+            var next_element = this[index];
+            Vector3 next_point = next_element.transform.position;
+            Vector3 forward = (next_point - walking.transform.position).normalized;
+
+            var next_next_element = this[index + (forwards ? 1 : -1)];
+            if (next_next_element != null)
+            {
+                // Gradually turn towards the next direction, to make
+                // going round sharp corners look natural
+                Vector3 next_next_point = next_next_element.transform.position;
+                Vector3 next_forward = (next_next_point - next_point).normalized;
+
+                // Weight forward vector by proximity
+                float w1 = 1f / (walking.transform.position - next_point).magnitude;
+                float w2 = 1f / (walking.transform.position - next_next_point).magnitude;
+                forward = forward * w1 + next_forward * w2;
+                forward /= (w1 + w2);
+            }
+
+            // Only face towards the forward direction if we have a reasonably
+            // large component in the not-y directions, so that if we're climbing
+            // ladders directly up/down this code does not trigger
+            forward.y = 0;
+            if (forward.magnitude > 0.1f)
+            {
+                // If we need to do > 90 degree turn, just do it instantly
+                if (Vector3.Dot(walking.transform.forward, forward) < 0)
+                    walking.transform.forward = forward;
+                else // Otherwise, lerp our forward vector
+                    walking.transform.forward = Vector3.Lerp(walking.transform.forward, forward, Time.deltaTime * 5f);
+            }
         }
 
         public void draw_gizmos(Color color)

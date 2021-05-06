@@ -547,6 +547,13 @@ namespace settler_animations
         protected Vector3 right_hand_pos;
         protected float timer { get; private set; }
 
+        public virtual void draw_arm_control_gizmos()
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(left_hand_pos, 0.025f);
+            Gizmos.DrawWireSphere(right_hand_pos, 0.025f);
+        }
+
         public animation(settler s)
         {
             settler = s;
@@ -557,11 +564,14 @@ namespace settler_animations
                 else left_arm = a;
                 a.controller = this;
             }
+            last_frame_played = Time.frameCount;
         }
 
         public void play()
         {
             if (settler == null) return;
+            left_arm.controller = this;
+            right_arm.controller = this;
             timer += Time.deltaTime;
             last_frame_played = Time.frameCount;
             animate();

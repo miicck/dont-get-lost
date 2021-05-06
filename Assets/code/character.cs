@@ -841,7 +841,7 @@ public class character : networked,
         {
             base.OnInspectorGUI();
             var c = (character)target;
-            c.controller.draw_inspector_gui();
+            c.controller?.draw_inspector_gui();
         }
     }
 #endif
