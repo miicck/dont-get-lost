@@ -26,7 +26,17 @@ public class console : MonoBehaviour
             command = (args) =>
             {
                 item item = null;
-                if (args.Length < 2) return console_error("Not enough arguments!");
+                if (args.Length < 2)
+                {
+                    player.call_when_current_player_available(() =>
+                    {
+                        var r = player.current.camera_ray();
+                        var found = utils.raycast_for_closest<item>(r, out RaycastHit hit);
+                        if (found == null) popup_message.create("Not looking at an item!");
+                        else player.current.inventory.add(found, 1);
+                    });
+                    return true;
+                }
 
                 if (args.Length < 3)
                 {
