@@ -121,9 +121,6 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     public Transform search_origin;
     public float search_radius;
 
-    public float time_between_harvests = 1f;
-    public int max_harvests = 5;
-
     public tool.TYPE tool_type = tool.TYPE.AXE;
     public tool.QUALITY tool_quality = tool.QUALITY.TERRIBLE;
 
@@ -139,9 +136,6 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             return harvest_options[selected_option];
         }
     }
-
-    float work_done;
-    int harvested_count = 0;
 
     protected override void OnDrawGizmos()
     {
@@ -220,6 +214,9 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     // SETTLER_INTERACTABLE //
     //######################//
 
+    float time_harvesting;
+    int harvested_count = 0;
+
     protected override bool ready_to_assign(settler s)
     {
         // Check we have something to harvest
@@ -229,7 +226,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     protected override void on_arrive(settler s)
     {
         // Reset stuff 
-        work_done = 0f;
+        time_harvesting = 0f;
         harvested_count = 0;
     }
 
@@ -239,9 +236,9 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
             return STAGE_RESULT.TASK_FAILED;
 
         // Record how long has been spent harvesting
-        work_done += Time.deltaTime * current_proficiency.total_multiplier;
+        time_harvesting += Time.deltaTime;
 
-        if (work_done > harvested_count)
+        if (time_harvesting * current_proficiency.total_multiplier / 4f > harvested_count)
         {
             harvested_count += 1;
 
@@ -250,7 +247,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
                 p.create_in_node(output, true);
         }
 
-        if (harvested_count >= max_harvests)
+        if (time_harvesting > 10f)
             return STAGE_RESULT.TASK_COMPLETE;
         return STAGE_RESULT.STAGE_UNDERWAY;
     }
@@ -258,8 +255,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     public override string task_summary()
     {
         if (harvesting == null) return "Harvesting nothing!!!";
-        return "Harvesting " + product.product_plurals_list(harvesting.products) +
-            " (" + harvested_count + "/" + max_harvests + ")";
+        return "Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
     protected override List<proficiency> proficiencies(settler s)

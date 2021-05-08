@@ -87,9 +87,9 @@ public class settler_field_spot : networked, IPlayerInteractable
         networked_progress.value = 0f;
     }
 
-    public void tend()
+    public void tend(float effective_time)
     {
-        local_progress += 10f / growth_time;
+        local_progress += effective_time / growth_time;
     }
 
     private void OnDrawGizmos()

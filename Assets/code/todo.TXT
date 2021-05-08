@@ -36,3 +36,4 @@ TODO
 - Add cowering spots to various things (beds)
 - Priority splitter (just a hole in a gutter?)
   Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
+- Make proficiency more important to quantities of materials obtained

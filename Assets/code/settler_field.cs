@@ -9,7 +9,6 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
     public int x_size = 2;
     public int z_size = 2;
     public float spacing = 1f;
-    public float spot_tend_prob = 0.33f;
     public float base_tend_time = 4f;
     public Vector3 offset = Vector3.zero;
 
@@ -114,8 +113,8 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
         for (int x = 0; x < x_size; ++x)
             for (int z = 0; z < z_size; ++z)
             {
-                // Only tend to a particular spot with the given spot_tend_prob
-                if (Random.Range(0, 1f) > spot_tend_prob)
+                // Fail to tend this spot with probability that decreases with proficiency
+                if (Random.Range(0, 1f) < Mathf.Exp(-current_proficiency.total_multiplier))
                     continue;
 
                 var spot = spots[x, z];
@@ -128,9 +127,8 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
                 else
                 {
                     // Farm the spot here
-                    spot.tend();
-                    if (spot.grown)
-                        spot.harvest();
+                    spot.tend(current_proficiency.total_multiplier * 2f);
+                    if (spot.grown) spot.harvest();
                 }
             }
 
