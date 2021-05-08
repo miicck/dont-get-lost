@@ -8,7 +8,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public const float TIME_TO_REGEN = 120f;
     public const float TIME_TO_TIRED = time_manager.DAY_LENGTH;
 
-    public List<Renderer> skin_renderers = new List<Renderer>();
     public List<Renderer> top_underclothes = new List<Renderer>();
     public List<Renderer> bottom_underclothes = new List<Renderer>();
 
@@ -331,8 +330,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         skin_color.on_change = () =>
         {
-            foreach (var r in skin_renderers)
-                utils.set_color(r.material, skin_color.value);
+            foreach (var s in GetComponentsInChildren<skin>())
+                s.color = skin_color.value;
         };
 
         top_color.on_change = () =>

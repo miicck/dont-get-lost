@@ -1379,6 +1379,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     networked_variables.net_bool crouched;
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_color net_hair_color;
+    networked_variables.net_color net_skin_color;
     networked_variables.net_int networked_interaction;
     networked_variables.net_int tutorial_stage;
 
@@ -1666,6 +1667,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     al.equipped.on_equip(this);
         };
 
+        // Network the player skin color
+        net_skin_color = new networked_variables.net_color();
+        net_skin_color.on_change = () =>
+        {
+            foreach (var s in GetComponentsInChildren<skin>())
+                s.color = net_skin_color.value;
+        };
+
         // Network the current (networked_)interaction that is underway
         networked_interaction = new networked_variables.net_int(default_value: -1);
 
@@ -1685,16 +1694,20 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public override void on_first_create()
     {
-        // Create the inventory object
-        client.create(transform.position, "inventories/player_inventory", this);
-        client.create(transform.position, "inventories/player_crafting_menu", this);
-
         // Player starts in the middle of the first biome
         respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL, biome.SIZE / 2);
         networked_position = respawn_point.value;
 
+        // Initialize hair/skin color
+        net_hair_color.value = character_colors.random_hair_color();
+        net_skin_color.value = character_colors.random_skin_color();
+
         // Start the tutorial
         tutorial_stage.value = 0;
+
+        // Create the inventory object
+        client.create(transform.position, "inventories/player_inventory", this);
+        client.create(transform.position, "inventories/player_crafting_menu", this);
     }
 
     public override void on_add_networked_child(networked child)
@@ -1715,11 +1728,20 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                 crafting_input.craft_to = inventory;
 
                 foreach (var cs in inventory.ui.GetComponentsInChildren<color_selector>(true))
+                {
                     if (cs.name.Contains("hair"))
                     {
+                        // Setup the hair color selector
                         cs.color = net_hair_color.value;
                         cs.on_change = () => { net_hair_color.value = cs.color; };
                     }
+                    else if (cs.name.Contains("skin"))
+                    {
+                        // Setup the skin color selector
+                        cs.color = net_skin_color.value;
+                        cs.on_change = () => { net_skin_color.value = cs.color; };
+                    }
+                }
             }
             else inventory = inv;
         }
