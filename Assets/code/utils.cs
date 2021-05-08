@@ -583,11 +583,15 @@ public static class utils
     /// <summary> Move the transform <paramref name="t"/> towards the point <paramref name="to"/> by an amount
     /// bounded from above by <paramref name="max_move"/> until <paramref name="t"/> is within 
     /// <paramref name="arrive_distance"/> of <paramref name="to"/>. Returns true once this criteria is met. </summary>
-    public static bool move_towards(Transform t, Vector3 to, float max_move, float arrive_distance = 0)
+    public static bool move_towards(Transform t, Vector3 to, float max_move, 
+        float arrive_distance = 0, bool allign_forwards = false)
     {
         Vector3 delta = to - t.position;
         if (delta.magnitude < arrive_distance)
             return true;
+
+        if (allign_forwards)
+            t.forward = delta.normalized;
 
         bool arrived = false;
         if (delta.magnitude > max_move)

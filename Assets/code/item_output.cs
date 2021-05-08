@@ -34,6 +34,8 @@ public class item_dropper : MonoBehaviour
     item_node give_to;
     float speed = 0;
 
+    public static item_dropper create(item i) => create(i, i.transform.position, null);
+
     public static item_dropper create(item i, Vector3 from, item_node give_to)
     {
         Vector3 target;
