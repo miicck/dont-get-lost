@@ -39,3 +39,4 @@ TODO
 - Recreational tasks
 - Make trade carts work
 - Stop menus persisting when the object they refer to has been deleted
+- Settlers sometimes get stuck on unconnected path_element's (e.g the unconnected side of a planter)

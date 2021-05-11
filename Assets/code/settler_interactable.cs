@@ -41,6 +41,9 @@ public abstract class settler_interactable : has_path_elements,
             return;
         }
 
+        if (current_proficiency == null)
+            current_proficiency = new proficiency_info(s, this);
+
         if (s.has_authority)
         {
             // Gain XP
@@ -120,8 +123,8 @@ public abstract class settler_interactable : has_path_elements,
         if (!ready_to_assign(s)) return false;
 
         // Assign the new settler
-        current_proficiency = new proficiency_info(s, this);
         settler_id.value = s.network_id;
+        current_proficiency = null;
         return true;
     }
 
@@ -129,7 +132,7 @@ public abstract class settler_interactable : has_path_elements,
     {
         // Unassign the settler
         settler_id.value = -1;
-        current_proficiency.on_unassign();
+        current_proficiency?.on_unassign();
         current_proficiency = null;
     }
 
@@ -423,6 +426,7 @@ public abstract class settler_interactable : has_path_elements,
                 if (inter.settler_id.value == s.network_id)
                 {
                     Debug.Log("Assignement fallback triggered!");
+                    inter.current_proficiency = null;
                     assignments[s.network_id] = inter;
                     return inter;
                 }
