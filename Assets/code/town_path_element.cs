@@ -496,9 +496,6 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 }
             }
 
-            // Run animations based on the current element
-            run_animations(walking, forwards);
-
             // Walk the path to completion
             var next_element = this[index];
             if (next_element == null)
@@ -508,6 +505,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
                 return WALK_STATE.FAILED;
             }
 
+            run_animations(walking, forwards);
             walking.on_walk_towards(next_element);
 
             if (utils.move_towards(walking.transform, next_element.transform.position,
