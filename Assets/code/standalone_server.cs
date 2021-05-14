@@ -72,7 +72,7 @@ public static class standalone_server
     static void log<T>(T message)
     {
         using (var sw = File.AppendText("log"))
-            sw.WriteLine(message);
+            sw.WriteLine(DateTime.Now+": "+message);
     }
 }
 #endif
