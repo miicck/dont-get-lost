@@ -33,6 +33,9 @@ public class colony_tasks : MonoBehaviour
 
         // The skills are built and will not need
         // changing, delete corresponding templates
+        // (disable first so changes take place immediately)
+        row_skill_template.gameObject.SetActive(false);
+        header_skill_template.gameObject.SetActive(false);
         Destroy(header_skill_template.gameObject);
         Destroy(row_skill_template.gameObject);
         header_skill_template = null;
@@ -60,7 +63,15 @@ public class colony_tasks : MonoBehaviour
         {
             var r = row_template.inst();
             r.SetParent(row_template.parent);
-            r.GetComponentInChildren<UnityEngine.UI.Text>().text = s.name.capitalize();
+
+            var name_button = r.Find("name_button").GetComponent<UnityEngine.UI.Button>();
+            name_button.onClick.AddListener(() =>
+            {
+                // Ping the settler if you click their name
+                if (s == null) return;
+                client.create(s.transform.position, "misc/map_ping");
+            });
+            name_button.GetComponentInChildren<UnityEngine.UI.Text>().text = s.name.capitalize();
 
             foreach (var sk in skill.all)
             {
