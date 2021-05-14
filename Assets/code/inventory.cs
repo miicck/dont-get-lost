@@ -299,7 +299,7 @@ public class inventory : networked, IItemCollection
                             isn.delete(() =>
                             {
                                 // Transfer into target inventory
-                                target.add(transfer_item, transfer_count);
+                                target.add(transfer_item, transfer_count, popup_if_player: false);
                             });
 
                         return;
@@ -364,7 +364,9 @@ public class inventory : networked, IItemCollection
         return add(to_add, count);
     }
 
-    public bool add(item item, int count)
+    public bool add(item item, int count) => add(item, count, popup_if_player: true);
+
+    public bool add(item item, int count, bool popup_if_player = true)
     {
         if (item == null || count == 0)
             return true;
@@ -405,7 +407,7 @@ public class inventory : networked, IItemCollection
         }
 
         // If this is the local player inventory, display a message on success
-        if (added && GetComponentInParent<player>() == player.current)
+        if (popup_if_player && added && GetComponentInParent<player>() == player.current)
         {
             int total = 0;
             contents().TryGetValue(item, out total);

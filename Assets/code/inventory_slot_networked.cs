@@ -128,10 +128,10 @@ public class inventory_slot_networked : networked
                     inv.transform.position, "misc/networked_inventory_slot", inv);
                 slot.set_item_count_index(item_to_pickup, remaining, index);
             }
-
-            // Update the ui to reflect that the object has been picked up
-            mouse_item.create(item_to_pickup, to_pickup, inv);
         });
+
+        // Update the ui to reflect that the object has been picked up
+        mouse_item.create(item_to_pickup, to_pickup, inv);
     }
 
 #if UNITY_EDITOR
