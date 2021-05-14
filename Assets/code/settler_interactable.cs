@@ -155,7 +155,7 @@ public abstract class settler_interactable : has_path_elements,
             proficiencies = i.proficiencies(s);
             foreach (var p in proficiencies)
                 total_proficiency += p.percent_modifier;
-            if (total_proficiency < -100) total_proficiency = -100;
+            if (total_proficiency < -90) total_proficiency = -90;
 
             // From the above, work out the multiplier
             total_multiplier = 1f + total_proficiency * 0.01f;
