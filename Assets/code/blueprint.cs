@@ -93,10 +93,38 @@ public class blueprint : MonoBehaviour
         }
     }
 
-    public bool manipulate_with_mouse()
+    void play_sounds()
+    {
+        // Play adjustment sounds
+        if (accumulated_adjustment > last_adjustment_played + 1)
+        {
+            last_adjustment_played = accumulated_adjustment;
+
+            float x = Mathf.Max(accumulated_adjustment - 1f, 0f);
+            float pitch = 1.5f - 0.5f * Mathf.Exp(-x / 10f);
+
+            player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f,
+                location: transform.position, min_time_since_last: 0.05f);
+        }
+    }
+
+    public bool manipulate()
     {
         listen_for_pivot_change();
+        play_sounds();
 
+        if (controls.key_based_building)
+        {
+            if (controls.triggered(controls.BIND.USE_ITEM)) return true;
+            manipulate_with_keys();
+            return false;
+        }
+
+        return manipulate_with_mouse();
+    }
+
+    bool manipulate_with_mouse()
+    {
         // The ray from the player camera
         var cam_ray = player.current.camera_ray();
 
@@ -183,25 +211,11 @@ public class blueprint : MonoBehaviour
                 break;
         }
 
-        // Play adjustment sounds
-        if (accumulated_adjustment > last_adjustment_played + 1)
-        {
-            last_adjustment_played = accumulated_adjustment;
-
-            float x = Mathf.Max(accumulated_adjustment - 1f, 0f);
-            float pitch = 1.5f - 0.5f * Mathf.Exp(-x / 10f);
-
-            player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f,
-                location: transform.position, min_time_since_last: 0.05f);
-        }
-
         return false;
     }
 
-    public void manipulate_with_keys()
+    void manipulate_with_keys()
     {
-        listen_for_pivot_change();
-
         if (controls.held(controls.BIND.BUILDING_TRANSLATION))
         {
             axes.gameObject.SetActive(true);
@@ -305,7 +319,8 @@ public class blueprint : MonoBehaviour
     void rotate_around(Vector3 axis, float angle)
     {
         accumulated_adjustment += Mathf.Abs(angle) / 15f;
-        building.transform.RotateAround(transform.position, axis, angle);
+        Transform to_rotate = controls.held(controls.BIND.ROTATE_ALSO_AXES) ? transform : building.transform;
+        to_rotate.RotateAround(transform.position, axis, angle);
     }
 
     void rotate_around(Vector3 axis)

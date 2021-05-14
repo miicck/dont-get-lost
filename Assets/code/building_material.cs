@@ -347,8 +347,8 @@ public class building_material : item, IPlayerInteractable
         {
             // Don't do anything on non-auth clients
             if (!player.has_authority) return true;
-
             if (blueprint == null) return true;
+
             last_time_building = Time.realtimeSinceStartup;
 
             if (controls.triggered(controls.BIND.ALT_USE_ITEM))
@@ -359,13 +359,7 @@ public class building_material : item, IPlayerInteractable
                 return true;
             }
 
-            if (controls.key_based_building)
-            {
-                if (controls.triggered(controls.BIND.USE_ITEM)) return true;
-                blueprint.manipulate_with_keys();
-                return false;
-            }
-            else return blueprint.manipulate_with_mouse();
+            return blueprint.manipulate();
         }
 
         public override void end_interaction(player player)
