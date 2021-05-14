@@ -250,6 +250,12 @@ public class building_material : item, IPlayerInteractable
             return !controls.key_based_building;
         }
 
+        public override bool allows_mouse_look()
+        {
+            if (blueprint == null) return true;
+            return blueprint.allows_mouse_look;
+        }
+
         public override string context_tip()
         {
             if (blueprint != null)

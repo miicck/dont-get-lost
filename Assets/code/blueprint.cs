@@ -80,6 +80,20 @@ public class blueprint : MonoBehaviour
     }
     MOUSE_MODE _mouse_mode = MOUSE_MODE.NONE;
 
+    public bool allows_mouse_look
+    {
+        get
+        {
+            switch (mouse_mode)
+            {
+                case MOUSE_MODE.X_ROTATE: return false;
+                case MOUSE_MODE.Y_ROTATE: return false;
+                case MOUSE_MODE.Z_ROTATE: return false;
+                default: return true;
+            }
+        }
+    }
+
     void listen_for_pivot_change()
     {
         float pivot_change_dir = controls.delta(controls.BIND.CHANGE_PIVOT);
