@@ -245,16 +245,14 @@ public static class utils
         T _value;
     }
 
-    /// <summary> Returns the point on the given <paramref name="world_line"/>, that 
-    /// passes closest to the players camera ray. </summary>
-    public static Vector3 nearest_point_on_line_to_player_ray(Ray world_line)
+    /// <summary> Returns the point on <paramref name="line"/>, that 
+    /// passes closest to <paramref name="other_line"/>. </summary>
+    public static Vector3 nearest_point_on_line(Ray line, Ray other_line)
     {
-        var cam_ray = player.current.camera_ray();
-
-        Vector3 a1 = cam_ray.origin;
-        Vector3 r1 = cam_ray.direction;
-        Vector3 a2 = world_line.origin;
-        Vector3 r2 = world_line.direction;
+        Vector3 a1 = other_line.origin;
+        Vector3 r1 = other_line.direction;
+        Vector3 a2 = line.origin;
+        Vector3 r2 = line.direction;
 
         float r12 = Vector3.Dot(r1, r2);
         Vector3 c = a2 - a1;
@@ -583,7 +581,7 @@ public static class utils
     /// <summary> Move the transform <paramref name="t"/> towards the point <paramref name="to"/> by an amount
     /// bounded from above by <paramref name="max_move"/> until <paramref name="t"/> is within 
     /// <paramref name="arrive_distance"/> of <paramref name="to"/>. Returns true once this criteria is met. </summary>
-    public static bool move_towards(Transform t, Vector3 to, float max_move, 
+    public static bool move_towards(Transform t, Vector3 to, float max_move,
         float arrive_distance = 0, bool allign_forwards = false)
     {
         Vector3 delta = to - t.position;
@@ -750,6 +748,10 @@ public static class utils
     }
 
     public static bool is_prefab(this Component g) => !g.gameObject.scene.IsValid();
+
+    public static Ray right_ray(this Transform t) => new Ray(t.position, t.right);
+    public static Ray up_ray(this Transform t) => new Ray(t.position, t.up);
+    public static Ray forward_ray(this Transform t) => new Ray(t.position, t.forward);
 
 #if UNITY_EDITOR // Unity edtor utilities
 

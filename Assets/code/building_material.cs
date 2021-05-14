@@ -111,442 +111,12 @@ public class building_material : item, IPlayerInteractable
         };
     }
 
-    //#########//
-    // WELDING //
-    //#########//
-
-    // Points that welds snap to
-    protected snap_point[] snap_points => GetComponentsInChildren<snap_point>();
-
-    // A weld represents the fixture of an item via a pivot
-    // to a particular weld point in space
-    public class weld_info
-    {
-        building_material to_weld; // The item being welded
-        snap_point pivot;          // The pivot of the item, in snapped orientation
-
-        public Vector3 weld_location { get; private set; }    // The world location of the weld
-        public Quaternion weld_rotation { get; private set; } // The rotation of the weld (specifying the snap directions)
-
-        // The rotation of the rotation axes
-        public Quaternion rotation_axes_rotation
-        {
-            get => Quaternion.LookRotation(forward_rot, up_rot);
-        }
-
-        public void on_finish()
-        {
-            Destroy(axes.gameObject);
-            Destroy(rotation_axes.gameObject);
-        }
-
-        /// <summary> The displayed axes. </summary>
-        axes axes;
-        axes rotation_axes;
-
-        // Rotate the item so that the pivot has the given rotation
-        void set_pivot_rotation(Quaternion rotation)
-        {
-            // Rotate
-            to_weld.transform.rotation = rotation;
-            to_weld.transform.rotation *= Quaternion.Inverse(pivot.transform.localRotation);
-
-            // Align
-            Vector3 disp = weld_location - pivot.transform.position;
-            to_weld.transform.position += disp;
-        }
-
-        /// <summary>
-        /// The index of the pivot in <see cref="to_weld"/>.snap_points.
-        /// </summary>
-        int pivot_index
-        {
-            get
-            {
-                if (_pivot_index.ContainsKey(to_weld.name))
-                    return _pivot_index[to_weld.name];
-                return 0;
-            }
-            set
-            {
-                if (value > to_weld.snap_points.Length - 1) value = 0;
-                else if (value < 0) value = to_weld.snap_points.Length - 1;
-                _pivot_index[to_weld.name] = value;
-                pivot = to_weld.snap_points[value];
-            }
-        }
-
-        // Pivot index, by item name. Static so it's remembered between placements.
-        static Dictionary<string, int> _pivot_index = new Dictionary<string, int>();
-
-        // Constructor
-        public weld_info(
-            building_material to_weld,
-            Vector3 weld_location,
-            Quaternion weld_rotation)
-        {
-            this.to_weld = to_weld;
-            pivot_index = pivot_index; // Loads the pivot
-
-            this.weld_location = weld_location;
-            this.weld_rotation = weld_rotation;
-
-            // Determine the rotation axes
-            up_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.up));
-            right_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.right));
-            forward_rot = utils.find_to_min(possible_axes(), (a) => Vector3.Angle(a, player.current.transform.forward));
-
-            // Create the axes/rotation axes
-            axes = Resources.Load<axes>("misc/axes").inst();
-            axes.transform.position = weld_location;
-            axes.transform.rotation = rotation_axes_rotation;
-            axes.transform.localScale = Vector3.one * to_weld.axes_scale;
-            rotation_axes = Resources.Load<axes>("misc/rotation_axes").inst();
-            rotation_axes.transform.position = weld_location;
-            rotation_axes.transform.rotation = rotation_axes_rotation;
-            rotation_axes.transform.localScale = Vector3.one * to_weld.axes_scale;
-
-            // Axes start disabled if we're using key based building
-            // (enabled if we're using mouse-based building)
-            axes.gameObject.SetActive(!controls.key_based_building);
-            rotation_axes.gameObject.SetActive(!controls.key_based_building);
-
-            set_pivot_rotation(rotation_axes_rotation);
-        }
-
-        // The possible rotation axes
-        Vector3[] possible_axes()
-        {
-            // Axes relative to weld axis
-            Vector3[] axes = new Vector3[]
-            {
-                new Vector3( 1, 0, 0), new Vector3( 0, 1, 0), new Vector3( 0, 0, 1),
-                new Vector3(-1, 0, 0), new Vector3( 0,-1, 0), new Vector3( 0, 0,-1),
-                new Vector3( 0, 1, 1), new Vector3( 1, 0, 1), new Vector3( 1, 1, 0),
-                new Vector3( 0,-1, 1), new Vector3(-1, 0, 1), new Vector3(-1, 1, 0),
-                new Vector3( 0, 1,-1), new Vector3( 1, 0,-1), new Vector3( 1,-1, 0),
-                new Vector3( 0,-1,-1), new Vector3(-1, 0,-1), new Vector3(-1,-1, 0),
-            };
-
-            // Rotate by the weld rotation/normalize to
-            // obtain global rotation snap-axes
-            for (int i = 0; i < axes.Length; ++i)
-                axes[i] = weld_rotation * axes[i].normalized;
-
-            return axes;
-        }
-
-        // Rotate the pivot with the keyboard keys
-        public Vector3 right_rot { get; private set; }
-        public Vector3 forward_rot { get; private set; }
-        public Vector3 up_rot { get; private set; }
-
-        void translate(Vector3 amount)
-        {
-            to_weld.transform.position += amount;
-            axes.transform.position += amount;
-            rotation_axes.transform.position += amount;
-            weld_location += amount;
-        }
-
-        enum MOUSE_MODE
-        {
-            NONE,
-            X_TRANSLATE,
-            X_ROTATE,
-            Y_TRANSLATE,
-            Y_ROTATE,
-            Z_TRANSLATE,
-            Z_ROTATE
-        }
-        MOUSE_MODE mouse_mode = MOUSE_MODE.NONE;
-
-        Vector3? last_closest_point = null;
-        float last_click_time = Time.realtimeSinceStartup;
-        float accumulated_rotation = 0;
-
-        void change_pivot()
-        {
-            float pivot_change_dir = controls.delta(controls.BIND.CHANGE_PIVOT);
-            if (controls.triggered(controls.BIND.INCREMENT_PIVOT)) pivot_change_dir = 1f;
-            if (pivot_change_dir != 0)
-            {
-                // Change the pivot
-                Quaternion saved_rotation = pivot.transform.rotation;
-                pivot_index += pivot_change_dir > 0 ? 1 : -1;
-                set_pivot_rotation(saved_rotation);
-                player.current.play_sound("sounds/adjustment_click", 1f, 1f, 0.5f, location: weld_location, min_time_since_last: 0.05f);
-            }
-        }
-
-        float adjustment_sound_accumulated = 1;
-        float adjustment_sound_last_played = 0;
-
-        /// <summary> Rotate the building using the mouse. Returns true 
-        /// when the orientation is confirmed. </summary>
-        public bool mouse_rotate()
-        {
-            change_pivot();
-
-            if (controls.triggered(controls.BIND.USE_ITEM))
-            {
-                // Check for double-click to place
-                if (Time.realtimeSinceStartup - last_click_time < 0.5f)
-                    return true;
-
-                last_click_time = Time.realtimeSinceStartup;
-
-                var ray = player.current.camera_ray();
-                mouse_mode = MOUSE_MODE.NONE;
-
-                var trans = utils.raycast_for_closest<Transform>(ray, out RaycastHit hit,
-                    accept: (h, t) => t.IsChildOf(axes.transform) || t.IsChildOf(rotation_axes.transform));
-
-                if (trans != null)
-                {
-                    if (trans.IsChildOf(axes.transform))
-                    {
-                        switch (axes.test_is_part_of_axis(trans))
-                        {
-                            case axes.AXIS.X: mouse_mode = MOUSE_MODE.X_TRANSLATE; break;
-                            case axes.AXIS.Y: mouse_mode = MOUSE_MODE.Y_TRANSLATE; break;
-                            case axes.AXIS.Z: mouse_mode = MOUSE_MODE.Z_TRANSLATE; break;
-                        }
-                    }
-                    else if (trans.IsChildOf(rotation_axes.transform))
-                    {
-                        switch (rotation_axes.test_is_part_of_axis(trans))
-                        {
-                            case axes.AXIS.X: mouse_mode = MOUSE_MODE.X_ROTATE; break;
-                            case axes.AXIS.Y: mouse_mode = MOUSE_MODE.Y_ROTATE; break;
-                            case axes.AXIS.Z: mouse_mode = MOUSE_MODE.Z_ROTATE; break;
-                        }
-                    }
-                }
-            }
-            else if (controls.untriggered(controls.BIND.USE_ITEM))
-            {
-                last_closest_point = null;
-                mouse_mode = MOUSE_MODE.NONE;
-            }
-
-            Vector3? new_closest_point = null;
-            Vector3? rotation_axis = null;
-            float delta_rot_control = 10 * (controls.delta(controls.BIND.ROTATION_AMOUNT_X) +
-                                            controls.delta(controls.BIND.ROTATION_AMOUNT_Y));
-            accumulated_rotation += delta_rot_control;
-
-            switch (mouse_mode)
-            {
-                case MOUSE_MODE.X_TRANSLATE:
-                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, right_rot));
-                    axes.highlight_axis(axes.AXIS.X);
-                    break;
-
-                case MOUSE_MODE.Y_TRANSLATE:
-                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, up_rot));
-                    axes.highlight_axis(axes.AXIS.Y);
-                    break;
-
-                case MOUSE_MODE.Z_TRANSLATE:
-                    new_closest_point = utils.nearest_point_on_line_to_player_ray(new Ray(pivot.transform.position, forward_rot));
-                    axes.highlight_axis(axes.AXIS.Z);
-                    break;
-
-                case MOUSE_MODE.X_ROTATE:
-                    rotation_axis = right_rot;
-                    rotation_axes.highlight_axis(axes.AXIS.X);
-                    break;
-
-                case MOUSE_MODE.Y_ROTATE:
-                    rotation_axis = -up_rot;
-                    rotation_axes.highlight_axis(axes.AXIS.Y);
-                    break;
-
-                case MOUSE_MODE.Z_ROTATE:
-                    rotation_axis = -forward_rot;
-                    rotation_axes.highlight_axis(axes.AXIS.Z);
-                    break;
-
-                case MOUSE_MODE.NONE:
-                    axes.highlight_axis(axes.AXIS.NONE);
-                    rotation_axes.highlight_axis(axes.AXIS.NONE);
-                    accumulated_rotation = 0;
-                    break;
-            }
-
-            if (rotation_axis != null)
-            {
-                Vector3 rot_axis = (Vector3)rotation_axis;
-
-                if (controls.held(controls.BIND.FINE_ROTATION))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, accumulated_rotation);
-                    adjustment_sound_accumulated += Mathf.Abs(delta_rot_control) / 15f;
-                    accumulated_rotation = 0;
-                }
-                else if (accumulated_rotation > 20f)
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, 45);
-                    adjustment_sound_accumulated += 1.01f;
-                    accumulated_rotation = 0;
-                }
-                else if (accumulated_rotation < -20f)
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, rot_axis, -45);
-                    adjustment_sound_accumulated += 1.01f;
-                    accumulated_rotation = 0;
-                }
-            }
-
-            if (last_closest_point == null)
-                last_closest_point = new_closest_point;
-            else if (new_closest_point != null)
-            {
-                Vector3 delta = (Vector3)new_closest_point - (Vector3)last_closest_point;
-                translate(delta);
-                adjustment_sound_accumulated += delta.magnitude / 0.1f;
-                last_closest_point = new_closest_point;
-            }
-
-            if (!controls.held(controls.BIND.USE_ITEM))
-            {
-                adjustment_sound_last_played = 0f;
-                adjustment_sound_accumulated = 1f;
-            }
-
-            if (adjustment_sound_accumulated > adjustment_sound_last_played + 1f)
-            {
-                adjustment_sound_last_played = adjustment_sound_accumulated;
-                float x = Mathf.Max(adjustment_sound_accumulated - 1f, 0f);
-                float pitch = 1.5f - 0.5f * Mathf.Exp(-x / 10f);
-
-                player.current.play_sound("sounds/adjustment_click", pitch, pitch, 0.5f,
-                    location: weld_location, min_time_since_last: 0.05f);
-            }
-
-            return false;
-        }
-
-        public void key_rotate()
-        {
-            change_pivot();
-
-            axes.gameObject.SetActive(controls.held(controls.BIND.BUILDING_TRANSLATION));
-            rotation_axes.gameObject.SetActive(!controls.held(controls.BIND.BUILDING_TRANSLATION));
-
-            if (controls.held(controls.BIND.BUILDING_TRANSLATION))
-            {
-                // Translate, rather than rotate
-                float t_amount = Time.deltaTime / 2f;
-                if (controls.held(controls.BIND.MANIPULATE_BUILDING_RIGHT))
-                {
-                    axes.highlight_axis(axes.AXIS.X);
-                    translate(right_rot * t_amount);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_LEFT))
-                {
-                    axes.highlight_axis(axes.AXIS.X);
-                    translate(-right_rot * t_amount);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_FORWARD))
-                {
-                    axes.highlight_axis(axes.AXIS.Z);
-                    translate(forward_rot * t_amount);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_BACK))
-                {
-                    axes.highlight_axis(axes.AXIS.Z);
-                    translate(-forward_rot * t_amount);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_UP))
-                {
-                    axes.highlight_axis(axes.AXIS.Y);
-                    translate(up_rot * t_amount);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_DOWN))
-                {
-                    axes.highlight_axis(axes.AXIS.Y);
-                    translate(-up_rot * t_amount);
-                }
-            }
-
-            else if (controls.held(controls.BIND.FINE_ROTATION))
-            {
-                // Continuous rotation
-                if (controls.held(controls.BIND.MANIPULATE_BUILDING_RIGHT))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.Z);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_LEFT))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, forward_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.Z);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_BACK))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, -right_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.X);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_FORWARD))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, right_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.X);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_DOWN))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, -up_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.Y);
-                }
-                else if (controls.held(controls.BIND.MANIPULATE_BUILDING_UP))
-                {
-                    to_weld.transform.RotateAround(pivot.transform.position, up_rot, Time.deltaTime * 15f);
-                    rotation_axes.highlight_axis(axes.AXIS.Y);
-                }
-            }
-
-            // Rotation by 45 degree increments
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_RIGHT))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, -forward_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.Z);
-            }
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_LEFT))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, forward_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.Z);
-            }
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_BACK))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, -right_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.X);
-            }
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_FORWARD))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, right_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.X);
-            }
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_DOWN))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, -up_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.Y);
-            }
-            else if (controls.triggered(controls.BIND.MANIPULATE_BUILDING_UP))
-            {
-                to_weld.transform.RotateAround(pivot.transform.position, up_rot, 45);
-                rotation_axes.highlight_axis(axes.AXIS.Y);
-            }
-            else return;
-        }
-    }
-
-    // The current weld
-    public weld_info weld { get; private set; }
-
     //##########//
     // ITEM USE //
     //##########//
+
+    // Points that welds snap to
+    protected snap_point[] snap_points => GetComponentsInChildren<snap_point>();
 
     player_interaction[] interactions;
     public override player_interaction[] item_uses()
@@ -560,9 +130,9 @@ public class building_material : item, IPlayerInteractable
         return interactions;
     }
 
-    public bool is_blueprint { get; private set; }
+    public bool is_blueprint => GetComponentInParent<blueprint>() != null;
 
-    snap_point closest_to_ray(Ray ray, float ray_distance)
+    snap_point closest_snap_point(Ray ray, float ray_distance)
     {
         snap_point ret = null;
 
@@ -630,80 +200,6 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    void make_blueprint()
-    {
-        // Create a blue, placeholder version of this object
-        foreach (var comp in GetComponentsInChildren<Component>())
-        {
-            // Replace all materials with the building placeholder material
-            if (comp is Renderer)
-            {
-                var rend = (Renderer)comp;
-                rend.material = Resources.Load<Material>("materials/standard_shader/building_placeholder");
-                continue;
-            }
-
-            // Highlight the snap points
-            if (comp is snap_point)
-            {
-                var sp = (snap_point)comp;
-                var hl = Resources.Load<GameObject>("misc/snap_point_highlight").inst();
-                hl.transform.SetParent(sp.transform);
-                hl.transform.localPosition = Vector3.zero;
-                hl.transform.localRotation = Quaternion.identity;
-            }
-
-            // Destroy colliders
-            if (comp is Collider)
-            {
-                Destroy(comp);
-                continue;
-            }
-
-            // Remove componenets tagged as INonBlueprintable
-            if (comp is INonBlueprintable)
-                Destroy(comp);
-        }
-
-        // Don't carry out normal updates on blueprinted version.
-        enabled = false;
-        is_blueprint = true;
-    }
-
-    building_material blueprint_and_fix_to(
-        building_material other, RaycastHit hit,
-        Ray player_ray, float ray_distance)
-    {
-        var spawned = (building_material)create(name, hit.point, Quaternion.identity);
-        spawned.make_blueprint();
-
-        snap_point snap_to = other.closest_to_ray(player_ray, ray_distance);
-
-        if (snap_to == null)
-        {
-            Destroy(spawned.gameObject);
-            return null;
-        }
-
-        spawned.weld = new weld_info(spawned,
-            snap_to.transform.position,
-            snap_to.transform.rotation);
-
-        return spawned;
-    }
-
-    building_material blueprint_and_fix_at(RaycastHit hit)
-    {
-        var spawned = (building_material)create(name, hit.point, Quaternion.identity);
-        spawned.make_blueprint();
-
-        spawned.weld = new weld_info(spawned,
-            hit.point,
-            player.current.transform.rotation);
-
-        return spawned;
-    }
-
     class demolish_interaction : player_interaction
     {
         public static float last_time_deleting { get; private set; }
@@ -714,15 +210,7 @@ public class building_material : item, IPlayerInteractable
         public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
         public override bool allow_held => true;
 
-        public override string context_tip()
-        {
-            return "destroy matching objects";
-        }
-
-        public override bool start_interaction(player player)
-        {
-            return base.start_interaction(player);
-        }
+        public override string context_tip() => "destroy matching objects";
 
         public override bool continue_interaction(player player)
         {
@@ -750,11 +238,17 @@ public class building_material : item, IPlayerInteractable
     {
         public static float last_time_building { get; private set; }
 
-        building_material blueprint;
+        blueprint blueprint;
         building_material equipped;
 
         public build_interaction(building_material equipped) { this.equipped = equipped; }
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
+
+        public override bool allows_movement()
+        {
+            // Disable movement when using keys to manipulate
+            return !controls.key_based_building;
+        }
 
         public override string context_tip()
         {
@@ -792,11 +286,14 @@ public class building_material : item, IPlayerInteractable
 
         public override bool start_interaction(player player)
         {
-            // Don't do anything on the non-authority client
+            // Don't do anything on non-auth clients
             if (!player.has_authority) return true;
 
             if (equipped.snap_points.Length == 0)
-                throw new System.Exception("No snap points found on " + equipped.display_name + "!");
+            {
+                Debug.LogError("No snap points found on " + equipped.display_name + "!");
+                return true;
+            }
 
             // Get the ray to cast along, that stays within 
             // BUILD_RANGE of the player
@@ -814,13 +311,25 @@ public class building_material : item, IPlayerInteractable
             // If a building material is found, fix new build to it
             // otherwise, just fix to any solid object
             if (bm != null)
-                blueprint = equipped.blueprint_and_fix_to(bm, hit, camera_ray, raycast_distance);
+            {
+                var snap = bm.closest_snap_point(camera_ray, raycast_distance);
+
+                // Get the rotation that is maximally alligned with the player
+                // but still snapped to the snap point axes
+                var alligned_rot = Quaternion.LookRotation(
+                    utils.find_to_min(snap.snap_directions_45(), (a) => -Vector3.Dot(a, player.transform.forward)),
+                    utils.find_to_min(snap.snap_directions_45(), (a) => -Vector3.Dot(a, player.transform.up))
+                    );
+
+                blueprint = blueprint.create(equipped.name, snap.transform.position, alligned_rot);
+            }
             else
             {
                 var col = utils.raycast_for_closest<Collider>(camera_ray, out hit, raycast_distance,
                     (h, c) => !c.transform.IsChildOf(player.current.transform));
 
-                if (col != null) blueprint = equipped.blueprint_and_fix_at(hit);
+                if (col != null)
+                    blueprint = blueprint.create(equipped.name, hit.point, player.current.transform.rotation);
             }
 
             // Move onto rotation stage if something was spawned
@@ -830,20 +339,21 @@ public class building_material : item, IPlayerInteractable
                 if (!controls.key_based_building) player.current.cursor_sprite = cursors.DEFAULT;
                 return false;
             }
+
             return true;
         }
 
         public override bool continue_interaction(player player)
         {
-            // Don't do anything on the non-authority client
+            // Don't do anything on non-auth clients
             if (!player.has_authority) return true;
+
             if (blueprint == null) return true;
             last_time_building = Time.realtimeSinceStartup;
 
             if (controls.triggered(controls.BIND.ALT_USE_ITEM))
             {
                 // Cancel build on right click
-                blueprint.weld.on_finish();
                 Destroy(blueprint.gameObject);
                 blueprint = null;
                 return true;
@@ -852,38 +362,34 @@ public class building_material : item, IPlayerInteractable
             if (controls.key_based_building)
             {
                 if (controls.triggered(controls.BIND.USE_ITEM)) return true;
-                blueprint.weld.key_rotate();
+                blueprint.manipulate_with_keys();
                 return false;
             }
-            else return blueprint.weld.mouse_rotate();
+            else return blueprint.manipulate_with_mouse();
         }
 
         public override void end_interaction(player player)
         {
-            base.end_interaction(player);
-
-            // Don't do anything on the authority client
+            // Don't do anything non-auth clients
             if (!player.has_authority) return;
 
             if (blueprint != null)
             {
                 // Remove the object we're building from the inventory
-                if (player.current.inventory.remove(blueprint, 1))
+                if (player.current.inventory.remove(blueprint.building, 1))
                 {
-                    player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f, location: blueprint.weld.weld_location);
+                    player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f,
+                        location: blueprint.transform.position);
 
                     // Create a proper, networked version of the spawned object
-                    var created = (building_material)create(blueprint.name,
-                        blueprint.transform.position, blueprint.transform.rotation,
-                        networked: true, register_undo: true);
-
-                    created.on_build();
-                    blueprint.weld.on_finish();
+                    var b = blueprint.building;
+                    var created = create(b.name, b.transform.position, b.transform.rotation,
+                        networked: true, register_undo: true) as building_material;
+                    created?.on_build();
                     Destroy(blueprint.gameObject);
 
                     // Satisfy building requirements
                     build_requirement.on_build(created);
-
                 }
             }
 
