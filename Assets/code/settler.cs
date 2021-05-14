@@ -116,6 +116,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
     public float armour_scale() { return height_scale.value; }
     public Color hair_color() { return net_hair_color.value; }
+    public bool armour_visible(armour_piece.LOCATION location) => true;
 
     //#####################//
     // IPlayerInteractable //

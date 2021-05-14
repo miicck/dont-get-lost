@@ -410,6 +410,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
     public float armour_scale() { return 1f; }
     public Color hair_color() { return net_hair_color.value; }
+    public bool armour_visible(armour_piece.LOCATION location)
+    {
+        if (location == armour_piece.LOCATION.HEAD)
+            return !first_person;
+        return true;
+    }
 
     //########################//
     // EQUIP + QUICKBAR SLOTS //

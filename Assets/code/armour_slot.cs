@@ -56,6 +56,7 @@ public interface ICanEquipArmour
 {
     armour_locator[] armour_locators();
     float armour_scale();
+    bool armour_visible(armour_piece.LOCATION location);
     Color hair_color();
 }
 
@@ -87,6 +88,9 @@ public static class armour_extensions
             {
                 al.equipped = armour;
                 al.equipped?.on_equip(entity);
+                if (!entity.armour_visible(al.location))
+                    foreach (var r in al.equipped.GetComponentsInChildren<Renderer>())
+                        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
             }
     }
 }
