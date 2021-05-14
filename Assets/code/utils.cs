@@ -753,6 +753,17 @@ public static class utils
     public static Ray up_ray(this Transform t) => new Ray(t.position, t.up);
     public static Ray forward_ray(this Transform t) => new Ray(t.position, t.forward);
 
+    public static void set_default_rolloff(AudioSource source, float max_distance)
+    {
+        var rolloff = new AnimationCurve();
+        for (float x = 0; x < 1.05f; x += 0.1f)
+            rolloff.AddKey(x, 1f - Mathf.Pow(x, 0.25f));
+
+        source.rolloffMode = AudioRolloffMode.Custom;
+        source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, rolloff);
+        source.maxDistance = max_distance;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

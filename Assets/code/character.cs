@@ -172,6 +172,7 @@ public class character : networked,
             sound_source.transform.position = sound_centre;
             sound_source.transform.SetParent(transform);
             sound_source.spatialBlend = 1f; // 3D
+            utils.set_default_rolloff(sound_source, 15f);
         }
     }
 
