@@ -90,17 +90,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             run_mouse_look();
             run_movement();
             run_teleports();
-
-            if (controls.triggered(controls.BIND.UNDO))
-            {
-                if (undo_manager.undo())
-                    play_sound("sounds/undo_sound");
-            }
-            if (controls.triggered(controls.BIND.REDO))
-            {
-                if (undo_manager.redo())
-                    play_sound("sounds/undo_sound");
-            }
         }
         else
         {
@@ -192,11 +181,39 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     new toggle_map(),
                     new inspect_networked(),
                     new open_task_manager(),
+                    new undo_interaction(),
+                    new redo_interaction()
                 };
             return _self_interactions;
         }
     }
     player_interaction[] _self_interactions;
+
+    class undo_interaction : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.UNDO;
+        public override string context_tip() => "undo";
+        public override bool show_context_tip() => false;
+
+        public override bool start_interaction(player player)
+        {
+            if (undo_manager.undo()) player.play_sound("sounds/undo_sound");
+            return true;
+        }
+    }
+
+    class redo_interaction : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.REDO;
+        public override string context_tip() => "redo";
+        public override bool show_context_tip() => false;
+
+        public override bool start_interaction(player player)
+        {
+            if (undo_manager.redo()) player.play_sound("sounds/undo_sound");
+            return true;
+        }
+    }
 
     public abstract class menu_interaction : player_interaction
     {
