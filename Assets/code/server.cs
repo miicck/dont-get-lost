@@ -645,14 +645,14 @@ public static class server
             // Could not identify the requested prefab
             if (networked.look_up(prefab) == null)
             {
-                log_warning("Could not identify the prefab: "+prefab);
+                log_warning("Could not identify the prefab: " + prefab);
                 return null;
             }
 
             // Could not find the requested parent
             if (parent_id > 0 && !representations.ContainsKey(parent_id))
             {
-                log_warning("Tried to create a child of the missing id: "+parent_id);
+                log_warning("Tried to create a child of the missing id: " + parent_id);
                 return null;
             }
 
@@ -801,7 +801,7 @@ public static class server
             load();
 
 #if STANDALONE_SERVER
-                // Error out if the save file does not exist
+        // Error out if the save file does not exist
         else
         {
             log_error("Save file does not exist: " + save_file());
@@ -1496,7 +1496,6 @@ public static class server
     {
         switch (type)
         {
-
             case global::client.MESSAGE.LOGIN:
 
                 int init_offset = offset;
@@ -1620,6 +1619,18 @@ public static class server
 
                 // Delete the representation
                 deleting.delete(issued_from: client, response_requested: response);
+                break;
+
+            case global::client.MESSAGE.KICK:
+
+                // Disconnect the requested player
+                string username = network_utils.decode_string(bytes, ref offset);
+                foreach (var c in connected_clients)
+                    if (c.username == username)
+                    {
+                        c.disconnect("kicked");
+                        break;
+                    }
                 break;
 
             default:

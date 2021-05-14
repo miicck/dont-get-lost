@@ -21,6 +21,7 @@ public static class client
         RENDER_RANGE_UPDATE, // Client render range has changed
         VARIABLE_UPDATE,     // A networked_variable has changed
         TRIGGER,             // A networked event has been triggered
+        KICK,                // A player kick has been requested
     }
 
 #if STANDALONE_SERVER
@@ -499,6 +500,11 @@ public static class client
         send_queued_messages();
     }
 
+    public static void kick(string username)
+    {
+        queue_message(MESSAGE.KICK, username);
+    }
+
     public static string info()
     {
         if (!connected) return "Client not connected.";
@@ -681,6 +687,14 @@ public static class client
                     network_utils.encode_int(network_id),
                     network_utils.encode_int(number)
                 ));
+                break;
+
+            case MESSAGE.KICK:
+                if (args.Length != 1)
+                    throw new System.Exception("Wrong number of arguments!");
+
+                string username = (string)args[0];
+                send(MESSAGE.KICK, network_utils.encode_string(username));
                 break;
 
             default:

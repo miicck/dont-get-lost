@@ -687,6 +687,19 @@ public class console : MonoBehaviour
 
             description = "Makes the settler you are looking at 100% tired.",
             usage_example = "make_tired"
+        },
+
+        ["kick"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing argument!");
+                client.kick(args[1]);
+                return true;
+            },
+
+            description = "Kick the given player.",
+            usage_example = "kick michael"
         }
     };
 
