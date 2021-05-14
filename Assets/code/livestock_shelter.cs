@@ -68,7 +68,7 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         {
             last_produce_time = Time.realtimeSinceStartup;
             foreach (var p in GetComponents<product>())
-                p.create_in_node(output);
+                p.create_in_node(output, track_production: true);
         }
     }
 

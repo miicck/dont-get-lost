@@ -842,6 +842,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         get => _fly_mode;
         set
         {
+            // Ensure map is closed when flying
+            if (value) map_open = false;
+
             _fly_mode = value;
             cursor_sprite = _fly_mode ? null : cursors.DEFAULT;
 
