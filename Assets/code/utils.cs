@@ -280,6 +280,26 @@ public static class utils
         return ret;
     }
 
+    // Overload of the above with an accept function
+    public delegate bool accept_func<T>(T t);
+    public static T find_to_min<T>(IEnumerable<T> to_search, float_func<T> objective, accept_func<T> accept)
+    {
+        T ret = default;
+        if (to_search == null) return ret;
+        float min = float.PositiveInfinity;
+        foreach (var t in to_search)
+        {
+            if (!accept(t)) continue;
+            float val = objective(t);
+            if (val < min)
+            {
+                min = val;
+                ret = t;
+            }
+        }
+        return ret;
+    }
+
     // Check if the given circle intersects the given square
     public static bool circle_intersects_square(
         Vector2 circle_centre, float radius,

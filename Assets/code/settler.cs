@@ -26,7 +26,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         get
         {
             if (base.town_path_element == null)
-                base.town_path_element = town_path_element.nearest_element(transform.position);
+            {
+                var nearest_gate = town_gate.nearest_gate(transform.position);
+                base.town_path_element = nearest_gate == null ?
+                    town_path_element.nearest_element(transform.position) :
+                    town_path_element.nearest_element(transform.position, nearest_gate.path_element.group);
+            }
             return base.town_path_element;
         }
         set => base.town_path_element = value;

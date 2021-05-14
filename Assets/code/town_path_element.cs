@@ -187,20 +187,10 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText
     static Dictionary<int, HashSet<town_path_element>> grouped_elements;
     static Dictionary<int, HashSet<town_path_element>> roomed_elements;
 
-    public static town_path_element nearest_element(Vector3 v)
+    public static town_path_element nearest_element(Vector3 v, int group = -1)
     {
-        return utils.find_to_min(all_elements,
-            (e) => (e.transform.position - v).sqrMagnitude);
-    }
-
-    public static town_path_element nearest_element(Vector3 v, int group)
-    {
-        return utils.find_to_min(all_elements,
-            (e) =>
-            {
-                if (e.group != group) return Mathf.Infinity;
-                return (e.transform.position - v).sqrMagnitude;
-            });
+        if (group < 0) return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude);
+        else return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude, (e) => e.group == group);
     }
 
     public static HashSet<town_path_element> element_group(int group)
