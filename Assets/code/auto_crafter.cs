@@ -93,32 +93,6 @@ public class auto_crafter : building_material, IPlayerInteractable
 
         // Crafting success
         ingredients.craft_to(outputs[0], track_production: true);
-
-        /*
-        int output_number = -1;
-        while (true)
-        {
-            // Nothing to output to
-            if (outputs.Length == 0) break;
-
-            // Get the next item to output
-            var itm = next_crafted_products.remove_first();
-            if (itm == null) break; // No items left
-
-            // Cycle items to sequential outputs
-            output_number = (output_number + 1) % outputs.Length;
-            var op = outputs[output_number];
-
-            // Track production
-            production_tracker.register_product(itm);
-
-            // Create the item in the output
-            op.add_item(create(itm.name,
-                        op.transform.position,
-                        op.transform.rotation,
-                        logistics_version: true));
-        }
-        */
     }
 
     private void Update()
@@ -148,6 +122,17 @@ public class auto_crafter : building_material, IPlayerInteractable
         chosen_recipe.on_change = () =>
         {
             ingredients = new recipe.checklist(recipies[chosen_recipe.value]);
+        };
+    }
+
+    protected override recover_settings_func get_recover_func()
+    {
+        int recipe_copy = chosen_recipe.value;
+        return (c) =>
+        {
+            // Recover the recipe
+            if (c is auto_crafter)
+                (c as auto_crafter).chosen_recipe.value = recipe_copy;
         };
     }
 

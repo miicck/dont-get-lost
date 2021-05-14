@@ -223,6 +223,9 @@ public class item : networked, IPlayerInteractable
         });
     }
 
+    protected delegate void recover_settings_func(building_material copy);
+    protected virtual recover_settings_func get_recover_func() => null;
+
     public undo_manager.undo_action pickup_undo()
     {
         if (this == null) return null; // Destroyed
@@ -233,6 +236,7 @@ public class item : networked, IPlayerInteractable
         Vector3 pos = transform.position;
         Quaternion rot = transform.rotation;
         networked parent = transform.parent?.GetComponent<networked>();
+        var rf = get_recover_func();
 
         return () =>
         {
@@ -247,7 +251,8 @@ public class item : networked, IPlayerInteractable
                     throw new System.Exception("Tried to remove non-existant item!");
 
             // Recreate the building
-            var created = create(name_copy, pos, rot, networked: true, parent);
+            var created = create(name_copy, pos, rot, networked: true, parent) as building_material;
+            rf?.Invoke(created);
 
             // Return the redo function
             return () =>
