@@ -642,61 +642,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         if (!interactions.movement_allowed) return;
         Vector3 move = Vector3.zero;
 
-        // Climb ladders
-        bool climbing_ladder = false;
-        if (controls.held(controls.BIND.WALK_FORWARD) ||
-            controls.held(controls.BIND.PAUSE_ON_LADDER))
-        {
-            Vector3 ladder_test_point = transform.position + Vector3.up * 0.1f + transform.forward * WIDTH * 0.6f;
-            if (ladder.in_ladder_volume(ladder_test_point))
-            {
-                climbing_ladder = true;
-                velocity.y = speed * LADDER_SPEED_MULT;
-                if (controls.held(controls.BIND.PAUSE_ON_LADDER))
-                    velocity.y = 0;
-            }
-        }
-
-        // Turn on/off crouch
-        if (climbing_ladder)
-            crouched.value = false;
-        else
-            crouched.value = controls.held(controls.BIND.CROUCH);
-
-        // Jumping
-        if (controls.triggered(controls.BIND.JUMP) && can_jump())
-            velocity.y = JUMP_VEL;
-
-        if (controller.isGrounded)
-        {
-            if (velocity.y < -1f)
-            {
-                // Fall damage
-                if (velocity.y < -FALL_DAMAGE_START_SPEED)
-                {
-                    if (disable_next_fall_damage)
-                    {
-                        disable_next_fall_damage = false;
-                    }
-                    else
-                    {
-                        float fd = -velocity.y;
-                        fd -= FALL_DAMAGE_START_SPEED;
-                        fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
-                        take_damage((int)(fd * 100));
-                    }
-                }
-
-                // Ensure we don't accumulate too much -ve y velocity
-                velocity.y = -1f;
-            }
-        }
-        else // Not grounded
-        {
-            // Gravity
-            if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
-        }
-
         // Work out how much of the x-z velocity should be removed due to friction
         float local_slippyness = ground_slippyness;
         float friction_attenuation = 1f;
@@ -750,6 +695,55 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                 }
         }
 
+        // Climb ladders
+        bool climbing_ladder = false;
+        if (on_ladder(move, true))
+        {
+            climbing_ladder = true;
+            velocity.y = speed * LADDER_SPEED_MULT;
+            velocity.y = new Vector3(velocity.x, 0, velocity.z).magnitude;
+            if (Vector3.Angle(camera.transform.forward, Vector3.down) < 30f)
+                velocity.y = -velocity.y;
+        }
+
+        // Turn on/off crouch
+        if (climbing_ladder) crouched.value = false;
+        else crouched.value = controls.held(controls.BIND.CROUCH);
+
+        // Jumping
+        if (controls.triggered(controls.BIND.JUMP) && can_jump())
+            velocity.y = JUMP_VEL;
+
+        if (controller.isGrounded)
+        {
+            if (velocity.y < -1f)
+            {
+                // Fall damage
+                if (velocity.y < -FALL_DAMAGE_START_SPEED)
+                {
+                    if (disable_next_fall_damage)
+                    {
+                        disable_next_fall_damage = false;
+                    }
+                    else
+                    {
+                        float fd = -velocity.y;
+                        fd -= FALL_DAMAGE_START_SPEED;
+                        fd /= (FALL_DAMAGE_END_SPEED - FALL_DAMAGE_START_SPEED);
+                        take_damage((int)(fd * 100));
+                    }
+                }
+
+                // Ensure we don't accumulate too much -ve y velocity
+                velocity.y = -1f;
+            }
+        }
+        else // Not grounded
+        {
+            // Gravity
+            if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
+        }
+
         controller.Move(move);
 
         // Ensure we stay above the terrain (unless we're underground)
@@ -762,6 +756,19 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             if (terra_hit.point.y > transform.position.y)
                 transform.position = terra_hit.point;
         }
+    }
+
+    bool on_ladder(Vector3 move, bool pause_on_ladder = false)
+    {
+        if (pause_on_ladder)
+            return on_ladder(transform.forward) ||
+                   on_ladder(-transform.forward) ||
+                   on_ladder(transform.right) ||
+                   on_ladder(-transform.right);
+
+        return ladder.in_ladder_volume(transform.position +
+            Vector3.up * 0.1f +
+            move.normalized * WIDTH * 0.6f);
     }
 
     const float FLY_SPEED_RESET = 10f;
