@@ -356,11 +356,8 @@ public abstract class item_node : MonoBehaviour,
 
     public static void refresh_connections()
     {
-        foreach (var n in nodes)
-            break_all_connections(n);
-
-        foreach (var n in nodes)
-            validate_connections(n);
+        foreach (var n in nodes) break_all_connections(n);
+        foreach (var n in nodes) validate_connections(n);
     }
 
     /// <summary> Create a node where <paramref name="from"/> 

@@ -46,5 +46,5 @@ MonoBehaviour:
   is_client_side: 0
   delta_mood: -50
   timespan: 60
-  display_name: rtarving
+  display_name: starving
   description: I am starving to death
