@@ -213,7 +213,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override bool continue_interaction(player player)
         {
             if (continue_menu_interaction()) return true;
-            return triggered(player);
+            return triggered(player) || controls.triggered(controls.BIND.LEAVE_MENU);
         }
 
         public override void end_interaction(player player)
