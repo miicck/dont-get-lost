@@ -190,6 +190,14 @@ public class leg : MonoBehaviour
         footstep_source.transform.SetParent(foot_base.transform);
         footstep_source.transform.localPosition = Vector3.zero;
         footstep_source.spatialBlend = 1f; // 3D
+        footstep_source.rolloffMode = AudioRolloffMode.Custom;
+
+        var falloff = new AnimationCurve();
+        for (float x = 0; x < 1.05f; x += 0.1f)
+            falloff.AddKey(x, 1f - Mathf.Pow(x, 0.25f));
+
+        footstep_source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, falloff);
+        footstep_source.maxDistance = 20f;
     }
 
     void set_scales(float thigh_length, float shin_length)
@@ -304,7 +312,7 @@ public class leg : MonoBehaviour
         Vector3 new_pos = ankle.position + delta;
         float new_leg_length = (new_pos - hip.position).magnitude;
         if (new_leg_length / (shin_length + thigh_length) > max_leg_stretch)
-                return;
+            return;
 
         ankle.position += delta;
     }
