@@ -644,7 +644,17 @@ public static class server
 
             // Could not identify the requested prefab
             if (networked.look_up(prefab) == null)
+            {
+                log_warning("Could not identify the prefab: "+prefab);
                 return null;
+            }
+
+            // Could not find the requested parent
+            if (parent_id > 0 && !representations.ContainsKey(parent_id))
+            {
+                log_warning("Tried to create a child of the missing id: "+parent_id);
+                return null;
+            }
 
             // Figure out the network id to create
             int network_id = input_id;
