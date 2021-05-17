@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>
+public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLogistical
 {
     public const float LINK_DISPLAY_ALT = 0.25f;
     public const float LINK_WIDTH = 0.05f;

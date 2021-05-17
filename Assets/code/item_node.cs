@@ -10,7 +10,8 @@ public interface IDontBlockItemLogisitcs { }
 /// <summary> A node in the item logistics network. </summary>
 public abstract class item_node : MonoBehaviour,
     INonBlueprintable, INonEquipableCallback,
-    IAddsToInspectionText, IItemCollection
+    IAddsToInspectionText, IItemCollection,
+    INonLogistical
 {
     public const float LINK_DISTANCE_TOLERANCE = 0.25f;
     public const float UPHILL_LINK_ALLOW = 0.05f;

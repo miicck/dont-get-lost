@@ -5,7 +5,7 @@ using System.Linq;
 
 /// <summary> An object that can be connected to other objects of 
 /// the same kind via <see cref="town_path_link"/>s. </summary>
-public class town_path_element : MonoBehaviour, IAddsToInspectionText
+public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogistical
 {
     public settler_interactable interactable => GetComponentInParent<settler_interactable>();
 

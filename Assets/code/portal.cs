@@ -17,6 +17,8 @@ public class portal : building_material, IPlayerInteractable
     player_interaction[] interactions;
     public override player_interaction[] player_interactions()
     {
+        if (is_logistics_version) return base.player_interactions();
+
         if (interactions == null)
         {
             List<player_interaction> inter = new List<player_interaction>();

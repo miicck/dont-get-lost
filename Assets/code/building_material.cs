@@ -95,8 +95,7 @@ public class building_material : item, IPlayerInteractable
 
     public override player_interaction[] player_interactions()
     {
-        if (is_logistics_version)
-            return base.player_interactions();
+        if (is_logistics_version) return base.player_interactions();
 
         return new player_interaction[]
         {

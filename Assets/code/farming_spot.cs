@@ -108,6 +108,8 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
 
     public override player_interaction[] player_interactions()
     {
+        if (is_logistics_version) return base.player_interactions();
+
         if (interactions == null)
             interactions = base.player_interactions().prepend(new menu(this),
             new player_inspectable(transform)
