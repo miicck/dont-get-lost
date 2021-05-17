@@ -213,6 +213,19 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             (r) => (r.transform.position - position).sqrMagnitude);
     }
 
+    public static void validate_elements_within(Bounds bounds)
+    {
+        HashSet<town_path_element> to_validate = new HashSet<town_path_element>();
+        foreach (var e in all_elements)
+        {
+            var eb = new Bounds(e.transform.position, Vector3.one*2);
+            if (bounds.Intersects(eb)) to_validate.Add(e);
+        }
+
+        foreach (var e in to_validate)
+            validate_links(e);
+    }
+
     public static void initialize()
     {
         // Initialize theelements collection

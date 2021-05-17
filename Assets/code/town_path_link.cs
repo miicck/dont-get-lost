@@ -110,6 +110,20 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
 
     public static bool can_link(town_path_link a, town_path_link b)
     {
+        if (!link_possible(a, b)) return false;
+        if (a.path_element == null || b.path_element == null) return false;
+
+        Vector3 delta = b.path_element.transform.position - a.path_element.transform.position;
+        Ray ray = new Ray(a.path_element.transform.position + Vector3.up * LINK_DISPLAY_ALT, delta);
+        foreach (var h in Physics.RaycastAll(ray, delta.magnitude))
+            if (h.collider.GetComponentInParent<INotPathBlocking>() == null)
+                return false; // Path blocked
+
+        return true;
+    }
+
+    static bool link_possible(town_path_link a, town_path_link b)
+    {
         if (a is settler_path_section)
         {
             var a_sec = (settler_path_section)a;
@@ -128,6 +142,6 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
             return can_link(b, a); // Deal with the mixed case when it's the other way around
 
         // Default: can be linked if they're within 0.25f
-        return (a.transform.position - b.transform.position).magnitude < 0.25f;
+        return a.distance_to(b) < 0.25f;
     }
 }

@@ -1065,14 +1065,18 @@ public class int_rect
 /// after the given lifetime has elapsed. </summary>
 class temporary_object : MonoBehaviour
 {
-    public static temporary_object create(float lifetime)
+    public delegate void on_delete_func();
+    on_delete_func on_delete;
+
+    public static temporary_object create(float lifetime, on_delete_func on_delete=null)
     {
         var to = new GameObject("temp_object").AddComponent<temporary_object>();
+        to.on_delete = on_delete;
         to.Invoke("delete_temp_object", lifetime);
         return to;
     }
 
-    void delete_temp_object() { Destroy(gameObject); }
+    void delete_temp_object() { on_delete?.Invoke(); Destroy(gameObject); }
 }
 
 /// <summary> An object that will destroy itself unless 

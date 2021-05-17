@@ -45,6 +45,31 @@ public class building_material : item, IPlayerInteractable
             bl.on_first_built();
     }
 
+    public override void on_create()
+    {
+        base.on_create();
+
+        // Delay geometry check until we're in the right place
+        temporary_object.create(0.1f, () =>
+        {
+            if (this == null) return;
+            world.on_geometry_change(collision_bounds());
+        });
+    }
+
+    public override void on_forget(bool deleted)
+    {
+        base.on_forget(deleted);
+        if (!deleted) return;
+
+        // Delay geometry check until we're in the right place
+        var cb = collision_bounds();
+        temporary_object.create(0.1f, () =>
+        {
+            world.on_geometry_change(cb);
+        });
+    }
+
     //#####################//
     // IPlayerInteractable //
     //#####################//

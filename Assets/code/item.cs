@@ -437,17 +437,29 @@ public class item : networked, IPlayerInteractable
         return max;
     }
 
-    Bounds visual_bounds()
+    public Bounds visual_bounds()
+    {
+        return bounds_by_type<MeshRenderer>((r) => r.bounds);
+    }
+
+    public Bounds collision_bounds()
+    {
+        return bounds_by_type<Collider>((c) => c.bounds);
+    }
+
+    delegate Bounds get_bounds<T>(T t);
+    private Bounds bounds_by_type<T>(get_bounds<T> get_bounds)
     {
         bool found = false;
         Vector3 max = Vector3.one * float.MinValue;
         Vector3 min = Vector3.one * float.MaxValue;
 
-        foreach (var r in GetComponentsInChildren<MeshRenderer>())
+        foreach (var c in GetComponentsInChildren<T>())
         {
             found = true;
-            Vector3 rmax = r.bounds.center + r.bounds.extents;
-            Vector3 rmin = r.bounds.center - r.bounds.extents;
+            var b = get_bounds(c);
+            Vector3 rmax = b.center + b.extents;
+            Vector3 rmin = b.center - b.extents;
             for (int i = 0; i < 3; ++i)
             {
                 if (rmax[i] > max[i]) max[i] = rmax[i];

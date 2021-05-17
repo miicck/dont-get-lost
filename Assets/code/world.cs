@@ -49,6 +49,11 @@ public class world : networked
         return hit.point.y;
     }
 
+    public static void on_geometry_change(Bounds region_affected)
+    {
+        town_path_element.validate_elements_within(region_affected);
+    }
+
     public static string info()
     {
         if (static_world == null) return "No world";

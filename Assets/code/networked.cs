@@ -414,10 +414,12 @@ public class networked : MonoBehaviour
     /// forgotten temporarily (i.e has gone out of range). </summary>
     public void forget(bool deleting)
     {
+        gameObject.SetActive(true); // Re-activate game object for on_forget calls
         foreach (var ex in network_extenders) ex.get_callbacks().on_forget?.Invoke(deleting);
         on_forget(deleting);
         on_forget(this);
         transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
+        gameObject.SetActive(false); // De-activate again
         Destroy(gameObject);
     }
 
