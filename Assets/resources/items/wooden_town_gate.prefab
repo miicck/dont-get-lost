@@ -290,7 +290,6 @@ MonoBehaviour:
   plural: wooden town gates
   value: 28
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   teleport_location: {fileID: 7935551658518450860}
   path_element: {fileID: 9218543385975625420}

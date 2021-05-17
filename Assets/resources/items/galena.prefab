@@ -62,7 +62,6 @@ MonoBehaviour:
   plural: galena
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!1001 &3477736280157778786
 PrefabInstance:
   m_ObjectHideFlags: 0

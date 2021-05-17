@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: cassiterite
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-5900291530314929074
 MonoBehaviour:
   m_ObjectHideFlags: 0

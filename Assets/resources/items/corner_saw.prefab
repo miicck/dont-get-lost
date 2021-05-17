@@ -64,9 +64,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: a47eb0215e9d3fe4d9be674c3510af6b, type: 3}
   plural: corner saws
-  value: 0
+  value: 1
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!1 &2787652287099656152
 GameObject:

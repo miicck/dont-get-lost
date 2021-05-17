@@ -87,7 +87,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1 &7664008693999971038
 GameObject:
   m_ObjectHideFlags: 0
@@ -138,9 +137,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 41644c93ccd455c4697a51f51a9ff763, type: 3}
   plural: buffer chests
-  value: 40
+  value: 35
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   automatic_input: {fileID: 401635595973192010}
   chest_inventory_prefab: inventories/buffer_chest

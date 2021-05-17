@@ -66,7 +66,6 @@ MonoBehaviour:
   plural: bows
   value: 6
   fuel_value: 1
-  logistics_scale: 1
   projectile_velocity: 40
 --- !u!1001 &2071847695416407013
 PrefabInstance:

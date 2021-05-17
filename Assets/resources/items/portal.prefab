@@ -5162,9 +5162,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 4fa8240e6e3901749a72bf8699dd1dd5, type: 3}
   plural: portals
-  value: 3
+  value: 1
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   teleport_location: {fileID: 3247084226915459081}
 --- !u!1 &7523279688028667281

@@ -25,7 +25,6 @@ public class item : networked, IPlayerInteractable
     public string plural;
     public int value;
     public int fuel_value = 0;
-    public float logistics_scale = 1f; // How much to scale the item by when it is in the logistics network
     public bool is_equpped => GetComponentInParent<player>() != null;
 
     public food food_values => GetComponent<food>();
@@ -44,6 +43,18 @@ public class item : networked, IPlayerInteractable
     }
 
     public bool is_logistics_version { get; private set; }
+
+    // How much to scale the item by when it is in the logistics network
+    public float logistics_scale
+    {
+        get
+        {
+            if (_logistics_scale < 0)
+                _logistics_scale = suggested_logistics_scale();
+            return _logistics_scale;
+        }
+    }
+    float _logistics_scale = -1f;
 
     public string display_name
     {
@@ -428,11 +439,13 @@ public class item : networked, IPlayerInteractable
 
     Bounds visual_bounds()
     {
+        bool found = false;
         Vector3 max = Vector3.one * float.MinValue;
         Vector3 min = Vector3.one * float.MaxValue;
 
         foreach (var r in GetComponentsInChildren<MeshRenderer>())
         {
+            found = true;
             Vector3 rmax = r.bounds.center + r.bounds.extents;
             Vector3 rmin = r.bounds.center - r.bounds.extents;
             for (int i = 0; i < 3; ++i)
@@ -442,9 +455,18 @@ public class item : networked, IPlayerInteractable
             }
         }
 
+        // Fallback if no meshes found
+        if (!found) return new Bounds(transform.position, Vector3.one * 0.1f);
+
         Vector3 size = max - min;
         Vector3 centre = (max + min) / 2f;
         return new Bounds(centre, size);
+    }
+
+    float suggested_logistics_scale()
+    {
+        var b = visual_bounds();
+        return LOGISTICS_SIZE / Mathf.Max(b.size.x, b.size.y, b.size.z);
     }
 
     private void OnDrawGizmosSelected()
@@ -531,14 +553,6 @@ public class item : networked, IPlayerInteractable
             }
             if (GUILayout.Button("Solve all values"))
                 solve_item_values();
-
-            if (GUILayout.Button("Suggest logistics scale"))
-                using (var pe = new utils.prefab_editor(Resources.Load<item>("items/"+i.name).gameObject))
-                {
-                    var b = i.visual_bounds();
-                    pe.prefab.GetComponent<item>().logistics_scale =
-                        LOGISTICS_SIZE / Mathf.Max(b.size.x, b.size.y, b.size.z);
-                }
 
             if (rec != null)
                 UnityEditor.EditorGUILayout.ObjectField("Recipe determining value: ", rec, typeof(recipe), false);

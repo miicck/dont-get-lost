@@ -226,7 +226,6 @@ MonoBehaviour:
   plural: farming patches
   value: 8
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!65 &3520222411503524960
 BoxCollider:

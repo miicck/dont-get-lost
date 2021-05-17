@@ -223,7 +223,6 @@ MonoBehaviour:
   plural: stone path
   value: 3
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!65 &7927457733478339910
 BoxCollider:

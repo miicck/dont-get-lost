@@ -51,7 +51,6 @@ MonoBehaviour:
   plural: digging sticks
   value: 5
   fuel_value: 1
-  logistics_scale: 1
   damage: 1
   swing_time: 0.5
   swing_length: 0.15
@@ -59,6 +58,7 @@ MonoBehaviour:
   swing_audio: {fileID: 0}
   type: 1
   quality: 0
+  hanging_point: {fileID: 0}
 --- !u!65 &1577475556796335111
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -234,7 +234,6 @@ MonoBehaviour:
   plural: half planks
   value: 3
   fuel_value: 1
-  logistics_scale: 0.1
   axes_scale: 1
 --- !u!1 &6234869217568158658
 GameObject:

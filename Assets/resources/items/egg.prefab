@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: eggs
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-279132487055034338
 MonoBehaviour:
   m_ObjectHideFlags: 0

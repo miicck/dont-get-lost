@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: feathers
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!65 &4987989045230825970
 BoxCollider:
   m_ObjectHideFlags: 0

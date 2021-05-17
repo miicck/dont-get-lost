@@ -511,7 +511,6 @@ MonoBehaviour:
   plural: beds
   value: 17
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &7956232593808211018
 MonoBehaviour:

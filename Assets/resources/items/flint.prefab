@@ -63,7 +63,6 @@ MonoBehaviour:
   plural: flint
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-8022266731583849748
 MonoBehaviour:
   m_ObjectHideFlags: 0

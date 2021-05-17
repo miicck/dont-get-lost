@@ -131,7 +131,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1 &3191495794144632457
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,7 +183,6 @@ MonoBehaviour:
   plural: materials cupboards
   value: 16
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &734396763817462065
 MonoBehaviour:
@@ -198,12 +196,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df2018799559758408e0ed363fa51e4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skill: {fileID: 7915786716127770993, guid: dc732faed634b224a9c4ae5dd251de53, type: 3}
-  max_simultaneous_users: 1
   input: {fileID: 8752123961717484926}
   overflow_output: {fileID: 9222328733870284168}
-  specific_material: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  mode: 1
 --- !u!1 &4755086838044647776
 GameObject:
   m_ObjectHideFlags: 0

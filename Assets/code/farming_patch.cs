@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class farming_spot : building_with_inventory, IPlayerInteractable
+public class farming_patch : building_with_inventory, IPlayerInteractable
 {
     networked_variables.net_int time_planted;
 
-    recipe growing;
-    seed seed => (seed)((item_ingredient)growing?.ingredients[0])?.item;
-    item product => growing?.products[0].item;
+    seed seed;
     GameObject grown;
 
     int growth_time => seed.growth_time;
@@ -27,7 +25,7 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
     void update_growth()
     {
         if (grown != null) return;
-        if (growing == null) return;
+        if (seed == null) return;
 
         // Grow the product
         int delta_time = client.server_time - time_planted.value;
@@ -35,13 +33,10 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
         if (delta_time > growth_time)
         {
             // Grow the product
-            if (product != null)
-            {
-                // Add happens before remove, because if remove removes the last
-                // seed, then the product becomes null (in the inventory on_change method).
-                if (inventory.add(product, 1))
-                    inventory.remove(seed, 1);
-            }
+            // Add happens before remove, because if remove removes the last
+            // seed, then the product becomes null (in the inventory on_change method).
+            if (inventory.add(seed.growing_into, 1))
+                inventory.remove(seed, 1);
         }
     }
 
@@ -59,30 +54,26 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
         inventory.add_on_change_listener(() =>
         {
             // Update the recipe that we're growing
-            growing = null;
-            foreach (var r in Resources.LoadAll<recipe>("recipes/farming_spots/" + name))
-                if (r.can_craft(inventory))
+            seed = null;
+            foreach (var kv in inventory.contents())
+                if (kv.Value > 0 && kv.Key is seed)
                 {
-                    growing = r;
+                    seed = kv.Key as seed;
                     time_planted.value = client.server_time;
                     break;
                 }
 
             // Destroy the representation of the grown product if it has been removed
-            if (grown != null)
+            if (grown != null && inventory.count(grown.name) < 1)
             {
-                int grown_count = inventory.count(Resources.Load<item>("items/" + grown.name));
-                if (grown_count < 1)
-                {
-                    Destroy(grown);
-                    grown = null;
-                }
+                Destroy(grown);
+                grown = null;
             }
 
             // Create the representation of grown products
             if (grown == null)
                 foreach (var kv in inventory.contents())
-                    if (kv.Value > 0 && kv.Key is growable_item)
+                    if (kv.Value > 0 && kv.Key.name == seed.growing_into.name)
                     {
                         grown = create(kv.Key.name, transform.position, transform.rotation).gameObject;
                         grown.transform.SetParent(transform);
@@ -117,8 +108,8 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
                 text = () =>
                 {
                     string ret = "Farming patch\n";
-                    ret += (growing == null ? "Nothing growing." :
-                            seed?.plural + " growing into " + product?.plural + ".");
+                    ret += (seed == null ? "Nothing growing." :
+                            seed?.plural + " growing into " + seed.growing_into.plural + ".");
                     return ret;
                 }
             });
@@ -127,8 +118,8 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
 
     class menu : left_player_menu
     {
-        farming_spot spot;
-        public menu(farming_spot spot) : base(spot.display_name) { this.spot = spot; }
+        farming_patch spot;
+        public menu(farming_patch spot) : base(spot.display_name) { this.spot = spot; }
         protected override RectTransform create_menu() { return spot.inventory.ui; }
         public override inventory editable_inventory() { return spot.inventory; }
         protected override void on_open() { spot.update_growth(); }
@@ -137,7 +128,7 @@ public class farming_spot : building_with_inventory, IPlayerInteractable
 
 public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 {
-    public farming_spot spot;
+    public farming_patch spot;
 
     public player_interaction[] player_interactions()
     {
@@ -146,8 +137,8 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 
     class interaction : player_interaction
     {
-        farming_spot spot;
-        public interaction(farming_spot spot) { this.spot = spot; }
+        farming_patch spot;
+        public interaction(farming_patch spot) { this.spot = spot; }
 
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 

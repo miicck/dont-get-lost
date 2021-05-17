@@ -348,7 +348,6 @@ MonoBehaviour:
   plural: forestry spots
   value: 21
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &3010089207601794580
 MonoBehaviour:
@@ -363,13 +362,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 82f027a10de16cc44bd0ea2f0d32202e, type: 3}
-  max_simultaneous_users: 1
   display_name: forestry spot
   output: {fileID: 5679265494180299747}
   search_origin: {fileID: 6493507513712573707}
   search_radius: 1
-  time_between_harvests: 0.5
-  max_harvests: 20
   tool_type: 0
   tool_quality: 9
 --- !u!114 &5748081639992911202

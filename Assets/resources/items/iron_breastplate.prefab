@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: iron breastplates
   value: 38
   fuel_value: 0
-  logistics_scale: 1
   location: 4
   handedness: 0
   size: {x: 1.4, y: 1.44, z: 1}

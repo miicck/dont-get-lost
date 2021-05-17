@@ -246,7 +246,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1 &5035377021398408852
 GameObject:
   m_ObjectHideFlags: 0
@@ -307,7 +306,6 @@ MonoBehaviour:
   plural: chests
   value: 23
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   automatic_input: {fileID: 7141389777453485819}
   chest_inventory_prefab: inventories/chest

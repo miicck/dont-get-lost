@@ -313,10 +313,8 @@ MonoBehaviour:
   plural: anvils
   value: 35
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   craft_time: 1
-  recipes_folder: recipes/workbenches/anvil
   custom_crafting_sound: {fileID: 0}
   custom_crafting_sound_volume: 1
   enable_when_crafting: []

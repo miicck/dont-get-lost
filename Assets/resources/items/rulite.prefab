@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: rulite
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-782103353570407183
 MonoBehaviour:
   m_ObjectHideFlags: 0

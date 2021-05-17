@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: gold
   value: 8
   fuel_value: 0
-  logistics_scale: 0.5
 --- !u!65 &6591299362436018255
 BoxCollider:
   m_ObjectHideFlags: 0

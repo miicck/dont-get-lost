@@ -259,7 +259,6 @@ MonoBehaviour:
   plural: flintlock muskets
   value: 1
   fuel_value: 0
-  logistics_scale: 1
   butt: {fileID: 3780049617420365419}
   sight: {fileID: 7145026216378741801}
   grip: {fileID: 4726273760403303435}

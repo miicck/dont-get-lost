@@ -49,8 +49,8 @@ MonoBehaviour:
   plural: flax seeds
   value: 1
   fuel_value: 0
-  logistics_scale: 1
   growth_time: 1
+  growing_into: {fileID: -8525166010314729164, guid: e471869a6ce5822489af977eaf58692e, type: 3}
 --- !u!114 &1088192669539258332
 MonoBehaviour:
   m_ObjectHideFlags: 0

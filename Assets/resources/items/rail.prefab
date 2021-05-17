@@ -95,7 +95,6 @@ MonoBehaviour:
   plural: rails
   value: 9
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!65 &1198510559849595072
 BoxCollider:

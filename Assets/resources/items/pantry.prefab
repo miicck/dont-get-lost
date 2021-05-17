@@ -173,7 +173,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1 &1553889013467725813
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,7 +376,6 @@ MonoBehaviour:
   plural: pantries
   value: 31
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &487338210768889780
 MonoBehaviour:

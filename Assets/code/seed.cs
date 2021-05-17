@@ -5,4 +5,5 @@ using UnityEngine;
 public class seed : item
 {
     public int growth_time = 1;
+    public item growing_into;
 }

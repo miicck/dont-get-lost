@@ -52,9 +52,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 3ae5fd98afc63b245bc9a08fee3ab930, type: 3}
   plural: trade carts
-  value: 0
+  value: 1
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &6997236947742517448
 MonoBehaviour:

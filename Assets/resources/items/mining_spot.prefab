@@ -348,7 +348,6 @@ MonoBehaviour:
   plural: mining spots
   value: 27
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &3010089207601794580
 MonoBehaviour:
@@ -363,13 +362,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
-  max_simultaneous_users: 1
   display_name: mining spot
   output: {fileID: 5679265494180299747}
   search_origin: {fileID: 6493507513712573707}
   search_radius: 1.18
-  time_between_harvests: 1
-  max_harvests: 5
   tool_type: 1
   tool_quality: 9
 --- !u!114 &5748081639992911202

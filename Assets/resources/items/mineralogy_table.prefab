@@ -348,12 +348,12 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 8155a58d56a48d34396a6e012ccf2ac1, type: 3}
   plural: mineralogy tables
-  value: 0
+  value: 11
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   craft_time: 1
-  recipes_folder: recipes/workbenches/mineralogy_table
+  custom_crafting_sound: {fileID: 0}
+  custom_crafting_sound_volume: 1
   enable_when_crafting: []
 --- !u!1 &2722680392135431634
 GameObject:

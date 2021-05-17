@@ -64,7 +64,6 @@ MonoBehaviour:
   plural: arrows
   value: 8
   fuel_value: 0
-  logistics_scale: 1
   damage: 4
   start_distance: 1.5
 --- !u!1001 &4341164566981617894

@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: cherries
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-6183242982151725123
 MonoBehaviour:
   m_ObjectHideFlags: 0

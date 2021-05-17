@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: bread
   value: 6
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &1450433148893580567
 MonoBehaviour:
   m_ObjectHideFlags: 0

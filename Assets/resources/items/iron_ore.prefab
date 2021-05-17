@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: iron ore
   value: 1
   fuel_value: 0
-  logistics_scale: 0.8
 --- !u!114 &-3261128075303922843
 MonoBehaviour:
   m_ObjectHideFlags: 0

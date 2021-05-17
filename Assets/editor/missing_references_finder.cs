@@ -256,8 +256,21 @@ public static class MissingReferencesFinder
         FindMissingReferences("Project", objs);
     }
 
+    [MenuItem(MENU_ROOT + "Cycle")]
+    public static void cycle()
+    {
+        if (last_found.Count == 0) return;
+        cycle_index = (cycle_index + 1) % last_found.Count;
+        Selection.activeObject = last_found[cycle_index];
+    }
+
+    static int cycle_index = 0;
+    static System.Collections.Generic.List<GameObject> last_found = new System.Collections.Generic.List<GameObject>();
+
     private static void FindMissingReferences(string context, GameObject[] gameObjects)
     {
+        last_found = new System.Collections.Generic.List<GameObject>();
+
         bool missing_refs_found = false;
         if (gameObjects == null) gameObjects = new GameObject[] { };
         foreach (var go in gameObjects)
@@ -297,6 +310,7 @@ public static class MissingReferencesFinder
                         {
                             missing_refs_found = true;
                             ShowError(context, go, component.GetType().Name, ObjectNames.NicifyVariableName(sp.name));
+                            last_found.Add(go);
                         }
                     }
                 }

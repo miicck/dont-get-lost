@@ -436,9 +436,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 58d7684677e3ca249bebadc8ca53f180, type: 3}
   plural: fishing docks
-  value: 1
+  value: 4
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &4488149217651975118
 MonoBehaviour:
@@ -453,7 +452,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
-  max_simultaneous_users: 1
   options:
   - {fileID: 7941835153524549527, guid: 81b2a388cfa2d414baa71092aaf032b6, type: 3}
   harvest_time: 1

@@ -362,7 +362,6 @@ MonoBehaviour:
   plural: mineshafts
   value: 53
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &6089583144561588591
 MonoBehaviour:
@@ -389,7 +388,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: a1ea3818db403294bba1d8a3bbfef940, type: 3}
-  max_simultaneous_users: 1
   test_depth: 2
 --- !u!1 &7348392932919876741
 GameObject:

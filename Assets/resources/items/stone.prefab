@@ -407,7 +407,6 @@ MonoBehaviour:
   plural: stone
   value: 1
   fuel_value: 0
-  logistics_scale: 0.3
   axes_scale: 1
 --- !u!65 &1198510559849595072
 BoxCollider:

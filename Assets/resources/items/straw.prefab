@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: straw
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!1001 &4660027260365474256
 PrefabInstance:
   m_ObjectHideFlags: 0

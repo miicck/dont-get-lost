@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: flax fibers
   value: 5
   fuel_value: 0
-  logistics_scale: 1
 --- !u!1001 &2699784872211530103
 PrefabInstance:
   m_ObjectHideFlags: 0

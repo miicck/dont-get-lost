@@ -56,7 +56,6 @@ MonoBehaviour:
   plural: guard spots
   value: 11
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &1199280322146720609
 MonoBehaviour:
@@ -83,7 +82,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 6b45f5a086abfdb48bd1bdad3f9f7afb, type: 3}
-  max_simultaneous_users: 1
 --- !u!1 &2386203665121055914
 GameObject:
   m_ObjectHideFlags: 0

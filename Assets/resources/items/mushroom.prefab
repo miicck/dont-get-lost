@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: mushrooms
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &2877525331175093042
 MonoBehaviour:
   m_ObjectHideFlags: 0

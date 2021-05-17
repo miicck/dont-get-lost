@@ -322,7 +322,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1 &5322503093612587237
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,9 +376,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 0950b3f770d068143855c79052c0a096, type: 3}
   plural: tool racks
-  value: 0
+  value: 1
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &5560075959723335507
 MonoBehaviour:

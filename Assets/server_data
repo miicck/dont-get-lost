@@ -64,7 +64,7 @@ items/small_crane_box 1 True
 items/flint_pickaxe 1 True
 items/flour 1 True
 items/afro_hairstyle 1 True
-items/flax_seeds 1 True
+items/flax_seed 1 True
 items/flintlock_musket 1 True
 items/lead 1 True
 items/furnace 1 True
@@ -179,6 +179,7 @@ items/mineralogy_table 1 True
 items/guard_spot 1 True
 items/bedraggled_hairstyle 1 True
 mood_effects/starving 1 True
+items/wheat_plant 1 True
 items/drill_bit 1 True
 crops/cabbage 1 True
 items/small_lumber_contract 1 True

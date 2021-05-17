@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5865365589815700442}
-  - component: {fileID: 2538827299418554887}
+  - component: {fileID: -5867145585008818244}
   - component: {fileID: -9056336870308433450}
   m_Layer: 0
   m_Name: grain
@@ -33,7 +33,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2538827299418554887
+--- !u!114 &-5867145585008818244
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,7 +42,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 992061488607686714}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 903b1dc3e35740745b29ffa62f5abdb2, type: 3}
+  m_Script: {fileID: 11500000, guid: d323bf478ac60d548b866cc4faf4cb63, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
@@ -50,7 +50,8 @@ MonoBehaviour:
   plural: grain
   value: 1
   fuel_value: 0
-  logistics_scale: 1
+  growth_time: 1
+  growing_into: {fileID: 4939855331573152688, guid: ee3f5f436fa8d6740a4623227bf127f3, type: 3}
 --- !u!114 &-9056336870308433450
 MonoBehaviour:
   m_ObjectHideFlags: 0

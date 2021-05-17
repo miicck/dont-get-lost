@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: gold ore
   value: 1
   fuel_value: 0
-  logistics_scale: 0.8
 --- !u!114 &8999642714020921142
 MonoBehaviour:
   m_ObjectHideFlags: 0

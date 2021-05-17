@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: railcarts
   value: 31
   fuel_value: 0
-  logistics_scale: 1
   max_speed: 10
   acceleration: 1
 --- !u!1001 &9061778871152356408

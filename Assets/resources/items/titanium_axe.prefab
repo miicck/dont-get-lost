@@ -49,9 +49,8 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1f9d425231b7e2c45a97298b7ccf2dab, type: 3}
   plural: iron axes
-  value: 12
+  value: 31
   fuel_value: 0
-  logistics_scale: 1
   damage: 30
   swing_time: 0.5
   swing_length: 0.15
@@ -59,6 +58,7 @@ MonoBehaviour:
   swing_audio: {fileID: 0}
   type: 0
   quality: 5
+  hanging_point: {fileID: 0}
 --- !u!54 &5033637912833396061
 Rigidbody:
   m_ObjectHideFlags: 0

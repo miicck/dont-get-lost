@@ -256,10 +256,10 @@ MonoBehaviour:
   plural: log splitters
   value: 6
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   craft_time: 1
-  recipes_folder: recipes/workbenches/log_splitter
+  custom_crafting_sound: {fileID: 0}
+  custom_crafting_sound_volume: 1
   enable_when_crafting: []
 --- !u!1001 &342327459957259401
 PrefabInstance:

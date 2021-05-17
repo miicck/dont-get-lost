@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: coal
   value: 1
   fuel_value: 4
-  logistics_scale: 0.7
 --- !u!114 &-653319990223191337
 MonoBehaviour:
   m_ObjectHideFlags: 0

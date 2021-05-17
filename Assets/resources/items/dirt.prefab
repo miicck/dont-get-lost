@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: dirt
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &-6551679406825539621
 MonoBehaviour:
   m_ObjectHideFlags: 0

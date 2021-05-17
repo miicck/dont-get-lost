@@ -93,7 +93,6 @@ MonoBehaviour:
   plural: flowers
   value: 1
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   set_color_on:
   - {fileID: 1128552981850887549}

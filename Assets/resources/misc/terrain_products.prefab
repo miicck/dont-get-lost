@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 2
-  item: {fileID: 2538827299418554887, guid: 79e710047dd70d6499b09328839fa940, type: 3}
+  item: {fileID: 3966449809020136031, guid: a505128589338bd48847d7aae42fb1e4, type: 3}
   min_count: 1
   max_count: 5
   one_in_chance: 5

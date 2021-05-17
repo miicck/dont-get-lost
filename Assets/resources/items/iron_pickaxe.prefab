@@ -82,7 +82,6 @@ MonoBehaviour:
   plural: iron pickaxes
   value: 12
   fuel_value: 0
-  logistics_scale: 1
   damage: 20
   swing_time: 0.5
   swing_length: 0.15

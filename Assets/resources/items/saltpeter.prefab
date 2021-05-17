@@ -50,7 +50,6 @@ MonoBehaviour:
   plural: saltpeter
   value: 1
   fuel_value: 0
-  logistics_scale: 1
 --- !u!114 &2754718322531870583
 MonoBehaviour:
   m_ObjectHideFlags: 0

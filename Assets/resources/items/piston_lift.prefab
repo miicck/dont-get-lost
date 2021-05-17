@@ -230,7 +230,6 @@ MonoBehaviour:
   plural: piston lifts
   value: 23
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!1 &3721669667445588837
 GameObject:

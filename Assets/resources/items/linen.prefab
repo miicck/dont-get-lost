@@ -49,7 +49,6 @@ MonoBehaviour:
   plural: linen
   value: 8
   fuel_value: 0
-  logistics_scale: 1
 --- !u!1001 &8898337930003941833
 PrefabInstance:
   m_ObjectHideFlags: 0

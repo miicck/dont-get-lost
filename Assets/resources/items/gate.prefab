@@ -315,7 +315,6 @@ MonoBehaviour:
   plural: gates
   value: 16
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &1429737029068860935
 MonoBehaviour:

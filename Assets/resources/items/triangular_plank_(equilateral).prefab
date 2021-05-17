@@ -95,7 +95,6 @@ MonoBehaviour:
   plural: triangular planks (equilateral)
   value: 5
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!1 &6015390860076439252
 GameObject:

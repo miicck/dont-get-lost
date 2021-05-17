@@ -369,10 +369,10 @@ MonoBehaviour:
   plural: sawmills
   value: 24
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
   craft_time: 1
-  recipes_folder: recipes/workbenches/sawmill
+  custom_crafting_sound: {fileID: 0}
+  custom_crafting_sound_volume: 1
   enable_when_crafting: []
 --- !u!114 &4806985758012797492
 MonoBehaviour:
@@ -772,7 +772,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  max_items_waiting: 1
 --- !u!1001 &370170732104765219
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -445,7 +445,6 @@ MonoBehaviour:
   plural: wheat planters
   value: 22
   fuel_value: 0
-  logistics_scale: 1
   axes_scale: 1
 --- !u!114 &3620439260025948234
 MonoBehaviour:
@@ -460,13 +459,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 0ab7d34d23177694290e7c9b79471089, type: 3}
-  max_simultaneous_users: 1
   output: {fileID: 807333976542593736}
   field_spot_prefab: crops/wheat_planter
   x_size: 2
   z_size: 4
   spacing: 0.5
-  spot_tend_prob: 0.33
+  base_tend_time: 4
   offset: {x: 0, y: 0.4, z: 0}
 --- !u!1 &7265491173073064152
 GameObject:
