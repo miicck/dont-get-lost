@@ -49,7 +49,7 @@ public class inventory_slot : MonoBehaviour, IPlayerInteractable
         {
             // Set the UI to reflect the given item + count
             item_image.sprite = item.sprite;
-            count_text.text = "" + count.qs();
+            count_text.text = count.qs();
         }
 
         // If the sprite == null, make the image transparent

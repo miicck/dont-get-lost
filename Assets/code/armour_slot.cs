@@ -28,9 +28,24 @@ public class armour_slot : inventory_slot
     delegate void update_func();
     update_func pending_update;
 
+    UnityEngine.UI.Image background;
+
     public override void update(item item, int count, inventory inventory)
     {
         base.update(item, count, inventory);
+
+        // Create an image to obscure the equipment schematic
+        if (background == null)
+        {
+            background = new GameObject("background").AddComponent<UnityEngine.UI.Image>();
+            background.transform.SetParent(item_image.transform.parent);
+            background.transform.SetAsFirstSibling();
+            background.GetComponent<RectTransform>().sizeDelta = new Vector2(64, 64);
+            background.transform.position = item_image.transform.position;
+            background.sprite = Resources.Load<Sprite>("sprites/ui_panel");
+            background.color = new Color(0.9056f, 0.9056f, 0.9056f);
+        }
+        background.enabled = item != null && count > 0;
 
         // Find the entity that this slot belongs to
         var entity = inventory.GetComponentInParent<ICanEquipArmour>();
