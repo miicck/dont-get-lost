@@ -662,7 +662,6 @@ MonoBehaviour:
   x_size: 1
   z_size: 1
   spacing: 1.21
-  spot_tend_prob: 1
   base_tend_time: 4
   offset: {x: 0, y: 0, z: 0}
 --- !u!1 &7790678638878898613

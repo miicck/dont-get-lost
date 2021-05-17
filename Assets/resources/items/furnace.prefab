@@ -397,7 +397,7 @@ MonoBehaviour:
   plural: furnace
   value: 11
   fuel_value: 0
-  logistics_scale: 1
+  logistics_scale: 0.1662
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 8300000, guid: d1fab81da96d86846b4de973b459abd7, type: 3}

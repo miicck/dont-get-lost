@@ -426,6 +426,34 @@ public class item : networked, IPlayerInteractable
         return max;
     }
 
+    Bounds visual_bounds()
+    {
+        Vector3 max = Vector3.one * float.MinValue;
+        Vector3 min = Vector3.one * float.MaxValue;
+
+        foreach (var r in GetComponentsInChildren<MeshRenderer>())
+        {
+            Vector3 rmax = r.bounds.center + r.bounds.extents;
+            Vector3 rmin = r.bounds.center - r.bounds.extents;
+            for (int i = 0; i < 3; ++i)
+            {
+                if (rmax[i] > max[i]) max[i] = rmax[i];
+                if (rmin[i] < min[i]) min[i] = rmin[i];
+            }
+        }
+
+        Vector3 size = max - min;
+        Vector3 centre = (max + min) / 2f;
+        return new Bounds(centre, size);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        var b = visual_bounds();
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(b.center, b.size);
+    }
+
     //##################//
     // EDITOR UTILITIES //
     //##################//
@@ -496,13 +524,21 @@ public class item : networked, IPlayerInteractable
             base.OnInspectorGUI();
 
             item i = (item)target;
-            if (UnityEditor.EditorGUILayout.Toggle("Suggest value", false))
+            if (GUILayout.Button("Suggest value"))
             {
                 i.value = i.suggested_value(out recipe r);
                 rec = r;
             }
-            if (UnityEditor.EditorGUILayout.Toggle("Solve all values", false))
+            if (GUILayout.Button("Solve all values"))
                 solve_item_values();
+
+            if (GUILayout.Button("Suggest logistics scale"))
+                using (var pe = new utils.prefab_editor(Resources.Load<item>("items/"+i.name).gameObject))
+                {
+                    var b = i.visual_bounds();
+                    pe.prefab.GetComponent<item>().logistics_scale =
+                        LOGISTICS_SIZE / Mathf.Max(b.size.x, b.size.y, b.size.z);
+                }
 
             if (rec != null)
                 UnityEditor.EditorGUILayout.ObjectField("Recipe determining value: ", rec, typeof(recipe), false);

@@ -272,7 +272,7 @@ MonoBehaviour:
   plural: forges
   value: 0
   fuel_value: 0
-  logistics_scale: 1
+  logistics_scale: 0.13198516
   axes_scale: 1
 --- !u!114 &3253182588662209181
 MonoBehaviour:
@@ -288,7 +288,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: 332e887aa10bbc64a9f79f645024c605, type: 3}
   crafting_options_title: forging
-  workshop_task_summary: forging
+  base_craft_time: 10
   path_element: {fileID: 6169609716872315261}
   product_output: {fileID: 5962450161299020290}
   required_fixtures:

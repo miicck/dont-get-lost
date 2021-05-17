@@ -314,7 +314,7 @@ MonoBehaviour:
   plural: logs
   value: 1
   fuel_value: 1
-  logistics_scale: 0.2
+  logistics_scale: 0.15
   axes_scale: 1
 --- !u!1 &8597519401867688854
 GameObject:
