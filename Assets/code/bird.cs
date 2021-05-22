@@ -10,6 +10,27 @@ public class bird : character
     {
         return new default_bird_controller();
     }
+
+    //############//
+    // NETWORKING //
+    //############//
+
+    public networked_variables.net_bool is_flying;
+
+    public override void on_init_network_variables()
+    {
+        base.on_init_network_variables();
+        is_flying = new networked_variables.net_bool();
+
+        is_flying.on_change = () =>
+        {
+            foreach (var w in GetComponentsInChildren<wing>())
+                w.is_flying = is_flying.value;
+
+            foreach (var l in GetComponentsInChildren<leg>())
+                l.state = is_flying.value ? leg.STATE.BIRD_TUCKED : leg.STATE.NORMAL;
+        };
+    }
 }
 
 public class flight_path
@@ -92,17 +113,9 @@ public class default_bird_controller : ICharacterController
 
     bool flying
     {
-        get => _flying;
-        set
-        {
-            foreach (var w in bird.GetComponentsInChildren<wing>())
-                w.is_flying = value;
-
-            foreach (var l in bird.GetComponentsInChildren<leg>())
-                l.state = value ? leg.STATE.BIRD_TUCKED : leg.STATE.NORMAL;
-        }
+        get => bird.is_flying.value;
+        set => bird.is_flying.value = value;
     }
-    bool _flying;
 
     public void control(character c)
     {
