@@ -357,6 +357,7 @@ public class game : MonoBehaviour
         return "    FPS             : " + System.Math.Round(1 / Time.deltaTime, 0) +
                                    " (" + System.Math.Round(1 / Time.fixedDeltaTime, 0) + " physics)\n" +
                "    Fullscreen mode : " + Screen.fullScreenMode + "\n" +
-               "    Resolution      : " + Screen.width + " x " + Screen.height;
+               "    Resolution      : " + Screen.width + " x " + Screen.height + "\n" +
+               "       Display      : " + Screen.currentResolution.width + " x " + Screen.currentResolution.height;
     }
 }

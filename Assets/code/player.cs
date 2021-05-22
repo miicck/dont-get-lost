@@ -1338,6 +1338,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         if (!options_menu.global_volume.profile.TryGet(out UnityEngine.Rendering.HighDefinition.ColorAdjustments color))
             throw new System.Exception("No ColorAdjustments override on global volume!");
         color.colorFilter.value = Color.red;
+
+        // Reset things
+        networked_interaction.value = -1;
     }
 
     public void respawn()

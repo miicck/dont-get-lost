@@ -38,14 +38,21 @@ public class global_controls : MonoBehaviour
             switch (Screen.fullScreenMode)
             {
                 case FullScreenMode.Windowed:
-                    Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+                    Screen.SetResolution(Screen.currentResolution.width,
+                                         Screen.currentResolution.height,
+                                         FullScreenMode.FullScreenWindow);
                     break;
+
                 case FullScreenMode.FullScreenWindow:
-                    Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+                    Screen.SetResolution(Screen.currentResolution.width,
+                                         Screen.currentResolution.height,
+                                         FullScreenMode.ExclusiveFullScreen);
                     break;
+
                 case FullScreenMode.ExclusiveFullScreen:
                     Screen.fullScreenMode = FullScreenMode.Windowed;
                     break;
+
                 default:
                     throw new System.Exception("Unkown fullscreen mode!");
             }
