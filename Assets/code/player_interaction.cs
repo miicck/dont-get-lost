@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary> An object that provides player interactions. </summary>
 public interface IPlayerInteractable
 {
-    public player_interaction[] player_interactions();
+    public player_interaction[] player_interactions(RaycastHit hit);
 }
 
 /// <summary> An interaction that a player can be carry out. </summary>

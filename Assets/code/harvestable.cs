@@ -27,7 +27,7 @@ public class harvestable : accepts_item_impact, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[]
         {

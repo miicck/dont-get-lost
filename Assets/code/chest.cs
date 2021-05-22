@@ -35,11 +35,11 @@ public class chest : building_with_inventory, IPlayerInteractable
 
     player_interaction[] interactions;
 
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
+        if (is_logistics_version) return base.player_interactions(hit);
         if (interactions == null)
-            interactions = base.player_interactions().prepend(new menu(this));
+            interactions = base.player_interactions(hit).prepend(new menu(this));
         return interactions;
     }
 

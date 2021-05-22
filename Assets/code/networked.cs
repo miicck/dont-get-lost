@@ -563,9 +563,9 @@ public class networked : MonoBehaviour
             // Find all non-abstract types that inherit from 
             // networked, or that implement IExtendsNetworked
             if (type.IsAbstract) continue;
-            bool child_of_networked = type.IsSubclassOf(typeof(networked));
+            bool is_networked = type == typeof(networked) || type.IsSubclassOf(typeof(networked));
             bool extends_networked = typeof(IExtendsNetworked).IsAssignableFrom(type);
-            if (!child_of_networked && !extends_networked) continue;
+            if (!is_networked && !extends_networked) continue;
 
             var fields = new List<System.Reflection.FieldInfo>();
             int special_fields_count = System.Enum.GetNames(typeof(engine_networked_variable.TYPE)).Length;
@@ -613,7 +613,7 @@ public class networked : MonoBehaviour
 
             // Add the special fields at the start, so we
             // know how to access them in the engine.
-            if (child_of_networked)
+            if (is_networked)
             {
                 // Check we've got all of the special fields
                 for (int i = 0; i < special_fields.Length; ++i)

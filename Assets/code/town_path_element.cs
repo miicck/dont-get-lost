@@ -218,7 +218,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         HashSet<town_path_element> to_validate = new HashSet<town_path_element>();
         foreach (var e in all_elements)
         {
-            var eb = new Bounds(e.transform.position, Vector3.one*2);
+            var eb = new Bounds(e.transform.position, Vector3.one * 2);
             if (bounds.Intersects(eb)) to_validate.Add(e);
         }
 
@@ -451,7 +451,9 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             return null;
         }
 
+        // Overloads of the get method
         public static path get(Vector3 v, town_path_element goal) => get(nearest_element(v), goal);
+        public static path get(Vector3 a, Vector3 b, int group) => get(nearest_element(a, group), nearest_element(b, group));
 
         // Private constructor, paths should be created with the get method
         private path() { }
@@ -585,7 +587,10 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         {
             Gizmos.color = color;
             for (int i = 1; i < count; ++i)
+            {
+                if (this[i] == null || this[i - 1] == null) continue;
                 Gizmos.DrawLine(this[i].transform.position, this[i - 1].transform.position);
+            }
         }
     }
 }

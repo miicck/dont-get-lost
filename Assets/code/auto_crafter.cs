@@ -141,10 +141,10 @@ public class auto_crafter : building_material, IPlayerInteractable
     //#####################//
 
     player_interaction[] interactions;
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
-        if (interactions == null) interactions = base.player_interactions().prepend(
+        if (is_logistics_version) return base.player_interactions(hit);
+        if (interactions == null) interactions = base.player_interactions(hit).prepend(
             new menu(this),
             new player_inspectable(transform)
             {

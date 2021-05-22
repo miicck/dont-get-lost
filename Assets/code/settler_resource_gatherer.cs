@@ -28,7 +28,7 @@ public abstract class settler_interactable_options : walk_to_settler_interactabl
     //##################//
 
     player_interaction[] interactions;
-    public virtual player_interaction[] player_interactions()
+    public virtual player_interaction[] player_interactions(RaycastHit hit)
     {
         if (interactions == null) interactions = new player_interaction[] { new menu(this) };
         return interactions;

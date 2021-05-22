@@ -137,7 +137,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         // Get UI interactions (only on authority client)
         if (has_authority)
             foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
-                all_interactions.AddRange(ui_inter.player_interactions());
+                all_interactions.AddRange(ui_inter.player_interactions(default));
 
         // Get equipped interactions
         if (equipped != null)
@@ -150,7 +150,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             foreach (var inter in utils.raycast_for_closests<IPlayerInteractable>(
                 cam_ray, out RaycastHit hit, max_distance: dis,
                 accept: (h, i) => !h.transform.IsChildOf(transform))) // Don't interact with myself
-                all_interactions.AddRange(inter.player_interactions());
+                all_interactions.AddRange(inter.player_interactions(hit));
         }
 
         // Add self interactions to list
@@ -1356,7 +1356,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     //#####################//
 
     player_interaction[] remote_interactions;
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         if (remote_interactions == null) remote_interactions = new player_interaction[]
         {

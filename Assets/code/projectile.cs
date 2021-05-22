@@ -34,7 +34,7 @@ public class projectile : item, INotPathBlocking
         Destroy(FindObjectOfType<Rigidbody>());
     }
 
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[] { new pickup_ammo() };
     }

@@ -511,7 +511,7 @@ public static class utils
         foreach (Transform c in children) c.SetParent(t);
     }
 
-    public static string a_or_an(string name)
+    public static string a_or_an(string name, bool append_name = false)
     {
         string n = name.Trim().ToLower();
         switch (n[0])
@@ -521,9 +521,9 @@ public static class utils
             case 'i':
             case 'o':
             case 'u':
-                return "an";
+                return append_name ? "an " + name : "an";
             default:
-                return "a";
+                return append_name ? "a " + name : "a";
         }
     }
 
@@ -1068,7 +1068,7 @@ class temporary_object : MonoBehaviour
     public delegate void on_delete_func();
     on_delete_func on_delete;
 
-    public static temporary_object create(float lifetime, on_delete_func on_delete=null)
+    public static temporary_object create(float lifetime, on_delete_func on_delete = null)
     {
         var to = new GameObject("temp_object").AddComponent<temporary_object>();
         to.on_delete = on_delete;

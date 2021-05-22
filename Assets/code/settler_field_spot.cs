@@ -103,7 +103,7 @@ public class settler_field_spot : networked, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[]
         {

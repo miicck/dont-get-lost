@@ -64,7 +64,7 @@ public class building_material : item, IPlayerInteractable
 
         // Delay geometry check until we're in the right place
         var cb = collision_bounds();
-        temporary_object.create(0.1f, () =>
+         temporary_object.create(0.1f, () =>
         {
             world.on_geometry_change(cb);
         });
@@ -118,9 +118,9 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
+        if (is_logistics_version) return base.player_interactions(hit);
 
         return new player_interaction[]
         {

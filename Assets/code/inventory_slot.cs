@@ -71,7 +71,7 @@ public class inventory_slot : MonoBehaviour, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[] {new player_inspectable(transform)
         {

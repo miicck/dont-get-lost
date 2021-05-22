@@ -328,7 +328,7 @@ public abstract class settler_interactable : has_path_elements,
                     assignments.Remove(old_val);
                     if (this == null) return;
 
-                    assignments[new_val] = this;
+                    if (new_val >= 0) assignments[new_val] = this;
 
                     var old_user = networked.try_find_by_id(old_val, false);
                     if (old_user is settler) on_unassign((settler)old_user);
@@ -336,13 +336,6 @@ public abstract class settler_interactable : has_path_elements,
                     var new_user = networked.try_find_by_id(new_val, false);
                     if (new_user is settler) on_assign((settler)new_user);
                 };
-            },
-
-            on_auth_change = (has_auth) =>
-            {
-                // Reset assignment on authority change
-                settler_id.value = -1;
-                stage.value = 0;
             }
         };
     }
@@ -437,6 +430,22 @@ public abstract class settler_interactable : has_path_elements,
             try_assign_interaction(s);
 
         return null;
+    }
+
+    public static bool force_assign(settler_interactable i, settler s)
+    {
+        if (s == null) return false;
+
+        assigned_to(s)?.unassign(); // Unassign previous task of s
+        i?.unassign(); // Unassign previous settler from i
+
+        if (i != null && !i.try_assign(s)) // Assign i to s
+        {
+            Debug.LogError("Force assign failed!");
+            return false;
+        }
+
+        return true;
     }
 
     public static bool group_has_food_available(int group)

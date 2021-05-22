@@ -15,15 +15,15 @@ public class portal : building_material, IPlayerInteractable
     protected virtual string portal_ui() { return "ui/portal"; }
 
     player_interaction[] interactions;
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
+        if (is_logistics_version) return base.player_interactions(hit);
 
         if (interactions == null)
         {
             List<player_interaction> inter = new List<player_interaction>();
             inter.Add(new menu(this));
-            inter.AddRange(base.player_interactions());
+            inter.AddRange(base.player_interactions(hit));
             interactions = inter.ToArray();
         }
         return interactions;

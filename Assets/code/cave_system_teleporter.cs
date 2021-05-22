@@ -11,7 +11,7 @@ public class cave_system_teleporter : MonoBehaviour, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[] { new interaction(this) };
     }

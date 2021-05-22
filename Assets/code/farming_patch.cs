@@ -97,12 +97,12 @@ public class farming_patch : building_with_inventory, IPlayerInteractable
 
     player_interaction[] interactions;
 
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
+        if (is_logistics_version) return base.player_interactions(hit);
 
         if (interactions == null)
-            interactions = base.player_interactions().prepend(new menu(this),
+            interactions = base.player_interactions(hit).prepend(new menu(this),
             new player_inspectable(transform)
             {
                 text = () =>
@@ -130,7 +130,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 {
     public farming_patch spot;
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         return new interaction[] { new interaction(spot) };
     }

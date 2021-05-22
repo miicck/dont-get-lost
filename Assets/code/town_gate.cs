@@ -4,86 +4,12 @@ using UnityEngine;
 
 public class town_gate : portal, IAddsToInspectionText
 {
-    const float SPAWN_SETTLER_TIME = 30f;
-    const float MAX_APPROACH_DISTANCE = 30f;
-
     public town_path_element path_element;
     public Transform outside_link;
 
-    path enemy_approach_path;
-    int bed_count;
-    float next_attack_time;
-
-    class town_gate_pathfinder : IPathingAgent
-    {
-        Transform outside_link;
-
-        public town_gate_pathfinder(Transform outside_link)
-        {
-            this.outside_link = outside_link;
-        }
-
-        public Vector3 validate_position(Vector3 v, out bool valid)
-        {
-            if (v.y < world.SEA_LEVEL ||
-                Vector3.Dot(v - outside_link.position, outside_link.forward) < 0)
-            {
-                valid = false;
-                return v;
-            }
-
-            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
-        }
-
-        public bool validate_move(Vector3 a, Vector3 b)
-        {
-            return pathfinding_utils.validate_walking_move(a, b,
-                resolution, 1.5f, resolution / 2f);
-        }
-
-        public float resolution => 1f;
-    }
-
-    GameObject drawn_approach_path;
-    bool draw_approach_path
-    {
-        get => drawn_approach_path != null;
-        set
-        {
-            if (draw_approach_path == value)
-                return; // No change
-
-            if (drawn_approach_path != null) Destroy(drawn_approach_path);
-            if (!value || enemy_approach_path == null) return;
-
-            drawn_approach_path = new GameObject("approach_path");
-            drawn_approach_path.transform.SetParent(transform);
-            drawn_approach_path.transform.localPosition = Vector3.zero;
-
-            for (int i = 1; i < enemy_approach_path.length; ++i)
-            {
-                Vector3 a = enemy_approach_path[i - 1];
-                Vector3 b = enemy_approach_path[i];
-
-                var link = Resources.Load<GameObject>("misc/path_link").inst();
-                link.transform.SetParent(drawn_approach_path.transform);
-                link.transform.position = (a + b) / 2 + Vector3.up * 0.5f;
-                link.transform.forward = b - a;
-                link.transform.localScale = new Vector3(0.1f, 0.1f, (b - a).magnitude);
-            }
-        }
-    }
-
-    void refresh_drawn_approach_path()
-    {
-        draw_approach_path = false;
-        draw_approach_path = town_path_element.draw_links;
-    }
-
-    float random_attack_interval()
-    {
-        return Random.Range(3 * 60, 10 * 60);
-    }
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     private void Start()
     {
@@ -172,6 +98,25 @@ public class town_gate : portal, IAddsToInspectionText
         enemy_approach_path?.draw_gizmos();
     }
 
+    //#####################//
+    // IPlayerInteractable //
+    //#####################//
+
+    public override player_interaction[] player_interactions(RaycastHit hit)
+    {
+        // Don't forward interactions through my attackers
+        if (hit.transform.GetComponentInParent<character>() != null)
+            return new player_interaction[0];
+        return base.player_interactions(hit);
+    }
+
+    //##################//
+    // SETTLER SPAWNING //
+    //##################//
+
+    const float SPAWN_SETTLER_TIME = 30f;
+    int bed_count;
+
     void attempt_spawn_settler()
     {
         // Only spawn settlers on auth client
@@ -198,6 +143,17 @@ public class town_gate : portal, IAddsToInspectionText
         client.create(transform.position, "characters/settler");
     }
 
+    //########//
+    // PORTAL //
+    //########//
+
+    public override string init_portal_name() { return "Town gate"; }
+    protected override string portal_ui() { return "ui/town_gate"; }
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
+
     public string added_inspection_text()
     {
         return "Beds     : " + bed_count + "\n" +
@@ -207,8 +163,89 @@ public class town_gate : portal, IAddsToInspectionText
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
 
-    public override string init_portal_name() { return "Town gate"; }
-    protected override string portal_ui() { return "ui/town_gate"; }
+    //###############//
+    // APPROACH PATH //
+    //###############//
+
+    const float MAX_APPROACH_DISTANCE = 30f;
+    path enemy_approach_path;
+
+    class town_gate_pathfinder : IPathingAgent
+    {
+        Transform outside_link;
+
+        public town_gate_pathfinder(Transform outside_link)
+        {
+            this.outside_link = outside_link;
+        }
+
+        public Vector3 validate_position(Vector3 v, out bool valid)
+        {
+            if (v.y < world.SEA_LEVEL ||
+                Vector3.Dot(v - outside_link.position, outside_link.forward) < 0)
+            {
+                valid = false;
+                return v;
+            }
+
+            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        }
+
+        public bool validate_move(Vector3 a, Vector3 b)
+        {
+            return pathfinding_utils.validate_walking_move(a, b,
+                resolution, 1.5f, resolution / 2f);
+        }
+
+        public float resolution => 1f;
+    }
+
+    GameObject drawn_approach_path;
+    bool draw_approach_path
+    {
+        get => drawn_approach_path != null;
+        set
+        {
+            if (draw_approach_path == value)
+                return; // No change
+
+            if (drawn_approach_path != null) Destroy(drawn_approach_path);
+            if (!value || enemy_approach_path == null) return;
+
+            drawn_approach_path = new GameObject("approach_path");
+            drawn_approach_path.transform.SetParent(transform);
+            drawn_approach_path.transform.localPosition = Vector3.zero;
+
+            for (int i = 1; i < enemy_approach_path.length; ++i)
+            {
+                Vector3 a = enemy_approach_path[i - 1];
+                Vector3 b = enemy_approach_path[i];
+
+                var link = Resources.Load<GameObject>("misc/path_link").inst();
+                link.transform.SetParent(drawn_approach_path.transform);
+                link.transform.position = (a + b) / 2 + Vector3.up * 0.5f;
+                link.transform.forward = b - a;
+                link.transform.localScale = new Vector3(0.1f, 0.1f, (b - a).magnitude);
+            }
+        }
+    }
+
+    void refresh_drawn_approach_path()
+    {
+        draw_approach_path = false;
+        draw_approach_path = town_path_element.draw_links;
+    }
+
+    //###################//
+    // ATTACK TRIGGERING //
+    //###################//
+
+    float next_attack_time;
+
+    float random_attack_interval()
+    {
+        return Random.Range(3 * 60, 10 * 60);
+    }
 
     //#########//
     // ATTACKS //
@@ -351,7 +388,7 @@ public class town_gate : portal, IAddsToInspectionText
         public void on_end_control(character c) { }
         public void draw_gizmos() { }
         public void draw_inspector_gui() { }
-        public string inspect_info() { return "Approaching town."; }
+        public string inspect_info() { return "Attacking town."; }
     }
 
     class attack_controller : ICharacterController
@@ -359,6 +396,7 @@ public class town_gate : portal, IAddsToInspectionText
         town_path_element.path path;
         float local_speed_mod = 1.0f;
         town_gate gate;
+        settler target;
 
         public attack_controller(town_gate gate)
         {
@@ -366,56 +404,166 @@ public class town_gate : portal, IAddsToInspectionText
             local_speed_mod = Random.Range(0.9f, 1.1f);
         }
 
+        enum STAGE
+        {
+            SEARCHING_FOR_TARGETS,
+            PATHING_TO_TARGET,
+            WALKING_TO_TARGET,
+            FIGHTING_TARGET,
+            PATHING_AWAY,
+            GOING_AWAY
+        }
+        STAGE stage;
+
         public void control(character c)
         {
-            if (gate == null)
+            switch (stage)
             {
-                c.delete();
-                return;
+                case STAGE.SEARCHING_FOR_TARGETS:
+
+                    // Find closest target (with some noise)
+                    target = settler.find_to_min((s) =>
+                    {
+                        if (s.group != gate.path_element.group) return Mathf.Infinity;
+                        return (s.transform.position - c.transform.position).magnitude + Random.Range(0, 5f);
+                    });
+                    if (target == null) stage = STAGE.PATHING_AWAY;
+                    else stage = STAGE.PATHING_TO_TARGET;
+                    return;
+
+                case STAGE.PATHING_TO_TARGET:
+
+                    if (target == null)
+                    {
+                        // No target, go back to searching
+                        stage = STAGE.SEARCHING_FOR_TARGETS;
+                        break;
+                    }
+
+                    path = town_path_element.path.get(c.transform.position,
+                        target.transform.position, gate.path_element.group);
+
+                    if (path == null)
+                    {
+                        // No path, Go back to searching stage
+                        stage = STAGE.SEARCHING_FOR_TARGETS;
+                        break;
+                    }
+
+                    stage = STAGE.WALKING_TO_TARGET;
+                    return;
+
+                case STAGE.WALKING_TO_TARGET:
+
+                    if (path == null || target == null)
+                    {
+                        // No path or target, go back to searching stage
+                        stage = STAGE.SEARCHING_FOR_TARGETS;
+                        break;
+                    }
+
+                    // Walk the path
+                    switch (path.walk(c, c.run_speed * local_speed_mod))
+                    {
+                        case town_path_element.path.WALK_STATE.UNDERWAY:
+                            // Start fight if we're close enough
+                            if (c.distance_to(target) < c.pathfinding_resolution)
+                            {
+                                stage = STAGE.FIGHTING_TARGET;
+                                melee_fight.start_fight(c, target);
+                            }
+                            return;
+
+                        case town_path_element.path.WALK_STATE.FAILED:
+                            // Walking failed, go back to searching
+                            stage = STAGE.SEARCHING_FOR_TARGETS;
+                            break;
+
+                        case town_path_element.path.WALK_STATE.COMPLETE:
+                            if (c.distance_to(target) < c.pathfinding_resolution)
+                            {
+                                // Walking complete, start fighting
+                                stage = STAGE.FIGHTING_TARGET;
+                                melee_fight.start_fight(c, target);
+                            }
+                            else
+                                // Didn't end up close enough, path again
+                                stage = STAGE.PATHING_TO_TARGET;
+                            break;
+                    }
+                    return;
+
+                case STAGE.FIGHTING_TARGET:
+
+                    if (target == null || target.is_dead)
+                    {
+                        // Fight is over
+                        stage = STAGE.SEARCHING_FOR_TARGETS;
+                        break;
+                    }
+                    return;
+
+                case STAGE.PATHING_AWAY:
+
+                    if (gate == null)
+                    {
+                        // No gate to path to => delete attacker
+                        c.delete();
+                        break;
+                    }
+
+                    // Path to gate
+                    path = town_path_element.path.get(
+                        town_path_element.nearest_element(c.transform.position, gate.path_element.group),
+                        gate.path_element);
+
+                    stage = STAGE.GOING_AWAY;
+                    return;
+
+
+                case STAGE.GOING_AWAY:
+
+                    if (path == null)
+                    {
+                        // No path to walk => delete attacker
+                        c.delete();
+                        break;
+                    }
+
+                    switch (path.walk(c, c.walk_speed))
+                    {
+                        case town_path_element.path.WALK_STATE.COMPLETE:
+                            c.delete(); // Got away
+                            break;
+
+                        case town_path_element.path.WALK_STATE.FAILED:
+                            stage = STAGE.PATHING_AWAY; // Try pathing again
+                            break;
+
+                        case town_path_element.path.WALK_STATE.UNDERWAY:
+                            break;
+                    }
+
+                    return;
             }
-
-            // Walk a path if we have one
-            if (path != null)
-                switch (path.walk(c, c.run_speed * local_speed_mod))
-                {
-                    case town_path_element.path.WALK_STATE.UNDERWAY: return;
-                    default: path = null; return;
-                }
-
-            // Get the current element that I'm at
-            var current_element = town_path_element.nearest_element(c.transform.position, gate.path_element.group);
-
-            // Find the nearest (to within some random noize) target in the same group as me
-            var target = settler.find_to_min((s) =>
-            {
-                if (s.group != current_element.group) return Mathf.Infinity;
-                return (s.transform.position - c.transform.position).magnitude + Random.Range(0, 5f);
-            });
-
-            if (target == null)
-            {
-                // No targets
-                return;
-            }
-
-            var target_element = town_path_element.nearest_element(target.transform.position);
-
-            if (target_element == current_element)
-            {
-                // Fight each other
-                c.controller = new melee_fight_controller(c, target, c.controller);
-                target.controller = new melee_fight_controller(target, c, target.controller);
-                return;
-            }
-
-            path = town_path_element.path.get(current_element, target_element);
         }
 
         public void on_end_control(character c) { }
 
         public string inspect_info()
         {
-            return "Searching for targets";
+            switch (stage)
+            {
+                case STAGE.SEARCHING_FOR_TARGETS: return "Searching for targets";
+                case STAGE.PATHING_TO_TARGET: return "Pathfinding (to target)";
+                case STAGE.FIGHTING_TARGET: return "Fighting " + target?.name;
+                case STAGE.WALKING_TO_TARGET: return "Attacking " + target?.name;
+                case STAGE.PATHING_AWAY: return "Pathfinding (leaving)";
+                case STAGE.GOING_AWAY: return "Leaving";
+                default:
+                    Debug.LogError("Unkown attack stage!");
+                    return "Attacking";
+            }
         }
 
         public void draw_gizmos()
@@ -423,132 +571,6 @@ public class town_gate : portal, IAddsToInspectionText
             path?.draw_gizmos(Color.red);
         }
 
-        public void draw_inspector_gui() { }
-    }
-
-    class melee_fight_controller : ICharacterController
-    {
-        Vector3 fight_centre;
-        Vector3 fight_axis;
-
-        character fighting;
-        ICharacterController return_control_to;
-        bool complete = false;
-        float timer = 0;
-
-        List<arm> arms = new List<arm>();
-        List<Transform> arm_targets = new List<Transform>();
-        List<Vector3> arm_initial_pos = new List<Vector3>();
-
-        float distance_from_fight_centre(character c)
-        {
-            return c.pathfinding_resolution;
-        }
-
-        public melee_fight_controller(character c, character fighting, ICharacterController return_control_to = null)
-        {
-            this.fighting = fighting;
-            this.return_control_to = return_control_to;
-
-            if (fighting == null)
-            {
-                // Target has been deleted
-                complete = true;
-                return;
-            }
-
-            Vector3 disp = fighting.transform.position - c.transform.position;
-
-            if (disp.magnitude > 1.5f * Mathf.Max(
-                distance_from_fight_centre(c),
-                distance_from_fight_centre(fighting)))
-            {
-                // Have left the fight
-                complete = true;
-                return;
-            }
-
-            // Get the centre/axis that the fight takes place along
-            fight_centre = (c.transform.position + fighting.transform.position) / 2f;
-            fight_axis = disp.normalized;
-
-            Vector3 forward = fight_axis;
-            forward.y = 0;
-            c.transform.forward = forward;
-
-            c.transform.position = fight_centre - fight_axis * distance_from_fight_centre(c);
-
-            foreach (var arm in c.GetComponentsInChildren<arm>())
-            {
-                var target = new GameObject("arm_target").transform;
-                arm.to_grab = target;
-                target.position = arm.shoulder.position + fight_axis * arm.total_length / 2f;
-                target.forward = c.transform.forward;
-                arm_initial_pos.Add(target.position);
-                arm_targets.Add(target);
-                arms.Add(arm);
-            }
-        }
-
-        public void on_end_control(character c)
-        {
-            foreach (var t in arm_targets)
-                if (t != null)
-                    Destroy(t.gameObject);
-
-            complete = true;
-        }
-
-        public void control(character c)
-        {
-            if (fighting == null || fighting.is_dead) // Enemy has died
-                complete = true;
-
-            if (complete)
-            {
-                // Return control to whatever had control before
-                c.controller = return_control_to;
-                return;
-            }
-
-            // Make the target fight back if not already fighting
-            if (!(fighting.controller is melee_fight_controller))
-                fighting.controller = new melee_fight_controller(fighting, c);
-
-            // Run melee cooldown
-            timer += Time.deltaTime * 1f;
-            if (timer > c.attack_time)
-            {
-                fighting.take_damage(c.attack_damage);
-                timer = 0;
-            }
-
-            // Apply fight animation
-            float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * timer / c.attack_time), 10);
-            float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * timer / c.attack_time), 10);
-
-            c.transform.position = fight_centre +
-                fight_axis * distance_from_fight_centre(c) * (0.2f * Mathf.Max(cos, sin) - 1f);
-
-            for (int i = 0; i < arm_targets.Count; ++i)
-            {
-                var arm = arms[i];
-                var targ = arm_targets[i];
-                var init = arm_initial_pos[i];
-                var final = fighting.transform.position + fighting.height * Vector3.up * 0.75f;
-                final = arm.nearest_in_reach(final);
-
-                float amt = i % 2 == 0 ? sin : cos;
-                targ.position = Vector3.Lerp(init, final, amt);
-            }
-        }
-
-        public string inspect_info()
-        {
-            return "Figting " + fighting.display_name;
-        }
-
-        public void draw_gizmos() { }
         public void draw_inspector_gui() { }
     }
 

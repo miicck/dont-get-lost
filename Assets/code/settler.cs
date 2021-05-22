@@ -140,7 +140,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     }
 
     player_interaction[] interactions;
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
         if (interactions == null) interactions = new player_interaction[]
         {

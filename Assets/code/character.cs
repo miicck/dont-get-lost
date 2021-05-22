@@ -84,7 +84,7 @@ public class character : networked,
     // IPlayerInteractable //
     //#####################//
 
-    public virtual player_interaction[] player_interactions()
+    public virtual player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[]
         {
@@ -504,7 +504,7 @@ public class character : networked,
         character character;
 
         player_interaction[] _interactions;
-        public player_interaction[] player_interactions()
+        public player_interaction[] player_interactions(RaycastHit hit)
         {
             if (_interactions == null) _interactions = new player_interaction[]
             {

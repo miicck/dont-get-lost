@@ -31,7 +31,7 @@ public class sack : networked, IPlayerInteractable
 
     player_interaction[] interactions;
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         if (interactions == null) interactions =
             new player_interaction[]

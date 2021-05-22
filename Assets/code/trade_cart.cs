@@ -173,7 +173,7 @@ public class trade_cart : has_trade_hub, IAddsToInspectionText, IPlayerInteracta
 
     player_interaction[] inters;
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         if (inters == null) inters = new player_interaction[] { new cart_menu(this) };
         return inters;

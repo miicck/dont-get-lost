@@ -9,7 +9,7 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
     public abstract Dictionary<string, int> get_stock();
     public abstract void set_stock(string item, int count);
 
-    public player_interaction[] player_interactions()
+    public player_interaction[] player_interactions(RaycastHit hit)
     {
         trade.trader = this;
         return new player_interaction[] { trade };

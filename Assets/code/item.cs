@@ -71,7 +71,7 @@ public class item : networked, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public virtual player_interaction[] player_interactions()
+    public virtual player_interaction[] player_interactions(RaycastHit hit)
     {
         return new player_interaction[]
         {

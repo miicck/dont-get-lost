@@ -77,10 +77,10 @@ public class auto_harvester : building_material, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    public override player_interaction[] player_interactions()
+    public override player_interaction[] player_interactions(RaycastHit hit)
     {
-        if (is_logistics_version) return base.player_interactions();
-        return base.player_interactions().prepend(new player_inspectable(transform)
+        if (is_logistics_version) return base.player_interactions(hit);
+        return base.player_interactions(hit).prepend(new player_inspectable(transform)
         {
             text = () =>
             {
