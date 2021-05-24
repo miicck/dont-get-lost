@@ -316,6 +316,7 @@ public class interaction_set
 public abstract class left_player_menu : player_interaction
 {
     string name;
+    bool close_requested;
     player.inventory_interaction inventory_opener;
 
     public left_player_menu(string name)
@@ -332,6 +333,8 @@ public abstract class left_player_menu : player_interaction
 
     public override bool start_interaction(player player)
     {
+        close_requested = false;
+
         if (menu != null)
         {
             // Position the left menu at the left_expansion_point but leave 
@@ -351,7 +354,7 @@ public abstract class left_player_menu : player_interaction
     public override bool continue_interaction(player player)
     {
         // Left player menus close with the inventory.
-        return inventory_opener.continue_interaction(player);
+        return close_requested || inventory_opener.continue_interaction(player);
     }
 
     public override void end_interaction(player player)
@@ -374,6 +377,8 @@ public abstract class left_player_menu : player_interaction
         }
     }
     RectTransform _menu;
+
+    protected void close() { close_requested = true; }
 
     // IMPLEMENTATION //
     abstract protected RectTransform create_menu();

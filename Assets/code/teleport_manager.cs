@@ -63,7 +63,7 @@ public class teleport_manager : networked
         return nearest.first.value;
     }
 
-    public void create_buttons(RectTransform parent)
+    public void create_buttons(RectTransform parent, callback on_teleport)
     {
         var btn = Resources.Load<UnityEngine.UI.Button>("ui/teleport_button");
         foreach (var d in destinations)
@@ -77,6 +77,7 @@ public class teleport_manager : networked
             b.onClick.AddListener(() =>
             {
                 player.current.teleport(target);
+                on_teleport?.Invoke();
             });
         }
     }

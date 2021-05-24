@@ -13,6 +13,7 @@ public class game : MonoBehaviour
     public UnityEngine.UI.Text debug_text;
     public UnityEngine.UI.Text cursor_text_element;
     public GameObject debug_panel;
+    public GameObject loading_message;
 
     //#################//
     // UNITY CALLBACKS //
@@ -131,6 +132,28 @@ public class game : MonoBehaviour
         if (controls.triggered(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
         if (controls.triggered(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
+
+        if (player.current == null || !player.current.controller_enabled)
+        {
+            controls.disabled = true;
+            loading_message.SetActive(true);
+            loading_message.transform.SetAsLastSibling();
+
+            char[] symbs = new char[]
+            {
+                '|','/','-','\\','|','/','-','\\'
+            };
+
+            string t = "Loading world " + symbs[(int)(Time.time * 10f) % symbs.Length];
+
+            var txt = loading_message.GetComponentInChildren<UnityEngine.UI.Text>();
+            txt.text = t;
+        }
+        else
+        {
+            controls.disabled = false;
+            loading_message.gameObject.SetActive(false);
+        }
     }
 
     /// <summary> Called every <see cref="SLOW_UPDATE_TIME"/> seconds. </summary>

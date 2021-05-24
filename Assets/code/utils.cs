@@ -166,7 +166,7 @@ public static class utils
         get
         {
             if (_graphic_raycaster == null)
-                _graphic_raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>();
+                _graphic_raycaster = Object.FindObjectOfType<UnityEngine.UI.GraphicRaycaster>(true);
             return _graphic_raycaster;
         }
     }

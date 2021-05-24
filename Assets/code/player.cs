@@ -829,6 +829,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         controller.enabled = false;
         networked_position = location;
+        x_rotation.value = 0;
 
         // Re-enable the controller once the chunk at the new location is generated
         var chunk_coords = chunk.coords(location);
@@ -851,6 +852,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             return s;
         }
     }
+
+    public bool controller_enabled => controller != null && controller.enabled;
 
     public bool disable_next_fall_damage = false;
     public bool fly_mode
@@ -1557,7 +1560,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         nametag.gameObject.SetActive(false);
 
         // Find the healthbar
-        healthbar = FindObjectOfType<player_healthbar>();
+        healthbar = FindObjectOfType<player_healthbar>(true);
         healthbar.set(health.value, 100);
 
         // Create the water
