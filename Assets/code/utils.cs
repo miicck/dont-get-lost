@@ -784,6 +784,32 @@ public static class utils
         source.maxDistance = max_distance;
     }
 
+    public static float angle_lerp_360(float angle, float target, float lerp_amt)
+    {
+        // Modulo angles into [0, 360]
+        angle = angle % 360f;
+        target = target % 360f;
+
+        float fw_delta;
+        float bw_delta;
+
+        if (target >= angle)
+        {
+            fw_delta = target - angle;
+            bw_delta = fw_delta - 360f;
+        }
+        else
+        {
+            bw_delta = target - angle;
+            fw_delta = 360f + bw_delta;
+        }
+
+        if (Mathf.Abs(bw_delta) < fw_delta) // Shorter to lerp backwards
+            return Mathf.Lerp(angle, angle + bw_delta, lerp_amt);
+        else // Shorter to lerp forwards
+            return Mathf.Lerp(angle, angle + fw_delta, lerp_amt);
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

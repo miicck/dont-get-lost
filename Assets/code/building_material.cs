@@ -65,9 +65,9 @@ public class building_material : item, IPlayerInteractable
         // Delay geometry check until we're in the right place
         var cb = collision_bounds();
         temporary_object.create(0.1f, () =>
-       {
-           world.on_geometry_change(cb);
-       });
+        {
+            world.on_geometry_change(cb);
+        });
     }
 
     //#####################//

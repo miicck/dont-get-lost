@@ -95,7 +95,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         {
             // Non-authority only stuff
             // Position/rotation lerping
-            transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
+            transform.rotation = Quaternion.Euler(0, utils.angle_lerp_360(
+                transform.rotation.eulerAngles.y, y_rotation.value, Time.deltaTime * 5f), 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
 
             // Position my nametag
