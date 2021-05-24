@@ -109,6 +109,13 @@ public class character : networked,
         get => _town_path_element;
         set
         {
+            if (this == null)
+            {
+                // This == null => don't call on_character callbacks
+                _town_path_element = value;
+                return;
+            }
+
             if (_town_path_element == value)
                 _town_path_element?.on_character_move_towards(this);
             else
@@ -172,7 +179,6 @@ public class character : networked,
             sound_source.transform.position = sound_centre;
             sound_source.transform.SetParent(transform);
             sound_source.spatialBlend = 1f; // 3D
-            utils.set_default_rolloff(sound_source, 15f);
         }
     }
 
