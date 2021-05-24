@@ -802,7 +802,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         if (move.magnitude > 10e-4f) fly_speed += Time.deltaTime * FLY_ACCELERATION;
         else fly_speed = FLY_SPEED_RESET;
-        controller.Move(move);
+        transform.position += move; // Bypass controller => noclip
 
         if (controls.triggered(controls.BIND.ADD_CINEMATIC_KEYFRAME))
             cinematic_recording.add_keyframe(camera.transform.position, camera.transform.rotation);
