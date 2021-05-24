@@ -93,10 +93,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         }
         else
         {
-            // Non-authority only stuff (position lerping)
-            // Lerp rotation
+            // Non-authority only stuff
+            // Position/rotation lerping
             transform.rotation = Quaternion.Euler(0, y_rotation.lerped_value, 0);
             eye_transform.rotation = Quaternion.Euler(x_rotation.lerped_value, y_rotation.lerped_value, 0);
+
+            // Position my nametag
+            nametag.position = utils.clamped_screen_point(current.camera, nametag_position(), out bool on_edge);
+            nametag.gameObject.SetActive(!on_edge);
         }
 
         // Stuff that runs both on authority/non-auth clients
@@ -120,6 +124,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             Gizmos.DrawWireSphere(transform.position + controller.radius * Vector3.up,
                                   controller.radius);
         }
+
+        var np = nametag_position();
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(np - transform.right / 4, np + transform.right / 4);
     }
 
     //##############//
@@ -1456,6 +1464,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     arm left_arm;
     water_reflections water;
     player_healthbar healthbar;
+    RectTransform nametag;
+
+    public Vector3 nametag_position() => eye_transform.position + Vector3.up / 4;
 
     public void mod_x_rotation(float mod) { x_rotation.value += mod; }
     public void mod_y_rotation(float mod) { y_rotation.value = utils.minimal_modulus_angle(y_rotation.value + mod); }
@@ -1541,6 +1552,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         crt.anchoredPosition = Vector2.zero;
         cursor_sprite = "default_cursor";
 
+        // Disable local player nametag
+        nametag.gameObject.SetActive(false);
+
         // Find the healthbar
         healthbar = FindObjectOfType<player_healthbar>();
         healthbar.set(health.value, 100);
@@ -1625,8 +1639,24 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         sound_source.transform.localPosition = new Vector3(0, HEIGHT - WIDTH / 2f, WIDTH / 2f);
         sound_source.spatialBlend = 0f;
 
+        // Create nametag
+        nametag = Resources.Load<RectTransform>("ui/nametag").inst();
+        nametag.SetParent(game.canvas.transform);
+
         // Network my username
         username = new networked_variables.net_string();
+
+        username.on_change = () =>
+        {
+            // Update nametag
+            var tx = nametag.GetComponentInChildren<UnityEngine.UI.Text>(true);
+            if (tx == null)
+            {
+                Debug.LogError("No text component found in nametag!");
+                return;
+            }
+            tx.text = username.value;
+        };
 
         // The place where the player respawns
         respawn_point = new networked_variables.net_vector3();
@@ -1781,6 +1811,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             }
             else inventory = inv;
         }
+    }
+
+    public override void on_forget(bool deleted)
+    {
+        base.on_forget(deleted);
+
+        // Delete nametag when player is unloaded
+        Destroy(nametag.gameObject);
     }
 
     //################//

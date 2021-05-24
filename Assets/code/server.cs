@@ -1628,7 +1628,7 @@ public static class server
                 foreach (var c in connected_clients)
                     if (c.username == username)
                     {
-                        c.disconnect("kicked");
+                        c.disconnect("kicked by " + client.username);
                         break;
                     }
                 break;
