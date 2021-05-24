@@ -282,7 +282,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_food_satisfaction nutrition;
     public networked_variables.net_int tiredness;
     public networked_variables.net_string net_name;
-    public networked_variables.net_bool male;
     public networked_variables.net_int players_interacting_with;
     public networked_variables.net_color skin_color;
     public networked_variables.net_color top_color;
@@ -322,7 +321,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         nutrition = networked_variables.net_food_satisfaction.fully_satisfied;
         tiredness = new networked_variables.net_int(min_value: 0, max_value: 100);
         net_name = new networked_variables.net_string();
-        male = new networked_variables.net_bool();
         skin_color = new networked_variables.net_color();
         top_color = new networked_variables.net_color();
         bottom_color = new networked_variables.net_color();
@@ -375,9 +373,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override void on_first_create()
     {
         base.on_first_create();
-        male.value = Random.Range(0, 2) == 0;
-        if (male.value) net_name.value = names.random_male_name();
-        else net_name.value = names.random_female_name();
+        net_name.value = names.random_unisex_name();
         skin_color.value = character_colors.random_skin_color();
         top_color.value = character_colors.clothing_brown;
         bottom_color.value = character_colors.clothing_brown;

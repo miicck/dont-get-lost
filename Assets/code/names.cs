@@ -6,9 +6,11 @@ public static class names
 {
     static string[] male_names;
     static string[] female_names;
+    static string[] unisex_names;
 
     public static string random_male_name() { return male_names[Random.Range(0, male_names.Length)]; }
     public static string random_female_name() { return female_names[Random.Range(0, female_names.Length)]; }
+    public static string random_unisex_name() { return unisex_names[Random.Range(0, unisex_names.Length)]; }
 
     static string[] load_names(string resources_path)
     {
@@ -30,5 +32,6 @@ public static class names
     {
         male_names = load_names("names/male");
         female_names = load_names("names/female");
+        unisex_names = load_names("names/unisex");
     }
 }
