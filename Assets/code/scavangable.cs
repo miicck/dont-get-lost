@@ -38,6 +38,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
         public interaction(scavangable scavangable) { this.scavangable = scavangable; }
 
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
+        public override bool allow_held => true;
 
         public override string context_tip()
         {
@@ -59,6 +60,10 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
 
         public override bool continue_interaction(player player)
         {
+            controls.disabled = false;
+            if (!triggered(player)) return true;
+            controls.disabled = true;
+
             return timer == null;
         }
 
