@@ -20,7 +20,7 @@ public class random_color_building_material : building_material
         };
     }
 
-    protected override void on_build()
+    public override void on_build()
     {
         base.on_build();
 

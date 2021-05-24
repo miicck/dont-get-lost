@@ -34,14 +34,27 @@ public class blueprint : MonoBehaviour
             // Update the dictionary
             pivot_indicies[building.name] = ind;
 
-            // Rotate building so that the snap point is alligned
-            Quaternion snap_point_rot = Quaternion.Inverse(building.transform.rotation) * sp.transform.rotation;
-            building.transform.rotation = transform.rotation;
-            building.transform.rotation *= Quaternion.Inverse(snap_point_rot);
+            if (controls.held(controls.BIND.ROTATE_ALSO_AXES))
+            {
+                // Move the axes to the snap point
+                building.transform.SetParent(null);
+                transform.position = sp.transform.position;
+                transform.rotation = sp.transform.rotation;
+                building.transform.SetParent(transform);
+            }
+            else
+            {
+                // Move the snap point to the axes
 
-            // Translate the building so that the snap point is alligned
-            Vector3 delta = building.transform.position - sp.transform.position;
-            building.transform.position = transform.position + delta;
+                // Rotate building so that the snap point is alligned
+                Quaternion snap_point_rot = Quaternion.Inverse(building.transform.rotation) * sp.transform.rotation;
+                building.transform.rotation = transform.rotation;
+                building.transform.rotation *= Quaternion.Inverse(snap_point_rot);
+
+                // Translate the building so that the snap point is alligned
+                Vector3 delta = building.transform.position - sp.transform.position;
+                building.transform.position = transform.position + delta;
+            }
         }
     }
 
@@ -363,6 +376,27 @@ public class blueprint : MonoBehaviour
         rotate_around(axis, amount);
     }
 
+    public building_material build_networked_version(bool remove_from_inv = true)
+    {
+        // Check we have the building in inventory if required
+        if (remove_from_inv && !player.current.inventory.remove(building, 1)) return null;
+
+        player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f,
+            location: transform.position);
+
+        // Create a proper, networked version of the spawned object
+        var b = building;
+        var created = item.create(b.name, b.transform.position, b.transform.rotation,
+            networked: true, register_undo: true) as building_material;
+        created?.on_build();
+        Destroy(gameObject);
+
+        // Satisfy building requirements
+        build_requirement.on_build(created);
+
+        return created;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -443,5 +477,13 @@ public class blueprint : MonoBehaviour
         bp.building = bm;
 
         return bp;
+    }
+
+    public static blueprint create_relocator(building_material building)
+    {
+        if (building == null) return null;
+        if (!pivot_indicies.TryGetValue(building.name, out int index)) index = 0;
+        var sp = building.GetComponentsInChildren<snap_point>()[index];
+        return create(building.name, sp.transform.position, sp.transform.rotation);
     }
 }

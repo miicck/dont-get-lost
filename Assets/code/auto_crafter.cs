@@ -130,9 +130,19 @@ public class auto_crafter : building_material, IPlayerInteractable
         int recipe_copy = chosen_recipe.value;
         return (c) =>
         {
-            // Recover the recipe
-            if (c is auto_crafter)
-                (c as auto_crafter).chosen_recipe.value = recipe_copy;
+            // Get the copied autocrafter
+            var a = c as auto_crafter;
+            if (a == null)
+            {
+                Debug.LogError("Tried to recover autocrafter recipe on non-autocrafter!");
+                return;
+            }
+
+            // Recover the recipe (once registered)
+            a.add_register_listener(() =>
+            {
+                a.chosen_recipe.value = recipe_copy;
+            });
         };
     }
 

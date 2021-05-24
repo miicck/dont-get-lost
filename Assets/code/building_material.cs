@@ -64,10 +64,10 @@ public class building_material : item, IPlayerInteractable
 
         // Delay geometry check until we're in the right place
         var cb = collision_bounds();
-         temporary_object.create(0.1f, () =>
-        {
-            world.on_geometry_change(cb);
-        });
+        temporary_object.create(0.1f, () =>
+       {
+           world.on_geometry_change(cb);
+       });
     }
 
     //#####################//
@@ -118,6 +118,107 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
+    protected class relocate_interaction : player_interaction
+    {
+        building_material building;
+        blueprint blueprint;
+
+        bool delete_success;
+        Vector3 init_building_pos;
+        Quaternion init_building_rot;
+        recover_settings_func recover_func;
+
+        public relocate_interaction(building_material building) { this.building = building; }
+        public override controls.BIND keybind => controls.BIND.RELOCATE_BUILDING;
+        public override string context_tip() => "relocate " + building?.display_name;
+
+        public override bool start_interaction(player player)
+        {
+            delete_success = false;
+            if (building == null) return true;
+
+            if (!building.can_pick_up(out string mes))
+            {
+                popup_message.create("Could not relocate: " + mes);
+                return true;
+            }
+
+            // Attempt to create blueprint/recovery settings
+            blueprint = blueprint.create_relocator(building);
+            recover_func = building.get_recover_func();
+            init_building_pos = building.transform.position;
+            init_building_rot = building.transform.rotation;
+
+            if (blueprint != null)
+            {
+                // Destroy building and start blueprint placement
+                building?.delete(() =>
+                {
+                    delete_success = true;
+                });
+                return false;
+            }
+
+            // Blueprint creation failed, end interaction
+            return true;
+        }
+
+        public override bool continue_interaction(player player)
+        {
+            // Wait for building to be deleted server-side
+            if (!delete_success) return false;
+
+            // Cancel build on right click
+            if (controls.triggered(controls.BIND.ALT_USE_ITEM))
+            {
+                // Recover building
+                var re_built = item.create(blueprint.building.name,
+                    init_building_pos, init_building_rot, networked: true)
+                    as building_material;
+                recover_func?.Invoke(re_built);
+
+                // Destroy blueprint
+                Destroy(blueprint.gameObject);
+                blueprint = null;
+                return true;
+            }
+
+            return blueprint.manipulate();
+        }
+
+        public override void end_interaction(player player)
+        {
+            // Build the relocated building (if the bluerprint still exists)
+            var built = blueprint?.build_networked_version(remove_from_inv: false);
+            if (built != null)
+            {
+                recover_func?.Invoke(built);
+
+                undo_manager.undo_action undo = null;
+                undo = () =>
+                {
+                    if (built == null) return null;
+                    Vector3 redo_pos = built.transform.position;
+                    Quaternion redo_rot = built.transform.rotation;
+                    built.transform.position = init_building_pos;
+                    built.transform.rotation = init_building_rot;
+
+                    return () =>
+                    {
+                        if (built == null) return null;
+                        built.transform.position = redo_pos;
+                        built.transform.rotation = redo_rot;
+                        return undo;
+                    };
+                };
+                undo_manager.register_undo_level(undo);
+            }
+
+            // Destroy the blueprint (if it still exists)
+            if (blueprint != null) Destroy(blueprint.gameObject);
+        }
+    }
+
     public override player_interaction[] player_interactions(RaycastHit hit)
     {
         if (is_logistics_version) return base.player_interactions(hit);
@@ -127,6 +228,7 @@ public class building_material : item, IPlayerInteractable
             new pick_up_from_gutter(this),
             new deconstruct_interaction(this),
             new select_matching_interaction(this),
+            new relocate_interaction(this),
             new player_inspectable(transform)
             {
                 text = () => display_name + " (built)",
@@ -396,34 +498,14 @@ public class building_material : item, IPlayerInteractable
         {
             // Don't do anything non-auth clients
             if (!player.has_authority) return;
-
-            if (blueprint != null)
-            {
-                // Remove the object we're building from the inventory
-                if (player.current.inventory.remove(blueprint.building, 1))
-                {
-                    player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f,
-                        location: blueprint.transform.position);
-
-                    // Create a proper, networked version of the spawned object
-                    var b = blueprint.building;
-                    var created = create(b.name, b.transform.position, b.transform.rotation,
-                        networked: true, register_undo: true) as building_material;
-                    created?.on_build();
-                    Destroy(blueprint.gameObject);
-
-                    // Satisfy building requirements
-                    build_requirement.on_build(created);
-                }
-            }
-
+            blueprint?.build_networked_version();
             blueprint = null;
             player.current.validate_equip();
         }
     }
 
     /// <summary> Called when the object is built. </summary>
-    protected virtual void on_build() { }
+    public virtual void on_build() { }
 }
 
 public abstract class building_with_inventory : building_material
