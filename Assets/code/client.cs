@@ -56,6 +56,10 @@ public static class client
 
     public static int server_time => ((int)Time.realtimeSinceStartup - last_server_time_local) + last_server_time;
 
+    public delegate void callback();
+    static callback heartbeat_callbacks;
+    public static void add_heartbeat_callback(callback c) { heartbeat_callbacks += c; }
+
     /// <summary> Struct containing information about the players on the server. </summary>
     public class player_info
     {
@@ -802,6 +806,9 @@ public static class client
                     last_ping = -1;
                     Debug.Log("Heartbeat key mismatch, packet loss/very high ping?");
                 }
+
+                heartbeat_callbacks?.Invoke();
+                heartbeat_callbacks = null;
                 break;
 
             case server.MESSAGE.DISCONNECT:

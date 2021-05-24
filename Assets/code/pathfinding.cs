@@ -385,7 +385,7 @@ public class astar_path : path
             }
 
             // Call invalid start/end callbacks
-            switch(stage)
+            switch (stage)
             {
                 case STAGE.START_SEARCH:
                     on_invalid_start?.Invoke();
@@ -955,7 +955,10 @@ public static class pathfinding_utils
             bool grounding_found = false;
             foreach (var h in Physics.RaycastAll(start, delta_ray.normalized, delta_ray.magnitude))
                 if (h.transform.GetComponentInParent<INotPathBlocking>() == null)
+                {
                     grounding_found = true;
+                    break;
+                }
 
             if (!grounding_found)
                 return false;

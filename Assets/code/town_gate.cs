@@ -17,8 +17,6 @@ public class town_gate : portal, IAddsToInspectionText
         // equipped or blueprint version
         if (is_equpped || is_blueprint) return;
 
-        next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
-
         update_gate_group(this);
         path_element.add_group_change_listener(() => update_gate_group(this));
         InvokeRepeating("attempt_spawn_settler", SPAWN_SETTLER_TIME, SPAWN_SETTLER_TIME);
@@ -27,10 +25,10 @@ public class town_gate : portal, IAddsToInspectionText
     private void authority_update()
     {
         // Trigger attacks
-        if (Time.realtimeSinceStartup > next_attack_time)
+        if (next_attack_time.value >= 0 && client.server_time > next_attack_time.value)
         {
             if (attacks_enabled) trigger_scaled_attack();
-            next_attack_time = Time.realtimeSinceStartup + random_attack_interval();
+            next_attack_time.value = client.server_time + random_attack_interval();
         }
     }
 
@@ -69,9 +67,10 @@ public class town_gate : portal, IAddsToInspectionText
         switch (enemy_approach_path.state)
         {
             case path.STATE.COMPLETE:
-                // Ensure path remains valid that it remains valid
-                if (!enemy_approach_path.validate(load_balancing.iter))
-                    enemy_approach_path = null;
+                // Ensure path remains valid
+                if (!enemy_approach_path.optimize(load_balancing.iter))
+                    if (!enemy_approach_path.validate(load_balancing.iter))
+                        enemy_approach_path = null;
                 break;
 
             case path.STATE.SEARCHING:
@@ -143,6 +142,31 @@ public class town_gate : portal, IAddsToInspectionText
         client.create(transform.position, "characters/settler");
     }
 
+    //############//
+    // NETWORKING //
+    //############//
+
+    networked_variables.net_int next_attack_time;
+
+    public override void on_init_network_variables()
+    {
+        base.on_init_network_variables();
+        next_attack_time = new networked_variables.net_int(default_value: -1);
+    }
+
+    public override void on_gain_authority()
+    {
+        base.on_gain_authority();
+        client.add_heartbeat_callback(() =>
+        {
+            // Initialize the attack time on first heartbeat after auth gain
+            // (if it isn't already a valid time in the future)
+            if (this == null || !has_authority) return;
+            if (next_attack_time.value > client.server_time) return; // Already valid
+            next_attack_time.value = client.server_time + random_attack_interval();
+        });
+    }
+
     //########//
     // PORTAL //
     //########//
@@ -156,10 +180,13 @@ public class town_gate : portal, IAddsToInspectionText
 
     public string added_inspection_text()
     {
+        int next_attack_in = next_attack_time.value - client.server_time;
+        if (next_attack_in < 0 || next_attack_in > MAX_TIME_BETWEEN_ATTACKS) next_attack_in = 0;
+
         return "Beds     : " + bed_count + "\n" +
                "Settlers : " + settler.get_settlers_by_group(path_element.group).Count + "\n" +
                "Town combat level : " + Mathf.Round(town_combat_level()) + "\n" +
-               "Next attack in : " + Mathf.Round(next_attack_time - Time.realtimeSinceStartup) + "s\n" +
+               "Next attack in : " + next_attack_in + "s\n" +
                "Outside path length : " + enemy_approach_path?.length + " (" + enemy_approach_path?.state + ")";
     }
 
@@ -172,6 +199,10 @@ public class town_gate : portal, IAddsToInspectionText
 
     class town_gate_pathfinder : IPathingAgent
     {
+        public const float RESOLUTION = 1f;
+        public const float GROUND_CLEARANCE = 0.25f;
+        public const float HEIGHT = 1.5f;
+
         Transform outside_link;
 
         public town_gate_pathfinder(Transform outside_link)
@@ -188,16 +219,16 @@ public class town_gate : portal, IAddsToInspectionText
                 return v;
             }
 
-            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+            return pathfinding_utils.validate_walking_position(v, RESOLUTION, out valid);
         }
 
         public bool validate_move(Vector3 a, Vector3 b)
         {
             return pathfinding_utils.validate_walking_move(a, b,
-                resolution, 1.5f, resolution / 2f);
+                RESOLUTION, HEIGHT, GROUND_CLEARANCE);
         }
 
-        public float resolution => 1f;
+        public float resolution => RESOLUTION;
     }
 
     GameObject drawn_approach_path;
@@ -240,11 +271,12 @@ public class town_gate : portal, IAddsToInspectionText
     // ATTACK TRIGGERING //
     //###################//
 
-    float next_attack_time;
+    const int MIN_TIME_BETWEEN_ATTACKS = 3 * 60;
+    const int MAX_TIME_BETWEEN_ATTACKS = 10 * 60;
 
-    float random_attack_interval()
+    int random_attack_interval()
     {
-        return Random.Range(3 * 60, 10 * 60);
+        return Random.Range(MIN_TIME_BETWEEN_ATTACKS, MAX_TIME_BETWEEN_ATTACKS);
     }
 
     //#########//
