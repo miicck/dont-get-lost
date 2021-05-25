@@ -4,28 +4,37 @@ using UnityEngine;
 
 public class settler_path_section : town_path_link
 {
-#if UNITY_EDITOR
+#   if UNITY_EDITOR
     new public BoxCollider collider;
-#else
+#   else
     public BoxCollider collider;
-#endif
+#   endif
     public float max_distance = Mathf.Infinity;
 
     const float EDGE_THICKNESS = 0.05f;
 
-    public bool overlaps(settler_path_section other)
+    public override Bounds linkable_region()
     {
         // This might end up being too expensive, in which case we're gonna need to
         // wait for physics updates before testing settler_path_link(s)
         Physics.SyncTransforms();
 
-        var b1 = collider.bounds;
-        var b2 = other.collider.bounds;
+        var b = collider.bounds;
+        b.size += Vector3.one * EDGE_THICKNESS * 2f;
+
+        return b;
+    }
+
+    public bool overlaps(settler_path_section other)
+    {
+        var b1 = linkable_region();
+        var b2 = other.linkable_region();
+
+        // Ensure the two bounds are close enough to each other
+        // (this avoids annoying diagonal-type links, which don't
+        //  make for good paths)
         if ((b1.center - b2.center).magnitude > max_distance)
             return false;
-
-        b1.size += Vector3.one * EDGE_THICKNESS * 2f;
-        b2.size += Vector3.one * EDGE_THICKNESS * 2f;
 
         // First check if the bounds don't overlap
         if (!b1.Intersects(b2)) return false;

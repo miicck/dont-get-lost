@@ -437,44 +437,6 @@ public class item : networked, IPlayerInteractable
         return max;
     }
 
-    public Bounds visual_bounds()
-    {
-        return bounds_by_type<MeshRenderer>((r) => r.bounds);
-    }
-
-    public Bounds collision_bounds()
-    {
-        return bounds_by_type<Collider>((c) => c.bounds);
-    }
-
-    delegate Bounds get_bounds<T>(T t);
-    private Bounds bounds_by_type<T>(get_bounds<T> get_bounds)
-    {
-        bool found = false;
-        Vector3 max = Vector3.one * float.MinValue;
-        Vector3 min = Vector3.one * float.MaxValue;
-
-        foreach (var c in GetComponentsInChildren<T>())
-        {
-            found = true;
-            var b = get_bounds(c);
-            Vector3 rmax = b.center + b.extents;
-            Vector3 rmin = b.center - b.extents;
-            for (int i = 0; i < 3; ++i)
-            {
-                if (rmax[i] > max[i]) max[i] = rmax[i];
-                if (rmin[i] < min[i]) min[i] = rmin[i];
-            }
-        }
-
-        // Fallback if no meshes found
-        if (!found) return new Bounds(transform.position, Vector3.one * 0.1f);
-
-        Vector3 size = max - min;
-        Vector3 centre = (max + min) / 2f;
-        return new Bounds(centre, size);
-    }
-
     float suggested_logistics_scale()
     {
         var b = visual_bounds();
@@ -487,6 +449,13 @@ public class item : networked, IPlayerInteractable
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(b.center, b.size);
     }
+
+    //########//
+    // BOUNDS //
+    //########//
+
+    public Bounds visual_bounds() => this.bounds_by_type<MeshRenderer>((r) => r.bounds);
+    public Bounds collision_bounds() => this.bounds_by_type<Collider>((c) => c.bounds);
 
     //##################//
     // EDITOR UTILITIES //

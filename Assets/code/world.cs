@@ -26,6 +26,20 @@ public class world : networked
         static_world = this;
     }
 
+    private void Update()
+    {
+        if (geometry_update_regions.Count > 0)
+        {
+            // Process geometry updates
+            town_path_element.validate_elements_within(geometry_update_regions);
+            geometry_update_regions.Clear();
+        }
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
     static world static_world;
 
     // The seed for the world generator
@@ -49,9 +63,11 @@ public class world : networked
         return hit.point.y;
     }
 
+    static List<Bounds> geometry_update_regions = new List<Bounds>();
+
     public static void on_geometry_change(Bounds region_affected)
     {
-        town_path_element.validate_elements_within(region_affected);
+        geometry_update_regions.Add(region_affected);
     }
 
     public static string info()

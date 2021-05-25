@@ -138,8 +138,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
         foreach (var l in links)
             foreach (var l2 in other.links)
-                if (town_path_link.can_link(l, l2))
-                    l.link_to(l2);
+                l.try_link(l2);
     }
 
     void break_links(bool destroying = false)
@@ -207,28 +206,30 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         return new HashSet<town_path_element>();
     }
 
-    public static town_path_element find_nearest(Vector3 position)
+    public static void validate_elements_within(List<Bounds> regions)
     {
-        return utils.find_to_min(all_elements,
-            (r) => (r.transform.position - position).sqrMagnitude);
-    }
+        var to_validate = new List<town_path_element>();
 
-    public static void validate_elements_within(Bounds bounds)
-    {
-        HashSet<town_path_element> to_validate = new HashSet<town_path_element>();
         foreach (var e in all_elements)
-        {
-            var eb = new Bounds(e.transform.position, Vector3.one * 2);
-            if (bounds.Intersects(eb)) to_validate.Add(e);
-        }
+            foreach (var b in regions)
+            {
+                var eb = e.bounds_by_type<town_path_link>((l) => l.linkable_region());
+                if (b.Intersects(eb))
+                {
+                    to_validate.Add(e);
+                    break;
+                }
+            }
 
         foreach (var e in to_validate)
-            validate_links(e);
+            validate_links(e, eval_groups_and_rooms: false);
+
+        evaluate_groups_and_rooms();
     }
 
     public static void initialize()
     {
-        // Initialize theelements collection
+        // Initialize the elements collection
         all_elements = new HashSet<town_path_element>();
         grouped_elements = new Dictionary<int, HashSet<town_path_element>>();
         roomed_elements = new Dictionary<int, HashSet<town_path_element>>();
@@ -317,14 +318,14 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         }
     }
 
-    static void validate_links(town_path_element r)
+    static void validate_links(town_path_element r, bool eval_groups_and_rooms = true)
     {
         // Re-make all links to/from r
         r.break_links();
         foreach (var r2 in all_elements)
             r.try_link(r2);
 
-        evaluate_groups_and_rooms();
+        if (eval_groups_and_rooms) evaluate_groups_and_rooms();
     }
 
     static void register_element(town_path_element r)

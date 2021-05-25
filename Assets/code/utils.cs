@@ -810,6 +810,34 @@ public static class utils
             return Mathf.Lerp(angle, angle + fw_delta, lerp_amt);
     }
 
+    public delegate Bounds get_bounds<T>(T t);
+    public static Bounds bounds_by_type<T>(this Component me, get_bounds<T> get_bounds)
+    {
+        bool found = false;
+        Vector3 max = Vector3.one * float.MinValue;
+        Vector3 min = Vector3.one * float.MaxValue;
+
+        foreach (var c in me.GetComponentsInChildren<T>())
+        {
+            found = true;
+            var b = get_bounds(c);
+            Vector3 rmax = b.center + b.extents;
+            Vector3 rmin = b.center - b.extents;
+            for (int i = 0; i < 3; ++i)
+            {
+                if (rmax[i] > max[i]) max[i] = rmax[i];
+                if (rmin[i] < min[i]) min[i] = rmin[i];
+            }
+        }
+
+        // Fallback if no components found
+        if (!found) return new Bounds(me.transform.position, Vector3.zero);
+
+        Vector3 size = max - min;
+        Vector3 centre = (max + min) / 2f;
+        return new Bounds(centre, size);
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable
