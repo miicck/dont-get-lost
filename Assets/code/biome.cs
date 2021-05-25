@@ -591,7 +591,7 @@ public abstract class biome : MonoBehaviour
 
         private void Update()
         {
-            for (int i = 0; i < load_balancing.iter; ++i)
+            for (int i = 0; i < load_balancing.iter * 4; ++i)
                 if (biome.continue_generate_grid())
                 {
                     biome.on_end_generate_grid();

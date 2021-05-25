@@ -7,7 +7,7 @@ using System.Linq;
 /// the same kind via <see cref="town_path_link"/>s. </summary>
 public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogistical
 {
-    public settler_interactable interactable => GetComponentInParent<settler_interactable>();
+    public settler_interactable interactable => this?.GetComponentInParent<settler_interactable>();
 
     public virtual void on_character_enter(character c) { }
     public virtual void on_character_move_towards(character c) { }

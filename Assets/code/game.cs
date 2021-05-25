@@ -8,6 +8,7 @@ public class game : MonoBehaviour
     public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
     public const float CHARACTER_SPAWN_INTERVAL = 0.5f;
+    public const int LOADING_TARGET_FRAMERATE = 10;
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
@@ -136,18 +137,22 @@ public class game : MonoBehaviour
         if (controls.triggered(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
 
-        if (player.current == null || !player.current.controller_enabled)
+        if (loading)
         {
             controls.disabled = true;
             loading_message.SetActive(true);
-            loading_message.transform.SetAsLastSibling();
+
+            // Ensure loading message is above everything
+            // except for the debug panel
+            loading_message.transform.SetAsLastSibling(); 
+            debug_panel.transform.SetAsLastSibling();
 
             char[] symbs = new char[]
             {
                 '|','/','-','\\','|','/','-','\\'
             };
 
-            string t = "Loading world " + symbs[(int)(Time.time * 10f) % symbs.Length];
+            string t = "Loading world " + symbs[(int)(Time.time * LOADING_TARGET_FRAMERATE) % symbs.Length];
 
             var txt = loading_message.GetComponentInChildren<UnityEngine.UI.Text>();
             txt.text = t;
@@ -243,6 +248,8 @@ public class game : MonoBehaviour
     //##############//
     // STATIC STUFF //
     //##############//
+
+    public static bool loading => player.current == null || !player.current.controller_enabled;
 
     public static Canvas canvas { get; private set; }
 

@@ -4,14 +4,16 @@ using UnityEngine;
 
 public static class load_balancing
 {
-    public const int TARGET_FPS = 60;
-    public const int ITER_PER_EXTRA_FPS = 1;
-    public const float SMOOTHING_AMT = 0.8f;
+    const int ITER_PER_EXTRA_FPS = 1;
+    const float SMOOTHING_AMT = 0.6f;
 
-    static float smoothed_dt = 1 / (float)TARGET_FPS;
-    static int smoothed_fps = TARGET_FPS;
-    static int extra_fps => Mathf.Max(0, smoothed_fps - TARGET_FPS);
-    static int max_iter => 4 + extra_fps * ITER_PER_EXTRA_FPS;
+    static float smoothed_dt = 1 / (float)60;
+    static int smoothed_fps = 60;
+
+    static int target_fps => game.loading ? game.LOADING_TARGET_FRAMERATE : Screen.currentResolution.refreshRate;
+    static int extra_fps => Mathf.Max(0, smoothed_fps - target_fps);
+    static int extra_iter => extra_fps * ITER_PER_EXTRA_FPS;
+    static int min_iter => 4;
 
     /// <summary> Update the timing information needed to perform load balancing. </summary>
     public static void update()
@@ -27,15 +29,16 @@ public static class load_balancing
     {
         get
         {
-            if (max_iter == 1) return 1;
-            return Random.Range(1, max_iter);
+            if (extra_iter <= 0) return min_iter;
+            return Random.Range(min_iter, min_iter + extra_iter + 1);
         }
     }
 
     public static string info()
     {
-        return "    Smoothed fps : " + smoothed_fps + "\n" +
-               "    Extra fps    : " + extra_fps + "\n" +
-               "    Max iter     : " + max_iter;
+        return "    Target FPS   : " + target_fps + "\n" +
+               "    Smoothed FPS : " + smoothed_fps + "\n" +
+               "    Extra FPS    : " + extra_fps + "\n" +
+               "    Max iter     : " + (min_iter + extra_iter);
     }
 }
