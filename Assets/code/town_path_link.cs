@@ -25,22 +25,24 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         // Create the link both ways
         linked_to.Add(other);
         other.linked_to.Add(this);
-        update_display();
-        other.update_display();
+
+        // Link created => display update is required
+        display_update_required = true;
+        other.display_update_required = true;
 
         return true;
     }
 
-    public void break_links(bool destroying = false)
+    public void break_links()
     {
         // Break all of my links
         foreach (var l in linked_to)
         {
             l.linked_to.Remove(this);
-            l.update_display();
+            l.display_update_required = true;
         }
         linked_to.Clear();
-        if (!destroying) update_display();
+        display_update_required = true;
     }
 
     public virtual Bounds linkable_region()
@@ -59,9 +61,13 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
     public const float POINT_WIDTH = 0.1f;
 
     GameObject display;
+    bool display_update_required = false;
 
     public void update_display()
     {
+        // Reset required flag
+        display_update_required = false;
+
         // Destroy the old display
         if (display != null)
         {
@@ -105,6 +111,11 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
     //#################//
     // UNITY CALLBACKS //
     //#################//
+
+    private void Update()
+    {
+        if (display_update_required) update_display();
+    }
 
     private void OnDrawGizmosSelected()
     {

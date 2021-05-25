@@ -29,7 +29,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         {
             if (bm.is_blueprint)
                 foreach (var l in links)
-                    l.update_display();
+                    l.update_display(); // Ensure link display is shown for blueprints
             return;
         }
 
@@ -136,15 +136,18 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         // Can't link to self
         if (other == this) return;
 
+        // No chance of a link
+        if (!other.linkable_region.Intersects(linkable_region)) return;
+
         foreach (var l in links)
             foreach (var l2 in other.links)
                 l.try_link(l2);
     }
 
-    void break_links(bool destroying = false)
+    void break_links()
     {
         foreach (var l in links)
-            l.break_links(destroying);
+            l.break_links();
     }
 
     float heuristic(town_path_element other)
@@ -177,6 +180,17 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             }
         }
     }
+
+    Bounds linkable_region
+    {
+        get
+        {
+            if (_linkable_region == default)
+                _linkable_region = this.bounds_by_type<town_path_link>(l => l.linkable_region());
+            return _linkable_region;
+        }
+    }
+    Bounds _linkable_region;
 
     //##############//
     // STATIC STUFF //
@@ -212,14 +226,11 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
         foreach (var e in all_elements)
             foreach (var b in regions)
-            {
-                var eb = e.bounds_by_type<town_path_link>((l) => l.linkable_region());
-                if (b.Intersects(eb))
+                if (b.Intersects(e.linkable_region))
                 {
                     to_validate.Add(e);
                     break;
                 }
-            }
 
         foreach (var e in to_validate)
             validate_links(e, eval_groups_and_rooms: false);
@@ -343,7 +354,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         if (!all_elements.Remove(r))
             throw new System.Exception("Tried to forget unregistered element!");
 
-        r.break_links(destroying);
+        r.break_links();
         evaluate_groups_and_rooms();
     }
 

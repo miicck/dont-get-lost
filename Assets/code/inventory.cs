@@ -164,7 +164,9 @@ public class inventory : networked, IItemCollection
             var isb = _slots[i].button.gameObject.AddComponent<inventory_slot_button>();
             isb.index = i;
             isb.inventory = this;
-            _slots[i].update(null, 0, this); // Initalize ui to empty
+
+            // Initalize ui to empty
+            _slots[i].update(null, 0, this);
         }
 
         // UI starts closed, is opened using the "open" set method
@@ -537,10 +539,6 @@ public class inventory : networked, IItemCollection
     /// <summary> Called when an <see cref="inventory_slot_networked"/> changes contents. </summary>
     public void on_slot_change(int slot_index, item item, int count)
     {
-        // Ensure the ui exists
-        if (ui == null)
-            throw new System.Exception("UI should create itself!");
-
         slots[slot_index].update(item, count, this);
         last_frame_changed = Time.frameCount;
         invoke_on_change();
