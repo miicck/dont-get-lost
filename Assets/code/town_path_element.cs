@@ -71,6 +71,36 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     }
     town_path_link[] _links;
 
+    void try_link(town_path_element other)
+    {
+        // Can't link to self
+        if (other == this) return;
+
+        // No chance of a link
+        if (!other.linkable_region.Intersects(linkable_region)) return;
+
+        foreach (var l in links)
+            foreach (var l2 in other.links)
+                l.try_link(l2);
+    }
+
+    void break_links()
+    {
+        foreach (var l in links)
+            l.break_links();
+    }
+
+    Bounds linkable_region
+    {
+        get
+        {
+            if (_linkable_region == default)
+                _linkable_region = this.bounds_by_type<town_path_link>(l => l.linkable_region());
+            return _linkable_region;
+        }
+    }
+    Bounds _linkable_region;
+
     public List<town_path_element> linked_elements()
     {
         List<town_path_element> ret = new List<town_path_element>();
@@ -89,6 +119,35 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                     ret.Add(lt.path_element);
         return ret;
     }
+
+    public delegate bool connected_iter_function(town_path_element e);
+    public void iterate_connected(connected_iter_function f)
+    {
+        HashSet<town_path_element> open = new HashSet<town_path_element> { this };
+        HashSet<town_path_element> closed = new HashSet<town_path_element> { };
+
+        while (open.Count > 0)
+        {
+            town_path_element current = null;
+            foreach (var s in open) { current = s; break; }
+            if (current == null) break;
+
+            if (f(current)) return;
+            closed.Add(current);
+            open.Remove(current);
+
+            foreach (var n in current.linked_elements())
+            {
+                if (open.Contains(n)) continue;
+                if (closed.Contains(n)) continue;
+                open.Add(n);
+            }
+        }
+    }
+
+    //##################//
+    // GROUPS AND ROOMS //
+    //##################//
 
     public int group
     {
@@ -126,117 +185,11 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     room_update_func on_room_change = () => { };
     public void add_room_change_listener(room_update_func f) { on_room_change += f; }
 
-    public string added_inspection_text()
-    {
-        return "Group " + group + " room " + room;
-    }
-
-    void try_link(town_path_element other)
-    {
-        // Can't link to self
-        if (other == this) return;
-
-        // No chance of a link
-        if (!other.linkable_region.Intersects(linkable_region)) return;
-
-        foreach (var l in links)
-            foreach (var l2 in other.links)
-                l.try_link(l2);
-    }
-
-    void break_links()
-    {
-        foreach (var l in links)
-            l.break_links();
-    }
-
-    float heuristic(town_path_element other)
-    {
-        return (transform.position - other.transform.position).magnitude;
-    }
-
-    public delegate bool connected_iter_function(town_path_element e);
-
-    public void iterate_connected(connected_iter_function f)
-    {
-        HashSet<town_path_element> open = new HashSet<town_path_element> { this };
-        HashSet<town_path_element> closed = new HashSet<town_path_element> { };
-
-        while (open.Count > 0)
-        {
-            town_path_element current = null;
-            foreach (var s in open) { current = s; break; }
-            if (current == null) break;
-
-            if (f(current)) return;
-            closed.Add(current);
-            open.Remove(current);
-
-            foreach (var n in current.linked_elements())
-            {
-                if (open.Contains(n)) continue;
-                if (closed.Contains(n)) continue;
-                open.Add(n);
-            }
-        }
-    }
-
-    Bounds linkable_region
-    {
-        get
-        {
-            if (_linkable_region == default)
-                _linkable_region = this.bounds_by_type<town_path_link>(l => l.linkable_region());
-            return _linkable_region;
-        }
-    }
-    Bounds _linkable_region;
+    public string added_inspection_text() => "Group " + group + " room " + room;
 
     //##############//
     // STATIC STUFF //
     //##############//
-
-    static HashSet<town_path_element> all_elements;
-    static Dictionary<int, HashSet<town_path_element>> grouped_elements;
-    static Dictionary<int, HashSet<town_path_element>> roomed_elements;
-
-    public static town_path_element nearest_element(Vector3 v, int group = -1)
-    {
-        if (group < 0) return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude);
-        else return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude, (e) => e.group == group);
-    }
-
-    public static HashSet<town_path_element> element_group(int group)
-    {
-        if (grouped_elements.TryGetValue(group, out HashSet<town_path_element> elms))
-            return elms;
-        return new HashSet<town_path_element>();
-    }
-
-    public static HashSet<town_path_element> elements_in_room(int room)
-    {
-        if (roomed_elements.TryGetValue(room, out HashSet<town_path_element> elms))
-            return elms;
-        return new HashSet<town_path_element>();
-    }
-
-    public static void validate_elements_within(List<Bounds> regions)
-    {
-        var to_validate = new List<town_path_element>();
-
-        foreach (var e in all_elements)
-            foreach (var b in regions)
-                if (b.Intersects(e.linkable_region))
-                {
-                    to_validate.Add(e);
-                    break;
-                }
-
-        foreach (var e in to_validate)
-            validate_links(e, eval_groups_and_rooms: false);
-
-        evaluate_groups_and_rooms();
-    }
 
     public static void initialize()
     {
@@ -246,11 +199,24 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         roomed_elements = new Dictionary<int, HashSet<town_path_element>>();
     }
 
-    static void evaluate_groups_and_rooms()
+    public static void static_update()
     {
-        evaluate_groups();
-        evaluate_rooms();
+        if (rooms_update_required)
+        {
+            evaluate_groups();
+            evaluate_rooms();
+            rooms_update_required = false;
+        }
     }
+
+    //##################//
+    // ROOMS AND GROUPS //
+    //##################//
+
+    static Dictionary<int, HashSet<town_path_element>> grouped_elements;
+    static Dictionary<int, HashSet<town_path_element>> roomed_elements;
+
+    static bool rooms_update_required = false;
 
     static void evaluate_groups()
     {
@@ -329,15 +295,43 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         }
     }
 
-    static void validate_links(town_path_element r, bool eval_groups_and_rooms = true)
+    //##################//
+    // LINK VALIDATAION //
+    //##################//
+
+    public static void validate_elements_within(List<Bounds> regions)
+    {
+        var to_validate = new List<town_path_element>();
+
+        foreach (var e in all_elements)
+            foreach (var b in regions)
+                if (b.Intersects(e.linkable_region))
+                {
+                    to_validate.Add(e);
+                    break;
+                }
+
+        foreach (var e in to_validate)
+            validate_links(e);
+
+        rooms_update_required = true;
+    }
+
+    static void validate_links(town_path_element r)
     {
         // Re-make all links to/from r
         r.break_links();
         foreach (var r2 in all_elements)
             r.try_link(r2);
 
-        if (eval_groups_and_rooms) evaluate_groups_and_rooms();
+        rooms_update_required = true;
     }
+
+    //###################//
+    // Link registration //
+    //###################//
+
+    static HashSet<town_path_element> all_elements;
 
     static void register_element(town_path_element r)
     {
@@ -355,8 +349,34 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             throw new System.Exception("Tried to forget unregistered element!");
 
         r.break_links();
-        evaluate_groups_and_rooms();
+        rooms_update_required = true;
     }
+
+    //################//
+    // ELEMENT ACCESS //
+    //################//
+
+    public static town_path_element nearest_element(Vector3 v, int group = -1)
+    {
+        if (group < 0) return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude);
+        else return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude, (e) => e.group == group);
+    }
+
+    public static HashSet<town_path_element> element_group(int group)
+    {
+        if (grouped_elements.TryGetValue(group, out HashSet<town_path_element> elms)) return elms;
+        return new HashSet<town_path_element>();
+    }
+
+    public static HashSet<town_path_element> elements_in_room(int room)
+    {
+        if (roomed_elements.TryGetValue(room, out HashSet<town_path_element> elms)) return elms;
+        return new HashSet<town_path_element>();
+    }
+
+    //#########//
+    // DISPLAY //
+    //#########//
 
     /// <summary> Set to true to draw objects representing 
     /// links between path elements. </summary>
@@ -397,6 +417,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
         public int count => element_path == null ? 0 : element_path.Count;
 
+        static float heuristic(town_path_element a, town_path_element b) => a.distance_to(b);
+
         /// <summary> Find a path between the start and end elements, using 
         /// the A* algorithm. Returns null if no such path exists. </summary>
         public static path get(town_path_element start, town_path_element goal)
@@ -414,7 +436,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             // Initialize pathfinding with just start open
             open_set.Add(start);
             gscore[start] = 0;
-            fscore[start] = goal.heuristic(start);
+            fscore[start] = heuristic(goal, start);
 
             while (open_set.Count > 0)
             {
@@ -442,7 +464,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                         continue;
 
                     // Work out tentative path length to n, if we wen't via current
-                    var tgs = gscore[current] + n.heuristic(current);
+                    var tgs = gscore[current] + heuristic(n, current);
 
                     // Get the current neighbour gscore (infinity if not already scored)
                     if (!gscore.TryGetValue(n, out float gsn))
@@ -453,7 +475,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                         // This is a better path to n, update it
                         came_from[n] = current;
                         gscore[n] = tgs;
-                        fscore[n] = tgs + goal.heuristic(n);
+                        fscore[n] = tgs + heuristic(goal, n);
                         open_set.Add(n);
                     }
                 }

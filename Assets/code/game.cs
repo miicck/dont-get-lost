@@ -109,12 +109,15 @@ public class game : MonoBehaviour
 
     void Update()
     {
+        // Update load balancing info
+        load_balancing.update();
+
         // Run network updates
         server.update();
         client.update();
 
-        // Update load balancing info
-        load_balancing.update();
+        // Run town path updates
+        town_path_element.static_update();
 
         // Open/Close the console
         if (controls.triggered(controls.BIND.OPEN_CONSOLE)) console.open = true;
