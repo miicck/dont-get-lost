@@ -183,6 +183,7 @@ public class options_menu : MonoBehaviour
         {
             case "vsync":
                 QualitySettings.vSyncCount = value ? 1 : 0;
+                Application.targetFrameRate = value ? -1 : game.MAX_FRAMERATE;
                 break;
 
             case "water_reflections":

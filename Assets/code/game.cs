@@ -9,6 +9,7 @@ public class game : MonoBehaviour
     public const float SLOW_UPDATE_TIME = 0.1f;
     public const float CHARACTER_SPAWN_INTERVAL = 0.5f;
     public const int LOADING_TARGET_FRAMERATE = 10;
+    public const int MAX_FRAMERATE = 240;
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
@@ -144,7 +145,7 @@ public class game : MonoBehaviour
 
             // Ensure loading message is above everything
             // except for the debug panel
-            loading_message.transform.SetAsLastSibling(); 
+            loading_message.transform.SetAsLastSibling();
             debug_panel.transform.SetAsLastSibling();
 
             char[] symbs = new char[]
@@ -388,7 +389,8 @@ public class game : MonoBehaviour
     public string graphics_info()
     {
         return "    FPS             : " + System.Math.Round(1 / Time.deltaTime, 0) +
-                                   " (" + System.Math.Round(1 / Time.fixedDeltaTime, 0) + " physics)\n" +
+                                    " (physics: " + System.Math.Round(1 / Time.fixedDeltaTime, 0) +
+                                    " target: " + Application.targetFrameRate + ")\n" +
                "    Fullscreen mode : " + Screen.fullScreenMode + "\n" +
                "    Resolution      : " + Screen.width + " x " + Screen.height + "\n" +
                "       Display      : " + Screen.currentResolution.width + " x " + Screen.currentResolution.height;

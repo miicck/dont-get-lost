@@ -427,6 +427,7 @@ public abstract class item_node : MonoBehaviour,
 
         foreach (var t in ignore_transforms)
         {
+            if (t == null) continue;
             if (t.IsChildOf(hit.transform)) return true;
             if (hit.transform.IsChildOf(t)) return true;
         }

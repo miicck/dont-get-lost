@@ -95,6 +95,7 @@ items/iron_ore 1 True
 characters/thin_zombie 1 False
 inventories/sack 1 True
 crops/pine_tree 1 True
+items/cpu_eater 1 True
 items/tin 1 True
 items/log 1 True
 misc/world_object_destroyed 1 True

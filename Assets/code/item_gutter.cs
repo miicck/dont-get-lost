@@ -81,6 +81,8 @@ public class item_gutter : item_node
         if (distance_along < -LINK_DISTANCE_TOLERANCE) return false;
         if (distance_along > start_to_end.magnitude + LINK_DISTANCE_TOLERANCE) return false;
 
+        var my_build = building;
+        var other_build = other.building;
 
         // Check there is nothing in the way
         Vector3 out_to_in = input_point - other.output_point;
@@ -88,12 +90,8 @@ public class item_gutter : item_node
             out_to_in.normalized, out_to_in.magnitude))
         {
             // Ignore collisions with self/other/ignore_logistics_collisions_with things
-            if (h.transform.IsChildOf(building.transform)) continue;
-            if (h.transform.IsChildOf(other.building.transform)) continue;
-            if (ignore_logistics_collisions_with(h, building.transform, other.building.transform)) continue;
-
-            // Hit something in-between, don't allow the connection
-            return false;
+            if (!ignore_logistics_collisions_with(h, building?.transform, other.building?.transform))
+                return false;
         }
 
         return true;
