@@ -46,9 +46,9 @@ public static class server
     /// <summary> A client connected to the server. </summary>
     class client
     {
-        // The username + password of this client
+        // The username + id of this client
         public string username { get; private set; }
-        public byte[] password { get; private set; }
+        public ulong user_id { get; private set; }
 
         /// <summary> The representation of this clients player object. </summary>
         public representation player
@@ -60,7 +60,7 @@ public static class server
                 if (_player != null) throw new System.Exception("Client already has a player!");
 
                 _player = value;
-                player_representations[username] = value;
+                player_representations[user_id] = value;
 
                 // Update other clients about this new player
                 foreach (var c in connected_clients)
@@ -93,11 +93,11 @@ public static class server
             last_active_time = Time.realtimeSinceStartup;
         }
 
-        public void login(string username, byte[] password)
+        public void login(string username, ulong user_id)
         {
             // Attempt to load the player
             representation player = null;
-            if (!player_representations.TryGetValue(username, out player))
+            if (!player_representations.TryGetValue(user_id, out player))
             {
                 // Force the creation of the player on the client
                 player = null;
@@ -108,7 +108,7 @@ public static class server
             }
 
             this.username = username;
-            this.password = password;
+            this.user_id = user_id;
 
             if (player != null)
             {
@@ -176,7 +176,7 @@ public static class server
 
             if (player.parent == deleted_representations)
                 // Player has been deleted, remove it from player representations
-                player_representations.Remove(username);
+                player_representations.Remove(user_id);
             else
                 // Player has not been deleted (just logged out), move to inactive
                 player.parent = inactive_representations;
@@ -714,8 +714,8 @@ public static class server
     /// <summary> Representations that were recently deleted on the server. </summary>
     static Dictionary<int, float> recently_deleted;
 
-    /// <summary> Player representations on the server, keyed by username. </summary>
-    static Dictionary<string, representation> player_representations;
+    /// <summary> Player representations on the server, keyed by user id. </summary>
+    static Dictionary<ulong, representation> player_representations;
 
     /// <summary> Transform containing active representations (those which are
     /// considered for existance on clients) </summary>
@@ -777,7 +777,7 @@ public static class server
         connected_clients = new HashSet<client>();
         representations = new Dictionary<int, representation>();
         recently_deleted = new Dictionary<int, float>();
-        player_representations = new Dictionary<string, representation>();
+        player_representations = new Dictionary<ulong, representation>();
         message_queues = new Dictionary<client, Queue<pending_message>>();
         active_representations = new hierarchy_element("Active representations");
         inactive_representations = new hierarchy_element("Inactive representations");
@@ -1057,13 +1057,14 @@ public static class server
                         // For players, deserialize also the username
                         buffer.Read(length_bytes, 0, sizeof(int));
                         length = System.BitConverter.ToInt32(length_bytes, 0);
-                        byte[] uname_bytes = new byte[length];
-                        buffer.Read(uname_bytes, 0, length);
-                        string username = System.Text.Encoding.ASCII.GetString(uname_bytes);
+                        byte[] id_bytes = new byte[length];
+                        buffer.Read(id_bytes, 0, length);
+                        int id_offset = 0;
+                        var id = network_utils.decode_ulong(id_bytes, ref id_offset);
 
                         // Players start inactive
                         rep.parent = inactive_representations;
-                        player_representations[username] = rep;
+                        player_representations[id] = rep;
                         break;
 
                     case SAVE_TYPE.ACTIVE:
@@ -1102,9 +1103,8 @@ public static class server
                 compressor.WriteByte((byte)SAVE_TYPE.PLAYER);
                 compressor.write_bytes_with_length(kv.Value.serialize());
 
-                // Write the username
-                var uname_bytes = System.Text.Encoding.ASCII.GetBytes(kv.Key);
-                compressor.write_bytes_with_length(uname_bytes);
+                // Write also the id
+                compressor.write_bytes_with_length(network_utils.encode_ulong(kv.Key));
 
                 saved.Add(kv.Value.network_id);
             }
@@ -1500,20 +1500,18 @@ public static class server
 
                 int init_offset = offset;
                 string uname = network_utils.decode_string(bytes, ref offset);
+                ulong user_id = network_utils.decode_ulong(bytes, ref offset);
 
-                byte[] pword = new byte[length - (offset - init_offset)];
-                System.Buffer.BlockCopy(bytes, offset, pword, 0, pword.Length);
-
-                // Check if this username is in use
+                // Check if this id is in use
                 foreach (var c in connected_clients)
-                    if (c.username == uname)
+                    if (c.user_id == user_id)
                     {
-                        client.disconnect("Username already in use.");
+                        client.disconnect("User id already in use.");
                         return;
                     }
 
                 // Login
-                client.login(uname, pword);
+                client.login(uname, user_id);
                 break;
 
             case global::client.MESSAGE.DISCONNECT:

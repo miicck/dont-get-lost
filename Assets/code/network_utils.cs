@@ -47,6 +47,21 @@ public static class network_utils
         return i;
     }
 
+    /// <summary> Encode a ulong ready to be sent over the network. </summary>
+    public static byte[] encode_ulong(ulong i)
+    {
+        return System.BitConverter.GetBytes(i);
+    }
+
+    /// <summary> Decode a ulong that was encoded using <see cref="encode_ulong(ulong)"/>.
+    /// Offset will be incremented by the number of bytes decoded. </summary>
+    public static ulong decode_ulong(byte[] buffer, ref int offset)
+    {
+        ulong i = System.BitConverter.ToUInt64(buffer, offset);
+        offset += sizeof(ulong);
+        return i;
+    }
+
     /// <summary> Encodes a bool ready to be sent over the network. </summary>
     public static byte[] encode_bool(bool b)
     {

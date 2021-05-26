@@ -1431,6 +1431,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     networked_variables.net_int networked_interaction;
     networked_variables.net_int tutorial_stage;
 
+    public ulong user_id { get; private set; }
+
     public void start_networked_interaction(controls.BIND bind) { networked_interaction.value = (int)bind; }
     public void end_networked_interaction(controls.BIND bind) { networked_interaction.value = -1; }
     public bool networked_interaction_underway(controls.BIND bind) { return networked_interaction.value == (int)bind; }
@@ -1841,18 +1843,19 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     // The current (local) player
     public static player current
     {
-        get => _player;
+        get => _current;
         private set
         {
-            if (_player != null)
+            if (_current != null)
                 throw new System.Exception("Tried to overwrite player.current!");
-            _player = value;
-            _player.username.value = game.startup.username;
+            _current = value;
+            _current.username.value = game.startup.username;
+            _current.user_id = game.startup.user_id;
             waiting();
             waiting = () => { };
         }
     }
-    static player _player;
+    static player _current;
 
     public static string info()
     {
@@ -1865,7 +1868,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         else
             net_int_string = "No networked interaction";
 
-        return "    Local player " + current.username.value + "\n" +
+        return "    Local player  : " + current.username.value + "\n" +
+               "    User id       : " + current.user_id + "\n" +
                "    Slot equipped : " + current.slot_equipped.value + "\n" +
                "    " + net_int_string + "\n" +
                "    " + current.contracts.Count + " active contracts \n" +

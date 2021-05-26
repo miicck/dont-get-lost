@@ -5,7 +5,6 @@ using UnityEngine;
 public class game : MonoBehaviour
 {
     public const float MIN_RENDER_RANGE = 4f;
-    public const string PLAYER_PREFAB = "misc/player";
     public const float SLOW_UPDATE_TIME = 0.1f;
     public const float CHARACTER_SPAWN_INTERVAL = 0.5f;
     public const int LOADING_TARGET_FRAMERATE = 10;
@@ -34,7 +33,7 @@ public class game : MonoBehaviour
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                if (!server.start(server.DEFAULT_PORT, startup.world_name, PLAYER_PREFAB, out string error_message))
+                if (!server.start(server.DEFAULT_PORT, startup.world_name, "misc/player", out string error_message))
                 {
                     am_hard_disconnecting = true;
                     on_client_disconnect(error_message);
@@ -42,7 +41,7 @@ public class game : MonoBehaviour
                 }
 
                 client.connect(network_utils.local_ip_address().ToString(),
-                    server.DEFAULT_PORT, startup.username, "password", on_client_disconnect);
+                    server.DEFAULT_PORT, startup.username, startup.user_id, on_client_disconnect);
 
                 // Create the world (if required)
                 if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
@@ -63,7 +62,7 @@ public class game : MonoBehaviour
 
                 // Join the server
                 if (!client.connect(startup.hostname, startup.port,
-                    startup.username, "password", on_client_disconnect))
+                    startup.username, startup.user_id, on_client_disconnect))
                 {
                     on_client_disconnect("Couldn't connect to server!");
                     return;
@@ -276,19 +275,24 @@ public class game : MonoBehaviour
         }
 
         public MODE mode;
+
         public string username;
+        public ulong user_id;
+
         public string world_name;
         public int world_seed;
+
         public string hostname;
         public int port;
     }
     public static startup_info startup;
 
     /// <summary> Load/host a game from disk. </summary>
-    public static void load_and_host_world(string world_name, string username)
+    public static void load_and_host_world(string world_name, string username, ulong user_id)
     {
         startup = new startup_info
         {
+            user_id = user_id,
             username = username,
             mode = startup_info.MODE.LOAD_AND_HOST,
             world_name = world_name,
@@ -298,10 +302,11 @@ public class game : MonoBehaviour
     }
 
     /// <summary> Create/host a new world. </summary>
-    public static void create_and_host_world(string world_name, int seed, string username)
+    public static void create_and_host_world(string world_name, int seed, string username, ulong user_id)
     {
         startup = new startup_info
         {
+            user_id = user_id,
             username = username,
             mode = startup_info.MODE.CREATE_AND_HOST,
             world_name = world_name,

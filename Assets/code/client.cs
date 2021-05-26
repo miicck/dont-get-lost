@@ -322,7 +322,7 @@ public static class client
     }
 
     /// <summary> Connect the client to a server. </summary>
-    public static bool connect(string host, int port, string username, string password, disconnect_func on_disconnect)
+    public static bool connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
     {
         // Initialize client state
         last_local_id = 0;
@@ -351,8 +351,24 @@ public static class client
         // Initialize the networked object static state
         networked.client_initialize();
 
+        // The user doesn't have a steam account
+        // Just use the first 64 bytes of the username hash
+        if (user_id == 0)
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                var hash = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(username));
+                byte[] id_bytes = new byte[sizeof(ulong)];
+                for (int i = 0; i < id_bytes.Length; ++i)
+                    id_bytes[i] = i < hash.Length ? hash[i] : (byte)0; // Pad with 0 if needed
+                user_id = System.BitConverter.ToUInt64(id_bytes, 0);
+            }
+
+        // Ensure startup info is synced with what was actually used to connect
+        game.startup.user_id = user_id;
+        game.startup.username = username;
+
         // Send login message
-        queue_message(MESSAGE.LOGIN, username, password);
+        queue_message(MESSAGE.LOGIN, username, user_id);
         return true;
     }
 
@@ -579,20 +595,17 @@ public static class client
 
         switch (type)
         {
-
             case MESSAGE.LOGIN:
                 if (args.Length != 2)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 string uname = (string)args[0];
-                string pword = (string)args[1];
-
-                var hasher = System.Security.Cryptography.SHA256.Create();
-                var hashed = hasher.ComputeHash(System.Text.Encoding.ASCII.GetBytes(pword));
+                ulong id = (ulong)args[1];
 
                 // Send the username + hashed password to the server
                 send(MESSAGE.LOGIN, network_utils.concat_buffers(
-                    network_utils.encode_string(uname), hashed));
+                    network_utils.encode_string(uname),
+                    network_utils.encode_ulong(id)));
                 break;
 
             case MESSAGE.HEARTBEAT:

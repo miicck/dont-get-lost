@@ -84,8 +84,19 @@ public class world_menu : MonoBehaviour
 
         int world_count = world_files.Length;
 
-        // Restore saved username
-        username_input.text = PlayerPrefs.GetString("username");
+        // Restore saved (or steam) username
+        ulong user_id;
+        if (steam.connected)
+        {
+            username_input.interactable = false;
+            username_input.text = steam.username();
+            user_id = steam.steam_id;
+        }
+        else
+        {
+            username_input.text = PlayerPrefs.GetString("username");
+            user_id = 0;
+        }
 
         foreach (var wf in world_files)
         {
@@ -105,7 +116,7 @@ public class world_menu : MonoBehaviour
                 else
                 {
                     PlayerPrefs.SetString("username", username);
-                    game.load_and_host_world(name, username);
+                    game.load_and_host_world(name, username, user_id);
                 }
             });
 
@@ -160,7 +171,7 @@ public class world_menu : MonoBehaviour
                     seed = get_hash(ws);
             }
 
-            game.create_and_host_world(name, seed, username);
+            game.create_and_host_world(name, seed, username, user_id);
         });
 
         var join_header = template_header.inst();

@@ -14,10 +14,7 @@ public static class steam
             Steamworks.SteamClient.Init(1442360);
             Debug.Log("Stated steam client for " + Steamworks.SteamClient.Name);
         }
-        catch
-        {
-            Debug.Log("Failed to initialize steamworks client!");
-        }
+        catch { Debug.Log("Failed to initialize steamworks client!"); }
     }
 
     public static void update()
@@ -27,13 +24,30 @@ public static class steam
 
     public static void stop()
     {
-        try
-        {
-            Steamworks.SteamClient.Shutdown();
-        }
-        catch
-        {
+        try { Steamworks.SteamClient.Shutdown(); }
+        catch { }
+    }
 
+    public static string username()
+    {
+        try { return Steamworks.SteamClient.Name; }
+        catch { return PlayerPrefs.GetString("username"); }
+    }
+
+    public static bool connected
+    {
+        get
+        {
+            try { return Steamworks.SteamClient.IsLoggedOn; }
+            catch { return false; }
+        }
+    }
+    public static ulong steam_id
+    {
+        get
+        {
+            try { return Steamworks.SteamClient.SteamId.Value; }
+            catch { return 0; }
         }
     }
 }
@@ -44,5 +58,8 @@ public static class steam
     public static void start() { }
     public static void update() { }
     public static void stop() { }
+    public static string username() => PlayerPrefs.GetString("username");
+    public static bool connected => false;
+    public static ulong steam_id => 0;
 }
 #endif
