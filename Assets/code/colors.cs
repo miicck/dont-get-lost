@@ -68,6 +68,8 @@ public static class character_colors
 
 public static class ui_colors
 {
+    public static Color greyed_out => new Color(0.5f, 0.5f, 0.5f, 1f);
+
     public static UnityEngine.UI.ColorBlock red_green_button_colors(bool green)
     {
         if (green)

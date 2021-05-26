@@ -111,27 +111,16 @@ public class inventory_slot_networked : networked
 
     public void pickup(bool right_click)
     {
+        // Work out how much to pick up
         int to_pickup = right_click ? Mathf.Max(count / 2, 1) : count;
-        int remaining = count - to_pickup;
-        item item_to_pickup = item;
-        int index = net_index.value;
-        inventory inv = inventory;
+        if (to_pickup > count) to_pickup = count;
 
-        // Delete this inventory slot + replace it with the
-        // updated count.
-        delete(() =>
-        {
-            if (remaining > 0)
-            {
-                // Create the replacement slot
-                var slot = (inventory_slot_networked)client.create(
-                    inv.transform.position, "misc/networked_inventory_slot", inv);
-                slot.set_item_count_index(item_to_pickup, remaining, index);
-            }
-        });
+        // Set how much is left (delete if zero)
+        contents.second = count - to_pickup;
+        if (contents.second <= 0) delete();
 
         // Update the ui to reflect that the object has been picked up
-        mouse_item.create(item_to_pickup, to_pickup, inv);
+        mouse_item.create(item, to_pickup, inventory);
     }
 
 #if UNITY_EDITOR

@@ -195,7 +195,20 @@ public class inventory : networked, IItemCollection
     }
     inventory_slot[] _slots;
 
-    inventory_slot_networked[] networked_slots => GetComponentsInChildren<inventory_slot_networked>();
+    /// <summary> My child networked inventory slots. </summary>
+    HashSet<inventory_slot_networked> networked_slots = new HashSet<inventory_slot_networked>();
+
+    public override void on_add_networked_child(networked child)
+    {
+        if (child is inventory_slot_networked)
+            networked_slots.Add(child as inventory_slot_networked);
+    }
+
+    public override void on_delete_networked_child(networked child)
+    {
+        if (child is inventory_slot_networked)
+            networked_slots.Remove(child as inventory_slot_networked);
+    }
 
     public inventory_slot_networked nth_slot(int n)
     {
@@ -511,6 +524,7 @@ public class inventory : networked, IItemCollection
 
     public delegate void on_change_func();
     public delegate bool remove_func();
+
     List<change_listener_info> listeners = new List<change_listener_info>();
     public void add_on_change_listener(on_change_func f, remove_func remove_listener_delegate = null)
     {
@@ -528,7 +542,7 @@ public class inventory : networked, IItemCollection
         foreach (var f in listeners)
         {
             if (f.remove_func != null && f.remove_func()) continue;
-            f.callback();
+            f.callback?.Invoke();
             surviving.Add(f);
         }
         listeners = surviving;
