@@ -81,7 +81,6 @@ public class melee_fight : settler_interactable
     {
         // Get the centre/axis that the fight takes place along
         Vector3 disp = fighting.transform.position - c.transform.position;
-        Vector3 fight_centre = (c.transform.position + fighting.transform.position) / 2f;
         Vector3 fight_axis = disp.normalized;
 
         Vector3 forward = fight_axis;
@@ -90,9 +89,6 @@ public class melee_fight : settler_interactable
 
         float cos = Mathf.Pow(Mathf.Cos(Mathf.PI * Time.time / c.attack_time), 10);
         float sin = Mathf.Pow(Mathf.Sin(Mathf.PI * Time.time / c.attack_time), 10);
-
-        //c.transform.position = fight_centre + fight_axis * c.pathfinding_resolution * (0.2f * Mathf.Max(cos, sin) - 1f);
-        c.transform.position = fight_centre - fight_axis * c.pathfinding_resolution;
 
         var arms = c.GetComponentsInChildren<arm>();
         for (int i = 0; i < arms.Length; ++i)
