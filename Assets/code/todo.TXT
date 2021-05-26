@@ -18,26 +18,21 @@ TODO
 - Make it more obvious which side of a ladder is the front
 - Make time command work from non-auth clients
 - PvP hit markers
-- Player health desyncs on different clients on death (sometimes?) - was this down to the default-value
-  bug recently fixed?
 - Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
   allow the simplification of the code in a lot of places) - does the new callbacks structure of 
   IExtendsNetworked cover these use cases?
 - Brewing!
 - Just make foundary stuff/see if a use for the metal becomes apparent
-  Make settlers use tools (which wear out) for certain tasks - should constitue a use for metals etc.
 - town_path_element.path spread load across multiple frames.
-- Make autocrafters work with buffer chests
 - Settlers heads move over to their shoulder with time
-- Fishing dock not doing anything on non-auth clients? (also doesn't check for water)
-- Guard spots not doing anything on non-auth clients?
-- Remove gender entirely (I think there is still an associated variable)
+- Fishing dock doesn't check for water
 - Add cowering spots to various things (beds)
 - Priority splitter (just a hole in a gutter?)
   Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Make proficiency more important to quantities of materials obtained
 - Recreational tasks
-- Make trade carts work
+- Make trade carts actually move
 - Stop menus persisting when the object they refer to has been deleted
 - Settlers sometimes get stuck on unconnected path_element's (e.g the unconnected side of a planter)
 - Remove contract system?
+- Server checking of client version
