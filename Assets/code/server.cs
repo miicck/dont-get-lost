@@ -1498,7 +1498,7 @@ public static class server
         {
             case global::client.MESSAGE.LOGIN:
 
-                int init_offset = offset;
+                // Get username and id from message bytes
                 string uname = network_utils.decode_string(bytes, ref offset);
                 ulong user_id = network_utils.decode_ulong(bytes, ref offset);
 
