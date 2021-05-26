@@ -69,7 +69,7 @@ public class colony_tasks : MonoBehaviour
             {
                 // Ping the settler if you click their name
                 if (s == null) return;
-                client.create(s.transform.position, "misc/map_ping");
+                client.create(s.transform.position + s.transform.up * s.height, "misc/map_ping", parent: s);
             });
             name_button.GetComponentInChildren<UnityEngine.UI.Text>().text = s.name.capitalize();
 

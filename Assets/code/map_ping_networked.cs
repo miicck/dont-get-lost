@@ -62,12 +62,17 @@ public class map_ping_networked : networked
         ui.gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        // Make sure the ui knows where I am
+        ui.pinged_position = transform.position;
+    }
+
     public override float network_radius()
     {
         // Map pings are visible infinitely far away
         return Mathf.Infinity;
     }
-
 
     public override bool persistant()
     {
