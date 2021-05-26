@@ -1642,39 +1642,15 @@ public static class server
 
 #if STANDALONE_SERVER
     static Queue<string> log_queue = new Queue<string>();
-    public static string pop_log_queue()
-    {
-        if (log_queue.Count == 0) return null;
-        return log_queue.Dequeue();
-    }
-#endif
-
-    public static void log<T>(T message)
-    {
-#if STANDALONE_SERVER
-        log_queue.Enqueue(message.ToString());
+    public static string pop_log_queue() => log_queue.Count == 0 ? null : log_queue.Dequeue();
+    public static void log<T>(T message) => log_queue.Enqueue(message.ToString());
+    public static void log_error<T>(T message) => log_queue.Enqueue("ERROR: " + message.ToString());
+    public static void log_warning<T>(T message) => log_queue.Enqueue("Warning: " + message.ToString());
 #else
-        Debug.Log(message);
+    public static void log<T>(T message) => Debug.Log(message);
+    public static void log_error<T>(T message) => Debug.LogError(message);
+    public static void log_warning<T>(T message) => Debug.LogWarning(message);
 #endif
-    }
-
-    public static void log_error<T>(T message)
-    {
-#if STANDALONE_SERVER
-        log_queue.Enqueue("ERROR: " + message.ToString());
-#else
-        Debug.LogError(message);
-#endif
-    }
-
-    public static void log_warning<T>(T message)
-    {
-#if STANDALONE_SERVER
-        log_queue.Enqueue("WARNING: " + message.ToString());
-#else
-        Debug.LogWarning(message);
-#endif
-    }
 
 #if STANDALONE_SERVER
 
