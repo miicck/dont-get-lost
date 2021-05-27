@@ -1502,6 +1502,14 @@ public static class server
                 // Get username and id from message bytes
                 string uname = network_utils.decode_string(bytes, ref offset);
                 ulong user_id = network_utils.decode_ulong(bytes, ref offset);
+                string client_ver = network_utils.decode_string(bytes, ref offset);
+
+                // Check for version mismatch
+                if (client_ver != version)
+                {
+                    client.disconnect("Server version (" + version + ") and client version (" + client_ver + ") differ!");
+                    return;
+                }
 
                 // Check if this id is in use
                 foreach (var c in connected_clients)

@@ -368,7 +368,7 @@ public static class client
         game.startup.username = username;
 
         // Send login message
-        queue_message(MESSAGE.LOGIN, username, user_id);
+        queue_message(MESSAGE.LOGIN, username, user_id, version_control.version);
         return true;
     }
 
@@ -596,16 +596,18 @@ public static class client
         switch (type)
         {
             case MESSAGE.LOGIN:
-                if (args.Length != 2)
+                if (args.Length != 3)
                     throw new System.ArgumentException("Wrong number of arguments!");
 
                 string uname = (string)args[0];
                 ulong id = (ulong)args[1];
+                string client_ver = (string)args[2];
 
                 // Send the username + hashed password to the server
                 send(MESSAGE.LOGIN, network_utils.concat_buffers(
                     network_utils.encode_string(uname),
-                    network_utils.encode_ulong(id)));
+                    network_utils.encode_ulong(id),
+                    network_utils.encode_string(client_ver)));
                 break;
 
             case MESSAGE.HEARTBEAT:
