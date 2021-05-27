@@ -4,9 +4,9 @@ using UnityEngine;
 
 public static class version_control
 {
-    public static string commit_hash;
-    public static string commit_date;
-    public static string version;
+    public static string commit_hash { get; private set; }
+    public static string commit_date { get; private set; }
+    public static string version { get; private set; }
 
     static string find_git()
     {

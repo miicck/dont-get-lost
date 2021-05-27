@@ -1240,6 +1240,7 @@ public static class server
     {
         if (!started) return "Server not started.";
         return "Server listening on " + tcp.LocalEndpoint + "\n" +
+               "    Server version     : " + version + "\n" +
                "    Connected clients  : " + connected_clients.Count + "\n" +
                "    Representations    : " + representations.Count + "\n" +
                "    Recently deleted   : " + recently_deleted.Count + "\n" +
@@ -1635,6 +1636,16 @@ public static class server
                 throw new System.Exception("Unkown message type!");
         };
     }
+
+    //##############//
+    // VERSION INFO //
+    //##############//
+
+#if STANDALONE_SERVER
+    public static string version => throw new System.NotImplementedException();
+#else
+    public static string version => version_control.version;
+#endif
 
     //#########//
     // LOGGING //
