@@ -21,9 +21,10 @@ public static class standalone_server
         // Attempt to start the server
         if (!server.start(server.DEFAULT_PORT, args[0], "misc/player", out string err))
         {
-            log("The server failed to start: "+err);
+            log("Error: The server failed to start: "+err);
             return;
         }
+        else log("Started server (version "+version+")");
 
         // Run server updates, processing commands from
         // the cmd file + logging to the log file
@@ -74,5 +75,8 @@ public static class standalone_server
         using (var sw = File.AppendText("log"))
             sw.WriteLine(DateTime.Now+": "+message);
     }
+
+    // The server version name
+    public static string version => gen_server_data.version.Trim();
 }
 #endif
