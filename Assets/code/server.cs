@@ -128,10 +128,8 @@ public static class server
         /// otherwise no DISCONNECT message is sent to the server. </summary>
         public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
         {
-            if (message != null && message.Length > 0)
-                log("Client " + username + " disconnected: " + message);
-            else
-                log("Client " + username + " disconnected.");
+            if (message != null && message.Length > 0) log(username + " disconnected: " + message);
+            else log(username + " disconnected.");
 
             // Unload representations (only top-level, lower level will
             // be automatically unloaded using the unload function)
@@ -1521,6 +1519,7 @@ public static class server
 
                 // Login
                 client.login(uname, user_id);
+                log(uname + " connected.");
                 break;
 
             case global::client.MESSAGE.DISCONNECT:
