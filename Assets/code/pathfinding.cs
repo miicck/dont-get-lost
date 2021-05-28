@@ -96,6 +96,31 @@ public abstract class path
         this.agent = agent;
         state = STATE.SEARCHING;
     }
+
+    public GameObject create_visualization(Color color = default)
+    {
+        if (length < 2) return null;
+        if (color == default) color = Color.green;
+
+        var ret = new GameObject("path");
+        ret.transform.position = this[0];
+
+        for (int i = 1; i < length; ++i)
+        {
+            var a = this[i - 1];
+            var b = this[i];
+            var link = Resources.Load<GameObject>("misc/path_link").inst();
+            link.transform.SetParent(ret.transform);
+            link.transform.position = (a + b) / 2 + Vector3.up * 0.5f;
+            link.transform.forward = b - a;
+            link.transform.localScale = new Vector3(0.1f, 0.1f, (b - a).magnitude);
+        }
+
+        foreach (var r in ret.GetComponentsInChildren<Renderer>())
+            r.material.color = color;
+
+        return ret;
+    }
 }
 
 
@@ -629,12 +654,13 @@ public class random_path : astar_path
     public delegate bool success_func(Vector3 v);
     success_func endpoint_successful;
     success_func midpoint_successful;
+    Vector3 starting_direction;
 
     public random_path(Vector3 start,
         success_func midpoint_successful, success_func endpoint_successful,
-        IPathingAgent agent) : base(start, start, agent)
+        IPathingAgent agent, Vector3 starting_direction = default) : base(start, start, agent)
     {
-        // Give the start/goal a litte random boost, so we don't get stuck in  loops
+        // Give the start/goal a litte random boost, so we don't get stuck in loops
         Vector3 rnd = Random.insideUnitSphere * agent.resolution;
         start += rnd;
         goal += rnd;
@@ -645,6 +671,8 @@ public class random_path : astar_path
         closed_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
         this.endpoint_successful = endpoint_successful;
         this.midpoint_successful = midpoint_successful;
+
+        this.starting_direction = starting_direction;
     }
 
     public override void pathfind(int iterations)
@@ -679,8 +707,12 @@ public class random_path : astar_path
             waypoint current = null;
             if (open_set.Count <= utils.neighbouring_dxs_3d.Length)
             {
-                // Randomize the starting direction
-                current = open_set.ElementAt(Random.Range(0, open_set.Count)).Value;
+                if (starting_direction == default) // Randomize the starting direction
+                    current = open_set.ElementAt(Random.Range(0, open_set.Count)).Value;
+                else // Use specified starting direction
+                    current = utils.find_to_min(open_set,
+                        (ww) => -Vector3.Dot((ww.Value.entrypoint - start).normalized,
+                        starting_direction)).Value;
             }
             else
                 current = open_set.First().Value;
@@ -1052,9 +1084,10 @@ public static class pathfinding_utils
 
     // Overload of the above without the reason
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-    float width, float height, float ground_clearance)
+    float width, float height, float ground_clearance, float max_angle = 45f)
     {
-        return validate_walking_move(a, b, width, height, ground_clearance, out string reason);
+        return validate_walking_move(a, b, width, height, ground_clearance,
+            out string reason, max_angle: max_angle);
     }
 
     /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>

@@ -79,7 +79,7 @@ public abstract class settler_interactable : has_path_elements,
         if (this == null) return false; // This has been deleted
         if (s == null) return false; // Settler has been deleted
 
-        if (!skill.possible_when_under_attack && town_gate.group_under_attack(s.group))
+        if (!skill.possible_when_under_attack && group_info.under_attack(s.group))
             return false; // Not possible when under attack
 
         if (s.starving && skill.name != "eating" && group_has_food_available(s.group))

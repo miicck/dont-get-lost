@@ -23,14 +23,15 @@ public class time_manager : networked
     public override void on_init_network_variables()
     {
         networked_time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);
-
-        networked_time_of_day.on_change = () =>
-        {
-            // Always belive updates from the network
-            local_time_of_day = networked_time_of_day.value;
-        };
+        networked_time_of_day.on_change = () => local_time_of_day = networked_time_of_day.value;
 
         day_number = new networked_variables.net_int();
+        day_number.on_change = () =>
+        {
+            if (day_number.initialized) // Don't trigger attack on initialization
+                attacker_entrypoint.trigger_scaled_attack();
+        };
+
         manager = this;
     }
 
@@ -56,7 +57,7 @@ public class time_manager : networked
 
         if (has_authority)
         {
-            // Clien has authority over networked time of day
+            // Client has authority over networked time of day
             networked_time_of_day.value = local_time_of_day;
         }
     }

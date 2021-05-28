@@ -98,6 +98,7 @@ public class game : MonoBehaviour
         character.initialize();
         settler.initialize();
         town_gate.initialize();
+        attacker_entrypoint.initialize();
         options_menu.initialize(); // This relies on the most stuff, so should be initialized last
 
         // Set the slow_update method going
@@ -243,6 +244,11 @@ public class game : MonoBehaviour
             world_menu.message_to_display = "Disconnected: " + message_from_server;
 
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/world_menu");
+    }
+
+    private void OnDrawGizmos()
+    {
+        town_path_element.draw_group_gizmos();
     }
 
     //##############//

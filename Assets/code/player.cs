@@ -153,19 +153,22 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             all_interactions.AddRange(equipped?.item_uses());
 
         // Get in-world interactable (only on authority client)
-        if (has_authority)
-        {
-            var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-            foreach (var inter in utils.raycast_for_closests<IPlayerInteractable>(
-                cam_ray, out RaycastHit hit, max_distance: dis,
-                accept: (h, i) => !h.transform.IsChildOf(transform))) // Don't interact with myself
-                all_interactions.AddRange(inter.player_interactions(hit));
-        }
+        if (has_authority) all_interactions.AddRange(raycast_for_interactions());
 
         // Add self interactions to list
         all_interactions.AddRange(self_interactions);
 
         interactions.add_and_start_compatible(all_interactions, this, update_context_info: has_authority);
+    }
+
+    player_interaction[] raycast_for_interactions()
+    {
+        var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
+        if (!Physics.Raycast(cam_ray, out RaycastHit hit, dis)) return new player_interaction[0];
+        if (hit.transform.IsChildOf(transform)) return new player_interaction[0]; // Don't interact with myself
+        var inter = hit.transform.GetComponentInParent<IPlayerInteractable>();
+        if (inter == null) return new player_interaction[0];
+        return inter.player_interactions(hit);
     }
 
     //###################//

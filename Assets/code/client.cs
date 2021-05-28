@@ -169,7 +169,12 @@ public static class client
         created.on_first_create();
         created.on_create();
 
-        if (parent != null) parent.on_add_networked_child(created);
+        if (parent != null)
+        {
+            parent.on_add_networked_child(created);
+            foreach (var e in parent.GetComponents<IExtendsNetworked>())
+                e.get_callbacks().on_add_networked_child?.Invoke(created);
+        }
         return created;
     }
 
@@ -212,7 +217,12 @@ public static class client
 
         nw.on_create();
 
-        if (parent != null) parent.on_add_networked_child(nw);
+        if (parent != null)
+        {
+            parent.on_add_networked_child(nw);
+            foreach (var e in parent.GetComponents<IExtendsNetworked>())
+                e.get_callbacks().on_add_networked_child?.Invoke(nw);
+        }
     }
 
     /// <summary> Send all of the messages currently queued. </summary>

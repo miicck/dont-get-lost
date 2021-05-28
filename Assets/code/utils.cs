@@ -838,6 +838,31 @@ public static class utils
         return new Bounds(centre, size);
     }
 
+    public static float volume(this Bounds b) => b.size.x * b.size.y * b.size.z;
+
+    public static bool Intersects(this Bounds a, Bounds b, out Bounds intersection)
+    {
+        if (!a.Intersects(b))
+        {
+            intersection = default;
+            return false;
+        }
+
+        Vector3 max = Vector3.Min(a.max, b.max);
+        Vector3 min = Vector3.Max(a.min, b.min);
+        intersection = new Bounds((min + max) / 2, max - min);
+        return true;
+    }
+
+    public delegate T creator_func<T>();
+    public static V access_or_set<K, V>(this Dictionary<K, V> dict, K key, creator_func<V> create_value)
+    {
+        if (dict.TryGetValue(key, out V val)) return val;
+        val = create_value();
+        dict[key] = val;
+        return val;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

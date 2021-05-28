@@ -39,6 +39,8 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
 
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
         public override bool allow_held => true;
+        public override bool allows_mouse_look() => false;
+        public override bool allows_movement() => false;
 
         public override string context_tip()
         {

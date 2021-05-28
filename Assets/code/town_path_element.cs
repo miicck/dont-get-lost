@@ -185,6 +185,10 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     room_update_func on_room_change = () => { };
     public void add_room_change_listener(room_update_func f) { on_room_change += f; }
 
+    public bool is_extremety { get; private set; } = false;
+    public Vector3 out_of_town_direction { get; private set; }
+    town_bounds bounded_group;
+
     public string added_inspection_text() => "Group " + group + " room " + room;
 
     //##############//
@@ -213,8 +217,63 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     // ROOMS AND GROUPS //
     //##################//
 
+    const float IN_TOWN_RANGE = 1;
+    const float IN_TOWN_RESOLUTION = 7;
+
     static Dictionary<int, HashSet<town_path_element>> grouped_elements;
     static Dictionary<int, HashSet<town_path_element>> roomed_elements;
+    static Dictionary<int, List<town_bounds>> group_bounds;
+
+    public delegate void listener();
+    static listener on_groups_update_listener;
+    static listener on_rooms_update_listener;
+
+    public static void add_on_groups_update_listener(listener l) => on_groups_update_listener += l;
+    public static void add_on_rooms_update_listener(listener l) => on_rooms_update_listener += l;
+
+    class town_bounds : IEnumerable<town_path_element>
+    {
+        public Bounds bounds { get; private set; }
+
+        HashSet<town_path_element> elements;
+        public IEnumerator<town_path_element> GetEnumerator() => elements.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public town_bounds(Bounds bounds, IEnumerable<town_path_element> elements)
+        {
+            this.bounds = bounds;
+            this.elements = new HashSet<town_path_element>(elements);
+        }
+
+        // Attempt to combine two bounds
+        public bool combine_with(town_bounds other)
+        {
+            var a = bounds;
+            var b = other.bounds;
+
+            // They must intersect to be combined
+            if (!a.Intersects(b)) return false;
+
+            Vector3 min = Vector3.Min(a.min, b.min);
+            Vector3 max = Vector3.Max(a.max, b.max);
+            Vector3 size = max - min;
+
+            // The resulting size would be too large
+            if (Mathf.Max(size.x, size.y, size.z) > IN_TOWN_RESOLUTION)
+                return false;
+
+            // Combine with other, by increasing bounds to 
+            // cover both and adding all the elements in other
+            // to this
+            bounds = new Bounds((min + max) / 2, size);
+            foreach (var e in other.elements)
+                elements.Add(e);
+
+            return true;
+        }
+
+        public bool remove(town_path_element e) => elements.Remove(e);
+    }
 
     static bool rooms_update_required = false;
 
@@ -222,7 +281,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     {
         int group = 0;
         HashSet<town_path_element> ungrouped = new HashSet<town_path_element>(all_elements);
-
+        grouped_elements = new Dictionary<int, HashSet<town_path_element>>();
         while (ungrouped.Count > 0)
         {
             // Create an open set from the first ungrouped element
@@ -252,6 +311,78 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             }
             ++group;
         }
+
+        group_bounds = new Dictionary<int, List<town_bounds>>();
+        foreach (var kv in grouped_elements)
+        {
+            // Get a list containing the bounds of each element
+            var bounds = new List<town_bounds>(kv.Value.Count);
+            foreach (var e in kv.Value)
+            {
+                var b = e.linkable_region;
+                b.size += Vector3.one * 2 * IN_TOWN_RANGE;
+                bounds.Add(new town_bounds(b, new town_path_element[] { e }));
+            }
+
+            while (true)
+            {
+                bool combined = false;
+                for (int i = 0; i < bounds.Count; ++i)
+                {
+                    for (int j = 0; j < i; ++j)
+                    {
+                        // Attempt to combine two bounds
+                        if (bounds[i].combine_with(bounds[j]))
+                        {
+                            // Remove bounds at j (swap with last
+                            // element to make removal faster)
+                            bounds[j] = bounds[bounds.Count - 1];
+                            bounds.RemoveAt(bounds.Count - 1);
+
+                            combined = true;
+                            break;
+                        }
+                    }
+
+                    if (combined) break;
+                }
+
+                if (!combined) break;
+            }
+
+            group_bounds[kv.Key] = bounds;
+        }
+
+        // Flag extremeties
+        foreach (var kv in group_bounds)
+            foreach (var b in kv.Value)
+            {
+                float max_dis = float.NegativeInfinity;
+                town_path_element extreme = null;
+                foreach (var e in b)
+                {
+                    // Record my town bounds group
+                    e.bounded_group = b;
+
+                    // Work out the direction out of town and distance from my group.
+                    e.out_of_town_direction = e.transform.position - b.bounds.center;
+                    if (e.out_of_town_direction.magnitude > max_dis)
+                    {
+                        // Work out most extreme element of the group
+                        max_dis = e.out_of_town_direction.magnitude;
+                        extreme = e;
+                    }
+
+                    // Clear extremety flag
+                    e.is_extremety = false;
+                    e.out_of_town_direction.Normalize();
+                }
+
+                // Re-flag extremity element
+                extreme.is_extremety = true;
+            }
+
+        on_groups_update_listener?.Invoke();
     }
 
     static void evaluate_rooms()
@@ -293,6 +424,22 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             }
             ++room;
         }
+
+        on_rooms_update_listener?.Invoke();
+    }
+
+    public static void draw_group_gizmos()
+    {
+        if (group_bounds == null) return;
+
+        Gizmos.color = new Color(1, 0, 1);
+        foreach (var l in group_bounds)
+            foreach (var b in l.Value)
+            {
+                Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
+                foreach (var e in b)
+                    Gizmos.DrawLine(b.bounds.center, e.transform.position);
+            }
     }
 
     //##################//
@@ -349,6 +496,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             throw new System.Exception("Tried to forget unregistered element!");
 
         r.break_links();
+        r.bounded_group.remove(r);
         rooms_update_required = true;
     }
 
@@ -626,5 +774,24 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 Gizmos.DrawLine(this[i].transform.position, this[i - 1].transform.position);
             }
         }
+    }
+}
+
+/// <summary> A centralised source for information about pathing groups. </summary>
+public static class group_info
+{
+    public static bool under_attack(int group) =>
+        attacker_entrypoint.group_under_attack(group);
+
+    public delegate bool attack_iterator(character attacker);
+    public static void iterate_over_attackers(int group, attack_iterator f) =>
+        attacker_entrypoint.iterate_over_attackers(group, f);
+
+    public static bool has_starvation(int group)
+    {
+        foreach (var s in settler.get_settlers_by_group(group))
+            if (s.starving)
+                return true;
+        return false;
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> A component child of a <see cref="networked"/> object that 
-/// itself has networked member variables. </summary>
+/// can itself have networked member variables. </summary>
 public interface IExtendsNetworked
 {
     callbacks get_callbacks();
@@ -14,10 +14,13 @@ public interface IExtendsNetworked
     {
         public delegate void callback();
         public delegate void bool_callback(bool val);
+        public delegate void networked_callback(networked net);
 
         public callback init_networked_variables;
         public bool_callback on_auth_change;
         public bool_callback on_forget;
+        public networked_callback on_add_networked_child;
+        public networked_callback on_delete_networked_child;
     }
 }
 
@@ -86,7 +89,7 @@ public class networked : MonoBehaviour
     public bool is_client_side = false;
 
     /// <summary> Children that implement <see cref="IExtendsNetworked"/>. </summary>
-    IExtendsNetworked[] network_extenders = new IExtendsNetworked[0];
+    public IExtendsNetworked[] network_extenders { get; private set; } = new IExtendsNetworked[0];
 
     /// <summary> Called just before we create this object. </summary>
     public void init_network_variables()
@@ -418,7 +421,15 @@ public class networked : MonoBehaviour
         foreach (var ex in network_extenders) ex.get_callbacks().on_forget?.Invoke(deleting);
         on_forget(deleting);
         on_forget(this);
-        transform.parent?.GetComponent<networked>()?.on_delete_networked_child(this);
+
+        if (transform.parent != null)
+        {
+            // Invoke parent on_delete_child methods
+            transform.parent.GetComponent<networked>()?.on_delete_networked_child(this);
+            foreach (var e in transform.parent.GetComponents<IExtendsNetworked>())
+                e.get_callbacks().on_delete_networked_child?.Invoke(this);
+        }
+
         gameObject.SetActive(false); // De-activate again
         Destroy(gameObject);
     }

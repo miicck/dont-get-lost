@@ -7,10 +7,8 @@ public class guard_spot : walk_to_settler_interactable
     character target;
     float attack_timer = 0;
 
-    bool in_range(character c)
-    {
-        return (c.transform.position - transform.position).magnitude < 20f;
-    }
+    bool in_range(character c) => (c.transform.position - transform.position).magnitude < 20f;
+    bool valid_target(character c) => c != null && !c.is_dead && in_range(c);
 
     public override string task_summary()
     {
@@ -21,7 +19,7 @@ public class guard_spot : walk_to_settler_interactable
     protected override bool ready_to_assign(settler s)
     {
         // Only need to defend if under attack
-        return town_gate.group_under_attack(s.group);
+        return group_info.under_attack(s.group);
     }
 
     protected override void on_arrive(settler s)
@@ -33,19 +31,18 @@ public class guard_spot : walk_to_settler_interactable
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        if (target == null || !in_range(target) || target.is_dead)
+        if (!valid_target(target))
         {
             // Identify a new target
-            town_gate.iterate_over_attackers(s.group, (c) =>
+            group_info.iterate_over_attackers(s.group, (c) =>
             {
-                if (in_range(c))
+                if (valid_target(c))
                 {
                     target = c;
                     return true;
                 }
                 return false;
             });
-
         }
         else
         {
@@ -61,7 +58,7 @@ public class guard_spot : walk_to_settler_interactable
         }
 
         // Continue defending whilst attack is underway
-        if (town_gate.group_under_attack(s.group))
+        if (group_info.under_attack(s.group))
             return STAGE_RESULT.STAGE_UNDERWAY;
         return STAGE_RESULT.TASK_COMPLETE;
     }

@@ -369,16 +369,18 @@ public class console : MonoBehaviour
             {
                 player.call_when_current_player_available(() =>
                 {
-                    var gates = FindObjectsOfType<town_gate>();
-                    var gate = utils.find_to_min(gates, (g) =>
-                        (player.current.transform.position - g.transform.position).magnitude);
-                    if (gate == null)
+                    if (args.Length > 1)
                     {
-                        console_error("Could not find a town gate to attack!");
-                        return;
+                        List<string> attackers = new List<string>();
+                        for (int i = 1; i < args.Length; ++i)
+                        {
+                            if (Resources.Load<character>("characters/" + args[i]) == null)
+                                popup_message.create("Unkown character: " + args[i]);
+                            else attackers.Add(args[i]);
+                        }
+                        attacker_entrypoint.trigger_attack(attackers);
                     }
-                    if (args.Length > 1) gate.trigger_attack(args);
-                    else gate.trigger_scaled_attack();
+                    else attacker_entrypoint.trigger_scaled_attack();
                 });
                 return true;
             },
@@ -630,8 +632,8 @@ public class console : MonoBehaviour
         {
             command = (args) =>
             {
-                town_gate.attacks_enabled = !town_gate.attacks_enabled;
-                popup_message.create("Attacks " + (town_gate.attacks_enabled ? "enabled" : "disabled"));
+                attacker_entrypoint.attacks_enabled = !attacker_entrypoint.attacks_enabled;
+                popup_message.create("Attacks " + (attacker_entrypoint.attacks_enabled ? "enabled" : "disabled"));
                 return true;
             },
 

@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class lootbox : walk_to_settler_interactable
 {
-    town_gate gate;
     character looting;
     town_path_element looting_path_element;
     town_path_element.path path;
@@ -18,32 +17,31 @@ public class lootbox : walk_to_settler_interactable
     protected override bool ready_to_assign(settler s)
     {
         // Reset everything
-        gate = null;
         looting = null;
         looting_path_element = null;
         path = null;
         walking_back = false;
 
-        // Look for nearest gate that the settler can reach
-        gate = utils.find_to_min(town_gate.gate_group(s.group), (g) => g.distance_to(this));
-        if (gate == null) return false; // No gate found
-
         // Search for a character to loot
-        foreach (var c in gate.GetComponentsInChildren<character>())
+        group_info.iterate_over_attackers(s.group, (c) =>
         {
-            if (c == null) continue; // Can't loot deleted characters
-            if (!c.is_dead) continue; // Can't loot alive characters
-            if (c is settler) continue; // Can't loot settlers
+            if (c == null) return false; // Can't loot deleted characters
+            if (!c.is_dead) return false; // Can't loot alive characters
+
             var inv = c.GetComponentInChildren<inventory>();
-            if (inv == null) continue; // Can't loot character with no inventory
+            if (inv == null) return false; // Can't loot character with no inventory
             var cts = inv.contents();
-            if (cts.Count == 0) continue; // Nothing to loot
+            if (cts.Count == 0) return false; // Nothing to loot
+
             var tentative_target = town_path_element.nearest_element(c.transform.position, s.group);
-            if (tentative_target == null || tentative_target.distance_to(c) > 2f) continue; // Inaccessible
+            if (tentative_target == null || tentative_target.distance_to(c) > 2f) return false; // Inaccessible
+
             looting = c;
             looting_path_element = tentative_target;
-            break;
-        }
+
+            return true;
+        });
+
         if (looting == null || looting_path_element == null) return false; // No character to loot, or path element
 
         // Path from lootbox to character to loot

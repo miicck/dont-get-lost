@@ -39,7 +39,7 @@ public class food_dipsenser : walk_to_settler_interactable
         }
 
         // Don't eat if one of my friends is starving
-        if (!s.starving && town_gate.group_has_starvation(s.group))
+        if (!s.starving && group_info.has_starvation(s.group))
             return false;
 
         // Check if food is available 
