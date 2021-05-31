@@ -123,6 +123,65 @@ public abstract class path
     }
 }
 
+public class explicit_path : path
+{
+    List<Vector3> path;
+    int last_validate_step;
+
+    public override int length => path.Count;
+    public override Vector3 this[int i] => path[i];
+    public override void pathfind(int iterations) { state = STATE.COMPLETE; }
+
+    public explicit_path(List<Vector3> path, IPathingAgent agent) : base(path[0], path[path.Count - 1], agent)
+    {
+        this.path = path;
+        state = STATE.COMPLETE;
+    }
+
+    public override bool validate(int iterations)
+    {
+        switch (state)
+        {
+            case STATE.COMPLETE:
+
+                if (length < 2) return true; // Nothing to validate
+                last_validate_step = last_validate_step % (length - 1); // Stay in-range
+                for (int i = 0; i < iterations; ++i)
+                {
+                    Vector3 a = this[last_validate_step];
+                    Vector3 b = this[last_validate_step + 1];
+
+                    // Note, in validation mode, we don't update the positions a and b
+                    // to the return value of agent.validate_position as we only care if
+                    // the positions saved to the path are still valid.
+                    agent.validate_position(a, out bool valid);
+                    if (!valid) return false;
+                    agent.validate_position(b, out valid);
+                    if (!valid) return false;
+                    if (!agent.validate_move(a, b)) return false;
+
+                    last_validate_step = (last_validate_step + 1) % (length - 1);
+                }
+
+                return true;
+
+            case STATE.FAILED:
+            case STATE.SEARCHING:
+                return false;
+
+            default:
+                throw new System.Exception("Unkown path state!");
+        }
+    }
+
+    public override void draw_gizmos()
+    {
+        Gizmos.color = Color.yellow;
+        for (int i = 1; i < length; ++i)
+            Gizmos.DrawLine(this[i - 1], this[i]);
+    }
+}
+
 
 
 /// <summary> Carry out pathfinding using the A* algorithm. </summary>
@@ -654,11 +713,15 @@ public class random_path : astar_path
     public delegate bool success_func(Vector3 v);
     success_func endpoint_successful;
     success_func midpoint_successful;
+    success_func midpoint_failed;
     Vector3 starting_direction;
 
     public random_path(Vector3 start,
-        success_func midpoint_successful, success_func endpoint_successful,
-        IPathingAgent agent, Vector3 starting_direction = default) : base(start, start, agent)
+        IPathingAgent agent,
+        success_func endpoint_successful,
+        success_func midpoint_successful = null,
+        success_func midpoint_failed = null,
+        Vector3 starting_direction = default) : base(start, start, agent)
     {
         // Give the start/goal a litte random boost, so we don't get stuck in loops
         Vector3 rnd = Random.insideUnitSphere * agent.resolution;
@@ -670,7 +733,8 @@ public class random_path : astar_path
         open_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
         closed_set = new SortedDictionary<waypoint, waypoint>(new waypoint.decreasing_magnitude());
         this.endpoint_successful = endpoint_successful;
-        this.midpoint_successful = midpoint_successful;
+        this.midpoint_successful = midpoint_successful ?? ((v) => false);
+        this.midpoint_failed = midpoint_failed ?? ((v) => false);
 
         this.starting_direction = starting_direction;
     }
@@ -716,6 +780,12 @@ public class random_path : astar_path
             }
             else
                 current = open_set.First().Value;
+
+            if (midpoint_failed(current.entrypoint))
+            {
+                state = STATE.FAILED;
+                return;
+            }
 
             if (midpoint_successful(current.entrypoint))
             {

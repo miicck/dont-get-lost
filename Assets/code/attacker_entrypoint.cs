@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked
 {
+    const float MIN_TIME_BETWEEN_PATHS = 1f;
+    const float MAX_TIME_BETWEEN_PATHS = 5f;
+
     path path;
+    float next_path_time = float.NegativeInfinity;
+    float time_between_paths = MIN_TIME_BETWEEN_PATHS;
+
     public town_path_element element => GetComponentInParent<town_path_element>();
 
     //#################//
@@ -27,19 +33,50 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             return;
         }
 
+        // Draw the path if path links are to be drawn
+        draw_path = town_path_element.draw_links;
+
         if (path == null)
-            path = new random_path(transform.position,
-                midpoint_success, endpoint_success, new agent(),
+        {
+            // Wait until next path time
+            if (Time.time < next_path_time) return;
+
+            path = new random_path(transform.position, new agent(), endpoint_success,
+                midpoint_successful: midpoint_success,
                 starting_direction: element.out_of_town_direction);
+        }
+
+        if (path is explicit_path)
+        {
+            // We have an optimized path, check it remains valid
+            if (!path.validate(load_balancing.iter)) path = null;
+            return;
+        }
 
         switch (path.state)
         {
             case path.STATE.COMPLETE:
-                // Check path remains optimal/valid
+
+                // Optimize path
+                time_between_paths = MIN_TIME_BETWEEN_PATHS;
                 if (path.optimize(load_balancing.iter))
                     refresh_drawn_path();
-                else if (!path.validate(load_balancing.iter))
-                    path = null;
+
+                // Optimization complete, cut off path at first point in town
+                else for (int i = path.length - 1; i >= 0; --i)
+                    {
+                        var e = town_path_element.nearest_element(path[i], group: element.group);
+                        if (e.linkable_region.Contains(path[i]))
+                        {
+                            List<Vector3> new_path = new List<Vector3>();
+                            for (int j = i; j < path.length; ++j)
+                                new_path.Add(path[j]);
+                            path = new explicit_path(new_path, new agent());
+                            refresh_drawn_path();
+                            break;
+                        }
+                    }
+
                 break;
 
             case path.STATE.SEARCHING:
@@ -50,10 +87,10 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             case path.STATE.FAILED:
                 // Pathfinding failed, try again
                 path = null;
+                time_between_paths = Mathf.Min(time_between_paths + 0.5f, MAX_TIME_BETWEEN_PATHS);
+                next_path_time = Time.time + time_between_paths;
                 break;
         }
-
-        draw_path = town_path_element.draw_links;
     }
 
     private void OnDrawGizmos()
@@ -366,7 +403,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         };
     }
 
-    void update_attack_message()
+    public void update_attack_message()
     {
         if (attack_message != null)
             Destroy(attack_message);
@@ -401,6 +438,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     static pinned_message attack_message;
     static HashSet<attacker_entrypoint> entrypoints;
     static Dictionary<int, HashSet<character>> attackers;
+    static int last_entrypoint_index = 0;
 
     public static bool attacks_enabled;
 
@@ -489,9 +527,12 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             characters_to_spawn = to_spawn;
         }
 
-        // Distribute enemies randomly around the entrypoints
+        // Distribute enemies evenly around the entrypoints
         foreach (var c in characters_to_spawn)
-            entries[Random.Range(0, entries.Count)].trigger_attack(c);
+        {
+            last_entrypoint_index = (last_entrypoint_index + 1) % entries.Count;
+            entries[last_entrypoint_index].trigger_attack(c);
+        }
 
         foreach (var s in settler.get_settlers_by_group(group))
             s.on_attack_begin();

@@ -90,7 +90,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             l.break_links();
     }
 
-    Bounds linkable_region
+    public Bounds linkable_region
     {
         get
         {
@@ -432,13 +432,16 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     {
         if (group_bounds == null) return;
 
-        Gizmos.color = new Color(1, 0, 1);
         foreach (var l in group_bounds)
             foreach (var b in l.Value)
             {
+                Gizmos.color = new Color(1, 0, 1);
                 Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
                 foreach (var e in b)
+                {
+                    Gizmos.color = e.is_extremety ? Color.cyan : new Color(1, 0, 1);
                     Gizmos.DrawLine(b.bounds.center, e.transform.position);
+                }
             }
     }
 

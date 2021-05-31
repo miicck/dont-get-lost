@@ -19,7 +19,8 @@ public interface IAcceptsDamage
 public class character : networked,
     INotPathBlocking, IDontBlockItemLogisitcs,
     IAcceptsDamage, IPlayerInteractable, IPathingAgent,
-    IDoesntCoverBeds, town_path_element.path.ITownWalker
+    IDoesntCoverBeds, town_path_element.path.ITownWalker,
+    IBlocksInteractionPropagation
 {
     //############################################//
     // Parameters determining character behaviour //
@@ -499,6 +500,8 @@ public class character : networked,
         if (dead_version == null && create_dead_body())
             dead_version = dead_character.create(this);
 
+        GetComponentInParent<attacker_entrypoint>()?.update_attack_message();
+
         on_death();
     }
 
@@ -931,7 +934,7 @@ public class idle_wander : ICharacterController
         {
             Vector3 start = c.transform.position;
             random_path.success_func sf = (v) => (v - start).magnitude > character.IDLE_WALK_RANGE;
-            path = new random_path(start, sf, sf, c);
+            path = new random_path(start, c, sf, midpoint_successful: sf);
             path.on_invalid_start = () => c?.unstuck();
             index = 0;
             going_forward = true;

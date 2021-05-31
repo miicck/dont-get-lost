@@ -161,14 +161,36 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         interactions.add_and_start_compatible(all_interactions, this, update_context_info: has_authority);
     }
 
-    player_interaction[] raycast_for_interactions()
+    IEnumerable<player_interaction> raycast_for_interactions()
     {
         var cam_ray = camera_ray(INTERACTION_RANGE, out float dis);
-        if (!Physics.Raycast(cam_ray, out RaycastHit hit, dis)) return new player_interaction[0];
-        if (hit.transform.IsChildOf(transform)) return new player_interaction[0]; // Don't interact with myself
-        var inter = hit.transform.GetComponentInParent<IPlayerInteractable>();
-        if (inter == null) return new player_interaction[0];
-        return inter.player_interactions(hit);
+
+        if (!Physics.Raycast(cam_ray, out RaycastHit hit, dis))
+            return new player_interaction[0]; // No hit
+
+        if (hit.transform.IsChildOf(transform))
+            return new player_interaction[0]; // Don't interact with myself
+
+        List<player_interaction> ret = new List<player_interaction>();
+
+        // Recurse up the heirarchy, accumulating interactions
+        var t = hit.transform;
+        while (t != null)
+        {
+            // Add interactions for t
+            foreach (var inter in t.GetComponents<IPlayerInteractable>())
+                ret.AddRange(inter.player_interactions(hit));
+
+            // Check for components that block the
+            // propagation of interactions to their parents
+            if (t.GetComponent<IBlocksInteractionPropagation>() != null)
+                break;
+
+            // Move to my parent
+            t = t.parent;
+        }
+
+        return ret;
     }
 
     //###################//
@@ -1892,6 +1914,8 @@ public interface ICursorText
 {
     string cursor_text();
 }
+
+public interface IBlocksInteractionPropagation { }
 
 public class popup_message : MonoBehaviour
 {
