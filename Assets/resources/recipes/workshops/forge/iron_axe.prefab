@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: -7845326207384050824}
   - component: {fileID: -3501409818469146156}
   - component: {fileID: 1213581095459593720}
-  - component: {fileID: 7571075653961924988}
   - component: {fileID: -4553750974437377852}
   m_Layer: 0
   m_Name: iron_axe
@@ -78,20 +77,6 @@ MonoBehaviour:
   min_count: 1
   max_count: 1
   one_in_chance: 1
---- !u!114 &7571075653961924988
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 2857990679801850892, guid: 1e8b0b35a88f3c14fb5b46abdc08281e, type: 3}
-  count: 1
 --- !u!114 &-4553750974437377852
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -354,7 +354,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6712449087804474299}
   - component: {fileID: 8842586173793418492}
-  - component: {fileID: 739859340615817986}
   m_Layer: 0
   m_Name: furnace
   m_TagString: Untagged
@@ -403,18 +402,6 @@ MonoBehaviour:
   custom_crafting_sound_volume: 0.25
   enable_when_crafting:
   - {fileID: 8844632565118912347}
---- !u!114 &739859340615817986
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6712449087804474297}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71f15e9b6b464b7419a389e27de60b1a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6712449088207452527
 GameObject:
   m_ObjectHideFlags: 0

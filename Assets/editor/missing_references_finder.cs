@@ -283,7 +283,8 @@ public static class MissingReferencesFinder
                 if (!component)
                 {
                     missing_refs_found = true;
-                    Debug.LogError("Missing component in object " + GetFullPath(go));
+                    Debug.LogError("Missing component in object " + GetFullPath(go), go);
+                    last_found.Add(go);
                     continue;
                 }
 
