@@ -496,8 +496,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     //##############//
 
     static HashSet<settler> settlers;
-
     public static int settler_count => settlers.Count;
+    new public static void initialize() => settlers = new HashSet<settler>();
+    public static settler find_to_min(utils.float_func<settler> f) => utils.find_to_min(settlers, f);
+
+    const float TIME_BETWEEN_SPAWNS = 5f;
+    static float last_spawn_time = float.NegativeInfinity;
 
     public static List<settler> all_settlers()
     {
@@ -515,14 +519,23 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return ret;
     }
 
-    new public static void initialize()
+    public static void try_spawn(int group, Vector3 location)
     {
-        settlers = new HashSet<settler>();
-    }
+        if (Time.time < last_spawn_time + TIME_BETWEEN_SPAWNS)
+            return; // Wait until time to spawn again
 
-    public static settler find_to_min(utils.float_func<settler> f)
-    {
-        return utils.find_to_min(settlers, f);
+        if (group_info.under_attack(group))
+            return; // Don't spawn when under attack
+
+        var set = get_settlers_by_group(group);
+        if (set.Count >= group_info.bed_count(group)) return; // Not enough beds
+
+        foreach (var s in set)
+            if (s.nutrition.metabolic_satisfaction == 0)
+                return; // Starvation => don't spawn
+
+        last_spawn_time = Time.time;
+        client.create(location, "characters/settler");
     }
 
     new public static string info()

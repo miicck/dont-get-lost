@@ -797,4 +797,12 @@ public static class group_info
                 return true;
         return false;
     }
+
+    public static int bed_count(int group)
+    {
+        int ret = 0;
+        foreach (var e in town_path_element.element_group(group))
+            if (e.interactable is bed) ++ret;
+        return ret;
+    }
 }

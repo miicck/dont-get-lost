@@ -50,6 +50,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         {
             // We have an optimized path, check it remains valid
             if (!path.validate(load_balancing.iter)) path = null;
+            else settler.try_spawn(element.group, element.transform.position);
             return;
         }
 
@@ -121,7 +122,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             drawn_path.transform.SetParent(transform);
         }
     }
-    void refresh_drawn_path() { draw_path = false; draw_path = true; }
+    void refresh_drawn_path() { draw_path = !draw_path; draw_path = !draw_path; }
 
     class agent : IPathingAgent
     {

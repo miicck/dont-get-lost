@@ -5,7 +5,6 @@ using UnityEngine;
 public class town_gate : portal, IAddsToInspectionText
 {
     public town_path_element path_element;
-    public Transform outside_link;
 
     //#################//
     // UNITY CALLBACKS //
@@ -19,7 +18,6 @@ public class town_gate : portal, IAddsToInspectionText
 
         update_gate_group(this);
         path_element.add_group_change_listener(() => update_gate_group(this));
-        InvokeRepeating("attempt_spawn_settler", SPAWN_SETTLER_TIME, SPAWN_SETTLER_TIME);
     }
 
     private void OnDestroy()
@@ -41,39 +39,6 @@ public class town_gate : portal, IAddsToInspectionText
         return base.player_interactions(hit);
     }
 
-    //##################//
-    // SETTLER SPAWNING //
-    //##################//
-
-    const float SPAWN_SETTLER_TIME = 30f;
-    int bed_count;
-
-    void attempt_spawn_settler()
-    {
-        // Only spawn settlers on auth client
-        if (!has_authority)
-            return;
-
-        // Don't do anything until the chunk is loaded
-        if (!chunk.generation_complete(outside_link.position))
-            return;
-
-        var elements = town_path_element.element_group(path_element.group);
-        bed_count = 0;
-        foreach (var e in elements)
-            if (e.interactable is bed)
-                bed_count += 1;
-
-        var settlers = settler.get_settlers_by_group(path_element.group);
-
-        if (settlers.Count >= bed_count) return; // Not enough beds for another settler
-        foreach (var s in settlers)
-            if (s.nutrition.metabolic_satisfaction == 0)
-                return; // Settlers are starving
-
-        client.create(transform.position, "characters/settler");
-    }
-
     //########//
     // PORTAL //
     //########//
@@ -87,7 +52,7 @@ public class town_gate : portal, IAddsToInspectionText
 
     public string added_inspection_text()
     {
-        return "Beds     : " + bed_count + "\n" +
+        return "Beds     : " + group_info.bed_count(path_element.group) + "\n" +
                "Settlers : " + settler.get_settlers_by_group(path_element.group).Count;
     }
 

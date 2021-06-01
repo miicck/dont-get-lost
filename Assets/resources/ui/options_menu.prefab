@@ -11761,7 +11761,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   increase_graphics_priority: 0
   option_name: vsync
-  default_value: 1
+  default_value: 0
   optimization_mode: 2
   toggle: {fileID: 5609767248125062313}
   suboptions: {fileID: 0}

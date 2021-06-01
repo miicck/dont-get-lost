@@ -37,8 +37,9 @@ public static class load_balancing
     }
 
     /// <summary> The number of iterations of compute-heavy tasks to 
-    /// carry out. Is always at least 1 so heavy tasks always progress, 
-    /// and increases if the frame rate is high enough. </summary>
+    /// carry out. Is always at least <see cref="MIN_ITER"/> so heavy 
+    /// tasks always progress, and increases if the frame rate is 
+    /// high enough. </summary>
     public static int iter
     {
         get
