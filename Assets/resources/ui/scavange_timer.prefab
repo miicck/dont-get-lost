@@ -246,7 +246,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Scavanging...
+  m_Text: Scavenging...
 --- !u!1 &7708635118388485346
 GameObject:
   m_ObjectHideFlags: 0

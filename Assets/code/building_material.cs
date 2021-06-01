@@ -413,7 +413,7 @@ public class building_material : item, IPlayerInteractable
             return "build\n" +
                 "Buildings will snap together at key points, hold " +
                 controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + " to disable this\n" +
-                "Disabling snapping will also allign the building to the world axes";
+                "Disabling snapping will also align the building to the world axes";
         }
 
         public override bool start_interaction(player player)
