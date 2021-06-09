@@ -41,7 +41,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
+  item: {fileID: 2405045557127744063, guid: ad48093a3f54a8c449cc3682011dbc17, type: 3}
   min_count: 1
   max_count: 1
   one_in_chance: 1
@@ -89,8 +89,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   directory: foliage/grassy_tiers
-  min_scale: 1
-  max_scale: 1.6
+  min_scale: 0.7
+  max_scale: 1.4
   nothing_probability: 0.8
   random_y_rotation: 1
 --- !u!1 &2872015290553810965
@@ -137,8 +137,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   directory: foliage/grassy_tiers
-  min_scale: 1
-  max_scale: 1.6
+  min_scale: 0.7
+  max_scale: 1.4
   nothing_probability: 0.8
   random_y_rotation: 1
 --- !u!1 &4825326944209826035
@@ -152,7 +152,7 @@ GameObject:
   - component: {fileID: 5145188905844297121}
   - component: {fileID: 3317362287847228477}
   m_Layer: 0
-  m_Name: grassy_tier
+  m_Name: rocky_tier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -202,6 +202,51 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+--- !u!114 &2691590107348864046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6187465072856261984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3113350228393266360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6187465072856261984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 8229800829730807780, guid: 22a8d0444ee67e7419c1dbaff2291629, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
+--- !u!114 &8956665226420252924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6187465072856261984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 1
+  tool_quality: 0
 --- !u!1 &6658495606451802249
 GameObject:
   m_ObjectHideFlags: 0
@@ -246,8 +291,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   directory: foliage/grassy_tiers
-  min_scale: 1
-  max_scale: 1.6
+  min_scale: 0.7
+  max_scale: 1.4
   nothing_probability: 0.8
   random_y_rotation: 1
 --- !u!1 &7687099558370174107
@@ -365,11 +410,11 @@ PrefabInstance:
     - target: {fileID: 7071182760956848314, guid: ea16b1272d441554ba09f200da4a9ee3, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 506767efdfbbd4757924dbece9e136a1, type: 2}
+      objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
     - target: {fileID: 7202271454713460447, guid: ea16b1272d441554ba09f200da4a9ee3, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
+      objectReference: {fileID: 2100000, guid: f1b8cd3d258ec0c4b803c05e53130c5b, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ea16b1272d441554ba09f200da4a9ee3, type: 3}
 --- !u!4 &2626652038037693368 stripped
@@ -380,5 +425,10 @@ Transform:
 --- !u!1 &1243042943627725395 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5568371526223589888, guid: ea16b1272d441554ba09f200da4a9ee3, type: 3}
+  m_PrefabInstance: {fileID: 2592111177303032915}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &6187465072856261984 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8513859187771203891, guid: ea16b1272d441554ba09f200da4a9ee3, type: 3}
   m_PrefabInstance: {fileID: 2592111177303032915}
   m_PrefabAsset: {fileID: 0}

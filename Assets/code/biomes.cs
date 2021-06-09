@@ -849,11 +849,19 @@ public class grassy_tiers : biome
             p.sky_color = sky_colors.light_blue;
             p.fog_distance = fog_distances.MEDIUM;
 
-            p.altitude = Mathf.PerlinNoise(i / 32f, j / 32f);
-            p.altitude *= 32f;
+            p.altitude = 0.75f * perlin(i / 32f, j / 32f) +
+                         0.25f * perlin(i / 55f + 0.2f, j / 55f - 0.2f);
+            p.altitude = Mathf.Pow(p.altitude, 1.5f) * 45f;
 
-            if (i % 3 == 0 && j % 3 == 0 && random.range(0, 3) == 0)
-                p.object_to_generate = world_object.load("grassy_tier");
+            if (i % 3 == 0 && j % 3 == 0 && random.range(0, 4) == 0)
+            {
+                if (random.range(0, 5) == 0)
+                    p.object_to_generate = world_object.load("stone_plateau");
+                else if (random.range(0, 5) == 0)
+                    p.object_to_generate = world_object.load("rocky_tier");
+                else
+                    p.object_to_generate = world_object.load("grassy_tier");
+            }
             else if (random.range(0, 300) == 0)
                 p.object_to_generate = world_object.load("tree");
         }
