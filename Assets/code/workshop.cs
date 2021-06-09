@@ -98,6 +98,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        if (to_pickup == null) return STAGE_RESULT.TASK_FAILED;
         foreach (var kv in to_pickup)
         {
             switch (kv.Key.path.walk(s, s.walk_speed, forwards: walking_to_dispenser))

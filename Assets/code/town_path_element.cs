@@ -525,6 +525,19 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         return new HashSet<town_path_element>();
     }
 
+    public static int largest_group()
+    {
+        int max = 0;
+        int ret = -1;
+        foreach (var kv in grouped_elements)
+            if (kv.Value.Count > max)
+            {
+                max = kv.Value.Count;
+                ret = kv.Key;
+            }
+        return ret;
+    }
+
     //#########//
     // DISPLAY //
     //#########//

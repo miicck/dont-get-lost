@@ -50,7 +50,16 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         {
             // We have an optimized path, check it remains valid
             if (!path.validate(load_balancing.iter)) path = null;
-            else settler.try_spawn(element.group, element.transform.position);
+            else
+            {
+                settler.try_spawn(element.group, element.transform.position);
+
+                if (((int)Time.time) % 100 == Random.Range(0, 100))
+                {
+                    // Spawn a trader
+                    client.create(element.transform.position, "characters/wandering_trader");
+                }
+            }
             return;
         }
 

@@ -9,6 +9,13 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
     public abstract Dictionary<string, int> get_stock();
     public abstract void set_stock(string item, int count);
 
+    private void Start()
+    {
+        var pm = gameObject.AddComponent<pinned_message>();
+        pm.message = "A trader is visiting the town.";
+        pm.color = Color.cyan;
+    }
+
     public player_interaction[] player_interactions(RaycastHit hit)
     {
         trade.trader = this;
