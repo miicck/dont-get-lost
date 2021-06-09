@@ -27,7 +27,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             if (base.town_path_element == null)
                 base.town_path_element = town_path_element.nearest_element(
-                    transform.position, town_path_element.largest_group());
+                    transform.position, group_info.largest_group());
             return base.town_path_element;
         }
         set => base.town_path_element = value;
@@ -66,7 +66,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     // UNITY CALLBACKS //
     //#################//
 
-    private void Start()
+    protected override void Start()
     {
         // Get my left/right hand transforms
         foreach (var al in GetComponentsInChildren<armour_locator>())
@@ -105,7 +105,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         interaction?.interact(this);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         settlers.Remove(this);
     }

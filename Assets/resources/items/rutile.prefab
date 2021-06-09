@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5363578731448351423}
   - component: {fileID: -782103353570407183}
   m_Layer: 0
-  m_Name: rulite
+  m_Name: rutile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: f3a3fdf6873d75748a539463a0d4cf25, type: 3}
-  plural: rulite
+  plural: rutile
   value: 1
   fuel_value: 0
 --- !u!114 &-782103353570407183

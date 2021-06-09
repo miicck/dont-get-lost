@@ -818,4 +818,6 @@ public static class group_info
             if (e.interactable is bed) ++ret;
         return ret;
     }
+
+    public static int largest_group() => town_path_element.largest_group();
 }

@@ -129,15 +129,8 @@ public class character : networked,
     }
     town_path_element _town_path_element;
 
-    public void on_walk_towards(town_path_element element)
-    {
-        town_path_element = element;
-    }
-
-    public void on_end_walk()
-    {
-        town_path_element?.on_character_leave(this);
-    }
+    public void on_walk_towards(town_path_element element) => town_path_element = element;
+    public void on_end_walk() => town_path_element?.on_character_leave(this);
 
     //########//
     // SOUNDS //
@@ -229,7 +222,7 @@ public class character : networked,
 
     public bool dont_despawn_automatically = false;
 
-    private void Start()
+    protected virtual void Start()
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
@@ -237,7 +230,7 @@ public class character : networked,
             characters.Add(this);
     }
 
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         town_path_element = null;
         characters.Remove(this);

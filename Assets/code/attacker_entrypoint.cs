@@ -11,7 +11,10 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     float next_path_time = float.NegativeInfinity;
     float time_between_paths = MIN_TIME_BETWEEN_PATHS;
 
+    public bool path_complete => path is explicit_path;
+    public Vector3 path_end => path == null ? transform.position : path[path.length - 1];
     public town_path_element element => GetComponentInParent<town_path_element>();
+    public bool has_authority => GetComponentInParent<networked>()?.has_authority == true;
 
     //#################//
     // UNITY CALLBACKS //
@@ -53,12 +56,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             else
             {
                 settler.try_spawn(element.group, element.transform.position);
-
-                if (((int)Time.time) % 100 == Random.Range(0, 100))
-                {
-                    // Spawn a trader
-                    client.create(element.transform.position, "characters/wandering_trader");
-                }
+                visiting_character.try_spawn(this);
             }
             return;
         }
@@ -72,8 +70,11 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 if (path.optimize(load_balancing.iter))
                     refresh_drawn_path();
 
-                // Optimization complete, cut off path at first point in town
-                else for (int i = path.length - 1; i >= 0; --i)
+                // Optimization complete
+                else
+                {
+                    // Attempt to cut off path at first point in town
+                    for (int i = path.length - 1; i >= 0; --i)
                     {
                         var e = town_path_element.nearest_element(path[i], group: element.group);
                         if (e.linkable_region.Contains(path[i]))
@@ -86,6 +87,12 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                             break;
                         }
                     }
+
+                    // Fallback, keep whole path
+                    List<Vector3> whole_path = new List<Vector3>();
+                    for (int i = 0; i < path.length; ++i) whole_path.Add(path[i]);
+                    path = new explicit_path(whole_path, new agent());
+                }
 
                 break;
 
@@ -150,12 +157,22 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     // ATTACKS //
     //#########//
 
-    class approach_controller : ICharacterController
+    public class approach_controller : ICharacterController
     {
+        ICharacterController controller_on_arival;
         attacker_entrypoint entrypoint;
+        bool should_run;
         int index = 0;
 
-        public approach_controller(attacker_entrypoint entrypoint) => this.entrypoint = entrypoint;
+        public bool complete => index >= entrypoint.path.length;
+
+        public approach_controller(attacker_entrypoint entrypoint,
+            ICharacterController controller_on_arival, bool should_run = true)
+        {
+            this.entrypoint = entrypoint;
+            this.controller_on_arival = controller_on_arival;
+            this.should_run = should_run;
+        }
 
         public void control(character c)
         {
@@ -168,17 +185,19 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 return;
             }
 
-            if (index >= entrypoint.path.length)
+            if (complete)
             {
                 // Finished walking the path, begin the attack
-                c.controller = new attack_controller(entrypoint);
+                c.controller = controller_on_arival;
                 return;
             }
+
+            float speed = should_run ? c.run_speed : c.walk_speed;
 
             // Make my way into town along the approach path
             if (utils.move_towards_and_look(c.transform, entrypoint.path[
                 entrypoint.path.length - 1 - index],
-                Time.deltaTime * c.run_speed, 0.25f))
+                Time.deltaTime * speed, 0.25f))
                 index += 1;
         }
 
@@ -188,7 +207,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         public string inspect_info() { return "Attacking town."; }
     }
 
-    class attack_controller : ICharacterController
+    public class attack_controller : ICharacterController
     {
         town_path_element.path path;
         float local_speed_mod = 1.0f;
@@ -394,7 +413,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             {
                 var c = child as character;
                 if (c == null) return;
-                c.controller = new approach_controller(this);
+                c.controller = new approach_controller(this, new attack_controller(this));
                 attackers.access_or_set(element.group, () => new HashSet<character>()).Add(c);
                 update_attack_message();
             },

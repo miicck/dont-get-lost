@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 311726512560934347}
-  - component: {fileID: 3000497392265695727}
+  - component: {fileID: -5632444933130856337}
   - component: {fileID: 6739213211046171195}
   m_Layer: 0
   m_Name: wandering_trader
@@ -33,7 +33,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3000497392265695727
+--- !u!114 &-5632444933130856337
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,23 +42,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 600703960671519282}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4a641ec7532e3243abf8651f019f9d2, type: 3}
+  m_Script: {fileID: 11500000, guid: 088b70a183a297145bfd83fec650af06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
   display_name: wandering trader
   plural_name: wandering traders
   pathfinding_resolution: 0.5
-  height: 1.62
+  height: 1.5
   walk_speed: 1
   run_speed: 4
   rotation_lerp_speed: 1
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
-  max_health: 200
+  max_health: 10
   friendliness: 1
-  attack_range: 0.69
+  attack_range: 1
   attack_time: 1
   attack_damage: 50
   dont_despawn_automatically: 0
@@ -190,6 +190,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bob_amplitude: 0.1
   lean_into_run_amount: 20
+  lean_with_arms_amount: 45
   lean_lerp_speed: 5
   lean_velocity_scale: 5
   character: {fileID: 311726512560934347}
