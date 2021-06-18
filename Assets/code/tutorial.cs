@@ -106,9 +106,12 @@ class basic_camp_requirement : tutorial_object
 
     private void Update()
     {
-        bool path_from_gate_to_bed = false;
-        bool path_from_gate_to_planter = false;
-        bool path_from_gate_to_pantry = false;
+        var valid_entrypoints = attacker_entrypoint.valid_entrypoints();
+
+        bool entrypoint = valid_entrypoints.Count > 0;
+        bool path_to_bed = false;
+        bool path_to_planter = false;
+        bool path_to_pantry = false;
         bool planter_connected_to_pantry = false;
 
         food_dipsenser pantry = null;
@@ -116,25 +119,25 @@ class basic_camp_requirement : tutorial_object
 
         if (player.current != null)
         {
-            var tg = town_gate.nearest_gate(player.current.transform.position);
-            tg?.path_element?.iterate_connected((e) =>
-            {
-                if (e != null)
+            foreach (var ep in valid_entrypoints)
+                ep?.element?.iterate_connected((e) =>
                 {
-                    if (e.interactable is bed) path_from_gate_to_bed = true;
-                    if (e.interactable is settler_field)
+                    if (e != null)
                     {
-                        path_from_gate_to_planter = true;
-                        planter = (settler_field)e.interactable;
+                        if (e.interactable is bed) path_to_bed = true;
+                        if (e.interactable is settler_field)
+                        {
+                            path_to_planter = true;
+                            planter = (settler_field)e.interactable;
+                        }
+                        if (e.interactable is food_dipsenser)
+                        {
+                            path_to_pantry = true;
+                            pantry = (food_dipsenser)e.interactable;
+                        }
                     }
-                    if (e.interactable is food_dipsenser)
-                    {
-                        path_from_gate_to_pantry = true;
-                        pantry = (food_dipsenser)e.interactable;
-                    }
-                }
-                return path_from_gate_to_bed && path_from_gate_to_planter && path_from_gate_to_pantry;
-            });
+                    return path_to_bed && path_to_planter && path_to_pantry;
+                });
         }
 
         if (planter != null && pantry != null)
@@ -151,14 +154,16 @@ class basic_camp_requirement : tutorial_object
         }
 
         requirement_text.text =
-            (path_from_gate_to_bed ? "[x]" : "[ ]") + " path from gate to bed\n" +
-        (path_from_gate_to_planter ? "[x]" : "[ ]") + " path from gate to planter\n" +
-         (path_from_gate_to_pantry ? "[x]" : "[ ]") + " path from gate to pantry\n" +
+             (entrypoint ? "[x]" : "[ ]") + " entrypoint (EP) to town\n" +
+            (path_to_bed ? "[x]" : "[ ]") + " path from EP to bed\n" +
+        (path_to_planter ? "[x]" : "[ ]") + " path from EP to planter\n" +
+         (path_to_pantry ? "[x]" : "[ ]") + " path from EP to pantry\n" +
       (planter_connected_to_pantry ? "[x]" : "[ ]") + " planter connected to pantry";
 
-        if (!path_from_gate_to_bed) return;
-        if (!path_from_gate_to_planter) return;
-        if (!path_from_gate_to_pantry) return;
+        if (!entrypoint) return;
+        if (!path_to_bed) return;
+        if (!path_to_planter) return;
+        if (!path_to_pantry) return;
         if (!planter_connected_to_pantry) return;
 
         Destroy(gameObject);
@@ -266,7 +271,6 @@ public static class tutorial
                         player.call_when_current_player_available(() =>
                         {
                             player.current.inventory.remove("plank", 20);
-                            player.current.inventory.add("wooden_town_gate", 1);
                             player.current.inventory.add("stone_path", 10);
                             player.current.inventory.add("pantry", 1);
                             player.current.inventory.add("plank_gutter", 5);
@@ -299,7 +303,6 @@ public static class tutorial
         if (stage < 0) return;
         if (stage >= tutorial_stages.Length) return;
         tutorial_object = tutorial_stages[stage]();
-        Debug.Log(tutorial_object);
         player.current.force_interaction(tutorial_object.interaction);
     }
 }

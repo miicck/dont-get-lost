@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked
 {
+    public const float MIN_EXTERNAL_PATH_DISTANCE = 15f;
+    public const float MAX_EXTERNAL_PATH_DISTANCE = 25f;
+
     const float MIN_TIME_BETWEEN_PATHS = 1f;
     const float MAX_TIME_BETWEEN_PATHS = 5f;
 
@@ -119,8 +122,8 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     // PATHING //
     //#########//
 
-    bool midpoint_success(Vector3 v) => (transform.position - v).magnitude > 25f;
-    bool endpoint_success(Vector3 v) => (transform.position - v).magnitude > 25f;
+    bool midpoint_success(Vector3 v) => (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE;
+    bool endpoint_success(Vector3 v) => (transform.position - v).magnitude > MIN_EXTERNAL_PATH_DISTANCE;
 
     GameObject drawn_path;
     bool draw_path
@@ -135,7 +138,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             if (!value || path == null || path.state != path.STATE.COMPLETE) return;
 
             drawn_path = path.create_visualization(color: Color.red);
-            drawn_path.transform.SetParent(transform);
+            drawn_path?.transform.SetParent(transform);
         }
     }
     void refresh_drawn_path() { draw_path = !draw_path; draw_path = !draw_path; }
@@ -146,8 +149,16 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         public float ground_clearance => 0.25f;
         public float height => 1.5f;
 
-        public Vector3 validate_position(Vector3 v, out bool valid) =>
-            pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        public Vector3 validate_position(Vector3 v, out bool valid)
+        {
+            if (v.y < world.SEA_LEVEL)
+            {
+                valid = false;
+                return v;
+            }
+
+            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        }
 
         public bool validate_move(Vector3 a, Vector3 b) =>
             pathfinding_utils.validate_walking_move(a, b, resolution, height, ground_clearance, max_angle: 50f);
@@ -470,6 +481,15 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     static int last_entrypoint_index = 0;
 
     public static bool attacks_enabled;
+
+    public static List<attacker_entrypoint> valid_entrypoints()
+    {
+        var ret = new List<attacker_entrypoint>();
+        foreach (var e in entrypoints)
+            if (e.path_complete)
+                ret.Add(e);
+        return ret;
+    }
 
     public static void initialize()
     {

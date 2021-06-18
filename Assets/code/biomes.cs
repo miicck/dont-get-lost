@@ -25,18 +25,20 @@ public class tutorial_island : mangroves
 
     float island_amount(int i, int j)
     {
+        float size = attacker_entrypoint.MAX_EXTERNAL_PATH_DISTANCE;
         int dx = i - SIZE / 2;
         int dy = j - SIZE / 2;
-        return Mathf.Exp(-(dx * dx + dy * dy) / (ISLAND_SIZE * ISLAND_SIZE));
+        return Mathf.Exp(-(dx * dx + dy * dy) / (size * size));
     }
 
     protected override float altitude(int i, int j)
     {
         float ia = island_amount(i, j);
-        float island_alt = world.SEA_LEVEL + ia - 0.75f;
-        if (ia > 0.5f) return island_alt;
 
-        ia *= 2;
+        if (ia > 0.5f) ia = 1f;
+        else ia *= 2f;
+
+        float island_alt = world.SEA_LEVEL + 1f;
         float base_alt = base.altitude(i, j);
         return island_alt * ia + base_alt * (1f - ia);
     }
