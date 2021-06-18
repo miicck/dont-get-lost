@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class visiting_character : character, ICharacterController, IAddsToInspectionText
 {
+    public float visiting_time = 60f;
+
     protected override void Start()
     {
         visitors.Add(this);
@@ -75,6 +77,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
         var vc = client.create(entrypoint.path_end, "characters/wandering_trader") as visiting_character;
         vc.controller = new attacker_entrypoint.approach_controller(entrypoint, vc, should_run: false);
+        vc.remaining_time_alive = vc.visiting_time;
         next_spawn_time = Time.time + Random.Range(3 * 60, 5 * 60);
         return true;
     }

@@ -62,6 +62,7 @@ MonoBehaviour:
   attack_time: 1
   attack_damage: 50
   dont_despawn_automatically: 0
+  visiting_time: 180
 --- !u!114 &6739213211046171195
 MonoBehaviour:
   m_ObjectHideFlags: 0
