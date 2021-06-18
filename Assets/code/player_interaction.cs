@@ -141,7 +141,17 @@ public class interaction_set
     Dictionary<controls.BIND, started_info> underway = new Dictionary<controls.BIND, started_info>();
     public int underway_count => underway.Count;
 
-    int last_frame_completed_interaction = -1;
+    /// <summary> Stops all underway tasks. </summary>
+    void clear_underway(player player)
+    {
+        var to_end = new List<player_interaction>();
+        foreach (var kv in underway) to_end.Add(kv.Value.interaction);
+        underway.Clear();
+
+        // End interactions *after* clearing underway (in case
+        // end_interaction starts new iteractions)
+        foreach (var i in to_end) i.end_interaction(player);
+    }
 
     /// <summary> Returns true if this interaction set can be
     /// carried out alongside other interactions. </summary>
@@ -302,11 +312,25 @@ public class interaction_set
             // End finished interaction
             kv.Value.interaction.end_interaction(player);
             underway.Remove(kv.Key);
-            last_frame_completed_interaction = Time.frameCount;
         }
 
         if (force_stop)
             tips.context_tip = "";
+    }
+
+    public void force_interaction(player p, player_interaction i)
+    {
+        clear_underway(p);
+        if (i == null) return;
+
+        underway[i.keybind] = new started_info
+        {
+            interaction = i,
+            frame_started = Time.frameCount
+        };
+
+        if (i.start_interaction(p))
+            underway.Remove(i.keybind); // Completed immediately
     }
 }
 

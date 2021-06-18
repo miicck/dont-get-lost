@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_requirement_tracker : MonoBehaviour
+public class item_requirement_tracker : tutorial_object
 {
     public RectTransform item_requirement_template;
     public UnityEngine.UI.Text hint_text;
@@ -12,6 +12,22 @@ public class item_requirement_tracker : MonoBehaviour
 
     public delegate void on_complete_func();
     on_complete_func on_complete;
+
+    public bool is_complete
+    {
+        get => _is_complete;
+        private set
+        {
+            if (_is_complete == value) return; // No change
+            _is_complete = value;
+            if (_is_complete)
+            {
+                on_complete?.Invoke();
+                Destroy(gameObject);
+            }
+        }
+    }
+    bool _is_complete;
 
     public static item_requirement_tracker create(string hint_text, Dictionary<string, int> requirements, on_complete_func on_complete = null)
     {
@@ -53,6 +69,8 @@ public class item_requirement_tracker : MonoBehaviour
 
     void update_satisfaction()
     {
+        if (is_complete) return; // Already completed
+
         // Wait until the inventory is ready
         if (player.current == null) { Invoke("update_satisfaction", 0.2f); return; }
         if (player.current.inventory == null) { Invoke("update_satisfaction", 0.2f); return; }
@@ -66,10 +84,6 @@ public class item_requirement_tracker : MonoBehaviour
             if (have < req) complete = false;
         }
 
-        if (complete)
-        {
-            on_complete?.Invoke();
-            Destroy(gameObject);
-        }
+        is_complete = complete;
     }
 }

@@ -136,6 +136,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     //##############//
 
     public interaction_set interactions { get; } = new interaction_set();
+    public void force_interaction(player_interaction i) => interactions.force_interaction(this, i);
 
     void add_interactions()
     {
@@ -1783,8 +1784,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             //  player or not)
             call_when_current_player_available(() =>
             {
-                if (has_authority)
-                    tutorial.set_stage(tutorial_stage.value);
+                if (!has_authority) return;
+                tutorial.set_stage(tutorial_stage.value);
             });
         };
     }

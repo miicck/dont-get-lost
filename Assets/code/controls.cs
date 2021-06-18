@@ -6,7 +6,14 @@ public static class controls
 {
     public static float mouse_look_sensitivity = 1f;
     public static bool key_based_building = false;
-    public static bool disabled = false;
+
+    public static bool disabled
+    {
+        get;
+        set;
+    }
+
+
     static Dictionary<BIND, control> keybinds = default_keybinds();
 
     static controls()
@@ -33,6 +40,16 @@ public static class controls
             if (untriggered()) return -1f;
             return 0f;
         }
+    }
+
+    public class forced_control : control
+    {
+        public override bool triggered() => true;
+        public override bool untriggered() => false;
+        public override bool held() => true;
+        public override string name() => "Forced";
+        public override bool Equals(object obj) => obj is forced_control;
+        public override int GetHashCode() => typeof(forced_control).GetHashCode();
     }
 
     public class key_control : control
@@ -209,7 +226,8 @@ public static class controls
         IGNORE_SNAP_POINTS,
         CYCLE_FULLSCREEN_MODES,
         ENTER_EXIT_CAVE,
-        GET_NETWORK_INFO
+        GET_NETWORK_INFO,
+        FORCED_INTERACTION,
     }
 
     static Dictionary<BIND, control> default_keybinds()
@@ -289,7 +307,8 @@ public static class controls
             [BIND.IGNORE_SNAP_POINTS] = new key_control(KeyCode.LeftControl),
             [BIND.CYCLE_FULLSCREEN_MODES] = new key_control(KeyCode.F11),
             [BIND.ENTER_EXIT_CAVE] = new mouse_control(mouse_control.BUTTON.LEFT),
-            [BIND.GET_NETWORK_INFO] = new key_control(KeyCode.F2)
+            [BIND.GET_NETWORK_INFO] = new key_control(KeyCode.F2),
+            [BIND.FORCED_INTERACTION] = new forced_control()
         };
     }
 

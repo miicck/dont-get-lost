@@ -2,7 +2,44 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-class confirm_window : MonoBehaviour
+public abstract class tutorial_object : MonoBehaviour
+{
+    public player_interaction interaction
+    {
+        get
+        {
+            if (_interaction == null)
+                _interaction = new tutorial_interaction(this);
+            return _interaction;
+        }
+    }
+    player_interaction _interaction;
+
+    class tutorial_interaction : player_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.FORCED_INTERACTION;
+        public override string context_tip() => "";
+        public override bool show_context_tip() => false;
+
+        public tutorial_interaction(tutorial_object obj) => this.obj = obj;
+        tutorial_object obj;
+
+        public override bool simultaneous() => obj.allows_other_interactions();
+        public override bool allows_movement() => obj.allows_movement();
+        public override bool allows_mouse_look() => obj.allows_mouse_look();
+        public override bool start_interaction(player player) { obj.start_interaction(); return false; }
+        public override bool continue_interaction(player player) => false;
+        public override void end_interaction(player player) => obj.end_interaction();
+    }
+
+    protected virtual bool allows_other_interactions() => true;
+    protected virtual bool allows_movement() => true;
+    protected virtual bool allows_mouse_look() => true;
+    protected virtual void start_interaction() { }
+    protected virtual void end_interaction() { }
+}
+
+class confirm_window : tutorial_object
 {
     public delegate void confirm_func();
     confirm_func on_confirm;
@@ -15,6 +52,7 @@ class confirm_window : MonoBehaviour
         ui.GetComponentInChildren<UnityEngine.UI.Text>().text = message;
         ui.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
         {
+            player.current.force_interaction(null);
             Destroy(ui.gameObject);
         });
         var ret = ui.gameObject.AddComponent<confirm_window>();
@@ -22,25 +60,27 @@ class confirm_window : MonoBehaviour
         return ret;
     }
 
-    private void Start()
+    protected override bool allows_mouse_look() => false;
+    protected override bool allows_movement() => false;
+    protected override bool allows_other_interactions() => false;
+
+    protected override void start_interaction()
     {
-        player.call_when_current_player_available(() => player.current.cursor_sprite = null);
-        controls.disabled = true;
+        player.current.cursor_sprite = null;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
 
-    private void OnDestroy()
+    protected override void end_interaction()
     {
-        player.call_when_current_player_available(() => player.current.cursor_sprite = cursors.DEFAULT);
-        controls.disabled = false;
+        player.current.cursor_sprite = cursors.DEFAULT;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         on_confirm?.Invoke();
     }
 }
 
-class basic_camp_requirement : MonoBehaviour
+class basic_camp_requirement : tutorial_object
 {
     public delegate void finished_func();
     finished_func on_finish;
@@ -133,7 +173,7 @@ public static class tutorial
         player.call_when_current_player_available(() => player.current.advance_tutorial_stage());
     }
 
-    delegate Component tutorial_object_generator();
+    delegate tutorial_object tutorial_object_generator();
     static tutorial_object_generator[] tutorial_stages
     {
         get
@@ -250,7 +290,7 @@ public static class tutorial
     }
     static tutorial_object_generator[] _tutorial_stages;
 
-    static Component tutorial_object;
+    static tutorial_object tutorial_object;
 
     public static void set_stage(int stage)
     {
@@ -259,5 +299,7 @@ public static class tutorial
         if (stage < 0) return;
         if (stage >= tutorial_stages.Length) return;
         tutorial_object = tutorial_stages[stage]();
+        Debug.Log(tutorial_object);
+        player.current.force_interaction(tutorial_object.interaction);
     }
 }

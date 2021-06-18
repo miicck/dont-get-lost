@@ -158,10 +158,12 @@ public class game : MonoBehaviour
             var txt = loading_message.GetComponentInChildren<UnityEngine.UI.Text>();
             txt.text = t;
         }
-        else
+        else if (loading_message.activeInHierarchy)
         {
             controls.disabled = false;
             loading_message.gameObject.SetActive(false);
+            on_load?.Invoke();
+            on_load = null;
         }
     }
 
@@ -256,6 +258,14 @@ public class game : MonoBehaviour
     //##############//
 
     public static bool loading => player.current == null || !player.current.controller_enabled;
+
+    public delegate void load_delegate();
+    static load_delegate on_load;
+    public static void call_when_loaded(load_delegate l)
+    {
+        if (loading) l?.Invoke();
+        else on_load += l;
+    }
 
     public static Canvas canvas { get; private set; }
 

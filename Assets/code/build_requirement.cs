@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class build_requirement : MonoBehaviour
+public class build_requirement : tutorial_object
 {
     public delegate void confirm_func();
     confirm_func on_built;
@@ -25,10 +25,6 @@ public class build_requirement : MonoBehaviour
             return null;
         }
 
-        // Destroy previous requirement (if it still exists)
-        if (current != null)
-            Destroy(current.gameObject);
-
         var br = Resources.Load<build_requirement>("ui/build_requirement").inst();
         br.image.sprite = b.sprite;
         br.text.text = "Build " + utils.a_or_an(b.display_name) + " " + b.display_name + "\n" +
@@ -42,10 +38,8 @@ public class build_requirement : MonoBehaviour
         br.on_built = on_built;
         pending[b.name] = br;
 
-        return null;
+        return br;
     }
-
-    static build_requirement current;
 
     public static void on_build(building_material m)
     {

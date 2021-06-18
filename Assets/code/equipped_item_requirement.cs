@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class equipped_item_requirement : MonoBehaviour
+public class equipped_item_requirement : tutorial_object
 {
     public UnityEngine.UI.Text equip_text;
     public UnityEngine.UI.Image item_image;
