@@ -46,8 +46,10 @@ public class item_requirement_tracker : tutorial_object
             var itm = Resources.Load<item>("items/" + kv.Key);
             var requirement = ret.item_requirement_template.inst();
             requirement.transform.SetParent(ret.item_requirement_template.parent);
-            requirement.GetComponentInChildren<UnityEngine.UI.Image>().sprite = itm.sprite;
-            ret.text_trackers[kv.Key] = requirement.GetComponentInChildren<UnityEngine.UI.Text>();
+            requirement.Find("sprite").GetComponent<UnityEngine.UI.Image>().sprite = itm.sprite;
+            var txt = requirement.GetComponentInChildren<UnityEngine.UI.Text>();
+            ret.text_trackers[kv.Key] = txt;
+            txt.text = "0/" + kv.Value;
         }
 
         ret.item_requirement_template.SetParent(null);

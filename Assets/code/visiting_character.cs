@@ -23,7 +23,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     float remaining_time_alive = 60f;
     town_path_element next_element;
 
-    public void control(character c)
+    bool control_or_delete(character c)
     {
         if (town_path_element == null)
             town_path_element = town_path_element.nearest_element(transform.position, group_info.largest_group());
@@ -31,6 +31,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
         if (next_element == null)
         {
             var linked = town_path_element.linked_elements();
+            if (linked.Count == 0) return false;
 
             if (Random.Range(0, 3) == 0)
                 next_element = linked[Random.Range(0, linked.Count)];
@@ -39,12 +40,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                     -Vector3.Dot(e.transform.position - transform.position, transform.forward));
         }
 
-        if (next_element == null)
-        {
-            // We could not find the next part of the path
-            c.delete();
-            return;
-        }
+        if (next_element == null) return false;
 
         if (utils.move_towards_and_look(transform, next_element.transform.position, Time.deltaTime * c.walk_speed))
         {
@@ -53,7 +49,14 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
         }
 
         remaining_time_alive -= Time.deltaTime;
-        if (remaining_time_alive <= 0)
+        if (remaining_time_alive <= 0) return false;
+
+        return true;
+    }
+
+    public void control(character c)
+    {
+        if (!control_or_delete(c))
             c.delete();
     }
 

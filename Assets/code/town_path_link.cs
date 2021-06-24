@@ -45,9 +45,14 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         display_update_required = true;
     }
 
-    public virtual Bounds linkable_region()
+    public virtual Bounds linkable_region() => new Bounds(transform.position, Vector3.one * LINK_WIDTH * 2);
+
+    protected virtual bool ignore_blocking_hit(RaycastHit h)
     {
-        return new Bounds(transform.position, Vector3.one * LINK_WIDTH * 2);
+        // Ignore collisions with my own building
+        var b = GetComponentInParent<building_material>();
+        if (b == null) return false;
+        return h.transform.IsChildOf(b.transform);
     }
 
     /// <summary> The point above this link by the ground clearance amount. </summary>
@@ -137,16 +142,12 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         if (!link_possible(a, b)) return false;
         if (a.path_element == null || b.path_element == null) return false;
 
-        var a_build = a.GetComponentInParent<building_material>();
-        var b_build = b.GetComponentInParent<building_material>();
-
         Vector3 delta = b.ground_clearance_point - a.ground_clearance_point;
         Ray ray = new Ray(a.ground_clearance_point, delta);
         foreach (var h in Physics.RaycastAll(ray, delta.magnitude))
         {
-            // We can't be blocked by the building we belong to (?)
-            // if (h.transform.IsChildOf(a_build.transform)) continue;
-            // if (h.transform.IsChildOf(b_build.transform)) continue;
+            if (a.ignore_blocking_hit(h)) continue;
+            if (b.ignore_blocking_hit(h)) continue;
 
             if (h.collider.GetComponentInParent<INotPathBlocking>() == null)
                 return false; // Path blocked

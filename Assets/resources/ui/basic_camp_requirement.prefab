@@ -35,7 +35,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -410}
+  m_AnchoredPosition: {x: -0.6000061, y: -421.19995}
   m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6795771550786545428
@@ -241,8 +241,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -123.35396}
-  m_SizeDelta: {x: 265.4134, y: 94.5523}
+  m_AnchoredPosition: {x: 0, y: -131.30733}
+  m_SizeDelta: {x: 265.4134, y: 110.4589}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5926469168048067788
 CanvasRenderer:
@@ -294,7 +294,10 @@ MonoBehaviour:
 
     [x] Path from gate to pantry
 
-    [x] Planter connected to pantry'
+    [x] Path to guard spot
+
+    [x]
+    Planter connected to pantry'
 --- !u!1 &3939964241940129235
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,7 +337,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 8, y: -8}
-  m_SizeDelta: {x: 300.8417, y: 559.5581}
+  m_SizeDelta: {x: 300.8417, y: 573.9641}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1174396533642252043
 CanvasRenderer:
@@ -408,7 +411,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -220.8}
+  m_AnchoredPosition: {x: 0, y: -232}
   m_SizeDelta: {x: 302.3652, y: 96.405}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4163177567778222854

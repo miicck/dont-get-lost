@@ -112,6 +112,7 @@ class basic_camp_requirement : tutorial_object
         bool path_to_bed = false;
         bool path_to_planter = false;
         bool path_to_pantry = false;
+        bool path_to_guard_spot = false;
         bool planter_connected_to_pantry = false;
 
         food_dipsenser pantry = null;
@@ -125,6 +126,7 @@ class basic_camp_requirement : tutorial_object
                     if (e != null)
                     {
                         if (e.interactable is bed) path_to_bed = true;
+                        if (e.interactable is guard_spot) path_to_guard_spot = true;
                         if (e.interactable is settler_field)
                         {
                             path_to_planter = true;
@@ -136,7 +138,7 @@ class basic_camp_requirement : tutorial_object
                             pantry = (food_dipsenser)e.interactable;
                         }
                     }
-                    return path_to_bed && path_to_planter && path_to_pantry;
+                    return path_to_bed && path_to_planter && path_to_pantry && path_to_guard_spot;
                 });
         }
 
@@ -154,16 +156,18 @@ class basic_camp_requirement : tutorial_object
         }
 
         requirement_text.text =
-             (entrypoint ? "[x]" : "[ ]") + " entrypoint (EP) to town\n" +
-            (path_to_bed ? "[x]" : "[ ]") + " path from EP to bed\n" +
-        (path_to_planter ? "[x]" : "[ ]") + " path from EP to planter\n" +
-         (path_to_pantry ? "[x]" : "[ ]") + " path from EP to pantry\n" +
+                       (entrypoint ? "[x]" : "[ ]") + " entrypoint (EP) to town\n" +
+                      (path_to_bed ? "[x]" : "[ ]") + " path from EP to bed\n" +
+                  (path_to_planter ? "[x]" : "[ ]") + " path from EP to planter\n" +
+                   (path_to_pantry ? "[x]" : "[ ]") + " path from EP to pantry\n" +
+               (path_to_guard_spot ? "[x]" : "[ ]") + " path from EP to guard spot\n" +
       (planter_connected_to_pantry ? "[x]" : "[ ]") + " planter connected to pantry";
 
         if (!entrypoint) return;
         if (!path_to_bed) return;
         if (!path_to_planter) return;
         if (!path_to_pantry) return;
+        if (!path_to_guard_spot) return;
         if (!planter_connected_to_pantry) return;
 
         Destroy(gameObject);
@@ -276,6 +280,7 @@ public static class tutorial
                             player.current.inventory.add("plank_gutter", 5);
                             player.current.inventory.add("bed", 1);
                             player.current.inventory.add("cabbage_planter", 1);
+                            player.current.inventory.add("guard_spot", 1);
                         });
                         advance_stage();
                     }),

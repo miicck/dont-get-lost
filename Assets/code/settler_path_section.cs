@@ -62,6 +62,12 @@ public class settler_path_section : town_path_link
         return (collider.ClosestPoint(p) - p).magnitude;
     }
 
+    protected override bool ignore_blocking_hit(RaycastHit h)
+    {
+        // Don't ignore any blocking hits
+        return false;
+    }
+
     private void OnDrawGizmosSelected()
     {
         if (collider == null) return;
