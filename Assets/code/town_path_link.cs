@@ -145,8 +145,8 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         foreach (var h in Physics.RaycastAll(ray, delta.magnitude))
         {
             // We can't be blocked by the building we belong to (?)
-            if (h.transform.IsChildOf(a_build.transform)) continue;
-            if (h.transform.IsChildOf(b_build.transform)) continue;
+            // if (h.transform.IsChildOf(a_build.transform)) continue;
+            // if (h.transform.IsChildOf(b_build.transform)) continue;
 
             if (h.collider.GetComponentInParent<INotPathBlocking>() == null)
                 return false; // Path blocked

@@ -39,6 +39,13 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                     -Vector3.Dot(e.transform.position - transform.position, transform.forward));
         }
 
+        if (next_element == null)
+        {
+            // We could not find the next part of the path
+            c.delete();
+            return;
+        }
+
         if (utils.move_towards_and_look(transform, next_element.transform.position, Time.deltaTime * c.walk_speed))
         {
             town_path_element = next_element;

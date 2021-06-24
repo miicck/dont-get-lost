@@ -531,7 +531,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 return; // Starvation => don't spawn
 
         last_spawn_time = Time.time;
-        client.create(location, "characters/settler");
+        var spawned = client.create(location, "characters/settler") as settler;
+        temporary_object.create(60f).gameObject.add_pinned_message(spawned.name.capitalize() + " has settled in the town!", Color.blue);
     }
 
     new public static string info()

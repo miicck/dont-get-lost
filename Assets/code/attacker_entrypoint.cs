@@ -151,13 +151,9 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
         public Vector3 validate_position(Vector3 v, out bool valid)
         {
-            if (v.y < world.SEA_LEVEL)
-            {
-                valid = false;
-                return v;
-            }
-
-            return pathfinding_utils.validate_walking_position(v, resolution, out valid);
+            v = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+            if (v.y < world.SEA_LEVEL) valid = false;
+            return v;
         }
 
         public bool validate_move(Vector3 a, Vector3 b) =>

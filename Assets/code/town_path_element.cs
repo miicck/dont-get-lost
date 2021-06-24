@@ -366,7 +366,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
                     // Work out the direction out of town and distance from my group.
                     e.out_of_town_direction = e.transform.position - b.bounds.center;
-                    if (e.out_of_town_direction.magnitude > max_dis)
+                    if (e.out_of_town_direction.magnitude > max_dis &&
+                        e.GetComponentInChildren<attacker_entrypoint>() != null)
                     {
                         // Work out most extreme element of the group
                         max_dis = e.out_of_town_direction.magnitude;
@@ -379,7 +380,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 }
 
                 // Re-flag extremity element
-                extreme.is_extremety = true;
+                if (extreme != null) extreme.is_extremety = true;
             }
 
         on_groups_update_listener?.Invoke();
