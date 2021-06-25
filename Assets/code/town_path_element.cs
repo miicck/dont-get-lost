@@ -654,6 +654,68 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         public static path get(Vector3 v, town_path_element goal) => get(nearest_element(v), goal);
         public static path get(Vector3 a, Vector3 b, int group) => get(nearest_element(a, group), nearest_element(b, group));
 
+        public static path get_random(town_path_element start, int max_length, int min_length = 0)
+        {
+            if (start == null) return null;
+
+            // Setup pathfinding state
+            var open_set = new HashSet<town_path_element>();
+            var closed_set = new HashSet<town_path_element>();
+            var came_from = new Dictionary<town_path_element, town_path_element>();
+            var gscore = new Dictionary<town_path_element, float>();
+
+            // Initialize pathfinding with just start open
+            open_set.Add(start);
+            gscore[start] = 0;
+
+            town_path_element current = null;
+
+            while (open_set.Count > 0)
+            {
+                // Find the largest gscore in the current set (i.e the furthest from the start)
+                current = utils.find_to_min(open_set, (c) => -gscore[c]);
+
+                if (came_from.Count >= max_length)
+                    break;
+
+                // Close current
+                open_set.Remove(current);
+                closed_set.Add(current);
+
+                foreach (var n in current.linked_elements())
+                {
+                    if (closed_set.Contains(n))
+                        continue;
+
+                    // Work out tentative path length to n, if we wen't via current
+                    var tgs = gscore[current] + heuristic(n, current);
+
+                    // Get the current neighbour gscore (infinity if not already scored)
+                    if (!gscore.TryGetValue(n, out float gsn))
+                        gsn = Mathf.Infinity;
+
+                    if (tgs < gsn)
+                    {
+                        // This is a better path to n, update it
+                        came_from[n] = current;
+                        gscore[n] = tgs;
+                        open_set.Add(n);
+                    }
+                }
+            }
+
+            if (current == null) return null;
+            if (came_from.Count < min_length) return null;
+
+            // Reconstruct path
+            var p = new path();
+            p.element_path = new List<town_path_element> { current };
+            while (came_from.TryGetValue(current, out current))
+                p.element_path.Add(current);
+            p.element_path.Reverse();
+            return p;
+        }
+
         // Private constructor, paths should be created with the get method
         private path() { }
 

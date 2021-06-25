@@ -21,43 +21,29 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     //######################//
 
     float remaining_time_alive = 60f;
+    town_path_element.path visitor_path;
     town_path_element next_element;
 
-    bool control_or_delete(character c)
+    public void control(character c)
     {
         if (town_path_element == null)
             town_path_element = town_path_element.nearest_element(transform.position, group_info.largest_group());
 
-        if (next_element == null)
+        if (visitor_path == null)
+            visitor_path = town_path_element.path.get_random(town_path_element, 20);
+
+        switch (visitor_path.walk(c, c.walk_speed))
         {
-            var linked = town_path_element.linked_elements();
-            if (linked.Count == 0) return false;
+            case town_path_element.path.WALK_STATE.COMPLETE:
+            case town_path_element.path.WALK_STATE.FAILED:
+                visitor_path = null;
+                break;
 
-            if (Random.Range(0, 3) == 0)
-                next_element = linked[Random.Range(0, linked.Count)];
-            else
-                next_element = utils.find_to_min(linked, (e) =>
-                    -Vector3.Dot(e.transform.position - transform.position, transform.forward));
-        }
-
-        if (next_element == null) return false;
-
-        if (utils.move_towards_and_look(transform, next_element.transform.position, Time.deltaTime * c.walk_speed))
-        {
-            town_path_element = next_element;
-            next_element = null;
+            default: break;
         }
 
         remaining_time_alive -= Time.deltaTime;
-        if (remaining_time_alive <= 0) return false;
-
-        return true;
-    }
-
-    public void control(character c)
-    {
-        if (!control_or_delete(c))
-            c.delete();
+        if (remaining_time_alive <= 0) c.delete();
     }
 
     public void draw_gizmos() { }
