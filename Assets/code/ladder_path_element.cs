@@ -13,6 +13,8 @@ public class ladder_path_element : town_path_element
 
     public override void on_character_move_towards(character c)
     {
+        if (this == null) return;
+
         // If sufficienctly flat, no need to face the ladder
         if (Vector3.Angle(transform.up, Vector3.up) > 45) return;
 

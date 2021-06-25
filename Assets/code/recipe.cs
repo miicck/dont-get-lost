@@ -138,6 +138,9 @@ public class recipe : MonoBehaviour
         foreach (var ac in Resources.LoadAll<farming_patch>("items"))
             ret.Add(new KeyValuePair<string, recipe[]>(ac.name, Resources.LoadAll<recipe>("recipes/farming_spots/" + ac.name)));
 
+        foreach (var w in Resources.LoadAll<workshop>("items"))
+            ret.Add(new KeyValuePair<string, recipe[]>(w.name + " (made by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
+
         return ret;
     }
 
