@@ -504,6 +504,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         }
     }
 
+    public void unequip() => slot_equipped.value = 0;
+
     public inventory_slot_networked inventory_slot(int n)
     {
         // Move to zero-offset array

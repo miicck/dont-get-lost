@@ -156,6 +156,7 @@ public class building_material : item, IPlayerInteractable
                 {
                     delete_success = true;
                 });
+                player.unequip();
                 return false;
             }
 
