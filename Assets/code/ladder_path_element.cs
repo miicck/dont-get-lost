@@ -25,6 +25,8 @@ public class ladder_path_element : town_path_element
         base.on_character_move_towards(c);
     }
 
+    public override bool seperates_rooms() => true;
+
     public class climb_ladder : settler_animations.animation
     {
         public climb_ladder(settler s) : base(s) { }

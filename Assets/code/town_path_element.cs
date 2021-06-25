@@ -405,16 +405,21 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 closed.Add(to_expand);
                 open.Remove(to_expand);
 
-                // Don't expand room searches from path elements
-                // that seperate rooms
-                if (to_expand.seperates_rooms())
-                    continue;
+                // Have we hit a path element that seperates rooms
+                bool hit_seperator = to_expand.seperates_rooms();
 
                 // Add all linked elements to the open set 
                 // (if they arent in the closed set)
                 foreach (var n in to_expand.linked_elements())
-                    if (!closed.Contains(n))
-                        open.Add(n);
+                {
+                    if (closed.Contains(n)) continue;
+
+                    // Multiple neighbouring seperators will
+                    // be combined into the same room
+                    if (hit_seperator && !n.seperates_rooms()) continue;
+
+                    open.Add(n);
+                }
             }
 
             roomed_elements[room] = closed;
