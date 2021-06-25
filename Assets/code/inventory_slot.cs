@@ -11,13 +11,14 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
     /// <summary> Forward mouse events to the inventory. </summary>
     public void OnPointerClick(UnityEngine.EventSystems.PointerEventData eventData)
     {
-        if (inventory.transform.IsChildOf(player.current.transform))
-            player.current.crafting_menu.ui.GetComponentInChildren<crafting_input>().on_inventory_slot_click();
-
         if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Left)
             inventory.click_slot(index, false);
         else if (eventData.button == UnityEngine.EventSystems.PointerEventData.InputButton.Right)
             inventory.click_slot(index, true);
+
+        // An inventory slot was clicked => safe to clear greyed out crafting options
+        if (inventory.transform.IsChildOf(player.current.transform))
+            player.current.crafting_menu.ui.GetComponentInChildren<crafting_input>().clear_greyed_out();
     }
 }
 

@@ -36,7 +36,7 @@ public class crafting_input : MonoBehaviour
     // Closed the menu => no longer need to save the recipe buttons
     private void OnDisable() => saved_recipe_buttons.Clear();
 
-    public void on_inventory_slot_click()
+    public void clear_greyed_out()
     {
         saved_recipe_buttons.Clear();
         update_recipies();
