@@ -122,8 +122,12 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     // PATHING //
     //#########//
 
-    bool midpoint_success(Vector3 v) => (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE;
-    bool endpoint_success(Vector3 v) => (transform.position - v).magnitude > MIN_EXTERNAL_PATH_DISTANCE;
+    // Is the vector v considered to be on the terrain
+    bool point_on_terrain(Vector3 v) => utils.raycast_for_closest<Terrain>(
+        new Ray(v, Vector3.down), out RaycastHit hit, max_distance: 1f) != null;
+
+    bool midpoint_success(Vector3 v) => (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE && point_on_terrain(v);
+    bool endpoint_success(Vector3 v) => (transform.position - v).magnitude > MIN_EXTERNAL_PATH_DISTANCE && point_on_terrain(v);
 
     GameObject drawn_path;
     bool draw_path
