@@ -311,11 +311,14 @@ public class inventory : networked, IItemCollection
                         }
 
                         if (target != null && target.can_add(transfer_item, transfer_count))
+                        {
+                            isn.set_item_count_index(null, 0, isn.index);
                             isn.delete(() =>
                             {
                                 // Transfer into target inventory
                                 target.add(transfer_item, transfer_count, popup_if_player: false);
                             });
+                        }
 
                         return;
                     }

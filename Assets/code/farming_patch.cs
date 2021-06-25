@@ -71,7 +71,7 @@ public class farming_patch : building_with_inventory, IPlayerInteractable
             }
 
             // Create the representation of grown products
-            if (grown == null)
+            if (grown == null && seed != null)
                 foreach (var kv in inventory.contents())
                     if (kv.Value > 0 && kv.Key.name == seed.growing_into.name)
                     {
