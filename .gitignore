@@ -3,6 +3,7 @@
 *.swp
 *.sln
 *.vsconfig
+.vscode*
 Assembly-CSharp.csproj
 Assets/resources/version_info*
 Assets/code/server

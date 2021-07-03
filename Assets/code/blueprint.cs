@@ -140,6 +140,12 @@ public class blueprint : MonoBehaviour
         listen_for_pivot_change();
         play_sounds();
 
+        if (controls.triggered(controls.BIND.SNAP_BUILDING_TO_WORLD))
+        {
+            snap_to_world_axes();
+            return false;
+        }
+
         if (controls.key_based_building)
         {
             if (controls.triggered(controls.BIND.USE_ITEM)) return true;
@@ -374,6 +380,13 @@ public class blueprint : MonoBehaviour
         }
 
         rotate_around(axis, amount);
+    }
+
+    void snap_to_world_axes()
+    {
+        Vector3 new_forward = Vector3.Cross(transform.right, Vector3.up);
+        transform.rotation = Quaternion.LookRotation(new_forward, Vector3.up);
+        pivot_index = pivot_index;
     }
 
     public building_material build_networked_version(bool remove_from_inv = true)
