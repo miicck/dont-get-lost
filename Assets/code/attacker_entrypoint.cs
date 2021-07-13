@@ -113,10 +113,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        path?.draw_gizmos();
-    }
+    private void OnDrawGizmos() => path?.draw_gizmos();
 
     //#########//
     // PATHING //

@@ -26,8 +26,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         get
         {
             if (base.town_path_element == null)
-                base.town_path_element = town_path_element.nearest_element(
-                    transform.position, group_info.largest_group());
+                base.town_path_element = town_path_element.nearest_element_connected_to_beds(transform.position);
             return base.town_path_element;
         }
         set => base.town_path_element = value;
@@ -49,10 +48,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         delete();
     }
 
-    protected override bool create_dead_body()
-    {
-        return false;
-    }
+    protected override bool create_dead_body() => false;
 
     public void look_at(Vector3 v, bool stay_upright = true)
     {

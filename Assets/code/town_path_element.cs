@@ -519,6 +519,28 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         else return utils.find_to_min(all_elements, (e) => (e.transform.position - v).sqrMagnitude, (e) => e.group == group);
     }
 
+    public static town_path_element nearest_element_connected_to_beds(Vector3 v)
+    {
+        return utils.find_to_min(all_elements, (e) =>
+        {
+            bed bed_found = null;
+            e.iterate_connected((c) =>
+            {
+                if (c.interactable is bed)
+                {
+                    bed_found = c.interactable as bed;
+                    return true;
+                }
+                return false;
+            });
+
+            if (bed_found == null)
+                return Mathf.Infinity;
+
+            return (e.transform.position - v).sqrMagnitude;
+        });
+    }
+
     public static HashSet<town_path_element> element_group(int group)
     {
         if (grouped_elements.TryGetValue(group, out HashSet<town_path_element> elms)) return elms;
