@@ -412,7 +412,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 // (if they arent in the closed set)
                 foreach (var n in to_expand.linked_elements())
                 {
-                    if (closed.Contains(n)) continue;
+                    if (n == null || closed.Contains(n)) continue;
 
                     // Multiple neighbouring seperators will
                     // be combined into the same room

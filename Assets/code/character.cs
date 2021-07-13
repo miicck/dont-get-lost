@@ -657,16 +657,26 @@ public class character : networked,
     /// <summary> Call to put the character somewhere sensible. </summary>
     public void unstuck()
     {
+        // First, attempt to unstick onto terrain
         var tc = utils.raycast_for_closest<TerrainCollider>(new Ray(
             transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
             out RaycastHit hit);
 
         if (tc == null)
-            Debug.LogError("No terrain found to unstick " + name);
-        else
         {
-            transform.position = hit.point;
+            // Then attempt to unstick onto anything (other than myself)
+            var col = utils.raycast_for_closest<Collider>(new Ray(
+                transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
+                out hit, accept: (h, c) => !c.transform.IsChildOf(transform));
+
+            if (col == null)
+            {
+                Debug.LogError("No collider found to unstick " + name);
+                return;
+            }
         }
+
+        transform.position = hit.point;
     }
 
     public bool move_towards(Vector3 point, float speed, out bool failed, float arrive_distance = -1)
@@ -730,10 +740,7 @@ public class character : networked,
         return (point - new_pos).magnitude < arrive_distance;
     }
 
-    public Vector3 projectile_target()
-    {
-        return transform.position + Vector3.up * height / 2f;
-    }
+    public Vector3 projectile_target() => transform.position + Vector3.up * height / 2f;
 
     //###############//
     // IPathingAgent //
@@ -1193,7 +1200,7 @@ public class chase_controller : ICharacterController
                 if (s == global::path.STATE.COMPLETE || s == global::path.STATE.PARTIALLY_COMPLETE)
                 {
                     // Ensure the path actually goes somewhere
-                    if (path.length < 2)
+                    if (path == null || path.length < 2)
                     {
                         path = null;
                         return;

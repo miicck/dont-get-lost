@@ -182,7 +182,7 @@ MonoBehaviour:
   align_to_terrain: 1
   max_health: 80
   friendliness: 0
-  attack_range: 0.88
+  attack_range: 0.72
   attack_time: 0.6
   attack_damage: 30
   dont_despawn_automatically: 0
@@ -243,6 +243,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bob_amplitude: 0.01
   lean_into_run_amount: 0
+  lean_with_arms_amount: 45
   lean_lerp_speed: 5
   lean_velocity_scale: 5
   character: {fileID: 9066674778359697565}
@@ -325,7 +326,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ff7330b5735cf1f42929880c868fb473, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.74
+      value: -0.575
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ff7330b5735cf1f42929880c868fb473, type: 3}
       propertyPath: m_LocalRotation.w

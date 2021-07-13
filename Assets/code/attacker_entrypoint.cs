@@ -502,6 +502,9 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             foreach (var kv in attackers)
                 foreach (var a in kv.Value)
                 {
+                    if (a == null || a.is_dead)
+                        continue;
+
                     var elm = a.GetComponentInParent<attacker_entrypoint>()?.element;
                     if (elm == null)
                     {
@@ -509,6 +512,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                         a.delete();
                         continue;
                     }
+
                     attackers_new.access_or_set(elm.group, () => new HashSet<character>()).Add(a);
                 }
             attackers = attackers_new;
