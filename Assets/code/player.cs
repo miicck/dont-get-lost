@@ -1341,7 +1341,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public void take_damage(int damage)
     {
-        if (is_dead) return;
+        if (is_dead || god_mode) return;
         health.value = Mathf.Max(0, health.value - damage);
     }
 
@@ -1458,6 +1458,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     networked_variables.net_color net_skin_color;
     networked_variables.net_int networked_interaction;
     networked_variables.net_int tutorial_stage;
+
+    public bool god_mode = false;
 
     public ulong user_id { get; private set; }
 

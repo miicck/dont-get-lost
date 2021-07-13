@@ -702,6 +702,22 @@ public class console : MonoBehaviour
 
             description = "Kick the given player.",
             usage_example = "kick michael"
+        },
+
+        ["god_mode"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.god_mode = !player.current.god_mode;
+                    popup_message.create("God mode " + (player.current.god_mode ? "enabled" : "disabled"));
+                });
+                return true;
+            },
+
+            description = "Toggle god mode.",
+            usage_example = "god_mode"
         }
     };
 
