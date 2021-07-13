@@ -1513,3 +1513,50 @@ public class desert_2 : biome
         return true;
     }
 }
+
+public class big_trees : biome
+{
+    const float ALT_SCALE = 16f;
+    const float ALT_SIZE = 32f;
+
+    int i_stage = 0;
+
+    int distance_from_modulo_grid(int i, int j, int m)
+    {
+        int im = i % m;
+        int jm = j % m;
+        if (im > m / 2) im = m - im;
+        if (jm > m / 2) jm = m - jm;
+        return im > jm ? im : jm;
+    }
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+
+            p.altitude = world.SEA_LEVEL - ALT_SCALE / 2 + ALT_SCALE * perlin(i / ALT_SIZE, j / ALT_SIZE);
+            p.terrain_color = terrain_colors.grass;
+            p.beach_color = terrain_colors.marshy_grass;
+            p.fog_distance = 32f;
+
+            if (i % 32 == 0 && j % 32 == 0 && random.range(0, 3) == 0)
+            {
+                p.object_to_generate = world_object.load("big_tree_1");
+            }
+            else if (distance_from_modulo_grid(i, j, 32) > 8) // Far enough away from potential big trees
+            {
+                if (i % 4 == 0 && j % 4 == 0 && random.range(0, 6) == 0)
+                    p.object_to_generate = world_object.load("tree_allows_beach");
+                else if (random.range(0, 200) == 0)
+                    p.object_to_generate = world_object.load("mossy_log");
+                else if (random.range(0, 50) == 0)
+                    p.object_to_generate = world_object.load("bush");
+            }
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}
