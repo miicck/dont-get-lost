@@ -735,6 +735,30 @@ public class console : MonoBehaviour
 
             description = "Teleport to the nearest teleport destination.",
             usage_example = "home_teleport"
+        },
+
+        ["force_assign"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    var i = utils.raycast_for_closest<settler_interactable>(player.current.camera_ray(), out RaycastHit hit);
+                    if (i == null) return;
+
+                    foreach (var s in settler.all_settlers())
+                        if (settler_interactable.force_assign(i, s))
+                        {
+                            popup_message.create("Setter " + s.name + " force assigned to " + i.GetType().Name);
+                            break;
+                        }
+
+                });
+                return true;
+            },
+
+            description = "Force a settler to assign themselves to the object you are looking at.",
+            usage_example = "force_assign"
         }
     };
 

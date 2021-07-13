@@ -38,3 +38,4 @@ TODO
 - Market stalls to sell excess (arbitrary) items?
 - Polar bears fall through floor on death/spawn underwater
 - Rail stops (click multiple times to select how many stops along you want to go)
+- generated trading camps
