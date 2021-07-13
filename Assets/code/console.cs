@@ -718,6 +718,23 @@ public class console : MonoBehaviour
 
             description = "Toggle god mode.",
             usage_example = "god_mode"
+        },
+
+        ["home_teleport"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    var tm = FindObjectOfType<teleport_manager>();
+                    if (tm == null) return;
+                    player.current.teleport(tm.nearest_teleport_destination(player.current.transform.position));
+                });
+                return true;
+            },
+
+            description = "Teleport to the nearest teleport destination.",
+            usage_example = "home_teleport"
         }
     };
 

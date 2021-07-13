@@ -89,7 +89,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             run_map();
             run_mouse_look();
             run_movement();
-            run_teleports();
         }
         else
         {
@@ -609,17 +608,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     {
         move();
         float_in_water();
-    }
-
-    void run_teleports()
-    {
-        // Carry out home teleports
-        if (controls.triggered(controls.BIND.HOME_TELEPORT))
-        {
-            var tm = FindObjectOfType<teleport_manager>();
-            if (tm != null)
-                teleport(tm.nearest_teleport_destination(transform.position));
-        }
     }
 
     bool can_jump()

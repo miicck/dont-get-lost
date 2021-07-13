@@ -113,10 +113,7 @@ public class rail : building_material
 
     public static void unregister(rail r)
     {
-        if (!rails.Contains(r))
-            throw new System.Exception("Rail not registered!");
         rails.Remove(r);
-
         foreach (var r2 in r.attached_to)
             r2.attached_to.Remove(r);
         r.attached_to.Clear();
