@@ -67,7 +67,7 @@ public class food_dipsenser : walk_to_settler_interactable
         if (food == null) return STAGE_RESULT.TASK_FAILED;
 
         // Eat food on authority client, delete food on all clients
-        if (s.has_authority) s.nutrition.consume_food(food.food_values);
+        if (s.has_authority) s.consume_food(food.food_values);
         Destroy(food.gameObject);
 
         // Complete if we've eaten enough

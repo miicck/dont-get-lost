@@ -4,6 +4,7 @@ inventories/farming_spot 1 True
 items/dynamite 1 True
 items/log_splitter 1 True
 inventories/player_inventory 1 True
+items/sterile_wort 1 True
 items/portal 1 True
 items/feather 1 True
 items/copper 1 True
@@ -25,6 +26,7 @@ items/stone 1 True
 items/titanium_ore 1 True
 crops/wheat 1 True
 items/long_layered_hairstyle 1 True
+inventories/brewing_barrel 1 True
 characters/mountain_goat 1 False
 items/dirt 1 True
 items/iron_plate_vambrace 1 True
@@ -45,7 +47,9 @@ characters/settler 1 True
 items/triangular_plank_(equilateral) 1 True
 items/trade_cart 1 True
 items/coal 1 True
+items/brewing_barrel 1 True
 items/long_flowing_hairstyle 1 True
+items/ale 1 True
 misc/trade_hub Infinity True
 mood_effects/just_got_up 1 True
 items/doorway 1 True
@@ -80,6 +84,7 @@ items/fishing_dock 1 True
 characters/smoke_spider 1 False
 items/saltpeter 1 True
 items/iron_plate_shoulder 1 True
+items/yeast 1 True
 items/spinning_wheel 1 True
 items/short_shaggy_hairstyle 1 True
 items/half_log 1 True
@@ -100,6 +105,7 @@ items/tin 1 True
 items/log 1 True
 misc/world_object_destroyed 1 True
 items/wooden_town_gate 1 True
+mood_effects/drank_ale 1 True
 items/cabbage_seed 1 True
 items/sandstone 1 True
 crops/wheat_planter 1 True
@@ -116,10 +122,12 @@ items/iron 1 True
 items/gold 1 True
 items/linen 1 True
 items/bow 1 True
+items/well 1 True
 characters/skeleton 1 False
 mood_effects/hungry 1 True
 items/lootbox 1 True
 items/piston_lift 1 True
+items/wort 1 True
 items/mining_spot 1 True
 characters/small_smoke_spider 1 False
 items/flint_axe 1 True
@@ -170,6 +178,7 @@ inventories/player_crafting_menu 1 True
 items/rail 1 True
 items/iron_breastplate 1 True
 items/half_plank_gutter 1 True
+items/water 1 True
 items/stick 1 True
 items/dreadlocks_hairstyle 1 True
 items/arboretum 1 True

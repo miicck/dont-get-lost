@@ -293,6 +293,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public settler_interactable interaction => settler_interactable.assigned_to(this);
 
+    public void consume_food(food f)
+    {
+        nutrition.consume_food(f);
+        foreach (var me in f.GetComponents<food_mood_effect>())
+            add_mood_effect(me.effect.name);
+    }
+
     public void add_mood_effect(string name)
     {
         // Can't add mood effects from non-auth client

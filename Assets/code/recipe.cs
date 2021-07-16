@@ -40,7 +40,8 @@ public class recipe : MonoBehaviour
     /// <summary> Check if this recipe is craftable from the given item collection.
     /// If so, the dictionary <paramref name="to_use"/> will contain the
     /// ingredients/quantities that can be used from the collection to
-    /// fulfil the recipe. </summary>
+    /// fulfil the recipe. If not, then it will contain the maximal partial set of
+    /// ingredients if <paramref name="maximal_use"/> is set; otherwise it should be ignored. </summary>
     public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use, bool maximal_use = false)
     {
         to_use = new Dictionary<string, int>();
@@ -52,6 +53,37 @@ public class recipe : MonoBehaviour
                 if (!maximal_use) return false;
             }
         return complete;
+    }
+
+    /// <summary> Simmilar to <see cref="can_craft(IEnumerable{IItemCollection}, out Dictionary{IItemCollection, Dictionary{string, int}}, bool)"/>
+    /// but will return the number of times the recipe can be crafted from the given item collection. </summary>
+    public int count_can_craft(IItemCollection i, out Dictionary<string, int> to_use, bool maximal_use = false, int max_count = 10)
+    {
+        to_use = new Dictionary<string, int>();
+        int craft_count = 0;
+        bool search_again = true;
+
+        while (search_again)
+        {
+            foreach (var ing in ingredients)
+                if (!ing.find(i, ref to_use))
+                {
+                    if (!maximal_use) return craft_count;
+                    search_again = false;
+                }
+
+            if (search_again && ++craft_count >= max_count)
+                return max_count;
+        }
+
+        return craft_count;
+    }
+
+    /// <summary> Overload of <see cref="count_can_craft(IItemCollection, out Dictionary{string, int}, bool)"/>, 
+    /// without to-use dictionary. </summary>
+    public int count_can_craft(IItemCollection i, bool maximal_use = false, int max_count = 10)
+    {
+        return count_can_craft(i, out Dictionary<string, int> ignored, maximal_use: maximal_use, max_count: max_count);
     }
 
     /// <summary> Check if this recipe is craftable from the given item collections.
@@ -102,6 +134,14 @@ public class recipe : MonoBehaviour
         foreach (var kv in to_use) from.remove(kv.Key, kv.Value);
         foreach (var p in products) p.create_in(to, track_production: track_production);
         return true;
+    }
+
+    public float time_requirement()
+    {
+        float t = 0;
+        foreach (var tr in GetComponents<time_requirement>())
+            t += tr.time;
+        return t;
     }
 
     public float average_amount_produced(item i)

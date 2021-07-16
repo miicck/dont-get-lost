@@ -527,6 +527,20 @@ public abstract class building_with_inventory : building_material
     protected abstract string inventory_prefab();
     protected virtual void on_set_inventory() { }
 
+    public delegate void inv_callback();
+    inv_callback on_set_inventory_callback;
+    public void add_on_set_inventory_listener(inv_callback callback)
+    {
+        if (inventory != null)
+        {
+            // Call immediately if inventory is already set
+            callback();
+            return;
+        }
+
+        on_set_inventory_callback += callback;
+    }
+
     public override void on_first_register()
     {
         base.on_first_register();
@@ -540,6 +554,7 @@ public abstract class building_with_inventory : building_material
         {
             inventory = (inventory)child;
             on_set_inventory();
+            on_set_inventory_callback?.Invoke();
         }
     }
 }
