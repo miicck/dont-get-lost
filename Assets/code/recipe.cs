@@ -181,6 +181,9 @@ public class recipe : MonoBehaviour
         foreach (var w in Resources.LoadAll<workshop>("items"))
             ret.Add(new KeyValuePair<string, recipe[]>(w.name + " (made by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
 
+        foreach (var g in Resources.LoadAll<gradual_processor>("items"))
+            ret.Add(new KeyValuePair<string, recipe[]>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
+
         return ret;
     }
 

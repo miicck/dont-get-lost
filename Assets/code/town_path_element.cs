@@ -652,7 +652,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
                 foreach (var n in current.linked_elements())
                 {
-                    if (closed_set.Contains(n))
+                    if (n == null || closed_set.Contains(n))
                         continue;
 
                     // Work out tentative path length to n, if we wen't via current

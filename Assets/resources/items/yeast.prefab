@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: e6e539aa95315624685485d07f4b9973, type: 3}
+  sprite: {fileID: 21300000, guid: f60b0afd676f6ef478afa7161bd858e7, type: 3}
   plural: yeast
   value: 0
   fuel_value: 0
