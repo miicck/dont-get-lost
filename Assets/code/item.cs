@@ -396,7 +396,11 @@ public class item : networked, IPlayerInteractable
 
         // Food value
         if (item.food_values != null)
+        {
             info += "Food values: " + item.food_values.shorthand_notation() + "\n";
+            var me = item.GetComponent<food_mood_effect>();
+            if (me != null) info += "Food mood effect " + (me.effect.delta_mood > 0 ? "+" : "") + me.effect.delta_mood;
+        }
 
         if (item is contract)
         {

@@ -45,11 +45,22 @@ public class item_dispenser : MonoBehaviour, IItemCollection
 
     private void Update()
     {
-        while (input.item_count > 0)
-            add(input.release_item(0), 1);
+        if (input.item_count > 0)
+        {
+            if (can_add(input.peek_item(0), 1, out item_locator locator))
+                add(input.release_item(0), 1);
+            else if (overflow_output != null)
+                overflow_items.Add(input.release_item(0));
+        }
 
         foreach (var i in new List<item>(overflow_items))
         {
+            if (overflow_output == null)
+            {
+                item_rejector.create(i);
+                continue;
+            }
+
             if (utils.move_towards_and_look(i.transform,
                 overflow_output.transform.position,
                 Time.deltaTime, level_look: false))
@@ -77,13 +88,15 @@ public class item_dispenser : MonoBehaviour, IItemCollection
         return ret;
     }
 
-    public bool add(item itm, int count)
+    bool can_add(item i, int count, out item_locator locator)
     {
+        locator = null;
+
         if (count != 1)
             throw new System.Exception("Items should be added to dispensers one at a time!");
 
-        // Find an available locator
-        item_locator locator = null;
+        if (!accept_item(i)) return false;
+
         foreach (var l in locators)
             if (l.item == null)
             {
@@ -91,8 +104,17 @@ public class item_dispenser : MonoBehaviour, IItemCollection
                 break;
             }
 
+        if (locator == null) return false;
+        return true;
+    }
+
+    public bool add(item itm, int count)
+    {
+        if (count != 1)
+            throw new System.Exception("Items should be added to dispensers one at a time!");
+
         // Reject unacceptable items, or if there are no outputs
-        if (locator == null || !accept_item(itm))
+        if (!can_add(itm, count, out item_locator locator))
         {
             // Reject item (give to overflow output if we have one)
             if (overflow_output == null)

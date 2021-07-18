@@ -21,6 +21,7 @@ public class food_dipsenser : walk_to_settler_interactable
 
     settler_animations.simple_work work_anim;
     float time_dispensing;
+    float time_started;
 
     public bool food_available => item_dispenser.has_items_to_dispense;
 
@@ -50,6 +51,7 @@ public class food_dipsenser : walk_to_settler_interactable
     {
         // Reset stuff
         time_dispensing = 0f;
+        time_started = Time.time;
         work_anim = new settler_animations.simple_work(s);
     }
 
@@ -71,7 +73,8 @@ public class food_dipsenser : walk_to_settler_interactable
         Destroy(food.gameObject);
 
         // Complete if we've eaten enough
-        if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL)
+        if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL ||
+            Time.time - time_started > 5f)
             return STAGE_RESULT.TASK_COMPLETE;
         else
             return STAGE_RESULT.STAGE_UNDERWAY;
