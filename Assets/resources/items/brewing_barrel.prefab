@@ -266,7 +266,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1da3aced4fcd5fe42a3b2f97165a8021, type: 3}
   plural: brewing barrels
-  value: 0
+  value: 1
   fuel_value: 0
   axes_scale: 1
   automatic_input: {fileID: 7042218251646886468}

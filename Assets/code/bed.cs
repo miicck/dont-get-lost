@@ -47,6 +47,9 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
         // Lie down
         s.transform.position = sleep_orientation.position;
         s.transform.rotation = sleep_orientation.rotation;
+
+        // Close eyes
+        s.GetComponentInChildren<facial_expression>().eyes_closed = true;
     }
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
@@ -69,6 +72,9 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
     {
         // Un-lie down
         s.transform.rotation = Quaternion.identity;
+
+        // Un-close (open?) eyes
+        s.GetComponentInChildren<facial_expression>().eyes_closed = false;
 
         // Add mood effects
         s.add_mood_effect("just_got_up");

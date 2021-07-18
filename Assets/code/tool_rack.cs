@@ -18,6 +18,30 @@ public class tool_rack : walk_to_settler_interactable
     // UNITY callbacks //
     //#################//
 
+    int items_in_rack
+    {
+        get
+        {
+            int count = 0;
+
+            // Count tools in slot junctions
+            foreach (var sj in slot_junctions)
+                foreach (Transform c in sj.transform)
+                    if (c.GetComponent<tool>() != null)
+                        ++count;
+
+            // Count tools in slots
+            foreach (var s in slots)
+                foreach (Transform c in s)
+                    if (c.GetComponent<tool>() != null)
+                        ++count;
+
+            return count;
+        }
+    }
+
+    int free_slots => Mathf.Max(slots.Count - items_in_rack, 0);
+
     protected override void Start()
     {
         base.Start();
@@ -35,15 +59,15 @@ public class tool_rack : walk_to_settler_interactable
     private void Update()
     {
         // Accept inputs
-        if (input.item_count > 0)
-            foreach (var i in input.relesae_all_items())
-            {
-                i.transform.SetParent(slot_junctions[0]);
-                i.transform.position = input_point;
-                Vector3 fw = output_point - input_point;
-                fw.y = 0;
-                i.transform.forward = fw;
-            }
+        if (input.item_count > 0 && free_slots > 0)
+        {
+            var i = input.release_next_item();
+            i.transform.SetParent(slot_junctions[0]);
+            i.transform.position = input_point;
+            Vector3 fw = output_point - input_point;
+            fw.y = 0;
+            i.transform.forward = fw;
+        }
 
         // Move things along the junctions
         for (int i = 0; i < slot_junctions.Count; ++i)

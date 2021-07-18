@@ -293,7 +293,6 @@ MonoBehaviour:
   axes_scale: 1
   teleport_location: {fileID: 7935551658518450860}
   path_element: {fileID: 9218543385975625420}
-  outside_link: {fileID: 2854756495304857481}
 --- !u!1 &6213388330985076314
 GameObject:
   m_ObjectHideFlags: 0

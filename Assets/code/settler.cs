@@ -99,6 +99,16 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Otherwise run my current interaction
         if (players_interacting_with.value > 0) return;
         interaction?.interact(this);
+
+        GetComponentInChildren<facial_expression>().expression = current_expression();
+    }
+
+    facial_expression.EXPRESSION current_expression()
+    {
+        int total_mood = this.total_mood();
+        if (Mathf.Abs(total_mood) <= 10) return facial_expression.EXPRESSION.NEUTRAL;
+        if (total_mood < 0) return facial_expression.EXPRESSION.SAD;
+        return facial_expression.EXPRESSION.HAPPY;
     }
 
     protected override void OnDestroy()

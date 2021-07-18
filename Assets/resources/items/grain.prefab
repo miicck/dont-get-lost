@@ -48,7 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 4eb0febc8becedd4db527adabfe6abb2, type: 3}
   plural: grain
-  value: 1
+  value: 2
   fuel_value: 0
   growth_time: 1
   growing_into: {fileID: 4939855331573152688, guid: ee3f5f436fa8d6740a4623227bf127f3, type: 3}

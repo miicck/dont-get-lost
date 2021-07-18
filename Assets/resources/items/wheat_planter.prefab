@@ -443,7 +443,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 7641b74cd5c3eda4db1295cd609312a7, type: 3}
   plural: wheat planters
-  value: 22
+  value: 23
   fuel_value: 0
   axes_scale: 1
 --- !u!114 &3620439260025948234

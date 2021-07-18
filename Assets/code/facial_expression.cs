@@ -6,7 +6,9 @@ public class facial_expression : MonoBehaviour
 {
     public enum EXPRESSION
     {
-        NEUTRAL
+        NEUTRAL,
+        HAPPY,
+        SAD
     }
 
     public EXPRESSION expression
@@ -20,11 +22,23 @@ public class facial_expression : MonoBehaviour
     }
     EXPRESSION _expression;
 
+    public bool eyes_closed
+    {
+        get => _eyes_closed;
+        set
+        {
+            _eyes_closed = value;
+            if (_eyes_closed) blinking = true;
+        }
+    }
+    bool _eyes_closed;
+
     bool blinking
     {
         get => _blinking;
         set
         {
+            if (eyes_closed) value = true;
             if (_blinking == value) return;
             _blinking = value;
             expression = expression;

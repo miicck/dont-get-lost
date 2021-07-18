@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3966449809020136031}
   - component: {fileID: 1088192669539258332}
   m_Layer: 0
-  m_Name: flax_seeds
+  m_Name: flax_seed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
