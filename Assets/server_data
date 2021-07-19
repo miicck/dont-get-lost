@@ -104,6 +104,7 @@ inventories/sack 1 True
 crops/pine_tree 1 True
 items/cpu_eater 1 True
 items/tin 1 True
+mood_effects/ate_without_chair 1 True
 items/log 1 True
 misc/world_object_destroyed 1 True
 items/wooden_town_gate 1 True
@@ -115,6 +116,7 @@ items/gate 1 True
 items/sapling 1 True
 items/iron_platehelm 1 True
 items/titanium_pickaxe 1 True
+mood_effects/ate_without_table 1 True
 items/straw 1 True
 items/wheat_planter 1 True
 items/grain 1 True

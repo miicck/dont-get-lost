@@ -4,23 +4,19 @@ using UnityEngine;
 
 public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
 {
-    public override string task_summary()
-    {
-        return "Eating";
-    }
-
-    List<food_dipsenser> food_dispensers = new List<food_dipsenser>();
-    List<item> foods = new List<item>();
-    int index = 0;
-    town_path_element.path path;
-    float eating_timer = 0;
-    settler_animations.simple_work work_anim;
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
 
     public override string added_inspection_text()
     {
         return base.added_inspection_text() + "\n" +
             "Dining spot (connected dispensers : " + food_dispensers.Count + ")";
     }
+
+    //#################//
+    // UNITY CALLBACKS //
+    //#################//
 
     protected override void Start()
     {
@@ -45,6 +41,17 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         });
     }
 
+    //##############################//
+    // walk_to_settler_interactable //
+    //##############################//
+
+    List<food_dipsenser> food_dispensers = new List<food_dipsenser>();
+    List<item> foods = new List<item>();
+    int index = 0;
+    town_path_element.path path;
+    float eating_timer = 0;
+    settler_animations.simple_work work_anim;
+
     void reset()
     {
         // Reset stuff
@@ -67,15 +74,10 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         return false;
     }
 
-    protected override bool ready_to_assign(settler s)
-    {
-        return s.ready_to_eat() && food_available();
-    }
-
-    protected override void on_arrive(settler s)
-    {
-        reset();
-    }
+    protected override bool ready_to_assign(settler s) => s.ready_to_eat() && food_available();
+    protected override void on_arrive(settler s) => reset();
+    protected override void on_unassign(settler s) => reset();
+    public override string task_summary() => "Eating";
 
     STAGE_RESULT gather_foods(settler s)
     {
@@ -141,10 +143,8 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         work_anim = new settler_animations.simple_work(s);
 
         var c = GetComponentInChildren<chair>();
-        if (c != null)
-        {
-
-        }
+        if (c == null)
+            s.add_mood_effect("ate_without_chair");
 
         return STAGE_RESULT.STAGE_COMPLETE;
     }
@@ -176,11 +176,6 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
             case 1: return arrive_at_spot(s);
             default: return eat_foods(s);
         }
-    }
-
-    protected override void on_unassign(settler s)
-    {
-        reset();
     }
 
     protected override void OnDrawGizmos()

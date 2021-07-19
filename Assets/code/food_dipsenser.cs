@@ -62,7 +62,10 @@ public class food_dipsenser : walk_to_settler_interactable, IAddsToInspectionTex
         // Complete if we've eaten enough
         if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL ||
             Time.time - time_started > 5f)
+        {
+            s.add_mood_effect("ate_without_table");
             return STAGE_RESULT.TASK_COMPLETE;
+        }
         else
             return STAGE_RESULT.STAGE_UNDERWAY;
     }

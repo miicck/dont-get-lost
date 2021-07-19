@@ -36,5 +36,4 @@ TODO
 - Polar bears fall through floor on death/spawn underwater
 - Rail stops (click multiple times to select how many stops along you want to go)
 - generated trading camps
-- Kitchen/dining area (perhaps some better way of specifying components of a meal)
 - Tavern

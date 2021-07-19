@@ -548,6 +548,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         Dictionary<int, int> group_counts = new Dictionary<int, int>();
         foreach (var e in entrypoints)
         {
+            if (e?.element == null) continue;
             if (group_counts.ContainsKey(e.element.group)) group_counts[e.element.group] += 1;
             else group_counts[e.element.group] = 1;
         }

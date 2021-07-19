@@ -106,7 +106,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         List<town_path_element> ret = new List<town_path_element>();
         foreach (var l in links)
             foreach (var lt in l)
-                ret.Add(lt.path_element);
+                if (lt?.path_element != null)
+                    ret.Add(lt.path_element);
         return ret;
     }
 
@@ -115,7 +116,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         List<town_path_element> ret = new List<town_path_element>();
         foreach (var l in links)
             foreach (var lt in l)
-                if (lt.path_element.room == room)
+                if (lt?.path_element != null && lt.path_element.room == room)
                     ret.Add(lt.path_element);
         return ret;
     }
