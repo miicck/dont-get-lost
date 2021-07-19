@@ -21,8 +21,6 @@ TODO
 - Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
   allow the simplification of the code in a lot of places) - does the new callbacks structure of 
   IExtendsNetworked cover these use cases?
-- Brewing!
-- Just make foundary stuff/see if a use for the metal becomes apparent
 - town_path_element.path spread load across multiple frames.
 - Settlers heads move over to their shoulder with time
 - Fishing dock doesn't check for water
@@ -33,9 +31,10 @@ TODO
 - Recreational tasks
 - Make trade carts actually move
 - Stop menus persisting when the object they refer to has been deleted
-- Settlers sometimes get stuck on unconnected path_element's (e.g the unconnected side of a planter)
 - Remove contract system?
 - Market stalls to sell excess (arbitrary) items?
 - Polar bears fall through floor on death/spawn underwater
 - Rail stops (click multiple times to select how many stops along you want to go)
 - generated trading camps
+- Kitchen/dining area (perhaps some better way of specifying components of a meal)
+- Tavern

@@ -5,12 +5,14 @@ using UnityEngine;
 public class has_path_elements : MonoBehaviour
 {
     /// <summary> Returns the path element that a settler from the
-    /// given group can use to access this interactable </summary>
-    public virtual town_path_element path_element(int group)
+    /// given group can use to access this interactable. If 
+    /// <paramref name="group"/> is < 0, then the first element found
+    /// will be returned. </summary>
+    public virtual town_path_element path_element(int group = -1)
     {
         if (this == null) return null;
         foreach (var e in GetComponentsInChildren<town_path_element>())
-            if (e.group == group)
+            if (e.group == group || group < 0)
                 return e;
         return null;
     }
@@ -88,16 +90,37 @@ public abstract class settler_interactable : has_path_elements,
         return true;
     }
 
-    bool try_assign(settler s)
+    enum ASSIGN_FAILURE_MODE
     {
-        if (s == null) return false; // Settler has been deleted
-        if (this == null) return false; // I have been deleted
+        NO_FAILURE,
+        SETTLER_IS_NULL,
+        INTERACTABLE_IS_NULL,
+        ALREADY_ASSIGNED,
+        ALREADY_ASSIGNED_TO_UNLOADED,
+        NOT_POSSIBLE,
+        NOT_READY,
+    }
+
+    bool try_assign(settler s, out ASSIGN_FAILURE_MODE failure)
+    {
+        if (s == null)
+        {
+            failure = ASSIGN_FAILURE_MODE.SETTLER_IS_NULL;
+            return false; // Settler has been deleted
+        }
+
+        if (this == null)
+        {
+            failure = ASSIGN_FAILURE_MODE.INTERACTABLE_IS_NULL;
+            return false; // I have been deleted
+        }
 
         if (settler_id.value > 0 && settler_id.value != s.network_id)
         {
             if (settler != null)
             {
                 cancel_missing_worker_timeout();
+                failure = ASSIGN_FAILURE_MODE.ALREADY_ASSIGNED;
                 return false; // Already assigned to someone else
             }
             else
@@ -110,21 +133,31 @@ public abstract class settler_interactable : has_path_elements,
                 if (!check_missing_worker_timeout())
                 {
                     trigger_missing_worker_timeout();
+                    failure = ASSIGN_FAILURE_MODE.ALREADY_ASSIGNED_TO_UNLOADED;
                     return false;
                 }
             }
         }
 
         // Check if this is possible
-        if (!possible_checks(s)) return false;
+        if (!possible_checks(s))
+        {
+            failure = ASSIGN_FAILURE_MODE.NOT_POSSIBLE;
+            return false;
+        }
 
         // This should be called last so that we can assume within
         // ready_to_assign that the above conditions are met.
-        if (!ready_to_assign(s)) return false;
+        if (!ready_to_assign(s))
+        {
+            failure = ASSIGN_FAILURE_MODE.NOT_READY;
+            return false;
+        }
 
         // Assign the new settler
         settler_id.value = s.network_id;
         current_proficiency = null;
+        failure = ASSIGN_FAILURE_MODE.NO_FAILURE;
         return true;
     }
 
@@ -398,7 +431,7 @@ public abstract class settler_interactable : has_path_elements,
             for (int i = 0; i < load_balancing.iter; ++i)
             {
                 var to_try = possibilities[Random.Range(0, possibilities.Count)];
-                if (to_try.try_assign(s)) return to_try;
+                if (to_try.try_assign(s, out ASSIGN_FAILURE_MODE fm)) return to_try;
             }
         }
 
@@ -439,9 +472,9 @@ public abstract class settler_interactable : has_path_elements,
         assigned_to(s)?.unassign(); // Unassign previous task of s
         i?.unassign(); // Unassign previous settler from i
 
-        if (i != null && !i.try_assign(s)) // Assign i to s
+        if (i != null && !i.try_assign(s, out ASSIGN_FAILURE_MODE fm)) // Assign i to s
         {
-            Debug.LogError("Force assign failed!");
+            Debug.LogError("Force assign failed: " + fm);
             return false;
         }
 

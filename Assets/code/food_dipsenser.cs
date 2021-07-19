@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class food_dipsenser : walk_to_settler_interactable
+public class food_dipsenser : walk_to_settler_interactable, IAddsToInspectionText
 {
     public item_dispenser item_dispenser;
 
@@ -27,24 +27,11 @@ public class food_dipsenser : walk_to_settler_interactable
 
     protected override bool ready_to_assign(settler s)
     {
-        int ms = s.nutrition.metabolic_satisfaction;
+        if (room_info.is_dining_room(path_element().room)) return false;
+        if (!s.ready_to_eat()) return false;
+        if (!food_available) return false;
 
-        // Not hungry
-        if (ms > GUARANTEED_FULL) return false;
-        if (ms > GUARANTEED_EAT)
-        {
-            float probability = ms - GUARANTEED_EAT;
-            probability /= (GUARANTEED_FULL - GUARANTEED_EAT);
-            probability = 1 - probability;
-            if (probability < Random.Range(0, 1f)) return false;
-        }
-
-        // Don't eat if one of my friends is starving
-        if (!s.starving && group_info.has_starvation(s.group))
-            return false;
-
-        // Check if food is available 
-        return food_available;
+        return true;
     }
 
     protected override void on_arrive(settler s)

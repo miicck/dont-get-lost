@@ -121,7 +121,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     }
 
     public delegate bool connected_iter_function(town_path_element e);
-    public void iterate_connected(connected_iter_function f)
+    public void iterate_connected(connected_iter_function f, bool same_room = false)
     {
         HashSet<town_path_element> open = new HashSet<town_path_element> { this };
         HashSet<town_path_element> closed = new HashSet<town_path_element> { };
@@ -136,7 +136,9 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             closed.Add(current);
             open.Remove(current);
 
-            foreach (var n in current.linked_elements())
+            foreach (var n in same_room ?
+                current.linked_elements_in_same_room() :
+                current.linked_elements())
             {
                 if (open.Contains(n)) continue;
                 if (closed.Contains(n)) continue;
@@ -910,4 +912,10 @@ public static class group_info
     }
 
     public static int largest_group() => town_path_element.largest_group();
+}
+
+/// <summary> A centralised source for information about rooms. </summary>
+public static class room_info
+{
+    public static bool is_dining_room(int room) => dining_spot.is_dining_room(room);
 }

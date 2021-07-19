@@ -27,7 +27,7 @@ public class item : networked, IPlayerInteractable
     public int fuel_value = 0;
     public bool is_equpped => GetComponentInParent<player>() != null;
 
-    public food food_values => GetComponent<food>();
+    public food food_values => this?.GetComponent<food>();
 
     void make_logistics_version()
     {

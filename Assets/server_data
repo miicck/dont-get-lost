@@ -46,6 +46,7 @@ items/flowers 1 True
 characters/settler 1 True
 items/triangular_plank_(equilateral) 1 True
 items/trade_cart 1 True
+inventories/dining_table 1 True
 items/coal 1 True
 items/brewing_barrel 1 True
 items/long_flowing_hairstyle 1 True
@@ -89,6 +90,7 @@ items/spinning_wheel 1 True
 items/short_shaggy_hairstyle 1 True
 items/half_log 1 True
 mood_effects/well_fed 1 True
+items/chair 1 True
 items/flax_fibers 1 True
 misc/tech_tree Infinity True
 items/digging_stick 1 True
@@ -175,6 +177,7 @@ mood_effects/exhausted 1 True
 characters/chicken 1 False
 items/slate 1 True
 inventories/player_crafting_menu 1 True
+items/dining_table 1 True
 items/rail 1 True
 items/iron_breastplate 1 True
 items/half_plank_gutter 1 True

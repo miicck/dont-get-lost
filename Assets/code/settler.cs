@@ -58,6 +58,34 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         transform.forward = delta;
     }
 
+    const byte GUARANTEED_FULL = 220;
+    const byte GUARANTEED_EAT = 64;
+
+    public bool ready_to_eat()
+    {
+        // Check needed things exist
+        if (this == null) return false;
+        if (nutrition == null) return false;
+
+        int ms = nutrition.metabolic_satisfaction;
+
+        // Not hungry
+        if (ms > GUARANTEED_FULL) return false;
+        if (ms > GUARANTEED_EAT)
+        {
+            float probability = ms - GUARANTEED_EAT;
+            probability /= (GUARANTEED_FULL - GUARANTEED_EAT);
+            probability = 1 - probability;
+            if (probability < Random.Range(0, 1f)) return false;
+        }
+
+        // Don't eat if one of my friends is starving
+        if (starving && group_info.has_starvation(group))
+            return false;
+
+        return true;
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
