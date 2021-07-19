@@ -7,10 +7,8 @@ public class railcart : item
     public float max_speed = 10f;
     public float acceleration = 1f;
 
-    public override player_interaction[] item_uses()
-    {
-        return new player_interaction[] { new ride_interaction(this) };
-    }
+    public override player_interaction[] item_uses() =>
+        new player_interaction[] { new ride_interaction(this) };
 
     class ride_interaction : player_interaction
     {
@@ -20,6 +18,8 @@ public class railcart : item
         float progress;
         float speed;
 
+        int stops = 0;
+
         public ride_interaction(railcart riding) { this.riding = riding; }
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
@@ -27,6 +27,13 @@ public class railcart : item
         {
             if (current != null) return "Stop riding";
             return "Ride";
+        }
+
+        void announce_stops()
+        {
+            if (stops <= 0) popup_message.create("Stopping at the next station");
+            else if (stops == 1) popup_message.create("Stopping after 1 station");
+            else popup_message.create("Stopping after " + stops + " stations");
         }
 
         public override bool start_interaction(player player)
@@ -40,6 +47,7 @@ public class railcart : item
             next = null;
             progress = 0;
             speed = 0;
+            stops = 0;
 
             // Get the rail the player clicked on
             var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
@@ -52,6 +60,8 @@ public class railcart : item
 
             if (next == null)
                 return true; // No next rail found
+
+            announce_stops();
 
             return false;
         }
@@ -74,17 +84,33 @@ public class railcart : item
                 // We've arrived at the next rail, find the next next rail
                 rail next_next = next.next(next.transform.position - current.transform.position);
                 if (next_next == null) return true; // End of the line
+
+                // We've arrived at a station, decrement the number of stops left
+                if (current.GetComponentInParent<building_material>().name == "rail_stop")
+                {
+                    if (--stops < 0) return true;
+                    announce_stops();
+                }
+
                 current = next;
                 next = next_next;
+
                 progress = 0f;
             }
 
             // Player follows the rail cart
             player.transform.position = current.progress_towards(next, progress);
 
-            // Mouse click dismounts the rail
-            if (controls.triggered(controls.BIND.USE_ITEM))
+            // Alternate use dismounts the rail
+            if (controls.triggered(controls.BIND.ALT_USE_ITEM))
                 return true;
+
+            // Use item increments the number of stops
+            if (controls.triggered(controls.BIND.USE_ITEM))
+            {
+                ++stops;
+                announce_stops();
+            }
 
             return false;
         }

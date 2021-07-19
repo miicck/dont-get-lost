@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class rail : building_material
+public class rail : MonoBehaviour
 {
     /// <summary> The maximum distance between two snap points on different
     /// rails for them to be considered attached. </summary>
@@ -13,6 +13,9 @@ public class rail : building_material
 
     /// <summary> The other rails that I am attached to. </summary>
     HashSet<rail> attached_to = new HashSet<rail>();
+
+    /// <summary> The building snap points at the ends of this rail. </summary>
+    snap_point[] snap_points => GetComponentsInChildren<snap_point>();
 
     /// <summary> Returns true if this rail can connect 
     /// to the <paramref name="other"/> rail. </summary>
@@ -58,10 +61,13 @@ public class rail : building_material
     // UNITY CALLBACKS //
     //#################//
 
+    bool is_equipped => GetComponentInParent<player>() != null;
+    bool is_blueprint => GetComponentInParent<blueprint>() != null;
+
     private void Start()
     {
         // Don't register equipped/blueprint versions
-        if (is_equpped || is_blueprint) return;
+        if (is_equipped || is_blueprint) return;
 
         if (snap_points.Length < 2)
             throw new System.Exception("A rail must have at least 2 snap points!");
@@ -73,7 +79,7 @@ public class rail : building_material
     private void OnDestroy()
     {
         // Don't un-register equipped/blueprint versions
-        if (is_equpped || is_blueprint) return;
+        if (is_equipped || is_blueprint) return;
         unregister(this);
     }
 
