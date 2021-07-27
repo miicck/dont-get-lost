@@ -144,6 +144,7 @@ items/titanium_axe 1 True
 items/chicken_coop 1 True
 items/coin 1 True
 items/mineshaft 1 True
+items/sign 1 True
 misc/teleport_manager Infinity True
 items/flax_planter 1 True
 items/materials_cupboard 1 True

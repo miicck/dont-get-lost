@@ -959,4 +959,77 @@ namespace networked_variables
             return "total xp : " + total_xp;
         }
     }
+
+    public class networked_texture : networked_variable
+    {
+        int xsize;
+        int ysize;
+        Color[,] data;
+
+        public override string state_info() => "texture";
+        public delegate void on_deserialize_func();
+        public on_deserialize_func on_deserialize;
+
+        public networked_texture(int xsize, int ysize)
+        {
+            this.xsize = xsize;
+            this.ysize = ysize;
+            this.data = new Color[xsize, ysize];
+        }
+
+        public override byte[] serialization()
+        {
+            byte[] color_data = new byte[4 * xsize * ysize];
+
+            int i = 0;
+            for (int x = 0; x < xsize; ++x)
+                for (int y = 0; y < ysize; ++y)
+                    for (int n = 0; n < 4; ++n)
+                        color_data[i++] = (byte)(data[x, y][n] * byte.MaxValue);
+
+            return network_utils.concat_buffers(
+                network_utils.encode_int(xsize),
+                network_utils.encode_int(ysize),
+                color_data
+            );
+        }
+
+        protected override void process_serialization(byte[] buffer, ref int offset, int length)
+        {
+            int xsize = network_utils.decode_int(buffer, ref offset);
+            int ysize = network_utils.decode_int(buffer, ref offset);
+
+            if (length != 2 * sizeof(int) + 4 * xsize * ysize)
+            {
+                Debug.LogError("Could not deserialize texture properly!");
+                return;
+            }
+
+            data = new Color[xsize, ysize];
+
+            int i = 0;
+            for (int x = 0; x < xsize; ++x)
+                for (int y = 0; y < ysize; ++y)
+                    for (int n = 0; n < 4; ++n)
+                        data[x, y][n] = buffer[offset + (i++)] / (float)byte.MaxValue;
+
+            on_deserialize?.Invoke();
+        }
+
+        public Color this[int x, int y]
+        {
+            get
+            {
+                if (x < 0 || x >= xsize || y < 0 || y >= ysize) return Color.clear;
+                return data[x, y];
+            }
+
+            set
+            {
+                if (x < 0 || x >= xsize || y < 0 || y >= ysize) return;
+                data[x, y] = value;
+                set_dirty();
+            }
+        }
+    }
 }
