@@ -52,6 +52,7 @@ items/brewing_barrel 1 True
 items/long_flowing_hairstyle 1 True
 items/ale 1 True
 misc/trade_hub Infinity True
+items/trampoline 1 True
 mood_effects/just_got_up 1 True
 items/doorway 1 True
 items/corner_saw 1 True

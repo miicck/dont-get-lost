@@ -18,6 +18,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public const float MAX_FLOAT_VELOCTY = 2f;
     public const float FALL_DAMAGE_START_SPEED = 10f;
     public const float FALL_DAMAGE_END_SPEED = 20f;
+    public const float MAX_BOUNCE_VELOCITY = 15f;
 
     // Movement
     public const float BASE_SPEED = 4f;
@@ -769,6 +770,20 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             if (!climbing_ladder) velocity.y -= GRAVITY * Time.deltaTime;
         }
 
+        foreach (var h in player_raycast(move, move.magnitude * 2f))
+        {
+            var t = h.collider.gameObject.GetComponent<trampoline>();
+            if (t != null)
+            {
+                float mult = controls.held(controls.BIND.CROUCH) ? 1.2f : 2.2f;
+                velocity -= mult * Vector3.Project(velocity, h.normal);
+                move -= mult * Vector3.Project(move, h.normal);
+                if (velocity.magnitude > MAX_BOUNCE_VELOCITY)
+                    velocity = velocity.normalized * MAX_BOUNCE_VELOCITY;
+                t.bounce_player(this, h);
+            }
+        }
+
         controller.Move(move);
 
         // Ensure we stay above the terrain (unless we're underground)
@@ -794,6 +809,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         return ladder.in_ladder_volume(transform.position +
             Vector3.up * 0.1f +
             move.normalized * WIDTH * 0.6f);
+    }
+
+    public RaycastHit[] player_raycast(Vector3 direction, float distance)
+    {
+        Vector3 upper_sphere = transform.position + Vector3.up * (HEIGHT - WIDTH / 2f);
+        Vector3 lower_sphere = transform.position + Vector3.up * WIDTH / 2f;
+        return Physics.CapsuleCastAll(upper_sphere, lower_sphere, WIDTH / 2f, direction, distance);
     }
 
     const float FLY_SPEED_RESET = 10f;

@@ -36,3 +36,4 @@ TODO
 - Polar bears fall through floor on death/spawn underwater
 - generated trading camps
 - Tavern
+- Manual fishing
