@@ -454,12 +454,14 @@ public class blueprint : MonoBehaviour
         axes.transform.SetParent(transform);
         axes.transform.localPosition = Vector3.zero;
         axes.transform.localRotation = Quaternion.identity;
+        axes.transform.localScale = Vector3.one * building.axes_scale;
 
         // Create the rotation axes
         rotation_axes = Resources.Load<axes>("misc/rotation_axes").inst();
         rotation_axes.transform.SetParent(transform);
         rotation_axes.transform.localPosition = Vector3.zero;
         rotation_axes.transform.localRotation = Quaternion.identity;
+        rotation_axes.transform.localScale = Vector3.one * building.axes_scale;
 
         // Initialize the pivot
         pivot_index = pivot_index;

@@ -830,7 +830,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             cinematic_recording.toggle_playback();
     }
 
-    public void teleport(Vector3 location)
+    public delegate void teleportCallback();
+
+    public void teleport(Vector3 location, teleportCallback on_arrive = null)
     {
         if (controller == null)
             return;
@@ -852,6 +854,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         chunk.add_generation_listener(transform, chunk_coords[0], chunk_coords[1], (c) =>
         {
             controller.enabled = true;
+            on_arrive?.Invoke();
         });
     }
 

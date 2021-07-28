@@ -406,6 +406,7 @@ public abstract class biome : MonoBehaviour
     static List<MethodInfo> modifier_list;
 
     public static int active_biomes => biome_list == null ? 0 : biome_list.Count;
+    public static string nth_biome(int n) => biome_list[n].ReturnType.Name;
 
     public static void initialize()
     {

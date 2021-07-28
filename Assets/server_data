@@ -61,6 +61,7 @@ items/crane 1 True
 items/cabbage 1 True
 items/sawmill 1 True
 items/iron_axe 1 True
+items/bamboo 1 True
 items/flax_plant 1 True
 misc/map_ping Infinity False
 inventories/buffer_chest 1 True

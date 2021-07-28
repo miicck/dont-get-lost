@@ -51,12 +51,24 @@ MonoBehaviour:
   seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
-  max_terrain_angle: 90
+  max_terrain_angle: 45
   min_terrain_angle: 0
   random_move_amplitude: 0
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+--- !u!114 &427284525013377045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4716687645134604801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f451eb843474847b1ca8620189a3b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8371286482976431206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,18 +86,6 @@ MonoBehaviour:
   min_count: 1
   max_count: 3
   one_in_chance: 1
---- !u!114 &427284525013377045
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4716687645134604801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4f451eb843474847b1ca8620189a3b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &3626778112097227528
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -93,6 +93,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 8074755294059997682}
     m_Modifications:
+    - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
@@ -106,6 +110,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.7071068
       objectReference: {fileID: 0}
@@ -116,14 +124,6 @@ PrefabInstance:
     - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071067
-      objectReference: {fileID: 0}
-    - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: e5a01e8f5251ab64391ec1c6128f4659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

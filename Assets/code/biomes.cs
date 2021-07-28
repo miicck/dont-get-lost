@@ -607,6 +607,7 @@ public class charred_forest : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class ice_ocean : biome
 {
     public const float OSCILLATION_PERIOD = 64f;
@@ -1040,6 +1041,10 @@ public class tangled_forest : biome
 {
     int i_stage = 0;
 
+    public const float MANGROVE_START_ALT = world.SEA_LEVEL - 2;
+    public const float MANGROVE_DECAY_ALT = 2f;
+    public const float MANGROVE_PROB = 0.02f;
+
     protected override bool continue_generate_grid()
     {
         int i = i_stage;
@@ -1057,6 +1062,19 @@ public class tangled_forest : biome
                 p.object_to_generate = world_object.load("tree");
             else if (random.range(0, 100) == 0)
                 p.object_to_generate = world_object.load("ground_ore");
+            else
+            {
+                // Work out mangrove amount, starts slightly below sea
+                // level so mangroves go into water
+                float man_amt = 0;
+                if (p.altitude > MANGROVE_START_ALT)
+                    man_amt = Mathf.Exp(
+                        -(p.altitude - MANGROVE_START_ALT) / MANGROVE_DECAY_ALT);
+
+                // Generate mangroves
+                if (random.range(0, 1f) < man_amt * MANGROVE_PROB)
+                    p.object_to_generate = world_object.load("mangroves");
+            }
         }
 
         return ++i_stage >= SIZE;
@@ -1075,6 +1093,7 @@ public class bamboo_marsh : biome
             var p = grid[i, j] = new point();
             p.fog_distance = fog_distances.VERY_CLOSE;
             p.altitude = world.SEA_LEVEL + 10f * Mathf.PerlinNoise(i / 32f, j / 32f) - 6f;
+            p.water_color = water_colors.swampy_green;
 
             if (p.altitude > world.SEA_LEVEL - 1f)
             {
@@ -1200,6 +1219,10 @@ public class snowy_peaks : biome
             {
                 if (random.range(0, 400) == 0)
                     p.object_to_generate = world_object.load("ice_sheet_transparent");
+                else if (random.range(0, 400) == 0)
+                    p.object_to_generate = world_object.load("iceberg");
+                else if (random.range(0, 1000) == 0)
+                    p.object_to_generate = world_object.load("ice_sheet_polar_bear");
             }
         }
 
@@ -1251,6 +1274,7 @@ public class jungle_cliff_islands : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class volcano_field : biome
 {
     int i_stage = 0;
@@ -1341,13 +1365,23 @@ public class willow_lakes : biome
             p.beach_color = terrain_colors.marshy_grass;
             p.fog_distance = 30f;
 
-            if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
+            if (random.range(0, 128) == 0)
+                p.object_to_generate = world_object.load("bush");
+            else if (random.range(0, 128) == 0)
+                p.object_to_generate = world_object.load("boulder");
+            else if (random.range(0, 128) == 0)
+                p.object_to_generate = world_object.load("flowers");
+            else if (random.range(0, 256) == 0)
+                p.object_to_generate = world_object.load("ground_ore");
+            else if (random.range(0, 256) == 0)
+                p.object_to_generate = world_object.load("apple_tree");
+            else if (p.altitude < point.BEACH_END && p.altitude > world.SEA_LEVEL)
             {
+                // On the beach, generate willow trees
                 if (random.range(0, 32) == 0)
                     p.object_to_generate = world_object.load("willow_tree");
-                else if (random.range(0, 200) == 0)
-                    p.object_to_generate = world_object.load("ground_ore");
             }
+
         }
 
         return ++i_stage >= SIZE;
@@ -1426,8 +1460,14 @@ public class tabletop_mountain : biome
 
             if (diff > 0.75f && i % 2 == 0 && j % 2 == 0)
                 p.object_to_generate = world_object.load("overhanging_tree");
+            else if (diff > 0.25f && random.range(0, 2) == 0 && i % 4 == 0 && j % 4 == 0)
+                p.object_to_generate = world_object.load("tier_cliff");
             else if (random.range(0, 600) == 0)
                 p.object_to_generate = world_object.load("flat_top_tree");
+            else if (random.range(0, 64) == 0)
+                p.object_to_generate = world_object.load("bush");
+            else if (random.range(0, 256) == 0)
+                p.object_to_generate = world_object.load("foxglove");
         }
 
         return ++i_stage >= SIZE;

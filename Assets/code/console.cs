@@ -8,6 +8,7 @@ public class console : MonoBehaviour
     static console current;
     static List<string> command_history;
     static int command_history_position = 0;
+    static int biome_tour_position = 0;
 
     public delegate bool console_command(string[] args);
     public struct console_info
@@ -759,6 +760,34 @@ public class console : MonoBehaviour
 
             description = "Force a settler to assign themselves to the object you are looking at.",
             usage_example = "force_assign"
+        },
+
+        ["biome_tour"] = new console_info
+        {
+            command = (args) =>
+            {
+                string name = biome.nth_biome(biome_tour_position);
+                biome_tour_position = (biome_tour_position + 1) % biome.active_biomes;
+
+                var c = biome.coords(player.current.transform.position);
+                utils.search_outward_2d(c[0], c[1], 50, (x, z) =>
+                {
+                    if (biome.peek_biome_type(x, z).Name == name)
+                    {
+                        player.current.teleport(new Vector3(x, 0, z) * biome.SIZE, on_arrive: () =>
+                        {
+                            popup_message.create("Jumped to biome: " + name);
+                        });
+                        return true;
+                    }
+                    return false;
+                });
+
+                return true;
+            },
+
+            description = "Call to jump to the next biome in a cyclic tour of all biomes.",
+            usage_example = "biome_tour"
         }
     };
 
