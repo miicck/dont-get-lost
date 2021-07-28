@@ -106,7 +106,7 @@ GameObject:
   - component: {fileID: 8574334041099165386}
   - component: {fileID: 895523511329660356}
   m_Layer: 0
-  m_Name: sign
+  m_Name: glowing_sign
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -142,8 +142,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: b61ce21774065b046a21f4f7631484ff, type: 3}
-  plural: signs
+  sprite: {fileID: 21300000, guid: 8922425f2a85d074092fa6fecf72e870, type: 3}
+  plural: glowing signs
   value: 0
   fuel_value: 0
   axes_scale: 1
@@ -399,4 +399,4 @@ MonoBehaviour:
   xsize: 32
   ysize: 16
   pixel_size: 0.03125
-  material: {fileID: 2100000, guid: 1f163a3c245f53d479a621b9d1c390f2, type: 2}
+  material: {fileID: 2100000, guid: 01b2b33765d5e9a42a958d3a9338222e, type: 2}

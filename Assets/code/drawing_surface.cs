@@ -7,6 +7,7 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
     public int xsize = 10;
     public int ysize = 10;
     public float pixel_size = 0.1f;
+    public Material material;
 
     GameObject drawing_quad;
 
@@ -42,7 +43,7 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
         drawing_quad.transform.localScale = new Vector3(xsize * pixel_size, ysize * pixel_size);
 
         var mr = drawing_quad.GetComponent<MeshRenderer>();
-        mr.sharedMaterial = Resources.Load<Material>("materials/drawing_surface");
+        mr.sharedMaterial = material;
         mr.material.mainTexture = tex;
     }
 
