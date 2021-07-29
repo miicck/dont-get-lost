@@ -344,6 +344,14 @@ public class blueprint : MonoBehaviour
 
     void translate_to(Vector3 v)
     {
+        // Don't allow translation beyond the render range
+        if (player.current != null)
+            if ((player.current.transform.position - v).magnitude > game.render_range)
+                return;
+
+        for (int i = 0; i < 3; ++i)
+            if (float.IsNaN(v[i]) || float.IsInfinity(v[i])) return;
+
         Vector3 delta = v - transform.position;
         accumulated_adjustment += delta.magnitude / 0.1f;
         transform.position = v;
