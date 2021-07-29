@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class load_balancing
 {
-    const float SMOOTHING_AMT = 0.6f;
+    const float SMOOTHING_AMT = 0.99f;
     const int MIN_ITER = 4;
     const int ITER_PER_EXTRA_FPS = 1;
     const int VSYNC_WINDOW = 1;
@@ -16,6 +16,8 @@ public static class load_balancing
     static int target_fps = 60;
     static int extra_fps = 0;
     static int extra_iter = 0;
+
+    public static bool enabled = true;
 
     /// <summary> Update the timing information needed to perform load balancing. </summary>
     public static void update()
@@ -34,6 +36,8 @@ public static class load_balancing
         vboost *= 1f - Time.deltaTime;
 
         extra_iter = Mathf.Max(extra_fps * ITER_PER_EXTRA_FPS, (int)vboost);
+        extra_iter = (int)Mathf.Pow(extra_iter, 0.5f);
+        if (!enabled) extra_iter = 0;
     }
 
     /// <summary> The number of iterations of compute-heavy tasks to 

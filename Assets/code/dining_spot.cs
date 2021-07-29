@@ -170,6 +170,9 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        // Don't do anything on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
         switch (stage)
         {
             case 0: return gather_foods(s);

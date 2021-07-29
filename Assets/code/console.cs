@@ -788,6 +788,19 @@ public class console : MonoBehaviour
 
             description = "Call to jump to the next biome in a cyclic tour of all biomes.",
             usage_example = "biome_tour"
+        },
+
+        ["toggle_load_balancer"] = new console_info
+        {
+            command = (args) =>
+            {
+                load_balancing.enabled = !load_balancing.enabled;
+                popup_message.create("Load balancer " + (load_balancing.enabled ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle the load balancer.",
+            usage_example = "toggle_load_balancer"
         }
     };
 

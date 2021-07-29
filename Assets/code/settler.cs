@@ -80,7 +80,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
 
         // Don't eat if one of my friends is starving
-        if (starving && group_info.has_starvation(group))
+        if (!starving && group_info.has_starvation(group))
             return false;
 
         return true;
