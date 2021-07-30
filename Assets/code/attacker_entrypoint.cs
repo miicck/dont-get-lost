@@ -406,6 +406,8 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             Debug.LogError("Attacker entrypoint is not networked");
             return;
         }
+        if (!nw.has_authority) return; // Only trigger attacks on auth client
+
         client.create(path[path.length - 1], "characters/" + character, parent: nw);
     }
 
