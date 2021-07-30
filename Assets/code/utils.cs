@@ -446,6 +446,15 @@ public static class utils
         return char.ToUpper(s[0]) + s.Substring(1);
     }
 
+    public static string capitalize_each_word(this string s)
+    {
+        char[] chars = new char[s.Length];
+        chars[0] = char.ToUpper(s[0]);
+        for (int i = 1; i < s.Length; ++i)
+            chars[i] = s[i - 1] == ' ' ? char.ToUpper(s[i]) : s[i];
+        return new string(chars);
+    }
+
     public static float tanh(float x)
     {
         return (Mathf.Exp(x) - Mathf.Exp(-x)) / (Mathf.Exp(x) + Mathf.Exp(-x));

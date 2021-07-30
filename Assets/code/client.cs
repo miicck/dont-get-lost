@@ -71,7 +71,17 @@ public static class client
     /// connected during this session. </summary>
     public static player_info get_player_info(string username)
     {
+        // Try with name as given
         if (player_infos.TryGetValue(username, out player_info pi)) return pi;
+
+        // Try with name with underscores replaced with spaces
+        username = username.Replace('_', ' ');
+        if (player_infos.TryGetValue(username, out pi)) return pi;
+
+        // Try with name with each word capitalized
+        username = username.capitalize_each_word();
+        if (player_infos.TryGetValue(username, out pi)) return pi;
+
         return null;
     }
 
