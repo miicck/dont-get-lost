@@ -8,6 +8,7 @@ public class leg : MonoBehaviour
     const float EPS_MAG = 0.001f;
     const float MIN_FOOT_SPEED = 0.2f;
     const float MIN_STEP_SIZE = 0.01f;
+    const float FOOT_RESET_DIST = 0.01f;
     const float SOUND_DISTANCE = 20f;
 
     public Transform character;
@@ -450,7 +451,14 @@ public class leg : MonoBehaviour
 
         if (velocity.magnitude < EPS_MAG)
         {
-            // Essentially not moving, stay as we are
+            // Essentially not moving, reset to default position
+            if ((foot_base.position - step_centre.position).sqrMagnitude >
+                FOOT_RESET_DIST * FOOT_RESET_DIST)
+            {
+                move_foot_towards(step_centre.position);
+                solve_leg();
+            }
+
             return;
         }
 
