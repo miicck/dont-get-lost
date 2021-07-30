@@ -96,11 +96,16 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         work_anim = null;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    STAGE_RESULT gather_materials(settler s)
     {
+        // Don't do anything on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        // Don't know what to gather
         if (to_pickup == null) return STAGE_RESULT.TASK_FAILED;
+
+        // Loop over items to pickup
         foreach (var kv in to_pickup)
-        {
             switch (kv.Key.path.walk(s, s.walk_speed, forwards: walking_to_dispenser))
             {
                 case town_path_element.path.WALK_STATE.COMPLETE:
@@ -125,9 +130,14 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
                 default:
                     return STAGE_RESULT.TASK_FAILED;
             }
-        }
 
-        // All materials have been gathered - time to craft
+        // Completed the gather-and-return stage
+        return STAGE_RESULT.STAGE_COMPLETE;
+    }
+
+    STAGE_RESULT craft(settler s)
+    {
+        // Play the work animation
         if (work_anim == null)
         {
             s.look_at(transform.position);
@@ -136,13 +146,32 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         }
         work_anim.play();
 
+        // Don't do anything else on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        // Increment crafting timer/eventually complete the crafting stage
         timer += Time.deltaTime * current_proficiency.total_multiplier;
         if (timer < base_craft_time) return STAGE_RESULT.STAGE_UNDERWAY;
+        return STAGE_RESULT.STAGE_COMPLETE;
+    }
 
+    STAGE_RESULT create_output()
+    {
         foreach (var p in current_recipe.products)
             p.create_in_node(product_output, track_production: true);
-
         return STAGE_RESULT.TASK_COMPLETE;
+    }
+
+    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    {
+        // Delegate interaction to approprate stage
+        switch (stage)
+        {
+            case 0: return gather_materials(s);
+            case 1: return craft(s);
+            case 2: return create_output();
+            default: return STAGE_RESULT.TASK_FAILED;
+        }
     }
 
     bool validate_recipe()

@@ -19,6 +19,9 @@ public static class version_control
         return null;
     }
 
+#if UNITY_EDITOR
+    [UnityEditor.Callbacks.DidReloadScripts]
+#endif
     public static void on_startup()
     {
 #if UNITY_EDITOR
@@ -78,6 +81,8 @@ public static class version_control
         version_prefab.transform.GetChild(1).name = commit_hash;
         version_prefab.transform.GetChild(2).name = commit_date;
         UnityEditor.PrefabUtility.SaveAsPrefabAsset(version_prefab, asset_path);
+
+        Debug.Log("Updated version info to " + version);
 #else
         // Get version info from prefab
         var go = Resources.Load<GameObject>("version_info");
