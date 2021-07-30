@@ -95,6 +95,7 @@ public abstract class settler_interactable : has_path_elements,
         NO_FAILURE,
         SETTLER_IS_NULL,
         INTERACTABLE_IS_NULL,
+        WRONG_GROUP,
         ALREADY_ASSIGNED,
         ALREADY_ASSIGNED_TO_UNLOADED,
         NOT_POSSIBLE,
@@ -113,6 +114,12 @@ public abstract class settler_interactable : has_path_elements,
         {
             failure = ASSIGN_FAILURE_MODE.INTERACTABLE_IS_NULL;
             return false; // I have been deleted
+        }
+
+        if (path_element(s.group) == null)
+        {
+            failure = ASSIGN_FAILURE_MODE.WRONG_GROUP;
+            return false; // This interactable does not have the same group as me
         }
 
         if (settler_id.value > 0 && settler_id.value != s.network_id)

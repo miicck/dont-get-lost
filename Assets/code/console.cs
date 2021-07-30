@@ -728,6 +728,28 @@ public class console : MonoBehaviour
             usage_example = "make_tired"
         },
 
+        ["make_hungry"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    var s = utils.raycast_for_closest<settler>(player.current.camera_ray(), out RaycastHit hit);
+                    if (s == null)
+                    {
+                        popup_message.create("Could not find a settler to make hungry!");
+                        return;
+                    }
+                    s.nutrition.modify_every_satisfaction(-byte.MaxValue);
+                    popup_message.create("Made " + s.net_name.value + " hungry");
+                });
+                return true;
+            },
+
+            description = "Makes the settler you are looking at 100% hungry.",
+            usage_example = "make_hungry"
+        },
+
         ["kick"] = new console_info
         {
             command = (args) =>

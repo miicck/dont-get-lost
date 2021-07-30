@@ -37,4 +37,3 @@ TODO
 - generated trading camps
 - Tavern
 - Manual fishing
-- Add skip tutorial command/advance stage
