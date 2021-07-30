@@ -541,7 +541,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     {
         // Can't use quickbar shortcuts if we're carring out a non-simultanous action
         if (!interactions.simultaneous()) return;
-        if (fly_mode) return;
+        if (fly_mode || map_open) return;
 
         // Select quickbar item using keyboard shortcut
         if (controls.triggered(controls.BIND.QUICKBAR_1)) toggle_equip(1);
