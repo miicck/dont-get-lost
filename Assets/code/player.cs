@@ -1354,7 +1354,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public void take_damage(int damage)
     {
-        if (is_dead || god_mode) return;
+        if (is_dead || god_mode.value) return;
         health.value = Mathf.Max(0, health.value - damage);
     }
 
@@ -1466,13 +1466,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     networked_variables.net_float x_rotation;
     networked_variables.net_string username;
     networked_variables.net_bool crouched;
+    networked_variables.net_bool god_mode;
     networked_variables.net_vector3 respawn_point;
     networked_variables.net_color net_hair_color;
     networked_variables.net_color net_skin_color;
     networked_variables.net_int networked_interaction;
     networked_variables.net_int tutorial_stage;
-
-    public bool god_mode = false;
 
     public ulong user_id { get; private set; }
 
@@ -1482,6 +1481,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public void advance_tutorial_stage() { tutorial_stage.value++; }
     public void set_tutorial_stage(int stage) { tutorial_stage.value = stage; }
+    public void toggle_god_mode() => god_mode.value = !god_mode.value;
 
     public int slot_number_equipped => slot_equipped.value;
     public string player_username => username.value;
@@ -1805,6 +1805,16 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                 tutorial.set_stage(tutorial_stage.value);
             });
         };
+
+        // Network god mode
+        god_mode = new networked_variables.net_bool();
+        god_mode.on_change = () =>
+        {
+            popup_message.create("God mode for " + username.value + " " + (god_mode.value ? "enabled" : "disabled"));
+        };
+
+        // Record the existance of this player
+        all_players.Add(this);
     }
 
     public override void on_first_create()
@@ -1866,6 +1876,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     {
         base.on_forget(deleted);
 
+        all_players.Remove(this);
+
         // Delete nametag when player is unloaded
         Destroy(nametag.gameObject);
     }
@@ -1899,6 +1911,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         }
     }
     static player _current;
+
+    /// <summary> All in-range players. </summary>
+    public static List<player> players => new List<player>(all_players);
+    static HashSet<player> all_players = new HashSet<player>();
 
     public static string info()
     {

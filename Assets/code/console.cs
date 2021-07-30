@@ -711,8 +711,7 @@ public class console : MonoBehaviour
             {
                 player.call_when_current_player_available(() =>
                 {
-                    player.current.god_mode = !player.current.god_mode;
-                    popup_message.create("God mode " + (player.current.god_mode ? "enabled" : "disabled"));
+                    player.current.toggle_god_mode();
                 });
                 return true;
             },

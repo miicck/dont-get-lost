@@ -642,16 +642,12 @@ public class character : networked,
         return new default_character_control();
     }
 
-    public bool check_agro(player p)
+    bool unstuck_pos_valid(Vector3 unstuck_pos)
     {
-        if (p.fly_mode) return false; // Don't agro in fly mode
-        return (p.transform.position - transform.position).magnitude < AGRO_RANGE;
-    }
-
-    public bool check_deagro(player p)
-    {
-        if (p.fly_mode) return true;
-        return (p.transform.position - transform.position).magnitude > 2f * AGRO_RANGE;
+        // Check if unstuck position is too close to current position
+        const float MIN_MOVE = 0.1f;
+        if ((unstuck_pos - transform.position).sqrMagnitude < MIN_MOVE * MIN_MOVE) return false;
+        return true;
     }
 
     /// <summary> Call to put the character somewhere sensible. </summary>
@@ -662,21 +658,27 @@ public class character : networked,
             transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
             out RaycastHit hit);
 
-        if (tc == null)
+        if (tc != null && unstuck_pos_valid(hit.point))
         {
-            // Then attempt to unstick onto anything (other than myself)
-            var col = utils.raycast_for_closest<Collider>(new Ray(
-                transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
-                out hit, accept: (h, c) => !c.transform.IsChildOf(transform));
-
-            if (col == null)
-            {
-                Debug.LogError("No collider found to unstick " + name);
-                return;
-            }
+            // Valid point on terrain found, go there
+            transform.position = hit.point;
+            return;
         }
 
-        transform.position = hit.point;
+        // Then attempt to unstick onto anything (other than myself)
+        var col = utils.raycast_for_closest<Collider>(new Ray(
+            transform.position + Vector3.up * world.MAX_ALTITUDE, Vector3.down),
+            out hit, accept: (h, c) => !c.transform.IsChildOf(transform));
+
+        if (col != null && unstuck_pos_valid(hit.point))
+        {
+            // Valid point on collider found, go there
+            transform.position = hit.point;
+            return;
+        }
+
+        // Just diffuse around (Nudge character)
+        transform.position += Random.onUnitSphere * 0.5f;
     }
 
     public bool move_towards(Vector3 point, float speed, out bool failed, float arrive_distance = -1)
@@ -936,6 +938,7 @@ public class idle_wander : ICharacterController
             random_path.success_func sf = (v) => (v - start).magnitude > character.IDLE_WALK_RANGE;
             path = new random_path(start, c, sf, midpoint_successful: sf);
             path.on_invalid_start = () => c?.unstuck();
+            path.on_invalid_end = () => c?.unstuck();
             index = 0;
             going_forward = true;
         }
@@ -1274,38 +1277,43 @@ public class default_character_control : ICharacterController
 {
     ICharacterController subcontroller;
 
+    void check_for_player_interactions(character c)
+    {
+        foreach (var p in player.players)
+        {
+            if (p == null) continue;
+
+            // Apply awareness modifications
+            c.run_awareness_checks(p);
+            if (!c.is_aware) continue; // Not yet aware
+
+            switch (c.friendliness)
+            {
+                case character.FRIENDLINESS.FRIENDLY:
+                    break; // Just wander around idly
+
+                case character.FRIENDLINESS.AFRAID:
+                    subcontroller = new flee_controller(p.transform);
+                    break;
+
+                case character.FRIENDLINESS.AGRESSIVE:
+                    subcontroller = new chase_controller(p.transform, p);
+                    break;
+            }
+
+            break;
+        }
+    }
+
     public void control(character c)
     {
-        if (subcontroller == null)
-            subcontroller = new idle_wander();
-
-        if (player.current == null) return;
-
-        // Apply awareness modifications
-        c.run_awareness_checks(player.current);
-
+        // If wandering idly, check for interactions with players
         if (subcontroller is idle_wander)
-        {
-            if (c.is_aware)
-                switch (c.friendliness)
-                {
-                    case character.FRIENDLINESS.FRIENDLY:
-                        break; // Just wander around idly
+            check_for_player_interactions(c);
 
-                    case character.FRIENDLINESS.AFRAID:
-                        subcontroller = new flee_controller(player.current.transform);
-                        break;
-
-                    case character.FRIENDLINESS.AGRESSIVE:
-                        subcontroller = new chase_controller(player.current.transform, player.current);
-                        break;
-                }
-        }
-        else
-        {
-            if (!c.is_aware)
-                subcontroller = new idle_wander();
-        }
+        // If character is not aware, return to wandering idly
+        else if (subcontroller == null || !c.is_aware)
+            subcontroller = new idle_wander();
 
         subcontroller.control(c);
     }
