@@ -133,46 +133,14 @@ public class item : networked, IPlayerInteractable
     // PLAYER USE //
     //############//
 
-    player_interaction[] interactions;
-
-    public virtual player_interaction[] item_uses()
-    {
-        if (interactions == null)
-        {
-            interactions = new player_interaction[]
-            {
-                new place_on_gutter(this)
-            };
-        }
-        return interactions;
-    }
+    // No default interactions
+    player_interaction[] interactions = new player_interaction[0];
+    public virtual player_interaction[] item_uses() => interactions;
 
     abstract class player_item_interaction : player_interaction
     {
         protected item item { get; private set; }
         public player_item_interaction(item item) { this.item = item; }
-    }
-
-    class place_on_gutter : player_item_interaction
-    {
-        public place_on_gutter(item i) : base(i) { }
-
-        public override controls.BIND keybind => controls.BIND.PLACE_ON_GUTTER;
-
-        public override string context_tip()
-        {
-            return "place " + item.display_name + " on gutter";
-        }
-
-        public override bool start_interaction(player player)
-        {
-            var ray = player.camera_ray(player.INTERACTION_RANGE, out float dis);
-            var gutter = utils.raycast_for_closest<item_gutter>(ray, out RaycastHit hit, dis);
-            if (gutter == null) return true;
-            if (player.inventory.remove(item, 1))
-                gutter.add_item(create(item.name, hit.point, Quaternion.identity, logistics_version: true));
-            return true;
-        }
     }
 
     /// <summary> Called when this item is equipped.</summary>
