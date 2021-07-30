@@ -1480,7 +1480,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public bool networked_interaction_underway(controls.BIND bind) { return networked_interaction.value == (int)bind; }
 
     public void advance_tutorial_stage() { tutorial_stage.value++; }
+    public void retreat_tutorial_stage() { tutorial_stage.value--; }
     public void set_tutorial_stage(int stage) { tutorial_stage.value = stage; }
+
     public void toggle_god_mode() => god_mode.value = !god_mode.value;
 
     public int slot_number_equipped => slot_equipped.value;

@@ -507,6 +507,42 @@ public class console : MonoBehaviour
             usage_example = "set_tutorial_stage 0"
         },
 
+        ["advance_tutorial_stage"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() => player.current.advance_tutorial_stage());
+                return true;
+            },
+
+            description = "Advance one stage in the tutorial.",
+            usage_example = "advance_tutorial_stage"
+        },
+
+        ["retreat_tutorial_stage"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() => player.current.retreat_tutorial_stage());
+                return true;
+            },
+
+            description = "Retreat one stage in the tutorial.",
+            usage_example = "retreat_tutorial_stage"
+        },
+
+        ["skip_tutorial"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() => player.current.set_tutorial_stage(-1));
+                return true;
+            },
+
+            description = "Skip the tutorial.",
+            usage_example = "skip_tutorial"
+        },
+
         ["clear_inventory"] = new console_info
         {
             command = (args) =>
