@@ -67,7 +67,7 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         foods.Clear();
     }
 
-    bool food_available()
+    public bool food_available()
     {
         foreach (var fd in food_dispensers)
             if (fd.food_available) return true;

@@ -273,7 +273,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         return "Assignment:\n" +
             inter.task_summary().Trim() + "\n" +
-            inter.proficiency_summary(this).Trim();
+            (inter.skill.is_visible ? inter.current_proficiency?.summary() : "");
     }
 
     public string assignment_details()
@@ -283,7 +283,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         return "Assignment:\n" +
             inter.task_summary().Trim() + "\n" +
-            inter.proficiency_breakdown(this).Trim();
+            (inter.skill.is_visible ? inter.current_proficiency?.breakdown() : "");
     }
 
     public string nutrition_info()

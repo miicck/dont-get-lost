@@ -82,6 +82,9 @@ public static class version_control
         version_prefab.transform.GetChild(2).name = commit_date;
         UnityEditor.PrefabUtility.SaveAsPrefabAsset(version_prefab, asset_path);
 
+        // Free stuff
+        UnityEditor.PrefabUtility.UnloadPrefabContents(version_prefab);
+
         Debug.Log("Updated version info to " + version);
 #else
         // Get version info from prefab

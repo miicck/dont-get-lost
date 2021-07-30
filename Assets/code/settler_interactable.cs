@@ -16,6 +16,8 @@ public class has_path_elements : MonoBehaviour
                 return e;
         return null;
     }
+
+    public int path_element_count => GetComponentsInChildren<town_path_element>().Length;
 }
 
 public abstract class settler_interactable : has_path_elements,
@@ -84,7 +86,7 @@ public abstract class settler_interactable : has_path_elements,
         if (!skill.possible_when_under_attack && group_info.under_attack(s.group))
             return false; // Not possible when under attack
 
-        if (s.starving && skill.name != "eating" && group_has_food_available(s.group))
+        if (s.starving && skill.name != "eating" && group_has_food_available_for(s))
             return false; // Not possible when starving/there is food available (unless this is an eating task)
 
         return true;
@@ -102,7 +104,7 @@ public abstract class settler_interactable : has_path_elements,
         NOT_READY,
     }
 
-    bool try_assign(settler s, out ASSIGN_FAILURE_MODE failure)
+    bool can_assign(settler s, out ASSIGN_FAILURE_MODE failure)
     {
         if (s == null)
         {
@@ -116,7 +118,7 @@ public abstract class settler_interactable : has_path_elements,
             return false; // I have been deleted
         }
 
-        if (path_element(s.group) == null)
+        if (path_element_count > 0 && path_element(s.group) == null)
         {
             failure = ASSIGN_FAILURE_MODE.WRONG_GROUP;
             return false; // This interactable does not have the same group as me
@@ -161,6 +163,14 @@ public abstract class settler_interactable : has_path_elements,
             return false;
         }
 
+        failure = ASSIGN_FAILURE_MODE.NO_FAILURE;
+        return true;
+    }
+
+    bool try_assign(settler s, out ASSIGN_FAILURE_MODE failure)
+    {
+        if (!can_assign(s, out failure)) return false;
+
         // Assign the new settler
         settler_id.value = s.network_id;
         current_proficiency = null;
@@ -180,36 +190,74 @@ public abstract class settler_interactable : has_path_elements,
     // Proficiency //
     //#############//
 
-    protected proficiency_info current_proficiency { get; private set; }
+    public proficiency_info current_proficiency { get; private set; }
 
-    protected class proficiency_info
+    public class proficiency_info
     {
         public float total_multiplier { get; private set; }
         public int total_proficiency { get; private set; }
+
         List<proficiency> proficiencies;
+        public void on_unassign() { foreach (var p in proficiencies) p.on_unassign(); }
 
         public proficiency_info(settler s, settler_interactable i)
         {
-            // Work out the total persentage proficiency modifier
-            total_proficiency = 0;
+            // Get the proficiencies (sort by highest effect)
             proficiencies = i.proficiencies(s);
-            foreach (var p in proficiencies)
-                total_proficiency += p.percent_modifier;
-            if (total_proficiency < -90) total_proficiency = -90;
+            proficiencies.Sort((a, b) => Mathf.Abs(a.percent_modifier) < Mathf.Abs(b.percent_modifier) ? 1 : -1);
 
-            // From the above, work out the multiplier
-            total_multiplier = 1f + total_proficiency * 0.01f;
+            // Work out the total multiplier
+            total_multiplier = 1f;
+            foreach (var p in proficiencies)
+                total_multiplier *= 1f + p.percent_modifier * 0.01f;
+
+            // Work out the equivelant as a persentage
+            total_proficiency = (int)((total_multiplier - 1f) * 100f);
         }
 
-        public void on_unassign()
+        public string summary()
         {
-            foreach (var p in proficiencies) p.on_unassign();
+            return "Work speed: " + percent_to_string(total_proficiency);
+        }
+
+        public string breakdown()
+        {
+            string ret = summary();
+            foreach (var p in proficiencies)
+                ret += "\n  " + p.description + " " + percent_to_string(p.percent_modifier, clamp_check: true);
+            return ret;
+        }
+
+        static string percent_to_string(int modifier, bool clamp_check = false)
+        {
+            string ret = (modifier >= 0 ? "+" : "") + modifier + "%";
+            if (clamp_check)
+            {
+                if (modifier == proficiency.MIN_MODIFIER) ret += " (minimum possible)";
+                if (modifier == proficiency.MAX_MODIFIER) ret += " (maximum possible)";
+            }
+            return ret;
         }
     }
 
     protected class proficiency
     {
-        public int percent_modifier { get; private set; }
+        public const int MIN_MODIFIER = -75;
+        public const int MAX_MODIFIER = 200;
+
+        public int percent_modifier
+        {
+            get => _percent_modifier;
+
+            private set
+            {
+                if (value < MIN_MODIFIER) value = MIN_MODIFIER;
+                if (value > MAX_MODIFIER) value = MAX_MODIFIER;
+                _percent_modifier = value;
+            }
+        }
+        int _percent_modifier;
+
         public string description { get; private set; }
 
         public proficiency(int percent_modifier, string description)
@@ -250,29 +298,6 @@ public abstract class settler_interactable : has_path_elements,
         ret.Add(new proficiency(s.skills[skill].proficiency_modifier, "skill level"));
         int total_mood = s.total_mood();
         if (total_mood != 0) ret.Add(new proficiency(total_mood * 5, "mood"));
-        return ret;
-    }
-
-    public string proficiency_summary(settler s)
-    {
-        if (!skill.is_visible || current_proficiency == null) return "";
-
-        int total = current_proficiency.total_proficiency;
-        return "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
-    }
-
-    public string proficiency_breakdown(settler s)
-    {
-        if (!skill.is_visible || current_proficiency == null) return "";
-
-        int total = current_proficiency.total_proficiency;
-        string ret = "Work speed: " + (total >= 0 ? "+" : "") + total + "%";
-
-        foreach (var sm in proficiencies(s))
-            ret += "\n  " + sm.description +
-                (sm.percent_modifier >= 0 ? " +" : " ") +
-                sm.percent_modifier + "%";
-
         return ret;
     }
 
@@ -488,27 +513,16 @@ public abstract class settler_interactable : has_path_elements,
         return true;
     }
 
-    public static bool group_has_food_available(int group)
+    public static bool group_has_food_available_for(settler s)
     {
         if (!interactables.TryGetValue(Resources.Load<skill>("skills/eating"),
-            out List<settler_interactable> dispensers))
-            return false; // No dispensers available
+            out List<settler_interactable> eating_interactions))
+            return false; // No eating interactions available
 
-        // Check for interactables that have food +
-        // are accessible from this group
-        foreach (var d in dispensers)
-        {
-            if (d.settler != null) continue; // Already reserverd
-            if (d.path_element(group) == null) continue; // Not in this group
-
-            if (d is food_dipsenser)
-            {
-                var fd = (food_dipsenser)d;
-                if (!fd.food_available) continue; // No food available in
-            }
-
-            return true;
-        }
+        // Check for eating interactables that are assignable to s
+        foreach (var e in eating_interactions)
+            if (e.can_assign(s, out ASSIGN_FAILURE_MODE fm))
+                return true;
 
         return false;
     }

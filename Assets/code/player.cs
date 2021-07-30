@@ -1483,7 +1483,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public void retreat_tutorial_stage() { tutorial_stage.value--; }
     public void set_tutorial_stage(int stage) { tutorial_stage.value = stage; }
 
-    public void toggle_god_mode() => god_mode.value = !god_mode.value;
+    public void toggle_god_mode()
+    {
+        god_mode.value = !god_mode.value;
+        popup_message.create("God mode for " + username.value + " " + (god_mode.value ? "enabled" : "disabled"));
+    }
 
     public int slot_number_equipped => slot_equipped.value;
     public string player_username => username.value;
@@ -1810,10 +1814,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Network god mode
         god_mode = new networked_variables.net_bool();
-        god_mode.on_change = () =>
-        {
-            popup_message.create("God mode for " + username.value + " " + (god_mode.value ? "enabled" : "disabled"));
-        };
 
         // Record the existance of this player
         all_players.Add(this);

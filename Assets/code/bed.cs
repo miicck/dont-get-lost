@@ -65,7 +65,8 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
             s.tiredness.value -= 1;
         }
 
-        return s.tiredness.value < 5 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
+        int target_tiredness = s.starving ? 60 : 5;
+        return s.tiredness.value < target_tiredness ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     protected override void on_unassign(settler s)
