@@ -481,12 +481,15 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
     public static bool attacks_enabled;
 
-    public static List<attacker_entrypoint> valid_entrypoints()
+    public static List<attacker_entrypoint> valid_entrypoints(int group = -1)
     {
         var ret = new List<attacker_entrypoint>();
         foreach (var e in entrypoints)
-            if (e.path_complete)
-                ret.Add(e);
+        {
+            if (group >= 0 && e.element.group != group) continue;
+            if (!e.path_complete) continue;
+            ret.Add(e);
+        }
         return ret;
     }
 

@@ -456,6 +456,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
     public static int group_at(Vector3 v)
     {
+        if (group_bounds == null) return -1;
+
         int group = -1;
         float min_dis = float.PositiveInfinity;
         foreach (var kv in group_bounds)

@@ -106,7 +106,8 @@ class basic_camp_requirement : tutorial_object
 
     private void Update()
     {
-        var valid_entrypoints = attacker_entrypoint.valid_entrypoints();
+        if (player.current == null) return;
+        var valid_entrypoints = attacker_entrypoint.valid_entrypoints(group: player.current.group);
 
         bool entrypoint = valid_entrypoints.Count > 0;
         bool path_to_bed = false;
