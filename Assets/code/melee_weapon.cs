@@ -114,7 +114,7 @@ public class melee_weapon : equip_in_hand
 
         public override bool start_networked_interaction(player player)
         {
-             if (swinging.swing_audio == null)
+            if (swinging.swing_audio == null)
             {
                 // Default audio
                 swinging.swing_audio = swinging.gameObject.AddComponent<AudioSource>();

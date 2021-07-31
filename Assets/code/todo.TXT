@@ -37,3 +37,4 @@ TODO
 - generated trading camps
 - Tavern
 - Manual fishing
+- Rail network

@@ -1,4 +1,5 @@
 items/plank_gutter 1 True
+items/fishing_rod 1 True
 characters/crocodile 1 False
 inventories/farming_spot 1 True
 items/dynamite 1 True
@@ -206,6 +207,7 @@ crops/cabbage 1 True
 items/small_lumber_contract 1 True
 items/item_splitter 1 True
 mood_effects/well_rested 1 True
+misc/fishing_float 100 True
 items/windmill 1 True
 items/charcoal 1 True
 characters/polar_bear 1 False
