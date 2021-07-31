@@ -158,7 +158,7 @@ public class item_gutter : item_node
 
             // Move first item towards output, dropping it off the end
             if (utils.move_towards(itm.transform, end.position, Time.deltaTime))
-                item_dropper.create(release_item(0), end.position, nearest_output);
+                item_dropper.create(release_item(0), end.position, next_output());
         }
     }
 

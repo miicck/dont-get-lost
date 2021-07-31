@@ -15,8 +15,8 @@ public class item_output : item_node
 
     protected override bool can_output_to(item_node other)
     {
-        // Only one output is allowed
-        return output_count == 0;
+        // Always accept outputs (they will perform input validation)
+        return true;
     }
 
     protected override bool can_input_from(item_node other)

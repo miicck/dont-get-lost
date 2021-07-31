@@ -136,19 +136,33 @@ public abstract class item_node : MonoBehaviour,
         outputs_display = new GameObject("outputs_display").transform;
         outputs_display.position = output_point;
         outputs_display.SetParent(transform);
+        outputs_display.localRotation = Quaternion.identity;
 
         foreach (var n in outputs_to)
         {
             Vector3 input_point = n.input_point(output_point);
             Vector3 delta = input_point - output_point;
-            if (delta.magnitude < 10e-3)
-                continue;
 
-            GameObject path = Resources.Load<GameObject>("misc/output_path").inst();
-            path.transform.SetParent(outputs_display);
-            path.transform.position = (output_point + input_point) / 2f;
-            path.transform.forward = delta;
-            path.transform.localScale = new Vector3(0.02f, 0.02f, delta.magnitude);
+            if (delta.magnitude > 10e-3)
+            {
+                GameObject path = Resources.Load<GameObject>("misc/output_path").inst();
+                path.transform.SetParent(outputs_display);
+                path.transform.position = (output_point + input_point) / 2f;
+                path.transform.forward = delta;
+                path.transform.localScale = new Vector3(0.02f, 0.02f, delta.magnitude);
+
+                var start = Resources.Load<GameObject>("misc/output_path").inst();
+                start.transform.SetParent(outputs_display);
+                start.transform.position = input_point;
+                start.transform.localRotation = Quaternion.identity;
+                start.transform.localScale = Vector3.one * 0.05f;
+            }
+
+            var end = Resources.Load<GameObject>("misc/output_path").inst();
+            end.transform.SetParent(outputs_display);
+            end.transform.position = output_point;
+            end.transform.localRotation = Quaternion.identity;
+            end.transform.localScale = Vector3.one * 0.05f;
         }
     }
 
@@ -307,22 +321,22 @@ public abstract class item_node : MonoBehaviour,
     // UNITY CALLBACKS //
     //#################//
 
-    // Keep track of nodes
-    bool registered = false;
     protected virtual void Start()
     {
+        // Wait a bit to register, sp the physics
+        // engine is up-to-date with my geometry.
+        Invoke("register_myself", 0.1f);
+    }
+
+    void register_myself()
+    {
         // Register the node, only after the chunk has finished generating
-        chunk.add_generation_listener(transform, (c) =>
-        {
-            registered = true;
-            register_node(this);
-        });
+        chunk.add_generation_listener(transform, (c) => register_node(this));
     }
 
     protected virtual void OnDestroy()
     {
-        if (registered)
-            forget_node(this);
+        forget_node(this);
     }
 
     protected virtual void OnDrawGizmos()
@@ -437,7 +451,7 @@ public abstract class item_node : MonoBehaviour,
 
     /// <summary> Checks that all of the input/outputs 
     /// for the given node are up-to-date. </summary>
-    static void validate_connections(item_node node)
+    static void validate_connections(item_node node, bool revalidate_connected = true)
     {
         // Break previous nodes
         break_all_connections(node);
@@ -454,22 +468,41 @@ public abstract class item_node : MonoBehaviour,
             if (test_connection(n, node)) create_connection(n, node);
             else if (test_connection(node, n)) create_connection(node, n);
         }
+
+        // Refresh display
+        if (display_enabled)
+            node.set_display(true);
+
+        // Revalidate the nodes which are now conencted.
+        // Consider the following example with 3 gutters
+        // and items flowing left-to-right.
+        //
+        //  >> items >>
+        //  1 ----------|
+        //              |      < new connection (1 -> 2)
+        //       2 ----------- < new gutter
+        //              |      < previous connection (1 -> 3)
+        //       3 -----------
+        //
+        // In the above example, placement of gutter 2 will break
+        // the previous connection from 1 to 3. Gutter 1 needs to be
+        // re-validated to realise this.
+
+        if (revalidate_connected)
+        {
+            var to_revalidate = new List<item_node>(node.inputs_from);
+            to_revalidate.AddRange(node.outputs_to);
+
+            foreach (var n in to_revalidate)
+                validate_connections(n, revalidate_connected: false);
+        }
     }
 
     static void register_node(item_node node)
     {
-        if (!nodes.Add(node))
-            throw new System.Exception("node already registered!");
-
         // Create the connections to/from the new node
+        nodes.Add(node);
         validate_connections(node);
-
-        if (display_enabled)
-        {
-            // Refresh display
-            display_enabled = false;
-            display_enabled = true;
-        }
     }
 
     static void forget_node(item_node node)
@@ -482,8 +515,7 @@ public abstract class item_node : MonoBehaviour,
 
         // Remove the node/break all of it's connections
         break_all_connections(node);
-        if (!nodes.Remove(node))
-            throw new System.Exception("Tried to remove unregistered node!");
+        nodes.Remove(node);
 
         // Re-validate all the nodes that the node was connected with
         foreach (var l in to_validate)
