@@ -1495,6 +1495,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public inventory inventory { get; private set; }
     public inventory crafting_menu { get; private set; }
 
+    public int group => town_path_element.group_at(transform.position);
+
     public List<contract> contracts
     {
         get
@@ -1929,7 +1931,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         else
             net_int_string = "No networked interaction";
 
-        return "    Local player  : " + current.username.value + "\n" +
+        return "    Local player  : " + current.username.value + " (group " + current.group + ")\n" +
                "    User id       : " + current.user_id + "\n" +
                "    Slot equipped : " + current.slot_equipped.value + "\n" +
                "    " + net_int_string + "\n" +

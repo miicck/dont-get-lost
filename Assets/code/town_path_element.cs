@@ -441,8 +441,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     {
         if (group_bounds == null) return;
 
-        foreach (var l in group_bounds)
-            foreach (var b in l.Value)
+        foreach (var kv in group_bounds)
+            foreach (var b in kv.Value)
             {
                 Gizmos.color = new Color(1, 0, 1);
                 Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
@@ -452,6 +452,30 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                     Gizmos.DrawLine(b.bounds.center, e.transform.position);
                 }
             }
+    }
+
+    public static int group_at(Vector3 v)
+    {
+        int group = -1;
+        float min_dis = float.PositiveInfinity;
+        foreach (var kv in group_bounds)
+        {
+            foreach (var b in kv.Value)
+            {
+                // We are within this group
+                if (b.bounds.Contains(v))
+                    return kv.Key;
+
+                var dis = b.bounds.SqrDistance(v);
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    group = kv.Key;
+                }
+            }
+        }
+
+        return group;
     }
 
     //##################//
