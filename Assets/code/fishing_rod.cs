@@ -22,6 +22,7 @@ public class fishing_rod : equip_in_hand
     class fish : networked_player_interaction
     {
         const float STRIKE_ANGLE = 30;
+        const float MAX_REEL_SPEED = 5f;
 
         fishing_rod rod;
         fishing_float fishing_float;
@@ -30,6 +31,7 @@ public class fishing_rod : equip_in_hand
         float cast_timer = 0;
         float cast_power = 0;
         RectTransform cast_power_meter;
+        RectTransform info_panel;
         Vector2 power_meter_init_size;
         bool strike_success = false;
         bool following_float = false;
@@ -101,6 +103,7 @@ public class fishing_rod : equip_in_hand
             // Delete objects
             if (cast_power_meter != null) Destroy(cast_power_meter.gameObject);
             if (fishing_float != null) Destroy(fishing_float.gameObject);
+            if (info_panel != null) Destroy(info_panel.gameObject);
         }
 
         //####################//
@@ -191,6 +194,17 @@ public class fishing_rod : equip_in_hand
             fishing_float.transform.up = Vector3.up + up_mod;
         }
 
+        void set_info()
+        {
+            var t = info_panel.GetComponentInChildren<UnityEngine.UI.Text>();
+
+            Vector3 to_rod = rod.rod_end.position - fishing_float.transform.position;
+            to_rod.y = 0;
+
+            t.text = "Depth    : " + fishing_float.water_depth.ToString("F1") + "M\n" +
+                     "Distance : " + to_rod.magnitude.ToString("F1") + "M";
+        }
+
         bool wait_for_float_submerged(player player)
         {
             float_kinematics(bob: false);
@@ -207,6 +221,12 @@ public class fishing_rod : equip_in_hand
                 ps.transform.forward = Vector3.down;
                 var ft = ps.gameObject.AddComponent<float_tracker>();
                 ft.tracking = fishing_float;
+
+                info_panel = Resources.Load<RectTransform>("ui/fishing_info").inst();
+                info_panel.SetParent(game.canvas.transform);
+                info_panel.localPosition = Vector3.zero;
+
+                set_info();
 
                 return true;
             }
@@ -245,6 +265,7 @@ public class fishing_rod : equip_in_hand
 
         bool wait_for_float_floating(player player)
         {
+            set_info();
             float_kinematics(bob: false);
             return fishing_float.submerged_amount < 0.5f;
         }
@@ -252,6 +273,7 @@ public class fishing_rod : equip_in_hand
         bool wait_for_strike(player player)
         {
             // Bob up and down
+            set_info();
             float_kinematics();
 
             // Wait for a strike 
@@ -269,6 +291,7 @@ public class fishing_rod : equip_in_hand
 
         bool reel_in(player player)
         {
+            set_info();
             follow_float(player);
 
             // Reel the float in
@@ -290,9 +313,9 @@ public class fishing_rod : equip_in_hand
             if (strike_success)
             {
                 // Pull to reel in
-                float direction = (pull_strength - 0.5f) * 2f;
-                if (towards_rod.magnitude > 10 && direction < 0) direction = 0; // Don't go too far away
-                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * direction;
+                float speed = (pull_strength - 0.5f) * 2f * MAX_REEL_SPEED;
+                if (towards_rod.magnitude > 10 && speed < 0) speed = 0; // Don't go too far away
+                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * speed;
 
                 // Kicks from the fish
                 fishing_float.transform.position += Random.onUnitSphere * Time.deltaTime;
@@ -305,11 +328,11 @@ public class fishing_rod : equip_in_hand
             else
             {
                 // Just reel in, sadly :(
-                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * (1 + pull_strength);
+                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * (1 + pull_strength) * 0.5f * MAX_REEL_SPEED;
                 fishing_float.transform.position += Vector3.up * Mathf.Sin(Time.time * 10) * Time.deltaTime / 5f;
             }
 
-            return towards_rod.magnitude < 1f || fishing_float.on_land;
+            return towards_rod.magnitude < 1f || fishing_float.water_depth < 0.1f;
         }
     }
 }
