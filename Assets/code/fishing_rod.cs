@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class fishing_rod : equip_in_hand
 {
+    public Transform rod_end;
+
+    public float max_cast_velocity = 20f;
+
     //##########//
     // ITEM USE //
     //##########//
@@ -17,32 +21,42 @@ public class fishing_rod : equip_in_hand
 
     class fish : networked_player_interaction
     {
+        const float STRIKE_ANGLE = 30;
+
         fishing_rod rod;
         fishing_float fishing_float;
+        Vector3 float_velocity;
         int stage = 0;
         float cast_timer = 0;
         float cast_power = 0;
         RectTransform cast_power_meter;
         Vector2 power_meter_init_size;
-
-        Vector3 cast_position;
+        bool strike_success = false;
+        bool following_float = false;
+        float pull_amount = 0;
 
         public fish(fishing_rod rod) => this.rod = rod;
         public override string context_tip() => "cast " + rod.display_name;
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
         public override bool allow_held => true;
-        public override bool allows_movement() => true;
-        public override bool allows_mouse_look() => true;
+        public override bool allows_movement() => fishing_float == null;
+        public override bool allows_mouse_look() => !following_float;
 
         public delegate bool stage_func(player player);
         stage_func[] stages;
 
         public override bool start_networked_interaction(player player)
         {
+            // Don't do anything on non-auth clients
+            if (!player.has_authority) return false;
+
             // Reset stuff
             stage = 0;
             cast_timer = 0;
             cast_power = 0;
+            pull_amount = 0;
+            strike_success = false;
+            following_float = false;
             power_meter_init_size = default;
 
             // Create the cast power meter
@@ -51,11 +65,47 @@ public class fishing_rod : equip_in_hand
             cast_power_meter.transform.localPosition = Vector3.zero;
             set_cast_power_meter(0f);
 
+            // Remove the cursor
+            player.cursor_sprite = null;
+
             // Setup the stages
-            stages = new stage_func[] { charge_cast, uncharge_cast, cast, wait_for_strike, reel_in };
+            stages = new stage_func[] {
+                charge_cast,
+                uncharge_cast,
+                cast,
+                wait_for_float_submerged,
+                wait_for_float_floating,
+                wait_for_strike,
+                reel_in
+            };
 
             return false;
         }
+
+        public override bool continue_networked_interaction(player player)
+        {
+            // Don't do anything on non-auth client
+            if (!player.has_authority) return false;
+
+            // Cycle through the stages of the interaction
+            if (stage >= stages.Length) return true;
+            if (stages[stage](player)) ++stage;
+            return false;
+        }
+
+        public override void end_networked_interaction(player player)
+        {
+            // Reset hand rotation
+            player.hand_centre.localRotation = Quaternion.identity;
+
+            // Delete objects
+            if (cast_power_meter != null) Destroy(cast_power_meter.gameObject);
+            if (fishing_float != null) Destroy(fishing_float.gameObject);
+        }
+
+        //####################//
+        // INTERACTION STAGES //
+        //####################//
 
         void set_cast_power_meter(float val)
         {
@@ -100,63 +150,166 @@ public class fishing_rod : equip_in_hand
         bool cast(player player)
         {
             // Create the float + initialize it's trajectory (on auth client)
-            if (!player.has_authority) return true;
-            fishing_float = client.create(rod.transform.position, "misc/fishing_float") as fishing_float;
-            fishing_float.set_velocity(player.eye_transform.forward * 10 * cast_power);
+            fishing_float = Resources.Load<fishing_float>("misc/fishing_float").inst(rod.rod_end.position);
+            float_velocity = player.eye_transform.forward * rod.max_cast_velocity * cast_power;
 
             Destroy(cast_power_meter.gameObject);
-            cast_position = player.transform.position;
 
             return true;
         }
 
-        void attract_player(player player)
+        void follow_float(player player)
         {
-            Vector3 delta = cast_position - player.transform.position;
-            player.transform.position += delta * Time.deltaTime;
+            following_float = true;
+            Vector3 toward_float = fishing_float.transform.position - player.eye_transform.position;
+            Quaternion current_look = player.eye_transform.rotation;
+            Quaternion target_look = Quaternion.LookRotation(toward_float, Vector3.up);
+            player.set_look_rotation(Quaternion.Lerp(current_look, target_look, Time.deltaTime * 5f));
+        }
 
-            Quaternion target_look = Quaternion.LookRotation(fishing_float.transform.position -
-                player.eye_transform.position, Vector3.up);
-            player.set_look_rotation(Quaternion.Lerp(player.eye_transform.rotation, target_look, Time.deltaTime * 5));
+        void float_kinematics(bool bob = true)
+        {
+            // Gravity/bouyancy
+            float_velocity.y -= Time.deltaTime * (10 - fishing_float.submerged_amount * 20);
+
+            // Damping
+            float_velocity -= Time.deltaTime * float_velocity * fishing_float.submerged_amount * 10;
+
+            // Random pulls downward
+            if (bob && ((int)Time.time) % 10 == Random.Range(0, 10))
+            {
+                float mag = Random.Range(0.8f, 1.2f);
+                float_velocity -= mag * Vector3.up;
+            }
+
+            // Apply velocity
+            fishing_float.transform.position += float_velocity * Time.deltaTime;
+
+            // Lean towards direction
+            Vector3 up_mod = float_velocity;
+            up_mod.y = 0;
+            fishing_float.transform.up = Vector3.up + up_mod;
+        }
+
+        bool wait_for_float_submerged(player player)
+        {
+            float_kinematics(bob: false);
+
+            // Wait until the float is submerged
+            if (fishing_float.submerged_amount > 0.4f)
+            {
+                var ps = Resources.Load<ParticleSystem>("particle_systems/ripples").inst();
+
+                var emission = ps.emission;
+                emission.enabled = false; // We will control emission
+
+                ps.transform.position = fishing_float.transform.position;
+                ps.transform.forward = Vector3.down;
+                var ft = ps.gameObject.AddComponent<float_tracker>();
+                ft.tracking = fishing_float;
+
+                return true;
+            }
+            return false;
+        }
+
+        class float_tracker : MonoBehaviour
+        {
+            public fishing_float tracking;
+
+            float last_y = world.SEA_LEVEL + 1;
+            float last_emit_time = -1;
+
+            void emit()
+            {
+                if (Time.time - last_emit_time < 0.2f) return;
+                last_emit_time = Time.time;
+                GetComponent<ParticleSystem>().Emit(1);
+            }
+
+            private void Update()
+            {
+                if (tracking == null)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+
+                Vector3 pos = tracking.transform.position;
+                if (pos.y < last_y) emit();
+                last_y = pos.y;
+                pos.y = world.SEA_LEVEL;
+                transform.position = pos;
+            }
+        }
+
+        bool wait_for_float_floating(player player)
+        {
+            float_kinematics(bob: false);
+            return fishing_float.submerged_amount < 0.5f;
         }
 
         bool wait_for_strike(player player)
         {
-            // Click will trigger the strike
-            attract_player(player);
-            return triggered(player);
+            // Bob up and down
+            float_kinematics();
+
+            // Wait for a strike 
+            follow_float(player);
+            if (!triggered(player)) return false;
+
+            if (fishing_float.strikeable)
+            {
+                // Successful strike
+                strike_success = true;
+            }
+
+            return true;
         }
 
         bool reel_in(player player)
         {
-            if (fishing_float == null) return true;
-
-            attract_player(player);
+            follow_float(player);
 
             // Reel the float in
-            Vector3 delta = rod.transform.position - fishing_float.transform.position;
-            delta.y = 0;
-            fishing_float.transform.position += delta.normalized * Time.deltaTime;
-            return delta.magnitude < 0.2f;
-        }
+            Vector3 towards_rod = rod.rod_end.position - fishing_float.transform.position;
+            towards_rod.y = 0;
 
-        public override bool continue_networked_interaction(player player)
-        {
-            // Cycle through the stages of the interaction
-            if (stage >= stages.Length) return true;
-            if (stages[stage](player)) ++stage;
-            return false;
-        }
+            // Modify the pull amount by pulling down with the mouse
+            float pull = -Mathf.Min(0, controls.delta(controls.BIND.FISHING_ROD_PULL));
+            pull_amount += (pull - 1) * Time.deltaTime;
+            pull_amount = Mathf.Clamp(pull_amount, 0f, 5f);
 
-        public override void end_networked_interaction(player player)
-        {
-            // Reset hand rotation
-            player.hand_centre.localRotation = Quaternion.identity;
+            // Pulling animation
+            float pull_strength = Mathf.Clamp(1f - Mathf.Exp(-pull_amount), 0, 0.99f);
+            Vector3 up = player.transform.up * (1 - pull_strength) - player.transform.forward * pull_strength;
+            Vector3 forward = player.transform.forward;
+            forward -= Vector3.Project(forward, up);
+            player.hand_centre.rotation = Quaternion.LookRotation(forward, up);
 
-            // Delete ui objects
-            if (cast_power_meter != null) Destroy(cast_power_meter.gameObject);
+            if (strike_success)
+            {
+                // Pull to reel in
+                float direction = (pull_strength - 0.5f) * 2f;
+                if (towards_rod.magnitude > 10 && direction < 0) direction = 0; // Don't go too far away
+                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * direction;
 
-            fishing_float?.delete();
+                // Kicks from the fish
+                fishing_float.transform.position += Random.onUnitSphere * Time.deltaTime;
+
+                // Stay near the surface
+                Vector3 pos = fishing_float.transform.position;
+                pos.y = Mathf.Clamp(pos.y, world.SEA_LEVEL - 0.1f, world.SEA_LEVEL);
+                fishing_float.transform.position = pos;
+            }
+            else
+            {
+                // Just reel in, sadly :(
+                fishing_float.transform.position += towards_rod.normalized * Time.deltaTime * (1 + pull_strength);
+                fishing_float.transform.position += Vector3.up * Mathf.Sin(Time.time * 10) * Time.deltaTime / 5f;
+            }
+
+            return towards_rod.magnitude < 1f || fishing_float.on_land;
         }
     }
 }

@@ -2,42 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class fishing_float : networked
+public class fishing_float : MonoBehaviour
 {
-    public void set_velocity(Vector3 v) => velocity.value = v;
+    public float height = 1f;
+    public float strike_line = 0.5f;
 
-    networked_variables.net_vector3 velocity;
+    public bool strikeable => (transform.position + Vector3.up * strike_line * height / 2).y < world.SEA_LEVEL;
+    public float submerged_amount => Mathf.Clamp(1f - (transform.position.y + height * 0.5f - world.SEA_LEVEL) / height, 0f, 1f);
+    public bool on_land => Physics.Raycast(transform.position + Vector3.up, Vector3.down, 1.1f);
 
-    public override float network_radius() => 100f;
-
-    public override void on_init_network_variables()
+    private void OnDrawGizmos()
     {
-        velocity = new networked_variables.net_vector3();
-    }
-
-    private void Update()
-    {
-        if (!has_authority) return; // Don't do anything on non-auth client
-
-        float height = 1f;
-        float submerged_amt = Mathf.Clamp(1f - (transform.position.y + height * 0.5f - world.SEA_LEVEL) / height, 0f, 1f);
-
-        // Gravity/bouyancy
-        Vector3 new_velocity = velocity.value;
-        new_velocity.y -= Time.deltaTime * (10 - submerged_amt * 20);
-
-        // Damping
-        new_velocity -= Time.deltaTime * new_velocity * submerged_amt * 10;
-
-        // Apply velocity
-        transform.position += new_velocity * Time.deltaTime;
-
-        velocity.value = new_velocity;
-
-        if (submerged_amt > 0.1f)
-        {
-            if (((int)Time.time) % 10 == Random.Range(0, 10))
-                velocity.value -= Vector3.up;
-        }
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireCube(transform.position, new Vector3(0.2f, 1f, 0.2f) * height);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(
+            transform.position + Vector3.up * strike_line * height / 2f,
+            new Vector3(0.2f, 0f, 0.2f) * height);
     }
 }

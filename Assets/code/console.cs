@@ -356,7 +356,9 @@ public class console : MonoBehaviour
                 if (!t.IsSubclassOf(typeof(networked))) return console_error(t + " is not a networked type!");
 
                 var found = (networked)FindObjectOfType(t);
-                found?.delete();
+                if (found == null) return console_error("Could not find an instance to delete!");
+                else found.delete();
+
                 return true;
             },
 
