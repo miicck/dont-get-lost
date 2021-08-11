@@ -38,3 +38,4 @@ TODO
 - Tavern
 - Manual fishing
 - Rail network
+- Hospital
