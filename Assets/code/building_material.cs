@@ -16,22 +16,39 @@ public class building_material : item, IPlayerInteractable
 
     static building_material()
     {
-        tips.add("When placing an object, you can cycle through the " +
+        List<string> building_tips = new List<string>()
+        {
+            "When placing a building, you can cycle through the " +
             "different starting orientations by pressing " +
             controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " or by scrolling. " +
-            "This initial orientation will be saved when placing subsequent objects.");
+            "This initial orientation will be saved when placing subsequent objects.",
 
-        tips.add("With a building material equipped, right click" +
-            " to quickly delete objects of the same type.");
+            "Building materials can be deleted by right-clicking on them. " +
+            "If you have a building material equipped, " +
+            "only matching materials will be deleted.",
 
-        tips.add("Building materials can be deleted by right-clicking on them with an empty hand. " +
-            "Press " + controls.bind_name(controls.BIND.QUICKBAR_1) +
-            " a few times to de-equip what you are holding.");
+            "When rotating a building, hold " +
+            controls.bind_name(controls.BIND.FINE_ROTATION) + " " +
+            "to allow rotating by any amount.",
 
-        tips.add("To turn off snapping when placing a building, hold " +
+            "If a building is rotated weirdly, press " +
+            controls.bind_name(controls.BIND.RELOCATE_BUILDING) + " " +
+            "to re-allign it to the world axes.",
+
+            "To turn off snapping when placing a building, hold " +
             controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
             "This will also orient the building to the world " +
-            "axes, rather than to the parent building.");
+            "axes, rather than to the parent building."
+        };
+
+        string help_text = "";
+        foreach (var b in building_tips)
+        {
+            tips.add(b);
+            help_text += b + "\n\n";
+        }
+
+        help_book.add_entry("building", help_text);
     }
 
     //############//

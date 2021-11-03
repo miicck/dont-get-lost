@@ -40,21 +40,25 @@ public static class help_book
                 // Find the template for creating topic entries
                 var topic_template = _menu.find_child_recursive("TopicEntry");
 
-                foreach (var kv in topics)
+                // Sort topics alphabetically
+                List<string> topics_sorted = new List<string>(topics.Keys);
+                topics_sorted.Sort();
+
+                foreach (string key in topics_sorted)
                 {
                     // Create copies of the template for each topic
                     var entry = topic_template.inst();
                     entry.transform.SetParent(topic_template.transform.parent);
-                    entry.GetComponentInChildren<UnityEngine.UI.Text>().text = kv.Key;
+                    entry.GetComponentInChildren<UnityEngine.UI.Text>().text = key;
                     entry.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
                     {
                         // Open the help book at this page
                         page.gameObject.SetActive(true);
 
                         page.find_child_recursive("HelpBookPageTitle").
-                            GetComponentInChildren<UnityEngine.UI.Text>().text = kv.Key;
+                            GetComponentInChildren<UnityEngine.UI.Text>().text = key;
                         page.find_child_recursive("HelpBookPageText").
-                            GetComponentInChildren<UnityEngine.UI.Text>().text = kv.Value;
+                            GetComponentInChildren<UnityEngine.UI.Text>().text = topics[key];
 
                         page.find_child_recursive("HelpBookPageClose").
                             GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>

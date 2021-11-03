@@ -149,16 +149,23 @@ public class simple_item_collection : IItemCollection
 public class inventory : networked, IItemCollection
 {
     public RectTransform ui_prefab;
-    
+
     // Static constructor
     static inventory()
     {
-        help_book.add_entry("inventory",
-            "The inventory can be accessed by pressing " +
-            controls.bind_name(controls.BIND.OPEN_INVENTORY) + ".\n" +
-            "To equip an item, it must be placed in the toolbar at the top of the inventory.\n" +
-            "In order to craft, items must be placed in the crafting area on the right hand side.\n" +
-            "Item stacks can be split in half by right clicking.\n");
+        List<string> inventory_tips = new List<string>
+        {
+            "The inventory can be accessed by pressing " + controls.bind_name(controls.BIND.OPEN_INVENTORY),
+            "To equip an item, it must be placed in the toolbar at the top of the inventory.",
+            "In order to craft, ingredients must be placed in the crafting area on the right hand side.",
+            "Item stacks can be split in half by right clicking."
+        };
+
+        string entry = "";
+        foreach (var t in inventory_tips)
+            entry += t + "\n\n";
+
+        help_book.add_entry("inventory", entry);
     }
 
     void generate_ui()

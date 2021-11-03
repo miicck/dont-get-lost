@@ -4,6 +4,41 @@ using UnityEngine;
 
 public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked
 {
+    static attacker_entrypoint()
+    {
+        List<string> town_tips = new List<string>
+        {
+            "A town is defined as a collection of buildings that are connected by paths. " +
+            "Only certain buildings can connect to the path network. The paths will only be " +
+            "shown if you have a connectable building equipped - this is known as \"path-view\" mode.",
+
+            "Entrypoints to the town will be automatically generated and are shown as " +
+            "red paths going off into the distance in path-view mode. These are the " +
+            "routes that visitors (but also enemies!) will use to enter the town.",
+
+            "Entrypoints can be blocked off by placing buildings in the way, allowing you " +
+            "to build walls to protect your town from attack. But be careful - a town with no " +
+            "entrypoints is doomed to fail.",
+
+            "Settlers will move into towns automatically if there are enough beds connected - "+
+            "build a town gate and inspect it with "+ controls.bind_name(controls.BIND.INSPECT)+
+            " to see how many connected beds/settlers there are.",
+
+            "Towns are seperated into rooms - these can be identified by inspecting connected " +
+            "buildings with "+controls.bind_name(controls.BIND.INSPECT)+". "+
+            "Rooms are seperated by certain objects such as doors, gates and ladders. "+
+            "The function of a room depends on the buildings connected to that room. For example, " +
+            "connecting a forge designates that room as a foundry. Inpect the forge to see what other " +
+            "buildings are needed to make a working foundry."
+        };
+
+        string help_text = "";
+        foreach (var t in town_tips)
+            help_text += t + "\n\n";
+
+        help_book.add_entry("towns", help_text);
+    }
+
     public const float MIN_EXTERNAL_PATH_DISTANCE = 15f;
     public const float MAX_EXTERNAL_PATH_DISTANCE = 25f;
 
