@@ -217,7 +217,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     new inspect_networked(),
                     new open_task_manager(),
                     new undo_interaction(),
-                    new redo_interaction()
+                    new redo_interaction(),
+                    new help_book_interaction()
                 };
             return _self_interactions;
         }
@@ -317,6 +318,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             production_tracker.update_ui();
             return false;
         }
+    }
+
+    public class help_book_interaction : menu_interaction
+    {
+        public override controls.BIND keybind => controls.BIND.TOGGLE_HELP_BOOK;
+        public override string context_tip() { return "toggle help book"; }
+        protected override void set_menu_state(player player, bool state) { help_book.open = state; }
     }
 
     public class first_third_person_interaction : player_interaction

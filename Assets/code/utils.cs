@@ -872,6 +872,25 @@ public static class utils
         return val;
     }
 
+    public static Transform find_child_recursive(this Transform t, string name)
+    {
+        var to_search = new Queue<Transform>();
+        to_search.Enqueue(t);
+
+        while (to_search.Count > 0)
+        {
+            var current = to_search.Dequeue();
+            foreach (Transform child in current)
+            {
+                if (child.name == name)
+                    return child;
+                to_search.Enqueue(child);
+            }
+        }
+
+        return null;
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

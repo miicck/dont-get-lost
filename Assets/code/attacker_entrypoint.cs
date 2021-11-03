@@ -486,6 +486,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         var ret = new List<attacker_entrypoint>();
         foreach (var e in entrypoints)
         {
+            if (e == null || e.element == null) continue;
             if (group >= 0 && e.element.group != group) continue;
             if (!e.path_complete) continue;
             ret.Add(e);

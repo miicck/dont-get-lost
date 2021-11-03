@@ -19,6 +19,12 @@ public static class controls
     static controls()
     {
         tips.add("You can switch between using the mouse or keyboard to rotate/translate buildings in the options menu.");
+
+        string current_controls = "";
+        foreach (var kv in keybinds)
+            current_controls += kv.Key + " : " + bind_name(kv.Key).capitalize() + "\n";
+        current_controls = utils.allign_colons(current_controls);
+        help_book.add_entry("controls", current_controls);
     }
 
     public abstract class control
@@ -205,6 +211,7 @@ public static class controls
         TOGGLE_OPTIONS,
         TOGGLE_TECH_TREE,
         TOGGLE_PRODUCTION_INFO,
+        TOGGLE_HELP_BOOK,
         TOGGLE_DEBUG_INFO,
         INCREASE_RENDER_RANGE,
         DECREASE_RENDER_RANGE,
@@ -287,6 +294,7 @@ public static class controls
             [BIND.TOGGLE_OPTIONS] = new key_control(KeyCode.Escape),
             [BIND.TOGGLE_TECH_TREE] = new key_control(KeyCode.T),
             [BIND.TOGGLE_PRODUCTION_INFO] = new key_control(KeyCode.P),
+            [BIND.TOGGLE_HELP_BOOK] = new key_control(KeyCode.H),
             [BIND.TOGGLE_DEBUG_INFO] = new key_control(KeyCode.F3),
             [BIND.INCREASE_RENDER_RANGE] = new key_control(KeyCode.Equals),
             [BIND.DECREASE_RENDER_RANGE] = new key_control(KeyCode.Minus),

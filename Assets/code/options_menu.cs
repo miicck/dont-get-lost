@@ -78,6 +78,11 @@ public class options_menu : MonoBehaviour
                 return;
     }
 
+    public void open_help()
+    {
+        player.current?.force_interaction(new player.help_book_interaction());
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//
