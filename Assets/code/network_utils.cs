@@ -14,6 +14,42 @@ public static class network_utils
     // SERVER AND THE IN-GAME SERVER //
     //###############################//
 
+    /// <summary> Given a message type and a payload, compose a full message. </summary>
+    public static byte[] compose_message(byte message_type, byte[] payload)
+    {
+        // Message is of form [type, payload_length, payload]
+        return concat_buffers(
+            new byte[] {message_type},
+            encode_int(payload.Length),
+            payload
+        );
+    }
+
+    public delegate void message_handler(byte message_type, byte[] buffer, int offset, int payload_length);
+
+    public static bool decompose_message(
+        byte[] buffer, ref int offset, int data_bytes, out int initial_offset, message_handler handler)
+    {
+        // Record the message start, in case we get truncated
+        initial_offset = offset;
+
+        // Parse message type
+        if (offset + 1 > data_bytes) return false;
+        var msg_type = buffer[offset];
+        offset += 1;
+
+        // Parse payload length
+        if (offset + sizeof(int) > data_bytes) return false;
+        int payload_length = decode_int(buffer, ref offset);
+
+        // Parse message
+        if (offset + payload_length > data_bytes) return false;
+        handler(msg_type, buffer, offset, payload_length);
+        offset += payload_length;
+
+        return true;
+    }
+
     /// <summary> Concatinate the given byte arrays into a single byte array. </summary>
     public static byte[] concat_buffers(params byte[][] buffers)
     {

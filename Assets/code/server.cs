@@ -735,10 +735,6 @@ public static class server
     static network_utils.traffic_monitor traffic_down;
     static network_utils.traffic_monitor traffic_up;
 
-    /// <summary> The stack trace sent alongside the last network 
-    /// message reccived, if NETWORK_DEBUG is set. </summary>
-    static string last_stack_trace = "Define NETWORK_DEBUG for stack trace.";
-
     /// <summary> The time the server was last autosaved. </summary>
     static float last_autosave_time;
 
@@ -754,7 +750,7 @@ public static class server
 
 
     /// <summary> Start a server listening on the given port on the local machine. </summary>
-    public static bool start(int port, string savename, string player_prefab, out string error_message)
+    public static bool start(string savename, string player_prefab, out string error_message)
     {
         if (started)
         {
@@ -765,7 +761,7 @@ public static class server
         // Initialize state variables
         server.player_prefab = player_prefab;
         server.savename = savename;
-        backend = new tcp_server_backend(network_utils.local_ip_address(), port);
+        backend = server_backend.default_backend();
         traffic_up = new network_utils.traffic_monitor();
         traffic_down = new network_utils.traffic_monitor();
         connected_clients = new HashSet<client>();
@@ -846,6 +842,12 @@ public static class server
         // Recive messages from clients
         foreach (var c in new List<client>(connected_clients))
         {
+            // Message handler for this client
+            network_utils.message_handler hander = (type_byte, buffer, offset, payload_length) =>
+            {
+                receive_message(c, type_byte, buffer, offset, payload_length);
+            };
+
             byte[] buffer = new byte[c.backend.ReceiveBufferSize];
             while (c.stream.CanRead && c.stream.DataAvailable)
             {
@@ -870,70 +872,19 @@ public static class server
                 int data_bytes = bytes_read + buffer_start;
                 int offset = 0;
 
-                // Variables for dealing with truncations
-                int last_message_start = 0;
-                bool truncated = false;
-
                 while (offset < data_bytes)
                 {
-                    // Record the message start, in case of truncation
-                    last_message_start = offset;
-
-                    // Check the payload length bytre are in the buffer
-                    if (offset + sizeof(int) > data_bytes)
+                    if (!network_utils.decompose_message(
+                        buffer, ref offset, data_bytes,
+                        out int last_message_start, hander))
                     {
-                        truncated = true;
+                        // Save the truncated message for later
+                        byte[] to_save = new byte[data_bytes - last_message_start];
+                        System.Buffer.BlockCopy(buffer, last_message_start,
+                            to_save, 0, to_save.Length);
+                        truncated_read_messages[c] = to_save;
                         break;
                     }
-
-                    // Parse message length
-                    int payload_length = network_utils.decode_int(buffer, ref offset);
-
-#if NETWORK_DEBUG
-                    // Check the stack trace length bytes are in the buffer
-                    if (offset + sizeof(int) > data_bytes)
-                    {
-                        truncated = true;
-                        break;
-                    }
-                    int stack_trace_length = network_utils.decode_int(buffer, ref offset);
-
-                    // Check the stack trace bytes are in the buffer
-                    if (offset + stack_trace_length > data_bytes)
-                    {
-                        truncated = true;
-                        break;
-                    }
-
-                    // Get the stack trace
-                    last_stack_trace = network_utils.decode_string(buffer, ref offset);
-
-#endif
-
-                    // Check the whole message is in the buffer (payload + 1 byte for message type)
-                    if (offset + payload_length + 1 > data_bytes)
-                    {
-                        truncated = true;
-                        break;
-                    }
-
-                    // Parse message type
-                    var msg_type = (global::client.MESSAGE)buffer[offset];
-                    offset += 1;
-
-                    // Handle the message
-                    c.last_message_time = Time.realtimeSinceStartup;
-                    receive_message(msg_type, c, buffer, offset, payload_length);
-                    offset += payload_length;
-                }
-
-                if (truncated)
-                {
-                    // Save the truncated message for later
-                    byte[] to_save = new byte[data_bytes - last_message_start];
-                    System.Buffer.BlockCopy(buffer, last_message_start,
-                        to_save, 0, to_save.Length);
-                    truncated_read_messages[c] = to_save;
                 }
             }
         }
@@ -1233,7 +1184,7 @@ public static class server
     public static string info()
     {
         if (!started) return "Server not started.";
-        return "Server listening on " + backend.LocalEndpoint + "\n" +
+        return "Server listening on " + backend.local_address + "\n" +
                "    Server version     : " + version + "\n" +
                "    Connected clients  : " + connected_clients.Count + "\n" +
                "    Representations    : " + representations.Count + "\n" +
@@ -1258,8 +1209,8 @@ public static class server
 
     public enum MESSAGE : byte
     {
-        // Numbering starts at 1 so erroneous 0's are caught
-        CREATE = 1,        // Create a networked object on a client
+        // Numbering starts at a specified number so erroneous 0's are caught
+        CREATE = 200,      // Create a networked object on a client
         FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
@@ -1276,11 +1227,7 @@ public static class server
     // Send a payload to a client
     static void send(client client, MESSAGE msg_type, byte[] payload, bool immediate = false)
     {
-        byte[] to_send = network_utils.concat_buffers(
-            network_utils.encode_int(payload.Length),
-            new byte[] { (byte)msg_type },
-            payload
-        );
+        byte[] to_send = network_utils.compose_message((byte)msg_type, payload);
 
         if (immediate)
         {
@@ -1487,8 +1434,10 @@ public static class server
 
     /// <summary> Receive a message of the given <paramref name="type"/> stored between <paramref name="offset"/> and 
     /// <paramref name="offset"/>+<paramref name="length"/> in <paramref name="bytes"/>. </summary>
-    static void receive_message(global::client.MESSAGE type, client client, byte[] bytes, int offset, int length)
+    static void receive_message(client client, byte type_byte, byte[] bytes, int offset, int length)
     {
+        var type = (global::client.MESSAGE)type_byte;
+
         switch (type)
         {
             case global::client.MESSAGE.LOGIN:
@@ -1612,8 +1561,7 @@ public static class server
                     if (!recently_deleted.ContainsKey(network_id))
                     {
                         // This should only happend in high-latency edge cases
-                        log_warning("Deleting non-existant id " + network_id +
-                        " (was not recently deleted)\n" + last_stack_trace);
+                        log_warning("Deleting non-existant id " + network_id + " (was not recently deleted)\n");
                     }
 
                     return;

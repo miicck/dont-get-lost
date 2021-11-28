@@ -33,7 +33,7 @@ public class game : MonoBehaviour
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                if (!server.start(server.DEFAULT_PORT, startup.world_name, "misc/player", out string error_message))
+                if (!server.start(startup.world_name, "misc/player", out string error_message))
                 {
                     am_hard_disconnecting = true;
                     on_client_disconnect(error_message);

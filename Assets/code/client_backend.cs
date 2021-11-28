@@ -36,7 +36,13 @@ public abstract class client_backend
     public abstract int ReceiveBufferSize { get; }
     public abstract int SendBufferSize { get; }
     public abstract IAsyncResult BeginConnect(string address, int port);
-    public abstract IPEndPoint RemoteEndPoint { get; }
+    public abstract string remote_address { get; }
+
+    public static client_backend default_backend()
+    {
+        return new tcp_client_backend();
+        return new steamworks_client_backend();
+    }
 }
 
 public class tcp_client_backend : client_backend
@@ -68,5 +74,93 @@ public class tcp_client_backend : client_backend
     public override int SendBufferSize => client.SendBufferSize;
     public override void Close(int timeout_ms = 0) => stream.Close(timeout_ms);
     public override IAsyncResult BeginConnect(string address, int port) => client.BeginConnect(address, port, null, null);
-    public override IPEndPoint RemoteEndPoint => (IPEndPoint)client.Client.RemoteEndPoint;
+
+    public override string remote_address
+    {
+        get
+        {
+            var ip = (IPEndPoint)client.Client.RemoteEndPoint;
+            return ip.Address + ":" + ip.Port;
+        }
+    }
+}
+
+class steamworks_stream : backend_stream
+{
+    Steamworks.SteamId id;
+
+    public steamworks_stream(Steamworks.SteamId steamId)
+    {
+        id = steamId;
+
+        // Accept incoming connection requests
+        Steamworks.SteamNetworking.OnP2PSessionRequest = (new_id) =>
+        {
+            Steamworks.SteamNetworking.AcceptP2PSessionWithUser(new_id);
+        };
+    }
+
+    public override bool CanRead => true;
+    public override bool DataAvailable => Steamworks.SteamNetworking.IsP2PPacketAvailable();
+
+    public override void Close(int timeout_ms)
+    {
+
+    }
+
+    public override int Read(byte[] buffer, int start, int count)
+    {
+        var packet = Steamworks.SteamNetworking.ReadP2PPacket();
+        var data = packet.Value.Data;
+
+        if (data.Length > count)
+            throw new Exception("Steamworks P2P packet is too large for buffer!");
+
+        Buffer.BlockCopy(data, 0, buffer, start, data.Length);
+        return data.Length;
+    }
+
+    public override void Write(byte[] buffer, int start, int count)
+    {
+        var data = new byte[count];
+        Buffer.BlockCopy(buffer, start, data, 0, count);
+        Steamworks.SteamNetworking.SendP2PPacket(id, data);
+    }
+}
+
+public class steamworks_client_backend : client_backend
+{
+    Steamworks.SteamId id;
+
+    public steamworks_client_backend(Steamworks.SteamId steamId)
+    {
+        id = steamId;
+    }
+
+    public steamworks_client_backend() : this(Steamworks.SteamClient.SteamId) { }
+
+    public override IAsyncResult BeginConnect(string address, int port)
+    {
+        return null;
+    }
+
+    public override void Close(int timeout_ms = 0)
+    {
+
+    }
+
+    public override int ReceiveBufferSize => 16384;
+    public override int SendBufferSize => 16384;
+    public override string remote_address => "Steam user " + id.Value;
+
+    public override backend_stream stream
+    {
+        get
+        {
+            if (_steamworks_stream == null)
+                _steamworks_stream = new steamworks_stream(id);
+            return _steamworks_stream;
+        }
+    }
+    steamworks_stream _steamworks_stream;
 }

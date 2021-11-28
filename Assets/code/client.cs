@@ -354,11 +354,11 @@ public static class client
         queued_variable_updates = new HashSet<networked_variable>();
         player_infos = new Dictionary<string, player_info>();
         client.on_disconnect = on_disconnect;
-        backend = new tcp_client_backend();
+        backend = client_backend.default_backend();
         var connector = backend.BeginConnect(host, port);
 
         // Connection timeout
-        if (!connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
+        if (connector != null && !connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
         {
             backend = null;
             return false;
@@ -459,54 +459,24 @@ public static class client
             int data_bytes = bytes_read + buffer_start;
             int offset = 0;
 
-            // Variables for dealing with truncations
-            int last_message_start = 0;
-            bool truncated = false;
-
             while (offset < data_bytes)
             {
-                // Record the message start, in case we get truncated
-                last_message_start = offset;
-
-                // Check the payload length is in the buffer
-                if (offset + sizeof(int) > data_bytes)
+                if (!network_utils.decompose_message(
+                    buffer, ref offset, data_bytes,
+                    out int last_message_start, parse_message))
                 {
-                    truncated = true;
+                    // Message truncated
+                    // Save the truncated message to be glued at the start of the next buffer.
+                    truncated_read_message = new byte[data_bytes - last_message_start];
+                    System.Buffer.BlockCopy(buffer, last_message_start,
+                        truncated_read_message, 0, truncated_read_message.Length);
                     break;
                 }
-
-                // Parse payload length
-                int payload_length = network_utils.decode_int(buffer, ref offset);
-
-                // Check the whole message is in the buffer
-                if (offset + payload_length + 1 > data_bytes)
-                {
-                    truncated = true;
-                    break;
-                }
-
-                // Parse message type
-                var msg_type = (server.MESSAGE)buffer[offset];
-                offset += 1;
-
-                // Handle the message
-                parse_message(msg_type, buffer, offset, payload_length);
-                offset += payload_length;
 
                 // The last message parsed caused a disconnect, we
                 // should stop immedately as we can no longer send
                 // messages to the server.
                 if (!connected) return;
-            }
-
-            // Save the truncated part of the message, to glue onto the
-            // start of the next buffer
-            if (truncated)
-            {
-                // Save the truncated message to be glued at the start of the next buffer.
-                truncated_read_message = new byte[data_bytes - last_message_start];
-                System.Buffer.BlockCopy(buffer, last_message_start,
-                    truncated_read_message, 0, truncated_read_message.Length);
             }
         }
 
@@ -545,13 +515,11 @@ public static class client
     {
         if (!connected) return "Client not connected.";
 
-        var ep = backend.RemoteEndPoint;
-
         // Convert ping to string
         string ping = (last_ping * 1000) + " ms";
         if (last_ping < 0) ping = "> " + server.CLIENT_HEARTBEAT_PERIOD * 1000 + " ms";
 
-        return "Client connected to " + ep.Address + ":" + ep.Port + "\n" +
+        return "Client connected to " + backend.remote_address + "\n" +
                "    Objects            : " + networked.object_count + "\n" +
                "    Recently forgotten : " + networked.recently_forgotten_count + "\n" +
                "    Queued updates     : " + queued_variable_updates.Count + "\n" +
@@ -584,27 +552,9 @@ public static class client
         // Send a message type + payload
         void send(MESSAGE msg_type, byte[] payload)
         {
-#if NETWORK_DEBUG
-            // Add a stack trace to every message
-            var st = network_utils.encode_string(System.Environment.StackTrace);
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                network_utils.encode_int(st.Length),
-                st,
-                new byte[] { (byte)msg_type },
-                payload
-            );
-#else
-            // Message is of form [length, type, payload]
-            byte[] to_send = network_utils.concat_buffers(
-                network_utils.encode_int(payload.Length),
-                new byte[] { (byte)msg_type },
-                payload
-            );
-#endif
             message_queue.Enqueue(new pending_message
             {
-                bytes = to_send,
+                bytes = network_utils.compose_message((byte)msg_type, payload),
                 time_sent = Time.realtimeSinceStartup
             });
         }
@@ -740,8 +690,10 @@ public static class client
     /// <summary> Parse a message of the given <paramref name="type"/> from the server that is
     /// stored between <paramref name="offset"/> and <paramref name="offset"/>+<paramref name="length"/>
     /// in <paramref name="buffer"/>. </summary>
-    static void parse_message(server.MESSAGE type, byte[] buffer, int offset, int length)
+    static void parse_message(byte type_byte, byte[] buffer, int offset, int length)
     {
+        var type = (server.MESSAGE)type_byte;
+
         // Setup message parsers
         switch (type)
         {
