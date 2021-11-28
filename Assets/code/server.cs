@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
 
 #if STANDALONE_SERVER
 #else
@@ -12,7 +11,6 @@ public static class server
     //###########//
     // CONSTANTS //
     //###########//
-
 
     /// <summary> Clients that have been silent for longer than this are disconnected </summary>
     public const float CLIENT_TIMEOUT = 6f;
@@ -74,9 +72,9 @@ public static class server
         /// <summary> The last position of the player that other clients were told about. </summary>
         Vector3 last_updated_position;
 
-        // The TCP connection to this client
-        public TcpClient tcp { get; private set; }
-        public NetworkStream stream { get; private set; }
+        // The connection to this client
+        public client_backend backend { get; private set; }
+        public backend_stream stream => backend.stream;
 
         public float render_range = INIT_RENDER_RANGE;
 
@@ -86,10 +84,9 @@ public static class server
         // The last time we reccived an active hearbeat from this client
         public float last_active_time = 0;
 
-        public client(TcpClient tcp)
+        public client(client_backend client_backend)
         {
-            this.tcp = tcp;
-            stream = tcp.GetStream();
+            backend = client_backend;
             last_active_time = Time.realtimeSinceStartup;
         }
 
@@ -146,8 +143,7 @@ public static class server
 
             // Close with a timeout, so that any hanging messages
             // (in particular the DISCONNECT message) can be sent.
-            stream.Close((int)(timeout * 1000));
-            tcp.Close();
+            backend.Close((int)(timeout * 1000));
 
             // Disconnect the player if there is one loaded
             // (the player isn't loaded if, for example, this
@@ -694,8 +690,8 @@ public static class server
 
     // STATE VARIABLES //
 
-    /// <summary> The TCP listener the server is listening with. </summary>
-    static TcpListener tcp;
+    /// <summary> The backend that the server is listening with. </summary>
+    static server_backend backend;
 
     /// <summary> The name that this session is saved under. </summary>
     static string savename;
@@ -752,7 +748,7 @@ public static class server
     // DERIVED STATE //
 
     /// <summary> Returns true if the server has been started. </summary>
-    public static bool started { get => tcp != null; }
+    public static bool started { get => backend != null; }
 
     // END DERIVED STATE //
 
@@ -769,7 +765,7 @@ public static class server
         // Initialize state variables
         server.player_prefab = player_prefab;
         server.savename = savename;
-        tcp = new TcpListener(network_utils.local_ip_address(), port);
+        backend = new tcp_server_backend(network_utils.local_ip_address(), port);
         traffic_up = new network_utils.traffic_monitor();
         traffic_down = new network_utils.traffic_monitor();
         connected_clients = new HashSet<client>();
@@ -786,7 +782,7 @@ public static class server
         // Start listening
         try
         {
-            tcp.Start();
+            backend.Start();
         }
         catch (System.Exception e)
         {
@@ -825,9 +821,9 @@ public static class server
         foreach (var c in new List<client>(connected_clients))
             c.disconnect("Server stopped.");
 
-        tcp.Stop();
+        backend.Stop();
         save();
-        tcp = null;
+        backend = null;
     }
 
     public static void update()
@@ -844,13 +840,13 @@ public static class server
             recently_deleted.Remove(i);
 
         // Connect new clients
-        while (tcp.Pending())
-            connected_clients.Add(new client(tcp.AcceptTcpClient()));
+        while (backend.Pending())
+            connected_clients.Add(new client(backend.AcceptClient()));
 
         // Recive messages from clients
         foreach (var c in new List<client>(connected_clients))
         {
-            byte[] buffer = new byte[c.tcp.ReceiveBufferSize];
+            byte[] buffer = new byte[c.backend.ReceiveBufferSize];
             while (c.stream.CanRead && c.stream.DataAvailable)
             {
                 int buffer_start = 0;
@@ -956,7 +952,7 @@ public static class server
             try
             {
                 // The buffer to concatinate messages into
-                byte[] send_buffer = new byte[client.tcp.SendBufferSize];
+                byte[] send_buffer = new byte[client.backend.SendBufferSize];
                 int offset = 0;
 
                 while (queue.Count > 0)
@@ -972,7 +968,7 @@ public static class server
                         // and create a new one
                         traffic_up.log_bytes(offset);
                         client.stream.Write(send_buffer, 0, offset);
-                        send_buffer = new byte[client.tcp.SendBufferSize];
+                        send_buffer = new byte[client.backend.SendBufferSize];
                         offset = 0;
                     }
 
@@ -1237,7 +1233,7 @@ public static class server
     public static string info()
     {
         if (!started) return "Server not started.";
-        return "Server listening on " + tcp.LocalEndpoint + "\n" +
+        return "Server listening on " + backend.LocalEndpoint + "\n" +
                "    Server version     : " + version + "\n" +
                "    Connected clients  : " + connected_clients.Count + "\n" +
                "    Representations    : " + representations.Count + "\n" +
