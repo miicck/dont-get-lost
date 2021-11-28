@@ -88,10 +88,14 @@ public class tcp_client_backend : client_backend
 class steamworks_stream : backend_stream
 {
     Steamworks.SteamId id;
+    int send_channel;
+    int receive_channel;
 
-    public steamworks_stream(Steamworks.SteamId steamId)
+    public steamworks_stream(Steamworks.SteamId steamId, int send_channel, int receive_channel)
     {
         id = steamId;
+        this.send_channel = send_channel;
+        this.receive_channel = receive_channel;
 
         // Accept incoming connection requests
         Steamworks.SteamNetworking.OnP2PSessionRequest = (new_id) =>
@@ -101,7 +105,7 @@ class steamworks_stream : backend_stream
     }
 
     public override bool CanRead => true;
-    public override bool DataAvailable => Steamworks.SteamNetworking.IsP2PPacketAvailable();
+    public override bool DataAvailable => Steamworks.SteamNetworking.IsP2PPacketAvailable(channel: receive_channel);
 
     public override void Close(int timeout_ms)
     {
@@ -110,7 +114,7 @@ class steamworks_stream : backend_stream
 
     public override int Read(byte[] buffer, int start, int count)
     {
-        var packet = Steamworks.SteamNetworking.ReadP2PPacket();
+        var packet = Steamworks.SteamNetworking.ReadP2PPacket(channel: receive_channel);
         var data = packet.Value.Data;
 
         if (data.Length > count)
@@ -124,17 +128,22 @@ class steamworks_stream : backend_stream
     {
         var data = new byte[count];
         Buffer.BlockCopy(buffer, start, data, 0, count);
-        Steamworks.SteamNetworking.SendP2PPacket(id, data);
+        Steamworks.SteamNetworking.SendP2PPacket(id, data, nChannel: send_channel);
     }
 }
 
 public class steamworks_client_backend : client_backend
 {
-    Steamworks.SteamId id;
+    public Steamworks.SteamId id { get; private set; }
+    bool server_side;
 
-    public steamworks_client_backend(Steamworks.SteamId steamId)
+    public steamworks_client_backend(Steamworks.SteamId steamId, bool server_side = false)
     {
         id = steamId;
+        this.server_side = server_side;
+
+        if (!server_side)
+            steamworks_server_backend.register_local_client(this);
     }
 
     public steamworks_client_backend() : this(Steamworks.SteamClient.SteamId) { }
@@ -158,7 +167,12 @@ public class steamworks_client_backend : client_backend
         get
         {
             if (_steamworks_stream == null)
-                _steamworks_stream = new steamworks_stream(id);
+            {
+                int send_channel = server_side ? 0 : 1;
+                int receive_channel = server_side ? 1 : 0;
+
+                _steamworks_stream = new steamworks_stream(id, send_channel, receive_channel);
+            }
             return _steamworks_stream;
         }
     }

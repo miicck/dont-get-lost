@@ -55,13 +55,35 @@ public class steamworks_server_backend : server_backend
 
     }
 
-    public override bool Pending() => pending_users.Count > 0;
+    public override bool Pending() => pending_users.Count > 0 || local_client_awating_accept;
 
     public override client_backend AcceptClient()
     {
+        if (local_client_awating_accept)
+        {
+            local_client_awating_accept = false;
+            return local_client;
+        }
+
         var id = pending_users.Dequeue();
-        return new steamworks_client_backend(id);
+        return new steamworks_client_backend(id, server_side: true);
     }
 
     public override string local_address => "Steam user " + Steamworks.SteamClient.SteamId.Value;
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static void register_local_client(steamworks_client_backend client)
+    {
+        if (local_client != null)
+            throw new System.Exception("Local client already registered!");
+
+        local_client = new steamworks_client_backend(client.id, server_side: true);
+        local_client_awating_accept = true;
+    }
+
+    static steamworks_client_backend local_client = null;
+    static bool local_client_awating_accept = false;
 }

@@ -11,8 +11,8 @@ public static class client
     /// <summary> Message types sent by the client. </summary>
     public enum MESSAGE : byte
     {
-        // Numbering starts at 1 so erroneous 0's are caught
-        LOGIN = 1,           // Client has logged in
+        // Numbering starts a specific number so erroneous 0's are caught
+        LOGIN = 20,           // Client has logged in
         HEARTBEAT,           // Heartbeat response
         DISCONNECT,          // Disconnect this client
         CREATE,              // Create an object on the server
@@ -22,6 +22,8 @@ public static class client
         TRIGGER,             // A networked event has been triggered
         KICK,                // A player kick has been requested
     }
+
+    public const MESSAGE LARGEST_VALUE_MESSAGE = MESSAGE.KICK;
 
 #if STANDALONE_SERVER
 #else
@@ -692,6 +694,9 @@ public static class client
     /// in <paramref name="buffer"/>. </summary>
     static void parse_message(byte type_byte, byte[] buffer, int offset, int length)
     {
+        if (!System.Enum.IsDefined(typeof(server.MESSAGE), type_byte))
+            throw new System.Exception(type_byte + " is not a valid message-to-client type!");
+
         var type = (server.MESSAGE)type_byte;
 
         // Setup message parsers

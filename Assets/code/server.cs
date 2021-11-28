@@ -1209,8 +1209,9 @@ public static class server
 
     public enum MESSAGE : byte
     {
-        // Numbering starts at a specified number so erroneous 0's are caught
-        CREATE = 200,      // Create a networked object on a client
+        // Numbering starts above client message types, so they are not confused
+        CREATE = global::client.LARGEST_VALUE_MESSAGE + 1, 
+                           // Create a networked object on a client
         FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
@@ -1436,6 +1437,9 @@ public static class server
     /// <paramref name="offset"/>+<paramref name="length"/> in <paramref name="bytes"/>. </summary>
     static void receive_message(client client, byte type_byte, byte[] bytes, int offset, int length)
     {
+        if (!System.Enum.IsDefined(typeof(global::client.MESSAGE), type_byte))
+            throw new System.Exception(type_byte + " is not a valid message-to-server type!");
+
         var type = (global::client.MESSAGE)type_byte;
 
         switch (type)
