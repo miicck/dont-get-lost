@@ -62,18 +62,8 @@ public abstract class client_backend
     /// <summary> How many bytes should be allocated to store outgoing messages. </summary>
     public abstract int SendBufferSize { get; }
 
-    /// <summary> Called to start connecting to a server at the given address/port combo. </summary>
-    public abstract IAsyncResult BeginConnect(string address, int port);
-
     /// <summary> A string representing the address of this client (as seen by the server). </summary>
     public abstract string remote_address { get; }
-
-    /// <summary> The default backend used. </summary>
-    public static client_backend default_backend()
-    {
-        return new tcp_client_backend();
-        return new steamworks_client_backend();
-    }
 }
 
 /// <summary> A TCP implementation of a <see cref="client_backend"/> </summary>
@@ -89,8 +79,6 @@ public class tcp_client_backend : client_backend
         client.LingerState = new LingerOption(true, 10);
     }
 
-    public tcp_client_backend() : this(new TcpClient()) { }
-
     public override backend_stream stream
     {
         get
@@ -105,7 +93,6 @@ public class tcp_client_backend : client_backend
     public override int ReceiveBufferSize => client.ReceiveBufferSize;
     public override int SendBufferSize => client.SendBufferSize;
     public override void Close(int timeout_ms = 0) => stream.Close(timeout_ms);
-    public override IAsyncResult BeginConnect(string address, int port) => client.BeginConnect(address, port, null, null);
 
     public override string remote_address
     {
@@ -114,6 +101,22 @@ public class tcp_client_backend : client_backend
             var ip = (IPEndPoint)client.Client.RemoteEndPoint;
             return ip.Address + ":" + ip.Port;
         }
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static tcp_client_backend connect(string host, int port)
+    {
+        var client = new TcpClient();
+        var connector = client.BeginConnect(host, port, null, null);
+
+        // Connection timeout
+        if (!connector.AsyncWaitHandle.WaitOne(global::client.CONNECTION_TIMEOUT_MS))
+            return null;
+
+        return new tcp_client_backend(client);
     }
 }
 
@@ -182,8 +185,6 @@ public class steamworks_client_backend : client_backend
             steamworks_server_backend.register_local_client(this);
     }
 
-    public steamworks_client_backend() : this(Steamworks.SteamClient.SteamId) { }
-    public override IAsyncResult BeginConnect(string address, int port) { return null; }
     public override void Close(int timeout_ms = 0) { }
     public override int ReceiveBufferSize => 16384;
     public override int SendBufferSize => 16384;

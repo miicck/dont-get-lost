@@ -30,8 +30,63 @@ public abstract class server_backend
     /// <summary> The default backend used. </summary>
     public static server_backend default_backend()
     {
-        return new tcp_server_backend(network_utils.local_ip_address(), server.DEFAULT_PORT);
-        return new steamworks_server_backend();
+        return new combined_server_backend(new List<server_backend>
+        {
+            new tcp_server_backend(network_utils.local_ip_address(), server.DEFAULT_PORT),
+            new steamworks_server_backend()
+        });
+    }
+}
+
+/// <summary> A server backend composed of 
+/// multiple communication channels. </summary>
+public class combined_server_backend : server_backend
+{
+    IEnumerable<server_backend> backends;
+
+    public combined_server_backend(IEnumerable<server_backend> backends)
+    {
+        this.backends = backends;
+    }
+
+    public override void Start()
+    {
+        foreach (var b in backends)
+            b.Start();
+    }
+
+    public override void Stop()
+    {
+        foreach (var b in backends)
+            b.Stop();
+    }
+
+    public override client_backend AcceptClient()
+    {
+        foreach (var b in backends)
+            if (b.Pending())
+                return b.AcceptClient();
+
+        throw new System.Exception("No backend has pending clients!");
+    }
+
+    public override bool Pending()
+    {
+        foreach (var b in backends)
+            if (b.Pending())
+                return true;
+        return false;
+    }
+
+    public override string local_address
+    {
+        get
+        {
+            string ret = "Multiple backends\n";
+            foreach (var b in backends)
+                ret += "    " + b.local_address + "\n";
+            return ret.Trim();
+        }
     }
 }
 
@@ -43,8 +98,15 @@ public class tcp_server_backend : server_backend
     public override void Start() => listener.Start();
     public override void Stop() => listener.Stop();
     public override bool Pending() => listener.Pending();
-    public override string local_address => listener.LocalEndpoint.ToString();
     public override client_backend AcceptClient() => new tcp_client_backend(listener.AcceptTcpClient());
+    public override string local_address
+    {
+        get
+        {
+            var ip = (IPEndPoint)listener.LocalEndpoint;
+            return ip.Address + ", port " + ip.Port + " (TCP)";
+        }
+    }
 }
 
 /// <summary> A Steam P2P networking implementation of the server backend. </summary>
@@ -87,7 +149,7 @@ public class steamworks_server_backend : server_backend
     }
 
     /// <summary> For steam P2P communication, the address is basically just the steam user. </summary>
-    public override string local_address => "Steam user " + Steamworks.SteamClient.SteamId.Value;
+    public override string local_address => Steamworks.SteamClient.SteamId.Value + " (Steam P2P)";
 
     //##############//
     // STATIC STUFF //

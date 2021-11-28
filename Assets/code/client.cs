@@ -342,8 +342,20 @@ public static class client
         queue_message(MESSAGE.DELETE, deleted.network_id, response_required);
     }
 
-    /// <summary> Connect the client to a server. </summary>
+    /// <summary> Connect directly to a host+port </summary>
     public static bool connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
+    {
+        backend = tcp_client_backend.connect(host, port);
+
+        // Connection failed
+        if (backend == null)
+            return false;
+
+        return connect(username, user_id, on_disconnect);
+    }
+
+    /// <summary> Connect the client to a server. </summary>
+    static bool connect(string username, ulong user_id, disconnect_func on_disconnect)
     {
         // Initialize client state
         last_local_id = 0;
@@ -356,15 +368,6 @@ public static class client
         queued_variable_updates = new HashSet<networked_variable>();
         player_infos = new Dictionary<string, player_info>();
         client.on_disconnect = on_disconnect;
-        backend = client_backend.default_backend();
-        var connector = backend.BeginConnect(host, port);
-
-        // Connection timeout
-        if (connector != null && !connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
-        {
-            backend = null;
-            return false;
-        }
 
         // Initialize the networked object static state
         networked.client_initialize();
