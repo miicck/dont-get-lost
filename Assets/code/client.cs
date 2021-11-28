@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
 
 #if STANDALONE_SERVER
 #else
@@ -42,7 +41,7 @@ public static class client
     static Queue<pending_message> message_queue;
     static Queue<pending_creation_message> pending_creation_messages;
     static disconnect_func on_disconnect;
-    static TcpClient tcp;
+    static client_backend backend;
     static int last_server_time;
     static int last_server_time_local;
     static Dictionary<string, player_info> player_infos;
@@ -106,7 +105,7 @@ public static class client
     }
 
     /// <summary> Is the client connected to a server. </summary>
-    public static bool connected { get => tcp != null; }
+    public static bool connected { get => backend != null; }
 
     /// <summary> Call to prevent inactivity timeout. </summary>
     public static void register_activity() { activity_since_heartbeat = true; }
@@ -265,16 +264,16 @@ public static class client
         queued_variable_updates = update_next_frame;
 
         // The buffer used to send messages
-        byte[] send_buffer = new byte[tcp.SendBufferSize];
+        byte[] send_buffer = new byte[backend.SendBufferSize];
         int offset = 0;
-        var stream = tcp.GetStream();
+        var stream = backend.stream;
 
         // Send the message queue
         while (message_queue.Count > 0)
         {
             var msg = message_queue.Dequeue();
 
-            if (msg.bytes.Length > tcp.SendBufferSize)
+            if (msg.bytes.Length > backend.SendBufferSize)
                 throw new System.Exception("Message too large!");
 
             if (offset + msg.bytes.Length > send_buffer.Length)
@@ -291,7 +290,7 @@ public static class client
                     disconnect(false, "Write failed, connection forcibly closed.");
                     return;
                 }
-                send_buffer = new byte[tcp.SendBufferSize];
+                send_buffer = new byte[backend.SendBufferSize];
                 offset = 0;
             }
 
@@ -355,18 +354,15 @@ public static class client
         queued_variable_updates = new HashSet<networked_variable>();
         player_infos = new Dictionary<string, player_info>();
         client.on_disconnect = on_disconnect;
-        tcp = new TcpClient();
-        var connector = tcp.BeginConnect(host, port, null, null);
+        backend = new tcp_client_backend();
+        var connector = backend.BeginConnect(host, port);
 
         // Connection timeout
         if (!connector.AsyncWaitHandle.WaitOne(CONNECTION_TIMEOUT_MS))
         {
-            tcp = null;
+            backend = null;
             return false;
         }
-
-        // Let the TCP connection linger after disconnect, so queued messages are sent
-        tcp.LingerState = new LingerOption(true, 10);
 
         // Initialize the networked object static state
         networked.client_initialize();
@@ -406,15 +402,15 @@ public static class client
         try
         {
             // Close the stream (with a timeout so the above messages can be sent)
-            tcp.GetStream().Close((int)(server.CLIENT_TIMEOUT * 1000));
+            backend.Close((int)(server.CLIENT_TIMEOUT * 1000));
         }
         catch
         {
             Debug.Log("Connection severed ungracefully.");
         }
 
-        tcp.Close();
-        tcp = null;
+        backend.Close();
+        backend = null;
 
         on_disconnect(msg_from_server);
     }
@@ -424,10 +420,10 @@ public static class client
         if (!connected) return;
 
         // Get the tcp stream
-        NetworkStream stream = null;
+        backend_stream stream = null;
         try
         {
-            stream = tcp.GetStream();
+            stream = backend.stream;
         }
         catch (System.InvalidOperationException e)
         {
@@ -438,7 +434,7 @@ public static class client
         // Read messages to the client
         while (stream.DataAvailable)
         {
-            byte[] buffer = new byte[tcp.ReceiveBufferSize];
+            byte[] buffer = new byte[backend.ReceiveBufferSize];
 
             // The start point in the buffer where new messages should be read into
             int buffer_start = 0;
@@ -549,7 +545,7 @@ public static class client
     {
         if (!connected) return "Client not connected.";
 
-        var ep = (System.Net.IPEndPoint)tcp.Client.RemoteEndPoint;
+        var ep = backend.RemoteEndPoint;
 
         // Convert ping to string
         string ping = (last_ping * 1000) + " ms";
