@@ -66,6 +66,97 @@ public abstract class client_backend
     public abstract string remote_address { get; }
 }
 
+/// <summary> A backend_stream implemented as a MemoryStream. </summary>
+public class local_stream : backend_stream
+{
+    public override bool CanRead => true;
+    public override void Close(int timeout_ms) { }
+
+    public local_stream other_end
+    {
+        get
+        {
+            if (_other_end == null)
+            {
+                // Create and link the other end of the stream
+                _other_end = new local_stream();
+                _other_end._other_end = this;
+            }
+            return _other_end;
+        }
+    }
+    local_stream _other_end;
+
+    byte[] incoming_buffer = new byte[16384];
+    int position = 0;
+
+    public int capacity => incoming_buffer.Length;
+
+    public override bool DataAvailable => position > 0;
+
+    public override int Read(byte[] buffer, int start, int count)
+    {
+        int read = Math.Min(count, position);
+        Buffer.BlockCopy(incoming_buffer, 0, buffer, start, read);
+
+        // Shift remaining unread portion of buffer to start
+        for (int i = 0; i <= position - read; ++i)
+            incoming_buffer[i] = incoming_buffer[i + read];
+
+        // Point to start of buffer
+        position = 0;
+        return read;
+    }
+
+    public override void Write(byte[] buffer, int start, int count)
+    {
+        // Write to the other end
+        other_end.WriteToIncoming(buffer, start, count);
+    }
+
+    void WriteToIncoming(byte[] buffer, int start, int count)
+    {
+        while (position + count > incoming_buffer.Length)
+        {
+            // Make buffer bigger to accomodate message
+            var new_buffer = new byte[incoming_buffer.Length * 2];
+            Buffer.BlockCopy(incoming_buffer, 0, new_buffer, 0, incoming_buffer.Length);
+            incoming_buffer = new_buffer;
+        }
+
+        Buffer.BlockCopy(buffer, start, incoming_buffer, position, count);
+        position += count;
+    }
+}
+
+public class local_client_backend : client_backend
+{
+    local_stream local_stream;
+
+    public local_client_backend()
+    {
+        // Setup my local stream 
+        local_stream = new local_stream();
+
+        // Give the local server the other end of my local stream
+        local_server_backend.local_client = new local_client_backend(local_stream.other_end);
+    }
+
+    private local_client_backend(local_stream local_stream)
+    {
+        this.local_stream = local_stream;
+    }
+
+    public override void Close(int timeout_ms = 0) { }
+    public override backend_stream stream => local_stream;
+    public override int SendBufferSize => 16384;
+    public override int ReceiveBufferSize => 16384;
+    public override string remote_address =>
+        "Local stream (capacities up/down = " +
+        local_stream.other_end.capacity + "/" +
+        local_stream.capacity + ")";
+}
+
 /// <summary> A TCP implementation of a <see cref="client_backend"/> </summary>
 public class tcp_client_backend : client_backend
 {

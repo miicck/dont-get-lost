@@ -40,8 +40,8 @@ public class game : MonoBehaviour
                     return;
                 }
 
-                client.connect(network_utils.local_ip_address().ToString(),
-                    server.DEFAULT_PORT, startup.username, startup.user_id, on_client_disconnect);
+                // Connect to the server we just started
+                client.connect_local(startup.username, startup.user_id, on_client_disconnect);
 
                 // Create the world (if required)
                 if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
@@ -61,7 +61,7 @@ public class game : MonoBehaviour
             case startup_info.MODE.JOIN:
 
                 // Join the server
-                if (!client.connect(startup.hostname, startup.port,
+                if (!client.direct_connect(startup.hostname, startup.port,
                     startup.username, startup.user_id, on_client_disconnect))
                 {
                     on_client_disconnect("Couldn't connect to server!");

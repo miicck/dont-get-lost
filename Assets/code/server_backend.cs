@@ -33,7 +33,8 @@ public abstract class server_backend
         return new combined_server_backend(new List<server_backend>
         {
             new tcp_server_backend(network_utils.local_ip_address(), server.DEFAULT_PORT),
-            new steamworks_server_backend()
+            new steamworks_server_backend(),
+            new local_server_backend()
         });
     }
 }
@@ -107,6 +108,38 @@ public class tcp_server_backend : server_backend
             return ip.Address + ", port " + ip.Port + " (TCP)";
         }
     }
+}
+
+/// <summary> A backend for communication with a client on the local machine. </summary>
+public class local_server_backend : server_backend
+{
+    public override void Start() { }
+    public override void Stop() { }
+    public override string local_address => "Local server";
+
+    public override bool Pending() => local_client != null && !accepted_local_client;
+    public override client_backend AcceptClient()
+    {
+        accepted_local_client = true;
+        return local_client;
+    }
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static local_client_backend local_client
+    {
+        get => _local_client;
+        set
+        {
+            if (_local_client != null)
+                throw new System.Exception("Tried to overwrite local client!");
+            _local_client = value;
+        }
+    }
+    static local_client_backend _local_client;
+    static bool accepted_local_client = false;
 }
 
 /// <summary> A Steam P2P networking implementation of the server backend. </summary>

@@ -287,9 +287,9 @@ public static class client
                 {
                     stream.Write(send_buffer, 0, offset);
                 }
-                catch
+                catch (System.Exception e)
                 {
-                    disconnect(false, "Write failed, connection forcibly closed.");
+                    disconnect(false, "Write failed, connection forcibly closed: " + e.Message);
                     return;
                 }
                 send_buffer = new byte[backend.SendBufferSize];
@@ -309,9 +309,9 @@ public static class client
             {
                 stream.Write(send_buffer, 0, offset);
             }
-            catch
+            catch (System.Exception e)
             {
-                disconnect(false, "Write failed, connection forcibly closed.");
+                disconnect(false, "Write failed, connection forcibly closed: " + e.Message);
                 return;
             }
         }
@@ -343,7 +343,7 @@ public static class client
     }
 
     /// <summary> Connect directly to a host+port </summary>
-    public static bool connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
+    public static bool direct_connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
     {
         backend = tcp_client_backend.connect(host, port);
 
@@ -351,6 +351,15 @@ public static class client
         if (backend == null)
             return false;
 
+        return connect(username, user_id, on_disconnect);
+    }
+
+    /// <summary> Connect to a server running on the local machine. </summary>
+    public static bool connect_local(string username, ulong user_id, disconnect_func on_disconnect)
+    {
+        if (!server.started)
+            return false;
+        backend = new local_client_backend();
         return connect(username, user_id, on_disconnect);
     }
 
