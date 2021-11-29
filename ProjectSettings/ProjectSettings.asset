@@ -576,7 +576,7 @@ PlayerSettings:
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
   scriptingDefineSymbols:
-    1: NO_SERVER_TIMEOUT
+    1: NO_SERVER_TIMEOUT;FACEPUNCH_STEAMWORKS
     4: UNITY_POST_PROCESSING_STACK_V2
     7: UNITY_POST_PROCESSING_STACK_V2
     13: UNITY_POST_PROCESSING_STACK_V2

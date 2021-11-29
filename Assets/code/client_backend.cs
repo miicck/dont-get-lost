@@ -138,8 +138,8 @@ public class local_client_backend : client_backend
         // Setup my local stream 
         local_stream = new local_stream();
 
-        // Give the local server the other end of my local stream
-        local_server_backend.local_client = new local_client_backend(local_stream.other_end);
+        // Create the client that the server will see (i.e the other end of my stream)
+        local_server_client = new local_client_backend(local_stream.other_end);
     }
 
     private local_client_backend(local_stream local_stream)
@@ -147,7 +147,11 @@ public class local_client_backend : client_backend
         this.local_stream = local_stream;
     }
 
-    public override void Close(int timeout_ms = 0) { }
+    public override void Close(int timeout_ms = 0) 
+    { 
+        local_server_client = null; 
+    }
+
     public override backend_stream stream => local_stream;
     public override int SendBufferSize => 16384;
     public override int ReceiveBufferSize => 16384;
@@ -155,6 +159,12 @@ public class local_client_backend : client_backend
         "Local stream (capacities up/down = " +
         local_stream.other_end.capacity + "/" +
         local_stream.capacity + ")";
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    public static local_client_backend local_server_client { get; private set; }
 }
 
 /// <summary> A TCP implementation of a <see cref="client_backend"/> </summary>
@@ -183,7 +193,11 @@ public class tcp_client_backend : client_backend
 
     public override int ReceiveBufferSize => client.ReceiveBufferSize;
     public override int SendBufferSize => client.SendBufferSize;
-    public override void Close(int timeout_ms = 0) => stream.Close(timeout_ms);
+
+    public override void Close(int timeout_ms = 0)
+    {
+        stream.Close(timeout_ms);
+    }
 
     public override string remote_address
     {
@@ -209,95 +223,4 @@ public class tcp_client_backend : client_backend
 
         return new tcp_client_backend(client);
     }
-}
-
-/// <summary> A Steamworks P2P-networking implemntation of a <see cref="backend_stream"/>. </summary>
-class steamworks_stream : backend_stream
-{
-    Steamworks.SteamId id;
-    int send_channel;
-    int receive_channel;
-
-    public steamworks_stream(Steamworks.SteamId steamId, int send_channel, int receive_channel)
-    {
-        id = steamId;
-        this.send_channel = send_channel;
-        this.receive_channel = receive_channel;
-
-        // Accept incoming connection requests
-        Steamworks.SteamNetworking.OnP2PSessionRequest = (new_id) =>
-        {
-            Steamworks.SteamNetworking.AcceptP2PSessionWithUser(new_id);
-        };
-    }
-
-    public override bool CanRead => true;
-    public override bool DataAvailable => Steamworks.SteamNetworking.IsP2PPacketAvailable(channel: receive_channel);
-
-    public override void Close(int timeout_ms) { } // Nothing to do
-
-    public override int Read(byte[] buffer, int start, int count)
-    {
-        var packet = Steamworks.SteamNetworking.ReadP2PPacket(channel: receive_channel);
-        var data = packet.Value.Data;
-
-        if (data.Length > count)
-            throw new Exception("Steamworks P2P packet is too large for buffer!");
-
-        Buffer.BlockCopy(data, 0, buffer, start, data.Length);
-        return data.Length;
-    }
-
-    public override void Write(byte[] buffer, int start, int count)
-    {
-        var data = new byte[count];
-        Buffer.BlockCopy(buffer, start, data, 0, count);
-        Steamworks.SteamNetworking.SendP2PPacket(id, data, nChannel: send_channel);
-    }
-}
-
-/// <summary> A steamworks P2P-networking implementation of a <see cref="client_backend"/>. </summary>
-public class steamworks_client_backend : client_backend
-{
-    public Steamworks.SteamId id { get; private set; }
-    bool server_side;
-
-    public steamworks_client_backend(Steamworks.SteamId steamId, bool server_side = false)
-    {
-        id = steamId;
-        this.server_side = server_side;
-
-        // This is a client-side client (i.e not the client that the server sees)
-        // we need to manually register it on the local server. In order to make this
-        // insensitive to the order in which the local-client and local-server are started
-        // we can't check if a local-server is running before doing this. This is fine
-        // because this won't do anything if there is no server running to accept clients.
-        if (!server_side)
-            steamworks_server_backend.register_local_client(this);
-    }
-
-    public override void Close(int timeout_ms = 0) { }
-    public override int ReceiveBufferSize => 16384;
-    public override int SendBufferSize => 16384;
-    public override string remote_address => "Steam user " + id.Value;
-
-    public override backend_stream stream
-    {
-        get
-        {
-            if (_steamworks_stream == null)
-            {
-                // Data from the server to a client is sent on channel 0
-                // Data from a client to the server is sent on channel 1
-                // This is so messages from a local-server to a local-client
-                // (i.e messages from the server to itself) aren't mixed up
-                int send_channel = server_side ? 0 : 1;
-                int receive_channel = server_side ? 1 : 0;
-
-                _steamworks_stream = new steamworks_stream(id, send_channel, receive_channel);
-            }
-            return _steamworks_stream;
-        }
-    }
-    steamworks_stream _steamworks_stream;
 }

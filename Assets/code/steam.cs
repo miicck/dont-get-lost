@@ -1,5 +1,4 @@
-﻿#define FACEPUNCH_STEAMWORKS // Use the Facepunch.Steamworks steamworks C# wrapper
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 

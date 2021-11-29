@@ -62,6 +62,8 @@ public class world_menu : MonoBehaviour
 
     UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData hd_camera;
 
+    delegate string username_getter();
+
     private void Start()
     {
         // Ensure the mouse is visible
@@ -98,6 +100,17 @@ public class world_menu : MonoBehaviour
             user_id = 0;
         }
 
+        username_getter get_username = () =>
+        {
+            string username = username_input.text.Trim();
+            if (username.Length == 0)
+            {
+                error_highlighter.highlight(username_input.GetComponent<Image>());
+                return null;
+            }
+            return username;
+        };
+
         foreach (var wf in world_files)
         {
             var button = template_world_button.inst();
@@ -110,14 +123,11 @@ public class world_menu : MonoBehaviour
             load_button.GetComponentInChildren<Text>().text = name;
             load_button.onClick.AddListener(() =>
             {
-                string username = username_input.text.Trim();
-                if (username.Length == 0)
-                    error_highlighter.highlight(username_input.GetComponent<Image>());
-                else
-                {
-                    PlayerPrefs.SetString("username", username);
-                    game.load_and_host_world(name, username, user_id);
-                }
+                string username = get_username();
+                if (username == null) return;
+
+                PlayerPrefs.SetString("username", username);
+                game.load_and_host_world(name, username, user_id);
             });
 
             var delete_button = button.Find("delete").GetComponent<Button>();
@@ -146,12 +156,9 @@ public class world_menu : MonoBehaviour
         new_world.GetComponentInChildren<Text>().text = "New world";
         new_world.onClick.AddListener(() =>
         {
-            string username = username_input.text.Trim();
-            if (username.Length == 0)
-            {
-                error_highlighter.highlight(username_input.GetComponent<Image>());
+            string username = get_username();
+            if (username == null)
                 return;
-            }
 
             string name = world_name_input.text.Trim();
             if (name.Length == 0 || server.save_exists(name))
@@ -189,7 +196,7 @@ public class world_menu : MonoBehaviour
             else
             {
                 PlayerPrefs.SetString("last_ip_joined", ip_input.text);
-                if (!game.join_world(ip_input.text, username))
+                if (!game.join_world(ip_input.text, username, user_id))
                     error_highlighter.highlight(ip_input.GetComponentInChildren<Image>());
             }
         });
@@ -197,6 +204,35 @@ public class world_menu : MonoBehaviour
         ip_input.text = PlayerPrefs.GetString("last_ip_joined",
             network_utils.local_ip_address() + ":" + server.DEFAULT_PORT);
         ip_input.transform.SetAsLastSibling();
+
+        var steam_friends_header = template_header.inst();
+        steam_friends_header.text = "Join steam friends";
+        steam_friends_header.transform.SetParent(button_container);
+
+        int friends_count = 0;
+        foreach (var f in Steamworks.SteamFriends.GetFriends())
+            if (f.IsPlayingThisGame)
+            {
+                ++friends_count;
+                var join_friend_button = template_button.inst();
+                join_friend_button.GetComponentInChildren<Text>().text = f.Name;
+                join_friend_button.transform.SetParent(button_container.transform);
+
+                join_friend_button.onClick.AddListener(() =>
+                {
+                    var username = get_username();
+                    if (username == null) return;
+                    game.join_steam_friend(f.Id, username, user_id);
+                });
+            }
+
+        if (friends_count == 0) // :'(
+        {
+            var no_friends_header = template_header.inst();
+            no_friends_header.transform.SetParent(button_container);
+            no_friends_header.text = "No steam friends in-game";
+            Destroy(steam_friends_header.gameObject);
+        }
 
         var quit_header = template_header.inst();
         quit_header.text = "";

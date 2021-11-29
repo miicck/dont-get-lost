@@ -22,11 +22,18 @@ public class game : MonoBehaviour
 
     void Start()
     {
+        // Implement the "cancel" button on the world loading screen
+        loading_message.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
+        {
+            client.disconnect(true, msg_from_server: "World loading cancelled");
+        });
+
         // Get static reference to canvas
         canvas = main_canvas;
         cursor_text_static = cursor_text_element;
 
         // Various startup modes
+        startup.validate();
         switch (startup.mode)
         {
             case startup_info.MODE.LOAD_AND_HOST:
@@ -69,6 +76,19 @@ public class game : MonoBehaviour
                 }
 
                 break;
+
+#if FACEPUNCH_STEAMWORKS
+            case startup_info.MODE.JOIN_STEAM:
+
+                // Join a steam friend
+                if (!client.steam_connect(startup.id_to_join, startup.username, startup.user_id, on_client_disconnect))
+                {
+                    on_client_disconnect("Could not connect to steam friend!");
+                    return;
+                }
+
+                break;
+#endif
 
             default:
                 throw new System.Exception("Unkown startup mode!");
@@ -143,6 +163,10 @@ public class game : MonoBehaviour
             controls.disabled = true;
             loading_message.SetActive(true);
 
+            // Unlock cursor while loading
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
             // Ensure loading message is above everything
             // except for the debug panel
             loading_message.transform.SetAsLastSibling();
@@ -160,6 +184,10 @@ public class game : MonoBehaviour
         }
         else if (loading_message.activeInHierarchy)
         {
+            // Lock cursor again when finished loading
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
             controls.disabled = false;
             loading_message.gameObject.SetActive(false);
             on_load?.Invoke();
@@ -288,6 +316,7 @@ public class game : MonoBehaviour
             LOAD_AND_HOST,
             CREATE_AND_HOST,
             JOIN,
+            JOIN_STEAM,
         }
 
         public MODE mode;
@@ -300,6 +329,40 @@ public class game : MonoBehaviour
 
         public string hostname;
         public int port;
+
+#if FACEPUNCH_STEAMWORKS
+        public Steamworks.SteamId id_to_join;
+#endif
+
+        public void validate()
+        {
+            // This user doesn't have a steam account, just use the first 64 bytes of the username hash
+            if (user_id == 0)
+            {
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    var hash = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(username));
+                    byte[] id_bytes = new byte[sizeof(ulong)];
+                    for (int i = 0; i < id_bytes.Length; ++i)
+                        id_bytes[i] = i < hash.Length ? hash[i] : (byte)0; // Pad with 0 if needed
+                    user_id = System.BitConverter.ToUInt64(id_bytes, 0);
+                }
+            }
+
+            if (username == null)
+                throw new System.Exception("Unkown username when joining!");
+
+            if (mode == MODE.LOAD_AND_HOST || mode == MODE.CREATE_AND_HOST)
+                if (world_name == null)
+                    throw new System.Exception("No world name specified in game startup!");
+
+#if FACEPUNCH_STEAMWORKS
+            if (mode == MODE.JOIN_STEAM)
+                if (id_to_join == default)
+                    throw new System.Exception("No steam id specified when joining!");
+#endif
+        }
+
     }
     public static startup_info startup;
 
@@ -333,7 +396,7 @@ public class game : MonoBehaviour
     }
 
     /// <summary> Join a world hosted on a server. </summary>
-    public static bool join_world(string ip_port, string username)
+    public static bool join_world(string ip_port, string username, ulong user_id)
     {
         int port = server.DEFAULT_PORT;
         string host = ip_port;
@@ -348,6 +411,7 @@ public class game : MonoBehaviour
 
         startup = new startup_info
         {
+            user_id = user_id,
             username = username,
             mode = startup_info.MODE.JOIN,
             hostname = host,
@@ -357,6 +421,22 @@ public class game : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
         return true;
     }
+
+#if FACEPUNCH_STEAMWORKS
+    public static bool join_steam_friend(Steamworks.SteamId their_id, string my_username, ulong my_user_id)
+    {
+        startup = new startup_info
+        {
+            user_id = my_user_id,
+            username = my_username,
+            mode = startup_info.MODE.JOIN_STEAM,
+            id_to_join = their_id
+        };
+
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
+        return true;
+    }
+#endif
 
     /// <summary> Returns true if the render range is allowed
     /// to change in the given way. </summary>

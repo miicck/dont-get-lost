@@ -56,6 +56,7 @@ public static class client
     // END STATE VARIABLES //
 
     public static int server_time => ((int)Time.realtimeSinceStartup - last_server_time_local) + last_server_time;
+    public static float time_since_last_heartbeat => Time.realtimeSinceStartup - last_server_time_local;
 
     public delegate void callback();
     static callback heartbeat_callbacks;
@@ -342,6 +343,15 @@ public static class client
         queue_message(MESSAGE.DELETE, deleted.network_id, response_required);
     }
 
+    /// <summary> Connect to a server running on the local machine. </summary>
+    public static bool connect_local(string username, ulong user_id, disconnect_func on_disconnect)
+    {
+        if (!server.started)
+            return false;
+        backend = new local_client_backend();
+        return connect(username, user_id, on_disconnect);
+    }
+
     /// <summary> Connect directly to a host+port </summary>
     public static bool direct_connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
     {
@@ -354,18 +364,23 @@ public static class client
         return connect(username, user_id, on_disconnect);
     }
 
-    /// <summary> Connect to a server running on the local machine. </summary>
-    public static bool connect_local(string username, ulong user_id, disconnect_func on_disconnect)
+#if FACEPUNCH_STEAMWORKS
+
+    /// <summary> Connect to a steam friend. </summary>
+    public static bool steam_connect(Steamworks.SteamId id_to_join,
+        string my_username, ulong user_id, disconnect_func on_disconnect)
     {
-        if (!server.started)
-            return false;
-        backend = new local_client_backend();
-        return connect(username, user_id, on_disconnect);
+        backend = new steamworks_client_backend(id_to_join);
+        return connect(my_username, user_id, on_disconnect);
     }
+
+#endif
 
     /// <summary> Connect the client to a server. </summary>
     static bool connect(string username, ulong user_id, disconnect_func on_disconnect)
     {
+        if (user_id == 0) throw new System.Exception("Tried to connect a user_id of 0!");
+
         // Initialize client state
         last_local_id = 0;
         last_ping = 0;
@@ -381,24 +396,16 @@ public static class client
         // Initialize the networked object static state
         networked.client_initialize();
 
-        // The user doesn't have a steam account
-        // Just use the first 64 bytes of the username hash
-        if (user_id == 0)
-            using (var sha = System.Security.Cryptography.SHA256.Create())
-            {
-                var hash = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(username));
-                byte[] id_bytes = new byte[sizeof(ulong)];
-                for (int i = 0; i < id_bytes.Length; ++i)
-                    id_bytes[i] = i < hash.Length ? hash[i] : (byte)0; // Pad with 0 if needed
-                user_id = System.BitConverter.ToUInt64(id_bytes, 0);
-            }
-
         // Ensure startup info is synced with what was actually used to connect
         game.startup.user_id = user_id;
         game.startup.username = username;
 
         // Send login message
         queue_message(MESSAGE.LOGIN, username, user_id, version_control.version);
+
+        // Stop immediate server timeout
+        last_server_time_local = (int)Time.realtimeSinceStartup;
+
         return true;
     }
 
@@ -417,14 +424,12 @@ public static class client
         {
             // Close the stream (with a timeout so the above messages can be sent)
             backend.Close((int)(server.CLIENT_TIMEOUT * 1000));
+            backend = null;
         }
         catch
         {
             Debug.Log("Connection severed ungracefully.");
         }
-
-        backend.Close();
-        backend = null;
 
         on_disconnect(msg_from_server);
     }
@@ -541,6 +546,7 @@ public static class client
                "    Download           : " + traffic_down.usage() + "\n" +
                "    Effective ping     : " + ping + "\n" +
                "    Server time        : " + server_time + " (last = " + last_server_time + ")\n" +
+               "    Last srv heartbeat : " + time_since_last_heartbeat + " seconds ago\n" +
                "    Activity           : " + activity_since_heartbeat + "\n";
 
     }
