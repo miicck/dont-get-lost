@@ -87,7 +87,9 @@ public class steamworks_client_backend : client_backend
 
     public override int ReceiveBufferSize => 16384;
     public override int SendBufferSize => 16384;
-    public override string remote_address => "Steam user " + id_connected_to.Value + " (" + accepted_P2P_sessions + " P2P connections)";
+    public override string remote_address =>
+        "Steam user " + id_connected_to.Value + " (" + accepted_P2P_sessions + " P2P connections)" +
+        (local_server_client == null ? "" : " + local server client");
 
     public override backend_stream stream
     {
@@ -121,9 +123,14 @@ public class steamworks_client_backend : client_backend
 /// <summary> A Steam P2P networking implementation of the server backend. </summary>
 public class steamworks_server_backend : server_backend
 {
-    /// <summary> Remote steam users awaiting connection. </summary>
-    HashSet<Steamworks.SteamId> accepted_users = new HashSet<Steamworks.SteamId>();
     HashSet<Steamworks.SteamId> pending_users = new HashSet<Steamworks.SteamId>();
+    Dictionary<Steamworks.SteamId, steamworks_client_backend> accepted_users =
+        new Dictionary<Steamworks.SteamId, steamworks_client_backend>();
+
+    bool is_connected(Steamworks.SteamId id)
+    {
+        return accepted_users.ContainsKey(id) || pending_users.Contains(id);
+    }
 
     void connect_user(Steamworks.SteamId id)
     {
@@ -133,9 +140,20 @@ public class steamworks_server_backend : server_backend
 
     void disconnect_user(Steamworks.SteamId id)
     {
-        Steamworks.SteamNetworking.CloseP2PSessionWithUser(id);
+        // Only close the P2P session if it is a remote steam id
+        // (if I try to close a P2P session with myself, it will crash)
+        if (id != Steamworks.SteamClient.SteamId)
+            Steamworks.SteamNetworking.CloseP2PSessionWithUser(id);
+
         pending_users.Remove(id);
         accepted_users.Remove(id);
+    }
+
+    steamworks_client_backend accept_user(Steamworks.SteamId id, steamworks_client_backend client)
+    {
+        pending_users.Remove(id);
+        accepted_users[id] = client;
+        return client;
     }
 
     bool local_client_accepted = false;
@@ -153,7 +171,7 @@ public class steamworks_server_backend : server_backend
     {
         // Disconnect all users
         var all_users = new HashSet<Steamworks.SteamId>();
-        all_users.UnionWith(accepted_users);
+        all_users.UnionWith(accepted_users.Keys);
         all_users.UnionWith(pending_users);
 
         foreach (var u in all_users)
@@ -163,7 +181,10 @@ public class steamworks_server_backend : server_backend
     public override void on_disconnect(client_backend client)
     {
         if (client is steamworks_client_backend)
-            disconnect_user(((steamworks_client_backend)client).id_connected_to);
+        {
+            var steam_client = (steamworks_client_backend)client;
+            disconnect_user(steam_client.id_connected_to);
+        }
     }
 
     /// <summary> Either remote steam users are awaiting connection, 
@@ -183,7 +204,7 @@ public class steamworks_server_backend : server_backend
             Debug.Log("Server accepted local steamworks client");
 
             // Accept the local client (return it)
-            return steamworks_client_backend.local_server_client;
+            return accept_user(Steamworks.SteamClient.SteamId, steamworks_client_backend.local_server_client);
         }
 
         // Accept remote client
@@ -198,12 +219,13 @@ public class steamworks_server_backend : server_backend
             throw new Exception("No pending users to accept!");
 
         Debug.Log("Server accepted remote steamworks client " + to_accept.Value.Value);
-        return new steamworks_client_backend(to_accept.Value, server_side: true);
+        return accept_user(to_accept.Value, new steamworks_client_backend(to_accept.Value, server_side: true));
     }
 
     /// <summary> For steam P2P communication, the address is basically just the steam user. </summary>
     public override string local_address => Steamworks.SteamClient.SteamId.Value +
-        " (Steam P2P, " + accepted_users.Count + "/" + pending_users.Count + " accepted/pending users)";
+        " (Steam P2P, " + accepted_users.Count + "/" + pending_users.Count + " accepted/pending users)" +
+         (local_client_accepted ? " + local client" : "");
 }
 
 #endif // FACEPUNCH_STEAMWORKS

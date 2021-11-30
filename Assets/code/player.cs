@@ -1943,7 +1943,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         if (System.Enum.IsDefined(typeof(controls.BIND), ni))
             net_int_string = "Networked interaction : " + ((controls.BIND)ni).ToString();
         else
-            net_int_string = "No networked interaction";
+            net_int_string = "Networked interaction : None";
 
         return "    Local player  : " + current.username.value + " (group " + current.group + ")\n" +
                "    User id       : " + current.user_id + "\n" +

@@ -32,74 +32,8 @@ public class game : MonoBehaviour
         canvas = main_canvas;
         cursor_text_static = cursor_text_element;
 
-        // Various startup modes
-        startup.validate();
-        switch (startup.mode)
-        {
-            case startup_info.MODE.LOAD_AND_HOST:
-            case startup_info.MODE.CREATE_AND_HOST:
-
-                // Start + join the server
-                if (!server.start(startup.world_name, "misc/player", out string error_message))
-                {
-                    am_hard_disconnecting = true;
-                    on_client_disconnect(error_message);
-                    return;
-                }
-
-                // Connect to the server we just started
-                client.connect_local(startup.username, startup.user_id, on_client_disconnect);
-
-                // Create the world (if required)
-                if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
-                {
-                    var w = (world)client.create(Vector3.zero, "misc/world");
-                    w.networked_seed.value = startup.world_seed;
-                    w.networked_name.value = startup.world_name;
-
-                    // Create the various always-loaded objects
-                    client.create(Vector3.zero, "misc/tech_tree");
-                    client.create(Vector3.zero, "misc/time_manager");
-                    client.create(Vector3.zero, "misc/teleport_manager");
-                }
-
-                break;
-
-            case startup_info.MODE.JOIN:
-
-                // Join the server
-                if (!client.direct_connect(startup.hostname, startup.port,
-                    startup.username, startup.user_id, on_client_disconnect))
-                {
-                    on_client_disconnect("Couldn't connect to server!");
-                    return;
-                }
-
-                break;
-
-#if FACEPUNCH_STEAMWORKS
-            case startup_info.MODE.JOIN_STEAM:
-
-                // Join a steam friend
-                if (!client.steam_connect(startup.id_to_join, startup.username, startup.user_id, on_client_disconnect))
-                {
-                    on_client_disconnect("Could not connect to steam friend!");
-                    return;
-                }
-
-                break;
-#endif
-
-            default:
-                throw new System.Exception("Unkown startup mode!");
-        }
-
-        // Start with invisible, locked cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        //if (Application.isEditor)
-        QualitySettings.vSyncCount = 0;
+        // Attempt to connect the client to a server
+        if (!client_connect()) return;
 
         // Ensure we're using SRP batching
         UnityEngine.Rendering.GraphicsSettings.useScriptableRenderPipelineBatching = true;
@@ -127,6 +61,60 @@ public class game : MonoBehaviour
         // Set the character spawning going
         InvokeRepeating("character_spawn_update",
             CHARACTER_SPAWN_INTERVAL, CHARACTER_SPAWN_INTERVAL);
+    }
+
+    bool client_connect()
+    {
+        // Various startup modes
+        startup.validate();
+        switch (startup.mode)
+        {
+            case startup_info.MODE.LOAD_AND_HOST:
+            case startup_info.MODE.CREATE_AND_HOST:
+
+                // Start + join the server
+                if (!server.start(startup.world_name, "misc/player", out string error_message))
+                {
+                    am_hard_disconnecting = true;
+                    on_client_disconnect(error_message);
+                    return false;
+                }
+
+                // Connect to the server we just started
+                client.connect_local(startup.username, startup.user_id, on_client_disconnect);
+
+                // Create the world (if required)
+                if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
+                {
+                    var w = (world)client.create(Vector3.zero, "misc/world");
+                    w.networked_seed.value = startup.world_seed;
+                    w.networked_name.value = startup.world_name;
+
+                    // Create the various always-loaded objects
+                    client.create(Vector3.zero, "misc/tech_tree");
+                    client.create(Vector3.zero, "misc/time_manager");
+                    client.create(Vector3.zero, "misc/teleport_manager");
+                }
+
+                return true;
+
+            case startup_info.MODE.JOIN:
+
+                // Join the server
+                client.direct_connect(startup.hostname, startup.port, startup.username, startup.user_id, on_client_disconnect);
+                return true;
+
+#if FACEPUNCH_STEAMWORKS
+            case startup_info.MODE.JOIN_STEAM:
+
+                // Join a steam friend
+                client.steam_connect(startup.id_to_join, startup.username, startup.user_id, on_client_disconnect);
+                return true;
+#endif
+
+            default:
+                throw new System.Exception("Unkown startup mode!");
+        }
     }
 
     void Update()
@@ -158,6 +146,11 @@ public class game : MonoBehaviour
         if (controls.triggered(controls.BIND.DECREASE_RENDER_RANGE)) render_range_target -= 10f;
         render_range = Mathf.Lerp(render_range, render_range_target, 3 * Time.deltaTime);
 
+        run_loading_screen();
+    }
+
+    void run_loading_screen()
+    {
         if (loading)
         {
             controls.disabled = true;

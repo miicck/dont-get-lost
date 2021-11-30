@@ -344,40 +344,46 @@ public static class client
     }
 
     /// <summary> Connect to a server running on the local machine. </summary>
-    public static bool connect_local(string username, ulong user_id, disconnect_func on_disconnect)
+    public static void connect_local(string username, ulong user_id, disconnect_func on_disconnect)
     {
         if (!server.started)
-            return false;
+        {
+            on_disconnect("Could not connect to local server (server not started).");
+            return;
+        }
+
         backend = new local_client_backend();
-        return connect(username, user_id, on_disconnect);
+        connect(username, user_id, on_disconnect);
     }
 
     /// <summary> Connect directly to a host+port </summary>
-    public static bool direct_connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
+    public static void direct_connect(string host, int port, string username, ulong user_id, disconnect_func on_disconnect)
     {
         backend = tcp_client_backend.connect(host, port);
 
-        // Connection failed
         if (backend == null)
-            return false;
+        {
+            on_disconnect("Could not connect to remote server");
+            return;
+        }
 
-        return connect(username, user_id, on_disconnect);
+        connect(username, user_id, on_disconnect);
     }
 
 #if FACEPUNCH_STEAMWORKS
 
     /// <summary> Connect to a steam friend. </summary>
-    public static bool steam_connect(Steamworks.SteamId id_to_join,
+    public static void steam_connect(Steamworks.SteamId id_to_join,
         string my_username, ulong user_id, disconnect_func on_disconnect)
     {
         backend = new steamworks_client_backend(id_to_join);
-        return connect(my_username, user_id, on_disconnect);
+        connect(my_username, user_id, on_disconnect);
     }
 
 #endif
 
     /// <summary> Connect the client to a server. </summary>
-    static bool connect(string username, ulong user_id, disconnect_func on_disconnect)
+    static void connect(string username, ulong user_id, disconnect_func on_disconnect)
     {
         if (user_id == 0) throw new System.Exception("Tried to connect a user_id of 0!");
 
@@ -406,8 +412,6 @@ public static class client
 
         // Stop immediate server timeout
         last_server_time_local = (int)Time.realtimeSinceStartup;
-
-        return true;
     }
 
     public static void disconnect(bool initiated_by_client, string msg_from_server = null, bool delete_player = false)

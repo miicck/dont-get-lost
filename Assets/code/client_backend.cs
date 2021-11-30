@@ -219,10 +219,9 @@ public class tcp_client_backend : client_backend
         var client = new TcpClient();
         var connector = client.BeginConnect(host, port, null, null);
 
-        // Connection timeout
-        if (!connector.AsyncWaitHandle.WaitOne(global::client.CONNECTION_TIMEOUT_MS))
-            return null;
+        if (connector.AsyncWaitHandle.WaitOne(global::client.CONNECTION_TIMEOUT_MS))
+            return new tcp_client_backend(client);
 
-        return new tcp_client_backend(client);
+        return null;
     }
 }
