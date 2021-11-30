@@ -73,7 +73,7 @@ public class player_inspectable : player_interaction
         inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
     }
 
-    public override bool start_interaction(player player)
+    protected override bool on_start_interaction(player player)
     {
         update();
         return !controls.held(controls.BIND.INSPECT);
@@ -86,7 +86,7 @@ public class player_inspectable : player_interaction
         return !controls.held(controls.BIND.INSPECT);
     }
 
-    public override void end_interaction(player player)
+    protected override void on_end_interaction(player player)
     {
         inspect_info.turn_off();
     }

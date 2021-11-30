@@ -79,7 +79,7 @@ public class steamworks_client_backend : client_backend
         if (!server_side) local_server_client = new steamworks_client_backend(id_to_connect_to, server_side: true);
     }
 
-    public override void Close(int timeout_ms = 0)
+    protected override void OnClose()
     {
         // Forget the local server client
         local_server_client = null;
@@ -122,8 +122,21 @@ public class steamworks_client_backend : client_backend
 public class steamworks_server_backend : server_backend
 {
     /// <summary> Remote steam users awaiting connection. </summary>
-    Queue<Steamworks.SteamId> pending_users = new Queue<Steamworks.SteamId>();
-    HashSet<Steamworks.SteamId> all_users = new HashSet<Steamworks.SteamId>();
+    HashSet<Steamworks.SteamId> accepted_users = new HashSet<Steamworks.SteamId>();
+    HashSet<Steamworks.SteamId> pending_users = new HashSet<Steamworks.SteamId>();
+
+    void connect_user(Steamworks.SteamId id)
+    {
+        Steamworks.SteamNetworking.AcceptP2PSessionWithUser(id);
+        pending_users.Add(id);
+    }
+
+    void disconnect_user(Steamworks.SteamId id)
+    {
+        Steamworks.SteamNetworking.CloseP2PSessionWithUser(id);
+        pending_users.Remove(id);
+        accepted_users.Remove(id);
+    }
 
     bool local_client_accepted = false;
 
@@ -133,20 +146,24 @@ public class steamworks_server_backend : server_backend
             throw new Exception("Steam not connected!");
 
         // Accept new P2P connections
-        Steamworks.SteamNetworking.OnP2PSessionRequest = (new_id) =>
-        {
-            Steamworks.SteamNetworking.AcceptP2PSessionWithUser(new_id);
-            pending_users.Enqueue(new_id);
-            all_users.Add(new_id);
-        };
+        Steamworks.SteamNetworking.OnP2PSessionRequest = connect_user;
     }
 
     public override void Stop()
     {
-        // Close all P2P sessions
+        // Disconnect all users
+        var all_users = new HashSet<Steamworks.SteamId>();
+        all_users.UnionWith(accepted_users);
+        all_users.UnionWith(pending_users);
+
         foreach (var u in all_users)
-            Steamworks.SteamNetworking.CloseP2PSessionWithUser(u);
-        all_users.Clear();
+            disconnect_user(u);
+    }
+
+    public override void on_disconnect(client_backend client)
+    {
+        if (client is steamworks_client_backend)
+            disconnect_user(((steamworks_client_backend)client).id_connected_to);
     }
 
     /// <summary> Either remote steam users are awaiting connection, 
@@ -170,13 +187,23 @@ public class steamworks_server_backend : server_backend
         }
 
         // Accept remote client
-        var id = pending_users.Dequeue();
-        Debug.Log("Server accepted remote steamworks client " + id.Value);
-        return new steamworks_client_backend(id, server_side: true);
+        Steamworks.SteamId? to_accept = null;
+        foreach (var id in pending_users)
+        {
+            to_accept = id;
+            break;
+        }
+
+        if (to_accept == null)
+            throw new Exception("No pending users to accept!");
+
+        Debug.Log("Server accepted remote steamworks client " + to_accept.Value.Value);
+        return new steamworks_client_backend(to_accept.Value, server_side: true);
     }
 
     /// <summary> For steam P2P communication, the address is basically just the steam user. </summary>
-    public override string local_address => Steamworks.SteamClient.SteamId.Value + " (Steam P2P, " + all_users.Count + " users)";
+    public override string local_address => Steamworks.SteamClient.SteamId.Value +
+        " (Steam P2P, " + accepted_users.Count + "/" + pending_users.Count + " accepted/pending users)";
 }
 
 #endif // FACEPUNCH_STEAMWORKS

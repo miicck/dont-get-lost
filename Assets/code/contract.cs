@@ -106,7 +106,7 @@ public class contract : item
             return "activate contract";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (player.inventory.remove(contract, 1))
                 item.create(contract.name, player.transform.position,
@@ -150,7 +150,7 @@ public class contract : item
                 c.create_contract_ui(this).SetParent(content);
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             refresh_contracts(player);
             return base.start_interaction(player);

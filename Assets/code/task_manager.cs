@@ -16,12 +16,7 @@ public class task_manager : MonoBehaviour
     public bool open
     {
         get => gameObject.activeInHierarchy;
-        set
-        {
-            Cursor.visible = value;
-            Cursor.lockState = value ? CursorLockMode.None : CursorLockMode.Locked;
-            gameObject.SetActive(value);
-        }
+        set => gameObject.SetActive(value);
     }
 
     delegate void callback();

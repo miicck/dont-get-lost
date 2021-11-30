@@ -29,7 +29,7 @@ public class cave_system_teleporter : MonoBehaviour, IPlayerInteractable
             return "go underground";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             var target = utils.find_to_min(FindObjectsOfType<cave_system_teleporter>(), (t) =>
             {

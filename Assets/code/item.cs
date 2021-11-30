@@ -97,7 +97,7 @@ public class item : networked, IPlayerInteractable
             return item != null && !item.is_logistics_version;
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             player.play_sound("sounds/click_1", volume: 0.5f);
             item.pick_up();
@@ -117,7 +117,7 @@ public class item : networked, IPlayerInteractable
 
         public override controls.BIND keybind => controls.BIND.SELECT_ITEM_FROM_WORLD;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             player.current.equip_matching(item);
             return true;

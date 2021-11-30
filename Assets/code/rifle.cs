@@ -349,7 +349,7 @@ public class rifle : equip_in_hand
             return "aim down sights";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             rifle.ads_triggered = true;
             return false;
@@ -357,7 +357,7 @@ public class rifle : equip_in_hand
 
         public override bool continue_interaction(player player) { return !triggered(player); }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
             rifle.ads_triggered = false;
         }

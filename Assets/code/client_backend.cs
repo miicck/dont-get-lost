@@ -51,7 +51,14 @@ public abstract class client_backend
 {
     /// <summary> Close the connection to the server. </summary>
     /// <param name="timeout_ms">The number of milliseconds to linger for before actually closing.</param>
-    public abstract void Close(int timeout_ms = 0);
+    public void Close(int timeout_ms = 0)
+    {
+        this.OnClose();
+        stream.Close(timeout_ms);
+    }
+
+    /// <summary> Callback when client backend is closed. </summary>
+    protected virtual void OnClose() { }
 
     /// <summary> The byte stream used to communicate with the server. </summary>
     public abstract backend_stream stream { get; }
@@ -147,9 +154,9 @@ public class local_client_backend : client_backend
         this.local_stream = local_stream;
     }
 
-    public override void Close(int timeout_ms = 0) 
-    { 
-        local_server_client = null; 
+    protected override void OnClose()
+    {
+        local_server_client = null;
     }
 
     public override backend_stream stream => local_stream;
@@ -193,11 +200,6 @@ public class tcp_client_backend : client_backend
 
     public override int ReceiveBufferSize => client.ReceiveBufferSize;
     public override int SendBufferSize => client.SendBufferSize;
-
-    public override void Close(int timeout_ms = 0)
-    {
-        stream.Close(timeout_ms);
-    }
 
     public override string remote_address
     {

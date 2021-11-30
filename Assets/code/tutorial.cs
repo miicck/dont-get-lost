@@ -27,9 +27,10 @@ public abstract class tutorial_object : MonoBehaviour
         public override bool simultaneous() => obj.allows_other_interactions();
         public override bool allows_movement() => obj.allows_movement();
         public override bool allows_mouse_look() => obj.allows_mouse_look();
-        public override bool start_interaction(player player) { obj.start_interaction(); return false; }
+        protected override bool on_start_interaction(player player) { obj.start_interaction(); return false; }
         public override bool continue_interaction(player player) => false;
-        public override void end_interaction(player player) => obj.end_interaction();
+        protected override void on_end_interaction(player player) => obj.end_interaction();
+        protected override bool mouse_visible() => obj.mouse_visible();
     }
 
     protected virtual bool allows_other_interactions() => true;
@@ -37,6 +38,7 @@ public abstract class tutorial_object : MonoBehaviour
     protected virtual bool allows_mouse_look() => true;
     protected virtual void start_interaction() { }
     protected virtual void end_interaction() { }
+    protected virtual bool mouse_visible() => false;
 }
 
 class confirm_window : tutorial_object
@@ -64,18 +66,15 @@ class confirm_window : tutorial_object
     protected override bool allows_movement() => false;
     protected override bool allows_other_interactions() => false;
 
-    protected override void start_interaction()
+    protected override bool mouse_visible()
     {
-        player.current.cursor_sprite = null;
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        // Need a mouse to be able to click the button
+        return true;
     }
 
     protected override void end_interaction()
     {
-        player.current.cursor_sprite = cursors.DEFAULT;
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        // confirm window interaction ended => confirmation
         on_confirm?.Invoke();
     }
 }
@@ -309,6 +308,7 @@ public static class tutorial
         if (stage < 0) return;
         if (stage >= tutorial_stages.Length) return;
         tutorial_object = tutorial_stages[stage]();
+
         player.current.force_interaction(tutorial_object.interaction);
     }
 }

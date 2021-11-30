@@ -142,7 +142,7 @@ public class farm_harvest_on_click : MonoBehaviour, IPlayerInteractable
 
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             player.play_sound("sounds/click_1");
             spot.harvest();

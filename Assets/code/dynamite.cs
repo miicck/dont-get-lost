@@ -18,7 +18,7 @@ public class dynamite : item
             return "blow stuff up";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             // Only blow stuff up if we have authority
             if (!player.has_authority) return true;

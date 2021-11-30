@@ -49,7 +49,7 @@ public class projectile : item, INotPathBlocking
             return "pickup projectiles";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             // Don't do anything unless player has authority
             if (!player.has_authority) return true;

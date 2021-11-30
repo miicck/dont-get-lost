@@ -401,6 +401,7 @@ public static class client
         game.startup.username = username;
 
         // Send login message
+        Debug.Log("Sending LOGIN message with username: " + username + " id: " + user_id);
         queue_message(MESSAGE.LOGIN, username, user_id, version_control.version);
 
         // Stop immediate server timeout

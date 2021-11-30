@@ -173,18 +173,16 @@ public static class utils
     static UnityEngine.UI.GraphicRaycaster _graphic_raycaster;
 
     /// <summary> Raycast for a <typeparamref name="T"/> under the mouse. </summary>
-    public static T raycast_ui_under_mouse<T>(bool require_cursor_visible = true)
+    public static T raycast_ui_under_mouse<T>()
     {
-        var arr = raycast_all_ui_under_mouse<T>(require_cursor_visible: require_cursor_visible, return_first: true);
+        var arr = raycast_all_ui_under_mouse<T>(return_first: true);
         if (arr.Length == 0) return default;
         return arr[0];
     }
 
     /// <summary> Raycast for all <typeparamref name="T"/>s under the mouse. </summary>
-    public static T[] raycast_all_ui_under_mouse<T>(bool require_cursor_visible = true, bool return_first = false)
+    public static T[] raycast_all_ui_under_mouse<T>( bool return_first = false)
     {
-        if (!Cursor.visible && require_cursor_visible) return new T[0];
-
         // Setup the raycast
         var pointer_data = new
             UnityEngine.EventSystems.PointerEventData(

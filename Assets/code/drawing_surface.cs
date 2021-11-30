@@ -91,7 +91,12 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
         public override bool allows_mouse_look() => false;
         public override bool allows_movement() => false;
 
-        public override bool start_interaction(player player)
+        protected override bool mouse_visible()
+        {
+            return true;
+        }
+
+        protected override bool on_start_interaction(player player)
         {
             ui = Resources.Load<RectTransform>("ui/drawing_surface").inst();
             ui.transform.SetParent(game.canvas.transform);
@@ -102,10 +107,6 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
                 {
                     color = b.image.color;
                 });
-
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-            player.current.cursor_sprite = null;
 
             return false;
         }
@@ -138,11 +139,8 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
             return ui == null; // Interaction complete when ui deleted
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-            player.current.cursor_sprite = cursors.DEFAULT;
             player.current.validate_equip();
         }
     }

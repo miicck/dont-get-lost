@@ -102,7 +102,7 @@ public class building_material : item, IPlayerInteractable
             return material.is_logistics_version;
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             material.pick_up();
             return true;
@@ -122,7 +122,7 @@ public class building_material : item, IPlayerInteractable
         public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM;
         public override bool is_possible() { return !material.is_logistics_version; }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             material.pick_up(true);
             player.current.play_sound("sounds/hammer_wood_lowpass", 0.9f, 1.1f, 0.5f, location: material.transform.position);
@@ -149,7 +149,7 @@ public class building_material : item, IPlayerInteractable
         public override controls.BIND keybind => controls.BIND.RELOCATE_BUILDING;
         public override string context_tip() => "relocate " + building?.display_name;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             delete_success = false;
             if (building == null) return true;
@@ -204,7 +204,7 @@ public class building_material : item, IPlayerInteractable
             return blueprint.manipulate();
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
             // Build the relocated building (if the bluerprint still exists)
             var built = blueprint?.build_networked_version(remove_from_inv: false);
@@ -434,7 +434,7 @@ public class building_material : item, IPlayerInteractable
                 "Disabling snapping will also align the building to the world axes";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             // Don't do anything on non-auth clients
             if (!player.has_authority) return true;
@@ -512,7 +512,7 @@ public class building_material : item, IPlayerInteractable
             return blueprint.manipulate();
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
             // Don't do anything non-auth clients
             if (!player.has_authority) return;

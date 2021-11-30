@@ -37,6 +37,12 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
         UnityEngine.UI.Text trader_coins_text;
         bool interaction_completed = false;
 
+        protected override bool mouse_visible()
+        {
+            // Mouse is visible during trade interaction
+            return true;
+        }
+
         int current_trade_value()
         {
             // Update the total value of goods transfered
@@ -73,7 +79,7 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
             else if (player_coins_gained < 0) trader_coins_text.text += "+" + (-player_coins_gained).qs();
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (ui == null)
             {
@@ -152,10 +158,8 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
             }
             else update_ui(player); // ui already exists, ensure up to date
 
-            // Open the menu/enable the mouse
+            // Open the menu
             ui.gameObject.SetActive(true);
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
             return false;
         }
 
@@ -173,12 +177,10 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
             return triggered(player);
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
-            // Close the menu/disable the mouse
+            // Close the menu
             ui.gameObject.SetActive(false);
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
         }
     }
 }

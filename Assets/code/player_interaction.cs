@@ -30,6 +30,9 @@ public abstract class player_interaction
     /// <summary> Returns false if the interaction is (temporarily) impossible. </summary>
     public virtual bool is_possible() { return true; }
 
+    /// <summary> Returns true if the mouse should be visible during this interaction. </summary>
+    protected virtual bool mouse_visible() { return false; }
+
     /// <summary> Shown at the bottom right of the screen to let the player 
     /// know what interactions are currently possible. </summary>
     public abstract string context_tip();
@@ -37,16 +40,45 @@ public abstract class player_interaction
     /// <summary> Returns true if the context tip should be displayed. </summary>
     public virtual bool show_context_tip() { return true; }
 
+    /// <summary> Called when an interaction starts, returns 
+    /// true if the interaction is immediately completed. </summary>
+    public bool start_interaction(player player)
+    {
+        if (player == player.current)
+        {
+            // Update cursor visibility state
+            Cursor.visible = mouse_visible();
+            Cursor.lockState = mouse_visible() ? CursorLockMode.None : CursorLockMode.Locked;
+            if (mouse_visible()) player.cursor_sprite = null;
+        }
+
+        return on_start_interaction(player);
+    }
+
     /// <summary> Called when an interaction starts, should return 
     /// true if the interaction is immediately completed. </summary>
-    public virtual bool start_interaction(player player) { return false; }
+    protected virtual bool on_start_interaction(player player) { return false; }
 
     /// <summary> Called once per frame when the interaction is underway,
     /// should return true once the interaction is over. </summary>
     public virtual bool continue_interaction(player player) { return true; }
 
+    /// <summary> Called to end an interaction. </summary>
+    public void end_interaction(player player)
+    {
+        if (player == player.current)
+        {
+            // Return to default invisible cursor
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            if (mouse_visible()) player.current.cursor_sprite = cursors.DEFAULT;
+        }
+
+        on_end_interaction(player);
+    }
+
     /// <summary> Called when the interaction is completed. </summary>
-    public virtual void end_interaction(player player) { }
+    protected virtual void on_end_interaction(player player) { }
 
     /// <summary> An inventory that can be edited when 
     /// interacting with this. null otherwise. </summary>
@@ -95,7 +127,7 @@ public abstract class networked_player_interaction : player_interaction
         return false;
     }
 
-    public sealed override bool start_interaction(player player)
+    protected sealed override bool on_start_interaction(player player)
     {
         // On the authority client, record the fact that
         // we've started this interaction
@@ -117,7 +149,7 @@ public abstract class networked_player_interaction : player_interaction
 
     public virtual bool continue_networked_interaction(player player) { return true; }
 
-    public sealed override void end_interaction(player player)
+    protected sealed override void on_end_interaction(player player)
     {
         // On the authority client, record the fact that 
         // we've ended this interaction
@@ -355,7 +387,7 @@ public abstract class left_player_menu : player_interaction
     public override bool allows_movement() { return false; }
     public override bool allows_mouse_look() { return false; }
 
-    public override bool start_interaction(player player)
+    protected override bool on_start_interaction(player player)
     {
         close_requested = false;
 
@@ -381,7 +413,7 @@ public abstract class left_player_menu : player_interaction
         return close_requested || inventory_opener.continue_interaction(player);
     }
 
-    public override void end_interaction(player player)
+    protected override void on_end_interaction(player player)
     {
         if (menu != null)
         {

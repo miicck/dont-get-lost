@@ -7,10 +7,13 @@ using System.Net.Sockets;
 public abstract class server_backend
 {
     /// <summary> Start listening for incomming messages (start the server). </summary>
-    public abstract void Start();
+    public virtual void Start() { }
 
     /// <summary> Stop listening to messages (stop the server). </summary>
-    public abstract void Stop();
+    public virtual void Stop() { }
+
+    /// <summary> Called when a client disconnects. </summary>
+    public virtual void on_disconnect(client_backend client) { }
 
     /// <summary> Are there pending incomming connections? </summary>
     /// <returns>True if there are pending incoming connections.</returns>
@@ -67,6 +70,12 @@ public class combined_server_backend : server_backend
             b.Stop();
     }
 
+    public override void on_disconnect(client_backend client)
+    {
+        foreach (var b in backends)
+            b.on_disconnect(client);
+    }
+
     public override client_backend AcceptClient()
     {
         foreach (var b in backends)
@@ -119,9 +128,6 @@ public class tcp_server_backend : server_backend
 public class local_server_backend : server_backend
 {
     bool accepted_local_client = false;
-
-    public override void Start() { }
-    public override void Stop() { }
 
     public override string local_address => "Local server";
 

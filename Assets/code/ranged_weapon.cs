@@ -79,7 +79,7 @@ public class ranged_weapon : equip_in_hand
             return "fire "+weapon.display_name;
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             weapon.fire();
             return true;

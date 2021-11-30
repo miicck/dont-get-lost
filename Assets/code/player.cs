@@ -231,7 +231,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override string context_tip() => "undo";
         public override bool show_context_tip() => false;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (undo_manager.undo()) player.play_sound("sounds/undo_sound");
             return true;
@@ -244,7 +244,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override string context_tip() => "redo";
         public override bool show_context_tip() => false;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (undo_manager.redo()) player.play_sound("sounds/undo_sound");
             return true;
@@ -255,10 +255,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     {
         protected abstract void set_menu_state(player player, bool state);
 
-        public override bool start_interaction(player player)
+        protected override bool mouse_visible()
         {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
+            return true;
+        }
+
+        protected override bool on_start_interaction(player player)
+        {
             set_menu_state(player, true);
             return false;
         }
@@ -269,10 +272,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             return triggered(player) || controls.triggered(controls.BIND.LEAVE_MENU);
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
             set_menu_state(player, false);
         }
 
@@ -333,7 +334,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override string context_tip() { return "toggle first/third person"; }
         public override bool show_context_tip() { return false; }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             player.first_person = !player.first_person;
             return true;
@@ -346,7 +347,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override string context_tip() { return "place marker"; }
         public override bool show_context_tip() { return false; }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             var ray = player.camera_ray();
             if (Physics.Raycast(ray, out RaycastHit hit)) client.create(hit.point, "misc/map_ping");
@@ -360,7 +361,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override string context_tip() { return "toggle map"; }
         public override bool show_context_tip() { return false; }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             player.map_open = !player.map_open;
             return true;
@@ -374,6 +375,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         public override controls.BIND keybind => controls.BIND.OPEN_TASK_MANAGER;
         public override string context_tip() { return "open task manager"; }
         public override bool show_context_tip() { return false; }
+
+        protected override bool mouse_visible()
+        {
+            return true;
+        }
 
         protected override void set_menu_state(player player, bool state)
         {
@@ -421,7 +427,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         RectTransform ui;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             ui = Resources.Load<RectTransform>("ui/simple_textbox").inst();
             ui.SetParent(game.canvas.transform);
@@ -440,7 +446,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             return !triggered(player);
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
             Destroy(ui.gameObject);
         }
@@ -1447,7 +1453,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                    " to " + interacting_with.username.value;
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (current.equipped == null) return true;
             if (interacting_with == null) return true;

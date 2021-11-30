@@ -49,7 +49,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
             return "scavange";
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             if (timer != null) Destroy(timer.gameObject);
             timer = Resources.Load<scavange_timer>("ui/scavange_timer").inst();
@@ -69,7 +69,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
             return timer == null;
         }
 
-        public override void end_interaction(player player)
+        protected override void on_end_interaction(player player)
         {
             controls.disabled = false;
             if (timer == null)

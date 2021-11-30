@@ -64,7 +64,7 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
         public harvest_interaction(harvest_by_hand harvesting) { this.harvesting = harvesting; }
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             harvesting.harvest();
             return false;

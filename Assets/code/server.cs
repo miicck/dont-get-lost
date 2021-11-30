@@ -123,7 +123,7 @@ public static class server
         /// <summary> Called when a client disconnects. If message is not 
         /// null, it is sent to the server as part of a DISCONNECT message, 
         /// otherwise no DISCONNECT message is sent to the server. </summary>
-        public void disconnect(string message, float timeout = CLIENT_TIMEOUT, bool delete_player = false)
+        public void disconnect(string message, bool delete_player = false)
         {
             if (message != null && message.Length > 0) log(username + " disconnected: " + message);
             else log(username + " disconnected.");
@@ -141,9 +141,12 @@ public static class server
             connected_clients.Remove(this);
             message_queues.Remove(this);
 
+            // Call backend-specific disconnect
+            server.backend.on_disconnect(backend);
+
             // Close with a timeout, so that any hanging messages
             // (in particular the DISCONNECT message) can be sent.
-            backend.Close((int)(timeout * 1000));
+            backend.Close((int)(server.CLIENT_TIMEOUT * 1000));
 
             // Disconnect the player if there is one loaded
             // (the player isn't loaded if, for example, this

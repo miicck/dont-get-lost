@@ -36,7 +36,7 @@ public class railcart : item
             else popup_message.create("Stopping after " + stops + " stations");
         }
 
-        public override bool start_interaction(player player)
+        protected override bool on_start_interaction(player player)
         {
             // Rails only get used by authority client
             if (!player.has_authority)

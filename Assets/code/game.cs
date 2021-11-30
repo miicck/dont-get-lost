@@ -163,10 +163,6 @@ public class game : MonoBehaviour
             controls.disabled = true;
             loading_message.SetActive(true);
 
-            // Unlock cursor while loading
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
             // Ensure loading message is above everything
             // except for the debug panel
             loading_message.transform.SetAsLastSibling();
@@ -184,10 +180,6 @@ public class game : MonoBehaviour
         }
         else if (loading_message.activeInHierarchy)
         {
-            // Lock cursor again when finished loading
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
             controls.disabled = false;
             loading_message.gameObject.SetActive(false);
             on_load?.Invoke();
