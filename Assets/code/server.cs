@@ -829,6 +829,8 @@ public static class server
     {
         if (!started) return;
 
+        backend.Update();
+
         // Timout recently-deleted id's
         HashSet<int> to_remove = new HashSet<int>();
         foreach (var kv in recently_deleted)
@@ -841,6 +843,11 @@ public static class server
         // Connect new clients
         while (backend.Pending())
             connected_clients.Add(new client(backend.AcceptClient()));
+
+        // Disconnect clients that have dropped
+        foreach (var c in new List<client>(connected_clients))
+            if (c.backend.has_disconnected)
+                c.disconnect("Backend disconnected");
 
         // Recive messages from clients
         foreach (var c in new List<client>(connected_clients))

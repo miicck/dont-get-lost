@@ -49,6 +49,9 @@ public class tcp_stream : backend_stream
 /// <summary> The interface needed for the client to communicate with the server. </summary>
 public abstract class client_backend
 {
+    /// <summary> Called once a frame, before the main client logic. </summary>
+    public virtual void Update() { }
+
     /// <summary> Close the connection to the server. </summary>
     /// <param name="timeout_ms">The number of milliseconds to linger for before actually closing.</param>
     public void Close(int timeout_ms = 0)
@@ -71,6 +74,9 @@ public abstract class client_backend
 
     /// <summary> A string representing the address of this client (as seen by the server). </summary>
     public abstract string remote_address { get; }
+
+    /// <summary> Returns true if this backend has disconnected. </summary>
+    public virtual bool has_disconnected => false;
 }
 
 /// <summary> A backend_stream implemented as a MemoryStream. </summary>

@@ -12,6 +12,9 @@ public abstract class server_backend
     /// <summary> Stop listening to messages (stop the server). </summary>
     public virtual void Stop() { }
 
+    /// <summary> Called once per frame, before any of the main server logic. </summary>
+    public virtual void Update() { }
+
     /// <summary> Called when a client disconnects. </summary>
     public virtual void on_disconnect(client_backend client) { }
 
@@ -68,6 +71,12 @@ public class combined_server_backend : server_backend
     {
         foreach (var b in backends)
             b.Stop();
+    }
+
+    public override void Update()
+    {
+        foreach (var b in backends)
+            b.Update();
     }
 
     public override void on_disconnect(client_backend client)

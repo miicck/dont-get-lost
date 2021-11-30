@@ -376,7 +376,7 @@ public static class client
     public static void steam_connect(Steamworks.SteamId id_to_join,
         string my_username, ulong user_id, disconnect_func on_disconnect)
     {
-        backend = new steamworks_client_backend(id_to_join);
+        backend = new steamworks_client_backend(id_to_join, steamworks_server_backend.CLIENT_TO_SERVER_CHANNEL);
         connect(my_username, user_id, on_disconnect);
     }
 
@@ -442,6 +442,8 @@ public static class client
     public static void update()
     {
         if (!connected) return;
+
+        backend.Update();
 
         // Get the tcp stream
         backend_stream stream = null;
