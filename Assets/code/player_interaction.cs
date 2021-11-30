@@ -329,6 +329,13 @@ public class interaction_set
     /// <summary> Continue underway interactions </summary>
     public void continue_underway(player player, bool force_stop = false)
     {
+        // Re-disable cursor if no interactions are underway
+        if (underway.Count == 0 && Cursor.visible)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+
         // Continue underway interactions
         foreach (var kv in new Dictionary<controls.BIND, started_info>(underway))
         {
