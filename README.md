@@ -10,13 +10,14 @@ To setup a unity project for development, follow these steps:
     $ cd /path/to/project/folder
     $ rm -r Assets/ ProjectSettings/
     $ git init
-    $ git remote add origin https://github.com/miicck/dont-get-lost
+    $ git remote add origin git@github.com:miicck/dont-get-lost.git
     $ git fetch
     $ git checkout -t origin/master
     Re-open the unity editor/load the project
     ~~~~
     If you're working with a newer version of unity than the last commit in this project, unity may ask to do a 
     reimport. This should be fine. Note that using an older version than the last commit is not supported - update your engine.
+    It might also ask to disable the old input manager, which I still use. You should say no to this.
  
 3. (optional, recommended) Go to Window > Package Manager, locate *High Definition RP* and update it to the latest version (it may already be the latest version).
 4. <b> If you want steam-based features: </b> <br>
