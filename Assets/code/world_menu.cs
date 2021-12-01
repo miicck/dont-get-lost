@@ -205,6 +205,7 @@ public class world_menu : MonoBehaviour
             network_utils.local_ip_address() + ":" + server.DEFAULT_PORT);
         ip_input.transform.SetAsLastSibling();
 
+#if FACEPUNCH_STEAMWORKS
         var steam_friends_header = template_header.inst();
         steam_friends_header.text = "Join steam friends";
         steam_friends_header.transform.SetParent(button_container);
@@ -233,6 +234,7 @@ public class world_menu : MonoBehaviour
             no_friends_header.text = "No steam friends in-game";
             Destroy(steam_friends_header.gameObject);
         }
+#endif
 
         var quit_header = template_header.inst();
         quit_header.text = "";

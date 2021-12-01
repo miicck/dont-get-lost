@@ -81,8 +81,7 @@ public class game : MonoBehaviour
                 }
 
                 // Connect to the server we just started
-                //client.connect_local(startup.username, startup.user_id, on_client_disconnect);
-                client.steam_connect(Steamworks.SteamClient.SteamId, startup.username, startup.user_id, on_client_disconnect);
+                client.connect_local(startup.username, startup.user_id, on_client_disconnect);
 
                 // Create the world (if required)
                 if (startup.mode == startup_info.MODE.CREATE_AND_HOST)
