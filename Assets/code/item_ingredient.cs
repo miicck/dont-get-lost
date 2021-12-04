@@ -9,6 +9,8 @@ public class item_ingredient : ingredient
 
     public override float average_value()
     {
+        if (item == null)
+            throw new System.Exception("No item set for item_ingredient " + name);
         return item.value * count;
     }
 

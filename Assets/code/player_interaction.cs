@@ -44,7 +44,7 @@ public abstract class player_interaction
     /// true if the interaction is immediately completed. </summary>
     public bool start_interaction(player player)
     {
-        if (player == player.current)
+        if (player.has_authority)
         {
             // Update cursor visibility state
             Cursor.visible = mouse_visible();
@@ -66,7 +66,7 @@ public abstract class player_interaction
     /// <summary> Called to end an interaction. </summary>
     public void end_interaction(player player)
     {
-        if (player == player.current)
+        if (player.has_authority)
         {
             // Return to default invisible cursor
             Cursor.visible = false;
@@ -330,7 +330,7 @@ public class interaction_set
     public void continue_underway(player player, bool force_stop = false)
     {
         // Re-disable cursor if no interactions are underway
-        if (underway.Count == 0 && Cursor.visible)
+        if (player.has_authority && underway.Count == 0 && Cursor.visible)
         {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
