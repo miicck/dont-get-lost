@@ -445,7 +445,7 @@ public static class client
 
         backend.Update();
 
-        // Get the tcp stream
+        // Get the network stream
         backend_stream stream = null;
         try
         {
@@ -454,6 +454,13 @@ public static class client
         catch (System.InvalidOperationException e)
         {
             disconnect(false, e.Message);
+            return;
+        }
+
+        // Timeout server if we haven't had a heartbeat in a while
+        if (time_since_last_heartbeat > server.CLIENT_HEARTBEAT_PERIOD * 10f)
+        {
+            disconnect(false, "No server heartbeat!");
             return;
         }
 

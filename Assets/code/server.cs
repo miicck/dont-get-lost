@@ -125,27 +125,32 @@ public static class server
         /// otherwise no DISCONNECT message is sent to the server. </summary>
         public void disconnect(string message, bool delete_player = false)
         {
-            if (message != null && message.Length > 0) log(username + " disconnected: " + message);
-            else log(username + " disconnected.");
+            // Replace empty, or null message with "No information" message.
+            if (message == null || message.Trim().Length == 0)
+                message = "No information";
 
-            // Unload representations (only top-level, lower level will
-            // be automatically unloaded using the unload function)
+            // Unload representations (only top-level, lower level
+            // will be automatically unloaded by the unload function)
             foreach (var rep in new HashSet<representation>(loaded))
                 if (rep.is_top_level)
                     unload(rep, false);
 
-            // Send the disconnect message
-            if (message != null)
-                send_message(MESSAGE.DISCONNECT, this, message);
+            // Log/send a disconnect message
+            log(username + " disconnected: " + message);
+            send_message(MESSAGE.DISCONNECT, this, message);
 
-            connected_clients.Remove(this);
+            // Send any queued messages for this
+            // client before we get rid of the queue
+            send_queued_messages(this);
             message_queues.Remove(this);
 
-            // Call backend-specific disconnect
-            server.backend.on_disconnect(backend);
+            // Remove the client from connected clients collection
+            connected_clients.Remove(this);
 
-            // Close with a timeout, so that any hanging messages
+            // Call backend-specific disconnect and close with
+            // a timeout, so that any hanging messages
             // (in particular the DISCONNECT message) can be sent.
+            server.backend.on_disconnect(backend);
             backend.Close((int)(server.CLIENT_TIMEOUT * 1000));
 
             // Disconnect the player if there is one loaded
@@ -903,58 +908,8 @@ public static class server
         foreach (var c in new List<client>(connected_clients))
             c.update();
 
-        // Send the messages from the queue
-        var disconnected_during_write = new List<client>();
-        foreach (var kv in message_queues)
-        {
-            var client = kv.Key;
-            var queue = kv.Value;
-
-            try
-            {
-                // The buffer to concatinate messages into
-                byte[] send_buffer = new byte[client.backend.SendBufferSize];
-                int offset = 0;
-
-                while (queue.Count > 0)
-                {
-                    var msg = queue.Dequeue();
-
-                    if (msg.bytes.Length > send_buffer.Length)
-                        throw new System.Exception("Message too large!");
-
-                    if (offset + msg.bytes.Length > send_buffer.Length)
-                    {
-                        // Message would overrun buffer, send the buffer
-                        // and create a new one
-                        traffic_up.log_bytes(offset);
-                        client.stream.Write(send_buffer, 0, offset);
-                        send_buffer = new byte[client.backend.SendBufferSize];
-                        offset = 0;
-                    }
-
-                    // Copy the message into the send buffer
-                    System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
-                    offset += msg.bytes.Length; // Move to next message
-                }
-
-                // Send the buffer
-                if (offset > 0)
-                {
-                    traffic_up.log_bytes(offset);
-                    client.stream.Write(send_buffer, 0, offset);
-                }
-            }
-            catch
-            {
-                disconnected_during_write.Add(client);
-            }
-        }
-
-        // Properly disconnect clients that were found
-        // to have disconnected during message writing
-        foreach (var d in disconnected_during_write)
-            d.disconnect(null);
+        // Send any pending messages
+        send_queued_messages();
 
         // Autosave
         if (Time.realtimeSinceStartup > last_autosave_time + AUTOSAVE_PERIOD)
@@ -963,6 +918,67 @@ public static class server
             save(autosave: true);
             log("Server has autosaved.");
         }
+    }
+
+    /// <summary> Send all the messages from the queue 
+    /// (or just the ones for the given client, if specified). </summary>
+    static void send_queued_messages(client for_client = null)
+    {
+        // Send the messages from the queue
+        var disconnected_during_write = new List<client>();
+        foreach (var kv in message_queues)
+        {
+            var client = kv.Key;
+            var queue = kv.Value;
+
+            if (for_client != null && client != for_client)
+                continue; // We asked for a specific client, this isn't them
+
+            // The buffer to concatinate messages into
+            byte[] send_buffer = new byte[client.backend.SendBufferSize];
+            int offset = 0;
+            bool disconnected = false;
+
+            while (queue.Count > 0)
+            {
+                var msg = queue.Dequeue();
+
+                if (msg.bytes.Length > send_buffer.Length)
+                    throw new System.Exception("Message too large!");
+
+                if (offset + msg.bytes.Length > send_buffer.Length)
+                {
+                    // Message would overrun buffer, send
+                    // the buffer and create a new one
+                    traffic_up.log_bytes(offset);
+                    try { client.stream.Write(send_buffer, 0, offset); }
+                    catch { disconnected = true; break; }
+                    send_buffer = new byte[client.backend.SendBufferSize];
+                    offset = 0;
+                }
+
+                // Copy the message into the send buffer
+                System.Buffer.BlockCopy(msg.bytes, 0, send_buffer, offset, msg.bytes.Length);
+                offset += msg.bytes.Length; // Move to next message
+            }
+
+            // Send the buffer
+            if (!disconnected && offset > 0)
+            {
+                traffic_up.log_bytes(offset);
+                try { client.stream.Write(send_buffer, 0, offset); }
+                catch { disconnected = true; }
+            }
+
+            // Record clients that got disconnected during a stream.Write attempt
+            if (disconnected)
+                disconnected_during_write.Add(client);
+        }
+
+        // Properly disconnect clients that were found
+        // to have disconnected during message writing
+        foreach (var d in disconnected_during_write)
+            d.disconnect(null);
     }
 
     //################//
@@ -1220,8 +1236,8 @@ public static class server
     public enum MESSAGE : byte
     {
         // Numbering starts above client message types, so they are not confused
-        CREATE = global::client.LARGEST_VALUE_MESSAGE + 1, 
-                           // Create a networked object on a client
+        CREATE = global::client.LARGEST_VALUE_MESSAGE + 1,
+        // Create a networked object on a client
         FORCE_CREATE,      // Force a client to create an object
         UNLOAD,            // Unload an object on a client
         CREATION_SUCCESS,  // Send when a creation requested by a client was successful
