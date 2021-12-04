@@ -871,6 +871,8 @@ public static class server
                 if (truncated_read_messages.TryGetValue(c, out byte[] trunc))
                 {
                     // Glue a truncated message onto the start of the buffer
+                    if (trunc.Length > buffer.Length)
+                        throw new System.Exception("Truncated message too large for buffer!");
                     System.Buffer.BlockCopy(trunc, 0, buffer, 0, trunc.Length);
                     buffer_start = trunc.Length;
                     truncated_read_messages.Remove(c);
@@ -895,8 +897,7 @@ public static class server
                     {
                         // Save the truncated message for later
                         byte[] to_save = new byte[data_bytes - last_message_start];
-                        System.Buffer.BlockCopy(buffer, last_message_start,
-                            to_save, 0, to_save.Length);
+                        System.Buffer.BlockCopy(buffer, last_message_start, to_save, 0, to_save.Length);
                         truncated_read_messages[c] = to_save;
                         break;
                     }

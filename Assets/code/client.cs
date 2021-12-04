@@ -458,11 +458,13 @@ public static class client
         }
 
         // Timeout server if we haven't had a heartbeat in a while
+        /*
         if (time_since_last_heartbeat > server.CLIENT_HEARTBEAT_PERIOD * 10f)
         {
             disconnect(false, "No server heartbeat!");
             return;
         }
+        */
 
         // Read messages to the client
         while (stream.DataAvailable)

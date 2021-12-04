@@ -79,7 +79,7 @@ public abstract class client_backend
     public virtual bool has_disconnected => false;
 }
 
-/// <summary> A backend_stream implemented as a MemoryStream. </summary>
+/// <summary> A backend_stream implemented in local memory. </summary>
 public class local_stream : backend_stream
 {
     public override bool CanRead => true;
@@ -117,7 +117,7 @@ public class local_stream : backend_stream
             incoming_buffer[i] = incoming_buffer[i + read];
 
         // Point to start of buffer
-        position = 0;
+        position -= read;
         return read;
     }
 

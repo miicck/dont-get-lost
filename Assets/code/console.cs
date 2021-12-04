@@ -860,6 +860,26 @@ public class console : MonoBehaviour
 
             description = "Toggle the load balancer.",
             usage_example = "toggle_load_balancer"
+        },
+
+        ["build_a_lot_of_logs"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (player.current == null)
+                    return console_error("No player found!");
+
+                for (int dx = 0; dx < 10; ++dx)
+                    for (int dy = 0; dy < 10; ++dy)
+                        for (int dz = 0; dz < 10; ++dz)
+                        {
+                            Vector3 pos = player.current.transform.position;
+                            pos += new Vector3(dx, dy, dz) * 2;
+                            client.create(pos, "items/log", rotation: player.current.transform.rotation);
+                        }
+
+                return true;
+            },
         }
     };
 
