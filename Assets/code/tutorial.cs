@@ -2,6 +2,264 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public static class tutorial
+{
+    static tutorial_object_generator[] tutorial_stages
+    {
+        get
+        {
+            if (_tutorial_stages != null) return _tutorial_stages;
+            _tutorial_stages = new tutorial_object_generator[]
+            {
+                () => confirm_window.create(
+                    "Welcome to don't get lost!\n\n" +
+                    "We have arrived in a strange new land, tasked with\n" +
+                    "setting up colonies to export natural resources.",
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "The first thing we need to do is set up a base camp.\n" +
+                    "To do this, we're going to need some tools. See if you\n" +
+                    "can find some materials to make some tools from...",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Find some materials to make tools.\n" +
+                    "  - Flint can be found by scavenging on the floor\n" +
+                    "  - Sticks can be found in the trees\n" +
+                    "If you're confused about how to interact with objects,\n" +
+                    "look in the bottom right of the screen for hints.",
+                    new Dictionary<string, int>
+                    {
+                        ["flint"] = 2,
+                        ["stick"] = 2
+                    }, advance_stage),
+
+                () => confirm_window.create(
+                    "Great, it looks like you've got what you need.\n" +
+                    "Go ahead and craft an axe and a pickaxe.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Craft a flint axe and a flint pickaxe.\n" +
+                    "Your can do this from inside your inventory,\n" +
+                    "which can be accessed by pressing " +
+                    controls.bind_name(controls.BIND.OPEN_INVENTORY) + ".\n" +
+                    "Move the sticks and flint into the crafting area on the\n" +
+                    "right hand side and click on the crafting options that appear.",
+                    new Dictionary<string, int> {["flint_pickaxe"] = 1, ["flint_axe"] = 1}, advance_stage),
+
+                () => confirm_window.create(
+                    "Good job. Now we can start to put our camp together.\n" +
+                    "Go ahead and collect some wood using your axe.",
+                    advance_stage),
+
+                () => equipped_item_requirement.create(
+                    Resources.Load<item>("items/flint_axe"),
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Collect some wood. With the axe equipped, \n" +
+                    "press " + controls.bind_name(controls.BIND.USE_ITEM) + " to swing it at a tree.",
+                    new Dictionary<string, int> {["log"] = 10}, advance_stage),
+
+                () => confirm_window.create(
+                    "Good job. Now, we're going to need to split these logs into more\n" +
+                    "useful shapes. Go ahead and craft a log splitter.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Craft a log splitter.\n" +
+                    "To figure out what ingredients you need to put in\n" +
+                    "the crafting slots, press " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
+                    " to open the recipe book \n" +
+                    "and search for 'log splitter' in the top right.\n" +
+                    "Press enter to finish searching and " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
+                    "\nto close the recipe book again.",
+                    new Dictionary<string, int> {["log_splitter"] = 1}, advance_stage),
+
+                () => confirm_window.create(
+                    "Good job. In order to build the log splitter, equip it the same way you did with the axe.",
+                    advance_stage),
+
+                () => build_requirement.create("log_splitter", 1, advance_stage),
+
+                () => confirm_window.create(
+                    "Now you can use the log splitter to make some planks.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make some planks", new Dictionary<string, int>{ ["plank"] = 10 },
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "We're going to need some more advanced tools as well.\n" +
+                    "For those, we are going to need some metal.\n" +
+                    "To make the metal, we're going to need a furnace.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make a furnace.\n" +
+                    "Check the recipe by pressing "+controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) + "\n" +
+                    "The stone you need can be harvested from nearby rocks using the pickaxe.",
+                    new Dictionary<string, int>{["furnace"] = 1},
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Good job - you're getting the hang of this!\n" +
+                    "Build the furnace somewhere so that we can make some metal.",
+                    advance_stage),
+
+                () => build_requirement.create(
+                    "furnace", 1, advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make some metal.\n" +
+                    "There should be some brown-ish iron ore deposits nearby.\n" +
+                    "Wood can be used as fuel.",
+                    new Dictionary<string, int>{["iron"] = 10},
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Now that we've got the iron, we need an anvil to\n" +
+                    "make it into useful shapes. Use some of the iron\n" +
+                    "to make an anvil.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make an anvil.",
+                    new Dictionary<string, int>{["anvil"] = 1},
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Great - put the anvil somewhere convinient so that we can use it.",
+                    advance_stage),
+
+                () => build_requirement.create("anvil", 1, advance_stage),
+
+                () => confirm_window.create(
+                    "Now, we're going to replace the log splitter with a more\n" +
+                    "advanced piece of kit - a sawmill!\n" +
+                    "We can use the anvil to make the sawblade.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make a sawblade",
+                    new Dictionary<string, int>{["sawblade"] = 1},
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "You already know how to make the other ingredients\n" +
+                    "for the sawmill - go ahead and make one.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make a sawmill",
+                    new Dictionary<string, int>{["sawmill"] = 1},
+                    advance_stage),
+
+                () => build_requirement.create(
+                    "sawmill", 1, advance_stage),
+
+                () => confirm_window.create(
+                    "Now we can start to build our camp. Using some planks, make " +
+                    "some wooden path sections.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make some wooden path sections (press "+
+                    controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK)+ " for the recipe)",
+                    new Dictionary<string, int>{["wooden_path"] = 10},
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Good job. Now we're going to have to think about a basic camp layout.",
+                    advance_stage),
+
+                () => build_requirement.create("wooden_path", 6, advance_stage,
+                    hint: "The path sections should be connected together.\n" +
+                          "Click on an existing path to snap a new path to it.",
+                    constraint: build_requirement_constraints.is_linked),
+
+                ()=> confirm_window.create(
+                    "Great, you should have seen a green path highlighted - this is\n" +
+                    "the path that settlers can use to move around your camp.\n"+
+                    "Eventually, a red path leading off into the distance will\n"+
+                    "be generated - this is an entrypoint to your camp.",
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "For settlers to move in, they need somewhere to sleep.\n" +
+                    "To save some time, I'm going to give you a bed - \n" +
+                    "connect it to one of the paths.",
+                    () =>
+                    {
+                        player.call_when_current_player_available(()=>player.current.inventory.add("bed", 1));
+                        advance_stage();
+                    }),
+
+                () => build_requirement.create("bed", 1, advance_stage,
+                    hint: "The bed should be connected to the town.\n" +
+                          "To connect the bed to a path, click\n" +
+                          "on the path when building the bed.",
+                    constraint: build_requirement_constraints.is_linked),
+
+                () => confirm_window.create(
+                    "Good job. A settler will soon move into the camp.\n" +
+                    "They are going to need some food to eat, so we should\n" +
+                    "get to work building a farm!",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make the components of a cabbage farm.\n" +
+                    "A cabbage farm will consist of a cabbage planter\n" +
+                    "that will drop cabbages onto some plank gutters\n" +
+                    "that will feed the cabbages into a pantry",
+                    new Dictionary<string, int> {
+                        ["cabbage_planter"] = 1,
+                        ["plank_gutter"] = 2,
+                        ["pantry"] = 1
+                    },
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Now, lets kit our town out with a farm!\n" +
+                    "While we're at it, we should build some basic defences\n." +
+                    "A simple guard spot should be enough for now.",
+                    advance_stage),
+
+                () => basic_camp_requirement.create(
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Congratulations - you've built your first functional camp,\n" +
+                    "well on the way to a fully-fledged town!\n\n" +
+                    "For here on, it's up to you to expand as you see fit\n" +
+                    "useful tips can be found in the help book by pressing "+
+                    controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK)+".",
+                    advance_stage)
+            };
+            return _tutorial_stages;
+        }
+    }
+    static tutorial_object_generator[] _tutorial_stages;
+    delegate tutorial_object tutorial_object_generator();
+
+    public static void advance_stage() => player.call_when_current_player_available(() => player.current.advance_tutorial_stage());
+    static tutorial_object tutorial_object;
+
+    public static void set_stage(int stage)
+    {
+        if (tutorial_object != null) Object.Destroy(tutorial_object.gameObject);
+        tutorial_object = null;
+        if (stage < 0) return;
+        if (stage >= tutorial_stages.Length) return;
+        tutorial_object = tutorial_stages[stage]();
+
+        player.current.force_interaction(tutorial_object.interaction);
+    }
+}
+
 public abstract class tutorial_object : MonoBehaviour
 {
     public player_interaction interaction
@@ -172,143 +430,5 @@ class basic_camp_requirement : tutorial_object
 
         Destroy(gameObject);
         on_finish?.Invoke();
-    }
-}
-
-public static class tutorial
-{
-    public static void advance_stage()
-    {
-        player.call_when_current_player_available(() => player.current.advance_tutorial_stage());
-    }
-
-    delegate tutorial_object tutorial_object_generator();
-    static tutorial_object_generator[] tutorial_stages
-    {
-        get
-        {
-            if (_tutorial_stages != null) return _tutorial_stages;
-            _tutorial_stages = new tutorial_object_generator[]
-            {
-                () => confirm_window.create(
-                    "Welcome to don't get lost!\n\n" +
-                    "We have arrived in a strange new land, tasked with\n" +
-                    "setting up colonies to export natural resources.",
-                    advance_stage),
-
-                () => confirm_window.create(
-                    "The first thing we need to do is set up a base camp.\n" +
-                    "To do this, we're going to need some tools. See if you\n" +
-                    "can find some materials to make some tools from...",
-                    advance_stage),
-
-                () => item_requirement_tracker.create(
-                    "Find some materials to make tools.\n" +
-                    "  - Flint can be found by scavenging on the floor\n" +
-                    "  - Sticks can be found in the trees\n" +
-                    "If you're confused about how to interact with objects,\n" +
-                    "look in the bottom right of the screen for hints.",
-                    new Dictionary<string, int>
-                    {
-                        ["flint"] = 2,
-                        ["stick"] = 2
-                    }, advance_stage),
-
-                () => confirm_window.create(
-                    "Great, it looks like you've got what you need.\n" +
-                    "Go ahead and craft an axe and a pickaxe.",
-                    advance_stage),
-
-                () => item_requirement_tracker.create(
-                    "Craft a flint axe and a flint pickaxe.\n" +
-                    "Your can do this from inside your inventory,\n" +
-                    "which can be accessed by pressing " +
-                    controls.bind_name(controls.BIND.OPEN_INVENTORY) + ".\n" +
-                    "Move the sticks and flint into the crafting area on the\n" +
-                    "right hand side and click on the crafting options that appear.",
-                    new Dictionary<string, int> {["flint_pickaxe"] = 1, ["flint_axe"] = 1}, advance_stage),
-
-                () => confirm_window.create(
-                    "Good job. Now we can start to put our camp together.\n" +
-                    "Go ahead and collect some wood using your axe.",
-                    advance_stage),
-
-                () => equipped_item_requirement.create(
-                    Resources.Load<item>("items/flint_axe"),
-                    advance_stage),
-
-                () => item_requirement_tracker.create(
-                    "Collect some wood. With the axe equipped, \n" +
-                    "press " + controls.bind_name(controls.BIND.USE_ITEM) + " to swing it at a tree.",
-                    new Dictionary<string, int> {["log"] = 10}, advance_stage),
-
-                () => confirm_window.create(
-                    "Good job. Now, we're going to need to split these logs into more\n" +
-                    "useful shapes. Go ahead and craft a log splitter.",
-                    advance_stage),
-
-                () => item_requirement_tracker.create(
-                    "Craft a log splitter.\n" +
-                    "To figure out what ingredients you need to put in\n" +
-                    "the crafting slots, press " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
-                    " to open the recipe book \n" +
-                    "and search for 'log splitter' in the top right.\n" +
-                    "Press enter to finish searching and " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
-                    "\nto close the recipe book again.",
-                    new Dictionary<string, int> {["log_splitter"] = 1}, advance_stage),
-
-                () => confirm_window.create(
-                    "Good job. In order to build the log splitter, equip it the same way you did with the axe.",
-                    advance_stage),
-
-                () => build_requirement.create("log_splitter", advance_stage),
-
-                () => confirm_window.create(
-                    "Now you can use the log splitter to make some planks.",
-                    advance_stage),
-
-                () => item_requirement_tracker.create(
-                    "Make some planks.", new Dictionary<string, int>
-                    {
-                        ["plank"] = 20
-                    }, ()=>{
-                        player.call_when_current_player_available(() =>
-                        {
-                            player.current.inventory.remove("plank", 20);
-                            player.current.inventory.add("stone_path", 10);
-                            player.current.inventory.add("pantry", 1);
-                            player.current.inventory.add("plank_gutter", 5);
-                            player.current.inventory.add("bed", 1);
-                            player.current.inventory.add("cabbage_planter", 1);
-                            player.current.inventory.add("guard_spot", 1);
-                        });
-                        advance_stage();
-                    }),
-
-                () => confirm_window.create("You've been given some materials to set up a camp.", advance_stage),
-
-                () => basic_camp_requirement.create(advance_stage),
-
-                () => confirm_window.create(
-                    "Great job - now we've got a base camp set up, it might\n"+
-                    "be a good idea to go explore for a nice place to set up\n"+
-                    "our first outpost. But it's up to you from here, good luck!", advance_stage)
-            };
-            return _tutorial_stages;
-        }
-    }
-    static tutorial_object_generator[] _tutorial_stages;
-
-    static tutorial_object tutorial_object;
-
-    public static void set_stage(int stage)
-    {
-        if (tutorial_object != null) Object.Destroy(tutorial_object.gameObject);
-        tutorial_object = null;
-        if (stage < 0) return;
-        if (stage >= tutorial_stages.Length) return;
-        tutorial_object = tutorial_stages[stage]();
-
-        player.current.force_interaction(tutorial_object.interaction);
     }
 }

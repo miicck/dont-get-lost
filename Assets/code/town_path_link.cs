@@ -14,6 +14,7 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
     //#########//
 
     HashSet<town_path_link> linked_to = new HashSet<town_path_link>();
+    public int linked_to_count => linked_to.Count;
     public IEnumerator<town_path_link> GetEnumerator() { return linked_to.GetEnumerator(); }
     IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
 

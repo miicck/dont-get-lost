@@ -509,6 +509,23 @@ public class console : MonoBehaviour
             usage_example = "set_tutorial_stage 0"
         },
 
+        ["restart_tutorial"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.call_when_current_player_available(() =>
+                {
+                    player.current.inventory.clear();
+                    player.current.set_tutorial_stage(0);
+                });
+
+                return true;
+            },
+
+            description = "Clear the player inventory and restart the tutorial.",
+            usage_example = "restart_tutorial"
+        },
+
         ["advance_tutorial_stage"] = new console_info
         {
             command = (args) =>
@@ -880,6 +897,9 @@ public class console : MonoBehaviour
 
                 return true;
             },
+
+            description = "Build a lot of logs.",
+            usage_example = "build_a_lot_of_logs"
         }
     };
 

@@ -546,7 +546,7 @@ public class inventory : networked, IItemCollection
     public delegate void on_change_func();
     public delegate bool remove_func();
 
-    List<change_listener_info> listeners = new List<change_listener_info>();
+    HashSet<change_listener_info> listeners = new HashSet<change_listener_info>();
     public void add_on_change_listener(on_change_func f, remove_func remove_listener_delegate = null)
     {
         listeners.Add(new change_listener_info
@@ -559,14 +559,16 @@ public class inventory : networked, IItemCollection
     /// <summary> Call to invoke listeners added via <see cref="add_on_change_listener(on_change_func)"/>. </summary>
     public void invoke_on_change()
     {
-        List<change_listener_info> surviving = new List<change_listener_info>();
-        foreach (var f in listeners)
+        foreach (var f in new List<change_listener_info>(listeners))
         {
-            if (f.remove_func != null && f.remove_func()) continue;
+            if (f.remove_func != null && f.remove_func())
+            {
+                listeners.Remove(f);
+                continue;
+            }
+
             f.callback?.Invoke();
-            surviving.Add(f);
         }
-        listeners = surviving;
     }
 
     public int last_frame_changed { get; private set; }
