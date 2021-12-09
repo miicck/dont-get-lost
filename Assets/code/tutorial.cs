@@ -224,7 +224,7 @@ public static class tutorial
 
                 () => confirm_window.create(
                     "Now, lets kit our town out with a farm!\n" +
-                    "While we're at it, we should build some basic defences\n." +
+                    "While we're at it, we should build some basic defences.\n" +
                     "A simple guard spot should be enough for now.",
                     advance_stage),
 
