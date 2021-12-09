@@ -43,7 +43,8 @@ public abstract class server_backend
         };
 
 #if FACEPUNCH_STEAMWORKS
-        backends.Add(new steamworks_server_backend());
+        if (steam.connected)
+            backends.Add(new steamworks_server_backend());
 #endif
 
         return new combined_server_backend(backends);

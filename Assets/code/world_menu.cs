@@ -206,33 +206,36 @@ public class world_menu : MonoBehaviour
         ip_input.transform.SetAsLastSibling();
 
 #if FACEPUNCH_STEAMWORKS
-        var steam_friends_header = template_header.inst();
-        steam_friends_header.text = "Join steam friends";
-        steam_friends_header.transform.SetParent(button_container);
-
-        int friends_count = 0;
-        foreach (var f in Steamworks.SteamFriends.GetFriends())
-            if (f.IsPlayingThisGame)
-            {
-                ++friends_count;
-                var join_friend_button = template_button.inst();
-                join_friend_button.GetComponentInChildren<Text>().text = f.Name;
-                join_friend_button.transform.SetParent(button_container.transform);
-
-                join_friend_button.onClick.AddListener(() =>
-                {
-                    var username = get_username();
-                    if (username == null) return;
-                    game.join_steam_friend(f.Id, username, user_id);
-                });
-            }
-
-        if (friends_count == 0) // :'(
+        if (steam.connected)
         {
-            var no_friends_header = template_header.inst();
-            no_friends_header.transform.SetParent(button_container);
-            no_friends_header.text = "No steam friends in-game";
-            Destroy(steam_friends_header.gameObject);
+            var steam_friends_header = template_header.inst();
+            steam_friends_header.text = "Join steam friends";
+            steam_friends_header.transform.SetParent(button_container);
+
+            int friends_count = 0;
+            foreach (var f in Steamworks.SteamFriends.GetFriends())
+                if (f.IsPlayingThisGame)
+                {
+                    ++friends_count;
+                    var join_friend_button = template_button.inst();
+                    join_friend_button.GetComponentInChildren<Text>().text = f.Name;
+                    join_friend_button.transform.SetParent(button_container.transform);
+
+                    join_friend_button.onClick.AddListener(() =>
+                    {
+                        var username = get_username();
+                        if (username == null) return;
+                        game.join_steam_friend(f.Id, username, user_id);
+                    });
+                }
+
+            if (friends_count == 0) // :'(
+            {
+                var no_friends_header = template_header.inst();
+                no_friends_header.transform.SetParent(button_container);
+                no_friends_header.text = "No steam friends in-game";
+                Destroy(steam_friends_header.gameObject);
+            }
         }
 #endif
 
