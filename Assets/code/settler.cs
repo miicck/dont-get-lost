@@ -325,6 +325,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override float position_lerp_speed() { return 2f; }
     public override bool persistant() { return !is_dead; }
     public bool starving => nutrition.metabolic_satisfaction <= 0;
+    public bool needs_sleep => tiredness.value > 80;
 
     public inventory inventory { get; private set; }
 

@@ -92,7 +92,7 @@ public abstract class settler_interactable : has_path_elements,
         return true;
     }
 
-    enum ASSIGN_FAILURE_MODE
+    protected enum ASSIGN_FAILURE_MODE
     {
         NO_FAILURE,
         SETTLER_IS_NULL,
@@ -177,6 +177,8 @@ public abstract class settler_interactable : has_path_elements,
         failure = ASSIGN_FAILURE_MODE.NO_FAILURE;
         return true;
     }
+
+    protected virtual void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure) { }
 
     public void unassign()
     {
@@ -464,6 +466,7 @@ public abstract class settler_interactable : has_path_elements,
             {
                 var to_try = possibilities[Random.Range(0, possibilities.Count)];
                 if (to_try.try_assign(s, out ASSIGN_FAILURE_MODE fm)) return to_try;
+                else to_try.on_fail_assign(s, fm);
             }
         }
 

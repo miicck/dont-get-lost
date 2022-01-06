@@ -33,10 +33,18 @@ public class bed : walk_to_settler_interactable, IAddsToInspectionText
         return base.added_inspection_text() + "\n" + ((int)(100 * covered_amt)) + "% covered";
     }
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(settler s) => s.needs_sleep;
+
+    protected override void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure)
     {
-        // You have to be tired enough to sleep
-        return s.tiredness.value > 80;
+        if (s.needs_sleep)
+            if (group_info.settlers(s.group).Count > group_info.bed_count(s.group))
+            {
+                // More settlers than beds - despawn the settler
+                temporary_object.create(60f).gameObject.add_pinned_message(
+                    "The settler " + s.name + " left because there were too few beds!", Color.red);
+                s.delete();
+            }
     }
 
     protected override void on_arrive(settler s)

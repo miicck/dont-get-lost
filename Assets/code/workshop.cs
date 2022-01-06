@@ -4,6 +4,22 @@ using UnityEngine;
 
 public class workshop : settler_interactable_options, IAddsToInspectionText
 {
+    static workshop()
+    {
+        help_book.add_entry("Workshops",
+            "Workshops are rooms containing a collection of useful " +
+            "tools for a specific purpose. A specific object " +
+            "(e.g a forge) designates the type of workshop " +
+            "(e.g a smithing workshop). This object can be inspected " +
+            "to see what other objects need to be placed in the room " +
+            "for it to become operational.\n\n" +
+            "Once a workshop has become operational, it must be suplied " +
+            "with materials. These materials can be fed into dispensers " +
+            "(e.g a materials cupboard), which must be connected to the room."
+        );
+    }
+
+
     public string crafting_options_title = "crafting";
     public float base_craft_time = 10f;
     new public town_path_element path_element;

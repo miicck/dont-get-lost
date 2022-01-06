@@ -939,6 +939,8 @@ public static class group_info
     }
 
     public static int largest_group() => town_path_element.largest_group();
+
+    public static HashSet<settler> settlers(int group) => settler.get_settlers_by_group(group);
 }
 
 /// <summary> A centralised source for information about rooms. </summary>
