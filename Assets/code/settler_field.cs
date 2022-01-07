@@ -86,6 +86,8 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
     float work_done;
     settler_animations.simple_work work_anim;
 
+    public override string task_summary() => "Tending to " + GetComponentInParent<item>().display_name;
+
     protected override void on_arrive(settler s)
     {
         // Reset stuff
@@ -133,10 +135,5 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
             }
 
         return STAGE_RESULT.TASK_COMPLETE;
-    }
-
-    public override string task_summary()
-    {
-        return "Tending to " + GetComponentInParent<item>().display_name;
     }
 }
