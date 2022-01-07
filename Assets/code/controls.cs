@@ -250,7 +250,7 @@ public static class controls
             [BIND.LOOK_UP_DOWN] = new axis_control("Mouse Y"),
             [BIND.PLACE_MARKER] = new mouse_control(mouse_control.BUTTON.MIDDLE),
             [BIND.OPEN_INVENTORY] = new key_control(KeyCode.E),
-            [BIND.OPEN_TASK_MANAGER] = new key_control(KeyCode.T),
+            [BIND.OPEN_TASK_MANAGER] = new key_control(KeyCode.J),
             [BIND.LEAVE_MENU] = new key_control(KeyCode.Escape),
             [BIND.OPEN_RECIPE_BOOK] = new key_control(KeyCode.R),
             [BIND.USE_ITEM] = new mouse_control(mouse_control.BUTTON.LEFT),

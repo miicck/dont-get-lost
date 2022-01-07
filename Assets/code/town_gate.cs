@@ -52,8 +52,17 @@ public class town_gate : portal, IAddsToInspectionText
 
     public string added_inspection_text()
     {
-        return "Beds     : " + group_info.bed_count(path_element.group) + "\n" +
-               "Settlers : " + settler.get_settlers_by_group(path_element.group).Count;
+        var set = settler.get_settlers_by_group(path_element.group);
+
+        float av_mood = 0;
+        foreach (var s in set)
+            av_mood += s.total_mood();
+        av_mood /= set.Count;
+
+        return
+        "Settlers     : " + set.Count + "\n" +
+        "Beds         : " + group_info.bed_count(path_element.group) + "\n" +
+        "Average mood : " + Mathf.RoundToInt(av_mood);
     }
 
     //##############//

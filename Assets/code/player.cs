@@ -218,7 +218,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     new open_task_manager(),
                     new undo_interaction(),
                     new redo_interaction(),
-                    new help_book_interaction()
+                    new help_book_interaction(),
+                    new open_tech_tree()
                 };
             return _self_interactions;
         }
@@ -407,14 +408,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         {
             if (ui == null)
                 ui = tech_tree.generate_tech_tree();
-
             ui.gameObject.SetActive(state);
-        }
-
-        public override bool continue_interaction(player player)
-        {
-            tech_tree.run_solver();
-            return base.continue_interaction(player);
         }
     }
 

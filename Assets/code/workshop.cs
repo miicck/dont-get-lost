@@ -12,7 +12,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
             "(e.g a forge) designates the type of workshop " +
             "(e.g a smithing workshop). This object can be inspected " +
             "to see what other objects need to be placed in the room " +
-            "for it to become operational.\n\n" +
+            "for it to become operational (e.g an anvil for a forge).\n\n" +
             "Once a workshop has become operational, it must be suplied " +
             "with materials. These materials can be fed into dispensers " +
             "(e.g a materials cupboard), which must be connected to the room."
