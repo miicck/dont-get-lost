@@ -900,6 +900,22 @@ public class console : MonoBehaviour
 
             description = "Build a lot of logs.",
             usage_example = "build_a_lot_of_logs"
+        },
+
+        ["research"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 3) return console_error("Missing arguments!");
+                if (args.Length > 3) return console_error("Too many arguments!");
+                if (!technology.is_valid_name(args[1])) return console_error("Unkown technology: " + args[1]);
+                if (!int.TryParse(args[2], out int rs)) return console_error("Could not parse int from: " + args[2]);
+                tech_tree.perform_research(args[1], rs);
+                return true;
+            },
+
+            description = "Perform the given amount of research on the given topic.",
+            usage_example = "research buffer_chest 99"
         }
     };
 

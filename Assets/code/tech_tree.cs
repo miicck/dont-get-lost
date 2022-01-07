@@ -4,23 +4,195 @@ using UnityEngine;
 
 public class tech_tree : networked
 {
-    public override float network_radius()
+    //############//
+    // NETWORKING //
+    //############//
+
+    public networked_variables.net_string_counts research_progress;
+    public networked_variables.net_string currently_researching;
+
+    public override void on_init_network_variables()
     {
-        // The tech tree is always loaded
-        return Mathf.Infinity;
+        base.on_init_network_variables();
+        research_progress = new networked_variables.net_string_counts();
+        currently_researching = new networked_variables.net_string(default_value: "");
+
+        currently_researching.on_change = () =>
+        {
+            if (technology.is_valid_name(name))
+            {
+                Debug.LogError("Tried to set unknown research: " + name);
+                return;
+            }
+            update_tech_tree_ui();
+        };
+
+        research_progress.on_change = update_tech_tree_ui;
     }
+
+    // The tech tree is always loaded
+    public override float network_radius() => Mathf.Infinity;
+    private void Start() => loaded_tech_tree = this;
 
     //##############//
     // STATIC STUFF //
     //##############//
 
+    static tech_tree loaded_tech_tree;
+    static RectTransform tech_tree_ui;
+
+    public static void set_research(string name)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to set research before tech tree loaded");
+            return;
+        }
+
+        loaded_tech_tree.currently_researching.value = name;
+    }
+
+    public static void perform_research(int amount)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to perform research before tech tree loaded");
+            return;
+        }
+
+        string topic = loaded_tech_tree.currently_researching.value;
+        perform_research(topic, amount);
+    }
+
+    public static void perform_research(string topic, int amount)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to perform research before tech tree loaded");
+            return;
+        }
+
+        loaded_tech_tree.research_progress[topic] =
+            Mathf.Min(100, loaded_tech_tree.research_progress[topic] + amount);
+
+        // Unassign completed research
+        if (current_research_complete())
+            loaded_tech_tree.currently_researching.value = "";
+    }
+
+    public static bool research_project_set()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to check if research is set before tech tree loaded");
+            return false;
+        }
+
+        return loaded_tech_tree.currently_researching.value != "";
+    }
+
+    public static string reseach_project()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to get research project before tech tree loaded");
+            return "";
+        }
+
+        return loaded_tech_tree.currently_researching.value.Replace('_', ' ');
+    }
+
+    public static bool current_research_complete()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to check if current research was complete before tech tree loaded");
+            return false;
+        }
+
+        return research_complete(loaded_tech_tree.currently_researching.value);
+    }
+
+    public static bool research_complete(string name)
+    {
+        name = name.Replace(' ', '_');
+
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to check if research was complete before tech tree loaded");
+            return false;
+        }
+
+        return
+            loaded_tech_tree.research_progress.contains_key(name) &&
+            loaded_tech_tree.research_progress[name] >= 100;
+    }
+
+    static void update_tech_tree_ui()
+    {
+        if (loaded_tech_tree == null)
+            return;
+
+        // No ui to update
+        if (tech_tree_ui == null)
+            return;
+
+        var content = tech_tree_ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+        foreach (RectTransform c in content)
+        {
+            var tech = technology.load(c.name);
+            if (tech == null)
+                continue;
+
+            int progress = 0;
+            if (loaded_tech_tree.research_progress.contains_key(c.name))
+                progress = loaded_tech_tree.research_progress[c.name];
+
+            var button = c.get_child_with_name<UnityEngine.UI.Button>("research_button");
+            var button_text = button.GetComponentInChildren<UnityEngine.UI.Text>();
+
+            if (loaded_tech_tree.currently_researching.value == c.name)
+            {
+                // Current research
+                button_text.text = progress + "/100";
+                button.interactable = false;
+            }
+            else
+            {
+                if (tech.complete)
+                {
+                    // Completed research
+                    button_text.text = "Complete";
+                    button.interactable = false;
+                }
+                else if (tech.prerequisites_complete)
+                {
+                    // Available research
+                    button_text.text = "Research";
+                    button.interactable = true;
+                }
+                else
+                {
+                    // Prerequisites not met
+                    button_text.text = "Unavailable";
+                    button.interactable = false;
+                }
+            }
+        }
+    }
+
     public static RectTransform generate_tech_tree()
     {
         const int SPACING = 128;
+        const int ARROW_WIDTH = 4;
+
+
+        if (tech_tree_ui != null)
+            return tech_tree_ui;   
 
         // Load the technologies + init coordinates
         Dictionary<technology, int[]> coords = new Dictionary<technology, int[]>();
-        foreach (var t in Resources.LoadAll<technology>("technologies"))
+        foreach (var t in technology.all)
             coords[t] = new int[] { 0, 0 };
 
 
@@ -64,8 +236,8 @@ public class tech_tree : networked
         }
 
         // Create the tech tree template object
-        var ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
-        var content = ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
+        tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
+        var content = tech_tree_ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
         var tech_template = content.GetChild(0);
 
         Dictionary<technology, RectTransform> ui_elements = new Dictionary<technology, RectTransform>();
@@ -76,6 +248,7 @@ public class tech_tree : networked
             tt.SetParent(tech_template.parent);
             tt.get_child_with_name<UnityEngine.UI.Image>("sprite").sprite = t.sprite;
             tt.get_child_with_name<UnityEngine.UI.Text>("text").text = t.name.Replace('_', '\n').capitalize();
+            tt.get_child_with_name<UnityEngine.UI.Button>("research_button").onClick.AddListener(() => set_research(t.name));
             tt.name = t.name;
 
             // Position according to coordinates
@@ -103,7 +276,7 @@ public class tech_tree : networked
                 Vector2 from = ui_elements[kv.Key].anchoredPosition;
                 Vector2 to = ui_elements[t].anchoredPosition;
                 arr.anchoredPosition = (from + to) / 2f;
-                arr.sizeDelta = new Vector2(2, (to - from).magnitude);
+                arr.sizeDelta = new Vector2(ARROW_WIDTH, (to - from).magnitude);
                 arr.up = to - from;
             }
         }
@@ -111,8 +284,11 @@ public class tech_tree : networked
         tech_template.SetParent(null);
         Destroy(tech_template.gameObject);
 
-        ui.SetParent(game.canvas.transform);
-        ui.anchoredPosition = Vector3.zero;
-        return ui;
+        tech_tree_ui.SetParent(game.canvas.transform);
+        tech_tree_ui.anchoredPosition = Vector3.zero;
+
+        update_tech_tree_ui();
+
+        return tech_tree_ui;
     }
 }
