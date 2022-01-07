@@ -233,7 +233,6 @@ public class tech_tree : networked
             row_counts[kv.Value[1]] = count + 1;
         }
 
-        /*
         // Setup technology matrix
         int max_col = 0;
         int max_row = 0;
@@ -245,7 +244,77 @@ public class tech_tree : networked
         var matrix = new technology[max_col + 1, max_row + 1];
         foreach (var kv in coords)
             matrix[kv.Value[0], kv.Value[1]] = kv.Key;
-        */
+
+        // Setup dependance dict
+        Dictionary<technology, List<technology>> children = new Dictionary<technology, List<technology>>();
+        foreach (var kv in coords)
+            foreach (var parent in kv.Key.depends_on)
+            {
+                if (!children.ContainsKey(parent))
+                    children[parent] = new List<technology>();
+                children[parent].Add(kv.Key);
+            }
+        foreach (var kv in coords)
+            if (!children.ContainsKey(kv.Key))
+                children[kv.Key] = new List<technology>();
+
+        // Perform swaps on the matrix to reduce the average distance
+        // between technologies and their dependants
+        iter = 0;
+        while (true)
+        {
+            if (++iter > 1000)
+            {
+                Debug.LogError("Could not identify optimal tech columns after 1000 iterations!");
+                break;
+            }
+
+            bool swap_perfomed = false;
+
+            for (int row = 0; row < matrix.GetLength(1); ++row)
+            {
+                for (int col = 1; col < matrix.GetLength(0); ++col)
+                {
+                    technology left = matrix[col - 1, row];
+                    technology right = matrix[col, row];
+
+                    int score_unswapped = 0;
+                    int score_swapped = 0;
+
+                    if (left != null)
+                        foreach (var c in children[left])
+                        {
+                            score_unswapped += Mathf.Abs(coords[c][0] - (col - 1));
+                            score_swapped += Mathf.Abs(coords[c][0] - col);
+                        }
+
+                    if (right != null)
+                        foreach (var c in children[right])
+                        {
+                            score_unswapped += Mathf.Abs(coords[c][0] - col);
+                            score_swapped += Mathf.Abs(coords[c][0] - (col - 1));
+                        }
+
+                    if (score_swapped > score_unswapped)
+                        continue; // Swap would be worse
+
+                    if (score_swapped == score_unswapped)
+                        continue; // Swap would be the same - perhaps randomly swap?
+
+                    // Perform swap
+                    matrix[col, row] = left;
+                    if (left != null) coords[left][0] = col;
+
+                    matrix[col - 1, row] = right;
+                    if (right != null) coords[right][0] = col - 1;
+
+                    swap_perfomed = true;
+                }
+            }
+
+            if (!swap_perfomed)
+                break;
+        }
 
         // Create the tech tree template object
         tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
