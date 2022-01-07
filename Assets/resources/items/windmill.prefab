@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.162, y: 0.575, z: 0.5407}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3082375672533780850}
   m_Father: {fileID: 7677598754923787605}
@@ -71,6 +72,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.017, y: 0, z: 1.034}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7677598754923787605}
   m_RootOrder: 4
@@ -114,6 +116,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.187, y: 1.5531, z: 0.5407}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9215921952796578121}
   m_Father: {fileID: 7677598754923787605}
@@ -131,20 +134,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbd3391cf4233e741aaa4614f84bd0e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &813628753720968438
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5918927744679704741}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c94f51670c507ff4b97f1bc601df2f0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 30
-  axis: 2
 --- !u!1 &6170596641206748943
 GameObject:
   m_ObjectHideFlags: 0
@@ -172,6 +161,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1, y: 0, z: -0.31}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7677598754923787605}
   m_RootOrder: 1
@@ -215,6 +205,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.2194, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6029502110754551167}
   m_RootOrder: 0
@@ -258,6 +249,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1, y: 0, z: -0.31}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7677598754923787605}
   m_RootOrder: 2
@@ -301,6 +293,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.06, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8181223113079015914}
   m_RootOrder: 0
@@ -344,6 +337,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1, y: 0, z: 1.034}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7677598754923787605}
   m_RootOrder: 3
@@ -370,6 +364,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7677598754923787605}
   - component: {fileID: 6595801239367281441}
+  - component: {fileID: 7325651423915328235}
   m_Layer: 0
   m_Name: windmill
   m_TagString: Untagged
@@ -387,6 +382,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5429474164243045352}
   - {fileID: 3394508794947945291}
@@ -420,6 +416,19 @@ MonoBehaviour:
   custom_crafting_sound: {fileID: 0}
   custom_crafting_sound_volume: 1
   enable_when_crafting: []
+--- !u!114 &7325651423915328235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8574935738241012539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 8967fbba6314e8c4497cd1aa04097816, type: 3}
 --- !u!1001 &5536019610247330819
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -623,3 +632,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2231434580575192230, guid: 7e5382998592ac74cb25a59124f5c08b, type: 3}
   m_PrefabInstance: {fileID: 5536019610247330819}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &813628753720968438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5918927744679704741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c94f51670c507ff4b97f1bc601df2f0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 30
+  axis: 2

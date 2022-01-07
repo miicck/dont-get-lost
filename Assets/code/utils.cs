@@ -181,7 +181,7 @@ public static class utils
     }
 
     /// <summary> Raycast for all <typeparamref name="T"/>s under the mouse. </summary>
-    public static T[] raycast_all_ui_under_mouse<T>( bool return_first = false)
+    public static T[] raycast_all_ui_under_mouse<T>(bool return_first = false)
     {
         // Setup the raycast
         var pointer_data = new

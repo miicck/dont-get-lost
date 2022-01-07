@@ -188,7 +188,7 @@ public class tech_tree : networked
 
 
         if (tech_tree_ui != null)
-            return tech_tree_ui;   
+            return tech_tree_ui;
 
         // Load the technologies + init coordinates
         Dictionary<technology, int[]> coords = new Dictionary<technology, int[]>();
@@ -224,16 +224,28 @@ public class tech_tree : networked
         }
 
         // Work out which column each technology belongs on
-        Dictionary<int, int> row_progress = new Dictionary<int, int>();
-        foreach (var kv in coords)
-            row_progress[kv.Value[1]] = 0;
-
+        // Initialize to one slot per technology on each row
+        Dictionary<int, int> row_counts = new Dictionary<int, int>();
         foreach (var kv in coords)
         {
-            var prog = row_progress[kv.Value[1]];
-            kv.Value[0] = prog;
-            row_progress[kv.Value[1]] = prog + 1;
+            if (!row_counts.TryGetValue(kv.Value[1], out int count)) count = 0;
+            kv.Value[0] = count;
+            row_counts[kv.Value[1]] = count + 1;
         }
+
+        /*
+        // Setup technology matrix
+        int max_col = 0;
+        int max_row = 0;
+        foreach (var kv in coords)
+        {
+            max_col = Mathf.Max(max_col, kv.Value[0]);
+            max_row = Mathf.Max(max_row, kv.Value[1]);
+        }
+        var matrix = new technology[max_col + 1, max_row + 1];
+        foreach (var kv in coords)
+            matrix[kv.Value[0], kv.Value[1]] = kv.Key;
+        */
 
         // Create the tech tree template object
         tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();

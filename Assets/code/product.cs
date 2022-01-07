@@ -97,15 +97,24 @@ public class product : MonoBehaviour
         }
     }
 
+    public virtual bool unlocked
+    {
+        get
+        {
+            var item_unlocked = item == null || technology_requirement.unlocked(item);
+            return item_unlocked && technology_requirement.unlocked(this);
+        }
+    }
+
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public virtual void create_in(IItemCollection inv, int count = 1, bool track_production=false)
+    public virtual void create_in(IItemCollection inv, int count = 1, bool track_production = false)
     {
         int to_add = 0;
         switch (mode)
         {
             case MODE.SIMPLE:
             case MODE.RANDOM_AMOUNT:
-                to_add = Random.Range(min_count * count, max_count * count + 1);      
+                to_add = Random.Range(min_count * count, max_count * count + 1);
                 break;
 
             case MODE.PROBABILITY:
@@ -142,7 +151,7 @@ public class product : MonoBehaviour
         }
     }
 
-    public virtual void create_in_node(item_node node, bool track_production=false)
+    public virtual void create_in_node(item_node node, bool track_production = false)
     {
         int count = 0;
 

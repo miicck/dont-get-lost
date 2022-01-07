@@ -185,6 +185,8 @@ public class auto_crafter : building_material, IPlayerInteractable
     class menu : left_player_menu
     {
         auto_crafter crafter;
+        crafting_entry[] recipe_buttons;
+
         public menu(auto_crafter crafter) : base(crafter.display_name) { this.crafter = crafter; }
 
         public override recipe[] additional_recipes(out string name, out AudioClip crafting_sound, out float crafting_sound_vol)
@@ -195,12 +197,21 @@ public class auto_crafter : building_material, IPlayerInteractable
             return crafter.recipies;
         }
 
+        protected override void on_open()
+        {
+            base.on_open();
+
+            // Simulate a click on the initially-selected button
+            if (crafter.chosen_recipe.value >= 0 && crafter.chosen_recipe.value < recipe_buttons.Length)
+                recipe_buttons[crafter.chosen_recipe.value].button.onClick.Invoke();
+        }
+
         protected override RectTransform create_menu()
         {
             if (crafter.outputs.Length == 0 || crafter.inputs.Length == 0)
                 return null;
 
-            var recipe_buttons = new crafting_entry[crafter.recipies.Length];
+            recipe_buttons = new crafting_entry[crafter.recipies.Length];
 
             var left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst();
             var content = left_menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
@@ -242,21 +253,28 @@ public class auto_crafter : building_material, IPlayerInteractable
                         var colors = button_j.button.colors;
                         if (j == i_copy)
                         {
+                            // Selected recipe
                             colors.normalColor = Color.green;
                             colors.pressedColor = Color.green;
                             colors.highlightedColor = Color.green;
                             colors.selectedColor = Color.green;
                             colors.disabledColor = Color.green;
                         }
+                        else if (!crafter.recipies[j].unlocked)
+                        {
+                            // Locked recipe
+                            colors.normalColor = Color.grey;
+                            colors.pressedColor = Color.grey;
+                            colors.highlightedColor = Color.grey;
+                            colors.selectedColor = Color.grey;
+                            colors.disabledColor = Color.grey;
+                        }
                         else colors = reset_colors;
                         button_j.button.colors = colors;
+                        button_j.button.interactable = crafter.recipies[j].unlocked;
                     }
                 }));
             }
-
-            // Simulate a click on the initially-selected button
-            if (crafter.chosen_recipe.value >= 0 && crafter.chosen_recipe.value < recipe_buttons.Length)
-                recipe_buttons[crafter.chosen_recipe.value].button.onClick.Invoke();
 
             return left_menu;
         }

@@ -666,6 +666,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3023962211572878530}
   - component: {fileID: 1606099014804353193}
+  - component: {fileID: 4173581708542690399}
   m_Layer: 0
   m_Name: crane
   m_TagString: Untagged
@@ -712,6 +713,19 @@ MonoBehaviour:
   value: 38
   fuel_value: 0
   axes_scale: 1
+--- !u!114 &4173581708542690399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7430195440821214064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 49d23aaf91c6e9548b5563151592eff4, type: 3}
 --- !u!1 &7621956302368379687
 GameObject:
   m_ObjectHideFlags: 0

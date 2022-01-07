@@ -37,6 +37,45 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
+    public float time_requirement()
+    {
+        float t = 0;
+        foreach (var tr in GetComponents<time_requirement>())
+            t += tr.time;
+        return t;
+    }
+
+    public float average_amount_produced(item i)
+    {
+        float ret = 0;
+        foreach (var p in products)
+            ret += p.average_amount_produced(i);
+        return ret;
+    }
+
+    public float average_ingredients_value()
+    {
+        float ret = 0;
+        foreach (var i in ingredients)
+            ret += i.average_value();
+        return ret;
+    }
+
+    //##################//
+    // CAN CRAFT CHECKS //
+    //##################//
+
+    public bool unlocked
+    {
+        get
+        {
+            foreach (var p in products)
+                if (!p.unlocked)
+                    return false;
+            return technology_requirement.unlocked(this);
+        }
+    }
+
     /// <summary> Check if this recipe is craftable from the given item collection.
     /// If so, the dictionary <paramref name="to_use"/> will contain the
     /// ingredients/quantities that can be used from the collection to
@@ -45,6 +84,10 @@ public class recipe : MonoBehaviour
     public bool can_craft(IItemCollection i, out Dictionary<string, int> to_use, bool maximal_use = false)
     {
         to_use = new Dictionary<string, int>();
+
+        if (!unlocked)
+            return false;
+
         bool complete = true;
         foreach (var ing in ingredients)
             if (!ing.find(i, ref to_use))
@@ -52,14 +95,21 @@ public class recipe : MonoBehaviour
                 complete = false;
                 if (!maximal_use) return false;
             }
+
         return complete;
     }
+
+    public bool can_craft(IItemCollection i) => can_craft(i, out Dictionary<string, int> ignored);
 
     /// <summary> Simmilar to <see cref="can_craft(IEnumerable{IItemCollection}, out Dictionary{IItemCollection, Dictionary{string, int}}, bool)"/>
     /// but will return the number of times the recipe can be crafted from the given item collection. </summary>
     public int count_can_craft(IItemCollection i, out Dictionary<string, int> to_use, bool maximal_use = false, int max_count = 10)
     {
         to_use = new Dictionary<string, int>();
+
+        if (!unlocked)
+            return 0;
+
         int craft_count = 0;
         bool search_again = true;
 
@@ -81,10 +131,8 @@ public class recipe : MonoBehaviour
 
     /// <summary> Overload of <see cref="count_can_craft(IItemCollection, out Dictionary{string, int}, bool)"/>, 
     /// without to-use dictionary. </summary>
-    public int count_can_craft(IItemCollection i, bool maximal_use = false, int max_count = 10)
-    {
-        return count_can_craft(i, out Dictionary<string, int> ignored, maximal_use: maximal_use, max_count: max_count);
-    }
+    public int count_can_craft(IItemCollection i, bool maximal_use = false, int max_count = 10) => 
+        count_can_craft(i, out Dictionary<string, int> ignored, maximal_use: maximal_use, max_count: max_count);
 
     /// <summary> Check if this recipe is craftable from the given item collections.
     /// If so, the dictionary <paramref name="to_use"/> will contain the
@@ -98,6 +146,9 @@ public class recipe : MonoBehaviour
         // Initialise the dictionary-of-dictionaries
         to_use = new Dictionary<IItemCollection, Dictionary<string, int>>();
         foreach (var i in ics) to_use[i] = new Dictionary<string, int>();
+
+        if (!unlocked)
+            return false;
 
         // Check for each ingredient
         bool complete = true;
@@ -123,41 +174,12 @@ public class recipe : MonoBehaviour
         return complete;
     }
 
-    public bool can_craft(IItemCollection i)
-    {
-        return can_craft(i, out Dictionary<string, int> ignored);
-    }
-
     public bool craft(IItemCollection from, IItemCollection to, bool track_production = false)
     {
         if (!can_craft(from, out Dictionary<string, int> to_use)) return false;
         foreach (var kv in to_use) from.remove(kv.Key, kv.Value);
         foreach (var p in products) p.create_in(to, track_production: track_production);
         return true;
-    }
-
-    public float time_requirement()
-    {
-        float t = 0;
-        foreach (var tr in GetComponents<time_requirement>())
-            t += tr.time;
-        return t;
-    }
-
-    public float average_amount_produced(item i)
-    {
-        float ret = 0;
-        foreach (var p in products)
-            ret += p.average_amount_produced(i);
-        return ret;
-    }
-
-    public float average_ingredients_value()
-    {
-        float ret = 0;
-        foreach (var i in ingredients)
-            ret += i.average_value();
-        return ret;
     }
 
     //##############//
