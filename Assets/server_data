@@ -11,14 +11,12 @@ items/feather 1 True
 items/copper 1 True
 items/autochopper 1 True
 items/galena 1 True
-mood_effects/tired 1 True
 items/hammer_swing 1 True
 items/item_combiner 1 True
 crops/flax 1 True
 items/cod 1 True
 items/pasture 1 True
 items/half_stick 1 True
-mood_effects/ravenous 1 True
 items/iron_plate_shinpad 1 True
 items/railcart 1 True
 items/sawblade 1 True
@@ -93,7 +91,6 @@ items/yeast 1 True
 items/spinning_wheel 1 True
 items/short_shaggy_hairstyle 1 True
 items/half_log 1 True
-mood_effects/well_fed 1 True
 items/chair 1 True
 items/flax_fibers 1 True
 misc/tech_tree Infinity True
@@ -132,7 +129,6 @@ items/linen 1 True
 items/bow 1 True
 items/well 1 True
 characters/skeleton 1 False
-mood_effects/hungry 1 True
 items/lootbox 1 True
 items/piston_lift 1 True
 items/wort 1 True
@@ -183,7 +179,6 @@ items/tool_rack 1 True
 items/scrap_metal 1 True
 items/foxglove 1 True
 items/buffer_chest 1 True
-mood_effects/exhausted 1 True
 characters/chicken 1 False
 items/slate 1 True
 inventories/player_crafting_menu 1 True
@@ -202,13 +197,11 @@ items/balding_hairstyle 1 True
 items/mineralogy_table 1 True
 items/guard_spot 1 True
 items/bedraggled_hairstyle 1 True
-mood_effects/starving 1 True
 items/wheat_plant 1 True
 items/drill_bit 1 True
 crops/cabbage 1 True
 items/small_lumber_contract 1 True
 items/item_splitter 1 True
-mood_effects/well_rested 1 True
 items/windmill 1 True
 items/charcoal 1 True
 characters/polar_bear 1 False

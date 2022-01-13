@@ -344,11 +344,14 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Can't add mood effects from non-auth client
         if (!has_authority) return;
 
+        var effect = mood_effect.load(name);
+
         // Mood effect doesn't exist (mood_effect.load will flag a warning)
-        if (mood_effect.load(name) == null) return;
+        if (effect == null) return;
 
         // Don't allow the same effect more than once
-        foreach (var me in mood_effect.get_all(this)) if (me.name == name) return;
+        foreach (var me in mood_effect.get_all(this)) 
+            if (me.display_name == effect.display_name) return;
 
         client.create(transform.position, "mood_effects/" + name, parent: this);
     }
