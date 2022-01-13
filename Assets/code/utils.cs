@@ -889,6 +889,26 @@ public static class utils
         return null;
     }
 
+    public static void set_left(this RectTransform rt, float left)
+    {
+        rt.offsetMin = new Vector2(left, rt.offsetMin.y);
+    }
+
+    public static void set_right(this RectTransform rt, float right)
+    {
+        rt.offsetMax = new Vector2(-right, rt.offsetMax.y);
+    }
+
+    public static void set_top(this RectTransform rt, float top)
+    {
+        rt.offsetMax = new Vector2(rt.offsetMax.x, -top);
+    }
+
+    public static void set_bottom(this RectTransform rt, float bottom)
+    {
+        rt.offsetMin = new Vector2(rt.offsetMin.x, bottom);
+    }
+
 #if UNITY_EDITOR // Unity edtor utilities
 
     public class prefab_editor : System.IDisposable

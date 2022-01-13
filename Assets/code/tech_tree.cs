@@ -424,7 +424,10 @@ public class tech_tree : networked
         Destroy(tech_template.gameObject);
 
         tech_tree_ui.SetParent(game.canvas.transform);
-        tech_tree_ui.anchoredPosition = Vector3.zero;
+        tech_tree_ui.set_left(128);
+        tech_tree_ui.set_right(128);
+        tech_tree_ui.set_top(128);
+        tech_tree_ui.set_bottom(128);
 
         update_tech_tree_ui();
 

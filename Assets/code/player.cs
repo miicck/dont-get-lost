@@ -218,8 +218,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     new open_task_manager(),
                     new undo_interaction(),
                     new redo_interaction(),
-                    new help_book_interaction(),
-                    new open_tech_tree()
+                    new help_book_interaction()
                 };
             return _self_interactions;
         }
@@ -392,22 +391,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             }
 
             if (state) ui.GetComponentInChildren<colony_tasks>().refresh();
-            ui.gameObject.SetActive(state);
-        }
-    }
-
-    public class open_tech_tree : menu_interaction
-    {
-        static RectTransform ui;
-
-        public override controls.BIND keybind => controls.BIND.TOGGLE_TECH_TREE;
-        public override string context_tip() { return "toggle tech tree"; }
-        public override bool show_context_tip() { return false; }
-
-        protected override void set_menu_state(player player, bool state)
-        {
-            if (ui == null)
-                ui = tech_tree.generate_tech_tree();
             ui.gameObject.SetActive(state);
         }
     }
