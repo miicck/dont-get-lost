@@ -7,8 +7,21 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
 {
     public chest to_process;
     public item_output output;
+    public List<GameObject> activate_when_running = new List<GameObject>();
 
-    recipe crafting;
+    recipe crafting
+    {
+        get => _crafting;
+        set
+        {
+            _crafting = value;
+            foreach (var g in activate_when_running)
+                g.SetActive(_crafting != null);
+        }
+    }
+    recipe _crafting;
+
+
     int count_crafting = 0;
     float craft_timer = 0;
 

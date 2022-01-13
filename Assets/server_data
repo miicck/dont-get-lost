@@ -15,6 +15,7 @@ items/hammer_swing 1 True
 items/item_combiner 1 True
 crops/flax 1 True
 items/cod 1 True
+items/cheese 1 True
 items/pasture 1 True
 items/half_stick 1 True
 items/iron_plate_shinpad 1 True
@@ -118,6 +119,7 @@ items/gate 1 True
 items/sapling 1 True
 items/iron_platehelm 1 True
 items/titanium_pickaxe 1 True
+items/cheese_vat 1 True
 mood_effects/ate_without_table 1 True
 items/straw 1 True
 items/wheat_planter 1 True
@@ -167,6 +169,7 @@ items/copper_ore 1 True
 characters/scorpion 1 False
 misc/world Infinity True
 items/pantry 1 True
+inventories/cheese_vat 1 True
 items/doormat 1 True
 items/ladder 1 True
 inventories/chest 1 True
