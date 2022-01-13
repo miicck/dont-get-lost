@@ -8,6 +8,7 @@ inventories/player_inventory 1 True
 items/sterile_wort 1 True
 items/portal 1 True
 items/feather 1 True
+items/pizza 1 True
 items/copper 1 True
 items/autochopper 1 True
 items/galena 1 True
@@ -207,6 +208,7 @@ items/wheat_plant 1 True
 items/drill_bit 1 True
 crops/cabbage 1 True
 items/small_lumber_contract 1 True
+items/pizza_oven 1 True
 items/item_splitter 1 True
 items/windmill 1 True
 items/charcoal 1 True

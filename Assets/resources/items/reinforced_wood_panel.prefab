@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: -0.49999976, y: -0.5000002, z: -0.50000024, w: 0.49999985}
   m_LocalPosition: {x: -0.000000834465, y: -0.00000023841858, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 6
@@ -70,6 +71,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0.70710707, z: -0, w: 0.70710653}
   m_LocalPosition: {x: -0.000000834465, y: 0, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 2
@@ -113,6 +115,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0.70710707, z: -0, w: 0.70710653}
   m_LocalPosition: {x: 0.000000834465, y: 0, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 1
@@ -139,6 +142,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2026644758334606422}
   - component: {fileID: 6695110599244550331}
+  - component: {fileID: -919863245840464105}
   m_Layer: 0
   m_Name: reinforced_wood_panel
   m_TagString: Untagged
@@ -156,6 +160,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3348918907905479132}
   - {fileID: 3891646276810987335}
@@ -185,6 +190,19 @@ MonoBehaviour:
   value: 6
   fuel_value: 0
   axes_scale: 1
+--- !u!114 &-919863245840464105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2607104909629897362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: ba673ddf1bc0e6c4a97cfe77348a646e, type: 3}
 --- !u!1 &2617410994098043399
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,6 +230,7 @@ Transform:
   m_LocalRotation: {x: -0.49999976, y: -0.5000002, z: -0.50000024, w: 0.49999985}
   m_LocalPosition: {x: 0.000000834465, y: 0, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 5
@@ -255,6 +274,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0.70710707, z: -0, w: 0.70710653}
   m_LocalPosition: {x: -0.000000834465, y: 2, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 3
@@ -298,6 +318,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0.70710707, z: -0, w: 0.70710653}
   m_LocalPosition: {x: 0.000000834465, y: 2, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2026644758334606422}
   m_RootOrder: 4

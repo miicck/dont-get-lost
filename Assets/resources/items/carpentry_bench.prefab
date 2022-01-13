@@ -187,6 +187,7 @@ GameObject:
   - component: {fileID: 6862110386516180624}
   - component: {fileID: 6248654364106381598}
   - component: {fileID: 1699498911953702173}
+  - component: {fileID: 6492794879416304413}
   m_Layer: 0
   m_Name: carpentry_bench
   m_TagString: Untagged
@@ -230,7 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: e0751baf9dbe07745be2e17e0dfde9f6, type: 3}
+  sprite: {fileID: 21300000, guid: 4ce7f4ce1d904a44b8d1da07859d5ad0, type: 3}
   plural: carpentry benches
   value: 21
   fuel_value: 0
@@ -254,6 +255,19 @@ MonoBehaviour:
   product_output: {fileID: 3538262791860626072}
   required_fixtures:
   - {fileID: 5617365583440348834, guid: b40cdf43cb2af9f43a74d664417ec4c2, type: 3}
+--- !u!114 &6492794879416304413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5282827488804224284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 2f6423ee82ff86c44bf59a689443dc73, type: 3}
 --- !u!1 &5599470851651116682
 GameObject:
   m_ObjectHideFlags: 0

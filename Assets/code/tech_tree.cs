@@ -281,15 +281,14 @@ public class tech_tree : networked
         iter = 0;
         while (true)
         {
-            if (++iter > 1000)
+            if (++iter > 10000)
             {
-                Debug.LogError("Could not identify optimal tech columns after 1000 iterations!");
+                Debug.Log("Hit tech column iteration limit");
                 break;
             }
 
             bool swap_perfomed = false;
 
-            // Swap parents to reduce child distance
             for (int row = 0; row < matrix.GetLength(1); ++row)
                 for (int col = 1; col < matrix.GetLength(0); ++col)
                 {
@@ -300,64 +299,41 @@ public class tech_tree : networked
                     int score_swapped = 0;
 
                     if (left != null)
+                    {
                         foreach (var c in children[left])
                         {
                             score_unswapped += tech_tree_distance_cost(coords[c][0], (col - 1));
                             score_swapped += tech_tree_distance_cost(coords[c][0], col);
                         }
 
-                    if (right != null)
-                        foreach (var c in children[right])
-                        {
-                            score_unswapped += tech_tree_distance_cost(coords[c][0], col);
-                            score_swapped += tech_tree_distance_cost(coords[c][0], (col - 1));
-                        }
-
-                    if (score_swapped > score_unswapped)
-                        continue; // Swap would be worse
-
-                    if (score_swapped == score_unswapped)
-                        continue; // Swap would be the same - perhaps randomly swap?
-
-                    // Perform swap
-                    matrix[col, row] = left;
-                    if (left != null) coords[left][0] = col;
-
-                    matrix[col - 1, row] = right;
-                    if (right != null) coords[right][0] = col - 1;
-
-                    swap_perfomed = true;
-                }
-
-            // Swap children to reduce parent distance
-            for (int row = 1; row < matrix.GetLength(1); ++row) // Start at row 1 because row 0 has no parents
-                for (int col = 1; col < matrix.GetLength(0); ++col)
-                {
-                    technology left = matrix[col - 1, row];
-                    technology right = matrix[col, row];
-
-                    int score_unswapped = 0;
-                    int score_swapped = 0;
-
-                    if (left != null)
                         foreach (var p in left.depends_on)
                         {
                             score_unswapped += tech_tree_distance_cost(coords[p][0], (col - 1));
                             score_swapped += tech_tree_distance_cost(coords[p][0], col);
                         }
 
+                    }
+
                     if (right != null)
+                    {
+                        foreach (var c in children[right])
+                        {
+                            score_unswapped += tech_tree_distance_cost(coords[c][0], col);
+                            score_swapped += tech_tree_distance_cost(coords[c][0], (col - 1));
+                        }
+
                         foreach (var p in right.depends_on)
                         {
                             score_unswapped += tech_tree_distance_cost(coords[p][0], col);
                             score_swapped += tech_tree_distance_cost(coords[p][0], (col - 1));
                         }
+                    }
 
                     if (score_swapped > score_unswapped)
                         continue; // Swap would be worse
 
                     if (score_swapped == score_unswapped)
-                        continue; // Swap would be the same - perhaps randomly swap?
+                        continue;
 
                     // Perform swap
                     matrix[col, row] = left;
@@ -368,7 +344,6 @@ public class tech_tree : networked
 
                     swap_perfomed = true;
                 }
-
 
             if (!swap_perfomed)
                 break;

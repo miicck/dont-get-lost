@@ -55,9 +55,12 @@ public class town_gate : portal, IAddsToInspectionText
         var set = settler.get_settlers_by_group(path_element.group);
 
         float av_mood = 0;
-        foreach (var s in set)
-            av_mood += s.total_mood();
-        av_mood /= set.Count;
+        if (set.Count > 0)
+        {
+            foreach (var s in set)
+                av_mood += s.total_mood();
+            av_mood /= set.Count;
+        }
 
         return
         "Settlers     : " + set.Count + "\n" +

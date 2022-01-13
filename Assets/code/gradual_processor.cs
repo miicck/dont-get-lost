@@ -16,7 +16,8 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
         {
             _crafting = value;
             foreach (var g in activate_when_running)
-                g.SetActive(_crafting != null);
+                if (g.activeInHierarchy != (_crafting != null))
+                    g.SetActive(_crafting != null);
         }
     }
     recipe _crafting;
@@ -46,9 +47,9 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
 
                 // Update the recipe that we are crafting
                 // to the craftable recipe that has the most ingredients
-                crafting = null;
-                count_crafting = 0;
+                recipe new_recipe = null;
                 int max_ingredients = 0;
+                count_crafting = 0;
 
                 foreach (var r in recipes)
                 {
@@ -56,11 +57,13 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
 
                     if (can_craft > 0 && r.ingredients.Length > max_ingredients)
                     {
-                        crafting = r;
+                        new_recipe = r;
                         count_crafting = can_craft;
                         max_ingredients = r.ingredients.Length;
                     }
                 }
+
+                crafting = new_recipe;
             });
 
             to_process.inventory.invoke_on_change();

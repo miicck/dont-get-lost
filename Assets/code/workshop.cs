@@ -72,7 +72,15 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
     }
     recipe[] _recipes;
 
-    recipe current_recipe => recipes[selected_option];
+    recipe current_recipe
+    {
+        get
+        {
+            if (recipes.Length == 0)
+                throw new System.Exception("No recipes for workshop: " + name);
+            return recipes[selected_option];
+        }
+    }
 
     protected override int options_count => recipes.Length;
     protected override string options_title => crafting_options_title;
