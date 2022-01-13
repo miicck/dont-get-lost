@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 361143786713873491}
   - component: {fileID: 3519165186118458864}
   - component: {fileID: 507421509519720614}
+  - component: {fileID: -8496955590785962818}
   m_Layer: 0
   m_Name: ale
   m_TagString: Untagged
@@ -29,6 +30,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6298662612925832764}
   m_Father: {fileID: 0}
@@ -77,6 +79,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 7396305659482701798, guid: b84694f8b45dd5d46afd40a492207330, type: 3}
+--- !u!114 &-8496955590785962818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5452444735530667131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: c2ced0a6ff141a0479e3e212781e8f64, type: 3}
 --- !u!1001 &5828749987034905047
 PrefabInstance:
   m_ObjectHideFlags: 0

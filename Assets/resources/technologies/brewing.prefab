@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
   m_Layer: 0
-  m_Name: windmill
+  m_Name: brewing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,4 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   depends_on:
   - {fileID: 3707283815685127039, guid: 7ceb7a1e81e72e647b7e219736c8e675, type: 3}
-  sprite: {fileID: 21300000, guid: 187a008c373727b47b0b411997c084a7, type: 3}
+  sprite: {fileID: 21300000, guid: 97d4e2c23f74b7646afc0cc89505acf0, type: 3}

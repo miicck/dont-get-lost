@@ -32,16 +32,20 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
                 }
 
                 // Update the recipe that we are crafting
+                // to the craftable recipe that has the most ingredients
                 crafting = null;
                 count_crafting = 0;
+                int max_ingredients = 0;
 
                 foreach (var r in recipes)
                 {
-                    count_crafting = r.count_can_craft(to_process.inventory, max_count: 100);
-                    if (count_crafting > 0)
+                    int can_craft = r.count_can_craft(to_process.inventory, max_count: 100);
+
+                    if (can_craft > 0 && r.ingredients.Length > max_ingredients)
                     {
                         crafting = r;
-                        break;
+                        count_crafting = can_craft;
+                        max_ingredients = r.ingredients.Length;
                     }
                 }
             });

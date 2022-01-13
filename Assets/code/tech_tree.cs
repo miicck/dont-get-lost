@@ -80,6 +80,18 @@ public class tech_tree : networked
             loaded_tech_tree.currently_researching.value = "";
     }
 
+    public static void unlock_all_research()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried research everything before tech tree loaded");
+            return;
+        }
+
+        foreach (var t in technology.all)
+            loaded_tech_tree.research_progress[t.name] = 100;
+    }
+
     public static bool research_project_set()
     {
         if (loaded_tech_tree == null)

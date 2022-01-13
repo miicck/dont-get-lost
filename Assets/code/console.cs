@@ -916,6 +916,18 @@ public class console : MonoBehaviour
 
             description = "Perform the given amount of research on the given topic.",
             usage_example = "research buffer_chest 99"
+        },
+
+        ["unlock_all_research"] = new console_info
+        {
+            command = (args) =>
+            {
+                tech_tree.unlock_all_research();
+                return true;
+            },
+
+            description = "Unlock all research topics.",
+            usage_example = "unlock_all_research"
         }
     };
 
