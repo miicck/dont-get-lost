@@ -193,6 +193,11 @@ public class tech_tree : networked
         }
     }
 
+    static int tech_tree_distance_cost(int x1, int x2)
+    {
+        return (x1 - x2) * (x1 - x2);
+    }
+
     public static RectTransform generate_tech_tree()
     {
         const int SPACING = 128;
@@ -270,6 +275,7 @@ public class tech_tree : networked
             if (!children.ContainsKey(kv.Key))
                 children[kv.Key] = new List<technology>();
 
+
         // Perform swaps on the matrix to reduce the average distance
         // between technologies and their dependants
         iter = 0;
@@ -283,8 +289,8 @@ public class tech_tree : networked
 
             bool swap_perfomed = false;
 
+            // Swap parents to reduce child distance
             for (int row = 0; row < matrix.GetLength(1); ++row)
-            {
                 for (int col = 1; col < matrix.GetLength(0); ++col)
                 {
                     technology left = matrix[col - 1, row];
@@ -296,15 +302,15 @@ public class tech_tree : networked
                     if (left != null)
                         foreach (var c in children[left])
                         {
-                            score_unswapped += Mathf.Abs(coords[c][0] - (col - 1));
-                            score_swapped += Mathf.Abs(coords[c][0] - col);
+                            score_unswapped += tech_tree_distance_cost(coords[c][0], (col - 1));
+                            score_swapped += tech_tree_distance_cost(coords[c][0], col);
                         }
 
                     if (right != null)
                         foreach (var c in children[right])
                         {
-                            score_unswapped += Mathf.Abs(coords[c][0] - col);
-                            score_swapped += Mathf.Abs(coords[c][0] - (col - 1));
+                            score_unswapped += tech_tree_distance_cost(coords[c][0], col);
+                            score_swapped += tech_tree_distance_cost(coords[c][0], (col - 1));
                         }
 
                     if (score_swapped > score_unswapped)
@@ -322,7 +328,47 @@ public class tech_tree : networked
 
                     swap_perfomed = true;
                 }
-            }
+
+            // Swap children to reduce parent distance
+            for (int row = 1; row < matrix.GetLength(1); ++row) // Start at row 1 because row 0 has no parents
+                for (int col = 1; col < matrix.GetLength(0); ++col)
+                {
+                    technology left = matrix[col - 1, row];
+                    technology right = matrix[col, row];
+
+                    int score_unswapped = 0;
+                    int score_swapped = 0;
+
+                    if (left != null)
+                        foreach (var p in left.depends_on)
+                        {
+                            score_unswapped += tech_tree_distance_cost(coords[p][0], (col - 1));
+                            score_swapped += tech_tree_distance_cost(coords[p][0], col);
+                        }
+
+                    if (right != null)
+                        foreach (var p in right.depends_on)
+                        {
+                            score_unswapped += tech_tree_distance_cost(coords[p][0], col);
+                            score_swapped += tech_tree_distance_cost(coords[p][0], (col - 1));
+                        }
+
+                    if (score_swapped > score_unswapped)
+                        continue; // Swap would be worse
+
+                    if (score_swapped == score_unswapped)
+                        continue; // Swap would be the same - perhaps randomly swap?
+
+                    // Perform swap
+                    matrix[col, row] = left;
+                    if (left != null) coords[left][0] = col;
+
+                    matrix[col - 1, row] = right;
+                    if (right != null) coords[right][0] = col - 1;
+
+                    swap_perfomed = true;
+                }
+
 
             if (!swap_perfomed)
                 break;

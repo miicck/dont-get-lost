@@ -39,6 +39,7 @@ items/half_plank 1 True
 items/forge 1 True
 items/half_triangular_plank_(right_angle) 1 True
 items/gunpowder 1 True
+items/nali_cow_shed 1 True
 items/cabbage_planter 1 True
 items/chest 1 True
 items/flowers 1 True
@@ -166,6 +167,7 @@ items/copper_ore 1 True
 characters/scorpion 1 False
 misc/world Infinity True
 items/pantry 1 True
+items/doormat 1 True
 items/ladder 1 True
 inventories/chest 1 True
 inventories/settler_inventory 1 True
@@ -193,6 +195,7 @@ items/arboretum 1 True
 items/bed 1 True
 items/triangular_plank_(right_angle) 1 True
 items/iron_sword 1 True
+items/milk 1 True
 items/balding_hairstyle 1 True
 items/mineralogy_table 1 True
 items/guard_spot 1 True

@@ -12,8 +12,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     public virtual void on_character_enter(character c) { }
     public virtual void on_character_move_towards(character c) { }
     public virtual void on_character_leave(character c) { }
-    public virtual bool seperates_rooms() { return false; }
-    public virtual settler_animations.animation settler_animation(settler s) { return null; }
+    public virtual bool seperates_rooms() => false;
+    public virtual settler_animations.animation settler_animation(settler s) => null;
 
     //#################//
     // UNITY CALLBACKS //
