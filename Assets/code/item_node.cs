@@ -114,16 +114,9 @@ public abstract class item_node : MonoBehaviour,
     public delegate void on_change_func();
     on_change_func on_change = () => { };
     bool on_change_being_called = false;
+    public void add_on_change_listener(on_change_func f) => on_change += f;
 
-    public void add_on_change_listener(on_change_func f)
-    {
-        on_change += f;
-    }
-
-    protected virtual bool is_display_enabled()
-    {
-        return outputs_display != null;
-    }
+    protected virtual bool is_display_enabled() => outputs_display != null;
 
     Transform outputs_display;
     protected virtual void set_display(bool enabled)
@@ -317,6 +310,19 @@ public abstract class item_node : MonoBehaviour,
         }
     }
 
+    //#########//
+    // LINKING //
+    //#########//
+
+    /// <summary> Called just after my connections have been validated. </summary>
+    protected virtual void postprocess_connections(
+        List<item_node> outputs_to, List<item_node> inputs_from,
+        out HashSet<item_node> outputs_to_remove, out HashSet<item_node> inputs_to_remove)
+    {
+        outputs_to_remove = new HashSet<item_node>();
+        inputs_to_remove = new HashSet<item_node>();
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -395,6 +401,15 @@ public abstract class item_node : MonoBehaviour,
         to.on_inputs_change();
     }
 
+    /// <summary> Break a connection between two nodes. </summary>
+    static void break_connection(item_node from, item_node to)
+    {
+        bool from_changed = from?.outputs_to.Remove(to) ?? false;
+        bool to_changed = to?.inputs_from.Remove(from) ?? false;
+        if (from_changed) from.on_outputs_change();
+        if (to_changed) to.on_inputs_change();
+    }
+
     /// <summary> Remove all input and output nodes 
     /// from <paramref name="node"/>. </summary>
     static void break_all_connections(item_node node)
@@ -411,6 +426,8 @@ public abstract class item_node : MonoBehaviour,
             ot?.on_inputs_change();
         }
 
+        // Inputs/outputs for the given node will only have
+        // changed if there were any in the first place
         bool inputs_changed = node.input_count > 0;
         bool outputs_changed = node.output_count > 0;
 
@@ -469,10 +486,6 @@ public abstract class item_node : MonoBehaviour,
             else if (test_connection(node, n)) create_connection(node, n);
         }
 
-        // Refresh display
-        if (display_enabled)
-            node.set_display(true);
-
         // Revalidate the nodes which are now conencted.
         // Consider the following example with 3 gutters
         // and items flowing left-to-right.
@@ -487,7 +500,6 @@ public abstract class item_node : MonoBehaviour,
         // In the above example, placement of gutter 2 will break
         // the previous connection from 1 to 3. Gutter 1 needs to be
         // re-validated to realise this.
-
         if (revalidate_connected)
         {
             var to_revalidate = new List<item_node>(node.inputs_from);
@@ -496,6 +508,16 @@ public abstract class item_node : MonoBehaviour,
             foreach (var n in to_revalidate)
                 validate_connections(n, revalidate_connected: false);
         }
+
+        // Perform connection postprocssing
+        node.postprocess_connections(node.outputs_to, node.inputs_from,
+            out HashSet<item_node> outputs_to_remove, out HashSet<item_node> inputs_to_remove);
+        foreach (var output in outputs_to_remove) break_connection(node, output);
+        foreach (var input in inputs_to_remove) break_connection(input, node);
+
+        // Refresh display
+        if (display_enabled)
+            node.set_display(true);
     }
 
     static void register_node(item_node node)

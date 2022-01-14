@@ -81,9 +81,6 @@ public class item_gutter : item_node
         if (distance_along < -LINK_DISTANCE_TOLERANCE) return false;
         if (distance_along > start_to_end.magnitude + LINK_DISTANCE_TOLERANCE) return false;
 
-        var my_build = building;
-        var other_build = other.building;
-
         // Check there is nothing in the way
         Vector3 out_to_in = input_point - other.output_point;
         foreach (var h in Physics.RaycastAll(other.output_point,
@@ -100,6 +97,40 @@ public class item_gutter : item_node
     protected override bool can_output_to(item_node other)
     {
         return true;
+    }
+
+    protected override void postprocess_connections(List<item_node> outputs_to, List<item_node> inputs_from,
+        out HashSet<item_node> outputs_to_remove, out HashSet<item_node> inputs_to_remove)
+    {
+        outputs_to_remove = new HashSet<item_node>();
+        inputs_to_remove = new HashSet<item_node>();
+
+        // If this gutter outputs to something that is connected very
+        // closely, then don't output to anything else. This deals with
+        // the problem of a row of gutters above another row dropping through.
+        // 
+        //  |----------|----------|----------|--> Gutter 1 -->
+        //                        |
+        //                        |  <--- Stops this drop from happening
+        //                        |
+        //  |----------|----------|----------|--> Gutter 2 -->
+        //
+        item_node exclusive_output = null;
+        foreach (var o in outputs_to)
+            if ((output_point - o.input_point(output_point)).magnitude < 0.01f)
+            {
+                exclusive_output = o;
+                break;
+            }
+
+        // No exclusive output identified
+        if (exclusive_output == null)
+            return;
+
+        // Remove all outputs, except the one flagged as exclusive above
+        foreach (var o in outputs_to)
+            if (o != exclusive_output)
+                outputs_to_remove.Add(o);
     }
 
     protected override void OnDrawGizmos()
