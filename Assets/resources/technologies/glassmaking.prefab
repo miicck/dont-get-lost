@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
   m_Layer: 0
-  m_Name: pizza_making
+  m_Name: glassmaking
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,8 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8db759e8d86d204492a6daa873f4124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depends_on:
-  - {fileID: 3707283815685127039, guid: 6e604fe29c885404fb02cd4bb0cec2d0, type: 3}
-  - {fileID: 3707283815685127039, guid: f2285fd335047274b91936d8799ba695, type: 3}
-  - {fileID: 3707283815685127039, guid: 0cbfb8ccdef527049860242a6c0608e1, type: 3}
-  sprite: {fileID: 21300000, guid: 98f72be60310b15448324d74946cbf6b, type: 3}
+  depends_on: []
+  sprite: {fileID: 21300000, guid: 73f5f70dbf085e14288912000640ace4, type: 3}

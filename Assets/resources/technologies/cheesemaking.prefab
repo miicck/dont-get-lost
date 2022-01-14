@@ -46,4 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   depends_on:
   - {fileID: 3707283815685127039, guid: c95157416fdea954ea087dcb201d8778, type: 3}
-  sprite: {fileID: 21300000, guid: 78378029f890ab34fa53bc35ca556c31, type: 3}
+  sprite: {fileID: 21300000, guid: cbc95aab0d6273748895f8c016ef0811, type: 3}

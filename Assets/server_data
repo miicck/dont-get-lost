@@ -73,6 +73,7 @@ items/arrow 1 False
 items/small_crane_box 1 True
 items/flint_pickaxe 1 True
 items/flour 1 True
+items/tomato_planter 1 True
 misc/melee_fight 1 True
 items/afro_hairstyle 1 True
 items/flax_seed 1 True
@@ -94,6 +95,8 @@ items/yeast 1 True
 items/spinning_wheel 1 True
 items/short_shaggy_hairstyle 1 True
 items/half_log 1 True
+items/glass_pane 1 True
+crops/tomato 1 True
 items/chair 1 True
 items/flax_fibers 1 True
 misc/tech_tree Infinity True
@@ -200,6 +203,7 @@ items/bed 1 True
 items/triangular_plank_(right_angle) 1 True
 items/iron_sword 1 True
 items/milk 1 True
+items/tomato 1 True
 items/balding_hairstyle 1 True
 items/mineralogy_table 1 True
 items/guard_spot 1 True

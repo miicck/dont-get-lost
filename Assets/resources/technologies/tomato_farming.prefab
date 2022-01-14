@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
   m_Layer: 0
-  m_Name: pizza_making
+  m_Name: tomato_farming
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,7 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   depends_on:
-  - {fileID: 3707283815685127039, guid: 6e604fe29c885404fb02cd4bb0cec2d0, type: 3}
-  - {fileID: 3707283815685127039, guid: f2285fd335047274b91936d8799ba695, type: 3}
-  - {fileID: 3707283815685127039, guid: 0cbfb8ccdef527049860242a6c0608e1, type: 3}
-  sprite: {fileID: 21300000, guid: 98f72be60310b15448324d74946cbf6b, type: 3}
+  - {fileID: 3707283815685127039, guid: 4ce400a74f8df8e4aaa89f3a8de9558f, type: 3}
+  sprite: {fileID: 21300000, guid: bb95764591359024fb9d68e136b48a8c, type: 3}

@@ -193,11 +193,6 @@ public class tech_tree : networked
         }
     }
 
-    static int tech_tree_distance_cost(int x1, int x2)
-    {
-        return (x1 - x2) * (x1 - x2);
-    }
-
     public static RectTransform generate_tech_tree()
     {
         const int SPACING = 128;
@@ -208,146 +203,8 @@ public class tech_tree : networked
             return tech_tree_ui;
 
         // Load the technologies + init coordinates
-        Dictionary<technology, int[]> coords = new Dictionary<technology, int[]>();
-        foreach (var t in technology.all)
-            coords[t] = new int[] { 0, 0 };
-
-
-        // Work out which row each technology belongs on
-        int iter = 0;
-        while (true)
-        {
-            if (++iter > 1000)
-            {
-                Debug.LogError("Could not identify technology rows in 1000 iterations, are cycles present?");
-                break;
-            }
-
-            bool changed = false;
-            foreach (var kv in coords)
-            {
-                int row_t = kv.Value[1];
-                foreach (var td in kv.Key.depends_on)
-                {
-                    int row_td = coords[td][1];
-                    if (row_td >= row_t)
-                    {
-                        changed = true;
-                        row_t = kv.Value[1] = row_td + 1;
-                    }
-                }
-            }
-            if (!changed) break;
-        }
-
-        // Work out which column each technology belongs on
-        // Initialize to one slot per technology on each row
-        Dictionary<int, int> row_counts = new Dictionary<int, int>();
-        foreach (var kv in coords)
-        {
-            if (!row_counts.TryGetValue(kv.Value[1], out int count)) count = 0;
-            kv.Value[0] = count;
-            row_counts[kv.Value[1]] = count + 1;
-        }
-
-        // Setup technology matrix
-        int max_col = 0;
-        int max_row = 0;
-        foreach (var kv in coords)
-        {
-            max_col = Mathf.Max(max_col, kv.Value[0]);
-            max_row = Mathf.Max(max_row, kv.Value[1]);
-        }
-        var matrix = new technology[max_col + 1, max_row + 1];
-        foreach (var kv in coords)
-            matrix[kv.Value[0], kv.Value[1]] = kv.Key;
-
-        // Setup dependance dict
-        Dictionary<technology, List<technology>> children = new Dictionary<technology, List<technology>>();
-        foreach (var kv in coords)
-            foreach (var parent in kv.Key.depends_on)
-            {
-                if (!children.ContainsKey(parent))
-                    children[parent] = new List<technology>();
-                children[parent].Add(kv.Key);
-            }
-        foreach (var kv in coords)
-            if (!children.ContainsKey(kv.Key))
-                children[kv.Key] = new List<technology>();
-
-
-        // Perform swaps on the matrix to reduce the average distance
-        // between technologies and their dependants
-        iter = 0;
-        while (true)
-        {
-            if (++iter > 10000)
-            {
-                Debug.Log("Hit tech column iteration limit");
-                break;
-            }
-
-            bool swap_perfomed = false;
-
-            for (int row = 0; row < matrix.GetLength(1); ++row)
-                for (int col = 1; col < matrix.GetLength(0); ++col)
-                {
-                    technology left = matrix[col - 1, row];
-                    technology right = matrix[col, row];
-
-                    int score_unswapped = 0;
-                    int score_swapped = 0;
-
-                    if (left != null)
-                    {
-                        foreach (var c in children[left])
-                        {
-                            score_unswapped += tech_tree_distance_cost(coords[c][0], (col - 1));
-                            score_swapped += tech_tree_distance_cost(coords[c][0], col);
-                        }
-
-                        foreach (var p in left.depends_on)
-                        {
-                            score_unswapped += tech_tree_distance_cost(coords[p][0], (col - 1));
-                            score_swapped += tech_tree_distance_cost(coords[p][0], col);
-                        }
-
-                    }
-
-                    if (right != null)
-                    {
-                        foreach (var c in children[right])
-                        {
-                            score_unswapped += tech_tree_distance_cost(coords[c][0], col);
-                            score_swapped += tech_tree_distance_cost(coords[c][0], (col - 1));
-                        }
-
-                        foreach (var p in right.depends_on)
-                        {
-                            score_unswapped += tech_tree_distance_cost(coords[p][0], col);
-                            score_swapped += tech_tree_distance_cost(coords[p][0], (col - 1));
-                        }
-                    }
-
-                    if (score_swapped > score_unswapped)
-                        continue; // Swap would be worse
-
-                    if (score_swapped == score_unswapped)
-                        continue;
-
-                    // Perform swap
-                    matrix[col, row] = left;
-                    if (left != null) coords[left][0] = col;
-
-                    matrix[col - 1, row] = right;
-                    if (right != null) coords[right][0] = col - 1;
-
-                    swap_perfomed = true;
-                }
-
-            if (!swap_perfomed)
-                break;
-        }
+        tech_tree_layout_engine layout = new swapper_layout_engine(technology.all);
+        var coords = layout.evaluate_coordinates();
 
         // Create the tech tree template object
         tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
@@ -407,5 +264,380 @@ public class tech_tree : networked
         update_tech_tree_ui();
 
         return tech_tree_ui;
+    }
+}
+
+abstract class tech_tree_layout_engine
+{
+    protected List<technology> technologies;
+
+    public tech_tree_layout_engine(IEnumerable<technology> technologies)
+    {
+        // Store technologies in increasing-dependence order
+        this.technologies = new List<technology>(technologies);
+        this.technologies.Sort((t1, t2) => t2.depends_on.Count.CompareTo(t1.depends_on.Count));
+    }
+
+    public abstract Dictionary<technology, float[]> evaluate_coordinates();
+}
+
+class swapper_layout_engine : tech_tree_layout_engine
+{
+    public swapper_layout_engine(IEnumerable<technology> technologies) : base(technologies) { }
+
+    public override Dictionary<technology, float[]> evaluate_coordinates()
+    {
+        // Identify independent families of technologies
+        var family_ids = new Dictionary<technology, int>();
+        for (int i = 0; i < technologies.Count; ++i)
+            family_ids[technologies[i]] = i;
+
+        while (true)
+        {
+            bool families_updated = false;
+            foreach (var kv in family_ids)
+            {
+                foreach (var kv2 in family_ids)
+                    if (kv.Value != kv2.Value && kv.Key.linked_to(kv2.Key))
+                    {
+                        int new_fam = Mathf.Min(kv.Value, kv2.Value);
+                        family_ids[kv.Key] = new_fam;
+                        family_ids[kv2.Key] = new_fam;
+                        families_updated = true;
+                        break;
+                    }
+
+                if (families_updated)
+                    break;
+            }
+
+            if (!families_updated)
+                break;
+        }
+
+        // Construct family lists
+        var families = new Dictionary<int, List<technology>>();
+        foreach (var kv in family_ids)
+        {
+            if (!families.ContainsKey(kv.Value))
+                families[kv.Value] = new List<technology>();
+            families[kv.Value].Add(kv.Key);
+        }
+
+        // Construct the layout for each family
+        var family_layouts = new Dictionary<int, family_layout>();
+        foreach (var kv in families)
+            family_layouts[kv.Key] = new family_layout(kv.Value);
+
+        // Order families by size
+        var family_order = new List<int>(families.Keys);
+        family_order.Sort((a, b) => families[a].Count.CompareTo(families[b].Count));
+
+        // Arrange each family next to each other
+        Dictionary<technology, float[]> result = new Dictionary<technology, float[]>();
+        int x_offset = 0;
+        foreach (var family in family_order)
+        {
+            var layout = family_layouts[family];
+
+            int min_x = int.MaxValue;
+            int max_x = int.MinValue;
+            foreach (var coord in layout.coords)
+            {
+                if (coord.Value[0] < min_x) min_x = coord.Value[0];
+                if (coord.Value[0] > max_x) max_x = coord.Value[0];
+            }
+
+            foreach (var coord in layout.coords)
+                result[coord.Key] = new float[] { coord.Value[0] + x_offset - min_x, coord.Value[1] };
+
+            x_offset += 1 + max_x - min_x;
+        }
+
+        return result;
+    }
+
+    class family_layout
+    {
+        int grid_distance_heuristic(int x1, int x2) => (x1 - x2) * (x1 - x2);
+
+        public Dictionary<technology, int[]> coords;
+
+        public family_layout(List<technology> technologies)
+        {
+            // Load the technologies + init coordinates
+            coords = new Dictionary<technology, int[]>();
+            foreach (var t in technologies)
+                coords[t] = new int[] { 0, 0 };
+
+            // Work out which row each technology belongs on
+            int iter = 0;
+            while (true)
+            {
+                if (++iter > 1000)
+                {
+                    Debug.LogError("Could not identify technology rows in 1000 iterations, are cycles present?");
+                    break;
+                }
+
+                bool changed = false;
+                foreach (var kv in coords)
+                {
+                    int row_t = kv.Value[1];
+                    foreach (var td in kv.Key.depends_on)
+                    {
+                        int row_td = coords[td][1];
+                        if (row_td >= row_t)
+                        {
+                            changed = true;
+                            row_t = kv.Value[1] = row_td + 1;
+                        }
+                    }
+                }
+                if (!changed) break;
+            }
+
+            // Work out initial columns by sorting each row by number of dependencies
+            Dictionary<int, List<technology>> rows = new Dictionary<int, List<technology>>();
+            foreach (var kv in coords)
+            {
+                if (!rows.ContainsKey(kv.Value[1]))
+                    rows[kv.Value[1]] = new List<technology>();
+                rows[kv.Value[1]].Add(kv.Key);
+            }
+
+            foreach (var kv in rows)
+                kv.Value.Sort((t1, t2) => t2.depends_on.Count.CompareTo(t1.depends_on.Count));
+
+            foreach (var kv in rows)
+                for (int i = 0; i < kv.Value.Count; ++i)
+                    coords[kv.Value[i]][0] = i;
+
+            // Setup technology matrix
+            int max_col = 0;
+            int max_row = 0;
+            foreach (var kv in coords)
+            {
+                max_col = Mathf.Max(max_col, kv.Value[0]);
+                max_row = Mathf.Max(max_row, kv.Value[1]);
+            }
+            var matrix = new technology[max_col + 1, max_row + 1];
+            foreach (var kv in coords)
+                matrix[kv.Value[0], kv.Value[1]] = kv.Key;
+
+            // Setup dependance dict
+            Dictionary<technology, List<technology>> children = new Dictionary<technology, List<technology>>();
+            foreach (var kv in coords)
+                foreach (var parent in kv.Key.depends_on)
+                {
+                    if (!children.ContainsKey(parent))
+                        children[parent] = new List<technology>();
+                    children[parent].Add(kv.Key);
+                }
+            foreach (var kv in coords)
+                if (!children.ContainsKey(kv.Key))
+                    children[kv.Key] = new List<technology>();
+
+
+            // Perform swaps on the matrix to reduce the average distance
+            // between technologies and their dependants
+            iter = 0;
+            while (true)
+            {
+                if (++iter > 10000)
+                {
+                    Debug.Log("Hit tech column iteration limit");
+                    break;
+                }
+
+                bool swap_perfomed = false;
+
+                for (int row = 0; row < matrix.GetLength(1); ++row)
+                    for (int col = 1; col < matrix.GetLength(0); ++col)
+                    {
+                        technology left = matrix[col - 1, row];
+                        technology right = matrix[col, row];
+
+                        int score_unswapped = 0;
+                        int score_swapped = 0;
+
+                        // Add score for left technology before/after swap
+                        if (left != null)
+                        {
+                            foreach (var c in children[left])
+                            {
+                                score_unswapped += grid_distance_heuristic(coords[c][0], (col - 1));
+                                score_swapped += grid_distance_heuristic(coords[c][0], col);
+                            }
+
+                            foreach (var p in left.depends_on)
+                            {
+                                score_unswapped += grid_distance_heuristic(coords[p][0], (col - 1));
+                                score_swapped += grid_distance_heuristic(coords[p][0], col);
+                            }
+
+                        }
+
+                        // Add score for right technology before/after swap
+                        if (right != null)
+                        {
+                            foreach (var c in children[right])
+                            {
+                                score_unswapped += grid_distance_heuristic(coords[c][0], col);
+                                score_swapped += grid_distance_heuristic(coords[c][0], (col - 1));
+                            }
+
+                            foreach (var p in right.depends_on)
+                            {
+                                score_unswapped += grid_distance_heuristic(coords[p][0], col);
+                                score_swapped += grid_distance_heuristic(coords[p][0], (col - 1));
+                            }
+                        }
+
+                        if (score_swapped > score_unswapped)
+                            continue; // Swap would be worse => stay as we are
+
+                        if (score_swapped == score_unswapped)
+                            if (iter % 2 == 0)
+                                continue; // Swap would be same, swap sometimes
+
+                        // Perform swap
+                        matrix[col, row] = left;
+                        if (left != null) coords[left][0] = col;
+
+                        matrix[col - 1, row] = right;
+                        if (right != null) coords[right][0] = col - 1;
+
+                        swap_perfomed = true;
+                    }
+
+                // Converged
+                if (!swap_perfomed)
+                    break;
+            }
+        }
+    }
+}
+
+class force_layout_engine : tech_tree_layout_engine
+{
+    public force_layout_engine(IEnumerable<technology> technologies) : base(technologies) { }
+
+    public override Dictionary<technology, float[]> evaluate_coordinates()
+    {
+        // Initilize the collection of nodes
+        var nodes = new List<node>();
+        float offset = 0;
+        foreach (var t in technologies)
+        {
+            nodes.Add(new node
+            {
+                technology = t,
+                x = t.depends_on.Count + offset,
+                y = offset,
+            });
+
+            offset += 0.1f;
+        }
+
+        // Will be updated with forces as we go
+        for (int iter = 0; iter < 1000; ++iter)
+        {
+            // Work out forces on nodes
+            foreach (var n in nodes)
+                n.eval_force(nodes);
+
+            // Make move according to forces
+            foreach (var n in nodes)
+            {
+                n.x += n.force_x / 10f;
+                n.y += n.force_y / 10f;
+            }
+        }
+
+        // Normalize to resonable coordinate range
+        float max_x = float.MinValue;
+        float min_x = float.MaxValue;
+        float max_y = float.MinValue;
+        float min_y = float.MaxValue;
+        foreach (var n in nodes)
+        {
+            if (n.x > max_x) max_x = n.x;
+            if (n.x < min_x) min_x = n.x;
+            if (n.y > max_y) max_y = n.y;
+            if (n.y < min_y) min_y = n.y;
+        }
+
+        foreach (var n in nodes)
+        {
+            n.x = n.x - min_x;
+            n.y = n.y - min_y;
+        }
+
+        // Return the result
+        Dictionary<technology, float[]> result = new Dictionary<technology, float[]>();
+        foreach (var n in nodes)
+            result[n.technology] = new float[] { n.x, n.y };
+        return result;
+    }
+
+    class node
+    {
+        public technology technology;
+        public float x;
+        public float y;
+
+        public float force_x;
+        public float force_y;
+
+        public void eval_force(IEnumerable<node> nodes)
+        {
+            force_x = 0;
+            force_y = 0;
+
+            foreach (var n in nodes)
+            {
+                if (n.technology == technology)
+                    continue; // No self-interaction
+
+                // Add force from this node
+                add_force(n);
+            }
+
+            // Add attractive interaction to origin
+            force_x -= x;
+            force_y -= y;
+        }
+
+        public void add_force(node other)
+        {
+            float dx = other.x - x;
+            float dy = other.y - y;
+            float r2 = dx * dx + dy * dy;
+
+            if (r2 < 1f)
+            {
+                // Nodes too close => repulsive foce
+                force_x += -dx / (r2 + 0.01f);
+                force_y += -dy / (r2 + 0.01f);
+                return;
+            }
+
+            if (linked_to(other))
+            {
+                // We are connected by dependance => attractive foce
+                force_x += dx;
+                force_y += dy;
+                return;
+            }
+
+            // Not connected => repulsive
+            force_x += -dx / (r2 + 0.01f);
+            force_y += -dy / (r2 + 0.01f);
+        }
+
+        public bool linked_to(node other) =>
+            other.technology.depends_on_set.Contains(technology) ||
+            technology.depends_on_set.Contains(other.technology);
     }
 }

@@ -20,6 +20,19 @@ public class technology : MonoBehaviour
         }
     }
 
+    public HashSet<technology> depends_on_set
+    {
+        get
+        {
+            if (_depends_on_set == null)
+                _depends_on_set = new HashSet<technology>(depends_on);
+            return _depends_on_set;
+        }
+    }
+    HashSet<technology> _depends_on_set;
+
+    public bool linked_to(technology other) => depends_on_set.Contains(other) || other.depends_on_set.Contains(this);
+
     //##############//
     // STATIC STUFF //
     //##############//
