@@ -13,6 +13,7 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
         " at " + GetComponentInParent<item>().display_name;
 
     float work_done;
+    float time_researching;
     settler_animations.simple_work work_anim;
 
     protected override bool ready_to_assign(settler s) => tech_tree.research_project_set();
@@ -21,6 +22,7 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
     {
         // Reset stuff
         work_done = 0;
+        time_researching = 0;
         work_anim = new settler_animations.simple_work(s,
             period: 1f / current_proficiency.total_multiplier);
     }
@@ -34,15 +36,15 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         work_done += Time.deltaTime * current_proficiency.total_multiplier;
+        time_researching += Time.deltaTime;
 
-        // Work until 10 work done
-        if (work_done < 10)
-            return STAGE_RESULT.STAGE_UNDERWAY;
-
-        // Perform 1 unit of research
+        // Work until 10 work done, then perform 1 unit of research
+        if (work_done < 10) return STAGE_RESULT.STAGE_UNDERWAY;
         tech_tree.perform_research(1);
+        work_done = 0;
 
-        return STAGE_RESULT.TASK_COMPLETE;
+        // Go agaun until 60 seconds has passed
+        return time_researching > 60 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     //#####################//
@@ -54,7 +56,7 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
         static RectTransform ui;
 
         public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
-        public override string context_tip() =>  "open tech tree";
+        public override string context_tip() => "open tech tree";
         public override bool show_context_tip() => true;
         public override bool allows_movement() => false;
         public override bool allows_mouse_look() => false;

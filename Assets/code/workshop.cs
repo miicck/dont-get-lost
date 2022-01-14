@@ -109,15 +109,39 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
     }
 
     bool walking_to_dispenser = true;
-    float timer = 0;
+    float craft_timer = 0;
+    float total_timer = 0;
     settler_animations.simple_work work_anim;
+    Dictionary<dispenser, Dictionary<string, int>> to_pickup_this_cycle;
 
     protected override void on_arrive(settler s)
     {
         // Reset things
         walking_to_dispenser = true;
-        timer = 0;
+        craft_timer = 0;
+        total_timer = 0;
         work_anim = null;
+        to_pickup_this_cycle = null;
+    }
+
+    STAGE_RESULT prepare_to_gather_materials(settler s)
+    {
+        // Don't do anything on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        // Don't know what to gather
+        if (to_pickup == null) return STAGE_RESULT.TASK_FAILED;
+
+        // Copy the to_pickup dictionary for this cycle
+        to_pickup_this_cycle = new Dictionary<dispenser, Dictionary<string, int>>();
+        foreach (var kv in to_pickup)
+        {
+            to_pickup_this_cycle[kv.Key] = new Dictionary<string, int>();
+            foreach (var kv2 in kv.Value)
+                to_pickup_this_cycle[kv.Key][kv2.Key] = kv2.Value;
+        }
+
+        return STAGE_RESULT.STAGE_COMPLETE;
     }
 
     STAGE_RESULT gather_materials(settler s)
@@ -126,10 +150,10 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Don't know what to gather
-        if (to_pickup == null) return STAGE_RESULT.TASK_FAILED;
+        if (to_pickup_this_cycle == null) return STAGE_RESULT.TASK_FAILED;
 
         // Loop over items to pickup
-        foreach (var kv in to_pickup)
+        foreach (var kv in to_pickup_this_cycle)
             switch (kv.Key.path.walk(s, s.walk_speed, forwards: walking_to_dispenser))
             {
                 case town_path_element.path.WALK_STATE.COMPLETE:
@@ -144,7 +168,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
                     {
                         // Got back with materials - remove this entry from the dict
                         walking_to_dispenser = true;
-                        to_pickup.Remove(kv.Key);
+                        to_pickup_this_cycle.Remove(kv.Key);
                     }
                     return STAGE_RESULT.STAGE_UNDERWAY;
 
@@ -156,6 +180,15 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
             }
 
         // Completed the gather-and-return stage
+        return STAGE_RESULT.STAGE_COMPLETE;
+    }
+
+    STAGE_RESULT prepare_to_craft(settler s)
+    {
+        // Don't do anything else on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        craft_timer = 0;
         return STAGE_RESULT.STAGE_COMPLETE;
     }
 
@@ -174,28 +207,41 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Increment crafting timer/eventually complete the crafting stage
-        timer += Time.deltaTime * current_proficiency.total_multiplier;
-        if (timer < base_craft_time) return STAGE_RESULT.STAGE_UNDERWAY;
+        craft_timer += Time.deltaTime * current_proficiency.total_multiplier;
+        if (craft_timer < base_craft_time) return STAGE_RESULT.STAGE_UNDERWAY;
         return STAGE_RESULT.STAGE_COMPLETE;
     }
 
-    STAGE_RESULT create_output()
+    STAGE_RESULT create_output(settler s)
     {
         foreach (var p in current_recipe.products)
             p.create_in_node(product_output, track_production: true);
-        return STAGE_RESULT.TASK_COMPLETE;
+
+        // Don't do anything else on non-auth clients
+        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+
+        // Keep cycling until total time hits 60 seconds
+        return total_timer > 60 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_COMPLETE;
     }
+
+    delegate STAGE_RESULT stage_function(settler s);
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        // Delegate interaction to approprate stage
-        switch (stage)
+        // Record total time
+        if (s.has_authority) total_timer += Time.deltaTime;
+
+        stage_function[] stages = new stage_function[]
         {
-            case 0: return gather_materials(s);
-            case 1: return craft(s);
-            case 2: return create_output();
-            default: return STAGE_RESULT.TASK_FAILED;
-        }
+            prepare_to_gather_materials,
+            gather_materials,
+            prepare_to_craft,
+            craft,
+            create_output
+        };
+
+        // Delegate interaction to approprate stage
+        return stages[stage % stages.Length](s);
     }
 
     bool validate_recipe()
