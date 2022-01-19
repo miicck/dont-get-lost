@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6028286147238254669}
   - component: {fileID: 377656643341563206}
   - component: {fileID: 2458903323363178695}
+  - component: {fileID: 489334316797664001}
   - component: {fileID: 1489740370256527643}
   m_Layer: 0
   m_Name: fishing_dock
@@ -29,6 +30,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -59,6 +61,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   item: {fileID: 6695110599244550331, guid: 66f7ba4e10c3f5d4e940592a8d27dc4d, type: 3}
   count: 2
+--- !u!114 &489334316797664001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 1795700033665926964, guid: 105845350d5a8bb42b4cb6ac382a661e, type: 3}
+  count: 1
 --- !u!114 &1489740370256527643
 MonoBehaviour:
   m_ObjectHideFlags: 0

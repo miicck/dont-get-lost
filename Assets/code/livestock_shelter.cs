@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable, IAddsToInspectionText
+public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable, IAddsToInspectionText, IRecipeInfo
 {
     public character livestock_type;
     public int pasture_per_animal = 2;
@@ -140,4 +140,18 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         public void on_end_control(character c) { }
         public string inspect_info() { return "Livestock"; }
     }
+
+    //#############//
+    // IRecipeInfo //
+    //#############//
+
+    public string recipe_book_string()
+    {
+        string str = product.product_quantities_list(GetComponents<product>());
+        str += " < time";
+        return str;
+    }
+
+    public float average_amount_produced(item i) => 1f;
+    public float average_ingredients_value() => 0f;
 }

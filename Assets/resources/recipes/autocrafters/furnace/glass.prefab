@@ -11,11 +11,10 @@ GameObject:
   - component: {fileID: 1849496975812320664}
   - component: {fileID: -7845326207384050824}
   - component: {fileID: -3501409818469146156}
-  - component: {fileID: 3767063978501514603}
-  - component: {fileID: -7066185072270666823}
   - component: {fileID: 1213581095459593720}
+  - component: {fileID: -4553750974437377852}
   m_Layer: 0
-  m_Name: plain_pizza
+  m_Name: glass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,35 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  item: {fileID: 4183447387819725491, guid: 8145c4570c6d24a4c97a77392a079e04, type: 3}
-  count: 1
---- !u!114 &3767063978501514603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 6027353581098233284, guid: 2db95338cb6a29d44a8d920f475d78d0, type: 3}
-  count: 1
---- !u!114 &-7066185072270666823
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4183066231069393111}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  item: {fileID: 4183447387819725491, guid: 6e66ae2d4ebb69c4eadbeb7891d76879, type: 3}
+  item: {fileID: 1963094263204736833, guid: 628bc2a1c33ae57458bfeee246d24b47, type: 3}
   count: 1
 --- !u!114 &1213581095459593720
 MonoBehaviour:
@@ -103,7 +74,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  item: {fileID: 4183447387819725491, guid: d093e1304ed24bf478f168bf181163bf, type: 3}
-  min_count: 2
-  max_count: 2
+  item: {fileID: 5032644002433172250, guid: 37fd9260b5861f743b8ba70e9d9005ae, type: 3}
+  min_count: 1
+  max_count: 1
   one_in_chance: 1
+--- !u!114 &-4553750974437377852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4183066231069393111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c115349308b276345950de919ec67a3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_required: 1

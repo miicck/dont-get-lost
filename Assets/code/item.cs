@@ -379,7 +379,7 @@ public class item : networked, IPlayerInteractable
         return utils.allign_colons(info);
     }
 
-    int suggested_value(out recipe recipe_determining_value)
+    int suggested_value(out IRecipeInfo recipe_determining_value)
     {
         recipe_determining_value = null;
 
@@ -458,7 +458,7 @@ public class item : networked, IPlayerInteractable
             int changed = 0;
             foreach (var i in all_items)
             {
-                int suggested = i.suggested_value(out recipe r);
+                int suggested = i.suggested_value(out IRecipeInfo r);
                 if (suggested != i.value)
                 {
                     i.value = suggested;
@@ -493,7 +493,7 @@ public class item : networked, IPlayerInteractable
     [UnityEditor.CustomEditor(typeof(item), true)]
     class item_editor : UnityEditor.Editor
     {
-        recipe rec;
+        IRecipeInfo rec;
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
@@ -501,14 +501,14 @@ public class item : networked, IPlayerInteractable
             item i = (item)target;
             if (GUILayout.Button("Suggest value"))
             {
-                i.value = i.suggested_value(out recipe r);
+                i.value = i.suggested_value(out IRecipeInfo r);
                 rec = r;
             }
             if (GUILayout.Button("Solve all values"))
                 solve_item_values();
 
             if (rec != null)
-                UnityEditor.EditorGUILayout.ObjectField("Recipe determining value: ", rec, typeof(recipe), false);
+                UnityEditor.EditorGUILayout.TextField("Recipe determining value: " + rec.recipe_book_string());
         }
     }
 #endif

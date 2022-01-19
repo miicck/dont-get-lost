@@ -350,7 +350,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (effect == null) return;
 
         // Don't allow the same effect more than once
-        foreach (var me in mood_effect.get_all(this)) 
+        foreach (var me in mood_effect.get_all(this))
             if (me.display_name == effect.display_name) return;
 
         client.create(transform.position, "mood_effects/" + name, parent: this);
@@ -541,8 +541,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     new public static void initialize() => settlers = new HashSet<settler>();
     public static settler find_to_min(utils.float_func<settler> f) => utils.find_to_min(settlers, f);
 
-    const float TIME_BETWEEN_SPAWNS = 5f;
-    static float last_spawn_time = float.NegativeInfinity;
+    const float TIME_BETWEEN_SPAWN_CHECKS = 60f;
+    static float last_spawn_check = float.NegativeInfinity;
 
     public static List<settler> all_settlers()
     {
@@ -562,11 +562,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public static void try_spawn(int group, Vector3 location)
     {
-        if (Time.time < last_spawn_time + TIME_BETWEEN_SPAWNS)
-            return; // Wait until time to spawn again
+        if (Time.time < last_spawn_check + TIME_BETWEEN_SPAWN_CHECKS) return; // Wait until time to spawn again
+        last_spawn_check = Time.time;
 
-        if (group_info.under_attack(group))
-            return; // Don't spawn when under attack
+        if (group_info.under_attack(group)) return; // Don't spawn when under attack
 
         var set = get_settlers_by_group(group);
         if (set.Count >= group_info.bed_count(group)) return; // Not enough beds
@@ -575,7 +574,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             if (s.nutrition.metabolic_satisfaction == 0)
                 return; // Starvation => don't spawn
 
-        last_spawn_time = Time.time;
         var spawned = client.create(location, "characters/settler") as settler;
         temporary_object.create(60f).gameObject.add_pinned_message(spawned.name.capitalize() + " has settled in the town!", Color.blue);
     }

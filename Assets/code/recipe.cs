@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(product))]
 [RequireComponent(typeof(ingredient))]
-public class recipe : MonoBehaviour
+public class recipe : MonoBehaviour, IRecipeInfo
 {
     public product[] products { get => GetComponents<product>(); }
     public ingredient[] ingredients { get => GetComponents<ingredient>(); }
@@ -27,7 +27,7 @@ public class recipe : MonoBehaviour
         return ret;
     }
 
-    string recipe_book_string()
+    public string recipe_book_string()
     {
         string ret = product.product_quantities_list(products);
         ret += " < ";
@@ -131,7 +131,7 @@ public class recipe : MonoBehaviour
 
     /// <summary> Overload of <see cref="count_can_craft(IItemCollection, out Dictionary{string, int}, bool)"/>, 
     /// without to-use dictionary. </summary>
-    public int count_can_craft(IItemCollection i, bool maximal_use = false, int max_count = 10) => 
+    public int count_can_craft(IItemCollection i, bool maximal_use = false, int max_count = 10) =>
         count_can_craft(i, out Dictionary<string, int> ignored, maximal_use: maximal_use, max_count: max_count);
 
     /// <summary> Check if this recipe is craftable from the given item collections.
@@ -186,25 +186,28 @@ public class recipe : MonoBehaviour
     // STATIC STUFF //
     //##############//
 
-    public static List<KeyValuePair<string, recipe[]>> all_recipies()
+    public static List<KeyValuePair<string, IRecipeInfo[]>> all_recipies()
     {
-        List<KeyValuePair<string, recipe[]>> ret = new List<KeyValuePair<string, recipe[]>>();
-        ret.Add(new KeyValuePair<string, recipe[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
+        List<KeyValuePair<string, IRecipeInfo[]>> ret = new List<KeyValuePair<string, IRecipeInfo[]>>();
+        ret.Add(new KeyValuePair<string, IRecipeInfo[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
 
         foreach (var ac in Resources.LoadAll<auto_crafter>("items"))
-            ret.Add(new KeyValuePair<string, recipe[]>(ac.name, Resources.LoadAll<recipe>("recipes/workbenches/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/workbenches/" + ac.name)));
 
         foreach (var ac in Resources.LoadAll<auto_crafter>("items"))
-            ret.Add(new KeyValuePair<string, recipe[]>(ac.name, Resources.LoadAll<recipe>("recipes/autocrafters/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/autocrafters/" + ac.name)));
 
         foreach (var ac in Resources.LoadAll<farming_patch>("items"))
-            ret.Add(new KeyValuePair<string, recipe[]>(ac.name, Resources.LoadAll<recipe>("recipes/farming_spots/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/farming_spots/" + ac.name)));
 
         foreach (var w in Resources.LoadAll<workshop>("items"))
-            ret.Add(new KeyValuePair<string, recipe[]>(w.name + " (operated by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(w.name + " (operated by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
 
         foreach (var g in Resources.LoadAll<gradual_processor>("items"))
-            ret.Add(new KeyValuePair<string, recipe[]>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
+
+        foreach (var ls in Resources.LoadAll<livestock_shelter>("items"))
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ls.name, new IRecipeInfo[] { ls }));
 
         return ret;
     }
@@ -338,4 +341,11 @@ public abstract class ingredient : MonoBehaviour
     public abstract string satisfaction_string(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract bool find(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract float average_value();
+}
+
+public interface IRecipeInfo
+{
+    public string recipe_book_string();
+    public float average_amount_produced(item i);
+    public float average_ingredients_value();
 }
