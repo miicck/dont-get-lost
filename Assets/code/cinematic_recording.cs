@@ -6,6 +6,9 @@ using UnityEngine;
 /// Uses an interpolation of keyframes recorded in fly mode.  </summary>
 public static class cinematic_recording
 {
+    public static float time_between_keyframes = 1f;
+    public static bool loop_keyframes = true;
+
     /// <summary> A keyframe along the cinematic path. </summary>
     struct keyframe
     {
@@ -138,9 +141,18 @@ public static class cinematic_recording
             // Increment the progress along the path (it takes 1 second
             // to increment by 1 keyframe, allowing the user to control
             // the playback speed).
-            progress += Time.deltaTime;
-            while (progress > keyframes.Count - 1)
-                progress -= keyframes.Count - 1; // Loop
+            progress += Time.deltaTime / time_between_keyframes;
+
+            if (loop_keyframes)
+            {
+                while (progress > keyframes.Count - 1.01f)
+                    progress -= keyframes.Count - 1; // Loop
+            }
+            else
+            {
+                progress = Mathf.Min(progress, keyframes.Count - 2.01f);
+                Debug.Log(progress + ", " + keyframes.Count);
+            }
 
             // Work out the corresponding interpolated keyframe
             var inter = interpolated_keyframe(progress);

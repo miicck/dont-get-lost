@@ -928,6 +928,34 @@ public class console : MonoBehaviour
 
             description = "Unlock all research topics.",
             usage_example = "unlock_all_research"
+        },
+
+        ["time_between_cinematic_keyframes"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Missing time argument!");
+                if (float.TryParse(args[1], out float time))
+                    cinematic_recording.time_between_keyframes = time;
+                else return console_error("Could not parse a time from " + args[1]);
+                return true;
+            },
+
+            description = "Set the time between cinematic keyframes",
+            usage_example = "time_between_cinematic_keyframes 1.0"
+        },
+
+        ["toggle_loop_cinematic_keyframes"] = new console_info
+        {
+            command = (args) =>
+            {
+                cinematic_recording.loop_keyframes = !cinematic_recording.loop_keyframes;
+                popup_message.create("Looping keyframes " + (cinematic_recording.loop_keyframes ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle looping of cinematic keyframes. When off, cinematic playback will pause at the last keyframe.",
+            usage_example = "toggle_loop_cinematic_keyframes"
         }
     };
 
