@@ -938,10 +938,11 @@ public class console : MonoBehaviour
                 if (float.TryParse(args[1], out float time))
                     cinematic_recording.time_between_keyframes = time;
                 else return console_error("Could not parse a time from " + args[1]);
+                popup_message.create("Time between keyframes set to " + cinematic_recording.time_between_keyframes + " seconds");
                 return true;
             },
 
-            description = "Set the time between cinematic keyframes",
+            description = "Set the time between cinematic keyframes in seconds.",
             usage_example = "time_between_cinematic_keyframes 1.0"
         },
 
@@ -956,6 +957,32 @@ public class console : MonoBehaviour
 
             description = "Toggle looping of cinematic keyframes. When off, cinematic playback will pause at the last keyframe.",
             usage_example = "toggle_loop_cinematic_keyframes"
+        },
+
+        ["toggle_player_nametags"] = new console_info
+        {
+            command = (args) =>
+            {
+                player.nametags_visible = !player.nametags_visible;
+                popup_message.create("Player nametags " + (player.nametags_visible ? "visible" : "hidden"));
+                return true;
+            },
+
+            description = "Toggle player nametag visibility.",
+            usage_example = "toggle_player_nametags"
+        },
+
+        ["toggle_pause_time_of_day"] = new console_info
+        {
+            command = (args)=>
+            {
+                time_manager.local_time_of_day_paused = !time_manager.local_time_of_day_paused;
+                popup_message.create("Local time of day " + (time_manager.local_time_of_day_paused ? "paused" : "un-paused"));
+                return true;
+            },
+
+            description = "Toggle time-of-day changes.",
+            usage_example = "toggle_pause_time_of_day"
         }
     };
 

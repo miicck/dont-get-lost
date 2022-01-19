@@ -101,7 +101,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
             // Position my nametag
             nametag.position = utils.clamped_screen_point(current.camera, nametag_position(), out bool on_edge);
-            nametag.gameObject.SetActive(!on_edge);
+            nametag.gameObject.SetActive(!on_edge && nametags_visible);
         }
 
         // Stuff that runs both on authority/non-auth clients
@@ -1880,6 +1880,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     //################//
     // STATIC METHODS //
     //################//
+
+    // True if player nametags are visible to the local player
+    public static bool nametags_visible = true;
 
     private static callback waiting = () => { };
 

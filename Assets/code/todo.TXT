@@ -40,5 +40,3 @@ TODO
 - Rail network
 - Hospital
 - Potions
-- Pause day/night cycle
-- Hide player names

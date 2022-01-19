@@ -23,7 +23,11 @@ public class time_manager : networked
     public override void on_init_network_variables()
     {
         networked_time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);
-        networked_time_of_day.on_change = () => local_time_of_day = networked_time_of_day.value;
+        networked_time_of_day.on_change = () =>
+        {
+            if (!local_time_of_day_paused)
+                local_time_of_day = networked_time_of_day.value;
+        };
 
         day_number = new networked_variables.net_int();
         day_number.on_change = () =>
@@ -37,6 +41,10 @@ public class time_manager : networked
 
     void Update()
     {
+        // Time of day paused => do not increment time
+        if (local_time_of_day_paused)
+            return;
+
         // Increment time
         if (local_time_of_day < 1f)
             local_time_of_day += Time.deltaTime / DAY_LENGTH;
@@ -71,6 +79,9 @@ public class time_manager : networked
     //##################//
     // STATIC INTERFACE //
     //##################//
+
+    /// <summary> True if the time of day is paused locally. </summary>
+    public static bool local_time_of_day_paused = false;
 
     static time_manager manager;
 
