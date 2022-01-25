@@ -215,7 +215,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     new place_marker(),
                     new toggle_map(),
                     new inspect_networked(),
-                    new open_task_manager(),
                     new undo_interaction(),
                     new redo_interaction(),
                     new help_book_interaction()
@@ -365,33 +364,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         {
             player.map_open = !player.map_open;
             return true;
-        }
-    }
-
-    public class open_task_manager : menu_interaction
-    {
-        static RectTransform ui;
-
-        public override controls.BIND keybind => controls.BIND.OPEN_TASK_MANAGER;
-        public override string context_tip() { return "open task manager"; }
-        public override bool show_context_tip() { return false; }
-
-        protected override bool mouse_visible()
-        {
-            return true;
-        }
-
-        protected override void set_menu_state(player player, bool state)
-        {
-            if (ui == null)
-            {
-                ui = Resources.Load<RectTransform>("ui/colony_tasks").inst();
-                ui.transform.SetParent(game.canvas.transform);
-                ui.anchoredPosition = Vector2.zero;
-            }
-
-            if (state) ui.GetComponentInChildren<colony_tasks>().refresh();
-            ui.gameObject.SetActive(state);
         }
     }
 

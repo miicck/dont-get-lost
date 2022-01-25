@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6364318154603055067}
   - component: {fileID: 6542462162648508551}
+  - component: {fileID: 5392132422110792126}
   m_Layer: 0
   m_Name: noticeboard
   m_TagString: Untagged
@@ -53,6 +54,18 @@ MonoBehaviour:
   value: 0
   fuel_value: 0
   axes_scale: 1
+--- !u!114 &5392132422110792126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969048255346236510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3785926f92c9d5a47a653f7f4ed4cba8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5757811063779058790
 GameObject:
   m_ObjectHideFlags: 0
