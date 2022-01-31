@@ -974,7 +974,7 @@ public class console : MonoBehaviour
 
         ["toggle_pause_time_of_day"] = new console_info
         {
-            command = (args)=>
+            command = (args) =>
             {
                 time_manager.local_time_of_day_paused = !time_manager.local_time_of_day_paused;
                 popup_message.create("Local time of day " + (time_manager.local_time_of_day_paused ? "paused" : "un-paused"));
@@ -983,6 +983,19 @@ public class console : MonoBehaviour
 
             description = "Toggle time-of-day changes.",
             usage_example = "toggle_pause_time_of_day"
+        },
+
+        ["toggle_messages"] = new console_info
+        {
+            command = (args) =>
+            {
+                pinned_message.messages_enabled = !pinned_message.messages_enabled;
+                popup_message.create("Messages " + (pinned_message.messages_enabled ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle visibility of the messages that appear in the top-right of the screen.",
+            usage_example = "toggle_messages"
         }
     };
 

@@ -65,6 +65,17 @@ public class pinned_message : MonoBehaviour
 
     static HashSet<pinned_message> messages;
 
+    public static bool messages_enabled
+    {
+        get => _messages_enabled;
+        set
+        {
+            _messages_enabled = value;
+            locate_messages();
+        }
+    }
+    static bool _messages_enabled = true;
+
     public static void initialize()
     {
         messages = new HashSet<pinned_message>();
@@ -78,6 +89,9 @@ public class pinned_message : MonoBehaviour
             m.ui.anchoredPosition = new Vector2(0, y);
             y -= m.ui.sizeDelta.y;
         }
+
+        foreach (var m in messages)
+            m.ui.gameObject.SetActive(messages_enabled);
     }
 }
 
