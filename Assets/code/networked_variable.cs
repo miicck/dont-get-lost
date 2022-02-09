@@ -868,9 +868,10 @@ namespace networked_variables
 
         public net_job_priorities()
         {
-            // Start with default order
+            // Start with all medium priority
+            // (=> priority is determined by order)
             for (byte i = 0; i < priorities.Length; ++i)
-                priorities[i] = (byte)skill.PRIORITY.HIGH;
+                priorities[i] = (byte)skill.PRIORITY.MED;
         }
 
         public override byte[] serialization()

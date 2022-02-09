@@ -156,7 +156,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 172, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &749295979684629550
@@ -200,8 +200,21 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "Build a wooden town gate, this should automatically\nscale to fit the
-    \ntext\nas\nneeded"
+  m_Text: 'Interact with something
+
+    this text box should
+
+    scale
+
+    automatically
+
+    to
+
+    fit
+
+    the
+
+    text'
 --- !u!114 &5779703572870882759
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -282,7 +295,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: f0f86a50b28774543a13c37b30e3638f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -301,9 +314,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8263985954781786861}
-  - component: {fileID: 2251341888906886729}
   m_Layer: 5
-  m_Name: build_requirement
+  m_Name: interaction_requirement
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -330,17 +342,3 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
---- !u!114 &2251341888906886729
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7440194401861547900}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c647f6c3fe990245a3379c2db75fd73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  text: {fileID: 1738469305924674730}
-  image: {fileID: 6406999427884332927}

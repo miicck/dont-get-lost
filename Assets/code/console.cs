@@ -902,6 +902,22 @@ public class console : MonoBehaviour
             usage_example = "build_a_lot_of_logs"
         },
 
+        ["build_floating_log"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (player.current == null)
+                    return console_error("No player found!");
+
+                Vector3 pos = player.current.transform.position + player.current.transform.forward;
+                client.create(pos, "items/log", rotation: player.current.transform.rotation);
+                return true;
+            },
+
+            description = "Build a floating log in front of the player.",
+            usage_example = "build_floating_log"
+        },
+
         ["research"] = new console_info
         {
             command = (args) =>

@@ -52,6 +52,7 @@ public abstract class player_interaction
             if (mouse_visible()) player.cursor_sprite = null;
         }
 
+        interact_requirement.complete_interaction_requirements(this);
         return on_start_interaction(player);
     }
 

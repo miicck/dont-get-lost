@@ -158,6 +158,10 @@ public static class tutorial
                     new Dictionary<string, int>{["sawmill"] = 1},
                     advance_stage),
 
+                () => confirm_window.create(
+                    "OK, now put the sawmill somwhere convinient...",
+                    advance_stage),
+
                 () => build_requirement.create(
                     "sawmill", 1, advance_stage),
 
@@ -189,19 +193,81 @@ public static class tutorial
                     advance_stage),
 
                 () => confirm_window.create(
-                    "For settlers to move in, they need somewhere to sleep.\n" +
-                    "To save some time, I'm going to give you a bed - \n" +
-                    "connect it to one of the paths.",
-                    () =>
-                    {
-                        player.call_when_current_player_available(()=>player.current.inventory.add("bed", 1));
+                    "For settlers to move in, they need somewhere to sleep.\n"+
+                    "To make a bed, we're going to need some linen.\n"+
+                    "Linen is made from flax, which we can grow from a seed...\n",
+                    ()=>{
+                        player.current.inventory.remove_all("flax_seed");
                         advance_stage();
                     }),
+
+                () => item_requirement_tracker.create(
+                    "Find a flax seed",
+                    new Dictionary<string, int> {
+                        ["flax_seed"] = 1
+                    },
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Now that you've got a flax seed, we need somewhere to plant it.\n" +
+                    "This is what a farming patch is for...",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make a farming patch",
+                    new Dictionary<string, int> {
+                        ["farming_patch"] = 1
+                    }, advance_stage),
+
+                () => confirm_window.create(
+                    "Good stuff, now build the farming patch somewhere convinient.",
+                    advance_stage),
+
+                () => build_requirement.create("farming_patch", 1, advance_stage),
+
+                () => confirm_window.create(
+                    "Now we can use the farming patch to grow some flax.",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Grow some flax by putting a flax seed in the farming patch",
+                    new Dictionary<string, int> {
+                        ["flax_plant"] = 1
+                    }, advance_stage),
+
+                () => confirm_window.create(
+                    "Now we have some flax, we're going to need to turn\n"+
+                    "it into flax fibers, and then into linen, using a\n" +
+                    "spinning wheel...",
+                    advance_stage),
+
+                () => build_requirement.create(
+                    "spinning_wheel", 1,
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Good job, now we can make some linen, and use it to make a bed!",
+                    advance_stage),
+
+                () => item_requirement_tracker.create(
+                    "Make a bed",
+                    new Dictionary<string, int> {
+                        ["bed"] = 1
+                    },
+                    advance_stage),
+
+                () => confirm_window.create(
+                    "Now, if we link the bed up to the town\n" +
+                    "a settler will move in!",
+                    advance_stage),
 
                 () => build_requirement.create("bed", 1, advance_stage,
                     hint: "The bed should be connected to the town.\n" +
                           "To connect the bed to a path, click\n" +
-                          "on the path when building the bed.",
+                          "on the path when building the bed.\n" +
+                          "Press "+controls.bind_name(controls.BIND.INSPECT)+
+                          " to check that the group that the bed\n" +
+                          "belongs to is the same as the rest of town.",
                     constraint: build_requirement_constraints.is_linked),
 
                 () => confirm_window.create(
@@ -234,10 +300,72 @@ public static class tutorial
                 () => confirm_window.create(
                     "Congratulations - you've built your first functional camp,\n" +
                     "well on the way to a fully-fledged town!\n\n" +
-                    "For here on, it's up to you to expand as you see fit\n" +
-                    "useful tips can be found in the help book by pressing "+
-                    controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK)+".",
-                    advance_stage)
+                    "In order to advance further, we are going to need to\n" +
+                    "do some research. Settlers can work at a research\n" +
+                    "table to discover new technologies to grow your town...",
+                    advance_stage),
+
+                () => build_requirement.create("research_table", 1, advance_stage,
+                    hint: "The research table should be connected to the town.",
+                    constraint: build_requirement_constraints.is_linked),
+
+                () => custom_requirement.create(
+                    "Start a research project.\n" +
+                    "This can be done by interacting with the research table.",
+                    test: tech_tree.research_project_set,
+                    on_complete: advance_stage),
+
+                () => confirm_window.create(
+                    "In order to get a settler to do some research,\n" +
+                    "we need to make sure that they are assigned to\n" +
+                    "the research task. To tell them what to do, we\n" +
+                    "can use a noticeboard...",
+                    advance_stage),
+
+                () => build_requirement.create("noticeboard", 1, advance_stage),
+
+                () => confirm_window.create(
+                    "OK, now we have a notice board, we can assign a\n" +
+                    "each settler individiaul priorities for each type\n" +
+                    "of work (as indicated by a color on the noticeboard).\n" +
+                    "Settlers have a skill level in each type of work \n" +
+                    "(as indicated by a number on the noticeboard).\n\n" +
+                    "Try increasing the priority of research for a settler by\n" +
+                    "clicking on the research button for that settler.",
+                    advance_stage),
+
+                () => custom_requirement.create(
+                    "Make research the highest priority for a settler.\n" +
+                    "This can be done by interacting with the noticeboard.",
+                    test: () => {
+
+                        var research_skill = Resources.Load<skill>("skills/research");
+                        foreach (var s in settler.all_settlers())
+                        {
+                            bool research_is_highest_priority = true;
+                            foreach (var skill in skill.all)
+                                if (skill != research_skill &&
+                                    s.job_priorities[skill] >= s.job_priorities[research_skill])
+                                {
+                                    research_is_highest_priority = false;
+                                    break;
+                                }
+
+                            if (research_is_highest_priority)
+                                return true;
+                        }
+
+                        return false;
+                    },
+                    on_complete: advance_stage),
+
+                () => confirm_window.create(
+                    "Now that you know the basics, it's up to you\n"+
+                    "to expand your town as you wish. If you're stuck\n" +
+                    "remember to check the hints in the bottom right\n" +
+                    "of the screen, or have a look in the help book by\n" +
+                    "pressing "+controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK)+".\n\n"+
+                    "Good luck!")
             };
             return _tutorial_stages;
         }
@@ -430,5 +558,90 @@ class basic_camp_requirement : tutorial_object
 
         Destroy(gameObject);
         on_finish?.Invoke();
+    }
+}
+
+class interact_requirement : tutorial_object
+{
+    public delegate void on_interact_func();
+    on_interact_func on_interact;
+
+    private void Update()
+    {
+        if (completed_interactions.Count == 0)
+            return;
+
+        var req = completed_interactions.Dequeue();
+        req.on_interact();
+        Destroy(req.gameObject);
+    }
+
+    static Dictionary<System.Type, interact_requirement> requirements =
+        new Dictionary<System.Type, interact_requirement>();
+
+    static Queue<interact_requirement> completed_interactions =
+        new Queue<interact_requirement>();
+
+    public static interact_requirement create<T>(string hint_text, on_interact_func on_interact)
+        where T : player_interaction
+    {
+        var rt = Resources.Load<RectTransform>("ui/interaction_requirement").inst();
+        rt.SetParent(game.canvas.transform);
+        rt.anchoredPosition = Vector3.zero;
+
+        var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
+        text.text = hint_text;
+
+        var ret = rt.gameObject.AddComponent<interact_requirement>();
+        ret.on_interact = on_interact;
+        requirements[typeof(T)] = ret;
+        return ret;
+    }
+
+    public static void complete_interaction_requirements(player_interaction interacted_with)
+    {
+        var type = interacted_with.GetType();
+        if (!requirements.ContainsKey(type))
+            return;
+        var req = requirements[type];
+        requirements.Remove(type);
+
+        completed_interactions.Enqueue(req);
+    }
+}
+
+class custom_requirement : tutorial_object
+{
+    public delegate bool requirement_test();
+    public delegate void requirement_completion_callback();
+
+    requirement_test test;
+    requirement_completion_callback callback;
+
+    private void Update()
+    {
+        if (test())
+        {
+            callback();
+            Destroy(gameObject);
+        }
+    }
+
+    public static custom_requirement create(string hint,
+        requirement_test test,
+        requirement_completion_callback on_complete)
+    {
+        var rt = Resources.Load<RectTransform>("ui/custom_requirement").inst();
+        rt.SetParent(game.canvas.transform);
+        rt.anchoredPosition = Vector3.zero;
+
+        var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
+        text.text = hint;
+
+        var cr = rt.gameObject.AddComponent<custom_requirement>();
+        cr.test = test;
+        cr.callback = on_complete;
+
+        return cr;
     }
 }

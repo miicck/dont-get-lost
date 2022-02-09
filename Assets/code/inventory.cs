@@ -32,6 +32,18 @@ public static class item_collection_extensions
         return col.remove(Resources.Load<item>("items/" + item_name), count);
     }
 
+    public static int remove_all(this IItemCollection col, item item)
+    {
+        int count = col.count(item);
+        col.remove(item, count);
+        return count;
+    }
+
+    public static int remove_all(this IItemCollection col, string item_name)
+    {
+        return col.remove_all(Resources.Load<item>("items/" + item_name));
+    }
+
     public static bool add(this IItemCollection col, string item_name, int count)
     {
         return col.add(Resources.Load<item>("items/" + item_name), count);
