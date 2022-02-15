@@ -64,7 +64,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
-  count: 0
+  count: 50
 --- !u!114 &-6933595959335478573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,6 +79,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 0
   item: {fileID: 1653388436121388084, guid: 1b1b8e0f2433fe74a801a2b93fca741f, type: 3}
-  min_count: 0
-  max_count: 0
+  min_count: 50
+  max_count: 50
   one_in_chance: 1

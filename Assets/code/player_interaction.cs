@@ -24,7 +24,8 @@ public abstract class player_interaction
         // Don't start interactions on non-authority clients
         // (if you want networked interactions see networked_player_interaction)
         if (!player.has_authority) return false;
-        return allow_held ? controls.held(keybind) : controls.triggered(keybind);
+        var result = allow_held ? controls.held(keybind) : controls.triggered(keybind);
+        return result;
     }
 
     /// <summary> Returns false if the interaction is (temporarily) impossible. </summary>
@@ -320,7 +321,7 @@ public class interaction_set
             };
 
             if (i.start_interaction(player))
-                underway.Remove(i.keybind); // Immediately completed, remove from underway
+                stop_interaction(i); // Immediately completed, remove from underway
         }
 
         if (update_context_info && tips.context_tip != new_context_tip)
@@ -351,7 +352,7 @@ public class interaction_set
 
             // End finished interaction
             kv.Value.interaction.end_interaction(player);
-            underway.Remove(kv.Key);
+            stop_interaction(kv.Value.interaction);
         }
 
         if (force_stop)
@@ -370,7 +371,12 @@ public class interaction_set
         };
 
         if (i.start_interaction(p))
-            underway.Remove(i.keybind); // Completed immediately
+            stop_interaction(i); // Completed immediately
+    }
+
+    void stop_interaction(player_interaction i)
+    {
+        underway.Remove(i.keybind);
     }
 }
 

@@ -63,6 +63,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
         public override bool continue_interaction(player player)
         {
             controls.disabled = false;
+            Debug.Log(triggered(player));
             if (!triggered(player)) return true;
             controls.disabled = true;
 

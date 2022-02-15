@@ -220,13 +220,11 @@ public class character : networked,
     // UNITY CALLBACKS //
     //#################//
 
-    public bool dont_despawn_automatically = false;
-
     protected virtual void Start()
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
-        if (!dont_despawn_automatically)
+        if (despawns_automatically)
             characters.Add(this);
     }
 
@@ -288,7 +286,14 @@ public class character : networked,
     networked_variables.net_float y_rotation;
     networked_variables.net_int health;
     networked_variables.net_int awareness;
+    networked_variables.net_bool dont_despawn_automatically;
     inventory loot;
+
+    public bool despawns_automatically
+    {
+        get => !dont_despawn_automatically.value;
+        set => dont_despawn_automatically.value = !value;
+    }
 
     public override void on_init_network_variables()
     {
@@ -319,6 +324,14 @@ public class character : networked,
         {
             awareness_meter.set_fraction(awareness.value / 100f);
             awareness_meter.gameObject.SetActive(awareness.value != 0 && awareness.value != 100);
+        };
+
+        dont_despawn_automatically = new networked_variables.net_bool();
+        dont_despawn_automatically.on_change = () =>
+        {
+            characters.Add(this);
+            if (dont_despawn_automatically.value)
+                characters.Remove(this);
         };
     }
 

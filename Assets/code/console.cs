@@ -213,7 +213,10 @@ public class console : MonoBehaviour
                     for (int i = 0; i < count; ++i)
                     {
                         var c = (character)client.create(hit.point, character_to_spawn);
-                        c.dont_despawn_automatically = true;
+                        c.add_register_listener(() =>
+                        {
+                            c.despawns_automatically = false;
+                        });          
                     }
 
                 return true;

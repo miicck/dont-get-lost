@@ -13,7 +13,6 @@ public static class controls
         set;
     }
 
-
     static Dictionary<BIND, control> keybinds = default_keybinds();
 
     static controls()
@@ -61,12 +60,11 @@ public static class controls
     public class key_control : control
     {
         KeyCode key;
-        public key_control(KeyCode key) { this.key = key; }
-        public override bool triggered() { return Input.GetKeyDown(key); }
-        public override bool untriggered() { return Input.GetKeyUp(key); }
-        public override bool held() { return Input.GetKey(key); }
-
-        public override int GetHashCode() { return key.GetHashCode(); }
+        public key_control(KeyCode key) => this.key = key;
+        public override bool triggered() => Input.GetKeyDown(key);
+        public override bool untriggered() => Input.GetKeyUp(key);
+        public override bool held() => Input.GetKey(key);
+        public override int GetHashCode() => key.GetHashCode();
         public override bool Equals(object obj)
         {
             if (obj is key_control)
@@ -111,12 +109,12 @@ public static class controls
         }
 
         BUTTON button;
-        public mouse_control(BUTTON button) { this.button = button; }
-        public override bool triggered() { return Input.GetMouseButtonDown((int)button); }
-        public override bool untriggered() { return Input.GetMouseButtonUp((int)button); }
-        public override bool held() { return Input.GetMouseButton((int)button); }
+        public mouse_control(BUTTON button) => this.button = button;
+        public override bool triggered() => Input.GetMouseButtonDown((int)button);
+        public override bool untriggered() => Input.GetMouseButtonUp((int)button);
+        public override bool held() => Input.GetMouseButton((int)button);
+        public override int GetHashCode() => button.GetHashCode();
 
-        public override int GetHashCode() { return button.GetHashCode(); }
         public override bool Equals(object obj)
         {
             if (obj is mouse_control)
@@ -139,16 +137,16 @@ public static class controls
     public class axis_control : control
     {
         string axis;
-        public axis_control(string axis) { this.axis = axis; }
+        public axis_control(string axis) => this.axis = axis;
         public const float AXIS_EPS = 1e-5f;
 
-        public override float delta() { return Input.GetAxis(axis); }
-        public override bool triggered() { return Mathf.Abs(delta()) > AXIS_EPS; }
-        public override bool untriggered() { return !triggered(); }
-        public override bool held() { return triggered(); }
-        public override string name() { return axis; }
+        public override float delta() => Input.GetAxis(axis);
+        public override bool triggered() => Mathf.Abs(delta()) > AXIS_EPS;
+        public override bool untriggered() => !triggered();
+        public override bool held() => triggered();
+        public override string name() => axis;
+        public override int GetHashCode() => axis.GetHashCode();
 
-        public override int GetHashCode() { return axis.GetHashCode(); }
         public override bool Equals(object obj)
         {
             if (obj is axis_control)
