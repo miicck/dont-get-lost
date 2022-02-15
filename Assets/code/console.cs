@@ -216,7 +216,7 @@ public class console : MonoBehaviour
                         c.add_register_listener(() =>
                         {
                             c.despawns_automatically = false;
-                        });          
+                        });
                     }
 
                 return true;
@@ -1015,8 +1015,33 @@ public class console : MonoBehaviour
 
             description = "Toggle visibility of the messages that appear in the top-right of the screen.",
             usage_example = "toggle_messages"
+        },
+
+        ["toggle_recording_mode"] = new console_info
+        {
+            command = (args) =>
+            {
+                recording_mode = !recording_mode;
+                popup_message.create("Recording mode " + (recording_mode ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle various settings to optimal values for recording.",
+            usage_example = "toggle_recording_mode"
         }
     };
+
+    public static bool recording_mode
+    {
+        get => !pinned_message.messages_enabled;
+        set
+        {
+            pinned_message.messages_enabled = !value;
+            time_manager.local_time_of_day_paused = value;
+            time_manager.time = 0;
+            player.current.fly_mode = value;
+        }
+    }
 
     /// <summary> True if the console window is open/selected. </summary>
     public static bool open

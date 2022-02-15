@@ -7,7 +7,7 @@ using UnityEngine;
 public static class cinematic_recording
 {
     public static float time_between_keyframes = 1f;
-    public static bool loop_keyframes = true;
+    public static bool loop_keyframes = false;
 
     /// <summary> A keyframe along the cinematic path. </summary>
     struct keyframe
