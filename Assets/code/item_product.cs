@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary> A product is triggered by some event, leading to 
 /// items potentially being added to the player inventory. </summary>
-public class product : MonoBehaviour
+public class item_product : product
 {
     /// <summary> The different ways that a product can be created. </summary>
     public enum MODE
@@ -29,11 +29,11 @@ public class product : MonoBehaviour
     /// <summary> The expected number of attempts to obtain this product. </summary>
     public int one_in_chance = 1;
 
-    /// <summary> The item created by an automatic harvester. </summary>
+    /// <summary> The item created by an automatic crafter. </summary>
     public virtual item auto_item => item;
 
     /// <summary> The display name of this product. </summary>
-    public virtual string product_name()
+    public override string product_name()
     {
         switch (mode)
         {
@@ -48,7 +48,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> The display name of this product, pluralized. </summary>
-    public virtual string product_name_plural()
+    public override string product_name_plural()
     {
         switch (mode)
         {
@@ -63,7 +63,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> The quantity and (appropriately pluralized) name. </summary>
-    public virtual string product_name_quantity()
+    public override string product_name_quantity()
     {
         if (item == null)
             throw new System.Exception("No item assigned to product " + name);
@@ -97,7 +97,8 @@ public class product : MonoBehaviour
         }
     }
 
-    public virtual bool unlocked
+    /// <summary> Is this product unlocked for the player? </summary>
+    public override bool unlocked
     {
         get
         {
@@ -107,7 +108,7 @@ public class product : MonoBehaviour
     }
 
     /// <summary> Called when this product is produced in the given inventory. </summary>
-    public virtual void create_in(IItemCollection inv, int count = 1, bool track_production = false)
+    public override void create_in(IItemCollection inv, int count = 1, bool track_production = false)
     {
         int to_add = 0;
         switch (mode)
@@ -131,7 +132,7 @@ public class product : MonoBehaviour
         if (track_production) production_tracker.register_product(item, to_add);
     }
 
-    public virtual float average_amount_produced(item i)
+    public override float average_amount_produced(item i)
     {
         // This product doesn't make that item
         if (i == null || item == null || i.name != item.name) return 0;
@@ -151,7 +152,7 @@ public class product : MonoBehaviour
         }
     }
 
-    public virtual void create_in_node(item_node node, bool track_production = false)
+    public override void create_in_node(item_node node, bool track_production = false)
     {
         int count = 0;
 
@@ -184,21 +185,24 @@ public class product : MonoBehaviour
     }
 
     /// <summary> A sprite representing the product. </summary>
-    public virtual Sprite sprite()
+    public override Sprite sprite
     {
-        switch (mode)
+        get
         {
-            case MODE.SIMPLE:
-            case MODE.RANDOM_AMOUNT:
-            case MODE.PROBABILITY:
-                return item.sprite;
+            switch (mode)
+            {
+                case MODE.SIMPLE:
+                case MODE.RANDOM_AMOUNT:
+                case MODE.PROBABILITY:
+                    return item.sprite;
 
-            default:
-                throw new System.Exception("Unkown product mode!");
+                default:
+                    throw new System.Exception("Unkown product mode!");
+            }
         }
     }
 
-    public void copy_to(product other)
+    public void copy_to(item_product other)
     {
         other.mode = mode;
         other.item = item;
@@ -207,53 +211,16 @@ public class product : MonoBehaviour
         other.one_in_chance = one_in_chance;
     }
 
-    //##############//
-    // STATIC STUFF //
-    //##############//
-
-    /// <summary> Convert a list of products to a string describing that list. </summary>
-    public static string product_quantities_list(IList<product> products)
-    {
-        string ret = "";
-        for (int i = 0; i < products.Count - 1; ++i)
-            ret += products[i].product_name_quantity() + ", ";
-
-        if (products.Count > 1)
-        {
-            ret = ret.Substring(0, ret.Length - 2);
-            ret += " and " + products[products.Count - 1].product_name_quantity();
-        }
-        else ret = products[0].product_name_quantity();
-
-        return ret;
-    }
-
-    public static string product_plurals_list(IList<product> products)
-    {
-        string ret = "";
-        for (int i = 0; i < products.Count - 1; ++i)
-            ret += products[i].product_name_plural() + ", ";
-
-        if (products.Count > 1)
-        {
-            ret = ret.Substring(0, ret.Length - 2);
-            ret += " and " + products[products.Count - 1].product_name_plural();
-        }
-        else ret = products[0].product_name_plural();
-
-        return ret;
-    }
-
     //###############//
     // CUSTOM EDITOR //
     //###############//
 
 #if UNITY_EDITOR
-    [UnityEditor.CustomEditor(typeof(product))]
+    [UnityEditor.CustomEditor(typeof(item_product))]
     class editor : UnityEditor.Editor
     {
         /// <summary> Create a dropdown to select the product mode. </summary>
-        void select_mode(product p)
+        void select_mode(item_product p)
         {
             var new_mode = (MODE)UnityEditor.EditorGUILayout.EnumPopup("mode", p.mode);
             if (p.mode != new_mode)
@@ -264,7 +231,7 @@ public class product : MonoBehaviour
         }
 
         /// <summary> Create a dropdown to select the item produced. </summary>
-        void select_item(product p)
+        void select_item(item_product p)
         {
             var new_item = (item)UnityEditor.EditorGUILayout.ObjectField("item", p.item, typeof(item), false);
             if (new_item != p.item)
@@ -276,7 +243,7 @@ public class product : MonoBehaviour
 
         public override void OnInspectorGUI()
         {
-            product p = (product)target;
+            item_product p = (item_product)target;
 
             switch (p.mode)
             {

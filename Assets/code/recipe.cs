@@ -6,13 +6,13 @@ using UnityEngine;
 [RequireComponent(typeof(ingredient))]
 public class recipe : MonoBehaviour, IRecipeInfo
 {
-    public product[] products { get => GetComponents<product>(); }
-    public ingredient[] ingredients { get => GetComponents<ingredient>(); }
+    public product[] products => GetComponents<product>();
+    public ingredient[] ingredients => GetComponents<ingredient>();
 
     public crafting_entry get_entry()
     {
         var ce = crafting_entry.create();
-        ce.image.sprite = products[0].sprite();
+        ce.image.sprite = products[0].sprite;
         ce.text.text = craft_string();
         return ce;
     }
@@ -23,13 +23,13 @@ public class recipe : MonoBehaviour, IRecipeInfo
         foreach (var i in ingredients)
             ret += i.str() + " + ";
         ret = ret.Substring(0, ret.Length - 2);
-        ret += "> " + product.product_quantities_list(products);
+        ret += "> " + item_product.product_quantities_list(products);
         return ret;
     }
 
     public string recipe_book_string()
     {
-        string ret = product.product_quantities_list(products);
+        string ret = item_product.product_quantities_list(products);
         ret += " < ";
         foreach (var i in ingredients)
             ret += i.str() + " + ";
@@ -341,6 +341,55 @@ public abstract class ingredient : MonoBehaviour
     public abstract string satisfaction_string(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract bool find(IItemCollection i, ref Dictionary<string, int> in_use);
     public abstract float average_value();
+}
+
+public abstract class product : MonoBehaviour
+{
+    public abstract bool unlocked { get; }
+    public abstract Sprite sprite { get; }
+    public abstract float average_amount_produced(item i);
+    public abstract string product_name_quantity();
+    public abstract string product_name_plural();
+    public abstract string product_name();
+    public abstract void create_in(IItemCollection inv, int count = 1, bool track_production = false);
+    public abstract void create_in_node(item_node node, bool track_production = false);
+
+    //##############//
+    // STATIC STUFF //
+    //##############//
+
+    /// <summary> Convert a list of products to a string describing that list. </summary>
+    public static string product_quantities_list(IList<product> products)
+    {
+        string ret = "";
+        for (int i = 0; i < products.Count - 1; ++i)
+            ret += products[i].product_name_quantity() + ", ";
+
+        if (products.Count > 1)
+        {
+            ret = ret.Substring(0, ret.Length - 2);
+            ret += " and " + products[products.Count - 1].product_name_quantity();
+        }
+        else ret = products[0].product_name_quantity();
+
+        return ret;
+    }
+
+    public static string product_plurals_list(IList<product> products)
+    {
+        string ret = "";
+        for (int i = 0; i < products.Count - 1; ++i)
+            ret += products[i].product_name_plural() + ", ";
+
+        if (products.Count > 1)
+        {
+            ret = ret.Substring(0, ret.Length - 2);
+            ret += " and " + products[products.Count - 1].product_name_plural();
+        }
+        else ret = products[0].product_name_plural();
+
+        return ret;
+    }
 }
 
 public interface IRecipeInfo

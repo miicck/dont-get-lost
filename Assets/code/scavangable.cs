@@ -10,7 +10,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
             controls.bind_name(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding.");
     }
 
-    product[] products => GetComponents<product>();
+    item_product[] products => GetComponents<item_product>();
 
     //#####################//
     // IPlayerInteractable //
@@ -24,7 +24,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
             new interaction(this),
             new player_inspectable(transform)
             {
-                text = () => product.product_plurals_list(products) + " can be scavanged",
+                text = () => item_product.product_plurals_list(products) + " can be scavanged",
                 sprite = () => Resources.Load<Sprite>("sprites/default_interact_cursor")
             }
         };
@@ -44,7 +44,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
 
         public override string context_tip()
         {
-            var str = "scavange for " + product.product_plurals_list(scavangable.products);
+            var str = "scavange for " + item_product.product_plurals_list(scavangable.products);
             if (str.Length < 40) return str;
             return "scavange";
         }

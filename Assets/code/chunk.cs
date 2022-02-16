@@ -352,8 +352,8 @@ public class chunk : MonoBehaviour
 
         // Create the terrain scavenging mechanic
         terrain.gameObject.AddComponent<scavangable>();
-        foreach (var p in Resources.Load<GameObject>("misc/terrain_products").GetComponents<product>())
-            p.copy_to(terrain.gameObject.AddComponent<product>());
+        foreach (var p in Resources.Load<GameObject>("misc/terrain_products").GetComponents<item_product>())
+            p.copy_to(terrain.gameObject.AddComponent<item_product>());
 
         // Start the gradual chunk generator
         var generator = new GameObject("generator").AddComponent<gradual_chunk_generator>();

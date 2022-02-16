@@ -5,7 +5,7 @@ using UnityEngine;
 public class contract : item
 {
     ingredient[] ingredients => GetComponents<ingredient>();
-    product[] products => GetComponents<product>();
+    item_product[] products => GetComponents<item_product>();
 
     public string info(player player_with_contract)
     {

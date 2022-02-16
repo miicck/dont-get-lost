@@ -4,11 +4,11 @@ using UnityEngine;
 
 /// <summary> An object that can be harvested with a specific tool, 
 /// to yield a specific product, repeatedly. </summary>
-[RequireComponent(typeof(product))]
+[RequireComponent(typeof(item_product))]
 [RequireComponent(typeof(item_requirement))]
 public class harvestable : accepts_item_impact, IPlayerInteractable
 {
-    public product[] products { get => GetComponents<product>(); }
+    public item_product[] products { get => GetComponents<item_product>(); }
     public item_requirement tool { get => GetComponent<item_requirement>(); }
 
     public override bool on_impact(item i)
@@ -33,10 +33,10 @@ public class harvestable : accepts_item_impact, IPlayerInteractable
         {
             new player_inspectable(transform)
             {
-                text = ()=> product.product_plurals_list(products) + " can be harvested with " +
+                text = ()=> item_product.product_plurals_list(products) + " can be harvested with " +
                             utils.a_or_an(tool.display_name) + " " + tool.display_name +
                             " (higher quality tools will produce more products).",
-                sprite = ()=> products[0].sprite()
+                sprite = ()=> products[0].sprite
             }
         };
     }

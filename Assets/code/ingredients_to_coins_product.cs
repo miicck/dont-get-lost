@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ingredients_to_coins_product : product
+public class ingredients_to_coins_product : item_product
 {
     private void Start()
     {

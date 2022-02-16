@@ -629,7 +629,7 @@ public class character : networked,
                 // Add loot to the above inventory once it's registered
                 loot.add_register_listener(() =>
                 {
-                    foreach (var p in to_copy.GetComponents<product>())
+                    foreach (var p in to_copy.GetComponents<item_product>())
                         p.create_in(loot);
                 });
             }

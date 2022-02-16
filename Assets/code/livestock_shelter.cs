@@ -67,7 +67,7 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         if (dt > animal_produce_time / livestock.Count)
         {
             last_produce_time = Time.realtimeSinceStartup;
-            foreach (var p in GetComponents<product>())
+            foreach (var p in GetComponents<item_product>())
                 p.create_in_node(output, track_production: true);
         }
     }
@@ -147,7 +147,7 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
 
     public string recipe_book_string()
     {
-        string str = product.product_quantities_list(GetComponents<product>());
+        string str = item_product.product_quantities_list(GetComponents<item_product>());
         str += " < time";
         return str;
     }

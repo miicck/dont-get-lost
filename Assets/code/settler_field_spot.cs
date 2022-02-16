@@ -9,7 +9,7 @@ public class settler_field_spot : networked, IPlayerInteractable
 
     public bool grown => networked_progress.value >= 1f;
     public GameObject to_grow;
-    public product[] products => GetComponents<product>();
+    public item_product[] products => GetComponents<item_product>();
     public float growth_time = 30f;
     public float min_scale = 0.2f;
 

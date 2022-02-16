@@ -90,7 +90,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         return new option
         {
             text = recipes[i].craft_string(),
-            sprite = recipes[i].products[0].sprite()
+            sprite = recipes[i].products[0].sprite
         };
     }
 

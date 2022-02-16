@@ -5,14 +5,14 @@ using UnityEngine;
 /// <summary> Part of a world object that can be harvested by hand
 /// to yield a product, and takes time to regrow. The part will
 /// be disabled until it regrows. </summary>
-[RequireComponent(typeof(product))]
+[RequireComponent(typeof(item_product))]
 public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
 {
     public AudioClip play_on_pick;
     public float regrow_time = 1f;
     public float play_on_pick_volume = 1f;
 
-    product[] products { get => GetComponents<product>(); }
+    item_product[] products { get => GetComponents<item_product>(); }
 
     AudioSource source;
 
@@ -51,7 +51,7 @@ public class harvest_by_hand : MonoBehaviour, IPlayerInteractable
             new player_inspectable(transform)
             {
                 text = ()=> product.product_plurals_list(products) + " can bn harvested by hand",
-                sprite = ()=> products[0].sprite(),
+                sprite = ()=> products[0].sprite,
                 secondary_sprite= ()=> Resources.Load<Sprite>("sprites/default_interact_cursor")
             }
         };

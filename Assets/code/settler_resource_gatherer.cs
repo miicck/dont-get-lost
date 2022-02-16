@@ -178,15 +178,15 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
 
         // Sort alphabetically by text
         harvest_options.Sort((a, b) =>
-            product.product_plurals_list(a.products).CompareTo(
-                product.product_plurals_list(b.products)));
+            item_product.product_plurals_list(a.products).CompareTo(
+                item_product.product_plurals_list(b.products)));
 
         menu_options = new List<option>();
         foreach (var h in harvest_options)
             menu_options.Add(new option
             {
                 text = product.product_plurals_list(h.products),
-                sprite = h.products[0].sprite()
+                sprite = h.products[0].sprite
             });
     }
 
@@ -207,7 +207,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
         if (harvest_options == null) return "Waiting for chunks to generate";
         return base.added_inspection_text() + "\n" +
          ((harvesting == null) ? "Nothing in harvest range." :
-         "Harvesting " + product.product_plurals_list(harvesting.products));
+         "Harvesting " + item_product.product_plurals_list(harvesting.products));
     }
 
     //######################//
@@ -255,7 +255,7 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     public override string task_summary()
     {
         if (harvesting == null) return "Harvesting nothing!!!";
-        return "Harvesting " + product.product_plurals_list(harvesting.products);
+        return "Harvesting " + item_product.product_plurals_list(harvesting.products);
     }
 
     protected override List<proficiency> proficiencies(settler s)

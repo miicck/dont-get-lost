@@ -9,12 +9,14 @@ public class tech_tree : networked
     //############//
 
     public networked_variables.net_string_counts research_progress;
+    public networked_variables.net_string_counts research_materials;
     public networked_variables.net_string currently_researching;
 
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
         research_progress = new networked_variables.net_string_counts();
+        research_materials = new networked_variables.net_string_counts();
         currently_researching = new networked_variables.net_string(default_value: "");
 
         currently_researching.on_change = () =>
@@ -28,6 +30,7 @@ public class tech_tree : networked
         };
 
         research_progress.on_change = update_tech_tree_ui;
+        research_materials.on_change = update_tech_tree_ui;
     }
 
     // The tech tree is always loaded
@@ -62,6 +65,17 @@ public class tech_tree : networked
 
         string topic = loaded_tech_tree.currently_researching.value;
         perform_research(topic, amount);
+    }
+
+    public static void add_research_materials(research_material material, int count)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to add research materials before tech tree loaded");
+            return;
+        }
+
+        loaded_tech_tree.research_materials[material.name] += count;
     }
 
     public static void perform_research(string topic, int amount)
@@ -191,6 +205,12 @@ public class tech_tree : networked
                 }
             }
         }
+
+        // Update research material counts
+        var materials = tech_tree_ui.find_child_recursive("research_materials").GetComponent<RectTransform>();
+        foreach (RectTransform material in materials.transform)
+            material.GetComponentInChildren<UnityEngine.UI.Text>().text =
+                "" + loaded_tech_tree.research_materials[material.name];
     }
 
     public static RectTransform generate_tech_tree()
@@ -198,16 +218,31 @@ public class tech_tree : networked
         const int SPACING = 128;
         const int ARROW_WIDTH = 4;
 
-
         if (tech_tree_ui != null)
             return tech_tree_ui;
+
+        // Create the tech tree UI
+        tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
+
+        // Load the materials
+        var materials = tech_tree_ui.find_child_recursive("research_materials").GetComponent<RectTransform>();
+        var material_template = materials.Find("material").GetComponent<RectTransform>();
+
+        foreach (var m in research_material.all)
+        {
+            var material_ui = material_template.inst();
+            material_ui.transform.SetParent(materials);
+            material_ui.find_child_recursive("sprite").GetComponent<UnityEngine.UI.Image>().sprite = m.sprite;
+            material_ui.GetComponentInChildren<UnityEngine.UI.Text>().text = "0";
+            material_ui.name = m.name;
+        }
+
+        // Destroy the template
+        Object.Destroy(material_template.gameObject);
 
         // Load the technologies + init coordinates
         tech_tree_layout_engine layout = new swapper_layout_engine(technology.all);
         var coords = layout.evaluate_coordinates();
-
-        // Create the tech tree template object
-        tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
         var content = tech_tree_ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
         var tech_template = content.GetChild(0);
 

@@ -174,8 +174,8 @@ public class fractal_tree : MonoBehaviour
         ir.tool_type = tool.TYPE.AXE;
         ir.tool_quality = tool.QUALITY.TERRIBLE;
 
-        var prod = mr.gameObject.AddComponent<product>();
-        prod.mode = product.MODE.SIMPLE;
+        var prod = mr.gameObject.AddComponent<item_product>();
+        prod.mode = item_product.MODE.SIMPLE;
         prod.item = Resources.Load<item>("items/log");
         prod.min_count = 1;
         prod.max_count = 1;
