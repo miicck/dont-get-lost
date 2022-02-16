@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1719966842535906239}
   - component: {fileID: 7570533861770929278}
   m_Layer: 0
-  m_Name: mechanical_materials
+  m_Name: mechanical_research_materials
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

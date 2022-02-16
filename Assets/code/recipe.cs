@@ -348,9 +348,9 @@ public abstract class product : MonoBehaviour
     public abstract bool unlocked { get; }
     public abstract Sprite sprite { get; }
     public abstract float average_amount_produced(item i);
-    public abstract string product_name_quantity();
-    public abstract string product_name_plural();
     public abstract string product_name();
+    public abstract string product_name_plural();
+    public abstract string product_name_quantity();
     public abstract void create_in(IItemCollection inv, int count = 1, bool track_production = false);
     public abstract void create_in_node(item_node node, bool track_production = false);
 

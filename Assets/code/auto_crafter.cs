@@ -166,7 +166,7 @@ public class auto_crafter : building_material, IPlayerInteractable
                     if (crafting_time_left > 0)
                     {
                         info += "Crafting " +
-                            item_product.product_quantities_list(ingredients.recipe.products) + " from " +
+                            product.product_quantities_list(ingredients.recipe.products) + " from " +
                             ingredients.stored.contents_string();
                         float completion = 100f * (1f - crafting_time_left / craft_time);
                         info += " (" + completion.ToString("F0") + "%)";
