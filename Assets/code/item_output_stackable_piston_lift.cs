@@ -14,9 +14,16 @@ public class item_output_stackable_piston_lift : item_output
         var all_outputs = bm.GetComponentsInChildren<item_output_stackable_piston_lift>();
         if (all_outputs.Length == 0) return base.can_output_to(other);
 
+        var other_bm = other.GetComponentInParent<building_material>();
+
         // Can't connect to myself
-        if (other.GetComponentInParent<building_material>() ==
-            GetComponentInParent<building_material>())
+        if (other_bm == bm)
+            return false;
+
+        // Can't connect to other piston lifts unless they are "close"
+        if (other_bm != null &&
+            other_bm.GetComponentInChildren<item_output_stackable_piston_lift>() != null &&
+            (other.input_point(output_point) - output_point).magnitude > closely_connected_distance)
             return false;
 
         // Figure out if any of the other outputs from
