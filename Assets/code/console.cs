@@ -20,6 +20,8 @@ public class console : MonoBehaviour
 
     public static bool world_generator_enabled { get; private set; } = true;
 
+    public static bool creative_mode { get; private set; }
+
     public static Dictionary<string, console_info> commands = new Dictionary<string, console_info>
     {
         ["give"] = new console_info
@@ -1045,8 +1047,21 @@ public class console : MonoBehaviour
                 return console_error("Unkown research material: " + args[1]);
             },
 
-            description = "Add research materials of the given type",
+            description = "Add research materials of the given type.",
             usage_example = "add_research_materials mechanical_materials"
+        },
+
+        ["creative_mode"] = new console_info
+        {
+            command = (args) =>
+            {
+                creative_mode = !creative_mode;
+                popup_message.create("Creative mode " + (creative_mode ? "enabled" : "disabled"));
+                return true;
+            },
+
+            description = "Toggle creative mode.",
+            usage_example = "creative_mode"
         }
     };
 

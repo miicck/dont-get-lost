@@ -543,8 +543,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public void equip_matching(item itm)
     {
+        if (console.creative_mode)
+            inventory.add(itm, 1);
+
         var slot_found = inventory.find_slot_by_item(itm);
-        if (slot_found == null) return;
+        if (slot_found == null)
+            return;
         slot_equipped.value = slot_found.index + 1;
     }
 
