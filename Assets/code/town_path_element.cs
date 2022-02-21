@@ -490,11 +490,23 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
         foreach (var e in all_elements)
             foreach (var b in regions)
-                if (b.Intersects(e.linkable_region))
+            {
+                var e_affected_region = e.linkable_region;
+
+                if (e_affected_region.size.y < town_path_link.CLEARANCE_HEIGHT)
+                {
+                    // Increase height to include clearance height
+                    float delta_height = town_path_link.CLEARANCE_HEIGHT - e_affected_region.size.y;
+                    e_affected_region.size += Vector3.up * delta_height;
+                    e_affected_region.center += Vector3.up * delta_height / 2f;
+                }
+
+                if (b.Intersects(e_affected_region))
                 {
                     to_validate.Add(e);
                     break;
                 }
+            }
 
         foreach (var e in to_validate)
             validate_links(e);

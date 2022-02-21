@@ -65,25 +65,33 @@ public class building_material : item, IPlayerInteractable
     public override void on_create()
     {
         base.on_create();
-
-        // Delay geometry check until we're in the right place
-        temporary_object.create(0.1f, () =>
-        {
-            if (this == null) return;
-            world.on_geometry_change(collision_bounds());
-        });
+        on_move();
     }
 
     public override void on_forget(bool deleted)
     {
         base.on_forget(deleted);
         if (!deleted) return;
+        on_move(being_deleted: true);
+    }
+
+    void on_move(bool being_deleted = false)
+    {
+        // Only work out bounds before if we're being deleted
+        Bounds? bounds_before = being_deleted ? collision_bounds() : null;
 
         // Delay geometry check until we're in the right place
-        var cb = collision_bounds();
         temporary_object.create(0.1f, () =>
         {
-            world.on_geometry_change(cb);
+            if (being_deleted)
+            {
+                // Use the bounds from before we were deleted
+                world.on_geometry_change((Bounds)bounds_before);
+                return;
+            }
+
+            if (this == null) return;
+            world.on_geometry_change(collision_bounds());
         });
     }
 
@@ -220,12 +228,14 @@ public class building_material : item, IPlayerInteractable
                     Quaternion redo_rot = built.transform.rotation;
                     built.transform.position = init_building_pos;
                     built.transform.rotation = init_building_rot;
+                    built.on_move();
 
                     return () =>
                     {
                         if (built == null) return null;
                         built.transform.position = redo_pos;
                         built.transform.rotation = redo_rot;
+                        built.on_move();
                         return undo;
                     };
                 };
