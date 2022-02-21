@@ -114,6 +114,7 @@ items/tin 1 True
 mood_effects/ate_without_chair 1 True
 items/log 1 True
 misc/world_object_destroyed 1 True
+items/stackable_piston_lift 1 True
 items/wooden_town_gate 1 True
 mood_effects/drank_ale 1 True
 items/cabbage_seed 1 True

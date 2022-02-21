@@ -449,9 +449,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bottom: {fileID: 8858422217762321463}
   top: {fileID: 882639761447339335}
-  input: {fileID: 5023278240271509956}
-  output: {fileID: 26062158051343658}
-  speed: 2
+  lift_time: 0.5
 --- !u!4 &3357022270939671842 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e3fb94d266a380b4c9059cf63414f4f4, type: 3}

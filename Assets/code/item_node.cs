@@ -159,6 +159,12 @@ public abstract class item_node : MonoBehaviour,
         }
     }
 
+    public void refresh_display()
+    {
+        if (display_enabled)
+            set_display(true);
+    }
+
     //#################//
     // IItemCollection //
     //#################//
@@ -240,6 +246,12 @@ public abstract class item_node : MonoBehaviour,
     }
     int input_number = 0;
 
+    public void iterate_inputs(iter_func callback)
+    {
+        foreach (var i in inputs_from)
+            callback(i);
+    }
+
     //#########//
     // OUTPUTS //
     //#########//
@@ -284,6 +296,12 @@ public abstract class item_node : MonoBehaviour,
     /// <summary> Called whenever the outputs change. </summary>
     protected virtual void on_outputs_change() { }
 
+    public void iterate_outputs(iter_func callback)
+    {
+        foreach (var i in outputs_to)
+            callback(i);
+    }
+
     public delegate bool iter_func(item_node node);
 
     public void iterate_downstream(iter_func f)
@@ -309,6 +327,7 @@ public abstract class item_node : MonoBehaviour,
             }
         }
     }
+
 
     //#########//
     // LINKING //
@@ -402,7 +421,7 @@ public abstract class item_node : MonoBehaviour,
     }
 
     /// <summary> Break a connection between two nodes. </summary>
-    static void break_connection(item_node from, item_node to)
+    static protected void break_connection(item_node from, item_node to)
     {
         bool from_changed = from?.outputs_to.Remove(to) ?? false;
         bool to_changed = to?.inputs_from.Remove(from) ?? false;
@@ -516,8 +535,7 @@ public abstract class item_node : MonoBehaviour,
         foreach (var input in inputs_to_remove) break_connection(input, node);
 
         // Refresh display
-        if (display_enabled)
-            node.set_display(true);
+        node.refresh_display();
     }
 
     static void register_node(item_node node)
