@@ -6,6 +6,7 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
 {
     public const float MAX_LINK_DISTANCE = 0.25f;
     public const float LINK_GROUND_CLEARANCE = 0.25f;
+    public const float CLEARANCE_HEIGHT = 1.75f;
 
     public town_path_element path_element => GetComponentInParent<town_path_element>();
 
@@ -144,8 +145,18 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         if (a.path_element == null || b.path_element == null) return false;
 
         Vector3 delta = b.ground_clearance_point - a.ground_clearance_point;
-        Ray ray = new Ray(a.ground_clearance_point, delta);
-        foreach (var h in Physics.RaycastAll(ray, delta.magnitude))
+    
+        const float CLEARANCE_BOX_HEIGHT = CLEARANCE_HEIGHT - LINK_GROUND_CLEARANCE;
+
+        Vector3 look = delta; look.y = 0;
+        var cast = Physics.BoxCastAll(
+            a.ground_clearance_point + Vector3.up * CLEARANCE_BOX_HEIGHT / 2f,
+            new Vector3(0.5f, CLEARANCE_BOX_HEIGHT, 0.0f) / 2f,
+            delta, Quaternion.LookRotation(look, Vector3.up), delta.magnitude);
+
+        //Ray ray = new Ray(a.ground_clearance_point, delta);
+        //var cast = Physics.RaycastAll(ray, delta.magnitude) 
+        foreach (var h in cast)
         {
             if (a.ignore_blocking_hit(h)) continue;
             if (b.ignore_blocking_hit(h)) continue;

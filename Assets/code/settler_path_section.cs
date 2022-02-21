@@ -15,6 +15,23 @@ public class settler_path_section : town_path_link
 
     public override Bounds linkable_region()
     {
+        var b = overlap_bounds();
+
+        if (b.size.y < CLEARANCE_HEIGHT)
+        {
+            // Increase height to include clearance height
+            float delta_height = CLEARANCE_HEIGHT - b.size.y;
+            b.size += Vector3.up * delta_height;
+            b.center += Vector3.up * delta_height / 2f;
+        }
+
+        return b;
+    }
+
+    /// <summary> This is the bounding box for this path section, as 
+    /// far as the overlap test is concerned. </summary>
+    Bounds overlap_bounds()
+    {
         // This might end up being too expensive, in which case we're gonna need to
         // wait for physics updates before testing settler_path_link(s)
         Physics.SyncTransforms();
@@ -27,8 +44,8 @@ public class settler_path_section : town_path_link
 
     public bool overlaps(settler_path_section other)
     {
-        var b1 = linkable_region();
-        var b2 = other.linkable_region();
+        var b1 = overlap_bounds();
+        var b2 = other.overlap_bounds();
 
         // Ensure the two bounds are close enough to each other
         // (this avoids annoying diagonal-type links, which don't
