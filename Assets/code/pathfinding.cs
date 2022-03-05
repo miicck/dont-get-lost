@@ -130,11 +130,16 @@ public abstract class path
         {
             var a = this[i - 1];
             var b = this[i];
+
+            Vector3 delta = b - a;
+            if (delta.magnitude < 10e-3)
+                continue;
+
             var link = Resources.Load<GameObject>("misc/path_link").inst();
             link.transform.SetParent(ret.transform);
             link.transform.position = (a + b) / 2 + Vector3.up * 0.5f;
-            link.transform.forward = b - a;
-            link.transform.localScale = new Vector3(0.1f, 0.1f, (b - a).magnitude);
+            link.transform.forward = delta;
+            link.transform.localScale = new Vector3(0.1f, 0.1f, delta.magnitude);
         }
 
         foreach (var r in ret.GetComponentsInChildren<Renderer>())
@@ -1147,7 +1152,7 @@ public static class pathfinding_utils
         foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
             if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
             {
-                if (!settings.blocked_by_terrain() && 
+                if (!settings.blocked_by_terrain() &&
                     c.transform.GetComponentInParent<Terrain>())
                     continue;
 

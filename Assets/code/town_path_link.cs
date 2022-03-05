@@ -145,10 +145,13 @@ public class town_path_link : MonoBehaviour, IEnumerable<town_path_link>, INonLo
         if (a.path_element == null || b.path_element == null) return false;
 
         Vector3 delta = b.ground_clearance_point - a.ground_clearance_point;
-    
+
         const float CLEARANCE_BOX_HEIGHT = CLEARANCE_HEIGHT - LINK_GROUND_CLEARANCE;
 
         Vector3 look = delta; look.y = 0;
+        if (look.magnitude < 1e-3)
+            look = a.transform.most_orthogonal_axis(Vector3.up);
+
         var cast = Physics.BoxCastAll(
             a.ground_clearance_point + Vector3.up * CLEARANCE_BOX_HEIGHT / 2f,
             new Vector3(0.5f, CLEARANCE_BOX_HEIGHT, 0.0f) / 2f,

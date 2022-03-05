@@ -372,7 +372,8 @@ public abstract class settler_interactable : has_path_elements,
             if (nw is settler) return (settler)nw;
 
             // The networked id has been taken by something else?
-            Debug.LogError("Settler network id overwritten?");
+            Debug.Log("Interactable ID set to a non-setter");
+            settler_id.value = -1;
             return null;
         }
     }

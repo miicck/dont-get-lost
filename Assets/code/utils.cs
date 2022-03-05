@@ -160,6 +160,35 @@ public static class utils
         return ret;
     }
 
+    public static Vector3 most_aligned_axis(this Transform t, Vector3 v, bool include_anti_aligned = false)
+    {
+        var fd = Vector3.Dot(t.forward, v);
+        var rd = Vector3.Dot(t.right, v);
+        var ud = Vector3.Dot(t.up, v);
+
+        if (include_anti_aligned)
+        {
+            fd = Mathf.Abs(fd);
+            rd = Mathf.Abs(rd);
+            ud = Mathf.Abs(ud);
+        }
+
+        return fd > rd ? (fd > ud ? t.forward : t.up) : (rd > ud ? t.right : t.up);
+    }
+
+    public static Vector3 most_orthogonal_axis(this Transform t, Vector3 v)
+    {
+        var fd = Vector3.Dot(t.forward, v);
+        var rd = Vector3.Dot(t.right, v);
+        var ud = Vector3.Dot(t.up, v);
+
+        fd = Mathf.Abs(fd);
+        rd = Mathf.Abs(rd);
+        ud = Mathf.Abs(ud);
+
+        return fd < rd ? (fd < ud ? t.forward : t.up) : (rd < ud ? t.right : t.up);
+    }
+
     /// <summary> The graphic raycaster in the scene. </summary>
     static UnityEngine.UI.GraphicRaycaster graphic_raycaster
     {
