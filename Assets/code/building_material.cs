@@ -99,7 +99,7 @@ public class building_material : item, IPlayerInteractable
     // IPlayerInteractable //
     //#####################//
 
-    class pick_up_from_gutter : player_interaction
+    class pick_up_from_gutter : player_interaction, DisabledOnTutorialIsland
     {
         building_material material;
         public pick_up_from_gutter(building_material material) { this.material = material; }
@@ -122,7 +122,7 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    class deconstruct_interaction : player_interaction
+    class deconstruct_interaction : player_interaction, DisabledOnTutorialIsland
     {
         building_material material;
         public deconstruct_interaction(building_material material) { this.material = material; }
@@ -143,7 +143,7 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    protected class relocate_interaction : player_interaction
+    protected class relocate_interaction : player_interaction, DisabledOnTutorialIsland
     {
         building_material building;
         blueprint blueprint;
@@ -354,7 +354,7 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    class demolish_interaction : player_interaction
+    class demolish_interaction : player_interaction, DisabledOnTutorialIsland
     {
         public static float last_time_deleting { get; private set; }
 
@@ -388,7 +388,7 @@ public class building_material : item, IPlayerInteractable
         }
     }
 
-    class build_interaction : player_interaction
+    class build_interaction : player_interaction, DisabledOnTutorialIsland
     {
         public static float last_time_building { get; private set; }
 

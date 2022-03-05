@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+
 
 public class player : networked_player, INotPathBlocking, ICanEquipArmour,
-    IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, IDoesntCoverBeds
+    IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, IDoesntCoverBeds, INotSavedInStartupFile
 {
     //###########//
     // CONSTANTS //
@@ -158,6 +160,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Add self interactions to list
         all_interactions.AddRange(self_interactions);
+
+        // Remove interactions disabled on tutorial island
+        if (current.biome is tutorial_island)
+            all_interactions = new List<player_interaction>(all_interactions.Where((i) => !(i is DisabledOnTutorialIsland)));
 
         interactions.add_and_start_compatible(all_interactions, this, update_context_info: has_authority);
     }

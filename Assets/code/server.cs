@@ -794,9 +794,11 @@ public static class server
             return false;
         }
 
-        // Load the world
+        // Load the world (or the startup world)
         if (System.IO.File.Exists(save_file()))
             load();
+        else
+            load(startup_world: true);
 
 #if STANDALONE_SERVER
         // Error out if the save file does not exist
@@ -986,9 +988,14 @@ public static class server
     // SAVING/LOADING //
     //################//
 
-    static void load()
+    static void load(bool startup_world = false)
     {
-        string fullpath = System.IO.Path.GetFullPath(save_file());
+        string fullpath = null;
+
+        if (startup_world)
+            fullpath = Application.streamingAssetsPath + "/startup.save";
+        else
+            fullpath = System.IO.Path.GetFullPath(save_file());
 
         using (var file = System.IO.File.OpenRead(fullpath))
         using (var decompress = new System.IO.Compression.GZipStream(file,
@@ -1058,10 +1065,33 @@ public static class server
         }
     }
 
-    static void save(bool autosave = false)
+    public static void save(bool autosave = false, bool is_startup = false)
     {
         // The file containing the savegame
         string filename = autosave ? autosave_file() : save_file();
+
+        if (is_startup)
+        {
+            if (!Application.isEditor)
+            {
+                Debug.LogError("Tried to save startup file from outside of the editor!");
+                return;
+            }
+
+            Debug.Log(Application.streamingAssetsPath);
+            filename = Application.streamingAssetsPath + "/startup.save";
+        }
+
+        bool should_save(int id)
+        {
+            // Don't save things tagged as INotSavedInStartupFile
+            if (is_startup && networked.try_find_by_id(id, error_if_not_recently_forgotten: false)?.
+                GetComponentInParent<INotSavedInStartupFile>() != null)
+                return false;
+
+            return true;
+        }
+
         using (var file = System.IO.File.OpenWrite(filename))
         using (var compressor = new System.IO.Compression.GZipStream(file,
             System.IO.Compression.CompressionLevel.Optimal))
@@ -1072,13 +1102,16 @@ public static class server
             // Save the players first
             foreach (var kv in player_representations)
             {
+                saved.Add(kv.Value.network_id);
+
+                if (!should_save(kv.Value.network_id))
+                    continue;
+
                 compressor.WriteByte((byte)SAVE_TYPE.PLAYER);
                 compressor.write_bytes_with_length(kv.Value.serialize());
 
                 // Write also the id
                 compressor.write_bytes_with_length(network_utils.encode_ulong(kv.Key));
-
-                saved.Add(kv.Value.network_id);
             }
 
             // Then save active representations
@@ -1088,9 +1121,13 @@ public static class server
                 {
                     var rep = (representation)elm;
                     if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    saved.Add(rep.network_id);
+
+                    if (!should_save(rep.network_id))
+                        return;
+
                     compressor.WriteByte((byte)SAVE_TYPE.ACTIVE);
                     compressor.write_bytes_with_length(rep.serialize());
-                    saved.Add(rep.network_id);
                 }
             });
 
@@ -1101,9 +1138,13 @@ public static class server
                 {
                     var rep = (representation)elm;
                     if (saved.Contains(rep.network_id) || !rep.persistant) return;
+                    saved.Add(rep.network_id);
+
+                    if (!should_save(rep.network_id))
+                        return;
+
                     compressor.WriteByte((byte)SAVE_TYPE.INACTIVE);
                     compressor.write_bytes_with_length(rep.serialize());
-                    saved.Add(rep.network_id);
                 }
             });
         }

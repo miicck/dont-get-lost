@@ -1062,6 +1062,35 @@ public class console : MonoBehaviour
 
             description = "Toggle creative mode.",
             usage_example = "creative_mode"
+        },
+
+        ["save"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (!server.started)
+                    return console_error("You are not the host!");
+                server.save();
+                return true;
+            },
+
+            description = "Manually save the game (if you are the host).",
+            usage_example = "save"
+        },
+
+        ["save_startup"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (!Application.isEditor)
+                    return console_error("Startup file can only be saved from within the Unity editor!");
+                commands["kill_all"].command(args);
+                server.save(is_startup: true);
+                return true;
+            },
+
+            description = "Save the current map as the startup save file.",
+            usage_example = "save_startup"
         }
     };
 
@@ -1173,4 +1202,9 @@ public class console : MonoBehaviour
 public class test_method : System.Attribute
 {
     public static bool running_interactive = false;
+}
+
+public interface INotSavedInStartupFile
+{
+
 }

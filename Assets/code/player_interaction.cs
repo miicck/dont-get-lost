@@ -8,6 +8,9 @@ public interface IPlayerInteractable
     public player_interaction[] player_interactions(RaycastHit hit);
 }
 
+/// <summary> Attach to classes that should be in some way disabled on tutorial island. </summary>
+public interface DisabledOnTutorialIsland { }
+
 /// <summary> An interaction that a player can be carry out. </summary>
 public abstract class player_interaction
 {

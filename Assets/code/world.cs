@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Networked world information
-public class world : networked
+public class world : networked, INotSavedInStartupFile
 {
     // World-scale geograpical constants
     public const int SEA_LEVEL = 16;

@@ -13,13 +13,23 @@ public static class tutorial
             {
                 () => confirm_window.create(
                     "Welcome to don't get lost!\n\n" +
-                    "We have arrived in a strange new land, tasked with\n" +
-                    "setting up colonies to export natural resources.",
+                    "You have arrived in a frontier town in a strange new land.\n"+
+                    "Feel free to look around. When you're ready, go find a nice spot \n" +
+                    "to build your first camp and we can teach you the basics of colonization!",
+                    advance_stage),
+
+                () => custom_requirement.create(
+                    "Explore the frontier town.\n" +
+                    "When you're ready, find a nice spot sufficiently\n" +
+                    "far away to build your first settlement!",
+                    () => player.current != null && !(player.current.biome is tutorial_island),
                     advance_stage),
 
                 () => confirm_window.create(
+                    "You're now far enough away to build.\n"+
                     "The first thing we need to do is set up a base camp.\n" +
-                    "To do this, we're going to need some tools. See if you\n" +
+                    "To do this, we're going to need some tools. \n" +
+                    "While you're looking for somewhere to set up camp, see if you\n" +
                     "can find some materials to make some tools from...",
                     advance_stage),
 
