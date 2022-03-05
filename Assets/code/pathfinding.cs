@@ -23,6 +23,27 @@ public interface IPathingAgent : INotPathBlocking
     float resolution { get; }
 }
 
+public interface pathfinding_settings
+{
+    /// <summary> The maximum walkable ground angle. </summary>
+    public float max_ground_angle();
+
+    /// <summary> How much of the pathfinding resolution is 
+    /// allowed to be filled with random stuff at the bottom. 
+    /// (e.g to allow walking over small sticks etc.)</summary>
+    public float ground_clearance();
+
+    /// <summary> Should this pathfinding session be blocked by terrain? </summary>
+    public bool blocked_by_terrain();
+}
+
+public class default_pathfinding_settings : pathfinding_settings
+{
+    public float max_ground_angle() => 45f;
+    public float ground_clearance() => 0.5f;
+    public bool blocked_by_terrain() => true;
+}
+
 /// <summary> Base type for all paths. </summary>
 public abstract class path
 {
@@ -998,8 +1019,11 @@ public static class pathfinding_utils
     /// for grounding within the gridpoint with the given 
     /// <paramref name="centre"/>. </summary>
     static Vector3 boxcast_position_validate(Vector3 centre, float resolution,
-        out bool valid, float max_angle = 45)
+        out bool valid, pathfinding_settings settings = null)
     {
+        if (settings == null)
+            settings = new default_pathfinding_settings();
+
         Vector3 size = Vector3.one * resolution;
         Vector3 start_pos = centre + Vector3.up * resolution;
         Vector3 end_pos = centre;
@@ -1013,7 +1037,7 @@ public static class pathfinding_utils
                 // was already inside the starting box position
                 if (h.point == default) continue;
 
-                if (Vector3.Angle(h.normal, Vector3.up) > max_angle)
+                if (Vector3.Angle(h.normal, Vector3.up) > settings.max_ground_angle())
                     continue; // Too steep
 
                 valid = true;
@@ -1100,8 +1124,13 @@ public static class pathfinding_utils
     /// <paramref name="height"/> and <paramref name="ground_clearance"/>, by 
     /// checking if anythging overlaps an appropriately-shaped box. </summary>
     static bool validate_move_overlap(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance, out string reason)
+        float width, float height, out string reason, pathfinding_settings settings = null)
     {
+        if (settings == null)
+            settings = new default_pathfinding_settings();
+
+        float ground_clearance = settings.ground_clearance() * width;
+
         reason = null;
         Vector3 delta = b - a;
         if (delta.magnitude < 1e-4) return true;
@@ -1118,6 +1147,10 @@ public static class pathfinding_utils
         foreach (var c in Physics.OverlapBox(centre, size / 2f, orientation))
             if (c.transform.GetComponentInParent<INotPathBlocking>() == null)
             {
+                if (!settings.blocked_by_terrain() && 
+                    c.transform.GetComponentInParent<Terrain>())
+                    continue;
+
                 reason = "blocked by " + c.gameObject.name;
                 return false;
             }
@@ -1129,21 +1162,23 @@ public static class pathfinding_utils
     /// agent with the given <paramref name="width"/>, <paramref name="height"/> and 
     /// <paramref name="ground_clearance"/> walking. </summary>
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-        float width, float height, float ground_clearance, out string reason,
-        float max_angle = 45)
+        float width, float height, out string reason, pathfinding_settings settings = null)
     {
+        if (settings == null)
+            settings = new default_pathfinding_settings();
+
         Vector3 delta = b - a;
         Vector3 delta_xz = delta; delta_xz.y = 0;
-        if (Vector3.Angle(delta, delta_xz) > max_angle)
+        if (Vector3.Angle(delta, delta_xz) > settings.max_ground_angle())
         {
             reason = "Too steep";
             return false;
         }
 
-        bool overlap_test = validate_move_overlap(a, b, width, height, ground_clearance, out reason);
+        bool overlap_test = validate_move_overlap(a, b, width, height, out reason, settings: settings);
         if (!overlap_test) return false;
 
-        bool grounding = validate_move_grounding(a, b, width, ground_clearance);
+        bool grounding = validate_move_grounding(a, b, width, settings.ground_clearance() * width);
         if (!grounding)
         {
             reason = "No grounding";
@@ -1154,16 +1189,15 @@ public static class pathfinding_utils
 
     // Overload of the above without the reason
     public static bool validate_walking_move(Vector3 a, Vector3 b,
-    float width, float height, float ground_clearance, float max_angle = 45f)
+    float width, float height, pathfinding_settings settings = null)
     {
-        return validate_walking_move(a, b, width, height, ground_clearance,
-            out string reason, max_angle: max_angle);
+        return validate_walking_move(a, b, width, height, out string reason, settings: settings);
     }
 
     /// <summary> Validate the location <paramref name="v"/> for a walking agent. </summary>
     public static Vector3 validate_walking_position(Vector3 v, float resolution,
-        out bool valid)
+        out bool valid, pathfinding_settings settings = null)
     {
-        return boxcast_position_validate(v, resolution, out valid);
+        return boxcast_position_validate(v, resolution, out valid, settings: settings);
     }
 }

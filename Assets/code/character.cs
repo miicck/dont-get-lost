@@ -40,6 +40,7 @@ public class character : networked,
     public bool can_walk = true;
     public bool can_swim = false;
     public bool align_to_terrain = false;
+    public float align_to_terrain_amount = 1.0f;
 
     public int max_health = 10;
     public FRIENDLINESS friendliness;
@@ -735,7 +736,8 @@ public class character : networked,
                 Vector3 up = Vector3.zero;
                 if (align_to_terrain)
                     foreach (var l in GetComponentsInChildren<leg>())
-                        up += l.ground_normal;
+                        up += l.ground_normal * align_to_terrain_amount +
+                              Vector3.up * (1 - align_to_terrain_amount);
                 else up = Vector3.up;
 
                 up = Vector3.Lerp(
@@ -778,7 +780,8 @@ public class character : networked,
             return v;
         }
 
-        Vector3 ret = pathfinding_utils.validate_walking_position(v, resolution, out valid);
+        Vector3 ret = pathfinding_utils.validate_walking_position(
+            v, resolution, out valid, settings: GetComponent<pathfinding_overrides>());
         if (!is_allowed_at(ret)) valid = false;
         return ret;
     }
@@ -786,7 +789,7 @@ public class character : networked,
     public bool validate_move(Vector3 a, Vector3 b)
     {
         return pathfinding_utils.validate_walking_move(a, b,
-            resolution, height, resolution / 2f);
+            resolution, height, GetComponent<pathfinding_overrides>());
     }
 
     public float resolution => pathfinding_resolution;

@@ -193,7 +193,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         }
 
         public bool validate_move(Vector3 a, Vector3 b) =>
-            pathfinding_utils.validate_walking_move(a, b, resolution, height, ground_clearance, max_angle: 50f);
+            pathfinding_utils.validate_walking_move(a, b, resolution, height);
     }
 
     //#########//
