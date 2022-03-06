@@ -12,9 +12,11 @@ public class game : MonoBehaviour
 
     public Canvas main_canvas;
     public UnityEngine.UI.Text debug_text;
+    public UnityEngine.UI.Text controls_debug_text;
     public UnityEngine.UI.Text cursor_text_element;
     public GameObject debug_panel;
     public GameObject loading_message;
+    public GameObject controls_debug_panel;
 
     //#################//
     // UNITY CALLBACKS //
@@ -40,6 +42,7 @@ public class game : MonoBehaviour
 
         // Debug panel starts closed
         debug_panel.SetActive(false);
+        controls_debug_panel.SetActive(false);
 
         // Initialize various things
         names.initialize();
@@ -137,9 +140,11 @@ public class game : MonoBehaviour
         if (controls.triggered(controls.BIND.REPEAT_LAST_CONSOLE_COMMAND))
             console.repeat_last_command();
 
-        // Toggle the debug panel
+        // Toggle the debug panels
         if (controls.triggered(controls.BIND.TOGGLE_DEBUG_INFO))
             debug_panel.SetActive(!debug_panel.activeInHierarchy);
+        if (controls.triggered(controls.BIND.TOGGLE_CONTROL_DEBUG_INFO))
+            controls_debug_panel.SetActive(!controls_debug_panel.activeInHierarchy);
 
         // Increase/Decrease render ranges
         if (controls.triggered(controls.BIND.INCREASE_RENDER_RANGE)) render_range_target += 10f;
@@ -183,36 +188,35 @@ public class game : MonoBehaviour
     /// <summary> Called every <see cref="SLOW_UPDATE_TIME"/> seconds. </summary>
     void slow_update()
     {
-        if (!debug_panel.activeInHierarchy)
-            return;
+        if (debug_panel.activeInHierarchy)
+            debug_text.text = utils.allign_colons((
+                "\nVERSION\n" +
+                version_control.info() + "\n" +
+                "\nWORLD\n" +
+                world.info() + "\n" +
+                "\nGRAPHICS\n" +
+                graphics_info() + "\n" +
+                "\nSERVER\n" +
+                server.info() + "\n" +
+                "\nCLIENT\n" +
+                client.info() + "\n" +
+                "\nPLAYERS\n" +
+                player.info() + "\n" +
+                client.connected_player_info() + "\n" +
+                "\nCHARACTERS\n" +
+                character.info() + "\n" +
+                "\nSETTLERS\n" +
+                settler.info() + "\n" +
+                "\nINTERACTIONS\n" +
+                settler_interactable.info() + "\n" +
+                "\nLOAD BALANCER\n" +
+                load_balancing.info() + "\n" +
+                "\nTIME OF DAY\n" +
+                time_manager.info() + "\n"
+            ).Trim());
 
-        string debug_text = "" +
-            "\nVERSION\n" +
-            version_control.info() + "\n" +
-            "\nWORLD\n" +
-            world.info() + "\n" +
-            "\nGRAPHICS\n" +
-            graphics_info() + "\n" +
-            "\nSERVER\n" +
-            server.info() + "\n" +
-            "\nCLIENT\n" +
-            client.info() + "\n" +
-            "\nPLAYERS\n" +
-            player.info() + "\n" +
-            client.connected_player_info() + "\n" +
-            "\nCHARACTERS\n" +
-            character.info() + "\n" +
-            "\nSETTLERS\n" +
-            settler.info() + "\n" +
-            "\nINTERACTIONS\n" +
-            settler_interactable.info() + "\n" +
-            "\nLOAD BALANCER\n" +
-            load_balancing.info() + "\n" +
-            "\nTIME OF DAY\n" +
-            time_manager.info() + "\n";
-
-        debug_text = debug_text.Trim();
-        this.debug_text.text = utils.allign_colons(debug_text);
+        if (controls_debug_panel.activeInHierarchy)
+            controls_debug_text.text = controls.debug_info();
     }
 
     void character_spawn_update()

@@ -211,6 +211,7 @@ public static class controls
         TOGGLE_PRODUCTION_INFO,
         TOGGLE_HELP_BOOK,
         TOGGLE_DEBUG_INFO,
+        TOGGLE_CONTROL_DEBUG_INFO,
         INCREASE_RENDER_RANGE,
         DECREASE_RENDER_RANGE,
         CHANGE_PIVOT,
@@ -294,6 +295,7 @@ public static class controls
             [BIND.TOGGLE_PRODUCTION_INFO] = new key_control(KeyCode.P),
             [BIND.TOGGLE_HELP_BOOK] = new key_control(KeyCode.H),
             [BIND.TOGGLE_DEBUG_INFO] = new key_control(KeyCode.F3),
+            [BIND.TOGGLE_CONTROL_DEBUG_INFO] = new key_control(KeyCode.F4),
             [BIND.INCREASE_RENDER_RANGE] = new key_control(KeyCode.Equals),
             [BIND.DECREASE_RENDER_RANGE] = new key_control(KeyCode.Minus),
             [BIND.CHANGE_PIVOT] = new axis_control("Mouse ScrollWheel"),
@@ -410,5 +412,25 @@ public static class controls
         if (console.open) return false;
         if (player.current != null && player.current.is_dead) return false;
         return true;
+    }
+
+    public static string debug_info()
+    {
+        string ret = "Disabled binds:\n";
+        foreach (BIND b in System.Enum.GetValues((typeof(BIND))))
+            if (!bind_enabled(b))
+                ret += "    " + b.ToString() + "\n";
+
+        ret += "Triggered binds:\n";
+        foreach (BIND b in System.Enum.GetValues((typeof(BIND))))
+            if (triggered(b))
+                ret += "    " + b.ToString() + "\n";
+
+        ret += "Held binds:\n";
+        foreach (BIND b in System.Enum.GetValues((typeof(BIND))))
+            if (held(b))
+                ret += "    " + b.ToString() + "\n";
+
+        return ret;
     }
 }

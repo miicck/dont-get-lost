@@ -21,21 +21,21 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
     {
         if (interactions == null) interactions = new player_interaction[]
         {
-            new interaction(this),
+            new scavange_interaction(this),
             new player_inspectable(transform)
             {
-                text = () => item_product.product_plurals_list(products) + " can be scavanged",
+                text = () => product.product_plurals_list(products) + " can be scavanged",
                 sprite = () => Resources.Load<Sprite>("sprites/default_interact_cursor")
             }
         };
         return interactions;
     }
 
-    class interaction : player_interaction
+    class scavange_interaction : player_interaction
     {
         scavange_timer timer;
         scavangable scavangable;
-        public interaction(scavangable scavangable) { this.scavangable = scavangable; }
+        public scavange_interaction(scavangable scavangable) { this.scavangable = scavangable; }
 
         public override controls.BIND keybind => controls.BIND.USE_ITEM;
         public override bool allow_held => true;
@@ -44,7 +44,7 @@ public class scavangable : MonoBehaviour, IPlayerInteractable
 
         public override string context_tip()
         {
-            var str = "scavange for " + item_product.product_plurals_list(scavangable.products);
+            var str = "scavange for " + product.product_plurals_list(scavangable.products);
             if (str.Length < 40) return str;
             return "scavange";
         }
