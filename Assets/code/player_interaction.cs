@@ -332,7 +332,7 @@ public class interaction_set
     public void continue_underway(player player, bool force_stop = false)
     {
         // Update cursor state if neccassary
-        if (player.has_authority && Cursor.visible != cursor_visible)
+        if (player.has_authority)
         {
             Cursor.visible = cursor_visible;
             Cursor.lockState = cursor_visible ? CursorLockMode.None : CursorLockMode.Locked;
