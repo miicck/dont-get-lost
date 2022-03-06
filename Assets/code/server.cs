@@ -123,7 +123,7 @@ public static class server
         /// <summary> Called when a client disconnects. If message is not 
         /// null, it is sent to the server as part of a DISCONNECT message, 
         /// otherwise no DISCONNECT message is sent to the server. </summary>
-        public void disconnect(string message, bool delete_player = false)
+        public void disconnect(string message, bool delete_player = false, bool send_dc_message=true)
         {
             // Replace empty, or null message with "No information" message.
             if (message == null || message.Trim().Length == 0)
@@ -137,7 +137,8 @@ public static class server
 
             // Log/send a disconnect message
             log(username + " disconnected: " + message);
-            send_message(MESSAGE.DISCONNECT, this, message);
+            if (send_dc_message)
+                send_message(MESSAGE.DISCONNECT, this, message);
 
             // Send any queued messages for this
             // client before we get rid of the queue
@@ -1314,7 +1315,7 @@ public static class server
                 // = null because there would be no point
                 // trying to contact them, given they just
                 // disconnected).
-                client.disconnect(null);
+                client.disconnect(null, send_dc_message: false);
             }
             return;
         }
