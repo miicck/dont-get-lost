@@ -20,6 +20,12 @@ public class time_manager : networked
     /// start of the server. </summary> 
     networked_variables.net_int day_number;
 
+    public override void on_create()
+    {
+        // Ensure only one time manager exists
+        utils.delete_all_but_oldest(FindObjectsOfType<time_manager>());
+    }
+
     public override void on_init_network_variables()
     {
         networked_time_of_day = new networked_variables.net_float(resolution: 0.01f, lerp_speed: 0.1f);

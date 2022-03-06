@@ -3,11 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using networked_variables;
 
+
 public class teleport_manager : networked
 {
     // The list of teleport destinations (saved over the network)
     networked_list<networked_pair<net_string, net_vector3>> destinations =
         new networked_list<networked_pair<net_string, net_vector3>>();
+
+    public override void on_create()
+    {
+        // Ensure only one teleport manager exists
+        utils.delete_all_but_oldest(FindObjectsOfType<teleport_manager>(), callback: (n) =>
+        {
+            var tm = (teleport_manager)n;
+            if (tm.destinations.length > 0)
+                Debug.LogError("Found multiple teleport managers with destinations!");
+        });
+    }
 
     public void clear_registered_teleporters()
     {
@@ -34,7 +46,11 @@ public class teleport_manager : networked
                 break;
             }
 
-        if (to_remove < 0) throw new System.Exception("Could not find the portal to unregister!");
+        if (to_remove < 0)
+        {
+            Debug.LogError("Could not find the portal to unregister!");
+            return;
+        }
         destinations.remove_at(to_remove);
     }
 
@@ -45,7 +61,10 @@ public class teleport_manager : networked
 
         float dis = (nearest.second.value - p.teleport_location.position).magnitude;
         if (dis > 0.1f)
-            throw new System.Exception("Portal moved, or not registered?");
+        {
+            Debug.LogError("Portal moved, or not registered?");
+            return "RENAME FAILED";
+        }
 
         nearest.first.value = new_name;
         destinations.set_dirty();

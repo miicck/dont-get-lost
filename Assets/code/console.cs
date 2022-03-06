@@ -1091,6 +1091,23 @@ public class console : MonoBehaviour
 
             description = "Save the current map as the startup save file.",
             usage_example = "save_startup"
+        },
+
+        ["clear_world"] = new console_info
+        {
+            command = (args) =>
+            {
+                commands["kill_all"].command(args);
+
+                foreach (var b in FindObjectsOfType<building_material>())
+                    if (b.network_id >= 0)
+                        b.delete();
+
+                return true;
+            },
+
+            description = "Destroy all built buildings.",
+            usage_example = "delete_all_buildings"
         }
     };
 

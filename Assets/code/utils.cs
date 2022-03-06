@@ -160,6 +160,26 @@ public static class utils
         return ret;
     }
 
+    public delegate void callback<T>(T t);
+
+    /// <summary> Delete all but the oldest of the given set of network objects,
+    /// optionally invoking a callback on them just before. </summary>
+    public static bool delete_all_but_oldest(
+        IEnumerable<networked> networked_objects,
+        callback<networked> callback = null)
+    {
+        var list = new List<networked>(networked_objects);
+        list.Sort((a, b) => a.network_id.CompareTo(b.network_id));
+        for (int i = 1; i < list.Count; ++i)
+        {
+            if (callback != null)
+                callback(list[i]);
+            list[i].delete();
+        }
+        return list.Count > 1;
+    }
+
+    /// <summary> Find the axis of this transform most alligned with the given vector. </summary>
     public static Vector3 most_aligned_axis(this Transform t, Vector3 v, bool include_anti_aligned = false)
     {
         var fd = Vector3.Dot(t.forward, v);
@@ -176,6 +196,7 @@ public static class utils
         return fd > rd ? (fd > ud ? t.forward : t.up) : (rd > ud ? t.right : t.up);
     }
 
+    /// <summary> Find the axis of this transform that is most orthogonal to the given vector. </summary>
     public static Vector3 most_orthogonal_axis(this Transform t, Vector3 v)
     {
         var fd = Vector3.Dot(t.forward, v);

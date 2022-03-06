@@ -12,6 +12,21 @@ public class tech_tree : networked
     public networked_variables.net_string_counts research_materials;
     public networked_variables.net_string currently_researching;
 
+    public override void on_create()
+    {
+        // Ensure only one tech tree exists
+        utils.delete_all_but_oldest(FindObjectsOfType<tech_tree>(), callback: (n) =>
+        {
+            var tt = (tech_tree)n;
+            foreach (var kv in tt.research_progress)
+                if (kv.Value > 0)
+                {
+                    Debug.LogError("Found multiple tech trees with non-zero research progress!");
+                    return;
+                }
+        });
+    }
+
     public override void on_init_network_variables()
     {
         base.on_init_network_variables();
