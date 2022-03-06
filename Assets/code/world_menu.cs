@@ -62,7 +62,18 @@ public class world_menu : MonoBehaviour
 
     UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData hd_camera;
 
-    delegate string username_getter();
+    string get_username()
+    {
+        string username = username_input.text.Trim();
+        if (username.Length == 0)
+        {
+            error_highlighter.highlight(username_input.GetComponent<Image>());
+            return null;
+        }
+        return username;
+    }
+
+    ulong user_id => steam.connected ? steam.steam_id : 0;
 
     private void Start()
     {
@@ -86,30 +97,16 @@ public class world_menu : MonoBehaviour
 
         int world_count = world_files.Length;
 
-        // Restore saved (or steam) username
-        ulong user_id;
+        // Initialize username input field
         if (steam.connected)
         {
             username_input.interactable = false;
             username_input.text = steam.username();
-            user_id = steam.steam_id;
         }
         else
         {
             username_input.text = PlayerPrefs.GetString("username");
-            user_id = 0;
         }
-
-        username_getter get_username = () =>
-        {
-            string username = username_input.text.Trim();
-            if (username.Length == 0)
-            {
-                error_highlighter.highlight(username_input.GetComponent<Image>());
-                return null;
-            }
-            return username;
-        };
 
         foreach (var wf in world_files)
         {
@@ -205,39 +202,7 @@ public class world_menu : MonoBehaviour
             network_utils.local_ip_address() + ":" + server.DEFAULT_PORT);
         ip_input.transform.SetAsLastSibling();
 
-#if FACEPUNCH_STEAMWORKS
-        if (steam.connected)
-        {
-            var steam_friends_header = template_header.inst();
-            steam_friends_header.text = "Join steam friends";
-            steam_friends_header.transform.SetParent(button_container);
-
-            int friends_count = 0;
-            foreach (var f in Steamworks.SteamFriends.GetFriends())
-                if (f.IsPlayingThisGame)
-                {
-                    ++friends_count;
-                    var join_friend_button = template_button.inst();
-                    join_friend_button.GetComponentInChildren<Text>().text = f.Name;
-                    join_friend_button.transform.SetParent(button_container.transform);
-
-                    join_friend_button.onClick.AddListener(() =>
-                    {
-                        var username = get_username();
-                        if (username == null) return;
-                        game.join_steam_friend(f.Id, username, user_id);
-                    });
-                }
-
-            if (friends_count == 0) // :'(
-            {
-                var no_friends_header = template_header.inst();
-                no_friends_header.transform.SetParent(button_container);
-                no_friends_header.text = "No steam friends in-game";
-                Destroy(steam_friends_header.gameObject);
-            }
-        }
-#endif
+        update_steam_friends();
 
         var quit_header = template_header.inst();
         quit_header.text = "";
@@ -256,9 +221,75 @@ public class world_menu : MonoBehaviour
         });
 
         // Remove the templates
-        Destroy(template_button.gameObject);
-        Destroy(template_header.gameObject);
-        Destroy(template_world_button.gameObject);
+        template_button.gameObject.SetActive(false);
+        template_header.gameObject.SetActive(false);
+        template_world_button.gameObject.SetActive(false);
+
+        InvokeRepeating("update_steam_friends", 1, 1);
+    }
+
+    Text steam_friends_header;
+
+    void update_steam_friends()
+    {
+#if FACEPUNCH_STEAMWORKS
+
+        int friends_count = 0;
+
+        if (steam_friends_header == null)
+        {
+            steam_friends_header = template_header.inst();
+            steam_friends_header.text = "Join steam friends";
+            steam_friends_header.transform.SetParent(button_container);
+        }
+
+        // Delete old steam information
+        foreach (Transform t in button_container.transform)
+            if (t.name.StartsWith("steam"))
+                Destroy(t.gameObject);
+
+        if (steam.connected)
+        {
+            foreach (var f in Steamworks.SteamFriends.GetFriends())
+                if (f.IsPlayingThisGame)
+                {
+                    ++friends_count;
+                    var join_friend_button = template_button.inst();
+                    join_friend_button.gameObject.SetActive(true);
+                    join_friend_button.name = "steam_friend_" + f.Id;
+                    join_friend_button.GetComponentInChildren<Text>().text = f.Name;
+                    join_friend_button.transform.SetParent(button_container.transform);
+                    join_friend_button.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
+
+                    join_friend_button.onClick.AddListener(() =>
+                    {
+                        var username = get_username();
+                        if (username == null) return;
+                        game.join_steam_friend(f.Id, username, user_id);
+                    });
+                }
+
+            if (friends_count == 0) // :'(
+            {
+                var no_friends_header = template_header.inst();
+                no_friends_header.gameObject.SetActive(true);
+                no_friends_header.name = "steam_no_friends";
+                no_friends_header.transform.SetParent(button_container);
+                no_friends_header.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
+                no_friends_header.text = "No steam friends in-game";
+            }
+        }
+        else
+        {
+            var not_connected_header = template_header.inst();
+            not_connected_header.gameObject.SetActive(true);
+            not_connected_header.name = "steam_not_connected";
+            not_connected_header.transform.SetParent(button_container);
+            not_connected_header.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
+            not_connected_header.text = "Not connected to steam";
+        }
+
+#endif // FACEPUNCH_STEAMWORKS
     }
 
     public static int get_hash(string s)
