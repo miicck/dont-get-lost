@@ -21,6 +21,7 @@ public static class client
         VARIABLE_UPDATE,     // A networked_variable has changed
         TRIGGER,             // A networked event has been triggered
         KICK,                // A player kick has been requested
+        JOINABLE_QUERY,      // A query if a server is joinable
     }
 
     public const MESSAGE LARGEST_VALUE_MESSAGE = MESSAGE.KICK;
@@ -412,6 +413,91 @@ public static class client
 
         // Stop immediate server timeout
         last_server_time_local = (int)Time.realtimeSinceStartup;
+    }
+
+    public class join_query
+    {
+        client_backend backend;
+        float start_time;
+
+        public join_query(client_backend backend)
+        {
+            // Send a join query
+            this.backend = backend;
+            var buff = network_utils.compose_message((byte)MESSAGE.JOINABLE_QUERY, new byte[0]);
+            backend.stream.Write(buff, 0, buff.Length);
+            start_time = Time.time;
+        }
+
+        void process_response(byte type_byte, byte[] buffer, int offset, int length)
+        {
+            if (type_byte != (byte)server.MESSAGE.JOINABLE_RESPONSE)
+                throw new System.Exception("Wrong response to join query!");
+
+            _query_complete = true;
+            result = network_utils.decode_bool(buffer, ref offset);
+            close();
+        }
+
+        public void update()
+        {
+            if (backend == null)
+            {
+                _query_complete = true;
+                return;
+            }
+
+            backend.Update();
+
+            var stream = backend.stream;
+            if (stream == null)
+            {
+                _query_complete = true;
+                close();
+                return;
+            }
+
+            // Attempt to read data
+            while (stream.DataAvailable)
+            {
+                byte[] buffer = new byte[backend.ReceiveBufferSize];
+                int read = stream.Read(buffer, 0, buffer.Length);
+                int offset = 0;
+
+                if (!network_utils.decompose_message(
+                    buffer, ref offset, read, out int ignored, process_response))
+                    throw new System.Exception("Truncated message in join query!");
+            }
+        }
+
+        public bool query_complete
+        {
+            get
+            {
+                update();
+
+                // Timeout
+                if (Time.time - start_time > 5f)
+                    _query_complete = true;
+
+                return _query_complete;
+            }
+        }
+        bool _query_complete = false;
+
+        public bool result
+        {
+            get;
+            private set;
+        }
+
+        public void close()
+        {
+            if (backend == null)
+                return;
+            backend.Close();
+            backend = null;
+        }
     }
 
     public static void disconnect(bool initiated_by_client, string msg_from_server = null, bool delete_player = false)
@@ -854,8 +940,16 @@ public static class client
                 };
                 break;
 
+            case server.MESSAGE.JOINABLE_RESPONSE:
+
+                // Leftover joinable responses might have been sent
+                // when we queried if this server was joinable, just ignore them
+                bool joinable = network_utils.decode_bool(buffer, ref offset);
+                Debug.Log("Server joinable = " + joinable);
+                break;
+
             default:
-                throw new System.Exception("Unkown message type!");
+                throw new System.Exception("Unkown message type: " + type_byte + " (" + type + ")");
         }
     }
 

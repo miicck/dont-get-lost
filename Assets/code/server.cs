@@ -123,7 +123,7 @@ public static class server
         /// <summary> Called when a client disconnects. If message is not 
         /// null, it is sent to the server as part of a DISCONNECT message, 
         /// otherwise no DISCONNECT message is sent to the server. </summary>
-        public void disconnect(string message, bool delete_player = false, bool send_dc_message=true)
+        public void disconnect(string message, bool delete_player = false, bool send_dc_message = true)
         {
             // Replace empty, or null message with "No information" message.
             if (message == null || message.Trim().Length == 0)
@@ -1292,6 +1292,7 @@ public static class server
         HEARTBEAT,         // Respond to a client heartbeat
         DISCONNECT,        // Sent to a client when they are disconnected
         PLAYER_UPDATE,     // Sent to clients to update info about connected players
+        JOINABLE_RESPONSE, // Response to queries if the server is joinable
     }
 
     // Send a payload to a client
@@ -1497,6 +1498,16 @@ public static class server
                 ));
                 break;
 
+            case MESSAGE.JOINABLE_RESPONSE:
+                if (args.Length != 1)
+                    throw new System.ArgumentException("Wrong number of arguments!");
+
+                // Is the server joinable?
+                bool response = (bool)args[0];
+
+                send(client, MESSAGE.JOINABLE_RESPONSE, network_utils.encode_bool(response));
+                break;
+
             default:
                 throw new System.Exception("Unkown message type!");
         };
@@ -1654,6 +1665,13 @@ public static class server
                         c.disconnect("kicked by " + client.username);
                         break;
                     }
+                break;
+
+            case global::client.MESSAGE.JOINABLE_QUERY:
+
+                // Let the client know if I'm joinable
+                bool joinable = true;
+                send_message(MESSAGE.JOINABLE_RESPONSE, client, joinable);
                 break;
 
             default:

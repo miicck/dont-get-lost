@@ -229,6 +229,8 @@ public class world_menu : MonoBehaviour
     }
 
     Text steam_friends_header;
+    Dictionary<ulong, client.join_query> joinable_queries = new Dictionary<ulong, client.join_query>();
+    Dictionary<ulong, string> joinable_queries_unames = new Dictionary<ulong, string>();
 
     void update_steam_friends()
     {
@@ -250,24 +252,71 @@ public class world_menu : MonoBehaviour
 
         if (steam.connected)
         {
+            HashSet<ulong> online_ids = new HashSet<ulong>();
             foreach (var f in Steamworks.SteamFriends.GetFriends())
                 if (f.IsPlayingThisGame)
                 {
-                    ++friends_count;
-                    var join_friend_button = template_button.inst();
-                    join_friend_button.gameObject.SetActive(true);
-                    join_friend_button.name = "steam_friend_" + f.Id;
-                    join_friend_button.GetComponentInChildren<Text>().text = f.Name;
-                    join_friend_button.transform.SetParent(button_container.transform);
-                    join_friend_button.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
+                    online_ids.Add(f.Id);
 
-                    join_friend_button.onClick.AddListener(() =>
+                    if (joinable_queries.TryGetValue(f.Id, out client.join_query query))
+                        if (query.query_complete)
+                        {
+                            // This steam friend was found to be joinable
+                            if (query.result)
+                                continue;
+
+                            // This steam friend was not found to be joinable, we'll ask again
+                            query.close();
+                            joinable_queries.Remove(f.Id);
+                        }
+
+                    if (!joinable_queries.ContainsKey(f.Id))
                     {
-                        var username = get_username();
-                        if (username == null) return;
-                        game.join_steam_friend(f.Id, username, user_id);
-                    });
+                        // Start a new joinable query
+                        joinable_queries[f.Id] = new client.join_query(
+                            new steamworks_client_backend(f.Id,
+                            steamworks_server_backend.CLIENT_TO_SERVER_CHANNEL));
+
+                        joinable_queries_unames[f.Id] = f.Name;
+                    }
                 }
+
+            // Remove queries to friends that logged out
+            List<ulong> to_remove = new List<ulong>();
+            foreach (var kv in joinable_queries)
+                if (!online_ids.Contains(kv.Key))
+                    to_remove.Add(kv.Key);
+            foreach (var id in to_remove)
+            {
+                joinable_queries[id].close();
+                joinable_queries.Remove(id);
+            }
+
+            foreach (var kv in joinable_queries)
+            {
+                var id = kv.Key;
+                var query = kv.Value;
+
+                ++friends_count;
+                var join_friend_button = template_button.inst();
+                join_friend_button.gameObject.SetActive(true);
+                join_friend_button.name = "steam_friend_" + id;
+                join_friend_button.GetComponentInChildren<Text>().text =
+                    joinable_queries_unames[id] + " " + (query.result ? "(joinable)" : "(not joinable)");
+
+                if (!query.result)
+                    join_friend_button.colors = ui_colors.greyed_out_color_block(fade_duration: 0);
+
+                join_friend_button.transform.SetParent(button_container.transform);
+                join_friend_button.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
+
+                join_friend_button.onClick.AddListener(() =>
+                {
+                    var username = get_username();
+                    if (username == null) return;
+                    game.join_steam_friend(id, username, user_id);
+                });
+            }
 
             if (friends_count == 0) // :'(
             {
@@ -302,6 +351,9 @@ public class world_menu : MonoBehaviour
 
     private void Update()
     {
+        foreach (var kv in joinable_queries)
+            kv.Value.update();
+
         Color bg = hd_camera.backgroundColorHDR;
         float h, s, v;
         Color.RGBToHSV(bg, out h, out s, out v);
