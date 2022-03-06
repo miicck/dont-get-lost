@@ -52,6 +52,7 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
                 path_element.transform.position,
                 "characters/" + livestock_type.name,
                 parent: networked_element);
+            new_animal.despawns_automatically = false;
             livestock.Add(new_animal);
         }
 

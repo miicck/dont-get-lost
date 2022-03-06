@@ -12,6 +12,7 @@ public class empty : biome
             {
                 var p = grid[i, j] = new point();
                 p.altitude = world.SEA_LEVEL + 1;
+                p.fog_distance = 64f;
             }
 
         return true;
