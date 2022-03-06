@@ -426,7 +426,7 @@ public abstract class tutorial_object : MonoBehaviour
         protected override bool on_start_interaction(player player) { obj.start_interaction(); return false; }
         public override bool continue_interaction(player player) => false;
         protected override void on_end_interaction(player player) => obj.end_interaction();
-        protected override bool mouse_visible() => obj.mouse_visible();
+        public override bool mouse_visible() => obj.mouse_visible();
     }
 
     protected virtual bool allows_other_interactions() => true;

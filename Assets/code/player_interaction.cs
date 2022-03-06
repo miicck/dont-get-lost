@@ -35,7 +35,7 @@ public abstract class player_interaction
     public virtual bool is_possible() { return true; }
 
     /// <summary> Returns true if the mouse should be visible during this interaction. </summary>
-    protected virtual bool mouse_visible() { return false; }
+    public virtual bool mouse_visible() { return false; }
 
     /// <summary> Shown at the bottom right of the screen to let the player 
     /// know what interactions are currently possible. </summary>
@@ -48,14 +48,6 @@ public abstract class player_interaction
     /// true if the interaction is immediately completed. </summary>
     public bool start_interaction(player player)
     {
-        if (player.has_authority)
-        {
-            // Update cursor visibility state
-            Cursor.visible = mouse_visible();
-            Cursor.lockState = mouse_visible() ? CursorLockMode.None : CursorLockMode.Locked;
-            if (mouse_visible()) player.cursor_sprite = null;
-        }
-
         interact_requirement.complete_interaction_requirements(this);
         return on_start_interaction(player);
     }
@@ -71,14 +63,6 @@ public abstract class player_interaction
     /// <summary> Called to end an interaction. </summary>
     public void end_interaction(player player)
     {
-        if (player.has_authority)
-        {
-            // Return to default invisible cursor
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-            if (mouse_visible()) player.current.cursor_sprite = cursors.DEFAULT;
-        }
-
         on_end_interaction(player);
     }
 
@@ -226,6 +210,19 @@ public class interaction_set
         }
     }
 
+    /// <summary> Returns true if the mouse should be visible
+    /// for any of the underway interactions. </summary>
+    public bool cursor_visible
+    {
+        get
+        {
+            foreach (var kv in underway)
+                if (kv.Value.interaction.mouse_visible())
+                    return true;
+            return false;
+        }
+    }
+
     /// <summary> Returns the first editable inventory that 
     /// we're interacting with. </summary>
     public inventory editable_inventory()
@@ -334,11 +331,11 @@ public class interaction_set
     /// <summary> Continue underway interactions </summary>
     public void continue_underway(player player, bool force_stop = false)
     {
-        // Re-disable cursor if no interactions are underway
-        if (player.has_authority && underway.Count == 0 && Cursor.visible)
+        // Update cursor state if neccassary
+        if (player.has_authority && Cursor.visible != cursor_visible)
         {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = cursor_visible;
+            Cursor.lockState = cursor_visible ? CursorLockMode.None : CursorLockMode.Locked;
         }
 
         // Continue underway interactions
@@ -400,9 +397,10 @@ public abstract class left_player_menu : player_interaction
 
     // Left player menus open with the inventory.
     public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
-    public override string context_tip() { return "interact with " + name; }
-    public override bool allows_movement() { return false; }
-    public override bool allows_mouse_look() { return false; }
+    public override string context_tip() => "interact with " + name;
+    public override bool allows_movement() => false;
+    public override bool allows_mouse_look() => false;
+    public override bool mouse_visible() => true;
 
     protected override bool on_start_interaction(player player)
     {

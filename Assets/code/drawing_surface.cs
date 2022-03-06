@@ -90,11 +90,7 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
         public override string context_tip() => "draw on surface";
         public override bool allows_mouse_look() => false;
         public override bool allows_movement() => false;
-
-        protected override bool mouse_visible()
-        {
-            return true;
-        }
+        public override bool mouse_visible() => true;
 
         protected override bool on_start_interaction(player player)
         {

@@ -14,7 +14,7 @@ public class noticeboard : MonoBehaviour, IPlayerInteractable
         public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
         public override string context_tip() => "open job manager";
         public override bool show_context_tip() => true;
-        protected override bool mouse_visible() => true;
+        public override bool mouse_visible() => true;
 
         protected override void set_menu_state(player player, bool state)
         {

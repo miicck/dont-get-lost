@@ -258,12 +258,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public abstract class menu_interaction : player_interaction
     {
-        protected abstract void set_menu_state(player player, bool state);
-
-        protected override bool mouse_visible()
-        {
-            return true;
-        }
+        protected abstract void set_menu_state(player player, bool state);  
 
         protected override bool on_start_interaction(player player)
         {
@@ -277,14 +272,11 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             return triggered(player) || controls.triggered(controls.BIND.LEAVE_MENU);
         }
 
-        protected override void on_end_interaction(player player)
-        {
-            set_menu_state(player, false);
-        }
-
-        public override bool allows_mouse_look() { return false; }
-        public override bool show_context_tip() { return false; }
-        public virtual bool continue_menu_interaction() { return false; }
+        protected override void on_end_interaction(player player) => set_menu_state(player, false);
+        public override bool mouse_visible() => true;
+        public override bool allows_mouse_look() => false;
+        public override bool show_context_tip() => false;
+        public virtual bool continue_menu_interaction() => false;
     }
 
     public class inventory_interaction : menu_interaction

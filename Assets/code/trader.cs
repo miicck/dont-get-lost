@@ -37,7 +37,7 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
         UnityEngine.UI.Text trader_coins_text;
         bool interaction_completed = false;
 
-        protected override bool mouse_visible()
+        public override bool mouse_visible()
         {
             // Mouse is visible during trade interaction
             return true;
