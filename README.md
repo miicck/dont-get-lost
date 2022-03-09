@@ -1,5 +1,8 @@
 # Don't get lost
 A procedurally generated video game.
+
+![](Assets/pictures/header_capsule.png?raw=true "Title")
+
 ## Developing
 To setup a unity project for development, follow these steps:
 1. Using the latest version of unity, create a new unity project using the *High Definition RP* template.
