@@ -2,43 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked
+public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked, IAddsToInspectionText
 {
-    static attacker_entrypoint()
-    {
-        List<string> town_tips = new List<string>
-        {
-            "A town is defined as a collection of buildings that are connected by paths. " +
-            "Only certain buildings can connect to the path network. The paths will only be " +
-            "shown if you have a connectable building equipped - this is known as \"path-view\" mode.",
-
-            "Entrypoints to the town will be automatically generated and are shown as " +
-            "red paths going off into the distance in path-view mode. These are the " +
-            "routes that visitors (but also enemies!) will use to enter the town.",
-
-            "Entrypoints can be blocked off by placing buildings in the way, allowing you " +
-            "to build walls to protect your town from attack. But be careful - a town with no " +
-            "entrypoints is doomed to fail.",
-
-            "Settlers will move into towns automatically if there are enough beds connected - "+
-            "build a town gate and inspect it with "+ controls.bind_name(controls.BIND.INSPECT)+
-            " to see how many connected beds/settlers there are.",
-
-            "Towns are seperated into rooms - these can be identified by inspecting connected " +
-            "buildings with "+controls.bind_name(controls.BIND.INSPECT)+". "+
-            "Rooms are seperated by certain objects such as doors, gates and ladders. "+
-            "The function of a room depends on the buildings connected to that room. For example, " +
-            "connecting a forge designates that room as a foundry. Inpect the forge to see what other " +
-            "buildings are needed to make a working foundry."
-        };
-
-        string help_text = "";
-        foreach (var t in town_tips)
-            help_text += t + "\n\n";
-
-        help_book.add_entry("towns", help_text);
-    }
-
     public const float MIN_EXTERNAL_PATH_DISTANCE = 15f;
     public const float MAX_EXTERNAL_PATH_DISTANCE = 25f;
 
@@ -48,11 +13,30 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     path path;
     float next_path_time = float.NegativeInfinity;
     float time_between_paths = MIN_TIME_BETWEEN_PATHS;
+    bool geometry_changed_since_last_path = false;
 
     public bool path_complete => path is explicit_path;
     public Vector3 path_end => path == null ? transform.position : path[path.length - 1];
     public town_path_element element => GetComponentInParent<town_path_element>();
     public bool has_authority => GetComponentInParent<networked>()?.has_authority == true;
+
+    /// <summary> The region where paths from this entrypoint might exist. </summary>
+    public Bounds reachable_region => new Bounds(transform.position, Vector3.one * 2 * MAX_EXTERNAL_PATH_DISTANCE);
+
+    //#######################//
+    // IAddsToInspectionText //
+    //#######################//
+
+    public string added_inspection_text()
+    {
+        if (path == null)
+            return "No path";
+
+        if (path is explicit_path)
+            return "Path complete";
+
+        return "Pathing underway";
+    }
 
     //#################//
     // UNITY CALLBACKS //
@@ -60,6 +44,11 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
     private void Start() => entrypoints.Add(this);
     private void OnDestroy() => entrypoints.Remove(this);
+
+    void on_geometry_change_within_reachable_region()
+    {
+        geometry_changed_since_last_path = true;
+    }
 
     private void Update()
     {
@@ -78,9 +67,11 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         draw_path = town_path_element.draw_links;
 
         if (path == null)
-        {
-            // Wait until next path time
-            if (Time.time < next_path_time) return;
+        {   
+            if (!geometry_changed_since_last_path) return; // No point trying again until the geometry updates
+            if (Time.time < next_path_time) return; // Don't try again until the next path time
+
+            geometry_changed_since_last_path = false;
 
             path = new random_path(transform.position, new agent(), endpoint_success,
                 midpoint_successful: midpoint_success,
@@ -89,8 +80,13 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
         if (path is explicit_path)
         {
-            // We have an optimized path, check it remains valid
-            if (!path.validate(load_balancing.iter)) path = null;
+            if (geometry_changed_since_last_path)
+            {
+                if (!path.validate(load_balancing.iter, out bool cycle_complete))
+                    path = null; // Path invalidated
+                if (cycle_complete)
+                    geometry_changed_since_last_path = false; // We've checked the full path since last geometry change
+            }
             else
             {
                 settler.try_spawn(element.group, element.transform.position);
@@ -122,7 +118,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                                 new_path.Add(path[j]);
                             path = new explicit_path(new_path, new agent());
                             refresh_drawn_path();
-                            break;
+                            return;
                         }
                     }
 
@@ -130,6 +126,8 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                     List<Vector3> whole_path = new List<Vector3>();
                     for (int i = 0; i < path.length; ++i) whole_path.Add(path[i]);
                     path = new explicit_path(whole_path, new agent());
+                    refresh_drawn_path();
+                    return;
                 }
 
                 break;
@@ -513,6 +511,43 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     //##############//
     // STATIC STUFF //
     //##############//
+
+    static attacker_entrypoint()
+    {
+        string help_text =
+            "A town is defined as a collection of buildings that are connected by paths. " +
+            "Only certain buildings can connect to the path network. The paths will only be " +
+            "shown if you have a connectable building equipped - this is known as \"path-view\" mode.\n\n" +
+            "Entrypoints to the town will be automatically generated and are shown as " +
+            "red paths going off into the distance in path-view mode. These are the " +
+            "routes that visitors (but also enemies!) will use to enter the town.\n\n" +
+            "Entrypoints can be blocked off by placing buildings in the way, allowing you " +
+            "to build walls to protect your town from attack. But be careful - a town with no " +
+            "entrypoints is doomed to fail.\n\n" +
+            "Settlers will move into towns automatically if there are enough beds connected - " +
+            "build a town gate and inspect it with " + controls.bind_name(controls.BIND.INSPECT) +
+            " to see how many connected beds/settlers there are.\n\n" +
+            "Towns are seperated into rooms - these can be identified by inspecting connected " +
+            "buildings with " + controls.bind_name(controls.BIND.INSPECT) + ". " +
+            "Rooms are seperated by certain objects such as doors, gates and ladders. " +
+            "The function of a room depends on the buildings connected to that room. For example, " +
+            "connecting a forge designates that room as a foundry. Inpect the forge to see what other " +
+            "buildings are needed to make a working foundry.";
+
+        help_book.add_entry("towns", help_text);
+
+        // Add geometry change listener
+        world.add_geometry_change_listener((regions) =>
+        {
+            foreach (var ep in entrypoints)
+                foreach (var r in regions)
+                    if (ep.reachable_region.Intersects(r))
+                    {
+                        ep.on_geometry_change_within_reachable_region();
+                        break;
+                    }
+        });
+    }
 
     static pinned_message attack_message;
     static HashSet<attacker_entrypoint> entrypoints;

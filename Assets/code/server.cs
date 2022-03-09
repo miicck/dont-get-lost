@@ -994,7 +994,12 @@ public static class server
         string fullpath = null;
 
         if (startup_world)
+        {
+            if (new HashSet<string> { "test", "empty" }.Contains(savename.ToLower()))
+                return; // Don't load startup file for test/empty maps
+
             fullpath = Application.streamingAssetsPath + "/startup.save";
+        }
         else
             fullpath = System.IO.Path.GetFullPath(save_file());
 

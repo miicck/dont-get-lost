@@ -61,7 +61,7 @@ public abstract class path
 
     /// <summary> Perform the given number of valudation iterations, returns false if
     /// the path was found to be no longer valid. </summary>
-    public virtual bool validate(int iterations) { return true; }
+    public virtual bool validate(int iterations, out bool full_cycle_complete) { full_cycle_complete = true; return true; }
 
     /// <summary> Optimize a path, to make it more visually appealing, returns 
     /// true if some optimization was carried out </summary>
@@ -147,6 +147,54 @@ public abstract class path
 
         return ret;
     }
+
+    public static bool default_validate(path path, int iterations, ref int last_validate_step, out bool full_cycle_complete)
+    {
+        switch (path.state)
+        {
+            case STATE.COMPLETE:
+
+                if (path.length < 2)
+                {
+                    full_cycle_complete = true;
+                    return true; // Nothing to validate
+                }
+
+                full_cycle_complete = false;
+                last_validate_step = last_validate_step % (path.length - 1); // Stay in-range      
+
+                for (int i = 0; i < iterations; ++i)
+                {
+                    // A full cycle is completed when we check the last path segment
+                    if (last_validate_step == path.length - 2)
+                        full_cycle_complete = true;
+
+                    Vector3 a = path[last_validate_step];
+                    Vector3 b = path[last_validate_step + 1];
+
+                    // Note, in validation mode, we don't update the positions a and b
+                    // to the return value of agent.validate_position as we only care if
+                    // the positions saved to the path are still valid.
+                    path.agent.validate_position(a, out bool valid);
+                    if (!valid) return false;
+                    path.agent.validate_position(b, out valid);
+                    if (!valid) return false;
+                    if (!path.agent.validate_move(a, b)) return false;
+
+                    last_validate_step = (last_validate_step + 1) % (path.length - 1);
+                }
+
+                return true;
+
+            case STATE.FAILED:
+            case STATE.SEARCHING:
+                full_cycle_complete = false;
+                return false;
+
+            default:
+                throw new System.Exception("Unkown path state!");
+        }
+    }
 }
 
 public class explicit_path : path
@@ -164,41 +212,8 @@ public class explicit_path : path
         state = STATE.COMPLETE;
     }
 
-    public override bool validate(int iterations)
-    {
-        switch (state)
-        {
-            case STATE.COMPLETE:
-
-                if (length < 2) return true; // Nothing to validate
-                last_validate_step = last_validate_step % (length - 1); // Stay in-range
-                for (int i = 0; i < iterations; ++i)
-                {
-                    Vector3 a = this[last_validate_step];
-                    Vector3 b = this[last_validate_step + 1];
-
-                    // Note, in validation mode, we don't update the positions a and b
-                    // to the return value of agent.validate_position as we only care if
-                    // the positions saved to the path are still valid.
-                    agent.validate_position(a, out bool valid);
-                    if (!valid) return false;
-                    agent.validate_position(b, out valid);
-                    if (!valid) return false;
-                    if (!agent.validate_move(a, b)) return false;
-
-                    last_validate_step = (last_validate_step + 1) % (length - 1);
-                }
-
-                return true;
-
-            case STATE.FAILED:
-            case STATE.SEARCHING:
-                return false;
-
-            default:
-                throw new System.Exception("Unkown path state!");
-        }
-    }
+    public override bool validate(int iterations, out bool full_cycle_complete) =>
+        default_validate(this, iterations, ref last_validate_step, out full_cycle_complete);
 
     public override void draw_gizmos()
     {
@@ -412,41 +427,8 @@ public class astar_path : path
         return true;
     }
 
-    public override bool validate(int iterations)
-    {
-        switch (state)
-        {
-            case STATE.COMPLETE:
-
-                if (length < 2) return true; // Nothing to validate
-                last_validate_step = last_validate_step % (length - 1); // Stay in-range
-                for (int i = 0; i < iterations; ++i)
-                {
-                    Vector3 a = this[last_validate_step];
-                    Vector3 b = this[last_validate_step + 1];
-
-                    // Note, in validation mode, we don't update the positions a and b
-                    // to the return value of agent.validate_position as we only care if
-                    // the positions saved to the path are still valid.
-                    agent.validate_position(a, out bool valid);
-                    if (!valid) return false;
-                    agent.validate_position(b, out valid);
-                    if (!valid) return false;
-                    if (!agent.validate_move(a, b)) return false;
-
-                    last_validate_step = (last_validate_step + 1) % (length - 1);
-                }
-
-                return true;
-
-            case STATE.FAILED:
-            case STATE.SEARCHING:
-                return false;
-
-            default:
-                throw new System.Exception("Unkown path state!");
-        }
-    }
+    public override bool validate(int iterations, out bool full_cycle_complete) => 
+        default_validate(this, iterations, ref last_validate_step, out full_cycle_complete);
 
     public override bool optimize(int iterations)
     {
@@ -788,7 +770,7 @@ public class random_path : astar_path
                 // waypoint found is good enough as an endpoint
                 var best = closed_set.First().Value;
                 if (endpoint_successful(best.entrypoint))
-                    reconstruct_path(best);
+                    reconstruct_path(best, add_goal: false);
                 else
                     state = STATE.FAILED;
                 return;
@@ -815,7 +797,7 @@ public class random_path : astar_path
 
             if (midpoint_successful(current.entrypoint))
             {
-                reconstruct_path(current);
+                reconstruct_path(current, add_goal: false);
                 return;
             }
 

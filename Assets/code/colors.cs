@@ -96,7 +96,7 @@ public static class ui_colors
             };
     }
 
-    public static UnityEngine.UI.ColorBlock greyed_out_color_block(float fade_duration=0.5f)
+    public static UnityEngine.UI.ColorBlock greyed_out_color_block(float fade_duration = 0.5f)
     {
         return new UnityEngine.UI.ColorBlock()
         {
@@ -109,4 +109,29 @@ public static class ui_colors
             fadeDuration = fade_duration,
         };
     }
+
+    public static Color[] cycle
+    {
+        get
+        {
+            if (_cycle == null)
+                _cycle = new Color[]
+                {
+                    new Color(1, 0, 0),
+                    new Color(0, 1, 0),
+                    new Color(0, 0, 1),
+                    new Color(0, 1, 1),
+                    new Color(1, 0, 1),
+                    new Color(1, 1, 0),
+                    new Color(1, 0.5f, 0),
+                    new Color(1, 0, 0.5f),
+                    new Color(0.5f, 1, 0),
+                    new Color(0, 1, 0.5f),
+                    new Color(0.5f, 0, 1),
+                    new Color(0, 0.5f, 1)
+                };
+            return _cycle;
+        }
+    }
+    static Color[] _cycle;
 }

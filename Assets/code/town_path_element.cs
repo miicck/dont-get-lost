@@ -221,7 +221,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     //##################//
 
     const float IN_TOWN_RANGE = 1;
-    const float IN_TOWN_RESOLUTION = 7;
+    const float IN_TOWN_RESOLUTION = 10;
 
     static Dictionary<int, HashSet<town_path_element>> grouped_elements;
     static Dictionary<int, HashSet<town_path_element>> roomed_elements;
@@ -356,7 +356,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             group_bounds[kv.Key] = bounds;
         }
 
-        // Flag extremeties
+        // Record bound groups and town extremeties
         foreach (var kv in group_bounds)
             foreach (var b in kv.Value)
             {
@@ -444,7 +444,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         foreach (var kv in group_bounds)
             foreach (var b in kv.Value)
             {
-                Gizmos.color = new Color(1, 0, 1);
+                Gizmos.color = ui_colors.cycle[kv.Key % ui_colors.cycle.Length];
                 Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
                 foreach (var e in b)
                 {
@@ -483,6 +483,12 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     //##################//
     // LINK VALIDATAION //
     //##################//
+
+    static town_path_element()
+    {
+        // Register geometry listener
+        world.add_geometry_change_listener(validate_elements_within);
+    }
 
     public static void validate_elements_within(List<Bounds> regions)
     {

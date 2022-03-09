@@ -31,7 +31,10 @@ public class world : networked, INotSavedInStartupFile
         if (geometry_update_regions.Count > 0)
         {
             // Process geometry updates
-            town_path_element.validate_elements_within(geometry_update_regions);
+            foreach (var f in geometry_change_listeners)
+                f(geometry_update_regions);
+
+            // Clear set of regiosn to update
             geometry_update_regions.Clear();
         }
     }
@@ -43,16 +46,10 @@ public class world : networked, INotSavedInStartupFile
     static world static_world;
 
     // The seed for the world generator
-    public static int seed
-    {
-        get => static_world.networked_seed.value;
-    }
+    public static int seed => static_world.networked_seed.value;
 
     // The name of the world
-    new public static string name
-    {
-        get => static_world.networked_name.value;
-    }
+    new public static string name => static_world.networked_name.value;
 
     public static float terrain_altitude(Vector3 v)
     {
@@ -63,12 +60,11 @@ public class world : networked, INotSavedInStartupFile
         return hit.point.y;
     }
 
+    public delegate void geometry_change_listener(List<Bounds> modified_regions);
     static List<Bounds> geometry_update_regions = new List<Bounds>();
-
-    public static void on_geometry_change(Bounds region_affected)
-    {
-        geometry_update_regions.Add(region_affected);
-    }
+    static List<geometry_change_listener> geometry_change_listeners = new List<geometry_change_listener>();
+    public static void on_geometry_change(Bounds region_affected) => geometry_update_regions.Add(region_affected);
+    public static void add_geometry_change_listener(geometry_change_listener listener) => geometry_change_listeners.Add(listener);
 
     public static string info()
     {
