@@ -121,6 +121,18 @@ public class tech_tree : networked
             loaded_tech_tree.research_progress[t.name] = 100;
     }
 
+    public static void lock_all_research()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to un-research everythong before tech tree loaded");
+            return;
+        }
+
+        foreach (var t in technology.all)
+            loaded_tech_tree.research_progress[t.name] = 0;
+    }
+
     public static bool research_project_set()
     {
         if (loaded_tech_tree == null)

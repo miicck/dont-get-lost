@@ -951,6 +951,18 @@ public class console : MonoBehaviour
             usage_example = "unlock_all_research"
         },
 
+        ["lock_all_research"] = new console_info
+        {
+            command = (args) =>
+            {
+                tech_tree.lock_all_research();
+                return true;
+            },
+
+            description = "Lock (un-research) all research topics.",
+            usage_example = "lock_all_research"
+        },
+
         ["time_between_cinematic_keyframes"] = new console_info
         {
             command = (args) =>
