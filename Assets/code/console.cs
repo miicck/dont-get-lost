@@ -1096,8 +1096,12 @@ public class console : MonoBehaviour
             {
                 if (!Application.isEditor)
                     return console_error("Startup file can only be saved from within the Unity editor!");
+
                 commands["kill_all"].command(args);
-                server.save(is_startup: true);
+                commands["time"].command(new string[] { "time", "0" });
+
+                // Save world after a delay to ensure the above commands have stuck
+                temporary_object.create(1f, on_delete: () => server.save(is_startup: true));
                 return true;
             },
 
