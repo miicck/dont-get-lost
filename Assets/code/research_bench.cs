@@ -9,14 +9,21 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
     //##############//
 
     public override string task_summary() =>
-        "Researching " + tech_tree.reseach_project() +
+        "Researching " + tech_tree.current_research_project() +
         " at " + GetComponentInParent<item>().display_name;
 
     float work_done;
     float time_researching;
     settler_animations.simple_work work_anim;
 
-    protected override bool ready_to_assign(settler s) => tech_tree.research_project_set();
+    protected override bool ready_to_assign(settler s)
+    {
+        var tech = tech_tree.current_research_technology();
+        if (tech == null)
+            return false;
+
+        return true;
+    }
 
     protected override void on_arrive(settler s)
     {

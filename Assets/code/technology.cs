@@ -20,6 +20,17 @@ public class technology : MonoBehaviour
         }
     }
 
+    public bool materials_available
+    {
+        get
+        {
+            foreach (var material in GetComponentsInChildren<research_material_ingredient>())
+                if (tech_tree.research_materials_count(material.material) < material.count)
+                    return false;
+            return true;
+        }
+    }
+
     public HashSet<technology> depends_on_set
     {
         get

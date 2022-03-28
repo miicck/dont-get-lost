@@ -59,7 +59,7 @@ public class tech_tree : networked
     static tech_tree loaded_tech_tree;
     static RectTransform tech_tree_ui;
 
-    public static void set_research(string name)
+    public static void set_research(technology t)
     {
         if (loaded_tech_tree == null)
         {
@@ -67,7 +67,10 @@ public class tech_tree : networked
             return;
         }
 
-        loaded_tech_tree.currently_researching.value = name;
+        foreach (var material in t.GetComponentsInChildren<research_material_ingredient>())
+            loaded_tech_tree.research_materials[material.material.name] -= material.count;
+
+        loaded_tech_tree.currently_researching.value = t.name;
     }
 
     public static void perform_research(int amount)
@@ -91,6 +94,17 @@ public class tech_tree : networked
         }
 
         loaded_tech_tree.research_materials[material.name] += count;
+    }
+
+    public static int research_materials_count(research_material material)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to count research materials before tech tree loaded");
+            return 0;
+        }
+
+        return loaded_tech_tree.research_materials[material.name];
     }
 
     public static void perform_research(string topic, int amount)
@@ -144,7 +158,7 @@ public class tech_tree : networked
         return loaded_tech_tree.currently_researching.value != "";
     }
 
-    public static string reseach_project()
+    public static string current_research_project()
     {
         if (loaded_tech_tree == null)
         {
@@ -153,6 +167,21 @@ public class tech_tree : networked
         }
 
         return loaded_tech_tree.currently_researching.value.Replace('_', ' ');
+    }
+
+    public static technology current_research_technology()
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to get research project before tech tree loaded");
+            return null;
+        }
+
+        foreach (var t in technology.all)
+            if (t.name == loaded_tech_tree.currently_researching.value)
+                return t;
+
+        return null;
     }
 
     public static bool current_research_complete()
@@ -218,17 +247,23 @@ public class tech_tree : networked
                     button_text.text = "Complete";
                     button.interactable = false;
                 }
-                else if (tech.prerequisites_complete)
+                else if (!tech.prerequisites_complete)
+                {
+                    // Prerequisites not met
+                    button_text.text = "Requirements not met";
+                    button.interactable = false;
+                }
+                else if (!tech.materials_available)
+                {
+                    // Materials not available
+                    button_text.text = "Materials missing";
+                    button.interactable = false;
+                }
+                else
                 {
                     // Available research
                     button_text.text = "Research";
                     button.interactable = true;
-                }
-                else
-                {
-                    // Prerequisites not met
-                    button_text.text = "Unavailable";
-                    button.interactable = false;
                 }
             }
         }
@@ -242,7 +277,7 @@ public class tech_tree : networked
 
     public static RectTransform generate_tech_tree()
     {
-        const int SPACING = 128;
+        const int SPACING = 196;
         const int ARROW_WIDTH = 4;
 
         if (tech_tree_ui != null)
@@ -265,7 +300,7 @@ public class tech_tree : networked
         }
 
         // Destroy the template
-        Object.Destroy(material_template.gameObject);
+        Destroy(material_template.gameObject);
 
         // Load the technologies + init coordinates
         tech_tree_layout_engine layout = new swapper_layout_engine(technology.all);
@@ -279,9 +314,28 @@ public class tech_tree : networked
             var t = kv.Key;
             var tt = tech_template.inst().GetComponent<RectTransform>();
             tt.SetParent(tech_template.parent);
-            tt.get_child_with_name<UnityEngine.UI.Image>("sprite").sprite = t.sprite;
-            tt.get_child_with_name<UnityEngine.UI.Text>("text").text = t.name.Replace('_', '\n').capitalize();
-            tt.get_child_with_name<UnityEngine.UI.Button>("research_button").onClick.AddListener(() => set_research(t.name));
+
+            // Set spite
+            tt.get_child_with_name<UnityEngine.UI.Image>("technology_sprite").sprite = t.sprite;
+
+            // Set title/button action
+            var info_area = tt.Find("info_area");
+            info_area.get_child_with_name<UnityEngine.UI.Text>("title").text = t.name.Replace('_', '\n').capitalize();
+            info_area.get_child_with_name<UnityEngine.UI.Button>("research_button").onClick.AddListener(() => set_research(t));
+
+            // Create a material requirement entry for each research material needed
+            var material_requirement_template = info_area.Find("material_requirement");
+            foreach (var ingredient in t.GetComponentsInChildren<research_material_ingredient>())
+            {
+                var ing_requirement = material_requirement_template.inst();
+                ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
+                ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = ingredient.material.sprite;
+                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString();
+            }
+
+            // Destroy material requirement template
+            Destroy(material_requirement_template.gameObject);
+
             tt.name = t.name;
 
             // Position according to coordinates
