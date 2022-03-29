@@ -1,56 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &295528855127737387
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1422234809516931202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ecb1e6d870d9144486e8ee96c773207, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  character: {fileID: 4603360869218414446}
-  hip: {fileID: 7580568559587314714}
-  knee: {fileID: 6109550916183943926}
-  ankle: {fileID: 3954099451909097370}
-  foot_base: {fileID: 2582591270246466523}
-  knees_bend_backward: 0
-  following: {fileID: 1678239474845649265}
-  following_phase: 1
-  min_step_length_boost: 0.5
-  max_step_length_boost: 1
-  max_boost_at_speed: 4
-  max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
-  play_footsteps: 1
-  min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
-  step_length_boost: 0
-  state: 0
---- !u!114 &5769069357815354398
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1877538863259066079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cabaef7eb71ea84b884de03941cd7db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bob_amplitude: 0.05
-  lean_into_run_amount: 0
-  lean_lerp_speed: 5
-  lean_velocity_scale: 5
-  character: {fileID: 4603360869218414446}
-  head: {fileID: 6961652481852150451}
-  head_bob_amt: 0.5
-  head_lean_inherit_amt: 0
 --- !u!1 &7092091482070332179
 GameObject:
   m_ObjectHideFlags: 0
@@ -61,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4603360869218414446}
   - component: {fileID: 2666255444257158699}
+  - component: {fileID: 3517426323207309966}
   m_Layer: 0
   m_Name: nali_cow
   m_TagString: Untagged
@@ -78,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2349277287341118198}
   m_Father: {fileID: 0}
@@ -106,44 +57,29 @@ MonoBehaviour:
   can_walk: 1
   can_swim: 0
   align_to_terrain: 0
+  align_to_terrain_amount: 1
   max_health: 400
   friendliness: 1
   attack_range: 0.72
   attack_time: 1
-  attack_cooldown: 1
   attack_damage: 50
-  dont_despawn_automatically: 0
---- !u!114 &1678239474845649265
+--- !u!114 &3517426323207309966
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8700716623784334494}
+  m_GameObject: {fileID: 7092091482070332179}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ecb1e6d870d9144486e8ee96c773207, type: 3}
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  character: {fileID: 4603360869218414446}
-  hip: {fileID: 6017649070601851628}
-  knee: {fileID: 5111729011762622268}
-  ankle: {fileID: 240764571751548201}
-  foot_base: {fileID: 3227243190056110598}
-  knees_bend_backward: 0
-  following: {fileID: 0}
-  following_phase: 1
-  min_step_length_boost: 0.5
-  max_step_length_boost: 1
-  max_boost_at_speed: 4
-  max_leg_stretch: 1.5
-  custom_footstep_sound: {fileID: 0}
-  footstep_volume_multiplier: 1
-  play_footsteps: 1
-  min_footstep_pitch: 0.95
-  max_footsetp_pitch: 1.05
-  step_length_boost: 0
-  state: 0
+  mode: 2
+  item: {fileID: 4183447387819725491, guid: 33ba47d14ba512a489a438dbd4b640f8, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 4
 --- !u!1001 &2815020537152091421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -261,34 +197,91 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 6cc420ba63c18eb44bf518ed81b82b0a, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
---- !u!4 &2349277287341118198 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1877538863259066079 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -4819223349682164798, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6961652481852150451 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -4067818846581250130, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &8700716623784334494 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -2328411686548971133, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &240764571751548201 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6609128825158553548, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
   m_PrefabInstance: {fileID: 2815020537152091421}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1422234809516931202 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5427896081372246625, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &295528855127737387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422234809516931202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ecb1e6d870d9144486e8ee96c773207, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  character: {fileID: 4603360869218414446}
+  hip: {fileID: 7580568559587314714}
+  knee: {fileID: 6109550916183943926}
+  ankle: {fileID: 3954099451909097370}
+  foot_base: {fileID: 2582591270246466523}
+  knees_bend_backward: 0
+  following: {fileID: 1678239474845649265}
+  following_phase: 1
+  min_step_length_boost: 0.5
+  max_step_length_boost: 1
+  max_boost_at_speed: 4
+  max_leg_stretch: 1.5
+  custom_footstep_sound: {fileID: 0}
+  footstep_volume_multiplier: 1
+  play_footsteps: 1
+  min_footstep_pitch: 0.95
+  max_footsetp_pitch: 1.05
+  step_length_boost: 0
+  state: 0
+--- !u!1 &1877538863259066079 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4819223349682164798, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5769069357815354398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1877538863259066079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cabaef7eb71ea84b884de03941cd7db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bob_amplitude: 0.05
+  lean_into_run_amount: 0
+  lean_with_arms_amount: 45
+  lean_lerp_speed: 5
+  lean_velocity_scale: 5
+  character: {fileID: 4603360869218414446}
+  head: {fileID: 6961652481852150451}
+  head_bob_amt: 0.5
+  head_lean_inherit_amt: 0
+--- !u!4 &2349277287341118198 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2582591270246466523 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 344458645677930182, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3227243190056110598 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8369501379572072677, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3954099451909097370 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -7940058606932921721, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
   m_PrefabInstance: {fileID: 2815020537152091421}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5111729011762622268 stripped
@@ -301,24 +294,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8399791312958646257, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
   m_PrefabInstance: {fileID: 2815020537152091421}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1422234809516931202 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -5427896081372246625, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3954099451909097370 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -7940058606932921721, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &2582591270246466523 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 344458645677930182, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
-  m_PrefabInstance: {fileID: 2815020537152091421}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6109550916183943926 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8347855614326562795, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6961652481852150451 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -4067818846581250130, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
   m_PrefabInstance: {fileID: 2815020537152091421}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7580568559587314714 stripped
@@ -326,3 +309,39 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -3592921753953535737, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
   m_PrefabInstance: {fileID: 2815020537152091421}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8700716623784334494 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -2328411686548971133, guid: 43bd6d94a5d4be24a8f062d95c988bd4, type: 3}
+  m_PrefabInstance: {fileID: 2815020537152091421}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1678239474845649265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8700716623784334494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ecb1e6d870d9144486e8ee96c773207, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  character: {fileID: 4603360869218414446}
+  hip: {fileID: 6017649070601851628}
+  knee: {fileID: 5111729011762622268}
+  ankle: {fileID: 240764571751548201}
+  foot_base: {fileID: 3227243190056110598}
+  knees_bend_backward: 0
+  following: {fileID: 0}
+  following_phase: 1
+  min_step_length_boost: 0.5
+  max_step_length_boost: 1
+  max_boost_at_speed: 4
+  max_leg_stretch: 1.5
+  custom_footstep_sound: {fileID: 0}
+  footstep_volume_multiplier: 1
+  play_footsteps: 1
+  min_footstep_pitch: 0.95
+  max_footsetp_pitch: 1.05
+  step_length_boost: 0
+  state: 0

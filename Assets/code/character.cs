@@ -794,6 +794,23 @@ public class character : networked,
 
     public float resolution => pathfinding_resolution;
 
+    //##########//
+    // PRODUCTS //
+    //##########//
+
+    public class looting_products : product_list_recipe_info
+    {
+        public looting_products(IEnumerable<product> products) : base(products) { }
+        public override string recipe_book_string() => "Loot -> " + product.product_quantities_list(new List<product>(products));
+        public override float average_ingredients_value() => 0f;
+    }
+
+    public IRecipeInfo looting_products_recipe()
+    {
+        var products = GetComponentsInChildren<product>();
+        return products.Length == 0 ? null : new looting_products(products);
+    }
+
     //##############//
     // STATIC STUFF //
     //##############//

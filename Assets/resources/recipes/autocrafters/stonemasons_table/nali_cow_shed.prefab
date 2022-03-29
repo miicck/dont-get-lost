@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 37089541926742898}
   - component: {fileID: -5679323752785919595}
   - component: {fileID: -5453459046105753157}
+  - component: {fileID: -4594834698199278899}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
   m_Name: nali_cow_shed
@@ -89,6 +90,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: -8692857590867439196, guid: 92985e3112b2b0a42a8366f12ced8f57, type: 3}
+  count: 1
+--- !u!114 &-4594834698199278899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 4183447387819725491, guid: 33ba47d14ba512a489a438dbd4b640f8, type: 3}
   count: 1
 --- !u!114 &4228508087393313574
 MonoBehaviour:

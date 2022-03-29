@@ -209,6 +209,13 @@ public class recipe : MonoBehaviour, IRecipeInfo
         foreach (var ls in Resources.LoadAll<livestock_shelter>("items"))
             ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ls.name, new IRecipeInfo[] { ls }));
 
+        foreach (var c in Resources.LoadAll<character>("characters"))
+        {
+            var r = c.looting_products_recipe();
+            if (r != null)
+                ret.Add(new KeyValuePair<string, IRecipeInfo[]>(c.name, new IRecipeInfo[] { r }));
+        }
+
         return ret;
     }
 
@@ -397,4 +404,21 @@ public interface IRecipeInfo
     public string recipe_book_string();
     public float average_amount_produced(item i);
     public float average_ingredients_value();
+}
+
+public abstract class product_list_recipe_info : IRecipeInfo
+{
+    protected IEnumerable<product> products;
+
+    public product_list_recipe_info(IEnumerable<product> products) => this.products = products;
+    public abstract string recipe_book_string();
+    public abstract float average_ingredients_value();
+
+    public float average_amount_produced(item i)
+    {
+        float total = 0;
+        foreach (var p in products)
+            total += p.average_amount_produced(i);
+        return total;
+    }
 }

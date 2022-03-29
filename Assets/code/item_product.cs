@@ -89,7 +89,7 @@ public class item_product : product
                 else
                     ret += " " + item.display_name;
 
-                ret += " with a one in " + one_in_chance + " chance";
+                ret += " with a 1 in " + one_in_chance + " chance";
                 return ret;
 
             default:
