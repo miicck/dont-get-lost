@@ -170,6 +170,7 @@ items/gold_ore 1 True
 items/autominer 1 True
 items/bun_hairstyle 1 True
 characters/nali_cow 1 False
+items/lilypad 1 True
 items/rutile 1 True
 items/apple 1 True
 characters/wandering_trader 1 False

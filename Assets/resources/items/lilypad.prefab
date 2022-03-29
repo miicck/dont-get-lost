@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1713269341030616956
+--- !u!1 &6718553397662222643
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,62 +8,54 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8782014484744544450}
-  - component: {fileID: 3342996427026798166}
+  - component: {fileID: 7679421885878977236}
+  - component: {fileID: 7538032890913379854}
   m_Layer: 0
-  m_Name: lillypad
+  m_Name: lilypad
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8782014484744544450
+--- !u!4 &7679421885878977236
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1713269341030616956}
+  m_GameObject: {fileID: 6718553397662222643}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4866356553979106867}
+  - {fileID: 3548163850430050293}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3342996427026798166
+--- !u!114 &7538032890913379854
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1713269341030616956}
+  m_GameObject: {fileID: 6718553397662222643}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f48dae39d525c94ea59cee29b94c29d, type: 3}
+  m_Script: {fileID: 11500000, guid: 903b1dc3e35740745b29ffa62f5abdb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  align_with_terrain_normal: 0
-  y_rotation_mode: 1
-  min_scale: 0.5
-  max_scale: 4
-  seperate_xz_scale: 0
-  min_altitude: 0
-  max_altitude: 128
-  max_terrain_angle: 90
-  min_terrain_angle: 0
-  random_move_amplitude: 0
-  inherit_terrain_color: 0
-  fixed_altitude: 16.01
-  randomize_color_on: {fileID: 0}
---- !u!1001 &500587089348803881
+  is_client_side: 0
+  sprite: {fileID: 21300000, guid: 2e5736d53b1160d4cb55336e4c09fc07, type: 3}
+  plural: lillypads
+  value: 0
+  fuel_value: 0
+--- !u!1001 &8378710675557074159
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 8782014484744544450}
+    m_TransformParent: {fileID: 7679421885878977236}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
       propertyPath: m_RootOrder
@@ -71,15 +63,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 25.791277
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 25.791277
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 25.791277
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -131,45 +123,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
---- !u!4 &4866356553979106867 stripped
+--- !u!4 &3548163850430050293 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
-  m_PrefabInstance: {fileID: 500587089348803881}
+  m_PrefabInstance: {fileID: 8378710675557074159}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &8490301625800811552 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
-  m_PrefabInstance: {fileID: 500587089348803881}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &5606418906397054111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8490301625800811552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mode: 0
-  item: {fileID: 7538032890913379854, guid: cbe0518c6f2e9694785612b6e73326d7, type: 3}
-  min_count: 1
-  max_count: 1
-  one_in_chance: 1
---- !u!114 &231309357585781235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8490301625800811552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd2930d42479a5e4caf62938a315f4ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
-  regrow_time: 1
-  play_on_pick_volume: 1
