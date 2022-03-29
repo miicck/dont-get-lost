@@ -58,7 +58,7 @@ MonoBehaviour:
   can_swim: 0
   align_to_terrain: 0
   align_to_terrain_amount: 1
-  max_health: 400
+  max_health: 100
   friendliness: 1
   attack_range: 0.72
   attack_time: 1
