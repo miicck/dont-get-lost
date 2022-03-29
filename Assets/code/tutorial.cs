@@ -375,7 +375,8 @@ public static class tutorial
                     "remember to check the hints in the bottom right\n" +
                     "of the screen, or have a look in the help book by\n" +
                     "pressing "+controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK)+".\n\n"+
-                    "Good luck!")
+                    "Good luck!",
+                    on_confirm: advance_stage)
             };
             return _tutorial_stages;
         }
