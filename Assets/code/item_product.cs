@@ -88,7 +88,7 @@ public class item_product : product
                     ret += " " + item.plural;
                 else
                     ret += " " + item.display_name;
-
+                    
                 ret += " with a 1 in " + one_in_chance + " chance";
                 return ret;
 
