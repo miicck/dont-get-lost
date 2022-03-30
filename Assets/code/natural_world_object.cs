@@ -15,8 +15,8 @@ public class natural_world_object : world_object
     public bool inherit_terrain_color = false;
     public float fixed_altitude = -1;
     public Renderer randomize_color_on;
-    public Vector3 min_scales;
-    public Vector3 max_scales;
+    public Vector3 min_scales = Vector3.one;
+    public Vector3 max_scales = Vector3.one;
     public bool seperate_scale_factor = false;
 
     // The way that y rotation is chosen for this object

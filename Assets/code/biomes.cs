@@ -1627,8 +1627,8 @@ public class rock_tiers : biome
 
             p.altitude = world.SEA_LEVEL + alt * 32f;
 
-            int MIN_ROCK_SPACING = 4;
-            int MAX_ROCK_SPACING = 16;
+            const int MIN_ROCK_SPACING = 4;
+            const int MAX_ROCK_SPACING = 16;
 
             int rock_spacing = MIN_ROCK_SPACING + (int)(perlin(i / 32f + 0.5f, j / 32f + 0.5f) *
                 (MAX_ROCK_SPACING - MIN_ROCK_SPACING));
@@ -1655,6 +1655,47 @@ public class rock_tiers : biome
                         p.object_to_generate = world_object.load("rock_tier_short");
                         break;
                 }
+            }
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}
+
+public class multi_layer_forest : biome
+{
+    int i_stage = 0;
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.fog_distance = fog_distances.FAR;
+            p.altitude = world.SEA_LEVEL + (perlin(i / 32f, j / 32f) - 0.5f) * 2 * 4;
+
+            const int CANOPY_DENSITY = 4 * 4;
+            const int CANOPY_SPACING = 2;
+
+            if (i % CANOPY_SPACING == 0 && j % CANOPY_SPACING == 0)
+            {
+                if (random.range(0, CANOPY_DENSITY) == 0)
+                    p.object_to_generate = world_object.load("forest_canopy_level_1");
+                else if (random.range(0, CANOPY_DENSITY) == 0)
+                    p.object_to_generate = world_object.load("forest_canopy_level_2");
+                else if (random.range(0, CANOPY_DENSITY) == 0)
+                    p.object_to_generate = world_object.load("forest_canopy_level_3");
+            }
+
+            const int TRUNK_DENSITY = 4 * 4;
+            const int TRUNK_SPACING = 4;
+
+            if (i % TRUNK_SPACING == 0 && j % TRUNK_SPACING == 0)
+            {
+                if (random.range(0, TRUNK_DENSITY) == 0)
+                    p.object_to_generate = world_object.load("forest_canopy_trunk");
             }
         }
 
