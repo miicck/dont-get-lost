@@ -52,7 +52,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 1
   max_scale: 2
-  seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -61,6 +60,8 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 1, y: 1, z: 1}
+  max_scales: {x: 2, y: 2, z: 2}
 --- !u!1001 &713696020102275762
 PrefabInstance:
   m_ObjectHideFlags: 0

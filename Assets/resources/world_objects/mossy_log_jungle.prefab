@@ -50,7 +50,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 0.6
   max_scale: 2
-  seperate_xz_scale: 0
   min_altitude: 15
   max_altitude: 128
   max_terrain_angle: 45
@@ -59,6 +58,8 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 0.6, y: 0.6, z: 0.6}
+  max_scales: {x: 2, y: 2, z: 2}
 --- !u!1001 &1601123869518887838
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -365,6 +366,18 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -5259225927154676129, guid: 1f4a8cc029521ac4b9d238bdfa81c253, type: 3}
   m_PrefabInstance: {fileID: 6525910854893678198}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3610470123546739002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7895875275175911465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &5477648729387694251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -398,15 +411,3 @@ MonoBehaviour:
   item: {fileID: 0}
   tool_type: 0
   tool_quality: 0
---- !u!114 &3610470123546739002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7895875275175911465}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

@@ -7,9 +7,6 @@ public class natural_world_object : world_object
     // Variables specifying how this world object is placed
     public float align_with_terrain_normal = 0f;
     public Y_ROTATION_MODE y_rotation_mode;
-    public float min_scale = 0.5f;
-    public float max_scale = 2.0f;
-    public bool seperate_xz_scale = false;
     public float min_altitude = world.SEA_LEVEL;
     public float max_altitude = world.MAX_ALTITUDE;
     public float max_terrain_angle = 90f;
@@ -18,6 +15,9 @@ public class natural_world_object : world_object
     public bool inherit_terrain_color = false;
     public float fixed_altitude = -1;
     public Renderer randomize_color_on;
+    public Vector3 min_scales;
+    public Vector3 max_scales;
+    public bool seperate_scale_factor = false;
 
     // The way that y rotation is chosen for this object
     public enum Y_ROTATION_MODE
@@ -79,12 +79,23 @@ public class natural_world_object : world_object
         carry_out_terrain_alignment(terrain_normal, point);
 
         // Generate the scale
-        Vector3 local_scale = Vector3.one * chunk.random.range(min_scale, max_scale);
-
-        if (seperate_xz_scale)
-            local_scale.y = chunk.random.range(min_scale, max_scale);
-
-        transform.localScale = local_scale;
+        if (seperate_scale_factor)
+        {
+            transform.localScale = new Vector3(
+                chunk.random.range(min_scales.x, max_scales.x),
+                chunk.random.range(min_scales.y, max_scales.y),
+                chunk.random.range(min_scales.z, max_scales.z)
+            );
+        }
+        else
+        {
+            float sf = chunk.random.range(0, 1f);
+            transform.localScale = new Vector3(
+                min_scales.x * (1 - sf) + max_scales.x * sf,
+                min_scales.y * (1 - sf) + max_scales.y * sf,
+                min_scales.z * (1 - sf) + max_scales.z * sf
+            );
+        }
 
         // Generate random y rotation
         if (y_rotation_mode == Y_ROTATION_MODE.RANDOM)
@@ -109,4 +120,18 @@ public class natural_world_object : world_object
         // Stop z-fighting
         transform.position += Random.insideUnitSphere * 0.001f;
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomEditor(typeof(natural_world_object), true)]
+    [UnityEditor.CanEditMultipleObjects]
+    class editor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            var wo = (natural_world_object)target;
+        }
+    }
+#endif
+
 }

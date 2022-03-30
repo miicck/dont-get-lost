@@ -1601,3 +1601,63 @@ public class big_trees : biome
         return ++i_stage >= SIZE;
     }
 }
+
+public class rock_tiers : biome
+{
+    int i_stage = 0;
+    Color grass_color;
+
+    protected override void on_start_generate_grid()
+    {
+        grass_color = Resources.Load<Material>("materials/standard_shader/foliage").color;
+        base.on_start_generate_grid();
+    }
+
+    protected override bool continue_generate_grid()
+    {
+        int i = i_stage;
+        for (int j = 0; j < SIZE; ++j)
+        {
+            var p = grid[i, j] = new point();
+            p.fog_distance = fog_distances.FAR;
+            p.terrain_color = grass_color;
+
+            float alt = 2f * (perlin(i / 256f, j / 256f) - 0.5f);
+            alt += perlin(i / 32f, j / 32f) - 0.5f;
+
+            p.altitude = world.SEA_LEVEL + alt * 32f;
+
+            int MIN_ROCK_SPACING = 4;
+            int MAX_ROCK_SPACING = 16;
+
+            int rock_spacing = MIN_ROCK_SPACING + (int)(perlin(i / 32f + 0.5f, j / 32f + 0.5f) *
+                (MAX_ROCK_SPACING - MIN_ROCK_SPACING));
+
+            if (rock_spacing < (MIN_ROCK_SPACING + MAX_ROCK_SPACING) / 2)
+            {
+                if (random.range(0, 12 * 12) == 0)
+                    p.object_to_generate = world_object.load("tree");
+            }
+
+            if (i % rock_spacing == 0 && j % rock_spacing == 0)
+            {
+                switch (random.range(0, 5))
+                {
+                    case 0:
+                        p.object_to_generate = world_object.load("rock_tier_tall");
+                        break;
+                    case 1:
+                    case 2:
+                        p.object_to_generate = world_object.load("rock_tier_medium");
+                        break;
+                    case 3:
+                    case 4:
+                        p.object_to_generate = world_object.load("rock_tier_short");
+                        break;
+                }
+            }
+        }
+
+        return ++i_stage >= SIZE;
+    }
+}

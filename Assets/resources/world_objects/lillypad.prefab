@@ -49,7 +49,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 0.5
   max_scale: 4
-  seperate_xz_scale: 0
   min_altitude: 0
   max_altitude: 128
   max_terrain_angle: 90
@@ -58,6 +57,8 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: 16.01
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 0.5, y: 0.5, z: 0.5}
+  max_scales: {x: 4, y: 4, z: 4}
 --- !u!1001 &500587089348803881
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -141,6 +142,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
   m_PrefabInstance: {fileID: 500587089348803881}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &231309357585781235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8490301625800811552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd2930d42479a5e4caf62938a315f4ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
+  regrow_time: 1
+  play_on_pick_volume: 1
 --- !u!114 &5606418906397054111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,18 +174,3 @@ MonoBehaviour:
   min_count: 1
   max_count: 1
   one_in_chance: 1
---- !u!114 &231309357585781235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8490301625800811552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd2930d42479a5e4caf62938a315f4ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  play_on_pick: {fileID: 8300000, guid: 3a72b85969e32564488646dcfc9366b5, type: 3}
-  regrow_time: 1
-  play_on_pick_volume: 1

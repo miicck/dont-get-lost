@@ -49,7 +49,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 0.5
   max_scale: 1
-  seperate_xz_scale: 0
   min_altitude: 15
   max_altitude: 128
   max_terrain_angle: 90
@@ -58,6 +57,8 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 0.5, y: 0.5, z: 0.5}
+  max_scales: {x: 1, y: 1, z: 1}
 --- !u!1001 &6825833617630692395
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -132,23 +133,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -8380157826906577798, guid: 6545c084bc06a8e47b26a5cec2f93b7e, type: 3}
   m_PrefabInstance: {fileID: 6825833617630692395}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7787333575261829625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6127579785897582673}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mode: 0
-  item: {fileID: 7606961425758704865, guid: 84f037eb978057a458e1d4f90815026f, type: 3}
-  min_count: 1
-  max_count: 1
-  one_in_chance: 1
 --- !u!114 &1228809813078614903
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,6 +161,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7787333575261829625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6127579785897582673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 7606961425758704865, guid: 84f037eb978057a458e1d4f90815026f, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
 --- !u!1 &6140191962060174927 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8391222552659086748, guid: 6545c084bc06a8e47b26a5cec2f93b7e, type: 3}

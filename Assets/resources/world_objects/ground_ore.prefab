@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0.70710677, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: -0.057, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 2.5577}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2351342042282700221}
   m_RootOrder: 0
@@ -72,6 +73,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7470388408431155303}
   m_Father: {fileID: 0}
@@ -93,7 +95,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 1
   max_scale: 2
-  seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -102,3 +103,5 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 1, y: 1, z: 1}
+  max_scales: {x: 2, y: 2, z: 2}

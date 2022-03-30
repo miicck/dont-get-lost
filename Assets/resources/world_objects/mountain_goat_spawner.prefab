@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3636714361821698741}
-  - component: {fileID: 6719483231515099090}
   - component: {fileID: 2562198590697230589}
+  - component: {fileID: 6719483231515099090}
   m_Layer: 0
   m_Name: mountain_goat_spawner
   m_TagString: Untagged
@@ -28,23 +28,11 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6719483231515099090
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5082270190698662310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  to_spawn: {fileID: 5494109623048713752, guid: 4203d1cd2f31fa344abe6fb30ace8066, type: 3}
 --- !u!114 &2562198590697230589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,7 +49,6 @@ MonoBehaviour:
   y_rotation_mode: 1
   min_scale: 1
   max_scale: 1.5
-  seperate_xz_scale: 0
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -70,3 +57,18 @@ MonoBehaviour:
   inherit_terrain_color: 0
   fixed_altitude: -1
   randomize_color_on: {fileID: 0}
+  min_scales: {x: 1, y: 1, z: 1}
+  max_scales: {x: 1.5, y: 1.5, z: 1.5}
+--- !u!114 &6719483231515099090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5082270190698662310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43279cbf5b928006ea6326c8b2657cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  to_spawn: {fileID: 5494109623048713752, guid: 4203d1cd2f31fa344abe6fb30ace8066, type: 3}
