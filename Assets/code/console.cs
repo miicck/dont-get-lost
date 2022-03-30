@@ -1124,6 +1124,18 @@ public class console : MonoBehaviour
 
             description = "Destroy all built buildings.",
             usage_example = "delete_all_buildings"
+        },
+
+        ["count_items"] = new console_info
+        {
+            command = (args) =>
+            {
+                popup_message.create("There are " + Resources.LoadAll<item>("items").Length + " items in the game");
+                return true;
+            },
+
+            description = "Dispay statistics on the number of unique items in the game.",
+            usage_example = "count_items"
         }
     };
 
