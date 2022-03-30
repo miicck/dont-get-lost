@@ -110,6 +110,7 @@ items/filter_splitter 1 True
 items/carpentry_bench 1 True
 misc/networked_inventory_slot 1 True
 mood_effects/partially_covered_bed 1 True
+items/vines 1 True
 items/iron_ore 1 True
 characters/thin_zombie 1 False
 inventories/sack 1 True
