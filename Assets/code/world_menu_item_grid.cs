@@ -4,8 +4,12 @@ using UnityEngine;
 
 public class world_menu_item_grid : MonoBehaviour
 {
+    public bool reverse_direction = false;
+
     class image_scroller : MonoBehaviour
     {
+        public bool reverse_direction = false;
+
         RectTransform rect_transform;
         UnityEngine.UI.Image image;
 
@@ -19,17 +23,32 @@ public class world_menu_item_grid : MonoBehaviour
         void switch_sprite()
         {
             var items = Resources.LoadAll<item>("items");
-            image.sprite = items[Random.Range(0, items.Length)].sprite;
+            image.sprite = null;
+            while (image.sprite == null)
+                image.sprite = items[Random.Range(0, items.Length)].sprite;
         }
 
         private void Update()
         {
-            rect_transform.anchoredPosition -= 64 * Vector2.right * Time.deltaTime;
-
-            if (rect_transform.anchoredPosition.x < -64)
+            if (reverse_direction)
             {
-                rect_transform.anchoredPosition = new Vector2(Screen.currentResolution.width, 0);
-                switch_sprite();
+                rect_transform.anchoredPosition += 64 * Vector2.right * Time.deltaTime;
+
+                if (rect_transform.anchoredPosition.x > Screen.currentResolution.width)
+                {
+                    rect_transform.anchoredPosition = new Vector2(-64, 0);
+                    switch_sprite();
+                }
+            }
+            else
+            {
+                rect_transform.anchoredPosition -= 64 * Vector2.right * Time.deltaTime;
+
+                if (rect_transform.anchoredPosition.x < -64)
+                {
+                    rect_transform.anchoredPosition = new Vector2(Screen.currentResolution.width, 0);
+                    switch_sprite();
+                }
             }
         }
     }
@@ -43,7 +62,8 @@ public class world_menu_item_grid : MonoBehaviour
         {
             var image = template.inst();
             image.transform.SetParent(transform);
-            image.gameObject.AddComponent<image_scroller>();
+            var scroller = image.gameObject.AddComponent<image_scroller>();
+            scroller.reverse_direction = reverse_direction;
             image.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 64, 0);
         }
 

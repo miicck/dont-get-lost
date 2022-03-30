@@ -1590,7 +1590,7 @@ GameObject:
   - component: {fileID: 719584957}
   - component: {fileID: 719584956}
   m_Layer: 5
-  m_Name: item_grid (1)
+  m_Name: item_grid_top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1629,6 +1629,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc38cc1ab0983554ab674c8459e05b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  reverse_direction: 1
 --- !u!222 &719584957
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3103,7 +3104,7 @@ GameObject:
   - component: {fileID: 1703712294}
   - component: {fileID: 1703712292}
   m_Layer: 5
-  m_Name: item_grid
+  m_Name: item_grid_bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3142,6 +3143,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc38cc1ab0983554ab674c8459e05b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  reverse_direction: 0
 --- !u!222 &1703712294
 CanvasRenderer:
   m_ObjectHideFlags: 0
