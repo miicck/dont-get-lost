@@ -23,7 +23,7 @@ public class inventory_slot_button : MonoBehaviour, UnityEngine.EventSystems.IPo
 }
 
 /// <summary> The UI version of an inventory slot. </summary>
-public class inventory_slot : MonoBehaviour, IPlayerInteractable
+public class inventory_slot : MonoBehaviour, IPlayerInteractable, IMouseTextUI
 {
     public Image item_image;
     public Button button;
@@ -70,6 +70,12 @@ public class inventory_slot : MonoBehaviour, IPlayerInteractable
 
     /// <summary> Returns true if <paramref name="item"/> can be put in this slot. </summary>
     public virtual bool accepts(item item) { return true; }
+
+    //##############//
+    // IMouseTextUI //
+    //##############//
+
+    public string mouse_ui_text() => contents_display_name;
 
     //#####################//
     // IPlayerInteractable //

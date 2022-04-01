@@ -275,6 +275,12 @@ public class tech_tree : networked
                 "" + loaded_tech_tree.research_materials[material.name];
     }
 
+    public class technology_ui : MonoBehaviour, IMouseTextUI
+    {
+        public string text;
+        public string mouse_ui_text() => text;
+    }
+
     public static RectTransform generate_tech_tree()
     {
         const int SPACING = 196;
@@ -303,7 +309,7 @@ public class tech_tree : networked
         Destroy(material_template.gameObject);
 
         // Load the technologies + init coordinates
-        tech_tree_layout_engine layout = new swapper_layout_engine(technology.all);
+        tech_tree_layout_engine layout = new force_layout_engine(technology.all);
         var coords = layout.evaluate_coordinates();
         var content = tech_tree_ui.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
         var tech_template = content.GetChild(0);
@@ -316,7 +322,11 @@ public class tech_tree : networked
             tt.SetParent(tech_template.parent);
 
             // Set spite
-            tt.get_child_with_name<UnityEngine.UI.Image>("technology_sprite").sprite = t.sprite;
+            var tech_sprite = tt.get_child_with_name<UnityEngine.UI.Image>("technology_sprite");
+            tech_sprite.sprite = t.sprite;
+
+            var tech_ui = tech_sprite.gameObject.AddComponent<technology_ui>();
+            tech_ui.text = t.description;
 
             // Set title/button action
             var info_area = tt.Find("info_area");
@@ -330,7 +340,7 @@ public class tech_tree : networked
                 var ing_requirement = material_requirement_template.inst();
                 ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
                 ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = ingredient.material.sprite;
-                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString();
+                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString() + " " + ingredient.material.name;
             }
 
             // Destroy material requirement template
@@ -731,7 +741,7 @@ class force_layout_engine : tech_tree_layout_engine
             float dy = other.y - y;
             float r2 = dx * dx + dy * dy;
 
-            if (r2 < 1f)
+            if (r2 < 2f)
             {
                 // Nodes too close => repulsive foce
                 force_x += -dx / (r2 + 0.01f);

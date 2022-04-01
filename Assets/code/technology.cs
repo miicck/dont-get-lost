@@ -6,6 +6,7 @@ public class technology : MonoBehaviour
 {
     public List<technology> depends_on;
     public Sprite sprite;
+    public string description;
 
     public bool complete => tech_tree.research_complete(name);
 
@@ -47,7 +48,6 @@ public class technology : MonoBehaviour
     //##############//
     // STATIC STUFF //
     //##############//
-
 
     public static technology[] all => Resources.LoadAll<technology>("technologies");
 

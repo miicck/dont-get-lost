@@ -251,7 +251,7 @@ public static class utils
 
         foreach (var h in hits)
         {
-            var t = h.gameObject.GetComponentInChildren<T>();
+            var t = h.gameObject.GetComponent<T>();
             if (t != null)
             {
                 if (return_first) return new T[] { t };

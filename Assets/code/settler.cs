@@ -562,7 +562,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public static void try_spawn(int group, Vector3 location)
     {
-        if (Time.time < last_spawn_check + TIME_BETWEEN_SPAWN_CHECKS) return; // Wait until time to spawn again
+        // Wait until time to spawn again
+        if (Time.time < last_spawn_check + TIME_BETWEEN_SPAWN_CHECKS) return; 
         last_spawn_check = Time.time;
 
         if (group_info.under_attack(group)) return; // Don't spawn when under attack

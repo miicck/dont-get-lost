@@ -21,10 +21,14 @@ public class mouse_text : MonoBehaviour
         transform.SetAsLastSibling(); // Stay on top
         rect_transform.anchoredPosition = Input.mousePosition;
 
-        var slot = utils.raycast_ui_under_mouse<inventory_slot>();
-        if (slot != null && slot.contents_display_name != null)
-            text_element.text = slot.contents_display_name;
-        else
-            text_element.text = "";
+        var elements = utils.raycast_all_ui_under_mouse<IMouseTextUI>();
+        text_element.text = "";
+        foreach (var s in elements)
+            text_element.text += s.mouse_ui_text() + "\n";
     }
+}
+
+public interface IMouseTextUI
+{
+    public string mouse_ui_text();
 }
