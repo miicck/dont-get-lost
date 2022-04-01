@@ -86,6 +86,17 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return true;
     }
 
+    public void check_if_should_leave()
+    {
+        if (group_info.settlers(group).Count > group_info.bed_count(group))
+        {
+            // More settlers than beds - despawn the settler
+            temporary_object.create(60f).gameObject.add_pinned_message(
+                "The settler " + name + " left because there were too few beds!", Color.red);
+           delete();
+        }
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -126,6 +137,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Don't do anything if I'm interacting with players
         // Otherwise run my current interaction
         if (players_interacting_with.value > 0) return;
+
         interaction?.interact(this);
 
         GetComponentInChildren<facial_expression>().expression = current_expression();

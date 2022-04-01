@@ -84,8 +84,7 @@ public static class tutorial
                     "the crafting slots, press " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
                     " to open the recipe book \n" +
                     "and search for 'log splitter' in the top right.\n" +
-                    "Press enter to finish searching and " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) +
-                    "\nto close the recipe book again.",
+                    "Press " + controls.bind_name(controls.BIND.LEAVE_MENU) + " to close the recipe book.",
                     new Dictionary<string, int> {["log_splitter"] = 1}, advance_stage),
 
                 () => confirm_window.create(
@@ -181,7 +180,7 @@ public static class tutorial
                     advance_stage),
 
                 () => item_requirement_tracker.create(
-                    "Make some wooden path sections (press "+
+                    "Make wooden path (press "+
                     controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK)+ " for the recipe)",
                     new Dictionary<string, int>{["wooden_path"] = 10},
                     advance_stage),

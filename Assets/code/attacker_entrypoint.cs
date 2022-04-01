@@ -420,7 +420,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 case STAGE.PATHING_TO_TARGET: return "Pathfinding (to target)";
                 case STAGE.FIGHTING_TARGET: return "Fighting " + target?.name;
                 case STAGE.WALKING_TO_TARGET: return "Attacking " + target?.name;
-                case STAGE.PATHING_AWAY: return "Pathfinding (leaving)";
+                case STAGE.PATHING_AWAY: return "Pathfinding ()";
                 case STAGE.GOING_AWAY: return "Leaving";
                 default:
                     Debug.LogError("Unkown attack stage!");

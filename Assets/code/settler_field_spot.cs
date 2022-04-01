@@ -94,6 +94,7 @@ public class settler_field_spot : networked, IPlayerInteractable
 
     private void OnDrawGizmos()
     {
+        if (networked_progress == null) return;
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.color = Color.Lerp(Color.red, Color.green, networked_progress.value);
         Gizmos.DrawWireCube(Vector3.zero, new Vector3(1f, 0.05f, 1f));
