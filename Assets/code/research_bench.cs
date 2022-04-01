@@ -54,6 +54,13 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
         return time_researching > 60 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
+    public override string added_inspection_text()
+    {
+        return base.added_inspection_text() +
+            "\nResearching " + tech_tree.current_research_project() +
+            " (" + tech_tree.get_research_amount(tech_tree.current_research_project()) + " % complete)";
+    }
+
     //#####################//
     // IPlayerInteractable //
     //#####################//

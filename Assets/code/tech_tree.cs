@@ -87,6 +87,19 @@ public class tech_tree : networked
         loaded_tech_tree.currently_researching.value = t.name;
     }
 
+    public static int get_research_amount(string t)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to get research amount before tech tree loaded");
+            return 0;
+        }
+
+        return loaded_tech_tree.research_progress[t];
+    }
+
+    public static int get_research_amount(technology t) => get_research_amount(t.name);
+
     public static void perform_research(int amount)
     {
         if (loaded_tech_tree == null)
