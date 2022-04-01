@@ -59,6 +59,20 @@ public class tech_tree : networked
     static tech_tree loaded_tech_tree;
     static RectTransform tech_tree_ui;
 
+    public const int BASE_POPULATION_CAP = 10;
+
+    public static int population_cap
+    {
+        get
+        {
+            int cap = BASE_POPULATION_CAP;
+            foreach (var t in technology.all)
+                if (t.complete)
+                    cap += t.increased_population_cap;
+            return cap;
+        }
+    }
+
     public static void set_research(technology t)
     {
         if (loaded_tech_tree == null)
@@ -326,7 +340,7 @@ public class tech_tree : networked
             tech_sprite.sprite = t.sprite;
 
             var tech_ui = tech_sprite.gameObject.AddComponent<technology_ui>();
-            tech_ui.text = t.description;
+            tech_ui.text = t.info();
 
             // Set title/button action
             var info_area = tt.Find("info_area");

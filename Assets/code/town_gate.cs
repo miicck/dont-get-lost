@@ -63,9 +63,10 @@ public class town_gate : portal, IAddsToInspectionText
         }
 
         return
-        "Settlers     : " + set.Count + "\n" +
-        "Beds         : " + group_info.bed_count(path_element.group) + "\n" +
-        "Average mood : " + Mathf.RoundToInt(av_mood);
+        "Settlers       : " + set.Count + "\n" +
+        "Population cap : " + tech_tree.population_cap + "\n" +
+        "Beds           : " + group_info.bed_count(path_element.group) + "\n" +
+        "Average mood   : " + Mathf.RoundToInt(av_mood);
     }
 
     //##############//

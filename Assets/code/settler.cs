@@ -569,6 +569,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (group_info.under_attack(group)) return; // Don't spawn when under attack
 
         var set = get_settlers_by_group(group);
+        if (set.Count >= tech_tree.population_cap) return; // Hit population cap
         if (set.Count >= group_info.bed_count(group)) return; // Not enough beds
 
         foreach (var s in set)

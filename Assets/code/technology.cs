@@ -8,6 +8,23 @@ public class technology : MonoBehaviour
     public Sprite sprite;
     public string description;
 
+    public virtual string info()
+    {
+        string ret = description;
+        if (increased_population_cap > 0)
+            ret += "\nIncreses population cap by " + increased_population_cap;
+        return ret;
+    }
+
+    public int increased_population_cap
+    {
+        get
+        {
+            var ipc = GetComponent<increases_population_cap>();
+            return ipc == null ? 0 : ipc.increases_population_cap_by;
+        }
+    }
+
     public bool complete => tech_tree.research_complete(name);
 
     public bool prerequisites_complete
