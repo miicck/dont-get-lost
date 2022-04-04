@@ -420,7 +420,9 @@ public class item : networked, IPlayerInteractable
     float suggested_logistics_scale()
     {
         var b = visual_bounds();
-        return LOGISTICS_SIZE / Mathf.Max(b.size.x, b.size.y, b.size.z);
+        float max_size = Mathf.Max(b.size.x, b.size.y, b.size.z);
+        if (max_size < 10e-4) return 1f;
+        return LOGISTICS_SIZE / max_size;
     }
 
     private void OnDrawGizmosSelected()

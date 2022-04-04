@@ -13,7 +13,6 @@ TODO
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Pickup/dropoff points for settlers to move items around?
 - Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
-- Fuel value should be an attachable component, rather than a value for every item
 - Make it more obvious which side of a ladder is the front
 - Make time command work from non-auth clients
 - PvP hit markers

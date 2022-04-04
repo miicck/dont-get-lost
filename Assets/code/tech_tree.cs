@@ -136,6 +136,9 @@ public class tech_tree : networked
 
     public static void perform_research(string topic, int amount)
     {
+        if (topic.Length == 0)
+            return; // Researching the "" topic
+
         if (loaded_tech_tree == null)
         {
             Debug.LogError("Tried to perform research before tech tree loaded");
@@ -195,6 +198,8 @@ public class tech_tree : networked
 
         return loaded_tech_tree.currently_researching.value.Replace('_', ' ');
     }
+
+    public static bool researching() => current_research_project().Length > 0;
 
     public static technology current_research_technology()
     {
