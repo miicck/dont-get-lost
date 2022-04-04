@@ -13,6 +13,11 @@ public class technology : MonoBehaviour
         string ret = description;
         if (increased_population_cap > 0)
             ret += "\nIncreses population cap by " + increased_population_cap;
+
+        foreach (var i in Resources.LoadAll<item>("items"))
+            if (i.GetComponent<technology_requirement>()?.technology == this)
+                ret += "\nUnlocks " + i.display_name;
+
         return ret;
     }
 
