@@ -335,6 +335,9 @@ public class tech_tree : networked
             material_ui.find_child_recursive("sprite").GetComponent<UnityEngine.UI.Image>().sprite = m.sprite;
             material_ui.GetComponentInChildren<UnityEngine.UI.Text>().text = "0";
             material_ui.name = m.name;
+
+            // Add mouse-over text
+            material_ui.gameObject.AddComponent<technology_ui>().text = m.name.Replace('_', ' ');
         }
 
         // Destroy the template
@@ -372,7 +375,10 @@ public class tech_tree : networked
                 var ing_requirement = material_requirement_template.inst();
                 ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
                 ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = ingredient.material.sprite;
-                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString() + " " + ingredient.material.name;
+                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString();
+
+                // Add mouse-over text
+                ing_requirement.gameObject.AddComponent<technology_ui>().text = ingredient.material.name.Replace('_', ' ');
             }
 
             // Destroy material requirement template

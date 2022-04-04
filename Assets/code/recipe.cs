@@ -233,7 +233,7 @@ public class recipe : MonoBehaviour, IRecipeInfo
             foreach (var r in kv.Value)
             {
                 string line = r.recipe_book_string();
-                if (line.Contains(find))
+                if (line.Contains(find, System.StringComparison.InvariantCultureIgnoreCase))
                 {
                     entry += "  " + line + "\n";
                     found = true;
