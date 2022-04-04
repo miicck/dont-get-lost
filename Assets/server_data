@@ -11,7 +11,6 @@ items/portal 1 True
 items/feather 1 True
 items/pizza 1 True
 items/copper 1 True
-items/autochopper 1 True
 items/galena 1 True
 items/hammer_swing 1 True
 items/item_combiner 1 True
@@ -168,7 +167,6 @@ items/flint 1 True
 items/rhododendron_flowers 1 True
 items/rail_stop 1 True
 items/gold_ore 1 True
-items/autominer 1 True
 items/bun_hairstyle 1 True
 characters/nali_cow 1 False
 items/lilypad 1 True

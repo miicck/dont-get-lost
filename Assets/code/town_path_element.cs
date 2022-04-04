@@ -15,6 +15,17 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     public virtual bool seperates_rooms() => false;
     public virtual settler_animations.animation settler_animation(settler s) => null;
 
+    public float speed_multiplier
+    {
+        get
+        {
+            float mult = 1;
+            foreach (var msb in GetComponentsInChildren<movement_speed_boost>())
+                mult *= msb.speed_multiplier;
+            return mult;
+        }
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
@@ -848,8 +859,11 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             run_animations(walking, forwards);
             walking.on_walk_towards(next_element);
 
-            if (utils.move_towards(walking.transform, next_element.transform.position,
-                Time.deltaTime * speed, arrive_distance: ARRIVE_DISTANCE))
+            if (utils.move_towards(
+                walking.transform,
+                next_element.transform.position,
+                Time.deltaTime * speed * next_element.speed_multiplier,
+                arrive_distance: ARRIVE_DISTANCE))
             {
                 if (forwards) ++index;
                 else --index;

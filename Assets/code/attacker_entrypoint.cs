@@ -30,12 +30,12 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     public string added_inspection_text()
     {
         if (path == null)
-            return "No path";
+            return "No entrypoint path";
 
         if (path is explicit_path)
-            return "Path complete";
+            return "Entrypoint path complete";
 
-        return "Pathing underway";
+        return "Entrypoint pathing underway";
     }
 
     //#################//
