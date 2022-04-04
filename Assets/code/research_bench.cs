@@ -57,9 +57,11 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
     public override string added_inspection_text()
     {
         if (!tech_tree.researching()) return "Not researching anything.";
-        return base.added_inspection_text() +
-            "\nResearching " + tech_tree.current_research_project() +
-            " (" + tech_tree.get_research_amount(tech_tree.current_research_project()) + " % complete)";
+
+        string project = tech_tree.current_research_project();
+        int perc = tech_tree.get_research_amount(project);
+
+        return base.added_inspection_text() + "\nResearching " + project + " (" + perc + " % complete)";
     }
 
     //#####################//

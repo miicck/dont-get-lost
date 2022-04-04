@@ -95,7 +95,7 @@ public class tech_tree : networked
             return 0;
         }
 
-        return loaded_tech_tree.research_progress[t];
+        return loaded_tech_tree.research_progress[t.Replace(' ', '_')];
     }
 
     public static int get_research_amount(technology t) => get_research_amount(t.name);
@@ -150,7 +150,10 @@ public class tech_tree : networked
 
         // Unassign completed research
         if (current_research_complete())
+        {
+            temporary_object.create(60f).gameObject.add_pinned_message("Research topic complete", Color.green);
             loaded_tech_tree.currently_researching.value = "";
+        }
     }
 
     public static void unlock_all_research()
