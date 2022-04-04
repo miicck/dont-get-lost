@@ -39,3 +39,4 @@ TODO
 - Hospital
 - Potions
 - max simulataneous researchers
+- weather
