@@ -182,8 +182,6 @@ public abstract class settler_interactable : has_path_elements,
 
     public void unassign()
     {
-        settler?.check_if_should_leave();
-
         // Unassign the settler
         settler_id.value = -1;
         current_proficiency?.on_unassign();

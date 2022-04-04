@@ -14,6 +14,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform left_hand { get; private set; }
     public Transform right_hand { get; private set; }
 
+    const float TIME_BETWEEN_LEAVE_CHECKS = 5f;
+
+    float time_next_leave_check;
+    bool last_leave_check_result = false;
+
     //###################//
     // CHARACTER CONTROL //
     //###################//
@@ -88,13 +93,34 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public void check_if_should_leave()
     {
+        // Only check every TIME_BETWEEN_LEAVE_CHECKS seconds
+        if (Time.time < time_next_leave_check)
+            return;
+        time_next_leave_check = Time.time + TIME_BETWEEN_LEAVE_CHECKS;
+
+        if (should_leave(out string reason))
+        {
+            if (last_leave_check_result)
+            {
+                temporary_object.create(60).gameObject.add_pinned_message(reason, Color.red);
+                delete();
+            }
+            last_leave_check_result = true;
+        }
+        else
+            last_leave_check_result = false;
+    }
+
+    bool should_leave(out string reason)
+    {
         if (group_info.settlers(group).Count > group_info.bed_count(group))
         {
-            // More settlers than beds - despawn the settler
-            temporary_object.create(60f).gameObject.add_pinned_message(
-                "The settler " + name + " left because there were too few beds!", Color.red);
-           delete();
+            reason = "The settler " + name + " left because there were too few beds!";
+            return true;
         }
+
+        reason = null;
+        return false;
     }
 
     //#################//
@@ -103,6 +129,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     protected override void Start()
     {
+        // Check should leave at a random time
+        time_next_leave_check = Time.time + Random.Range(1f, 2f) * TIME_BETWEEN_LEAVE_CHECKS;
+
         // Get my left/right hand transforms
         foreach (var al in GetComponentsInChildren<armour_locator>())
             if (al.location == armour_piece.LOCATION.HAND)
@@ -139,6 +168,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         if (players_interacting_with.value > 0) return;
 
         interaction?.interact(this);
+
+        check_if_should_leave();
 
         GetComponentInChildren<facial_expression>().expression = current_expression();
     }
@@ -575,7 +606,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public static void try_spawn(int group, Vector3 location)
     {
         // Wait until time to spawn again
-        if (Time.time < last_spawn_check + TIME_BETWEEN_SPAWN_CHECKS) return; 
+        if (Time.time < last_spawn_check + TIME_BETWEEN_SPAWN_CHECKS) return;
         last_spawn_check = Time.time;
 
         if (group_info.under_attack(group)) return; // Don't spawn when under attack
