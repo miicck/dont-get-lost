@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6750309391286344692}
   - component: {fileID: 7456890149895918369}
+  - component: {fileID: -7349155667042778540}
   m_Layer: 0
   m_Name: straw
   m_TagString: Untagged
@@ -27,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5125385990005190203}
   m_Father: {fileID: 0}
@@ -48,7 +50,20 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: 71b1cfb1e5c8a8d4994384de8ec1c906, type: 3}
   plural: straw
   value: 3
-  fuel_value: 0
+  fuel_value: 1
+--- !u!114 &-7349155667042778540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627150377471924315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9c9084acc62b524389709e022a12168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_value_amount: 1
 --- !u!1001 &4660027260365474256
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: -0.70710677, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 3
@@ -70,6 +71,7 @@ Transform:
   m_LocalRotation: {x: -0.5, y: -0.5, z: 0.49999997, w: 0.50000006}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 6
@@ -113,6 +115,7 @@ Transform:
   m_LocalRotation: {x: -0.00000032782552, y: 0.00000000986418, z: -0.00000038918597, w: -1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 7
@@ -156,6 +159,7 @@ Transform:
   m_LocalRotation: {x: -0.5, y: -0.5, z: 0.49999997, w: 0.50000006}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 5
@@ -199,6 +203,7 @@ Transform:
   m_LocalRotation: {x: 1, y: 0.0000003891859, z: 0.000000009864323, w: 0}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 1
@@ -242,6 +247,7 @@ Transform:
   m_LocalRotation: {x: -1, y: -0, z: -0, w: 0.00000008940697}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 2
@@ -268,6 +274,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2016479743597637749}
   - component: {fileID: 9164871923869454548}
+  - component: {fileID: -7647956510279989345}
   m_Layer: 0
   m_Name: bamboo
   m_TagString: Untagged
@@ -285,6 +292,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6865488496441943423}
   - {fileID: 6836410223424972480}
@@ -313,8 +321,21 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: fbd0e1c63f77c974f9469806f14e1383, type: 3}
   plural: bamboo
   value: 17
-  fuel_value: 0
+  fuel_value: 5
   axes_scale: 0.5
+--- !u!114 &-7647956510279989345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7395054960694913047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9c9084acc62b524389709e022a12168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_value_amount: 5
 --- !u!1 &8028284507013706622
 GameObject:
   m_ObjectHideFlags: 0
@@ -342,6 +363,7 @@ Transform:
   m_LocalRotation: {x: -0.70710677, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2016479743597637749}
   m_RootOrder: 4

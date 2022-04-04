@@ -24,10 +24,18 @@ public class item : networked, IPlayerInteractable
     public Sprite sprite; // The sprite represeting this item in inventories etc
     public string plural;
     public int value;
-    public int fuel_value = 0;
     public bool is_equpped => GetComponentInParent<player>() != null;
 
     public food food_values => this?.GetComponent<food>();
+
+    public int fuel_value
+    {
+        get
+        {
+            var fv = GetComponent<fuel_value>();
+            return fv == null ? 0 : fv.fuel_value_amount;
+        }
+    }
 
     void make_logistics_version()
     {

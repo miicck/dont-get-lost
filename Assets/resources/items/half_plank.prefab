@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: -0.0000009238719, y: -0.00000051059294, z: -0.00000056479564, w: -1}
   m_LocalPosition: {x: -0.5, y: -0.00000007112273, z: -0.5000007}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5841013502393463211}
   m_RootOrder: 2
@@ -70,6 +71,7 @@ Transform:
   m_LocalRotation: {x: 0.0000012440577, y: -0.70710677, z: 0.7071068, w: 0.0000004074015}
   m_LocalPosition: {x: 0.5, y: -0.00000007112273, z: 0.49999928}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5841013502393463211}
   m_RootOrder: 0
@@ -115,6 +117,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 0.1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5841013502393463211}
   m_RootOrder: 4
@@ -138,6 +141,7 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -191,6 +195,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5841013502393463211}
   - component: {fileID: -8692857590867439196}
+  - component: {fileID: -6534734043686937269}
   m_Layer: 0
   m_Name: half_plank
   m_TagString: Untagged
@@ -208,6 +213,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2476101950932091174}
   - {fileID: 5896965136609066717}
@@ -235,6 +241,19 @@ MonoBehaviour:
   value: 3
   fuel_value: 1
   axes_scale: 1
+--- !u!114 &-6534734043686937269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4183591637203647774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9c9084acc62b524389709e022a12168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_value_amount: 1
 --- !u!1 &6234869217568158658
 GameObject:
   m_ObjectHideFlags: 0
@@ -262,6 +281,7 @@ Transform:
   m_LocalRotation: {x: -0.5000007, y: -0.5000006, z: 0.49999952, w: -0.4999993}
   m_LocalPosition: {x: -0.5, y: -0.00000007112273, z: 0.49999928}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5841013502393463211}
   m_RootOrder: 1
@@ -305,6 +325,7 @@ Transform:
   m_LocalRotation: {x: -0.000000036727617, y: 0.7071071, z: -0.000000030327545, w: -0.70710653}
   m_LocalPosition: {x: 0.5, y: -0.00000007112273, z: -0.5000007}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5841013502393463211}
   m_RootOrder: 3

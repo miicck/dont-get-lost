@@ -143,6 +143,7 @@ GameObject:
   - component: {fileID: 2026644758334606422}
   - component: {fileID: 6695110599244550331}
   - component: {fileID: -919863245840464105}
+  - component: {fileID: -7197305386086455875}
   m_Layer: 0
   m_Name: reinforced_wood_panel
   m_TagString: Untagged
@@ -188,7 +189,7 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: 2c9f437e8f68b86459779dd7aa87b93e, type: 3}
   plural: reinforced wood panels
   value: 6
-  fuel_value: 0
+  fuel_value: 4
   axes_scale: 1
 --- !u!114 &-919863245840464105
 MonoBehaviour:
@@ -203,6 +204,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   technology: {fileID: 3707283815685127039, guid: ba673ddf1bc0e6c4a97cfe77348a646e, type: 3}
+--- !u!114 &-7197305386086455875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2607104909629897362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9c9084acc62b524389709e022a12168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fuel_value_amount: 4
 --- !u!1 &2617410994098043399
 GameObject:
   m_ObjectHideFlags: 0
