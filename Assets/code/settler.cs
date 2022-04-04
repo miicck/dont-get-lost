@@ -15,9 +15,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform right_hand { get; private set; }
 
     const float TIME_BETWEEN_LEAVE_CHECKS = 5f;
+    const float TIME_WANTED_TO_LEAVE_BEFORE_LEAVE = 60f;
 
     float time_next_leave_check;
-    bool last_leave_check_result = false;
+    float time_wanted_to_leave = 0f;
 
     //###################//
     // CHARACTER CONTROL //
@@ -100,15 +101,15 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         if (should_leave(out string reason))
         {
-            if (last_leave_check_result)
+            time_wanted_to_leave += TIME_BETWEEN_LEAVE_CHECKS;
+
+            if (time_wanted_to_leave > TIME_WANTED_TO_LEAVE_BEFORE_LEAVE)
             {
                 temporary_object.create(60).gameObject.add_pinned_message(reason, Color.red);
                 delete();
             }
-            last_leave_check_result = true;
         }
-        else
-            last_leave_check_result = false;
+        else time_wanted_to_leave = 0;
     }
 
     bool should_leave(out string reason)
