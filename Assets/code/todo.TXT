@@ -3,7 +3,6 @@ Ongoing
 - More foliage? (small plants/flowers)
 
 TODO
-- Item flow recording/reproducing if out of range?
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Optimize chase paths
 	don't double back if thats what the player did
@@ -41,4 +40,3 @@ TODO
 - Hospital
 - Potions
 - max simulataneous researchers
-- sadness makes settlers leave

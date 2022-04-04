@@ -8,7 +8,14 @@ public class guard_spot : walk_to_settler_interactable
     float attack_timer = 0;
 
     bool in_range(character c) => (c.transform.position - transform.position).magnitude < 20f;
-    bool valid_target(character c) => c != null && !c.is_dead && in_range(c);
+
+    bool valid_target(character c, settler s)
+    {
+        if (c == null) return false;
+        if (c.is_dead) return false;
+        if (!in_range(c)) return false;
+        return true;
+    }
 
     public override string task_summary()
     {
@@ -31,18 +38,30 @@ public class guard_spot : walk_to_settler_interactable
 
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
-        if (!valid_target(target))
+        bool force_new_target = (Time.frameCount + s.network_id) % 60 == 0;
+
+        if (!valid_target(target, s) || force_new_target)
         {
-            // Identify a new target
+            target = null;
+
+            List<character> attackers = new List<character>();
+
             group_info.iterate_over_attackers(s.group, (c) =>
             {
-                if (valid_target(c))
-                {
-                    target = c;
-                    return true;
-                }
+                attackers.Add(c);
                 return false;
             });
+
+            attackers.Sort((a, b) =>
+                (s.transform.position - a.transform.position).sqrMagnitude.CompareTo(
+                (s.transform.position - b.transform.position).sqrMagnitude));
+
+            foreach (var c in attackers)
+                if (valid_target(c, s))
+                {
+                    target = c;
+                    break;
+                }
         }
         else
         {
