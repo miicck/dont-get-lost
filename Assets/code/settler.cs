@@ -119,6 +119,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
             return true;
         }
 
+        if (total_mood() < -10)
+        {
+            reason = "The settler " + name + " left because they were sad!";
+            return true;
+        }
+
         reason = null;
         return false;
     }

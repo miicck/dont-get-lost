@@ -195,7 +195,7 @@ public class mood_effect : networked, IMoodEffect
                 add_to.Add(new simple_mood_effect
                 {
                     delta_mood = 2,
-                    display_name = "Well nourished (" + food.group_name(g) + ")",
+                    display_name = "Nourished (" + food.group_name(g) + ")",
                     description = "I am not lacking in " + food.group_name(g)
                 });
 
