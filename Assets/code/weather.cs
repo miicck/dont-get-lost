@@ -17,6 +17,8 @@ public class weather : MonoBehaviour
     public float daytime_saturation = 1f;
     public float nighttime_saturation = 0.5f;
 
+    public weather_effect effect;
+
     public void mix(List<weather> weathers, List<float> weights)
     {
         day_sun_color = average_color(get_list(weathers, (w) => w.day_sun_color), weights);
@@ -31,6 +33,25 @@ public class weather : MonoBehaviour
 
         daytime_saturation = average_float(get_list(weathers, (w) => w.daytime_saturation), weights);
         nighttime_saturation = average_float(get_list(weathers, (w) => w.nighttime_saturation), weights);
+
+        // Destroy old weather effects
+        foreach (var e in player.current.GetComponentsInChildren<weather_effect>())
+            Destroy(e.gameObject);
+
+        // Create new weighted weather effects
+        for (int i = 0; i < weathers.Count; ++i)
+        {
+            var e = weathers[i].effect;
+            if (e == null) continue;
+
+            var w = weights[i];
+
+            e = e.inst();
+            e.transform.SetParent(player.current.transform);
+            e.transform.localPosition = Vector3.zero;
+            e.transform.localRotation = Quaternion.identity;
+            e.weight = w;
+        }
     }
 
     delegate T get_object<T>(weather w);
@@ -80,7 +101,7 @@ public class weather : MonoBehaviour
         {
             if (_weather == null)
             {
-                _weather = Resources.Load<weather>("weathers/sunny").inst();
+                _weather = Resources.Load<weather>("weathers/sun").inst();
                 _weather.name = "current_weather";
                 _weather.transform.SetParent(FindObjectOfType<lighting>()?.transform);
             }

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6414898615689696743}
   - component: {fileID: 3561469998012565477}
   m_Layer: 0
-  m_Name: rainy
+  m_Name: snow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54,3 +54,4 @@ MonoBehaviour:
   nighttime_ambient_color: {r: 1, g: 1, b: 1, a: 1}
   daytime_saturation: 0.7
   nighttime_saturation: 0.3
+  effect: {fileID: 1893286480136426716, guid: 61d015bf8e10e254090fbb240f3e070c, type: 3}
