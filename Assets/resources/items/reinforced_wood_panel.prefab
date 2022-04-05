@@ -188,8 +188,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 2c9f437e8f68b86459779dd7aa87b93e, type: 3}
   plural: reinforced wood panels
-  value: 6
-  fuel_value: 4
+  value: 11
   axes_scale: 1
 --- !u!114 &-919863245840464105
 MonoBehaviour:

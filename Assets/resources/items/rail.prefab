@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0.00000007066159, y: -0.0000019988786, z: -0.00000047683608, w: 1}
   m_LocalPosition: {x: -0.000002861023, y: -0.00000023841858, z: 1.0000004}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 937079229864356976}
   m_RootOrder: 2
@@ -55,6 +56,7 @@ GameObject:
   - component: {fileID: 7725557883707735357}
   - component: {fileID: 8008899970092778580}
   - component: {fileID: 1198510559849595072}
+  - component: {fileID: 5174024986286554174}
   m_Layer: 0
   m_Name: rail
   m_TagString: Untagged
@@ -72,6 +74,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8243593652828829586}
   - {fileID: 2604098412311084625}
@@ -94,8 +97,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1d455d00cbf92ce4dae554c22f8979e7, type: 3}
   plural: rails
-  value: 0
-  fuel_value: 0
+  value: 15
   axes_scale: 1
 --- !u!114 &8008899970092778580
 MonoBehaviour:
@@ -122,6 +124,19 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 0.2, y: 0.2, z: 2}
   m_Center: {x: 0, y: 0.1, z: 0}
+--- !u!114 &5174024986286554174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7260211643690761893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 9b06a0a325aec3147a26663f3c530b2a, type: 3}
 --- !u!1 &7715424612191731546
 GameObject:
   m_ObjectHideFlags: 0
@@ -149,6 +164,7 @@ Transform:
   m_LocalRotation: {x: 0.000000047104656, y: -0.000001522244, z: -0.0000004768365, w: 1}
   m_LocalPosition: {x: 0.000002861023, y: 0.00000023841858, z: -1.0000002}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 937079229864356976}
   m_RootOrder: 1

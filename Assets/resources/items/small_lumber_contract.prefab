@@ -49,8 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 0}
   plural: 
-  value: 0
-  fuel_value: 0
+  value: 2
 --- !u!114 &3653094000232183838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,6 +78,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 0
   item: {fileID: 1653388436121388084, guid: 1b1b8e0f2433fe74a801a2b93fca741f, type: 3}
-  min_count: 50
-  max_count: 50
+  min_count: 100
+  max_count: 100
   one_in_chance: 1

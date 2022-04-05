@@ -48,8 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6fdd8d7e4683771449e58a4d46f9a0df, type: 3}
   plural: spiderwebs
-  value: 0
-  fuel_value: 0
+  value: 2
 --- !u!1001 &1655582936896740415
 PrefabInstance:
   m_ObjectHideFlags: 0

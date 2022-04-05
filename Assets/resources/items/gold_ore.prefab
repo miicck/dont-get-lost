@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5578779908905963739}
   m_Father: {fileID: 0}
@@ -48,8 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 914774505c1ec4e4ab0e08dc263b7261, type: 3}
   plural: gold ore
-  value: 1
-  fuel_value: 0
+  value: 2
 --- !u!114 &8999642714020921142
 MonoBehaviour:
   m_ObjectHideFlags: 0

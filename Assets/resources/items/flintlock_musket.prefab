@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.0441, z: 0.6997}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6937629005691972774}
   m_RootOrder: 5
@@ -153,6 +154,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.082, y: -0.0233, z: -0.2472}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6937629005691972774}
   m_RootOrder: 1
@@ -183,6 +185,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.0559, z: -0.1036}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6937629005691972774}
   m_RootOrder: 2
@@ -215,6 +218,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6539973991729557007}
   - {fileID: 3780049617420365419}
@@ -257,8 +261,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: d21250f54d28fc24fa1222d45820fef2, type: 3}
   plural: flintlock muskets
-  value: 1
-  fuel_value: 0
+  value: 2
   butt: {fileID: 3780049617420365419}
   sight: {fileID: 7145026216378741801}
   grip: {fileID: 4726273760403303435}
@@ -300,6 +303,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.0095, y: 0.0162, z: 0.2182}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6937629005691972774}
   m_RootOrder: 3

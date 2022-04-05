@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2156382958004931458}
   m_Father: {fileID: 0}
@@ -47,8 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: b3f28dd4ff7bd8640a4b4dc91da36e6f, type: 3}
   plural: iron plate vambraces
-  value: 16
-  fuel_value: 0
+  value: 28
   location: 3
   handedness: 0
   size: {x: 1, y: 1, z: 1}

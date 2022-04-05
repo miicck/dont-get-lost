@@ -48,8 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: b29dfcb69a146e048a0a09563e878d1e, type: 3}
   plural: aloe vera
-  value: 4
-  fuel_value: 0
+  value: 2
 --- !u!1001 &9148232638271662606
 PrefabInstance:
   m_ObjectHideFlags: 0

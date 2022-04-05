@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: -0.4999997, y: 0.49999976, z: 0.5000003, w: 0.50000036}
   m_LocalPosition: {x: 0, y: 0.00000029802322, z: 0.24999997}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 278741605361968175}
   m_RootOrder: 2
@@ -70,6 +71,7 @@ Transform:
   m_LocalRotation: {x: -0.7071065, y: -0, z: -0, w: 0.7071072}
   m_LocalPosition: {x: 0, y: 0.0000001937151, z: -0.24999997}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 278741605361968175}
   m_RootOrder: 5
@@ -113,6 +115,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2783972646903933813}
   - {fileID: 3930645773932886096}
@@ -138,8 +141,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 72afc5e1a7b74a34e86ceb25acf6a1bd, type: 3}
   plural: half sticks
-  value: 3
-  fuel_value: 0
+  value: 4
   axes_scale: 0.5
 --- !u!1 &6331017533348891075
 GameObject:
@@ -168,6 +170,7 @@ Transform:
   m_LocalRotation: {x: 0.70710707, y: -0, z: -0, w: 0.70710653}
   m_LocalPosition: {x: -0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 278741605361968175}
   m_RootOrder: 3
@@ -211,6 +214,7 @@ Transform:
   m_LocalRotation: {x: -0.00000034682566, y: 0.70710623, z: 0.7071074, w: 0.00000035762787}
   m_LocalPosition: {x: -0.00000023841858, y: -0.0000004470349, z: -0.24999997}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 278741605361968175}
   m_RootOrder: 1
@@ -254,6 +258,7 @@ Transform:
   m_LocalRotation: {x: -0.7071065, y: -0, z: -0, w: 0.7071072}
   m_LocalPosition: {x: 0, y: -0.0000001937151, z: 0.24999997}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 278741605361968175}
   m_RootOrder: 4

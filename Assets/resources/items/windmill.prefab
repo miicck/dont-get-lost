@@ -409,8 +409,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 187a008c373727b47b0b411997c084a7, type: 3}
   plural: windmills
-  value: 83
-  fuel_value: 0
+  value: 127
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 0}

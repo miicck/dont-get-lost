@@ -48,8 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 7b16329d2d11cb54ab83bde2c8fbee93, type: 3}
   plural: scorpion leather
-  value: 1
-  fuel_value: 0
+  value: 2
 --- !u!1001 &8862711725007412572
 PrefabInstance:
   m_ObjectHideFlags: 0

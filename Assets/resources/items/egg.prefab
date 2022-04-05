@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8663503641230801925}
   m_Father: {fileID: 0}
@@ -48,8 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 05bdba44b2acb6c498bc48aaec28bab3, type: 3}
   plural: eggs
-  value: 1
-  fuel_value: 0
+  value: 2
 --- !u!114 &-279132487055034338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63,19 +63,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   food_group_values: 1400050005
---- !u!135 &7799642577333606537
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5647983913718222358}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.009999997
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &4413605045506201375
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -154,6 +141,19 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}
   m_PrefabInstance: {fileID: 4413605045506201375}
   m_PrefabAsset: {fileID: 0}
+--- !u!135 &7799642577333606537
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5647983913718222358}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.009999997
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &8663503641230801925 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}

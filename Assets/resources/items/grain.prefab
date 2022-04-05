@@ -28,6 +28,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2695306010789722595}
   m_Father: {fileID: 0}
@@ -48,8 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 4eb0febc8becedd4db527adabfe6abb2, type: 3}
   plural: grain
-  value: 2
-  fuel_value: 0
+  value: 3
   growth_time: 1
   growing_into: {fileID: 4939855331573152688, guid: ee3f5f436fa8d6740a4623227bf127f3, type: 3}
 --- !u!114 &-9056336870308433450

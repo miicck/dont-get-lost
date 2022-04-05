@@ -369,8 +369,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6bc28b3cd121230458820c1436ea4482, type: 3}
   plural: mineshafts
-  value: 53
-  fuel_value: 0
+  value: 93
   axes_scale: 1
 --- !u!114 &6089583144561588591
 MonoBehaviour:

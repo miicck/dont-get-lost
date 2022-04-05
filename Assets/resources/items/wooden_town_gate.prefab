@@ -295,8 +295,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: db584675cd802fa429860b2c22e383cd, type: 3}
   plural: wooden town gates
-  value: 28
-  fuel_value: 0
+  value: 40
   axes_scale: 1
   teleport_location: {fileID: 7935551658518450860}
   path_element: {fileID: 9218543385975625420}

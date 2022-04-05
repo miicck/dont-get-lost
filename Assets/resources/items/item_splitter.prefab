@@ -443,8 +443,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 83a35b2fac6f3254e8de69aa3e379951, type: 3}
   plural: item splitters
-  value: 28
-  fuel_value: 0
+  value: 35
   axes_scale: 1
 --- !u!114 &9083236677374905656
 MonoBehaviour:

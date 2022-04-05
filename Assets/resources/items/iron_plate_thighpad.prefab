@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.025, y: 1, z: 1.0125}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4718623458794669240}
   m_Father: {fileID: 0}
@@ -47,8 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6a88b1c870b693043a1fbfc982346c75, type: 3}
   plural: iron plate thighpads
-  value: 23
-  fuel_value: 0
+  value: 41
   location: 7
   handedness: 0
   size: {x: 1, y: 1, z: 1}

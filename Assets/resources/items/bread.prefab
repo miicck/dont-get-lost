@@ -50,8 +50,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: eab68a5ad075af24fae2ae391ae97738, type: 3}
   plural: bread
-  value: 8
-  fuel_value: 0
+  value: 10
 --- !u!114 &1450433148893580567
 MonoBehaviour:
   m_ObjectHideFlags: 0

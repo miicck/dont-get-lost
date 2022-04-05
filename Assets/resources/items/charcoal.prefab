@@ -49,8 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 94ba0bb3d4ccca24f9c287ff8fb080c9, type: 3}
   plural: charcoal
-  value: 4
-  fuel_value: 4
+  value: 6
 --- !u!114 &-3577740469334807436
 MonoBehaviour:
   m_ObjectHideFlags: 0

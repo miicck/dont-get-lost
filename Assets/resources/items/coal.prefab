@@ -50,8 +50,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 5890ddfa9590c464a868066e915fce92, type: 3}
   plural: coal
-  value: 1
-  fuel_value: 4
+  value: 2
 --- !u!114 &-653319990223191337
 MonoBehaviour:
   m_ObjectHideFlags: 0

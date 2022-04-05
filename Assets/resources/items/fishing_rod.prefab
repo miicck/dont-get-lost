@@ -26,6 +26,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.9227, z: 0.2311}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5697117828122076778}
   m_RootOrder: 1
@@ -57,6 +58,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7898059667751189429}
   - {fileID: 46895868383641198}
@@ -78,8 +80,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 706525f6149735540afcd3bd8937e389, type: 3}
   plural: fishing rods
-  value: 0
-  fuel_value: 0
+  value: 23
   rod_end: {fileID: 46895868383641198}
   max_cast_velocity: 20
 --- !u!1001 &7642945093126282334
