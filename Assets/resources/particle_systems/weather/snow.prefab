@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7062040937246799233}
   - component: {fileID: 1893286480136426716}
+  - component: {fileID: 1283091967360811026}
   m_Layer: 0
   m_Name: snow
   m_TagString: Untagged
@@ -45,6 +46,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49dadee9f284e5440bb794b709249e7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1283091967360811026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5959576449535892378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d201d8a963930d940b903065169c36db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  effect: {fileID: 1893286480136426716}
+  particle_system: {fileID: 8167228912863620874}
 --- !u!1 &9221244234072121283
 GameObject:
   m_ObjectHideFlags: 0
