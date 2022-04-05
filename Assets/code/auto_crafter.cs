@@ -93,7 +93,26 @@ public class auto_crafter : building_material, IPlayerInteractable
 
         // Crafting success
         ingredients.craft_to(outputs[0], track_production: true);
+        audio_source.Play();
     }
+
+    AudioSource audio_source
+    {
+        get
+        {
+            if (_audio_source == null)
+            {
+                _audio_source = new GameObject("audio_source").AddComponent<AudioSource>();
+                _audio_source.transform.SetParent(transform);
+                _audio_source.transform.localPosition = Vector3.zero;
+                _audio_source.spatialBlend = 1f; // 3D
+                _audio_source.clip = custom_crafting_sound;
+                _audio_source.volume = custom_crafting_sound_volume;
+            }
+            return _audio_source;
+        }
+    }
+    AudioSource _audio_source;
 
     private void Update()
     {
