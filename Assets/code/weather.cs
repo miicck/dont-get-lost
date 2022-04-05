@@ -34,8 +34,10 @@ public class weather : MonoBehaviour
         daytime_saturation = average_float(get_list(weathers, (w) => w.daytime_saturation), weights);
         nighttime_saturation = average_float(get_list(weathers, (w) => w.nighttime_saturation), weights);
 
+        var effect_container = player.current.transform;
+
         // Destroy old weather effects
-        foreach (var e in player.current.GetComponentsInChildren<weather_effect>())
+        foreach (var e in effect_container.GetComponentsInChildren<weather_effect>())
             Destroy(e.gameObject);
 
         // Create new weighted weather effects
@@ -47,7 +49,7 @@ public class weather : MonoBehaviour
             var w = weights[i];
 
             e = e.inst();
-            e.transform.SetParent(player.current.transform);
+            e.transform.SetParent(effect_container);
             e.transform.localPosition = Vector3.zero;
             e.transform.localRotation = Quaternion.identity;
             e.weight = w;
