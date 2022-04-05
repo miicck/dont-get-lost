@@ -1136,6 +1136,18 @@ public class console : MonoBehaviour
 
             description = "Dispay statistics on the number of unique items in the game.",
             usage_example = "count_items"
+        },
+
+        ["weather"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (args.Length < 2) return console_error("Too few arguments!");
+                var w = Resources.Load<weather>("weathers/" + args[1]);
+                if (w == null) return console_error("Unkown weather type: " + args[1]);
+                FindObjectOfType<lighting>().weather = w;
+                return true;
+            }
         }
     };
 

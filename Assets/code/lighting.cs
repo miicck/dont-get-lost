@@ -17,10 +17,11 @@ public static class fog_distances
 public class lighting : MonoBehaviour
 {
     public Light sun;
-    public Color day_sun_color;
-    public Color dawn_sun_color;
-    public Color dusk_sun_color;
-    public Color night_sun_color;
+    public weather weather;
+    public Color day_sun_color => weather.day_sun_color;
+    public Color dawn_sun_color => weather.dawn_sun_color;
+    public Color dusk_sun_color => weather.dusk_sun_color;
+    public Color night_sun_color => weather.night_sun_color;
 
     public static Color sky_color
     {
