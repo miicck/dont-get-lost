@@ -44,7 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9105f82ae44280544a72b37cd8fa8b31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  day_sun_color: {r: 0.5235849, g: 0.81827456, b: 1, a: 0}
+  day_sun_color: {r: 0.38812745, g: 0.7206074, b: 0.9245283, a: 0}
   dawn_sun_color: {r: 0.3042453, g: 0.4499579, b: 0.5, a: 0}
   dusk_sun_color: {r: 0.40606087, g: 0.5650337, b: 0.6886792, a: 0}
   night_sun_color: {r: 0.036845855, g: 0.16632299, b: 0.33962262, a: 0}
+  daytime_ambient_brightness: 1
+  nighttime_ambient_brightness: 0.79
+  daytime_ambient_color: {r: 0.31132078, g: 0.31132078, b: 0.31132078, a: 1}
+  nighttime_ambient_color: {r: 1, g: 1, b: 1, a: 1}
+  daytime_saturation: 0.7
+  nighttime_saturation: 0.3

@@ -1145,7 +1145,7 @@ public class console : MonoBehaviour
                 if (args.Length < 2) return console_error("Too few arguments!");
                 var w = Resources.Load<weather>("weathers/" + args[1]);
                 if (w == null) return console_error("Unkown weather type: " + args[1]);
-                FindObjectOfType<lighting>().weather = w;
+                weather.current = w;
                 return true;
             }
         }

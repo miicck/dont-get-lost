@@ -48,3 +48,9 @@ MonoBehaviour:
   dawn_sun_color: {r: 1, g: 0.60784316, b: 0.45882353, a: 0}
   dusk_sun_color: {r: 1, g: 0.5764706, b: 0.39215687, a: 0}
   night_sun_color: {r: 0.39607844, g: 0.39607844, b: 0.39607844, a: 0}
+  daytime_ambient_brightness: 1
+  nighttime_ambient_brightness: 1
+  daytime_ambient_color: {r: 1, g: 1, b: 1, a: 1}
+  nighttime_ambient_color: {r: 1, g: 1, b: 1, a: 1}
+  daytime_saturation: 1
+  nighttime_saturation: 0.5

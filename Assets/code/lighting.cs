@@ -17,11 +17,17 @@ public static class fog_distances
 public class lighting : MonoBehaviour
 {
     public Light sun;
-    public weather weather;
+    public weather weather => weather.current;
     public Color day_sun_color => weather.day_sun_color;
     public Color dawn_sun_color => weather.dawn_sun_color;
     public Color dusk_sun_color => weather.dusk_sun_color;
     public Color night_sun_color => weather.night_sun_color;
+    public float daytime_saturation => weather.daytime_saturation;
+    public float nighttime_saturation => weather.nighttime_saturation;
+    public float daytime_ambient_brightness => weather.daytime_ambient_brightness;
+    public float nighttime_ambient_brightness => weather.nighttime_ambient_brightness;
+    public Color daytime_ambient_color => weather.daytime_ambient_color;
+    public Color nighttime_ambient_color => weather.nighttime_ambient_color;
 
     public static Color sky_color
     {
@@ -86,14 +92,22 @@ public class lighting : MonoBehaviour
         UnityEngine.Rendering.HighDefinition.GradientSky sky;
         if (options_menu.global_volume.profile.TryGet(out sky))
         {
-            // Work out ambient brightness as a function of raw brightness            
-            float tb = b * 0.015f + 0.04f; // Top brightness (low in daytime - mostly provided by sun)
-            float mb = b * 0.15f; // Middle brightness (medium in daytime, zero at night - otherwise water looks weird)
-            float bb = b * 0.26f + 0.04f; // Bottom brightness (bright in daytime)
+            // Work out ambient brightness as a function of raw brightness
 
-            sky.top.value = new Color(tb, tb, tb);
-            sky.middle.value = new Color(mb, mb, mb);
-            sky.bottom.value = new Color(bb, bb, bb);
+            // Top brightness (low in daytime - mostly provided by sun)
+            float tb = b * daytime_ambient_brightness * 0.015f + 0.04f * nighttime_ambient_brightness;
+
+            // Middle brightness (medium in daytime, zero at night - otherwise water looks weird)
+            float mb = b * daytime_ambient_brightness * 0.15f;
+
+            // Bottom brightness (bright in daytime)
+            float bb = b * daytime_ambient_brightness * 0.26f + 0.04f * nighttime_ambient_brightness;
+
+            var c = daytime_ambient_color * b + nighttime_ambient_color * (1 - b);
+
+            sky.top.value = new Color(c.r * tb, c.g * tb, c.b * tb);
+            sky.middle.value = new Color(c.r * mb, c.g * mb, c.b * mb);
+            sky.bottom.value = new Color(c.r * bb, c.g * bb, c.b * bb);
         }
 
         Color target_sky_color = sky_color_daytime;
@@ -109,7 +123,7 @@ public class lighting : MonoBehaviour
             // Reduce saturation at night
             float max_saturation = options_menu.get_float("saturation");
             max_saturation = (max_saturation + 100f) / 200f;
-            float sat = max_saturation * (0.5f + 0.5f * b);
+            float sat = max_saturation * (daytime_saturation * b + nighttime_saturation * (1 - b));
             color.saturation.value = sat * 200f - 100f;
         }
 
