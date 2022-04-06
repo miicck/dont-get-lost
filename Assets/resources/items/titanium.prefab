@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5736404582864522269}
   - component: {fileID: 7373243042018251868}
+  - component: {fileID: -6436524187775706880}
   m_Layer: 0
   m_Name: titanium
   m_TagString: Untagged
@@ -49,6 +50,19 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: a845d0b72aa6434d8a755a160a81cbab, type: 3}
   plural: titanium
   value: 36
+--- !u!114 &-6436524187775706880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4759649740701017153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 1c371747b3e49414c9997c8a3053da26, type: 3}
 --- !u!1001 &337560184477975992
 PrefabInstance:
   m_ObjectHideFlags: 0
