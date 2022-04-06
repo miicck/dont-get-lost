@@ -8,26 +8,19 @@ public class technology : MonoBehaviour
     public Sprite sprite;
     public string description;
 
+    public string display_name => name.Replace('_', ' ');
+
+    public bool researched => tech_tree.research_complete(this);
+
     public virtual string info()
     {
         string ret = description;
-        if (increased_population_cap > 0)
-            ret += "\nIncreses population cap by " + increased_population_cap;
 
         foreach (var i in Resources.LoadAll<item>("items"))
             if (i.GetComponent<technology_requirement>()?.technology == this)
                 ret += "\nUnlocks " + i.display_name;
 
         return ret;
-    }
-
-    public int increased_population_cap
-    {
-        get
-        {
-            var ipc = GetComponent<increases_population_cap>();
-            return ipc == null ? 0 : ipc.increases_population_cap_by;
-        }
     }
 
     public bool complete => tech_tree.research_complete(name);

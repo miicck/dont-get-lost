@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class colony_tasks : MonoBehaviour
+public class colony_tasks : MonoBehaviour, ISimpleMenuObject
 {
     public RectTransform header_skill_template;
     public RectTransform row_skill_template;
@@ -102,4 +102,7 @@ public class colony_tasks : MonoBehaviour
         // Keep the header alligned to the table
         header_rect.horizontalNormalizedPosition = table_rect.horizontalNormalizedPosition;
     }
+
+    // ISimpleMenuObject
+    public void on_menu_open() => refresh();
 }

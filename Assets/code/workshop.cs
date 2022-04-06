@@ -19,6 +19,7 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
         );
     }
 
+    public string display_name => GetComponent<building_material>().display_name;
 
     public string crafting_options_title = "crafting";
     public float base_craft_time = 10f;
@@ -103,9 +104,17 @@ public class workshop : settler_interactable_options, IAddsToInspectionText
 
     protected override bool ready_to_assign(settler s)
     {
-        if (!validate_fixtures()) return false;
+        if (!operational) return false;
         if (!validate_recipe()) return false;
         return true;
+    }
+
+    public bool operational
+    {
+        get
+        {
+            return validate_fixtures();
+        }
     }
 
     bool walking_to_dispenser = true;

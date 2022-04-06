@@ -46,6 +46,7 @@ items/nali_cow_shed 1 True
 items/cabbage_planter 1 True
 items/chest 1 True
 items/flowers 1 True
+items/town_monument 1 True
 characters/settler 1 True
 items/triangular_plank_(equilateral) 1 True
 items/nali_cow_egg 1 True

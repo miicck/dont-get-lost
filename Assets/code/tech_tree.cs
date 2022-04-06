@@ -59,16 +59,18 @@ public class tech_tree : networked
     static tech_tree loaded_tech_tree;
     static RectTransform tech_tree_ui;
 
-    public const int BASE_POPULATION_CAP = 10;
-
     public static int population_cap
     {
         get
         {
-            int cap = BASE_POPULATION_CAP;
-            foreach (var t in technology.all)
-                if (t.complete)
-                    cap += t.increased_population_cap;
+            int cap = 0;
+            foreach (var l in town_level.ordered)
+            {
+                if (!l.unlocked)
+                    break;
+                cap += l.added_population_cap;
+            }
+
             return cap;
         }
     }
@@ -245,6 +247,8 @@ public class tech_tree : networked
             loaded_tech_tree.research_progress[name] >= 100;
     }
 
+    public static bool research_complete(technology t) => research_complete(t.name);
+
     static void update_tech_tree_ui()
     {
         if (loaded_tech_tree == null)
@@ -368,7 +372,7 @@ public class tech_tree : networked
 
             // Set title/button action
             var info_area = tt.Find("info_area");
-            info_area.get_child_with_name<UnityEngine.UI.Text>("title").text = t.name.Replace('_', '\n').capitalize();
+            info_area.get_child_with_name<UnityEngine.UI.Text>("title").text = t.display_name.capitalize();
             info_area.get_child_with_name<UnityEngine.UI.Button>("research_button").onClick.AddListener(() => set_research(t));
 
             // Create a material requirement entry for each research material needed
