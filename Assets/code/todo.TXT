@@ -40,3 +40,4 @@ TODO
 - Potions
 - max simulataneous researchers
 - weather
+- Setters sad if working uncovered
