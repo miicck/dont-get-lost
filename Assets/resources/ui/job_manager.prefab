@@ -975,7 +975,7 @@ GameObject:
   - component: {fileID: 4774230338374292091}
   - component: {fileID: 6480036588015922461}
   m_Layer: 5
-  m_Name: colony_tasks
+  m_Name: job_manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

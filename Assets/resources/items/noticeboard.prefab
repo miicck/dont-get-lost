@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6364318154603055067}
   - component: {fileID: 6542462162648508551}
-  - component: {fileID: 5392132422110792126}
+  - component: {fileID: 8809482794627276219}
   m_Layer: 0
   m_Name: noticeboard
   m_TagString: Untagged
@@ -53,7 +53,7 @@ MonoBehaviour:
   plural: noticeboards
   value: 55
   axes_scale: 1
---- !u!114 &5392132422110792126
+--- !u!114 &8809482794627276219
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -62,9 +62,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1969048255346236510}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3785926f92c9d5a47a653f7f4ed4cba8, type: 3}
+  m_Script: {fileID: 11500000, guid: 351243f2f7014e846ac009e3eeebf8df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  context_tip: open job manager
+  menu_prefab: {fileID: 2507719900080400054, guid: da0cea1ed66a9d248b35b8f2e3e2437c, type: 3}
 --- !u!1 &5757811063779058790
 GameObject:
   m_ObjectHideFlags: 0
