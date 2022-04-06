@@ -19,9 +19,9 @@ public class town_level_menu : MonoBehaviour
             level_ui.SetParent(town_level_template.parent);
 
             var level_text = level_ui.Find("text").GetComponent<UnityEngine.UI.Text>();
-            level_text.text = level.info();
+            level_text.text = level.info(player.current.group);
 
-            level_ui.GetComponent<UnityEngine.UI.Image>().color = level.unlocked ? Color.green : Color.white;
+            level_ui.GetComponent<UnityEngine.UI.Image>().color = level.unlocked(player.current.group) ? Color.green : Color.white;
 
             if (i == levels.Length - 1)
                 continue; // Don't make an arrow after the last level

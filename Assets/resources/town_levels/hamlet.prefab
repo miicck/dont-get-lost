@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8487522734639803022}
   - component: {fileID: 8024049790872513244}
   - component: {fileID: -5235604374425157563}
+  - component: {fileID: 4982115229247707892}
   m_Layer: 0
   m_Name: hamlet
   m_TagString: Untagged
@@ -45,6 +46,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0770a1110ff239a4eb1e9ced131c7e36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  previous: {fileID: 0}
+  added_population_cap: 5
 --- !u!114 &-5235604374425157563
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,3 +61,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   technology: {fileID: 3707283815685127039, guid: f2285fd335047274b91936d8799ba695, type: 3}
+--- !u!114 &4982115229247707892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4346200162385092738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 629e127571e74ec468f87bb0b9b54415, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  building: {fileID: 6497105927491836209, guid: cd4ddc4c13cbba94b904ee207e6fee7a, type: 3}

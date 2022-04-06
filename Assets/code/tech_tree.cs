@@ -66,7 +66,7 @@ public class tech_tree : networked
             int cap = 0;
             foreach (var l in town_level.ordered)
             {
-                if (!l.unlocked)
+                if (!l.unlocked(player.current.group))
                     break;
                 cap += l.added_population_cap;
             }
