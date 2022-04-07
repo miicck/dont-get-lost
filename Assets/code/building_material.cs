@@ -78,7 +78,9 @@ public class building_material : item, IPlayerInteractable
     void on_move(bool being_deleted = false)
     {
         // Only work out bounds before if we're being deleted
-        Bounds? bounds_before = being_deleted ? collision_bounds() : null;
+        Bounds bounds_before = new Bounds();
+        if (being_deleted)
+            bounds_before = collision_bounds();
 
         // Delay geometry check until we're in the right place
         temporary_object.create(0.1f, () =>
@@ -86,7 +88,7 @@ public class building_material : item, IPlayerInteractable
             if (being_deleted)
             {
                 // Use the bounds from before we were deleted
-                world.on_geometry_change((Bounds)bounds_before);
+                world.on_geometry_change(bounds_before);
                 return;
             }
 
