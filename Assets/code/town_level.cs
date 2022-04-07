@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class town_level : MonoBehaviour
 {
-    const int BASE_POPULATION_CAP = 5;
+    public const int BASE_POPULATION_CAP = 5;
 
     public town_level previous;
     public int added_population_cap = 5;
@@ -83,6 +83,22 @@ public class town_level : MonoBehaviour
                 ["Building requirements"] = new requirement_set<connected_building_requirement>(
                     gameObject, b => b.building.display_name, (b, g) => b.satisfied(g))
             };
+        }
+    }
+
+    public static int current_population_cap
+    {
+        get
+        {
+            int cap = BASE_POPULATION_CAP;
+            foreach (var l in town_level.ordered)
+            {
+                if (!l.unlocked(player.current.group))
+                    break;
+                cap += l.added_population_cap;
+            }
+
+            return cap;
         }
     }
 

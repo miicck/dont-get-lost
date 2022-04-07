@@ -59,21 +59,7 @@ public class tech_tree : networked
     static tech_tree loaded_tech_tree;
     static RectTransform tech_tree_ui;
 
-    public static int population_cap
-    {
-        get
-        {
-            int cap = 0;
-            foreach (var l in town_level.ordered)
-            {
-                if (!l.unlocked(player.current.group))
-                    break;
-                cap += l.added_population_cap;
-            }
-
-            return cap;
-        }
-    }
+    public static int population_cap => town_level.current_population_cap;
 
     public static void set_research(technology t)
     {
