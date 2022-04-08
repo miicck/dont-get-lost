@@ -151,6 +151,18 @@ public class skill : MonoBehaviour
         public int xp { get; private set; }
         public int level => xp_to_level(xp);
         public int proficiency_modifier => xp_to_proficiency_mod(xp);
+
+        public string xp_to_next
+        {
+            get
+            {
+                int level_xp = level_to_xp(level);
+                int next_level_xp = level_to_xp(level + 1);
+                int delta = next_level_xp - level_xp;
+                int prog = xp - level_xp;
+                return prog + "/" + delta;
+            }
+        }
     };
 
 #if UNITY_EDITOR

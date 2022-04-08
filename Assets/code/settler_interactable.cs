@@ -28,7 +28,7 @@ public abstract class settler_interactable : has_path_elements,
     public skill skill;
 
     // Overrideable stuff
-    protected virtual bool ready_to_assign(settler s) => true; 
+    protected virtual bool ready_to_assign(settler s) => true;
     protected virtual void on_assign(settler s) { }
     protected virtual STAGE_RESULT on_interact(settler s, int stage) => STAGE_RESULT.TASK_COMPLETE;
     protected virtual void on_unassign(settler s) { }
@@ -404,9 +404,13 @@ public abstract class settler_interactable : has_path_elements,
                     var new_user = networked.try_find_by_id(new_val, false);
                     if (new_user is settler) on_assign((settler)new_user);
                 };
+
+                stage.on_change_old_new = on_stage_change;
             }
         };
     }
+
+    protected virtual void on_stage_change(int old_stage, int new_stage) { }
 
     //#######################//
     // IAddsToInspectionText //
@@ -531,10 +535,7 @@ public abstract class settler_interactable : has_path_elements,
         return false;
     }
 
-    public static string info()
-    {
-        return "Total interactions : " + interactables.Count;
-    }
+    public static string info() => "Total interactions : " + interactables.Count;
 
     protected enum STAGE_RESULT
     {
@@ -551,8 +552,8 @@ public abstract class walk_to_settler_interactable : settler_interactable
     protected bool arrived { get; private set; }
 
     protected virtual void on_arrive(settler s) { }
-    protected virtual STAGE_RESULT on_interact_arrived(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
-    public virtual float move_to_speed(settler s) { return s.walk_speed; }
+    protected virtual STAGE_RESULT on_interact_arrived(settler s, int stage) => STAGE_RESULT.TASK_COMPLETE;
+    public virtual float move_to_speed(settler s) => s.walk_speed;
 
     protected sealed override void on_assign(settler s)
     {

@@ -624,6 +624,7 @@ GameObject:
   - component: {fileID: 9183244561944270363}
   - component: {fileID: 3400397826991905963}
   - component: {fileID: 6157673753918194396}
+  - component: {fileID: 3777019668673298441}
   m_Layer: 0
   m_Name: market_stall
   m_TagString: Untagged
@@ -693,6 +694,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
   shopkeeper_path_element: {fileID: 7512103988482490495}
+--- !u!114 &3777019668673298441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8791831583783846636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 1c7ecc046c51b55488a1aa4979d1282a, type: 3}
 --- !u!1 &9124192628601401059
 GameObject:
   m_ObjectHideFlags: 0

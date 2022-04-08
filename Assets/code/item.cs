@@ -421,8 +421,8 @@ public class item : networked, IPlayerInteractable
     {
         var b = visual_bounds();
         float max_size = Mathf.Max(b.size.x, b.size.y, b.size.z);
-        if (max_size < 10e-4) return 1f;
-        return LOGISTICS_SIZE / max_size;
+        if (max_size < 10e-4) return 1f; // Avoid divide-by-zero
+        return Mathf.Min(1f, LOGISTICS_SIZE / max_size); // Don't allow scaling up
     }
 
     private void OnDrawGizmosSelected()

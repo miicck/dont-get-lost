@@ -2,13 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class market_stall : walk_to_settler_interactable
+public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 {
     public town_path_element shopkeeper_path_element;
 
     chest storage;
     item_input[] inputs;
     item_output output;
+
+    protected override bool ready_to_assign(settler s)
+    {
+        return storage.inventory.total_item_count() > 0; // Must have stock
+    }
+
+    public override string added_inspection_text()
+    {
+        int items = storage.inventory.total_item_count();
+        if (items == 0) return "No stock!";
+        return items + " items in stock.";
+    }
 
     protected override void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure)
     {
@@ -49,10 +61,6 @@ public class market_stall : walk_to_settler_interactable
         }
     }
 
-    item item_selling;
-    float timer = 0;
-    int coins_to_dispense = 0;
-
     enum STATE
     {
         OBTAIN_ITEM_TO_SELL,
@@ -62,6 +70,9 @@ public class market_stall : walk_to_settler_interactable
         STATE_COUNT
     }
 
+    item item_selling;
+    float timer = 0;
+    int coins_to_dispense = 0;
     STATE state = STATE.OBTAIN_ITEM_TO_SELL;
 
     STATE parse_state(int stage, out bool success)
@@ -78,6 +89,8 @@ public class market_stall : walk_to_settler_interactable
         success = true;
         return (STATE)state_number;
     }
+
+    int cycle(int stage) => stage / (int)STATE.STATE_COUNT;
 
     public override string task_summary()
     {
@@ -100,8 +113,20 @@ public class market_stall : walk_to_settler_interactable
         }
     }
 
+    protected override void on_stage_change(int old_stage, int new_stage)
+    {
+        timer = 0;
+    }
+
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
+        const float BASE_STOCK_TIME = 1f;
+        const float BASE_SELL_TIME = 4f;
+        const float BASE_COIN_TIME = 0.5f;
+
+        if (cycle(stage) > 4)
+            return STAGE_RESULT.TASK_COMPLETE; // Completed enough stages
+
         state = parse_state(stage, out bool success);
         if (!success)
             return STAGE_RESULT.TASK_FAILED;
@@ -109,13 +134,20 @@ public class market_stall : walk_to_settler_interactable
         switch (state)
         {
             case STATE.OBTAIN_ITEM_TO_SELL:
+
+                timer += Time.deltaTime * current_proficiency.total_multiplier;
+                if (timer < BASE_STOCK_TIME)
+                    return STAGE_RESULT.STAGE_UNDERWAY;
+
                 item_selling = storage.inventory.remove_first();
                 if (item_selling == null)
                     return STAGE_RESULT.TASK_COMPLETE; // Sold out
+
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case STATE.AWAIT_BUYER:
-                timer = 0;
+
+                // Buyer found
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case STATE.SELL_ITEM:
@@ -125,11 +157,10 @@ public class market_stall : walk_to_settler_interactable
                     return STAGE_RESULT.TASK_FAILED;
                 }
 
-                timer += Time.deltaTime;
-                if (timer > 1)
+                timer += Time.deltaTime * current_proficiency.total_multiplier;
+                if (timer > BASE_SELL_TIME)
                 {
                     // Finished selling
-                    timer = 0;
                     coins_to_dispense = item_selling.value;
                     return STAGE_RESULT.STAGE_COMPLETE;
                 }
@@ -139,14 +170,19 @@ public class market_stall : walk_to_settler_interactable
             case STATE.OUTPUT_COIN:
 
                 if (coins_to_dispense <= 0)
+                {
                     return STAGE_RESULT.STAGE_COMPLETE;
+                }
 
-                timer += Time.deltaTime;
-                if (timer > 0.1f)
+                timer += Time.deltaTime * current_proficiency.total_multiplier;
+                if (timer > BASE_COIN_TIME)
                 {
                     // Dispense the next coin
                     coins_to_dispense -= 1;
-                    output.add(Resources.Load<item>("items/coin"), 1);
+                    timer = 0;
+                    var coin = Resources.Load<item>("items/coin");
+                    output.add(coin, 1);
+                    production_tracker.register_product(coin);
                 }
 
                 return STAGE_RESULT.STAGE_UNDERWAY;

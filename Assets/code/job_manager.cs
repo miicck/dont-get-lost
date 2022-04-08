@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class colony_tasks : MonoBehaviour, ISimpleMenuObject
+public class job_manager : MonoBehaviour, ISimpleMenuObject
 {
     public RectTransform header_skill_template;
     public RectTransform row_skill_template;
@@ -27,6 +27,10 @@ public class colony_tasks : MonoBehaviour, ISimpleMenuObject
 
             // Create the skills in the row template
             var r = row_skill_template.inst();
+
+            foreach (var b in r.GetComponentsInChildren<UnityEngine.UI.Button>())
+                b.gameObject.AddComponent<button_mouse_text>();
+
             r.SetParent(row_skill_template.parent);
             r.name = s.name;
         }
@@ -44,6 +48,12 @@ public class colony_tasks : MonoBehaviour, ISimpleMenuObject
         // Only disable the row template as it
         // is used in the refresh() function
         row_template.gameObject.SetActive(false);
+    }
+
+    class button_mouse_text : MonoBehaviour, IMouseTextUI
+    {
+        public string text = "";
+        public string mouse_ui_text() => this.text;
     }
 
     public void refresh()
@@ -83,6 +93,8 @@ public class colony_tasks : MonoBehaviour, ISimpleMenuObject
                 var txt = but.GetComponentInChildren<UnityEngine.UI.Text>();
                 txt.text = s.skills[sk].level.ToString();
                 but.image.color = skill.priority_color(s.job_priorities[sk]);
+
+                but.GetComponent<button_mouse_text>().text = "xp to next: " + s.skills[sk].xp_to_next;
 
                 but.onClick.AddListener(() =>
                 {
