@@ -68,7 +68,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                         return;
                     }
 
-                    var explore = c.add_or_get_component<explore_point_of_interest>();
+                    var explore = this.add_or_get_component<explore_point_of_interest>();
                     explore.element = elements[Random.Range(0, elements.Count)];
                     next_poi = explore;
                 }
@@ -95,12 +95,13 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                     break;
                 }
 
-                switch (path_to_poi.walk(c, c.walk_speed))
+                switch (path_to_poi.walk(this, walk_speed))
                 {
                     case town_path_element.path.WALK_STATE.UNDERWAY:
                         return; // Still walking
 
                     case town_path_element.path.WALK_STATE.COMPLETE:
+                        next_poi?.on_arrive(this);
                         state = STATE.INTERATING_WITH_POI;
                         break;
 
@@ -184,14 +185,22 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
     public static bool try_spawn(attacker_entrypoint entrypoint)
     {
-        if (visitors.Count > 0) return false; // Too many visitors
         if (Time.time < next_spawn_time) return false; // Not ready to spawn
         if (!entrypoint.has_authority) return false; // Only spawn on auth client
         if (!entrypoint.path_complete) return false; // Path not ready
 
-        var vc = client.create(entrypoint.path_end, "characters/wandering_trader") as visiting_character;
-        vc.controller = new approach_controller(entrypoint, vc);
-        vc.remaining_time_alive = vc.visiting_time;
+        int max_visitors = group_info.max_visitors(entrypoint.element.group);
+        if (visitors.Count >= max_visitors) return false; // Too many visitors
+
+        int to_spawn = Random.Range(1, max_visitors - visitors.Count);
+
+        for (int i = 0; i < to_spawn; ++i)
+        {
+            var vc = client.create(entrypoint.path_end, "characters/wandering_trader") as visiting_character;
+            vc.controller = new approach_controller(entrypoint, vc);
+            vc.remaining_time_alive = vc.visiting_time;
+        }
+
         next_spawn_time = Time.time + Random.Range(3 * 60, 5 * 60);
         return true;
     }

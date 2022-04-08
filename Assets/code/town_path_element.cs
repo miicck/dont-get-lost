@@ -970,6 +970,8 @@ public static class group_info
         return ret;
     }
 
+    public static int max_visitors(int group) => 1 + settlers(group).Count / 4;
+
     public static int largest_group() => town_path_element.largest_group();
 
     public static HashSet<settler> settlers(int group) => settler.get_settlers_by_group(group);

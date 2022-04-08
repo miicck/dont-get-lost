@@ -5,6 +5,7 @@ using UnityEngine;
 public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 {
     public town_path_element shopkeeper_path_element;
+    public market_stall_poi buyer_poi;
 
     chest storage;
     item_input[] inputs;
@@ -12,14 +13,18 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 
     protected override bool ready_to_assign(settler s)
     {
-        return storage.inventory.total_item_count() > 0; // Must have stock
+        if (storage.inventory.total_item_count() == 0)
+            return false; // Must have stock
+        return true;
     }
 
     public override string added_inspection_text()
     {
+        string ret = base.added_inspection_text();
         int items = storage.inventory.total_item_count();
-        if (items == 0) return "No stock!";
-        return items + " items in stock.";
+        if (items == 0) ret += "\nNo stock!";
+        else ret += "\n" + items + " items in stock.";
+        return ret;
     }
 
     protected override void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure)
@@ -118,11 +123,26 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
         timer = 0;
     }
 
+    settler_animations.simple_work work_anim;
+
+    protected override void on_arrive(settler s)
+    {
+        work_anim = null;
+    }
+
     protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
     {
         const float BASE_STOCK_TIME = 1f;
         const float BASE_SELL_TIME = 4f;
         const float BASE_COIN_TIME = 0.5f;
+
+        if (work_anim == null)
+        {
+            s.transform.forward = shopkeeper_path_element.transform.forward;
+            work_anim = new settler_animations.simple_work(s, 1f / current_proficiency.total_multiplier);
+        }
+        if (state != STATE.AWAIT_BUYER)
+            work_anim.play();
 
         if (cycle(stage) > 4)
             return STAGE_RESULT.TASK_COMPLETE; // Completed enough stages
@@ -147,11 +167,16 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 
             case STATE.AWAIT_BUYER:
 
+                if (buyer_poi.buyer == null)
+                    return STAGE_RESULT.STAGE_UNDERWAY;
+
                 // Buyer found
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case STATE.SELL_ITEM:
-                if (item_selling == null)
+
+                // I forgot what I was selling, or the buyer walked off
+                if (item_selling == null || buyer_poi.buyer == null)
                     return STAGE_RESULT.TASK_FAILED;
 
                 timer += Time.deltaTime * current_proficiency.total_multiplier;
