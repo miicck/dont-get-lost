@@ -895,6 +895,14 @@ public static class utils
         return new Bounds(centre, size);
     }
 
+    public static T add_or_get_component<T>(this Component comp) where T : Component
+    {
+        var t = comp.GetComponent<T>();
+        if (t != null) return t;
+        t = comp.gameObject.AddComponent<T>();
+        return t;
+    }
+
     public static float volume(this Bounds b) => b.size.x * b.size.y * b.size.z;
 
     public static bool Intersects(this Bounds a, Bounds b, out Bounds intersection)

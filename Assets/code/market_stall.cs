@@ -152,10 +152,7 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 
             case STATE.SELL_ITEM:
                 if (item_selling == null)
-                {
-                    Debug.LogError("Forgot what I was selling!");
                     return STAGE_RESULT.TASK_FAILED;
-                }
 
                 timer += Time.deltaTime * current_proficiency.total_multiplier;
                 if (timer > BASE_SELL_TIME)

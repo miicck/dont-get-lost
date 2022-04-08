@@ -4,13 +4,9 @@ using UnityEngine;
 
 public class wandering_trader : trader, IExtendsNetworked
 {
-    public override int get_stock(string item) { return stock[item]; }
-    public override void set_stock(string item, int count)
-    {
-        stock[item] = count;
-    }
-
-    public override string display_name() { return "Wandering trader"; }
+    public override int get_stock(string item) => stock[item];
+    public override void set_stock(string item, int count) => stock[item] = count;
+    public override string display_name() => "Wandering trader";
 
     public override Dictionary<string, int> get_stock()
     {

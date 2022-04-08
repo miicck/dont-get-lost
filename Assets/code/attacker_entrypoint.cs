@@ -250,7 +250,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         public void on_end_control(character c) { }
         public void draw_gizmos() { }
         public void draw_inspector_gui() { }
-        public string inspect_info() { return "Attacking town."; }
+        public virtual string inspect_info() => "Attacking town.";
     }
 
     public class attack_controller : ICharacterController
