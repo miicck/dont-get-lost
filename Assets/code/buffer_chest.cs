@@ -14,7 +14,7 @@ public class buffer_chest : MonoBehaviour
     private void Start()
     {
         if (buffering == null)
-            throw new System.Exception("Buffer chest unassigned!");
+            Debug.LogError("Buffer chest unassigned!");
     }
 
     private void Update()

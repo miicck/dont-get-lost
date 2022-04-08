@@ -41,3 +41,4 @@ TODO
 - max simulataneous researchers
 - weather
 - Setters sad if working uncovered
+- Make chest into an attachable component

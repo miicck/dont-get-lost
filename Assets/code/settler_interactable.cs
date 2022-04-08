@@ -28,9 +28,9 @@ public abstract class settler_interactable : has_path_elements,
     public skill skill;
 
     // Overrideable stuff
-    protected virtual bool ready_to_assign(settler s) { return true; }
+    protected virtual bool ready_to_assign(settler s) => true; 
     protected virtual void on_assign(settler s) { }
-    protected virtual STAGE_RESULT on_interact(settler s, int stage) { return STAGE_RESULT.TASK_COMPLETE; }
+    protected virtual STAGE_RESULT on_interact(settler s, int stage) => STAGE_RESULT.TASK_COMPLETE;
     protected virtual void on_unassign(settler s) { }
 
     public abstract string task_summary();
