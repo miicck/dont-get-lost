@@ -218,10 +218,7 @@ public class options_menu : MonoBehaviour
                 break;
 
             case "physical_sky":
-                player.call_when_current_player_available(() =>
-                {
-                    player.current.physical_sky_enabled = value;
-                });
+                sky.instance.gameObject.SetActive(value);
                 break;
 
             case "clip_out_of_range":

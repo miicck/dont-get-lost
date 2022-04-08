@@ -2859,7 +2859,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sun: {fileID: 2125337638}
-  weather: {fileID: 3561469998012565477, guid: 0877459c641a7864581bced09b44f28f, type: 3}
 --- !u!4 &954036884
 Transform:
   m_ObjectHideFlags: 0

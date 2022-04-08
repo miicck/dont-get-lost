@@ -31,19 +31,8 @@ public class lighting : MonoBehaviour
 
     public static Color sky_color
     {
-        get
-        {
-            if (player.current == null)
-                return Color.black;
-            return player.current.sky_color;
-        }
-
-        set
-        {
-            if (player.current == null)
-                return;
-            player.current.sky_color = value;
-        }
+        get => sky.instance.color;
+        set => sky.instance.color = value;
     }
 
     public static Color sky_color_daytime;

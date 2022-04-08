@@ -258,7 +258,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public abstract class menu_interaction : player_interaction
     {
-        protected abstract void set_menu_state(player player, bool state);  
+        protected abstract void set_menu_state(player player, bool state);
 
         protected override bool on_start_interaction(player player)
         {
@@ -876,8 +876,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
-                // Doesn't affect the sky/water
-                if (r.transform.IsChildOf(physical_sky.transform)) continue;
+                // Doesn't affect water
                 if (r.transform.IsChildOf(water.transform)) continue;
                 r.enabled = !_fly_mode;
             }
@@ -1058,30 +1057,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         return true;
     }
 
-    /// <summary> The in-game sky sphere. </summary>
-    Renderer physical_sky;
-    public bool physical_sky_enabled
-    {
-        get => physical_sky.enabled;
-        set => physical_sky.enabled = value;
-    }
-
-    public Color sky_color
-    {
-        get => utils.get_color(physical_sky.material);
-        set
-        {
-            var hd_cam = camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
-            if (hd_cam != null)
-            {
-                hd_cam.backgroundColorHDR = value;
-            }
-            camera.clearFlags = CameraClearFlags.Color;
-            camera.backgroundColor = value;
-            utils.set_color(physical_sky.material, value);
-        }
-    }
-
     bool head_visible
     {
         set
@@ -1158,7 +1133,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         render_range = game.render_range;
 
         // Set the sky size to the render range
-        physical_sky.transform.localScale = Vector3.one * game.render_range * 0.99f;
+        sky.instance.transform.localScale = Vector3.one * game.render_range * 0.99f;
 
         if (!map_open)
         {
@@ -1179,7 +1154,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         set
         {
             // Turn off the physical sky in map view
-            physical_sky_enabled = !value && options_menu.get_bool("physical_sky");
+            sky.instance.gameObject.SetActive(!value && options_menu.get_bool("physical_sky"));
 
             // Set the camera orthograpic if in 
             // map view, otherwise perspective
@@ -1551,12 +1526,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         camera.nearClipPlane = 0.01f;
         first_person = true; // Start with camera in 1st person position
 
-        // Enforce the render limit with a sky-color object
-        var sky = Resources.Load<GameObject>("misc/physical_sky").inst();
-        sky.transform.SetParent(transform);
-        sky.transform.localPosition = Vector3.zero;
-        physical_sky = sky.GetComponentInChildren<Renderer>();
-
         // The distance to the underwater screen, just past the near clipping plane
         float usd = camera.nearClipPlane * 1.1f;
         Vector3 bl_corner_point = camera.ScreenToWorldPoint(new Vector3(0, 0, usd));
@@ -1583,9 +1552,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Create the water
         water = new GameObject("water").AddComponent<water_reflections>();
-
-        // Ensure sky color is set properly
-        sky_color = sky_color;
 
         // Initialize the render range
         update_render_range();
