@@ -8,6 +8,8 @@ public class sky : MonoBehaviour
 
     void Update()
     {
+        if (player.current == null)
+            return;
         transform.position = player.current.transform.position;
     }
 
@@ -16,13 +18,17 @@ public class sky : MonoBehaviour
         get => utils.get_color(sky_background.material);
         set
         {
-            var hd_cam = player.current.camera.GetComponent<
-                UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
-            if (hd_cam != null)
-                hd_cam.backgroundColorHDR = value;
+            if (player.current != null)
+            {
+                var hd_cam = player.current.camera.GetComponent<
+                    UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+                if (hd_cam != null)
+                    hd_cam.backgroundColorHDR = value;
 
-            player.current.camera.clearFlags = CameraClearFlags.Color;
-            player.current.camera.backgroundColor = value;
+                player.current.camera.clearFlags = CameraClearFlags.Color;
+                player.current.camera.backgroundColor = value;
+            }
+
             utils.set_color(sky_background.material, value);
         }
     }

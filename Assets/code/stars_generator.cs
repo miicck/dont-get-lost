@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class stars_generator : MonoBehaviour
 {
-    List<Renderer> star_renderers = new List<Renderer>();
+    Material star_material;
 
     void Start()
     {
+        var star_template = Resources.Load<GameObject>("stars/simple_star");
+        star_material = Resources.Load<Material>("materials/star");
+
         for (int i = 0; i < 1000; ++i)
         {
 
@@ -17,14 +20,13 @@ public class stars_generator : MonoBehaviour
             Vector3 pos = Random.onUnitSphere * 0.99f;
             if (pos.y < 0) continue;
 
-            var star = Resources.Load<GameObject>("stars/simple_star").inst();
+            var star = star_template.inst();
 
             star.transform.SetParent(transform);
             star.transform.localPosition = pos;
             star.transform.forward = pos;
             star.transform.localScale = Vector3.one * Random.Range(0.4f, 1f) * 0.01f;
-
-            star_renderers.Add(star.GetComponentInChildren<Renderer>());
+            star.GetComponentInChildren<Renderer>().sharedMaterial = star_material;
         }
     }
 
@@ -32,10 +34,7 @@ public class stars_generator : MonoBehaviour
     {
         float alpha = 1f - time_manager.time_to_brightness;
         alpha = alpha * alpha;
-
         var color = new Color(1, 1, 1, alpha);
-
-        foreach (var r in star_renderers)
-            utils.set_color(r.material, color);
+        utils.set_color(star_material, color);
     }
 }
