@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class settler_interactable_options : walk_to_settler_interactable, IPlayerInteractable
+public abstract class settler_interactable_options : character_walk_to_interactable, IPlayerInteractable
 {
     //###################//
     // IExtendsNetworked //
@@ -217,20 +217,20 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     float time_harvesting;
     int harvested_count = 0;
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
         // Check we have something to harvest
         return harvesting != null;
     }
 
-    protected override void on_arrive(settler s)
+    protected override void on_arrive(character c)
     {
         // Reset stuff 
         time_harvesting = 0f;
         harvested_count = 0;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         if (harvesting == null)
             return STAGE_RESULT.TASK_FAILED;
@@ -255,17 +255,23 @@ public class settler_resource_gatherer : settler_interactable_options, IAddsToIn
     public override string task_summary()
     {
         if (harvesting == null) return "Harvesting nothing!!!";
-        return "Harvesting " + item_product.product_plurals_list(harvesting.products);
+        return "Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
-    protected override List<proficiency> proficiencies(settler s)
+    protected override List<proficiency> proficiencies(character c)
     {
-        var ret = base.proficiencies(s);
-        tool tool = tool.find_best_in(s.inventory, tool_type);
-        if (tool == null) return ret;
-        ret.Add(new item_based_proficiency(
-            tool.proficiency, tool.display_name,
-            s.inventory, tool, 0.1f));
+        var ret = base.proficiencies(c);
+
+        if (c is settler)
+        {
+            var s = (settler)c;
+            tool tool = tool.find_best_in(s.inventory, tool_type);
+            if (tool == null) return ret;
+            ret.Add(new item_based_proficiency(
+                tool.proficiency, tool.display_name,
+                s.inventory, tool, 0.1f));
+        }
+
         return ret;
     }
 }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class research_bench : walk_to_settler_interactable, IPlayerInteractable
+public class research_bench : character_walk_to_interactable, IPlayerInteractable
 {
     //##############//
     // INTERACTABLE //
@@ -16,7 +16,7 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
     float time_researching;
     settler_animations.simple_work work_anim;
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
         var tech = tech_tree.current_research_technology();
         if (tech == null)
@@ -25,22 +25,23 @@ public class research_bench : walk_to_settler_interactable, IPlayerInteractable
         return true;
     }
 
-    protected override void on_arrive(settler s)
+    protected override void on_arrive(character c)
     {
         // Reset stuff
         work_done = 0;
         time_researching = 0;
-        work_anim = new settler_animations.simple_work(s,
-            period: 1f / current_proficiency.total_multiplier);
+        if (c is settler)
+            work_anim = new settler_animations.simple_work(c as settler,
+                period: 1f / current_proficiency.total_multiplier);
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         // Play the work animation
-        work_anim.play();
+        work_anim?.play();
 
         // Only perform research on authority client
-        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+        if (!c.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         work_done += Time.deltaTime * current_proficiency.total_multiplier;
         time_researching += Time.deltaTime;

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class food_dipsenser : walk_to_settler_interactable, IAddsToInspectionText
+public class food_dipsenser : character_walk_to_interactable, IAddsToInspectionText
 {
     public item_dispenser item_dispenser;
 
@@ -25,26 +25,27 @@ public class food_dipsenser : walk_to_settler_interactable, IAddsToInspectionTex
 
     public bool food_available => item_dispenser.has_items_to_dispense;
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
         if (room_info.is_dining_room(path_element().room)) return false;
-        if (!s.ready_to_eat()) return false;
+        if (c is settler && !(c as settler).ready_to_eat()) return false;
         if (!food_available) return false;
 
         return true;
     }
 
-    protected override void on_arrive(settler s)
+    protected override void on_arrive(character c)
     {
         // Reset stuff
         time_dispensing = 0f;
         time_started = Time.time;
-        work_anim = new settler_animations.simple_work(s);
+        if (c is settler)
+            work_anim = new settler_animations.simple_work(c as settler);
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
-        work_anim.play();
+        work_anim?.play();
 
         // Run dispenser timer
         time_dispensing += Time.deltaTime;
@@ -55,19 +56,27 @@ public class food_dipsenser : walk_to_settler_interactable, IAddsToInspectionTex
         var food = item_dispenser.dispense_first_item();
         if (food == null) return STAGE_RESULT.TASK_FAILED;
 
-        // Eat food on authority client, delete food on all clients
-        if (s.has_authority) s.consume_food(food.food_values);
+        // delete food on all clients
+        var food_values = food.food_values; // Remember for later
         Destroy(food.gameObject);
 
-        // Complete if we've eaten enough
-        if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL ||
-            Time.time - time_started > 5f)
+        if (c is settler)
         {
-            s.add_mood_effect("ate_without_table");
-            return STAGE_RESULT.TASK_COMPLETE;
+            var s = (settler)c;
+            s.consume_food(food_values);
+
+            // Complete if we've eaten enough
+            if (s.nutrition.metabolic_satisfaction > GUARANTEED_FULL ||
+                Time.time - time_started > 5f)
+            {
+                s.add_mood_effect("ate_without_table");
+                return STAGE_RESULT.TASK_COMPLETE;
+            }
+            else
+                return STAGE_RESULT.STAGE_UNDERWAY;
         }
-        else
-            return STAGE_RESULT.STAGE_UNDERWAY;
+
+        return STAGE_RESULT.TASK_COMPLETE;
     }
 
     public override string task_summary()

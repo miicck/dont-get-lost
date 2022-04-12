@@ -38,9 +38,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         set => base.town_path_element = value;
     }
 
-    public int group => town_path_element == null ? -1 : town_path_element.group;
-    public int room => town_path_element == null ? -1 : town_path_element.room;
-
     public void on_attack_begin()
     {
         // Stop interactions that aren't possible when under attack
@@ -380,7 +377,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public inventory inventory { get; private set; }
 
     /// <summary> The interactable object that we are currently interacting with. </summary>
-    public settler_interactable interaction => settler_interactable.assigned_to(this);
+    public character_interactable interaction => character_interactable.assigned_to(this);
 
     public void consume_food(food f)
     {

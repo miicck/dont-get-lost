@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field : walk_to_settler_interactable, INonBlueprintable, INonEquipable
+public class settler_field : character_walk_to_interactable, INonBlueprintable, INonEquipable
 {
     public item_output output;
     public string field_spot_prefab;
@@ -88,21 +88,23 @@ public class settler_field : walk_to_settler_interactable, INonBlueprintable, IN
 
     public override string task_summary() => "Tending to " + GetComponentInParent<item>().display_name;
 
-    protected override void on_arrive(settler s)
+    protected override void on_arrive(character c)
     {
         // Reset stuff
         work_done = 0f;
-        work_anim = new settler_animations.simple_work(s,
-            period: 1f / current_proficiency.total_multiplier);
+
+        if (c is settler)
+            work_anim = new settler_animations.simple_work(c as settler,
+                period: 1f / current_proficiency.total_multiplier);
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         // Play the work animation
-        work_anim.play();
+        work_anim?.play();
 
         // Only grow the field on the authority client
-        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+        if (!c.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Record the amount of time spent farming
         work_done += Time.deltaTime * current_proficiency.total_multiplier;

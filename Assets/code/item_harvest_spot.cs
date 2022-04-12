@@ -32,19 +32,16 @@ public class item_harvest_spot : settler_interactable_options
     float work_completed = 0;
     int harvested_count = 0;
 
-    public override string task_summary()
-    {
-        return "Harvesting " + options[selected_option].plural;
-    }
+    public override string task_summary() => "Harvesting " + options[selected_option].plural;
 
-    protected override void on_arrive(settler s)
+    protected override void on_arrive(character c)
     {
         // Reset stuff
         work_completed = 0;
         harvested_count = 0;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         work_completed += Time.deltaTime * current_proficiency.total_multiplier;
         if (work_completed > (harvested_count + 1) * harvest_time)

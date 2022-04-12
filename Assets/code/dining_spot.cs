@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
+public class dining_spot : character_walk_to_interactable, IAddsToInspectionText
 {
     //#######################//
     // IAddsToInspectionText //
@@ -74,32 +74,32 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         return false;
     }
 
-    protected override bool ready_to_assign(settler s) => s.ready_to_eat() && food_available();
-    protected override void on_arrive(settler s) => reset();
-    protected override void on_unassign(settler s) => reset();
+    protected override bool ready_to_assign(character c) => (c is settler) && ((settler)c).ready_to_eat() && food_available();
+    protected override void on_arrive(character c) => reset();
+    protected override void on_unassign(character c) => reset();
     public override string task_summary() => "Eating";
 
-    STAGE_RESULT gather_foods(settler s)
+    STAGE_RESULT gather_foods(character c)
     {
         if (path == null)
         {
             if (index < food_dispensers.Count)
             {
                 // Path to the next food dispenser
-                var goal = food_dispensers[index]?.path_element(s.group);
-                path = town_path_element.path.get(s.town_path_element, goal);
+                var goal = food_dispensers[index]?.path_element(c.group);
+                path = town_path_element.path.get(c.town_path_element, goal);
                 if (path == null) return STAGE_RESULT.TASK_FAILED;
             }
             else
             {
                 // Path back to the dining spot
-                var goal = this?.path_element(s.group);
-                path = town_path_element.path.get(s.town_path_element, goal);
+                var goal = this?.path_element(c.group);
+                path = town_path_element.path.get(c.town_path_element, goal);
                 if (path == null) return STAGE_RESULT.TASK_FAILED;
             }
         }
 
-        switch (path.walk(s, s.walk_speed))
+        switch (path.walk(c, c.walk_speed))
         {
             // Arrived at destination
             case town_path_element.path.WALK_STATE.COMPLETE:
@@ -112,9 +112,16 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
                     if (food != null)
                     {
                         foods.Add(food);
-                        food.transform.SetParent(index % 2 == 0 ?
-                            s.right_hand.transform :
-                            s.left_hand.transform);
+
+                        Transform food_parent = null;
+                        if (c is settler)
+                        {
+                            var s = (settler)c;
+                            food_parent = index % 2 == 0 ? s.right_hand.transform : s.left_hand.transform;
+                        }
+                        else food_parent = c.transform;
+
+                        food.transform.SetParent(food_parent);
                         food.transform.localPosition = Vector3.zero;
                     }
 
@@ -136,23 +143,28 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         }
     }
 
-    STAGE_RESULT arrive_at_spot(settler s)
+    STAGE_RESULT arrive_at_spot(character c)
     {
-        s.transform.position = transform.position;
-        s.transform.forward = transform.forward;
-        work_anim = new settler_animations.simple_work(s);
+        c.transform.position = transform.position;
+        c.transform.forward = transform.forward;
 
-        var c = GetComponentInChildren<chair>();
-        if (c == null)
-            s.add_mood_effect("ate_without_chair");
+        if (c is settler)
+        {
+            var s = (settler)c;
+
+            work_anim = new settler_animations.simple_work(s);
+
+            var chair = GetComponentInChildren<chair>();
+            if (chair == null)
+                s.add_mood_effect("ate_without_chair");
+        }
 
         return STAGE_RESULT.STAGE_COMPLETE;
     }
 
-    STAGE_RESULT eat_foods(settler s)
+    STAGE_RESULT eat_foods(character c)
     {
-        if (work_anim == null) return STAGE_RESULT.TASK_FAILED;
-        work_anim.play();
+        work_anim?.play();
 
         eating_timer += Time.deltaTime;
         if (eating_timer < foods.Count * 2)
@@ -160,7 +172,7 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
 
         foreach (var f in foods)
         {
-            s.consume_food(f.food_values);
+            (c as settler)?.consume_food(f.food_values);
             Destroy(f.gameObject);
         }
         foods.Clear();
@@ -168,16 +180,16 @@ public class dining_spot : walk_to_settler_interactable, IAddsToInspectionText
         return STAGE_RESULT.TASK_COMPLETE;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         // Don't do anything on non-auth clients
-        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+        if (!c.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         switch (stage)
         {
-            case 0: return gather_foods(s);
-            case 1: return arrive_at_spot(s);
-            default: return eat_foods(s);
+            case 0: return gather_foods(c);
+            case 1: return arrive_at_spot(c);
+            default: return eat_foods(c);
         }
     }
 

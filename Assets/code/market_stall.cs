@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
+public class market_stall : character_walk_to_interactable, IAddsToInspectionText
 {
     public town_path_element shopkeeper_path_element;
     public market_stall_poi buyer_poi;
@@ -11,7 +11,7 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
     item_input[] inputs;
     item_output output;
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
         if (storage.inventory.total_item_count() == 0)
             return false; // Must have stock
@@ -27,7 +27,7 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
         return ret;
     }
 
-    protected override void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure)
+    protected override void on_fail_assign(character c, ASSIGN_FAILURE_MODE failure)
     {
         Debug.Log("Failed to assign to market stall: " + failure);
     }
@@ -118,19 +118,12 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
         }
     }
 
-    protected override void on_stage_change(int old_stage, int new_stage)
-    {
-        timer = 0;
-    }
-
     settler_animations.simple_work work_anim;
 
-    protected override void on_arrive(settler s)
-    {
-        work_anim = null;
-    }
+    protected override void on_stage_change(int old_stage, int new_stage) => timer = 0;
+    protected override void on_arrive(character c) =>  work_anim = null;
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         const float BASE_STOCK_TIME = 1f;
         const float BASE_SELL_TIME = 4f;
@@ -138,11 +131,13 @@ public class market_stall : walk_to_settler_interactable, IAddsToInspectionText
 
         if (work_anim == null)
         {
-            s.transform.forward = shopkeeper_path_element.transform.forward;
-            work_anim = new settler_animations.simple_work(s, 1f / current_proficiency.total_multiplier);
+            c.transform.forward = shopkeeper_path_element.transform.forward;
+            if (c is settler)
+                work_anim = new settler_animations.simple_work(c as settler, 1f / current_proficiency.total_multiplier);
         }
+
         if (state != STATE.AWAIT_BUYER)
-            work_anim.play();
+            work_anim?.play();
 
         if (cycle(stage) > 4)
             return STAGE_RESULT.TASK_COMPLETE; // Completed enough stages

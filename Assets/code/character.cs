@@ -108,7 +108,12 @@ public class character : networked,
 
     public virtual town_path_element town_path_element
     {
-        get => _town_path_element;
+        get
+        {
+            if (_town_path_element == null)
+                _town_path_element = town_path_element.nearest_element(transform.position);
+            return _town_path_element;
+        }
         set
         {
             if (this == null)
@@ -130,8 +135,19 @@ public class character : networked,
     }
     town_path_element _town_path_element;
 
+    public int group => town_path_element == null ? -1 : town_path_element.group;
+    public int room => town_path_element == null ? -1 : town_path_element.room;
+
     public void on_walk_towards(town_path_element element) => town_path_element = element;
     public void on_end_walk() => town_path_element?.on_character_leave(this);
+
+    public void look_at(Vector3 v, bool stay_upright = true)
+    {
+        Vector3 delta = v - transform.position;
+        if (stay_upright) delta.y = 0;
+        if (delta.magnitude < 0.001f) return;
+        transform.forward = delta;
+    }
 
     //########//
     // SOUNDS //

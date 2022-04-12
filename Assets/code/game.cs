@@ -208,7 +208,7 @@ public class game : MonoBehaviour
                 "\nSETTLERS\n" +
                 settler.info() + "\n" +
                 "\nINTERACTIONS\n" +
-                settler_interactable.info() + "\n" +
+                character_interactable.info() + "\n" +
                 "\nLOAD BALANCER\n" +
                 load_balancing.info() + "\n" +
                 "\nTIME OF DAY\n" +

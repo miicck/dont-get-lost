@@ -825,11 +825,11 @@ public class console : MonoBehaviour
             {
                 player.call_when_current_player_available(() =>
                 {
-                    var i = utils.raycast_for_closest<settler_interactable>(player.current.camera_ray(), out RaycastHit hit);
+                    var i = utils.raycast_for_closest<character_interactable>(player.current.camera_ray(), out RaycastHit hit);
                     if (i == null) return;
 
                     foreach (var s in settler.all_settlers())
-                        if (settler_interactable.force_assign(i, s))
+                        if (character_interactable.force_assign(i, s))
                         {
                             popup_message.create("Setter " + s.name + " force assigned to " + i.GetType().Name);
                             break;

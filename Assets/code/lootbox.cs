@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class lootbox : walk_to_settler_interactable
+public class lootbox : character_walk_to_interactable
 {
     character looting;
     town_path_element looting_path_element;
@@ -14,7 +14,7 @@ public class lootbox : walk_to_settler_interactable
         return "Looting dead bodies";
     }
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
         // Reset everything
         looting = null;
@@ -23,7 +23,7 @@ public class lootbox : walk_to_settler_interactable
         walking_back = false;
 
         // Search for a character to loot
-        group_info.iterate_over_attackers(s.group, (c) =>
+        group_info.iterate_over_attackers(c.group, (c) =>
         {
             if (c == null) return false; // Can't loot deleted characters
             if (!c.is_dead) return false; // Can't loot alive characters
@@ -33,7 +33,7 @@ public class lootbox : walk_to_settler_interactable
             var cts = inv.contents();
             if (cts.Count == 0) return false; // Nothing to loot
 
-            var tentative_target = town_path_element.nearest_element(c.transform.position, s.group);
+            var tentative_target = town_path_element.nearest_element(c.transform.position, c.group);
             if (tentative_target == null || tentative_target.distance_to(c) > 2f) return false; // Inaccessible
 
             looting = c;
@@ -45,18 +45,18 @@ public class lootbox : walk_to_settler_interactable
         if (looting == null || looting_path_element == null) return false; // No character to loot, or path element
 
         // Path from lootbox to character to loot
-        path = town_path_element.path.get(path_element(s.group), looting_path_element);
+        path = town_path_element.path.get(path_element(c.group), looting_path_element);
         if (path == null) return false; // No path to loot
 
         return true;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         if (looting == null) return STAGE_RESULT.TASK_FAILED; // Nothing to loot
         if (path == null) return STAGE_RESULT.TASK_FAILED; // No path somehow
 
-        switch (path.walk(s, s.walk_speed, forwards: !walking_back))
+        switch (path.walk(c, c.walk_speed, forwards: !walking_back))
         {
             case town_path_element.path.WALK_STATE.COMPLETE:
 

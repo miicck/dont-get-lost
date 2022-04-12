@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class melee_fight : settler_interactable
+public class melee_fight : character_interactable
 {
     character fighting => GetComponentInParent<character>();
     public override string task_summary() => "Fighting " + utils.a_or_an(fighting.display_name, true);
@@ -10,28 +10,28 @@ public class melee_fight : settler_interactable
     float timer_me = 0;
     float timer_target = 0;
 
-    protected override void on_assign(settler s)
+    protected override void on_assign(character c)
     {
         timer_me = 0;
         timer_target = 0;
     }
 
-    protected override STAGE_RESULT on_interact(settler s, int stage)
+    protected override STAGE_RESULT on_interact(character c, int stage)
     {
         if (fighting == null) return STAGE_RESULT.TASK_COMPLETE;
         if (fighting.is_dead) return STAGE_RESULT.TASK_COMPLETE;
 
         // Play fight animation both ways
-        play_fight_animation(fighting, s);
-        play_fight_animation(s, fighting);
+        play_fight_animation(fighting, c);
+        play_fight_animation(c, fighting);
 
         // Deal damage
         timer_me += Time.deltaTime;
-        if (timer_me > s.attack_time)
+        if (timer_me > c.attack_time)
         {
             timer_me = 0;
             //if (fighting.has_authority)
-                fighting.take_damage(s.attack_damage);
+                fighting.take_damage(c.attack_damage);
         }
 
         // Take damage
@@ -39,8 +39,7 @@ public class melee_fight : settler_interactable
         if (timer_target > fighting.attack_time)
         {
             timer_target = 0;
-            //if (s.has_authority)
-                s.take_damage(fighting.attack_damage);
+            c.take_damage(fighting.attack_damage);
         }
 
         return STAGE_RESULT.STAGE_UNDERWAY;
@@ -72,7 +71,7 @@ public class melee_fight : settler_interactable
 
             nw.add_register_listener(() =>
             {
-                settler_interactable.force_assign(mf, force_assign);
+                character_interactable.force_assign(mf, force_assign);
             });
         });
     }

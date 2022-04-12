@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class tool_rack : walk_to_settler_interactable
+public class tool_rack : character_walk_to_interactable
 {
     public item_input input;
     public item_output output;
@@ -156,17 +156,23 @@ public class tool_rack : walk_to_settler_interactable
         return ret;
     }
 
-    protected override bool ready_to_assign(settler s)
+    protected override bool ready_to_assign(character c)
     {
-        if (s.inventory == null) return false;
-        return tools_needed_by(s).Count > 0;
+        if (c is settler)
+        {
+            var s = (settler)c;
+            if (s.inventory == null) return false;
+            return tools_needed_by(s).Count > 0;
+        }
+
+        return false;
     }
 
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
-        foreach (var kv in tools_needed_by(s))
+        foreach (var kv in tools_needed_by(c as settler))
         {
-            s.inventory.add(kv.Value, 1);
+            (c as settler).inventory.add(kv.Value, 1);
             Destroy(kv.Value.gameObject);
         }
         return STAGE_RESULT.TASK_COMPLETE;

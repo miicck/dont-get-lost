@@ -71,18 +71,10 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
         return "Mining " + itm.plural;
     }
 
-    protected override bool ready_to_assign(settler s)
-    {
-        return on_valid_ground;
-    }
+    protected override bool ready_to_assign(character c) => on_valid_ground;
+    protected override void on_arrive(character c) => work_done = 0;
 
-    protected override void on_arrive(settler s)
-    {
-        // Reset stuff
-        work_done = 0;
-    }
-
-    protected override STAGE_RESULT on_interact_arrived(settler s, int stage)
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
         float delta_work = Time.deltaTime * current_proficiency.total_multiplier;
 
@@ -103,15 +95,21 @@ public class mineshaft : settler_interactable_options, IAddsToInspectionText
         return STAGE_RESULT.STAGE_UNDERWAY;
     }
 
-    protected override List<proficiency> proficiencies(settler s)
+    protected override List<proficiency> proficiencies(character c)
     {
-        var ret = base.proficiencies(s);
-        tool tool = tool.find_best_in(s.inventory, tool.TYPE.PICKAXE);
-        if (tool == null) return ret;
+        var ret = base.proficiencies(c);
 
-        ret.Add(new item_based_proficiency(
-            tool.proficiency, tool.display_name, 
-            s.inventory, tool, 0.1f));
+        if (c is settler)
+        {
+            var s = (settler)c;
+
+            tool tool = tool.find_best_in(s.inventory, tool.TYPE.PICKAXE);
+            if (tool == null) return ret;
+
+            ret.Add(new item_based_proficiency(
+                tool.proficiency, tool.display_name,
+                s.inventory, tool, 0.1f));
+        }
 
         return ret;
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class has_path_elements : MonoBehaviour
 {
-    /// <summary> Returns the path element that a settler from the
+    /// <summary> Returns the path element that a character from the
     /// given group can use to access this interactable. If 
     /// <paramref name="group"/> is < 0, then the first element found
     /// will be returned. </summary>
@@ -20,35 +20,35 @@ public class has_path_elements : MonoBehaviour
     public int path_element_count => GetComponentsInChildren<town_path_element>().Length;
 }
 
-public abstract class settler_interactable : has_path_elements,
+public abstract class character_interactable : has_path_elements,
     INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked
 {
     /// <summary> The type of interaction this is. This will determine when 
-    /// a settler decides to use this interactable object. </summary>
+    /// a character decides to use this interactable object. </summary>
     public skill skill;
 
     // Overrideable stuff
-    protected virtual bool ready_to_assign(settler s) => true;
-    protected virtual void on_assign(settler s) { }
-    protected virtual STAGE_RESULT on_interact(settler s, int stage) => STAGE_RESULT.TASK_COMPLETE;
-    protected virtual void on_unassign(settler s) { }
+    protected virtual bool ready_to_assign(character c) => true;
+    protected virtual void on_assign(character c) { }
+    protected virtual STAGE_RESULT on_interact(character c, int stage) => STAGE_RESULT.TASK_COMPLETE;
+    protected virtual void on_unassign(character c) { }
 
     public abstract string task_summary();
 
     float delta_xp = 0;
 
-    public void interact(settler s)
+    public void interact(character c)
     {
-        if (!possible_checks(s))
+        if (!possible_checks(c))
         {
             unassign();
             return;
         }
 
         if (current_proficiency == null)
-            current_proficiency = new proficiency_info(s, this);
+            current_proficiency = new proficiency_info(c, this);
 
-        if (s.has_authority)
+        if (c.has_authority)
         {
             // Gain XP
             delta_xp += Time.deltaTime;
@@ -60,7 +60,7 @@ public abstract class settler_interactable : has_path_elements,
         }
 
         cancel_missing_worker_timeout();
-        switch (on_interact(s, stage.value))
+        switch (on_interact(c, stage.value))
         {
             case STAGE_RESULT.TASK_COMPLETE:
             case STAGE_RESULT.TASK_FAILED:
@@ -78,16 +78,21 @@ public abstract class settler_interactable : has_path_elements,
         }
     }
 
-    bool possible_checks(settler s)
+    bool possible_checks(character c)
     {
         if (this == null) return false; // This has been deleted
-        if (s == null) return false; // Settler has been deleted
+        if (c == null) return false; // character has been deleted
 
-        if (!skill.possible_when_under_attack && group_info.under_attack(s.group))
-            return false; // Not possible when under attack
+        if (c is settler)
+        {
+            var s = (settler)c;
 
-        if (s.starving && skill.name != "eating" && group_has_food_available_for(s))
-            return false; // Not possible when starving/there is food available (unless this is an eating task)
+            if (!skill.possible_when_under_attack && group_info.under_attack(s.group))
+                return false; // Not possible when under attack
+
+            if (s.starving && skill.name != "eating" && group_has_food_available_for(s))
+                return false; // Not possible when starving/there is food available (unless this is an eating task)
+        }
 
         return true;
     }
@@ -104,12 +109,12 @@ public abstract class settler_interactable : has_path_elements,
         NOT_READY,
     }
 
-    bool can_assign(settler s, out ASSIGN_FAILURE_MODE failure)
+    bool can_assign(character c, out ASSIGN_FAILURE_MODE failure)
     {
-        if (s == null)
+        if (c == null)
         {
             failure = ASSIGN_FAILURE_MODE.SETTLER_IS_NULL;
-            return false; // Settler has been deleted
+            return false; // character has been deleted
         }
 
         if (this == null)
@@ -118,13 +123,13 @@ public abstract class settler_interactable : has_path_elements,
             return false; // I have been deleted
         }
 
-        if (path_element_count > 0 && path_element(s.group) == null)
+        if (path_element_count > 0 && path_element(c.group) == null)
         {
             failure = ASSIGN_FAILURE_MODE.WRONG_GROUP;
             return false; // This interactable does not have the same group as me
         }
 
-        if (settler_id.value > 0 && settler_id.value != s.network_id)
+        if (settler_id.value > 0 && settler_id.value != c.network_id)
         {
             if (settler != null)
             {
@@ -149,7 +154,7 @@ public abstract class settler_interactable : has_path_elements,
         }
 
         // Check if this is possible
-        if (!possible_checks(s))
+        if (!possible_checks(c))
         {
             failure = ASSIGN_FAILURE_MODE.NOT_POSSIBLE;
             return false;
@@ -157,7 +162,7 @@ public abstract class settler_interactable : has_path_elements,
 
         // This should be called last so that we can assume within
         // ready_to_assign that the above conditions are met.
-        if (!ready_to_assign(s))
+        if (!ready_to_assign(c))
         {
             failure = ASSIGN_FAILURE_MODE.NOT_READY;
             return false;
@@ -167,22 +172,22 @@ public abstract class settler_interactable : has_path_elements,
         return true;
     }
 
-    bool try_assign(settler s, out ASSIGN_FAILURE_MODE failure)
+    bool try_assign(character c, out ASSIGN_FAILURE_MODE failure)
     {
-        if (!can_assign(s, out failure)) return false;
+        if (!can_assign(c, out failure)) return false;
 
-        // Assign the new settler
-        settler_id.value = s.network_id;
+        // Assign the new character
+        settler_id.value = c.network_id;
         current_proficiency = null;
         failure = ASSIGN_FAILURE_MODE.NO_FAILURE;
         return true;
     }
 
-    protected virtual void on_fail_assign(settler s, ASSIGN_FAILURE_MODE failure) { }
+    protected virtual void on_fail_assign(character c, ASSIGN_FAILURE_MODE failure) { }
 
     public void unassign()
     {
-        // Unassign the settler
+        // Unassign the character
         settler_id.value = -1;
         current_proficiency?.on_unassign();
         current_proficiency = null;
@@ -202,7 +207,7 @@ public abstract class settler_interactable : has_path_elements,
         List<proficiency> proficiencies;
         public void on_unassign() { foreach (var p in proficiencies) p.on_unassign(); }
 
-        public proficiency_info(settler s, settler_interactable i)
+        public proficiency_info(character s, character_interactable i)
         {
             // Get the proficiencies (sort by highest effect)
             proficiencies = i.proficiencies(s);
@@ -294,13 +299,19 @@ public abstract class settler_interactable : has_path_elements,
         }
     }
 
-    protected virtual List<proficiency> proficiencies(settler s)
+    protected virtual List<proficiency> proficiencies(character c)
     {
-        var ret = new List<proficiency>();
-        ret.Add(new proficiency(s.skills[skill].proficiency_modifier, "skill level"));
-        int total_mood = s.total_mood();
-        if (total_mood != 0) ret.Add(new proficiency(total_mood * 5, "mood"));
-        return ret;
+        if (c is settler)
+        {
+            var s = (settler)c;
+            var ret = new List<proficiency>();
+            ret.Add(new proficiency(s.skills[skill].proficiency_modifier, "skill level"));
+            int total_mood = s.total_mood();
+            if (total_mood != 0) ret.Add(new proficiency(total_mood * 5, "mood"));
+            return ret;
+        }
+
+        return new List<proficiency>() { };
     }
 
     //########################//
@@ -338,15 +349,8 @@ public abstract class settler_interactable : has_path_elements,
     // UNITY callbacks //
     //#################//
 
-    protected virtual void Start()
-    {
-        register_interactable(this);
-    }
-
-    protected virtual void OnDestroy()
-    {
-        forget_interactable(this);
-    }
+    protected virtual void Start() => register_interactable(this);
+    protected virtual void OnDestroy() => forget_interactable(this);
 
     protected virtual void OnDrawGizmos()
     {
@@ -368,7 +372,7 @@ public abstract class settler_interactable : has_path_elements,
         {
             if (settler_id == null || settler_id.value <= 0) return null;
             var nw = networked.try_find_by_id(settler_id.value, false);
-            if (nw == null) return null; // Settler is not loaded on this client
+            if (nw == null) return null; // character is not loaded on this client
             if (nw is settler) return (settler)nw;
 
             // The networked id has been taken by something else?
@@ -384,7 +388,7 @@ public abstract class settler_interactable : has_path_elements,
         {
             init_networked_variables = () =>
             {
-                // Initialize the settler id/stage
+                // Initialize the character id/stage
                 settler_id = new networked_variables.net_int(default_value: -1);
                 stage = new networked_variables.net_int();
 
@@ -438,40 +442,45 @@ public abstract class settler_interactable : has_path_elements,
 
     // Private static //
 
-    static Dictionary<skill, List<settler_interactable>> interactables =
-        new Dictionary<skill, List<settler_interactable>>();
+    static Dictionary<skill, List<character_interactable>> interactables =
+        new Dictionary<skill, List<character_interactable>>();
 
-    static Dictionary<int, settler_interactable> assignments =
-        new Dictionary<int, settler_interactable>();
+    static Dictionary<int, character_interactable> assignments =
+        new Dictionary<int, character_interactable>();
 
-    static void register_interactable(settler_interactable i)
+    static void register_interactable(character_interactable i)
     {
-        if (interactables.TryGetValue(i.skill, out List<settler_interactable> hs)) hs.Add(i);
-        else interactables[i.skill] = new List<settler_interactable> { i };
+        if (interactables.TryGetValue(i.skill, out List<character_interactable> hs)) hs.Add(i);
+        else interactables[i.skill] = new List<character_interactable> { i };
     }
 
-    static void forget_interactable(settler_interactable i)
+    static void forget_interactable(character_interactable i)
     {
-        if (interactables.TryGetValue(i.skill, out List<settler_interactable> hs)) hs.Remove(i);
+        if (interactables.TryGetValue(i.skill, out List<character_interactable> hs)) hs.Remove(i);
     }
 
-    static settler_interactable try_assign_interaction(settler s)
+    static character_interactable try_assign_interaction(character c)
     {
         // Can't assign interactions on non-auth clients
-        if (!s.has_authority) return null;
+        if (!c.has_authority) return null;
 
         foreach (var sk in skill.all)
         {
-            // Skip visible skills that fail the priority test
-            if (sk.is_visible && !sk.priority_test(s)) continue;
-            if (!interactables.TryGetValue(sk, out List<settler_interactable> possibilities)) continue;
+            if (c is settler)
+            {
+                // Skip visible skills that fail the settler priority test
+                var s = (settler)c;
+                if (sk.is_visible && !sk.priority_test(s)) continue;
+            }
+
+            if (!interactables.TryGetValue(sk, out List<character_interactable> possibilities)) continue;
             if (possibilities.Count == 0) continue;
 
             for (int i = 0; i < load_balancing.iter; ++i)
             {
                 var to_try = possibilities[Random.Range(0, possibilities.Count)];
-                if (to_try.try_assign(s, out ASSIGN_FAILURE_MODE fm)) return to_try;
-                else to_try.on_fail_assign(s, fm);
+                if (to_try.try_assign(c, out ASSIGN_FAILURE_MODE fm)) return to_try;
+                else to_try.on_fail_assign(c, fm);
             }
         }
 
@@ -480,39 +489,39 @@ public abstract class settler_interactable : has_path_elements,
 
     // Public static //
 
-    public static settler_interactable assigned_to(settler s)
+    public static character_interactable assigned_to(character c)
     {
         // Look for existing interaction
-        if (assignments.TryGetValue(s.network_id, out settler_interactable i))
+        if (assignments.TryGetValue(c.network_id, out character_interactable i))
             return i;
 
         // As a fallback, search all interactions for one assigend to s
         foreach (var kv in interactables)
             foreach (var inter in kv.Value)
-                if (inter.settler_id.value == s.network_id)
+                if (inter.settler_id.value == c.network_id)
                 {
                     Debug.Log("Assignement fallback triggered!");
                     inter.current_proficiency = null;
-                    assignments[s.network_id] = inter;
+                    assignments[c.network_id] = inter;
                     return inter;
                 }
 
         // None found, attempt to assign interaction
         // if we're on the authority client
-        if (s.has_authority)
-            try_assign_interaction(s);
+        if (c.has_authority)
+            try_assign_interaction(c);
 
         return null;
     }
 
-    public static bool force_assign(settler_interactable i, settler s)
+    public static bool force_assign(character_interactable i, character c)
     {
-        if (s == null) return false;
+        if (c == null) return false;
 
-        assigned_to(s)?.unassign(); // Unassign previous task of s
-        i?.unassign(); // Unassign previous settler from i
+        assigned_to(c)?.unassign(); // Unassign previous task of s
+        i?.unassign(); // Unassign previous character from i
 
-        if (i != null && !i.try_assign(s, out ASSIGN_FAILURE_MODE fm)) // Assign i to s
+        if (i != null && !i.try_assign(c, out ASSIGN_FAILURE_MODE fm)) // Assign i to s
         {
             Debug.LogError("Force assign failed: " + fm);
             return false;
@@ -521,15 +530,15 @@ public abstract class settler_interactable : has_path_elements,
         return true;
     }
 
-    public static bool group_has_food_available_for(settler s)
+    public static bool group_has_food_available_for(settler c)
     {
         if (!interactables.TryGetValue(Resources.Load<skill>("skills/eating"),
-            out List<settler_interactable> eating_interactions))
+            out List<character_interactable> eating_interactions))
             return false; // No eating interactions available
 
         // Check for eating interactables that are assignable to s
         foreach (var e in eating_interactions)
-            if (e.can_assign(s, out ASSIGN_FAILURE_MODE fm))
+            if (e.can_assign(c, out ASSIGN_FAILURE_MODE fm))
                 return true;
 
         return false;
@@ -546,30 +555,30 @@ public abstract class settler_interactable : has_path_elements,
     }
 }
 
-public abstract class walk_to_settler_interactable : settler_interactable
+public abstract class character_walk_to_interactable : character_interactable
 {
     town_path_element.path path;
     protected bool arrived { get; private set; }
 
-    protected virtual void on_arrive(settler s) { }
-    protected virtual STAGE_RESULT on_interact_arrived(settler s, int stage) => STAGE_RESULT.TASK_COMPLETE;
-    public virtual float move_to_speed(settler s) => s.walk_speed;
+    protected virtual void on_arrive(character c) { }
+    protected virtual STAGE_RESULT on_interact_arrived(character c, int stage) => STAGE_RESULT.TASK_COMPLETE;
+    public virtual float move_to_speed(character c) => c.walk_speed;
 
-    protected sealed override void on_assign(settler s)
+    protected sealed override void on_assign(character c)
     {
         arrived = false;
         path = null;
     }
 
-    void lerp_look(settler s, float amt)
+    void lerp_look(character s, float amt)
     {
-        // Lerp settler so they are facing towards this
+        // Lerp character so they are facing towards this
         Vector3 delta = transform.position - s.transform.position;
         delta.y = 0;
         s.transform.forward = Vector3.Lerp(s.transform.forward, delta, amt);
     }
 
-    protected sealed override STAGE_RESULT on_interact(settler s, int stage)
+    protected sealed override STAGE_RESULT on_interact(character c, int stage)
     {
         // Delegate control to implementation once I have arrived
         if (stage > 0)
@@ -577,24 +586,24 @@ public abstract class walk_to_settler_interactable : settler_interactable
             if (!arrived)
             {
                 arrived = true;
-                lerp_look(s, 1f); // Look at target
-                on_arrive(s);
+                lerp_look(c, 1f); // Look at target
+                on_arrive(c);
             }
 
-            return on_interact_arrived(s, stage - 1);
+            return on_interact_arrived(c, stage - 1);
         }
 
-        // Only authority clients control the settler
-        if (!s.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
+        // Only authority clients control the character
+        if (!c.has_authority) return STAGE_RESULT.STAGE_UNDERWAY;
 
         // Get a path
         if (path == null)
         {
-            path = town_path_element.path.get(s.town_path_element, path_element(s.group));
+            path = town_path_element.path.get(c.town_path_element, path_element(c.group));
             if (path == null) return STAGE_RESULT.TASK_FAILED; // Pathfinding failed
         }
 
-        switch (path.walk(s, move_to_speed(s)))
+        switch (path.walk(c, move_to_speed(c)))
         {
             case town_path_element.path.WALK_STATE.COMPLETE:
                 return STAGE_RESULT.STAGE_COMPLETE;
@@ -603,7 +612,7 @@ public abstract class walk_to_settler_interactable : settler_interactable
                 if (path.index == path.count - 1)
                 {
                     // Turn towards the target on the last path segment
-                    lerp_look(s, Time.deltaTime * 5f);
+                    lerp_look(c, Time.deltaTime * 5f);
                 }
                 return STAGE_RESULT.STAGE_UNDERWAY;
 
