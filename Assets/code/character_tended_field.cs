@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field : character_walk_to_interactable, INonBlueprintable, INonEquipable
+public class character_tended_field : character_walk_to_interactable, INonBlueprintable, INonEquipable
 {
     public item_output output;
     public string field_spot_prefab;

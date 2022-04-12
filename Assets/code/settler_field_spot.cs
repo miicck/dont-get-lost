@@ -47,7 +47,7 @@ public class settler_field_spot : networked, IPlayerInteractable
             // If progress has been reduced, that means we've been harvested
             if (!first_load && progress_scale < grown_object.transform.localScale.x)
             {
-                var field = GetComponentInParent<settler_field>();
+                var field = GetComponentInParent<character_tended_field>();
                 if (field != null)
                     foreach (var p in products)
                         p.create_in_node(field.output, true);

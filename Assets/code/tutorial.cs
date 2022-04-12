@@ -512,7 +512,7 @@ class basic_camp_requirement : tutorial_object
         bool planter_connected_to_pantry = false;
 
         food_dipsenser pantry = null;
-        settler_field planter = null;
+        character_tended_field planter = null;
 
         if (player.current != null)
         {
@@ -523,10 +523,10 @@ class basic_camp_requirement : tutorial_object
                     {
                         if (e.interactable is bed) path_to_bed = true;
                         if (e.interactable is guard_spot) path_to_guard_spot = true;
-                        if (e.interactable is settler_field)
+                        if (e.interactable is character_tended_field)
                         {
                             path_to_planter = true;
-                            planter = (settler_field)e.interactable;
+                            planter = (character_tended_field)e.interactable;
                         }
                         if (e.interactable is food_dipsenser)
                         {
