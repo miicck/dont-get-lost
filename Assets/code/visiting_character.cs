@@ -18,7 +18,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     public void draw_gizmos() { }
     public void draw_inspector_gui() { }
     public void on_end_control(character c) { }
-    public string inspect_info() => null;
+    public string inspect_info() => interaction?.task_summary() ?? "Looking for something to do";
 
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public character_interactable interaction => character_interactable.assigned_to(this);
