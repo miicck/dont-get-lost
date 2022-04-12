@@ -101,20 +101,27 @@ public abstract class character_interactable : has_path_elements,
     protected enum ASSIGN_FAILURE_MODE
     {
         NO_FAILURE,
-        SETTLER_IS_NULL,
+        CHARACTER_IS_NULL,
         INTERACTABLE_IS_NULL,
         WRONG_GROUP,
         ALREADY_ASSIGNED,
         ALREADY_ASSIGNED_TO_UNLOADED,
         NOT_POSSIBLE,
         NOT_READY,
+        NOT_POSSIBLE_FOR_VISITOR,
     }
 
     bool can_assign(character c, out ASSIGN_FAILURE_MODE failure)
     {
+        if (c is visiting_character && GetComponent<visiting_character_interactable>() == null)
+        {
+            failure = ASSIGN_FAILURE_MODE.NOT_POSSIBLE_FOR_VISITOR;
+            return false;
+        }
+
         if (c == null)
         {
-            failure = ASSIGN_FAILURE_MODE.SETTLER_IS_NULL;
+            failure = ASSIGN_FAILURE_MODE.CHARACTER_IS_NULL;
             return false; // character has been deleted
         }
 
@@ -175,7 +182,12 @@ public abstract class character_interactable : has_path_elements,
 
     bool try_assign(character c, out ASSIGN_FAILURE_MODE failure)
     {
-        if (!can_assign(c, out failure)) return false;
+        if (!can_assign(c, out failure))
+        {
+            if (failure == ASSIGN_FAILURE_MODE.NO_FAILURE)
+                Debug.LogError("Assign failed but no reason set!");
+            return false;
+        }
 
         // Assign the new character
         character_id.value = c.network_id;

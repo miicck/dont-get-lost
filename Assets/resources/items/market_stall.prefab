@@ -730,7 +730,6 @@ GameObject:
   m_Component:
   - component: {fileID: 432929163511348397}
   - component: {fileID: 9157642573785041147}
-  - component: {fileID: 2105799483926893668}
   m_Layer: 0
   m_Name: path_element_front
   m_TagString: Untagged
@@ -764,18 +763,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 119155b4a9ef54c499df6016a9e6ee41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &2105799483926893668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8104363525387227223}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2238cfe814ac10b48a79cd787265e2a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8751567838146832070
@@ -905,7 +892,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
   shopkeeper_path_element: {fileID: 7512103988482490495}
-  buyer_poi: {fileID: 2105799483926893668}
 --- !u!114 &3777019668673298441
 MonoBehaviour:
   m_ObjectHideFlags: 0

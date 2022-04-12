@@ -23,16 +23,33 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public character_interactable interaction => character_interactable.assigned_to(this);
 
+    void leave()
+    {
+        interaction?.unassign();
+        delete();
+    }
+
     public void control(character c)
     {
+        remaining_visiting_time -= Time.deltaTime;
+
+        if (remaining_visiting_time < 0)
+        {
+            remaining_visiting_time = 0;
+            if (has_authority)
+            {
+                leave();
+                return;
+            }
+        }
+
         if (c != this)
         {
             Debug.LogError("Visiting character tried to control another character!");
             return;
         }
 
-        if (has_authority)
-            return;
+        interaction?.interact(this);
     }
 
     //#######################//
@@ -60,6 +77,11 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
         { }
 
         public override string inspect_info() => "Entering town.";
+    }
+
+    public static void try_spawn_now()
+    {
+        next_spawn_time = Time.time;
     }
 
     public static bool try_spawn(attacker_entrypoint entrypoint)

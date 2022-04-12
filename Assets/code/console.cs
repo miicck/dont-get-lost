@@ -1147,7 +1147,22 @@ public class console : MonoBehaviour
                 if (w == null) return console_error("Unkown weather type: " + args[1]);
                 weather.queue_weather_event(w, 5f);
                 return true;
-            }
+            },
+
+            description = "Set the weather.",
+            usage_example = "weather rain"
+        },
+
+        ["spawn_visitors"] = new console_info
+        {
+            command = (args) =>
+            {
+                visiting_character.try_spawn_now();
+                return true;
+            },
+
+            description = "Set the visitor spawn timer to zero.",
+            usage_example = "spawn_visitors"
         }
     };
 

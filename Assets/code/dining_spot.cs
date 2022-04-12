@@ -74,7 +74,13 @@ public class dining_spot : character_walk_to_interactable, IAddsToInspectionText
         return false;
     }
 
-    protected override bool ready_to_assign(character c) => (c is settler) && ((settler)c).ready_to_eat() && food_available();
+    protected override bool ready_to_assign(character c)
+    {
+        if (!food_available()) return false;
+        if (c is settler && !(c as settler).ready_to_eat()) return false;
+        return true;
+    }
+
     protected override void on_arrive(character c) => reset();
     protected override void on_unassign(character c) => reset();
     public override string task_summary() => "Eating";
