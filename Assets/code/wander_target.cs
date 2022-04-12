@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_wander_target : character_interactable
+public class wander_target : character_interactable
 {
     town_path_element found_element;
 
