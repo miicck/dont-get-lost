@@ -114,7 +114,7 @@ public abstract class settler_interactable_options : character_walk_to_interacta
     protected abstract string options_title { get; }
 }
 
-public class settler_resource_gatherer : settler_interactable_options, IAddsToInspectionText
+public class character_resource_gatherer : settler_interactable_options, IAddsToInspectionText
 {
     public string display_name;
     public item_output output;
