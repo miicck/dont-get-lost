@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class settler_field_spot : networked, IPlayerInteractable
+public class field_spot : networked, IPlayerInteractable
 {
     /// <summary> Only modify networked variables if this much progress has been made. </summary>
     const float GROWTH_RESOLUTION = 0.05f;

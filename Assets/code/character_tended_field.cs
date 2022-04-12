@@ -13,12 +13,12 @@ public class character_tended_field : character_walk_to_interactable, INonBluepr
     public Vector3 offset = Vector3.zero;
 
     // Get the spots indexed by their coordinates
-    settler_field_spot[,] spots
+    field_spot[,] spots
     {
         get
         {
-            settler_field_spot[,] ret = new settler_field_spot[x_size, z_size];
-            foreach (var s in GetComponentsInChildren<settler_field_spot>())
+            field_spot[,] ret = new field_spot[x_size, z_size];
+            foreach (var s in GetComponentsInChildren<field_spot>())
             {
                 var c = get_coords(s);
                 ret[c[0], c[1]] = s;
@@ -35,7 +35,7 @@ public class character_tended_field : character_walk_to_interactable, INonBluepr
         base.Start();
     }
 
-    int[] get_coords(settler_field_spot spot)
+    int[] get_coords(field_spot spot)
     {
         int[] ret = new int[2];
 
