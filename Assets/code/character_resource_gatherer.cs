@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class settler_interactable_options : character_walk_to_interactable, IPlayerInteractable
+public abstract class character_interactable_options : character_walk_to_interactable, IPlayerInteractable
 {
     //###################//
     // IExtendsNetworked //
@@ -36,8 +36,8 @@ public abstract class settler_interactable_options : character_walk_to_interacta
 
     class menu : left_player_menu
     {
-        settler_interactable_options options;
-        public menu(settler_interactable_options options) : base(
+        character_interactable_options options;
+        public menu(character_interactable_options options) : base(
             options.GetComponentInParent<item>()?.display_name)
         {
             this.options = options;
@@ -114,7 +114,7 @@ public abstract class settler_interactable_options : character_walk_to_interacta
     protected abstract string options_title { get; }
 }
 
-public class character_resource_gatherer : settler_interactable_options, IAddsToInspectionText
+public class character_resource_gatherer : character_interactable_options, IAddsToInspectionText
 {
     public string display_name;
     public item_output output;

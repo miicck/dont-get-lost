@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class item_harvest_spot : settler_interactable_options
+public class item_harvest_spot : character_interactable_options
 {
     public List<item> options = new List<item>();
     public float harvest_time = 1;

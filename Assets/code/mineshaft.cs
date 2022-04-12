@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class mineshaft : settler_interactable_options, IAddsToInspectionText
+public class mineshaft : character_interactable_options, IAddsToInspectionText
 {
     item_output output => GetComponentInChildren<item_output>();
 

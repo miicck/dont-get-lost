@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class workshop : settler_interactable_options, IAddsToInspectionText
+public class workshop : character_interactable_options, IAddsToInspectionText
 {
     static workshop()
     {
