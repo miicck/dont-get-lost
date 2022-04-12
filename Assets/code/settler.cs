@@ -53,14 +53,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     protected override bool create_dead_body() => false;
 
-    public void look_at(Vector3 v, bool stay_upright = true)
-    {
-        Vector3 delta = v - transform.position;
-        if (stay_upright) delta.y = 0;
-        if (delta.magnitude < 0.001f) return;
-        transform.forward = delta;
-    }
-
     const byte GUARANTEED_FULL = 220;
     const byte GUARANTEED_EAT = 64;
 
@@ -186,28 +178,23 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return facial_expression.EXPRESSION.HAPPY;
     }
 
-    protected override void OnDestroy()
-    {
-        settlers.Remove(this);
-    }
+    protected override void OnDestroy() => settlers.Remove(this);
 
     //#################//
     // ICanEquipArmour //
     //#################//
 
-    public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
-    public float armour_scale() { return height_scale.value; }
-    public Color hair_color() { return net_hair_color.value; }
+    public armour_locator[] armour_locators() => GetComponentsInChildren<armour_locator>();
+    public float armour_scale() => height_scale.value;
+    public Color hair_color() => net_hair_color.value;
     public bool armour_visible(armour_piece.LOCATION location) => true;
 
     //#####################//
     // IPlayerInteractable //
     //#####################//
 
-    public int hunger_percent()
-    {
-        return Mathf.RoundToInt(100f * (1f - nutrition.metabolic_satisfaction / (float)byte.MaxValue));
-    }
+    public int hunger_percent() => Mathf.RoundToInt(
+        100f * (1f - nutrition.metabolic_satisfaction / (float)byte.MaxValue));
 
     public int total_mood()
     {
