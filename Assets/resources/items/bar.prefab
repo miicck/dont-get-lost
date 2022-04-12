@@ -233,6 +233,7 @@ GameObject:
   - component: {fileID: 3302888111240262788}
   - component: {fileID: 7738390718062462329}
   - component: {fileID: 6800264004699239823}
+  - component: {fileID: 3721447944804663345}
   m_Layer: 0
   m_Name: bar
   m_TagString: Untagged
@@ -296,7 +297,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
   shopkeeper_path_element: {fileID: 2867048336478810269}
-  buyer_poi: {fileID: 4412216003596927571}
+  customer_interaction: {fileID: 3721447944804663345}
+--- !u!114 &3721447944804663345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3062260396346624488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ff89526154df224c9db82eb805b1703, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
+  customer_path_element: {fileID: 1633702224564718419}
 --- !u!1 &3115114400372713129
 GameObject:
   m_ObjectHideFlags: 0
@@ -606,7 +621,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7496434995884821224}
   - component: {fileID: 1633702224564718419}
-  - component: {fileID: 4412216003596927571}
   m_Layer: 0
   m_Name: path_element_patron
   m_TagString: Untagged
@@ -641,18 +655,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 119155b4a9ef54c499df6016a9e6ee41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &4412216003596927571
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6764153841248567561}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2238cfe814ac10b48a79cd787265e2a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &7277444454765508636

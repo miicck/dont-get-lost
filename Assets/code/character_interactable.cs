@@ -79,6 +79,10 @@ public abstract class character_interactable : has_path_elements,
         }
     }
 
+    /// <summary> By default, only settlers can carry out interactions. 
+    /// Override this method to change this behaviour. </summary>
+    protected virtual bool compatible_character(character c) => c is settler;
+
     bool possible_checks(character c)
     {
         if (this == null) return false; // This has been deleted
@@ -108,17 +112,11 @@ public abstract class character_interactable : has_path_elements,
         ALREADY_ASSIGNED_TO_UNLOADED,
         NOT_POSSIBLE,
         NOT_READY,
-        NOT_POSSIBLE_FOR_VISITOR,
+        INCOMPATIBLE_CHARACTER,
     }
 
     bool can_assign(character c, out ASSIGN_FAILURE_MODE failure)
     {
-        if (c is visiting_character && GetComponent<visiting_character_interactable>() == null)
-        {
-            failure = ASSIGN_FAILURE_MODE.NOT_POSSIBLE_FOR_VISITOR;
-            return false;
-        }
-
         if (c == null)
         {
             failure = ASSIGN_FAILURE_MODE.CHARACTER_IS_NULL;
@@ -129,6 +127,12 @@ public abstract class character_interactable : has_path_elements,
         {
             failure = ASSIGN_FAILURE_MODE.INTERACTABLE_IS_NULL;
             return false; // I have been deleted
+        }
+
+        if (!compatible_character(c))
+        {
+            failure = ASSIGN_FAILURE_MODE.INCOMPATIBLE_CHARACTER;
+            return false; // This character is incompatible with this interaction
         }
 
         if (path_element_count > 0 && path_element(c.group) == null)
@@ -386,7 +390,16 @@ public abstract class character_interactable : has_path_elements,
             if (character_id == null || character_id.value <= 0) return null;
             var nw = networked.try_find_by_id(character_id.value, false);
             if (nw == null) return null; // character is not loaded on this client
-            if (nw is character) return (character)nw;
+            if (nw is character)
+            {
+                var c = (character)nw;
+                if (c.is_dead)
+                {
+                    character_id.value = -1;
+                    return null;
+                }
+                return c;
+            }
 
             // The networked id has been taken by something else?
             Debug.LogError("Interactable ID set to a non-character");
@@ -416,10 +429,10 @@ public abstract class character_interactable : has_path_elements,
                     if (new_val >= 0) assignments[new_val] = this;
 
                     var old_user = networked.try_find_by_id(old_val, false);
-                    if (old_user is settler) on_unassign((settler)old_user);
+                    if (old_user is character) on_unassign(old_user as character);
 
                     var new_user = networked.try_find_by_id(new_val, false);
-                    if (new_user is settler) on_assign((settler)new_user);
+                    if (new_user is character) on_assign(new_user as character);
                 };
 
                 stage.on_change_old_new = on_stage_change;

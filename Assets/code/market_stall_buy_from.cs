@@ -6,6 +6,18 @@ public class market_stall_buy_from : character_walk_to_interactable
 {
     public town_path_element customer_path_element;
 
+    public character customer
+    {
+        get
+        {
+            if (_customer != character)
+                _customer = null; // Old customer
+            return _customer;
+        }
+        set => _customer = value;
+    }
+    character _customer;
+
     public override string task_summary() => "Trading with market stall";
 
     public override town_path_element path_element(int group = -1)
@@ -17,9 +29,17 @@ public class market_stall_buy_from : character_walk_to_interactable
 
     float timer = 0;
 
+    protected override bool compatible_character(character c) => c is visiting_character;
+
     protected override void on_arrive(character c)
     {
         timer = 0;
+        customer = c;
+    }
+
+    protected override void on_unassign(character c)
+    {
+        customer = null;
     }
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)

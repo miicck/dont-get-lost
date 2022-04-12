@@ -639,65 +639,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76030c4ef1b119949bef1fc95e95b970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &5402115514104988731
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2616740039023697076}
-  - component: {fileID: 4385309293553462726}
-  - component: {fileID: 5812856771152301102}
-  m_Layer: 0
-  m_Name: buy_from
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2616740039023697076
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5402115514104988731}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9183244561944270363}
-  m_RootOrder: 16
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4385309293553462726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5402115514104988731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ff89526154df224c9db82eb805b1703, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
-  customer_path_element: {fileID: 9157642573785041147}
---- !u!114 &5812856771152301102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5402115514104988731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6299b658f3b997449be859855b129cb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6408956349850944831
 GameObject:
   m_ObjectHideFlags: 0
@@ -879,6 +820,7 @@ GameObject:
   - component: {fileID: 9183244561944270363}
   - component: {fileID: 3400397826991905963}
   - component: {fileID: 6157673753918194396}
+  - component: {fileID: 3464556128021090760}
   - component: {fileID: 3777019668673298441}
   m_Layer: 0
   m_Name: market_stall
@@ -915,7 +857,6 @@ Transform:
   - {fileID: 6601457849808069200}
   - {fileID: 4881888538933122541}
   - {fileID: 5835708994893171735}
-  - {fileID: 2616740039023697076}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -952,6 +893,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
   shopkeeper_path_element: {fileID: 7512103988482490495}
+  customer_interaction: {fileID: 3464556128021090760}
+--- !u!114 &3464556128021090760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8791831583783846636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ff89526154df224c9db82eb805b1703, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skill: {fileID: 7915786716127770993, guid: e251027686a214e41ac8bed0956232f7, type: 3}
+  customer_path_element: {fileID: 9157642573785041147}
 --- !u!114 &3777019668673298441
 MonoBehaviour:
   m_ObjectHideFlags: 0

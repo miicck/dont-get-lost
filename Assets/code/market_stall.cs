@@ -5,6 +5,7 @@ using UnityEngine;
 public class market_stall : character_walk_to_interactable, IAddsToInspectionText
 {
     public town_path_element shopkeeper_path_element;
+    public market_stall_buy_from customer_interaction;
 
     chest storage;
     item_input[] inputs;
@@ -24,11 +25,6 @@ public class market_stall : character_walk_to_interactable, IAddsToInspectionTex
         if (items == 0) ret += "\nNo stock!";
         else ret += "\n" + items + " items in stock.";
         return ret;
-    }
-
-    protected override void on_fail_assign(character c, ASSIGN_FAILURE_MODE failure)
-    {
-        Debug.Log("Failed to assign to market stall: " + failure);
     }
 
     public override town_path_element path_element(int group = -1)
@@ -161,13 +157,17 @@ public class market_stall : character_walk_to_interactable, IAddsToInspectionTex
 
             case STATE.AWAIT_BUYER:
 
+                // Wait for a customer
+                if (customer_interaction.customer == null)
+                    return STAGE_RESULT.STAGE_UNDERWAY;
+
                 // Buyer found
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case STATE.SELL_ITEM:
 
-                // I forgot what I was selling
-                if (item_selling == null)
+                // I forgot what I was selling, or customer has left
+                if (item_selling == null || customer_interaction.customer == null)
                     return STAGE_RESULT.TASK_FAILED;
 
                 timer += Time.deltaTime * current_proficiency.total_multiplier;

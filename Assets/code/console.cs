@@ -1163,6 +1163,22 @@ public class console : MonoBehaviour
 
             description = "Set the visitor spawn timer to zero.",
             usage_example = "spawn_visitors"
+        },
+
+        ["hurry"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (player.current == null) return false;
+                var c = utils.raycast_for_closest<character>(player.current.camera_ray(), out RaycastHit hit);
+                if (c == null) return console_error("No character under cursor");
+                c.walk_speed *= 10;
+                c.run_speed *= 10;
+                return true;
+            },
+
+            description = "Speed up the character you're looking at.",
+            usage_example = "hurry"
         }
     };
 
