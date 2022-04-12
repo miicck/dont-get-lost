@@ -106,12 +106,14 @@ public class character : networked,
     // town_path_element.path.ITownWalker //
     //####################################//
 
-    public virtual town_path_element town_path_element
+    public virtual town_path_element find_best_path_element() => town_path_element.nearest_element(transform.position);
+
+    public town_path_element town_path_element
     {
         get
         {
             if (_town_path_element == null)
-                _town_path_element = town_path_element.nearest_element(transform.position);
+                _town_path_element = find_best_path_element();
             return _town_path_element;
         }
         set

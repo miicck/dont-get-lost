@@ -26,17 +26,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     protected override ICharacterController default_controller() { return null; }
 
-    /// <summary> The path element that I am currently moving towards. </summary>
-    public override town_path_element town_path_element
-    {
-        get
-        {
-            if (base.town_path_element == null)
-                base.town_path_element = town_path_element.nearest_element_connected_to_beds(transform.position);
-            return base.town_path_element;
-        }
-        set => base.town_path_element = value;
-    }
+    public override town_path_element find_best_path_element() =>
+        town_path_element.nearest_element_connected_to_beds(transform.position);
 
     public void on_attack_begin()
     {

@@ -55,7 +55,8 @@ public abstract class character_interactable : has_path_elements,
             if (delta_xp > 1f)
             {
                 delta_xp = 0;
-                settler.skills.modify_xp(skill, skill.XP_GAIN_PER_SEC);
+                if (c is settler)
+                    (c as settler).skills.modify_xp(skill, skill.XP_GAIN_PER_SEC);
             }
         }
 
@@ -129,9 +130,9 @@ public abstract class character_interactable : has_path_elements,
             return false; // This interactable does not have the same group as me
         }
 
-        if (settler_id.value > 0 && settler_id.value != c.network_id)
+        if (character_id.value > 0 && character_id.value != c.network_id)
         {
-            if (settler != null)
+            if (character != null)
             {
                 cancel_missing_worker_timeout();
                 failure = ASSIGN_FAILURE_MODE.ALREADY_ASSIGNED;
@@ -177,7 +178,7 @@ public abstract class character_interactable : has_path_elements,
         if (!can_assign(c, out failure)) return false;
 
         // Assign the new character
-        settler_id.value = c.network_id;
+        character_id.value = c.network_id;
         current_proficiency = null;
         failure = ASSIGN_FAILURE_MODE.NO_FAILURE;
         return true;
@@ -188,7 +189,7 @@ public abstract class character_interactable : has_path_elements,
     public void unassign()
     {
         // Unassign the character
-        settler_id.value = -1;
+        character_id.value = -1;
         current_proficiency?.on_unassign();
         current_proficiency = null;
     }
@@ -354,30 +355,30 @@ public abstract class character_interactable : has_path_elements,
 
     protected virtual void OnDrawGizmos()
     {
-        if (settler == null) return;
+        if (character == null) return;
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position + Vector3.up, settler.transform.position + Vector3.up);
+        Gizmos.DrawLine(transform.position + Vector3.up, character.transform.position + Vector3.up);
     }
 
     //###################//
     // IExtendsNetworked //
     //###################//
 
-    networked_variables.net_int settler_id;
+    networked_variables.net_int character_id;
     networked_variables.net_int stage;
 
-    public settler settler
+    public character character
     {
         get
         {
-            if (settler_id == null || settler_id.value <= 0) return null;
-            var nw = networked.try_find_by_id(settler_id.value, false);
+            if (character_id == null || character_id.value <= 0) return null;
+            var nw = networked.try_find_by_id(character_id.value, false);
             if (nw == null) return null; // character is not loaded on this client
-            if (nw is settler) return (settler)nw;
+            if (nw is character) return (character)nw;
 
             // The networked id has been taken by something else?
-            Debug.Log("Interactable ID set to a non-setter");
-            settler_id.value = -1;
+            Debug.LogError("Interactable ID set to a non-character");
+            character_id.value = -1;
             return null;
         }
     }
@@ -389,10 +390,10 @@ public abstract class character_interactable : has_path_elements,
             init_networked_variables = () =>
             {
                 // Initialize the character id/stage
-                settler_id = new networked_variables.net_int(default_value: -1);
+                character_id = new networked_variables.net_int(default_value: -1);
                 stage = new networked_variables.net_int();
 
-                settler_id.on_change_old_new = (old_val, new_val) =>
+                character_id.on_change_old_new = (old_val, new_val) =>
                 {
                     stage.value = 0;
                     delta_xp = 0;
@@ -423,8 +424,13 @@ public abstract class character_interactable : has_path_elements,
     public virtual string added_inspection_text()
     {
         check_missing_worker_timeout();
-        if (settler != null) return settler.net_name.value.capitalize() + " is assigned to this.";
-        else if (settler_id.value > 0)
+        if (character != null)
+        {
+            string name = character.display_name;
+            if (character is settler) name = (character as settler).net_name.value;
+            return name.capitalize() + " is assigned to this.";
+        }
+        else if (character_id.value > 0)
         {
             float timeout_in = force_unassign_time - Time.realtimeSinceStartup;
             if (timeout_in < MISSING_WORKER_TIMEOUT * 2)
@@ -498,7 +504,7 @@ public abstract class character_interactable : has_path_elements,
         // As a fallback, search all interactions for one assigend to s
         foreach (var kv in interactables)
             foreach (var inter in kv.Value)
-                if (inter.settler_id.value == c.network_id)
+                if (inter.character_id.value == c.network_id)
                 {
                     Debug.Log("Assignement fallback triggered!");
                     inter.current_proficiency = null;

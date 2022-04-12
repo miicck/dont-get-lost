@@ -5,7 +5,6 @@ using UnityEngine;
 public class market_stall : character_walk_to_interactable, IAddsToInspectionText
 {
     public town_path_element shopkeeper_path_element;
-    public market_stall_poi buyer_poi;
 
     chest storage;
     item_input[] inputs;
@@ -162,16 +161,13 @@ public class market_stall : character_walk_to_interactable, IAddsToInspectionTex
 
             case STATE.AWAIT_BUYER:
 
-                if (buyer_poi.buyer == null)
-                    return STAGE_RESULT.STAGE_UNDERWAY;
-
                 // Buyer found
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case STATE.SELL_ITEM:
 
-                // I forgot what I was selling, or the buyer walked off
-                if (item_selling == null || buyer_poi.buyer == null)
+                // I forgot what I was selling
+                if (item_selling == null)
                     return STAGE_RESULT.TASK_FAILED;
 
                 timer += Time.deltaTime * current_proficiency.total_multiplier;

@@ -9,149 +9,31 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     protected override void Start() => visitors.Add(this);
     protected override void OnDestroy() => visitors.Remove(this);
 
+    float remaining_visiting_time;
+
     //######################//
     // ICharacterController //
     //######################//
 
-    float remaining_time_alive = 60f;
-    town_path_element.path path_to_poi;
-    visitor_point_of_interest point_of_interest;
-
-    void set_point_of_interest(visitor_point_of_interest poi)
-    {
-        if (point_of_interest == poi) return; // No change
-        point_of_interest?.on_leave(this);
-        point_of_interest = poi;
-    }
-
-    void arrive_at_point_of_interest()
-    {
-        point_of_interest?.on_leave(this);
-    }
-
-    enum STATE
-    {
-        SEARCHING_FOR_POI,
-        PATHING_TO_POI,
-        WALKING_TO_POI,
-        INTERATING_WITH_POI
-    }
-
-    STATE state = STATE.SEARCHING_FOR_POI;
-
-    void leave()
-    {
-        set_point_of_interest(null);
-        delete();
-    }
-
-    public virtual void control(character c)
-    {
-        if (c != this)
-        {
-            Debug.LogError("Visiting character controlling another character!");
-            return;
-        }
-
-        remaining_time_alive -= Time.deltaTime;
-        if (remaining_time_alive <= 0)
-        {
-            leave();
-            return;
-        }
-
-        if (town_path_element == null)
-            town_path_element = town_path_element.nearest_element(transform.position, town_path_element.largest_group());
-
-        switch (state)
-        {
-            case STATE.SEARCHING_FOR_POI:
-                // Look for the next point of interest to visit
-                var pois = visitor_point_of_interest.all_in_group(town_path_element.group);
-
-                if (pois.Count > 0 && Random.Range(0, 3) > 0) // Always a chance of just exploring
-                    set_point_of_interest(pois[Random.Range(0, pois.Count)]);
-                else
-                {
-                    var elements = new List<town_path_element>(town_path_element.element_group(town_path_element.group));
-                    if (elements.Count == 0)
-                    {
-                        // I have no elements to explore - just leave
-                        leave();
-                        return;
-                    }
-
-                    var explore = this.add_or_get_component<explore_point_of_interest>();
-                    explore.element = elements[Random.Range(0, elements.Count)];
-                    set_point_of_interest(explore);
-                }
-                state = STATE.PATHING_TO_POI;
-                break;
-
-            case STATE.PATHING_TO_POI:
-                // Find a path to the next point of interest
-                if (point_of_interest == null)
-                {
-                    state = STATE.SEARCHING_FOR_POI;
-                    break;
-                }
-
-                path_to_poi = town_path_element.path.get(town_path_element, point_of_interest.target_element);
-                state = STATE.WALKING_TO_POI;
-                break;
-
-            case STATE.WALKING_TO_POI:
-                // Walk to the next point of interest
-                if (path_to_poi == null)
-                {
-                    state = STATE.SEARCHING_FOR_POI;
-                    break;
-                }
-
-                switch (path_to_poi.walk(this, walk_speed))
-                {
-                    case town_path_element.path.WALK_STATE.UNDERWAY:
-                        return; // Still walking
-
-                    case town_path_element.path.WALK_STATE.COMPLETE:
-                        arrive_at_point_of_interest();
-                        state = STATE.INTERATING_WITH_POI;
-                        break;
-
-                    default:
-                        state = STATE.SEARCHING_FOR_POI;
-                        break;
-                }
-
-                break;
-
-            case STATE.INTERATING_WITH_POI:
-                // Interact with the point of interest
-                if (point_of_interest == null)
-                {
-                    state = STATE.SEARCHING_FOR_POI;
-                    break;
-                }
-
-                switch (point_of_interest.interact(this))
-                {
-                    case visitor_point_of_interest.INTERACTION_RESULT.UNDERWAY:
-                        break;
-
-                    default:
-                        state = STATE.SEARCHING_FOR_POI;
-                        set_point_of_interest(null);
-                        break;
-                }
-
-                break;
-        }
-    }
-
     public void draw_gizmos() { }
     public void draw_inspector_gui() { }
     public void on_end_control(character c) { }
-    public string inspect_info() => display_name;
+    public string inspect_info() => null;
+
+    /// <summary> The interactable object that we are currently interacting with. </summary>
+    public character_interactable interaction => character_interactable.assigned_to(this);
+
+    public void control(character c)
+    {
+        if (c != this)
+        {
+            Debug.LogError("Visiting character tried to control another character!");
+            return;
+        }
+
+        if (has_authority)
+            return;
+    }
 
     //#######################//
     // IAddsToInspectionText //
@@ -159,24 +41,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
     public string added_inspection_text()
     {
-        string ret = "";
-        switch (state)
-        {
-            case STATE.SEARCHING_FOR_POI:
-                ret += "Looking for something to do.";
-                break;
-            case STATE.PATHING_TO_POI:
-                ret += point_of_interest?.description() + " (pathing)";
-                break;
-            case STATE.WALKING_TO_POI:
-                ret += point_of_interest?.description() + " (walking)";
-                break;
-            case STATE.INTERATING_WITH_POI:
-                ret += point_of_interest?.description();
-                break;
-        }
-        ret += "\n" + string.Format("Leaving in {0:0.0} seconds", remaining_time_alive);
-        return ret;
+        return string.Format("Leaving in {0:0.0} seconds", remaining_visiting_time);
     }
 
     //##############//
@@ -212,7 +77,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
         {
             var vc = client.create(entrypoint.path_end, "characters/wandering_trader") as visiting_character;
             vc.controller = new approach_controller(entrypoint, vc);
-            vc.remaining_time_alive = vc.visiting_time;
+            vc.remaining_visiting_time = vc.visiting_time;
         }
 
         next_spawn_time = Time.time + Random.Range(3 * 60, 5 * 60);

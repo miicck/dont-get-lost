@@ -18,7 +18,7 @@ public abstract class character_interactable_options : character_walk_to_interac
         var ret = base.get_callbacks();
         ret.init_networked_variables += () =>
         {
-            option_index = new networked_variables.net_int();
+            option_index = new networked_variables.net_int(min_value: 0, max_value: options_count - 1);
         };
         return ret;
     }
