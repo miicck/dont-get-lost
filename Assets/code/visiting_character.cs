@@ -15,7 +15,19 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
     float remaining_time_alive = 60f;
     town_path_element.path path_to_poi;
-    visitor_point_of_interest next_poi;
+    visitor_point_of_interest point_of_interest;
+
+    void set_point_of_interest(visitor_point_of_interest poi)
+    {
+        if (point_of_interest == poi) return; // No change
+        point_of_interest?.on_leave(this);
+        point_of_interest = poi;
+    }
+
+    void arrive_at_point_of_interest()
+    {
+        point_of_interest?.on_leave(this);
+    }
 
     enum STATE
     {
@@ -29,6 +41,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
     void leave()
     {
+        set_point_of_interest(null);
         delete();
     }
 
@@ -57,7 +70,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                 var pois = visitor_point_of_interest.all_in_group(town_path_element.group);
 
                 if (pois.Count > 0 && Random.Range(0, 3) > 0) // Always a chance of just exploring
-                    next_poi = pois[Random.Range(0, pois.Count)];
+                    set_point_of_interest(pois[Random.Range(0, pois.Count)]);
                 else
                 {
                     var elements = new List<town_path_element>(town_path_element.element_group(town_path_element.group));
@@ -70,20 +83,20 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
                     var explore = this.add_or_get_component<explore_point_of_interest>();
                     explore.element = elements[Random.Range(0, elements.Count)];
-                    next_poi = explore;
+                    set_point_of_interest(explore);
                 }
                 state = STATE.PATHING_TO_POI;
                 break;
 
             case STATE.PATHING_TO_POI:
                 // Find a path to the next point of interest
-                if (next_poi == null)
+                if (point_of_interest == null)
                 {
                     state = STATE.SEARCHING_FOR_POI;
                     break;
                 }
 
-                path_to_poi = town_path_element.path.get(town_path_element, next_poi.target_element);
+                path_to_poi = town_path_element.path.get(town_path_element, point_of_interest.target_element);
                 state = STATE.WALKING_TO_POI;
                 break;
 
@@ -101,7 +114,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                         return; // Still walking
 
                     case town_path_element.path.WALK_STATE.COMPLETE:
-                        next_poi?.on_arrive(this);
+                        arrive_at_point_of_interest();
                         state = STATE.INTERATING_WITH_POI;
                         break;
 
@@ -114,19 +127,20 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
 
             case STATE.INTERATING_WITH_POI:
                 // Interact with the point of interest
-                if (next_poi == null)
+                if (point_of_interest == null)
                 {
                     state = STATE.SEARCHING_FOR_POI;
                     break;
                 }
 
-                switch (next_poi.interact(this))
+                switch (point_of_interest.interact(this))
                 {
                     case visitor_point_of_interest.INTERACTION_RESULT.UNDERWAY:
                         break;
 
                     default:
                         state = STATE.SEARCHING_FOR_POI;
+                        set_point_of_interest(null);
                         break;
                 }
 
@@ -152,13 +166,13 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
                 ret += "Looking for something to do.";
                 break;
             case STATE.PATHING_TO_POI:
-                ret += next_poi?.description() + " (pathing)";
+                ret += point_of_interest?.description() + " (pathing)";
                 break;
             case STATE.WALKING_TO_POI:
-                ret += next_poi?.description() + " (walking)";
+                ret += point_of_interest?.description() + " (walking)";
                 break;
             case STATE.INTERATING_WITH_POI:
-                ret += next_poi?.description();
+                ret += point_of_interest?.description();
                 break;
         }
         ret += "\n" + string.Format("Leaving in {0:0.0} seconds", remaining_time_alive);
