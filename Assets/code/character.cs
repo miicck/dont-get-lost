@@ -207,7 +207,7 @@ public class character : networked,
             return;
         }
 
-        character_sound chosen = sound_list[0];
+        character_sound chosen = null;
         float rnd = Random.Range(0, 1f);
         float total = 0;
         foreach (var s in sound_list)
@@ -219,6 +219,9 @@ public class character : networked,
                 break;
             }
         }
+
+        if (chosen == null)
+            return;
 
         sound_source.Stop();
         sound_source.pitch = chosen.pitch_modifier * Random.Range(0.95f, 1.05f);

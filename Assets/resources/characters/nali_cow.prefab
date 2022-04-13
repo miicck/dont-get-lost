@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4603360869218414446}
   - component: {fileID: 2666255444257158699}
   - component: {fileID: 3517426323207309966}
+  - component: {fileID: -1730146212134955092}
   m_Layer: 0
   m_Name: nali_cow
   m_TagString: Untagged
@@ -80,6 +81,23 @@ MonoBehaviour:
   min_count: 1
   max_count: 1
   one_in_chance: 4
+--- !u!114 &-1730146212134955092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7092091482070332179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfe1a5b238c41df45bab068930006baf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  type: 0
+  clip: {fileID: 8300000, guid: ba0da735518409a4fa6b1c6a91d08894, type: 3}
+  volume: 0.1
+  pitch_modifier: 1
+  probability: 0.01
 --- !u!1001 &2815020537152091421
 PrefabInstance:
   m_ObjectHideFlags: 0
