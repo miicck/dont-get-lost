@@ -177,13 +177,16 @@ public class character : networked,
             sound_centre = s.transform.position;
         }
 
-        // Normalize probabilities
+        // Normalize probabilities (if they sum to more than 1)
         foreach (var kv in sounds)
         {
             var list = kv.Value;
             float total_prob = 0;
             foreach (var s in list) total_prob += s.probability;
-            foreach (var s in list) s.probability /= total_prob;
+
+            if (total_prob > 1f)
+                foreach (var s in list)
+                    s.probability /= total_prob;
         }
 
         if (sound_source == null)

@@ -97,7 +97,7 @@ MonoBehaviour:
   clip: {fileID: 8300000, guid: ba0da735518409a4fa6b1c6a91d08894, type: 3}
   volume: 0.1
   pitch_modifier: 1
-  probability: 0.01
+  probability: 0.1
 --- !u!1001 &2815020537152091421
 PrefabInstance:
   m_ObjectHideFlags: 0
