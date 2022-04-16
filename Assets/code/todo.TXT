@@ -42,3 +42,17 @@ TODO
 - weather
 - Setters sad if working uncovered
 - Make chest into an attachable component
+- Wander task for visitors
+- Notification for completed research more visible
+- Move overhang of noticeboard so it doesn't block paths
+- Make settlers stop researching once topic is complete
+- Dining without roof bad
+- Tutorials restart at certain points (hit population cap => town monument?)
+- Help entry for dining table
+- Buildings to speed up research
+- Mineshaftable-locations should be inspectable
+- Buildings take a wider variety of materials (too many plank+log+x buildings - would help with crafting menu clutter/introduce progression)
+- Bar requires brewing technology
+- Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
+- Town monument doesn't update
+- Maybe make attacks more frequent, so guards are a full-time job?

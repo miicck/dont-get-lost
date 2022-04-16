@@ -1602,6 +1602,7 @@ public class big_trees : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class rock_tiers : biome
 {
     int i_stage = 0;
@@ -1662,6 +1663,7 @@ public class rock_tiers : biome
     }
 }
 
+[biome_info(generation_enabled: false)]
 public class multi_layer_forest : biome
 {
     int i_stage = 0;
