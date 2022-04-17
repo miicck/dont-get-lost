@@ -85,6 +85,9 @@ public abstract class character_interactable : has_path_elements,
 
     bool possible_checks(character c)
     {
+        // This gets called every frame to check that this
+        // interaction is still possible, so should not be too slow.
+
         if (this == null) return false; // This has been deleted
         if (c == null) return false; // character has been deleted
 

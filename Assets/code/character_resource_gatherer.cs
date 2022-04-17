@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary> Class representing a settler interaction based on a set of selectable options. </summary>
-public abstract class character_interactable_options : character_walk_to_interactable, IPlayerInteractable
+public abstract class character_interactable_options : character_walk_to_interactable, IPlayerInteractable, IAddsToInspectionText
 {
     //###################//
     // IExtendsNetworked //
@@ -23,6 +23,13 @@ public abstract class character_interactable_options : character_walk_to_interac
         return ret;
     }
 
+    public override string added_inspection_text()
+    {
+        if (!building_operation_requirement.all_operation_requirements_satisfied(this, out string reason))
+            return "Can't assign: " + reason + "\n" + base.added_inspection_text();
+        return base.added_inspection_text();
+    }
+
     //##################//
     // LEFT PLAYER MENU //
     //##################//
@@ -32,6 +39,13 @@ public abstract class character_interactable_options : character_walk_to_interac
     {
         if (interactions == null) interactions = new player_interaction[] { new menu(this) };
         return interactions;
+    }
+
+    protected override bool ready_to_assign(character c)
+    {
+        if (!building_operation_requirement.all_operation_requirements_satisfied(this, out string reason))
+            return false;
+        return base.ready_to_assign(c);
     }
 
     class menu : left_player_menu
