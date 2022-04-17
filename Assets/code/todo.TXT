@@ -42,7 +42,6 @@ TODO
 - Make chest into an attachable component
 - Dining without roof bad
 - Tutorials restart at certain points (hit population cap => town monument?)
-- Help entry for dining table
 - Buildings to speed up research
 - Mineshaftable-locations should be inspectable
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
