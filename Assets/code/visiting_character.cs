@@ -23,6 +23,8 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public character_interactable interaction => character_interactable.assigned_to(this);
 
+    wander_task wander => this.add_or_get_component<wander_task>();
+
     void leave()
     {
         interaction?.unassign();
@@ -49,7 +51,43 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
             return;
         }
 
-        interaction?.interact(this);
+        var inter = interaction;
+        if (inter == null) wander?.wander(this);
+        else inter.interact(this);
+    }
+
+    class wander_task : MonoBehaviour
+    {
+        town_path_element target;
+        town_path_element.path path;
+
+        public void wander(character c)
+        {
+            if (target == null)
+            {
+                var options = new List<town_path_element>(town_path_element.element_group(c.town_path_element.group));
+                if (options.Count == 0) return;
+                target = options[Random.Range(0, options.Count)];
+                return;
+            }
+
+            if (path == null)
+            {
+                path = town_path_element.path.get(c.town_path_element, target);
+                if (path == null) return;
+            }
+
+            switch (path.walk(c, c.walk_speed))
+            {
+                case town_path_element.path.WALK_STATE.UNDERWAY:
+                    return;
+
+                default:
+                    target = null;
+                    path = null;
+                    return;
+            }
+        }
     }
 
     //#######################//
