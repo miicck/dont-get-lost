@@ -16,14 +16,7 @@ public class research_bench : character_walk_to_interactable, IPlayerInteractabl
     float time_researching;
     settler_animations.simple_work work_anim;
 
-    protected override bool ready_to_assign(character c)
-    {
-        var tech = tech_tree.current_research_technology();
-        if (tech == null)
-            return false;
-
-        return true;
-    }
+    protected override bool ready_to_assign(character c) => tech_tree.research_project_set();
 
     protected override void on_arrive(character c)
     {
@@ -37,6 +30,9 @@ public class research_bench : character_walk_to_interactable, IPlayerInteractabl
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
+        if (!tech_tree.research_project_set())
+            return STAGE_RESULT.TASK_COMPLETE;
+
         // Play the work animation
         work_anim?.play();
 

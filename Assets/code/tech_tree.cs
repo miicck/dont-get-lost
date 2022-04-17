@@ -177,7 +177,7 @@ public class tech_tree : networked
             return false;
         }
 
-        return loaded_tech_tree.currently_researching.value != "";
+        return current_research_technology() != null;
     }
 
     public static string current_research_project()
@@ -200,6 +200,9 @@ public class tech_tree : networked
             Debug.LogError("Tried to get research project before tech tree loaded");
             return null;
         }
+
+        if (loaded_tech_tree.currently_researching.value == "")
+            return null;
 
         foreach (var t in technology.all)
             if (t.name == loaded_tech_tree.currently_researching.value)
