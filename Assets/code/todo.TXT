@@ -22,8 +22,6 @@ TODO
 - town_path_element.path spread load across multiple frames.
 - Settlers heads move over to their shoulder with time
 - Add cowering spots to various things (beds)
-- Priority splitter (just a hole in a gutter?)
-  Maybe a 50% splitter that is just a hole in a plank gutter (rather than the swinging arm thing).
 - Make proficiency more important to quantities of materials obtained
 - Recreational tasks
 - Make trade carts actually move
@@ -53,5 +51,4 @@ TODO
 - Buildings take a wider variety of materials (too many plank+log+x buildings - would help with crafting menu clutter/introduce progression)
 - Bar requires brewing technology
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
-- Town monument doesn't update
 - Maybe make attacks more frequent, so guards are a full-time job?
