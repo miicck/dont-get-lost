@@ -140,6 +140,7 @@ public class tech_tree : networked
         if (current_research_complete())
         {
             temporary_object.create(60f).gameObject.add_pinned_message("Research topic complete", Color.green);
+            popup_message.create("Completed research: " + topic);
             loaded_tech_tree.currently_researching.value = "";
         }
     }

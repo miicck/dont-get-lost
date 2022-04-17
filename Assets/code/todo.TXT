@@ -40,8 +40,6 @@ TODO
 - max simulataneous researchers
 - Setters sad if working uncovered
 - Make chest into an attachable component
-- Notification for completed research more visible
-- Move overhang of noticeboard so it doesn't block paths
 - Make settlers stop researching once topic is complete
 - Dining without roof bad
 - Tutorials restart at certain points (hit population cap => town monument?)

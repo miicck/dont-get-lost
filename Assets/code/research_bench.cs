@@ -51,7 +51,7 @@ public class research_bench : character_walk_to_interactable, IPlayerInteractabl
         tech_tree.perform_research(1);
         work_done = 0;
 
-        // Go agaun until 60 seconds has passed
+        // Go again until 60 seconds has passed
         return time_researching > 60 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
