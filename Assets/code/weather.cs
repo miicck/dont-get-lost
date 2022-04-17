@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class weather : MonoBehaviour
 {
+    public float probability = 1f;
+
     public Color day_sun_color;
     public Color dawn_sun_color;
     public Color dusk_sun_color;

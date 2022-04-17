@@ -97,6 +97,7 @@ public class game : MonoBehaviour
                     client.create(Vector3.zero, "misc/tech_tree");
                     client.create(Vector3.zero, "misc/time_manager");
                     client.create(Vector3.zero, "misc/teleport_manager");
+                    client.create(Vector3.zero, "misc/weather_manager");
                 }
 
                 return true;
