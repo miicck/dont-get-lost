@@ -18,7 +18,7 @@ public class weather_manager : networked
     public override void on_init_network_variables()
     {
         next_weather_time = new networked_variables.net_int();
-        next_weather = new networked_variables.net_string();
+        next_weather = new networked_variables.net_string(default_value: "sun");
 
         // It is assumed that the weather name will change after the time,
         // so that when the name changes, both will be updated.

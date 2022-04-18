@@ -66,6 +66,14 @@ public class game : MonoBehaviour
             CHARACTER_SPAWN_INTERVAL, CHARACTER_SPAWN_INTERVAL);
     }
 
+    public static void create_manager_objects()
+    {
+        client.create(Vector3.zero, "misc/tech_tree");
+        client.create(Vector3.zero, "misc/time_manager");
+        client.create(Vector3.zero, "misc/teleport_manager");
+        client.create(Vector3.zero, "misc/weather_manager");
+    }
+
     bool client_connect()
     {
         // Various startup modes
@@ -94,10 +102,7 @@ public class game : MonoBehaviour
                     w.networked_name.value = startup.world_name;
 
                     // Create the various always-loaded objects
-                    client.create(Vector3.zero, "misc/tech_tree");
-                    client.create(Vector3.zero, "misc/time_manager");
-                    client.create(Vector3.zero, "misc/teleport_manager");
-                    client.create(Vector3.zero, "misc/weather_manager");
+                    create_manager_objects();
                 }
 
                 return true;

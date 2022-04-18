@@ -25,6 +25,8 @@ public class weather : MonoBehaviour
 
     void mix(List<weather> weathers, List<float> weights)
     {
+        weathers.RemoveAll((w) => w == null);
+
         day_sun_color = average_color(get_list(weathers, (w) => w.day_sun_color), weights);
         dawn_sun_color = average_color(get_list(weathers, (w) => w.dawn_sun_color), weights);
         dusk_sun_color = average_color(get_list(weathers, (w) => w.dusk_sun_color), weights);

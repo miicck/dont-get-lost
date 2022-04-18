@@ -1179,6 +1179,18 @@ public class console : MonoBehaviour
 
             description = "Speed up the character you're looking at.",
             usage_example = "hurry"
+        },
+
+        ["create_manager_objects"] = new console_info
+        {
+            command = (args) =>
+            {
+                game.create_manager_objects();
+                return true;
+            },
+
+            description = "Create the various manager objects containing always-loaded game state data.",
+            usage_example = "create_manager_objects"
         }
     };
 
