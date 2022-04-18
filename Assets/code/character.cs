@@ -249,8 +249,7 @@ public class character : networked,
     {
         load_sounds();
         InvokeRepeating("slow_update", Random.Range(0, 1f), 1f);
-        if (despawns_automatically)
-            characters.Add(this);
+        characters.Add(this);
     }
 
     protected virtual void OnDestroy()
@@ -261,7 +260,8 @@ public class character : networked,
 
     void slow_update()
     {
-        play_idle_sounds();
+        if (!(this is settler))
+            play_idle_sounds();
     }
 
     protected virtual void Update()
@@ -352,12 +352,6 @@ public class character : networked,
         };
 
         dont_despawn_automatically = new networked_variables.net_bool();
-        dont_despawn_automatically.on_change = () =>
-        {
-            characters.Add(this);
-            if (dont_despawn_automatically.value)
-                characters.Remove(this);
-        };
     }
 
     public override void on_network_update()
@@ -841,6 +835,26 @@ public class character : networked,
 
     static HashSet<character> characters;
 
+    static HashSet<character> natural_characters
+    {
+        get
+        {
+            HashSet<character> ret = new HashSet<character>();
+            foreach (var c in characters)
+            {
+                // Settlers/visitors aren't natual
+                if (c is settler) continue;
+                if (c is visiting_character) continue;
+
+                // Things set to not despawn aren't natural
+                if (c.dont_despawn_automatically.value) continue;
+
+                ret.Add(c);
+            }
+            return ret;
+        }
+    }
+
     public static bool characters_enabled
     {
         get => _characters_enabled;
@@ -868,16 +882,18 @@ public class character : networked,
     {
         if (!characters_enabled) return;
 
-        if (characters.Count < target_character_count)
+        var nat_characters = natural_characters;
+
+        if (nat_characters.Count < target_character_count)
         {
             // Fewer characters than target, spawn one
             character_spawn_point.spawn();
         }
-        else if (characters.Count > target_character_count)
+        else if (nat_characters.Count > target_character_count)
         {
             // More characters than target, despawn the character 
             // that is furthest from the player
-            var furthest = utils.find_to_min(characters, (c) =>
+            var furthest = utils.find_to_min(nat_characters, (c) =>
             {
                 if (c == null) return Mathf.Infinity;
 
@@ -891,11 +907,9 @@ public class character : networked,
         }
     }
 
-    public static string info()
-    {
-        return "    Total characters : " + characters.Count +
-                    "/" + target_character_count;
-    }
+    public static string info() =>
+        "    Total characters   : " + characters.Count + "\n" +
+        "    Natural characters : " + natural_characters.Count + "/" + target_character_count;
 
     //########//
     // EDITOR //
@@ -973,7 +987,7 @@ class healthbar : MonoBehaviour
         background_rect.localRotation = Quaternion.identity;
         foreground_rect.localRotation = Quaternion.identity;
 
-        canv_rect.transform.localScale = new Vector3(1f, 1f, 1f) / (float)width;
+        canv_rect.transform.localScale = new Vector3(1f, 1f, 1f) / width;
     }
 }
 
@@ -1052,9 +1066,9 @@ public class idle_wander : ICharacterController
     }
 
     public void on_end_control(character c) { }
-    public void draw_gizmos() { path?.draw_gizmos(); }
+    public void draw_gizmos() => path?.draw_gizmos();
     public void draw_inspector_gui() { }
-    public string inspect_info() { return "Wandering idly"; }
+    public string inspect_info() => "Wandering idly";
 }
 
 public class flee_controller : ICharacterController
@@ -1196,7 +1210,7 @@ public class attack_controller : ICharacterController
             Object.Destroy(at.gameObject);
     }
 
-    public string inspect_info() { return "attacking"; }
+    public string inspect_info() => "attacking";
     public void draw_gizmos()
     {
         Gizmos.color = Color.red;
@@ -1327,7 +1341,7 @@ public class chase_controller : ICharacterController
         path?.draw_gizmos();
     }
     public void draw_inspector_gui() { }
-    public string inspect_info() { return "Chasing"; }
+    public string inspect_info() => "Chasing";
 }
 
 public class default_character_control : ICharacterController

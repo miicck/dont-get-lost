@@ -116,6 +116,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     protected override void Start()
     {
+        base.Start();
+
         // Check should leave at a random time
         time_next_leave_check = Time.time + Random.Range(1f, 2f) * TIME_BETWEEN_LEAVE_CHECKS;
 
