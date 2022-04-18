@@ -1336,7 +1336,7 @@ public class default_character_control : ICharacterController
 
     void check_for_player_interactions(character c)
     {
-        foreach (var p in player.players)
+        foreach (var p in player.all)
         {
             if (p == null) continue;
 

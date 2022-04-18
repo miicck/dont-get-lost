@@ -1851,7 +1851,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     static player _current;
 
     /// <summary> All in-range players. </summary>
-    public static List<player> players => new List<player>(all_players);
+    public static IEnumerable<player> all => all_players;
+    public static player closest(Vector3 position) => utils.find_to_min(all, (p) => (p.transform.position - position).sqrMagnitude);
     static HashSet<player> all_players = new HashSet<player>();
 
     public static string info()

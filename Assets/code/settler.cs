@@ -143,6 +143,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     protected override void Update()
     {
+        // Wait for loading to finish
+        if (game.loading) return;
+        if (!chunk.generation_complete(transform.position)) return;
+
         if (controller != null)
         {
             // Under control by a character controller

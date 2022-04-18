@@ -197,7 +197,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
     public delegate void room_update_func();
     room_update_func on_room_change = () => { };
-    public void add_room_change_listener(room_update_func f) { on_room_change += f; }
+    public void add_room_change_listener(room_update_func f) => on_room_change += f;
 
     public bool is_extremety { get; private set; } = false;
     public Vector3 out_of_town_direction { get; private set; }
@@ -217,12 +217,20 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         roomed_elements = new Dictionary<int, HashSet<town_path_element>>();
     }
 
+    static float last_room_update_time = 0;
+    const float MIN_ROOM_UPDATE_INTERVAL = 1f;
+
     public static void static_update()
     {
         if (rooms_update_required)
         {
+            if (Time.time < last_room_update_time + MIN_ROOM_UPDATE_INTERVAL)
+                return; // Too close to last room update
+            last_room_update_time = Time.time;
+
             evaluate_groups();
             evaluate_rooms();
+            evaluate_connectivity();
             rooms_update_required = false;
         }
     }
@@ -237,6 +245,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     static Dictionary<int, HashSet<town_path_element>> grouped_elements;
     static Dictionary<int, HashSet<town_path_element>> roomed_elements;
     static Dictionary<int, List<town_bounds>> group_bounds;
+    static HashSet<int> groups_with_beds;
 
     public delegate void listener();
     static listener on_groups_update_listener;
@@ -448,6 +457,17 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         on_rooms_update_listener?.Invoke();
     }
 
+    static void evaluate_connectivity()
+    {
+        // Work out which groups have beds
+        groups_with_beds = new HashSet<int>();
+        foreach (var e in all_elements)
+        {
+            if (groups_with_beds.Contains(e.group)) continue;
+            if (e.interactable is bed) groups_with_beds.Add(e.group);
+        }
+    }
+
     public static void draw_group_gizmos()
     {
         if (group_bounds == null) return;
@@ -581,20 +601,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
     {
         return utils.find_to_min(all_elements, (e) =>
         {
-            bed bed_found = null;
-            e.iterate_connected((c) =>
-            {
-                if (c.interactable is bed)
-                {
-                    bed_found = c.interactable as bed;
-                    return true;
-                }
-                return false;
-            });
-
-            if (bed_found == null)
+            if (!groups_with_beds.Contains(e.group))
                 return Mathf.Infinity;
-
             return (e.transform.position - v).sqrMagnitude;
         });
     }
