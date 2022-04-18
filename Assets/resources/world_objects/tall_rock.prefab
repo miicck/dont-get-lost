@@ -200,6 +200,7 @@ GameObject:
   m_Component:
   - component: {fileID: 902168695382149259}
   - component: {fileID: 8066040234642508209}
+  - component: {fileID: 1675238343391684074}
   m_Layer: 0
   m_Name: tall_rock
   m_TagString: Untagged
@@ -242,8 +243,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 1
-  min_scale: 1
-  max_scale: 2
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -254,6 +253,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 1, y: 1, z: 1}
   max_scales: {x: 2, y: 2, z: 2}
+  seperate_scale_factor: 0
+--- !u!114 &1675238343391684074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7977203162797884373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4010168359851097972
 PrefabInstance:
   m_ObjectHideFlags: 0

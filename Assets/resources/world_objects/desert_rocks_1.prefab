@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2877093053794032774}
   - component: {fileID: -7424042658354358020}
+  - component: {fileID: 4785400028005084067}
   m_Layer: 0
   m_Name: desert_rocks_1
   m_TagString: Untagged
@@ -47,8 +48,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1
   y_rotation_mode: 1
-  min_scale: 0.5
-  max_scale: 3
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -59,6 +58,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 0.5, y: 0.5, z: 0.5}
   max_scales: {x: 3, y: 3, z: 3}
+  seperate_scale_factor: 0
+--- !u!114 &4785400028005084067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 468880058101922742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8683309274565197165
 PrefabInstance:
   m_ObjectHideFlags: 0

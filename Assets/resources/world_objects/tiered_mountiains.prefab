@@ -197,6 +197,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1385655540211468004}
   - component: {fileID: 5291186344507201572}
+  - component: {fileID: 2338235716091221091}
   m_Layer: 0
   m_Name: tiered_mountiains
   m_TagString: Untagged
@@ -238,8 +239,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 1
-  min_scale: 1
-  max_scale: 2
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -250,6 +249,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 1, y: 1, z: 1}
   max_scales: {x: 2, y: 2, z: 2}
+  seperate_scale_factor: 0
+--- !u!114 &2338235716091221091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5311774745095337542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &182737281206069219
 PrefabInstance:
   m_ObjectHideFlags: 0

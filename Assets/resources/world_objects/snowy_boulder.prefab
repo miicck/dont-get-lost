@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3792607960238042765}
   - component: {fileID: 3792607960238042802}
+  - component: {fileID: 6526913082364318712}
   m_Layer: 0
   m_Name: snowy_boulder
   m_TagString: Untagged
@@ -47,8 +48,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 1
   y_rotation_mode: 1
-  min_scale: 1.5
-  max_scale: 3
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -59,6 +58,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 1.5, y: 1.5, z: 1.5}
   max_scales: {x: 3, y: 3, z: 3}
+  seperate_scale_factor: 0
+--- !u!114 &6526913082364318712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3792607960238042803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3792607961327425776
 PrefabInstance:
   m_ObjectHideFlags: 0

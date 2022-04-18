@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2029395561097179639}
   - component: {fileID: 5380148130388018419}
+  - component: {fileID: 2640083009856195941}
   m_Layer: 0
   m_Name: rock_tier_medium
   m_TagString: Untagged
@@ -58,6 +59,18 @@ MonoBehaviour:
   min_scales: {x: 1, y: 1, z: 1}
   max_scales: {x: 3, y: 2, z: 3}
   seperate_scale_factor: 1
+--- !u!114 &2640083009856195941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4375303742909120935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4634595864490650553
 PrefabInstance:
   m_ObjectHideFlags: 0

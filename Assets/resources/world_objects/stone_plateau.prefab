@@ -56,6 +56,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6147736432322078611}
   - component: {fileID: 1146299398407297132}
+  - component: {fileID: 2576008286973551957}
   m_Layer: 0
   m_Name: stone_plateau
   m_TagString: Untagged
@@ -94,8 +95,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 2
-  min_scale: 2
-  max_scale: 3.5
   min_altitude: 14
   max_altitude: 128
   max_terrain_angle: 90
@@ -106,6 +105,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 2, y: 2, z: 2}
   max_scales: {x: 3.5, y: 3.5, z: 3.5}
+  seperate_scale_factor: 0
+--- !u!114 &2576008286973551957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6380269357279051955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7375738984148854401
 GameObject:
   m_ObjectHideFlags: 0

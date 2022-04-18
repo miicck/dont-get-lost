@@ -59,6 +59,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3609030134689089146}
   - component: {fileID: 1406851639924757270}
+  - component: {fileID: 9202008974938301139}
   m_Layer: 0
   m_Name: snowy_cliff
   m_TagString: Untagged
@@ -99,8 +100,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 2
-  min_scale: 2.5
-  max_scale: 4
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 180
@@ -111,6 +110,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 2.5, y: 2.5, z: 2.5}
   max_scales: {x: 4, y: 4, z: 4}
+  seperate_scale_factor: 0
+--- !u!114 &9202008974938301139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 856848618886739447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5253944016980706455
 GameObject:
   m_ObjectHideFlags: 0

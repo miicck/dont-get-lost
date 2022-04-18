@@ -154,6 +154,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7163027040219724078}
   - component: {fileID: 2822269357466855720}
+  - component: {fileID: 1696573263318548414}
   m_Layer: 0
   m_Name: rock_plateau_2
   m_TagString: Untagged
@@ -198,8 +199,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 1
-  min_scale: 1
-  max_scale: 2.5
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -210,6 +209,19 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 1, y: 1, z: 1}
   max_scales: {x: 2.5, y: 2.5, z: 2.5}
+  seperate_scale_factor: 0
+--- !u!114 &1696573263318548414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6721158868038969093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f464cf0dabedc4cb2f9435cc3edc07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7783323694255326468
 GameObject:
   m_ObjectHideFlags: 0
