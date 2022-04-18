@@ -64,6 +64,7 @@ misc/trade_hub Infinity True
 items/trampoline 1 True
 mood_effects/just_got_up 1 True
 items/doorway 1 True
+items/mood_antenna 1 True
 items/corner_saw 1 True
 items/research_table 1 True
 items/silver 1 True

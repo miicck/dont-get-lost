@@ -78,12 +78,17 @@ public class mood_effect : networked, IMoodEffect
         return ret;
     }
 
+    public const int TIREDNESS_EXHAUSTED = 75;
+    public const int TIREDNESS_TIRED = 50;
+    public const int TIREDNESS_RESTED = 25;
+    public const int TIREDNESS_WELL_RESTED = 0;
+
     static void add_tiredness_mood_effects(List<IMoodEffect> add_to, settler s)
     {
         // Compute the status-based mood effects on this settler
         int t = s.tiredness.value;
 
-        if (t > 75)
+        if (t > TIREDNESS_EXHAUSTED)
         {
             add_to.Add(new simple_mood_effect
             {
@@ -94,7 +99,7 @@ public class mood_effect : networked, IMoodEffect
             return;
         }
 
-        if (t > 50)
+        if (t > TIREDNESS_TIRED)
         {
             add_to.Add(new simple_mood_effect
             {
@@ -105,7 +110,7 @@ public class mood_effect : networked, IMoodEffect
             return;
         }
 
-        if (t < 25)
+        if (t > TIREDNESS_RESTED)
         {
             add_to.Add(new simple_mood_effect
             {
@@ -116,7 +121,7 @@ public class mood_effect : networked, IMoodEffect
             return;
         }
 
-        if (t < 50)
+        if (t > TIREDNESS_WELL_RESTED)
         {
             add_to.Add(new simple_mood_effect
             {

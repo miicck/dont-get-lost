@@ -346,11 +346,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public networked_variables.net_skills skills;
     public networked_variables.net_float height_scale;
 
-    public override float position_resolution() { return 0.1f; }
-    public override float position_lerp_speed() { return 2f; }
-    public override bool persistant() { return !is_dead; }
+    public override float position_resolution() => 0.1f;
+    public override float position_lerp_speed() => 2f;
+    public override bool persistant() => !is_dead;
     public bool starving => nutrition.metabolic_satisfaction <= 0;
-    public bool needs_sleep => tiredness.value > 80;
+    public bool needs_sleep => tiredness.value > (mood_effect.TIREDNESS_TIRED + mood_effect.TIREDNESS_EXHAUSTED) / 2;
 
     public inventory inventory { get; private set; }
 

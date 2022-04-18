@@ -24,14 +24,24 @@ public class mood_summary : MonoBehaviour
         var pairs = new List<KeyValuePair<string, int>>(total_effects);
         pairs.Sort((a, b) => a.Value.CompareTo(b.Value));
 
-        summary_text.text = "";
+        int max_key_length = 0;
         foreach (var kv in pairs)
-            summary_text.text += kv.Key + " " + kv.Value + "\n";
+            if (kv.Key.Length > max_key_length)
+                max_key_length = kv.Key.Length;
+
+        summary_text.text = "";
+
+        string title = "Mood effect";
+        string headers = title + new string(' ', max_key_length + 1 - title.Length) + "Total mood contribution\n";
+        summary_text.text += headers;
+        summary_text.text += new string('-', headers.Length) + "\n";
+
+        foreach (var kv in pairs)
+            summary_text.text += kv.Key + new string(' ', max_key_length + 1 - kv.Key.Length) + kv.Value + "\n";
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        if (Time.frameCount % 11 == 0)
-            update_summary_text();
+        update_summary_text();
     }
 }
