@@ -9,6 +9,7 @@ items/log_splitter 1 True
 inventories/player_inventory 1 True
 items/sterile_wort 1 True
 items/portal 1 True
+items/alluvium 1 True
 items/feather 1 True
 items/pizza 1 True
 items/copper 1 True

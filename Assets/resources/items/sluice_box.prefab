@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3295499905514029062}
   - component: {fileID: 5224269889459677526}
+  - component: {fileID: 5940520230176865134}
   m_Layer: 0
   m_Name: sluice_box
   m_TagString: Untagged
@@ -54,6 +55,24 @@ MonoBehaviour:
   plural: sluice boxes
   value: 0
   axes_scale: 1
+--- !u!114 &5940520230176865134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1021743650023105164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba6832ad64ed4ef408db7e0403fdb285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
+  options:
+  - {fileID: -1988161456644946750, guid: c03b4fac6e3ac7440b67b9e20a2dcdff, type: 3}
+  enabled_when_operating:
+  - {fileID: 5948375936942603047}
+  harvest_time: 1
 --- !u!1 &1042344948920957325
 GameObject:
   m_ObjectHideFlags: 0
