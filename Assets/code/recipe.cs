@@ -186,6 +186,15 @@ public class recipe : MonoBehaviour, IRecipeInfo
     // STATIC STUFF //
     //##############//
 
+    class simple_item_product_info : IRecipeInfo
+    {
+        item item;
+        public simple_item_product_info(item item) => this.item = item;
+        public string recipe_book_string() => item.display_name;
+        public float average_amount_produced(item i) => i == null ? 0 : i.name == item.name ? 1 : 0;
+        public float average_ingredients_value() => 0;
+    }
+
     public static List<KeyValuePair<string, IRecipeInfo[]>> all_recipies()
     {
         List<KeyValuePair<string, IRecipeInfo[]>> ret = new List<KeyValuePair<string, IRecipeInfo[]>>();
@@ -208,6 +217,14 @@ public class recipe : MonoBehaviour, IRecipeInfo
 
         foreach (var ls in Resources.LoadAll<livestock_shelter>("items"))
             ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ls.name, new IRecipeInfo[] { ls }));
+
+        foreach (var ih in Resources.LoadAll<item_harvest_spot>("items"))
+        {
+            List<IRecipeInfo> infos = new List<IRecipeInfo>();
+            foreach (var i in ih.options)
+                infos.Add(new simple_item_product_info(i));
+            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ih.GetComponent<item>().display_name + " (operated by settlers)", infos.ToArray()));
+        }
 
         foreach (var c in Resources.LoadAll<character>("characters"))
         {
