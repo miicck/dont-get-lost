@@ -79,7 +79,8 @@ public class gradual_processor : MonoBehaviour, IAddsToInspectionText,
             craft_timer += Time.deltaTime;
             if (craft_timer > crafting.time_requirement() / count_crafting)
             {
-                crafting.craft(to_process.inventory, pending_output, track_production: true);
+                if (pending_output.total_item_count() == 0)
+                    crafting.craft(to_process.inventory, pending_output, track_production: true);
                 craft_timer = 0;
             }
         }
