@@ -2,6 +2,7 @@ items/market_stall 1 True
 items/plank_gutter 1 True
 items/fishing_rod 1 True
 items/cactus_flesh 1 True
+items/emerald 1 True
 characters/crocodile 1 False
 inventories/farming_spot 1 True
 items/dynamite 1 True
@@ -41,6 +42,7 @@ items/plank 1 True
 items/titanium 1 True
 items/cherries 1 True
 items/half_plank 1 True
+items/diamond 1 True
 items/forge 1 True
 items/half_triangular_plank_(right_angle) 1 True
 items/gunpowder 1 True
@@ -87,6 +89,7 @@ items/flax_seed 1 True
 items/flintlock_musket 1 True
 items/lead 1 True
 items/furnace 1 True
+items/ruby 1 True
 inventories/character_loot 1 True
 items/reinforced_wood_panel 1 True
 inventories/workbench 1 True
@@ -189,6 +192,7 @@ misc/world Infinity True
 items/pantry 1 True
 inventories/cheese_vat 1 True
 items/doormat 1 True
+items/sapphire 1 True
 items/ladder 1 True
 inventories/chest 1 True
 inventories/settler_inventory 1 True

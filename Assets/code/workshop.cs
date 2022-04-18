@@ -109,13 +109,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         return true;
     }
 
-    public bool operational
-    {
-        get
-        {
-            return validate_fixtures();
-        }
-    }
+    public bool operational => validate_fixtures();
 
     bool walking_to_dispenser = true;
     float craft_timer = 0;
