@@ -66,6 +66,7 @@ mood_effects/just_got_up 1 True
 items/doorway 1 True
 items/corner_saw 1 True
 items/research_table 1 True
+items/silver 1 True
 mood_effects/uncovered_bed 1 True
 items/mushroom 1 True
 items/crane 1 True
@@ -83,6 +84,7 @@ items/flint_pickaxe 1 True
 items/flour 1 True
 items/sluice_box 1 True
 items/tomato_planter 1 True
+items/silver_ore 1 True
 misc/melee_fight 1 True
 items/afro_hairstyle 1 True
 items/flax_seed 1 True
@@ -167,6 +169,7 @@ items/stonemasons_table 1 True
 items/titanium_axe 1 True
 items/chicken_coop 1 True
 items/glowing_sign 1 True
+items/mood_crystal 1 True
 items/coin 1 True
 misc/weather_manager Infinity True
 items/mineshaft 1 True
