@@ -43,6 +43,13 @@ public class item_harvest_spot : character_interactable_options
             go.SetActive(false);
     }
 
+    protected override bool ready_to_assign(character c)
+    {
+        if (!building_operation_requirement.all_operation_requirements_satisfied(this, out string reason))
+            return false;
+        return base.ready_to_assign(c);
+    }
+
     protected override void on_arrive(character c)
     {
         // Reset stuff
