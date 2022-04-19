@@ -452,22 +452,29 @@ public abstract class character_interactable : has_path_elements,
     public virtual string added_inspection_text()
     {
         check_missing_worker_timeout();
+
+        string info = null;
+
         if (character != null)
         {
             string name = character.display_name;
             if (character is settler) name = (character as settler).net_name.value;
-            return name.capitalize() + " is assigned to this.";
+            info = name.capitalize() + " is assigned to this";
         }
         else if (character_id.value > 0)
         {
             float timeout_in = force_unassign_time - Time.realtimeSinceStartup;
             if (timeout_in < MISSING_WORKER_TIMEOUT * 2)
-                return "Reserved by someone (timeout in " + timeout_in.ToString("F1") + ")";
-            return "Reserved by someone";
+                info = "Reserved by someone (timeout in " + timeout_in.ToString("F1") + ")";
+            else
+                info = "Reserved by someone";
         }
-        if (skill == null) return "Required skill type undetermined.";
-        if (!skill.is_visible) return null;
-        return "Requires the " + skill.display_name + " skill.";
+
+        if (skill == null) info += "\nRequired skill type undetermined";
+        if (skill.is_visible)
+            info += "\nRequires the " + skill.display_name + " skill";
+
+        return info;
     }
 
     //##############//

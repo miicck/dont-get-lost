@@ -337,7 +337,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         ret += "\nWorkshop requirements:";
         if (required_fixtures.Count == 0) ret += "\nNone";
         else for (int i = 0; i < required_fixtures.Count; ++i)
-                ret += "\n  " + (found_fixtures[i] == null ? "[ ]" : "[x]") + " " + required_fixtures[i].name;
+                ret += "\n  " + (found_fixtures[i] == null ? "[ ]" : "[x]") + " " + required_fixtures[i].display_name;
         ret += "\n" + dispensers.Count + " dispensers connected";
         return ret;
     }

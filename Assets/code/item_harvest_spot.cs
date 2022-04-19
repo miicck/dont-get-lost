@@ -35,6 +35,13 @@ public class item_harvest_spot : character_interactable_options
 
     public override string task_summary() => "Harvesting " + options[selected_option].plural;
 
+    public override string added_inspection_text()
+    {
+        if (!building_operation_requirement.all_operation_requirements_satisfied(this, out string reason))
+            return "Not operational: " + reason;
+        return base.added_inspection_text();
+    }
+
     protected override void Start()
     {
         base.Start();

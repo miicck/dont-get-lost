@@ -108,8 +108,8 @@ public class farming_patch : building_with_inventory, IPlayerInteractable
                 text = () =>
                 {
                     string ret = "Farming patch\n";
-                    ret += (seed == null ? "Nothing growing." :
-                            seed?.plural + " growing into " + seed.growing_into.plural + ".");
+                    ret += (seed == null ? "Nothing growing" :
+                            seed?.plural + " growing into " + seed.growing_into.plural);
                     return ret;
                 }
             });

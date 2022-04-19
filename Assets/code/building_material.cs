@@ -261,7 +261,7 @@ public class building_material : item, IPlayerInteractable
             new relocate_interaction(this),
             new player_inspectable(transform)
             {
-                text = () => display_name + " (built)",
+                text = () => display_name.capitalize() + " (built)",
                 sprite = () => sprite
             }
         };
