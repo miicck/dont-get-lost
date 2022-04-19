@@ -1145,7 +1145,9 @@ public class console : MonoBehaviour
                 if (args.Length < 2) return console_error("Too few arguments!");
                 var w = Resources.Load<weather>("weathers/" + args[1]);
                 if (w == null) return console_error("Unkown weather type: " + args[1]);
-                weather.queue_weather_event(w, 5f);
+                var wm = FindObjectOfType<weather_manager>();
+                if (wm == null) return console_error("Could not find the weather manager!");
+                wm.trigger_weather(w.name, client.server_time + 5);
                 return true;
             },
 

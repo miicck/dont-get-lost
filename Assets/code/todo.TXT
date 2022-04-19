@@ -29,7 +29,6 @@ TODO
 - Make trade carts actually move
 - Stop menus persisting when the object they refer to has been deleted
 - Remove contract system?
-- Market stalls to sell excess (arbitrary) items?
 - Polar bears fall through floor on death/spawn underwater
 - generated trading camps
 - Tavern
@@ -46,3 +45,4 @@ TODO
 - Mineshaftable-locations should be inspectable
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
 - Maybe make attacks more frequent, so guards are a full-time job?
+- Banana tree
