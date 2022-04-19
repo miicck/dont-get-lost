@@ -148,7 +148,8 @@ MonoBehaviour:
   skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
   options:
   - {fileID: 7187197248306456962, guid: 0ed611e93f51ff748a392edd02092988, type: 3}
-  harvest_time: 4
+  enabled_when_operating: []
+  harvest_time: 1
 --- !u!1 &1090881992689774737
 GameObject:
   m_ObjectHideFlags: 0

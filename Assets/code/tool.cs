@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary> A melee weapon that can be used 
 /// for a specific purpose. </summary>
-public class tool : melee_weapon
+public class tool : melee_weapon, IAddsToInspectionText
 {
     /// <summary> The type of this tool. </summary>
     public TYPE type;
@@ -14,10 +14,15 @@ public class tool : melee_weapon
 
     /// <summary> The point that the tool hangs from in racks. </summary>
     public Transform hanging_point;
-    
+
     // Derived state
     public Vector3 hanging_point_offset => transform.position - hanging_point.position;
     public int proficiency => quality_to_proficiency(quality);
+
+    public override string added_inspection_text() =>
+        base.added_inspection_text() +
+        "\nTool type: " + type_to_name(type) +
+        "\nTool quality: " + quality_to_name(quality);
 
     //##############//
     // STATIC STUFF //

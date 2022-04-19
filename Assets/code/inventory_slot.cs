@@ -32,6 +32,8 @@ public class inventory_slot : MonoBehaviour, IPlayerInteractable, IMouseTextUI
     item item;
     int count;
 
+    public item item_in_slot => item;
+
     public string contents_display_name
     {
         get

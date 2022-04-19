@@ -90,6 +90,7 @@ GameObject:
   - component: {fileID: 7599445183793222104}
   - component: {fileID: 7984104583993314559}
   - component: {fileID: 8019944832501143559}
+  - component: {fileID: 5123974862546829557}
   m_Layer: 0
   m_Name: mood_antenna
   m_TagString: Untagged
@@ -145,6 +146,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   context_tip: open mood summary
   menu_prefab: {fileID: 8636374090574993309, guid: 26499ac1e14344442b2c4597c1567723, type: 3}
+--- !u!114 &5123974862546829557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3101138553159551374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 861ba347fafaa674fa7680017a09268b, type: 3}
 --- !u!1 &4481816825652857520
 GameObject:
   m_ObjectHideFlags: 0

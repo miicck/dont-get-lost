@@ -17,7 +17,7 @@ public abstract class equip_in_hand : item
     }
 }
 
-public class melee_weapon : equip_in_hand
+public class melee_weapon : equip_in_hand, IAddsToInspectionText
 {
 #if UNITY_EDITOR
     new
@@ -33,6 +33,8 @@ public class melee_weapon : equip_in_hand
     player in_use_by;
     float swing_progress_at_impact = -1f;
     float swing_progress = 0;
+
+    public virtual string added_inspection_text() => "Melee damage: " + damage;
 
     private void Start()
     {

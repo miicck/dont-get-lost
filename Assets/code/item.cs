@@ -333,29 +333,13 @@ public class item : networked, IPlayerInteractable
             return "No item.";
 
         // Title
-        string info = (quantity < 2 ? item.display_name :
-            (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";
+        string info = (quantity < 2 ? item.display_name : (utils.int_to_comma_string(quantity) + " " + item.plural)) + "\n";
 
         // Value
         if (quantity > 1)
-            info += "  Value : " + (item.value * quantity).qs() + " (" + item.value.qs() + " each)\n";
+            info += "Value: " + (item.value * quantity).qs() + " (" + item.value.qs() + " each)\n";
         else
-            info += "  Value : " + item.value.qs() + "\n";
-
-        // Tool type + quality
-        if (item is tool)
-        {
-            var t = (tool)item;
-            info += "  Tool type : " + tool.type_to_name(t.type) + "\n";
-            info += "  Quality : " + tool.quality_to_name(t.quality) + "\n";
-        }
-
-        // Melee weapon info
-        if (item is melee_weapon)
-        {
-            var m = (melee_weapon)item;
-            info += "  Melee damage : " + m.damage + "\n";
-        }
+            info += "Value: " + item.value.qs() + "\n";
 
         // Can this item be built with
         if (item is building_material)
@@ -365,9 +349,9 @@ public class item : networked, IPlayerInteractable
         if (item.fuel_value > 0)
         {
             if (quantity > 1)
-                info += "  Fuel value : " + (item.fuel_value * quantity).qs() + " (" + item.fuel_value.qs() + " each)\n";
+                info += "Fuel value: " + (item.fuel_value * quantity).qs() + " (" + item.fuel_value.qs() + " each)\n";
             else
-                info += "  Fuel value : " + item.fuel_value.qs() + "\n";
+                info += "Fuel value: " + item.fuel_value.qs() + "\n";
         }
 
         // Food value
@@ -384,7 +368,7 @@ public class item : networked, IPlayerInteractable
             info += c.info(player.current);
         }
 
-        return utils.allign_colons(info);
+        return info.Trim();
     }
 
     int suggested_value(out IRecipeInfo recipe_determining_value)

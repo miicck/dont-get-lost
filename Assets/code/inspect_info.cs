@@ -40,10 +40,7 @@ public interface IAddsToInspectionText
 public class player_inspectable : player_interaction
 {
     Transform transform;
-    public player_inspectable(Transform attached_to)
-    {
-        transform = attached_to;
-    }
+    public player_inspectable(Transform attached_to) => transform = attached_to;
 
     public delegate string text_func();
     public text_func text;
@@ -52,19 +49,24 @@ public class player_inspectable : player_interaction
     public sprite_func sprite;
     public sprite_func secondary_sprite;
 
-    public override string context_tip()
-    {
-        return "inspect";
-    }
-
     public override controls.BIND keybind => controls.BIND.INSPECT;
-    public override bool simultaneous() { return true; }
+    public override string context_tip() => "inspect";
+    public override bool simultaneous() => true;
 
     void update()
     {
         if (transform == null) return; // Deleted
+
+        IAddsToInspectionText[] added_inspect =
+            transform.GetComponentInChildren<inventory_slot>()?.
+            item_in_slot?.
+            GetComponentsInChildren<IAddsToInspectionText>();
+
+        if (added_inspect == null || added_inspect.Length == 0)
+            added_inspect = transform.GetComponentsInChildren<IAddsToInspectionText>();
+
         string str = text?.Invoke();
-        foreach (var add in transform.GetComponentsInChildren<IAddsToInspectionText>())
+        foreach (var add in added_inspect)
         {
             var txt = add.added_inspection_text();
             if (txt == null) continue;

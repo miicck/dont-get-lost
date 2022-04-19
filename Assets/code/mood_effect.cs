@@ -211,7 +211,7 @@ public class mood_effect : networked, IMoodEffect
     public static List<IMoodEffect> get_all(settler s)
     {
         // Get the event-based mood effects on this settler
-        List<IMoodEffect> ret = new List<IMoodEffect>(s.GetComponentsInChildren<mood_effect>());
+        List<IMoodEffect> ret = new List<IMoodEffect>(s.GetComponentsInChildren<IMoodEffect>());
         add_tiredness_mood_effects(ret, s);
         add_nutrition_mood_effects(ret, s);
         return ret;

@@ -1463,7 +1463,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     player_healthbar healthbar;
     RectTransform nametag;
 
-    public Vector3 nametag_position() => eye_transform.position + Vector3.up / 4;
+    public Vector3 nametag_position() => eye_transform == null ? transform.position : eye_transform.position + Vector3.up / 4;
 
     public void mod_x_rotation(float mod) { x_rotation.value += mod; }
     public void mod_y_rotation(float mod) { y_rotation.value = utils.minimal_modulus_angle(y_rotation.value + mod); }

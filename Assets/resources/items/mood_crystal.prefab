@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3113739144136294167}
   - component: {fileID: 4183447387819725491}
+  - component: {fileID: -170905640716045866}
   m_Layer: 0
   m_Name: mood_crystal
   m_TagString: Untagged
@@ -49,6 +50,19 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: 21841bb5ad5109a418be85c1267fc556, type: 3}
   plural: mood crystals
   value: 2
+--- !u!114 &-170905640716045866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424699822712960711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 70e3a9aca4064984ca791faaf9ab3c1e, type: 3}
 --- !u!1001 &4413605045506201375
 PrefabInstance:
   m_ObjectHideFlags: 0
