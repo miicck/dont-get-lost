@@ -52,6 +52,7 @@ MonoBehaviour:
   location: 4
   handedness: 0
   size: {x: 1.4, y: 1.44, z: 1}
+  settler_can_generate_with: 1
 --- !u!1001 &2732624193899243246
 PrefabInstance:
   m_ObjectHideFlags: 0

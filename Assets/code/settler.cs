@@ -481,8 +481,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 if (Random.Range(0, 1f) < armour_location_fill_probability(slot.location))
                     locations_to_fill.Add(slot.location);
 
+            // Gather armour that settlers can generate with
+            var armours = new List<armour_piece>();
+            foreach (var a in Resources.LoadAll<armour_piece>("items"))
+                if (a.settler_can_generate_with)
+                    armours.Add(a);
+
             // Fill the chosen armour slots
-            var armours = Resources.LoadAll<armour_piece>("items");
             foreach (var slot in armour_slots)
             {
                 if (!locations_to_fill.Contains(slot.location))

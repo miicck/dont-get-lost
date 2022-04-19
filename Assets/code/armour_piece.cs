@@ -15,6 +15,9 @@ public class armour_piece : item
 
     public Vector3 size = Vector3.one;
 
+    /// <summary> Set to true if a settler can be generated already wearing this item. </summary>
+    public bool settler_can_generate_with = false;
+
     public enum LOCATION
     {
         HEAD,
