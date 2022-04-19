@@ -40,6 +40,7 @@ misc/sack 1 True
 items/torch 1 True
 items/plank 1 True
 items/titanium 1 True
+items/emerald_necklace 1 True
 items/cherries 1 True
 items/half_plank 1 True
 items/diamond 1 True
@@ -117,6 +118,7 @@ items/flax_fibers 1 True
 misc/tech_tree Infinity True
 items/digging_stick 1 True
 items/filter_splitter 1 True
+items/diamond_necklace 1 True
 items/mineralogy_workshop 1 True
 items/carpentry_bench 1 True
 misc/networked_inventory_slot 1 True
@@ -185,6 +187,7 @@ items/rail_stop 1 True
 items/gold_ore 1 True
 items/bun_hairstyle 1 True
 characters/nali_cow 1 False
+items/ruby_necklace 1 True
 items/lilypad 1 True
 items/rutile 1 True
 items/apple 1 True
