@@ -583,7 +583,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
             throw new System.Exception("Tried to forget unregistered element!");
 
         r.break_links();
-        r.bounded_group.remove(r);
+        r.bounded_group?.remove(r);
         rooms_update_required = true;
     }
 

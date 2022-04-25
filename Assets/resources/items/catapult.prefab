@@ -330,6 +330,7 @@ GameObject:
   - component: {fileID: 3760051179129050524}
   - component: {fileID: 3005884741615199526}
   - component: {fileID: 3089190216512420660}
+  - component: {fileID: 602687732008066521}
   m_Layer: 0
   m_Name: catapult
   m_TagString: Untagged
@@ -384,6 +385,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 226ded0256580864797f596c956db06b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  skill: {fileID: 7915786716127770993, guid: 6b45f5a086abfdb48bd1bdad3f9f7afb, type: 3}
   rotation_base: {fileID: 7954452057543850109}
   firing_arm: {fileID: 5834045175697715975}
   firing_arm_fired: {fileID: 1463095668227347245}
@@ -392,6 +394,19 @@ MonoBehaviour:
   prep_time: 2
   fire_time: 0.2
   base_rotation_speed: 20
+--- !u!114 &602687732008066521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7583703852191626371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: dca93a3d0f6095f4a96659c77ad98685, type: 3}
 --- !u!1 &8651796843436757439
 GameObject:
   m_ObjectHideFlags: 0

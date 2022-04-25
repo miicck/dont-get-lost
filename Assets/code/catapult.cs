@@ -32,8 +32,10 @@ public class catapult : siege_engine
         }
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+
         // Record initial position of firing arm as reset position
         firing_arm_reset = new GameObject("firing_arm_reset").transform;
         firing_arm_reset.SetParent(firing_arm.parent);
@@ -49,68 +51,114 @@ public class catapult : siege_engine
         rotation_base = new_base;
     }
 
-    bool rotate_base_towards(Vector3 forward) => utils.rotate_towards(
+    bool rotate_base_towards(Vector3 forward, float speed) => utils.rotate_towards(
         rotation_base,
         Quaternion.LookRotation(forward, rotation_base.up),
         base_rotation_speed * Time.deltaTime);
 
-    void set_wind_up(float amount, out bool retracted, out bool fired)
+    float retraction_amount
     {
-        firing_arm.localRotation = Quaternion.Lerp(
-            firing_arm_fired.localRotation,
-            firing_arm_reset.localRotation,
-            Mathf.Clamp(amount, 0f, 1f)
-        );
-
-        retracted = amount >= 1f;
-        fired = amount <= 0;
-    }
-
-    protected override bool stage_update(FIRE_STAGE stage, float progress)
-    {
-        switch (stage)
+        get => _retraction_amount;
+        set
         {
-            case FIRE_STAGE.SEARCHING_FOR_TARGET:
+            _retraction_amount = Mathf.Clamp(value, 0, 1);
 
-                // Reset to fired position + facing forward
-                set_wind_up(1f - progress / prep_time, out bool retracted, out bool fired);
-                rotate_base_towards(transform.forward);
-                return false;
-
-            case FIRE_STAGE.PREPARING_TO_FIRE:
-
-                // Face towards target
-                Vector3 target_forward = target.transform.position - rotation_base.position;
-                target_forward.y = 0;
-                target_forward.Normalize();
-                var alligned = rotate_base_towards(target_forward);
-
-                // Wind up
-                set_wind_up(progress / prep_time, out retracted, out fired);
-
-                // Add projectile when wound up
-                if (retracted && projectile == null)
-                    Debug.LogError("Projectile should create itself");
-
-                return retracted && alligned;
-
-            case FIRE_STAGE.FIRING:
-
-                // Un-wind quickly
-                set_wind_up(1 - progress / fire_time, out retracted, out fired);
-
-                if (fired)
-                {
-                    // Loose projectile
-                    var proj = projectile;
-                    proj.target = target;
-                    proj.transform.SetParent(null);
-                }
-
-                return fired;
-
-            default:
-                return true;
+            firing_arm.localRotation = Quaternion.Lerp(
+                firing_arm_fired.localRotation,
+                firing_arm_reset.localRotation,
+                _retraction_amount
+            );
         }
     }
+    float _retraction_amount;
+
+    Vector3 forward_target
+    {
+        get
+        {
+            if (target == null || target.is_dead) return transform.forward;
+            Vector3 ret = target.transform.position - transform.position;
+            ret.y = 0;
+            ret.Normalize();
+            return ret;
+        }
+    }
+
+    bool ready_to_fire =>
+        retraction_amount >= 1f &&
+        projectile != null &&
+        rotate_base_towards(forward_target, 0f);
+
+    bool firing = false;
+
+    void prepare_to_fire()
+    {
+        retraction_amount += Time.deltaTime / prep_time;
+        rotate_base_towards(forward_target, base_rotation_speed);
+    }
+
+    void fire()
+    {
+        retraction_amount -= Time.deltaTime / fire_time;
+
+        if (retraction_amount <= 0)
+        {
+            firing = false;
+
+            // Loose projectile
+            var proj = projectile;
+            proj.target = target;
+            proj.transform.SetParent(null);
+        }
+    }
+
+    protected override bool ready_to_assign(character c)
+    {
+        // We should do this if we need to reset the catapult, or if we're under attack
+        return !ready_to_fire || group_info.under_attack(c.group);
+    }
+
+    public override float move_to_speed(character c)
+    {
+        return c.run_speed;
+    }
+
+    protected override STAGE_RESULT on_interact_arrived(character c, int stage)
+    {
+        if (firing)
+        {
+            fire();
+            return STAGE_RESULT.STAGE_UNDERWAY;
+        }
+
+        // Find a new target
+        if (group_info.under_attack(c.group) && (target == null || target.is_dead))
+        {
+            // Seach for nearest target
+            target = group_info.closest_attacker(transform.position);
+            return STAGE_RESULT.STAGE_UNDERWAY;
+        }
+
+        // Make ready to fire
+        if (!ready_to_fire)
+        {
+            prepare_to_fire();
+            return STAGE_RESULT.STAGE_UNDERWAY;
+        }
+
+        // Ready to fire, but no target => we're done
+        if (target == null || target.is_dead)
+        {
+            return STAGE_RESULT.TASK_COMPLETE;
+        }
+
+        // Everything is ready for us to fire
+        firing = true;
+        return STAGE_RESULT.STAGE_UNDERWAY;
+    }
+
+    public override string added_inspection_text() =>
+        base.added_inspection_text() + "\n" +
+        "Ready to fire: " + ready_to_fire + "\n" +
+        "Firing: " + firing;
 }
