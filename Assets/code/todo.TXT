@@ -44,5 +44,5 @@ TODO
 - Buildings to speed up research
 - Mineshaftable-locations should be inspectable
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
-- Maybe make attacks more frequent, so guards are a full-time job?
+- Maybe make attacks more frequent, so guards are a full-time job, but don't require the entire town?
 - Banana tree

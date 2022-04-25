@@ -67,7 +67,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         draw_path = town_path_element.draw_links;
 
         if (path == null)
-        {   
+        {
             if (!geometry_changed_since_last_path) return; // No point trying again until the geometry updates
             if (Time.time < next_path_time) return; // Don't try again until the next path time
 
@@ -605,6 +605,31 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             foreach (var a in hs)
                 if (a != null && f(a))
                     return;
+    }
+
+    static float character_distance_cost(character c, Vector3 position)
+    {
+        if (c.is_dead) return Mathf.Infinity;
+        return (c.transform.position - position).sqrMagnitude;
+    }
+
+    public static character closest_attacker(Vector3 position, int group = -1)
+    {
+        if (group >= 0)
+        {
+            if (!attackers.TryGetValue(group, out HashSet<character> cs))
+                return null;
+            return utils.find_to_min(cs, (c) => character_distance_cost(c, position));
+        }
+
+        var all_closest = new List<character>();
+        foreach (var kv in attackers)
+        {
+            var closest = utils.find_to_min(kv.Value, (c) => character_distance_cost(c, position));
+            if (closest != null)
+                all_closest.Add(closest);
+        }
+        return utils.find_to_min(all_closest, (c) => character_distance_cost(c, position));
     }
 
     public static bool group_under_attack(int group)

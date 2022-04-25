@@ -599,10 +599,11 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
 
     public static town_path_element nearest_element_connected_to_beds(Vector3 v)
     {
+        if (groups_with_beds == null) return null;
         return utils.find_to_min(all_elements, (e) =>
         {
-            if (!groups_with_beds.Contains(e.group))
-                return Mathf.Infinity;
+            if (e == null) return Mathf.Infinity;
+            if (!groups_with_beds.Contains(e.group)) return Mathf.Infinity;
             return (e.transform.position - v).sqrMagnitude;
         });
     }
@@ -961,6 +962,9 @@ public static class group_info
     public delegate bool attack_iterator(character attacker);
     public static void iterate_over_attackers(int group, attack_iterator f) =>
         attacker_entrypoint.iterate_over_attackers(group, f);
+
+    public static character closest_attacker(Vector3 position, int group = -1) =>
+        attacker_entrypoint.closest_attacker(position, group);
 
     public static bool has_starvation(int group)
     {
