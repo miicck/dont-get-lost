@@ -876,8 +876,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             // Make the player (in)visible
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
-                // Doesn't affect water
+                // Doesn't affect water/weather
                 if (r.transform.IsChildOf(water.transform)) continue;
+                if (r.GetComponentInParent<weather_effect>() != null) continue;
                 r.enabled = !_fly_mode;
             }
 

@@ -46,4 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   default_priority: 2
   is_visible: 0
-  possible_when_under_attack: 0
+  family: 1

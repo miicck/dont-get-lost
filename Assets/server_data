@@ -41,6 +41,7 @@ items/torch 1 True
 items/plank 1 True
 items/titanium 1 True
 items/emerald_necklace 1 True
+mood_effects/excellent_at 1 True
 items/cherries 1 True
 items/half_plank 1 True
 items/diamond 1 True
@@ -59,6 +60,7 @@ items/trade_cart 1 True
 inventories/dining_table 1 True
 items/coal 1 True
 items/brewing_barrel 1 True
+mood_effects/good_at 1 True
 items/long_flowing_hairstyle 1 True
 items/ale 1 True
 misc/trade_hub Infinity True
@@ -87,6 +89,7 @@ items/flour 1 True
 items/sluice_box 1 True
 items/tomato_planter 1 True
 items/silver_ore 1 True
+items/anti_famine_potion 1 True
 misc/melee_fight 1 True
 items/afro_hairstyle 1 True
 items/flax_seed 1 True
@@ -100,6 +103,7 @@ inventories/workbench 1 True
 misc/player 1 True
 items/zombie_flesh 1 True
 items/window_panel 1 True
+mood_effects/great_at 1 True
 items/wooden_path 1 True
 items/fishing_dock 1 True
 characters/smoke_spider 1 False
@@ -145,6 +149,7 @@ items/sapling 1 True
 items/iron_platehelm 1 True
 items/titanium_pickaxe 1 True
 items/cheese_vat 1 True
+items/cauldron 1 True
 mood_effects/ate_without_table 1 True
 items/straw 1 True
 items/wheat_planter 1 True
@@ -226,6 +231,7 @@ items/water 1 True
 items/stick 1 True
 items/dreadlocks_hairstyle 1 True
 items/arboretum 1 True
+items/vitality_crystal 1 True
 items/bed 1 True
 items/triangular_plank_(right_angle) 1 True
 items/iron_sword 1 True
@@ -246,6 +252,7 @@ items/windmill 1 True
 items/polar_bear_fur 1 True
 items/spider_web 1 True
 items/charcoal 1 True
+items/famine_ward 1 True
 items/catapult 1 True
 characters/polar_bear 1 False
 items/forestry_spot 1 True

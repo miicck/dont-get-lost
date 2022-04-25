@@ -854,6 +854,15 @@ namespace networked_variables
         /// indexed by the default priority of the job. </summary>
         byte[] priorities = new byte[skill.all.Length];
 
+        public delegate void on_change_func();
+        public on_change_func on_change;
+
+        public override void set_dirty()
+        {
+            on_change?.Invoke();
+            base.set_dirty();
+        }
+
         public skill.PRIORITY this[skill j]
         {
             get => (skill.PRIORITY)priorities[j.default_priority];

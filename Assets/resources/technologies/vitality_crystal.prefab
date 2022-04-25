@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
   m_Layer: 0
-  m_Name: mood_crystal
+  m_Name: vitality_crystal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,5 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   depends_on:
   - {fileID: 3707283815685127039, guid: 885213669b30ee84e85a6eb6d4c793dd, type: 3}
-  sprite: {fileID: 21300000, guid: 21841bb5ad5109a418be85c1267fc556, type: 3}
+  sprite: {fileID: 21300000, guid: 26d4581d09562c04aadcf55208a0348e, type: 3}
   description: 

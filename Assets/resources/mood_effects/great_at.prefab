@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &9155860940823450190
+--- !u!1 &5226254393311937358
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,43 +8,44 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6762625628197149770}
-  - component: {fileID: 3707283815685127039}
+  - component: {fileID: 2146318417295402699}
+  - component: {fileID: 7396305659482701798}
   m_Layer: 0
-  m_Name: mood_crystal
+  m_Name: great_at
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6762625628197149770
+--- !u!4 &2146318417295402699
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9155860940823450190}
+  m_GameObject: {fileID: 5226254393311937358}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 32.70286, y: 0.7462754, z: -4.946189}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3707283815685127039
+--- !u!114 &7396305659482701798
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9155860940823450190}
+  m_GameObject: {fileID: 5226254393311937358}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8db759e8d86d204492a6daa873f4124, type: 3}
+  m_Script: {fileID: 11500000, guid: 6e89001a05aa88345afb2505ff09577e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depends_on:
-  - {fileID: 3707283815685127039, guid: 885213669b30ee84e85a6eb6d4c793dd, type: 3}
-  sprite: {fileID: 21300000, guid: 21841bb5ad5109a418be85c1267fc556, type: 3}
-  description: 
+  is_client_side: 0
+  timespan: 120
+  _delta_mood: 15
+  _display_name: great at skill
+  _description: I did something that I was great at

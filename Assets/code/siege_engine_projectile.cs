@@ -13,7 +13,7 @@ public class siege_engine_projectile : MonoBehaviour
         if (transform.parent != null)
             return; // Still attached to siege engine
 
-        if (target == null || target.is_dead)
+        if (target == null)
         {
             Destroy(gameObject);
             return;

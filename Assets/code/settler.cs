@@ -29,10 +29,21 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override town_path_element find_best_path_element() =>
         town_path_element.nearest_element_connected_to_beds(transform.position);
 
+    public bool can_defend
+    {
+        get
+        {
+            foreach (var s in skill_priority_order)
+                if (s.family == skill.SKILL_FAMILY.DEFENSIVE)
+                    return true;
+            return false;
+        }
+    }
+
     public void on_attack_begin()
     {
-        // Stop interactions that aren't possible when under attack
-        if (interaction?.skill.possible_when_under_attack == false)
+        // I am a defender => I should stop what I'm doing to defend the town
+        if (can_defend)
             interaction.unassign();
     }
 
@@ -211,6 +222,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                 text = () =>
                 {
                     return name.capitalize() + "\n" +
+                       "  " + "Assigned to defense : "+can_defend + "\n"+
                        "  " + "Combat level : " + combat_level + "\n" +
                        "  " + "Health " + remaining_health + "/" + max_health + "\n" +
                        "  " + Mathf.Round(tiredness.value) + "% tired\n" +
@@ -360,6 +372,38 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     public inventory inventory { get; private set; }
 
+    public skill[] skill_priority_order
+    {
+        get
+        {
+            if (_skill_priority_order == null)
+            {
+                // Recalculate
+                var list = new List<skill>(skill.all);
+                list.Sort((a, b) =>
+                {
+                    if (a.is_visible && b.is_visible)
+                    {
+                        int p = -job_priorities[a].CompareTo(job_priorities[b]);
+                        if (p != 0) return p;
+                    }
+
+                    return a.default_priority.CompareTo(b.default_priority);
+                });
+                list.RemoveAll((a) => job_priorities[a] == skill.PRIORITY.OFF);
+                _skill_priority_order = list.ToArray();
+            }
+            return _skill_priority_order;
+        }
+        private set
+        {
+            if (value != null)
+                Debug.LogError("Skill priorities should only be set to null => trigger recalculation");
+            _skill_priority_order = value;
+        }
+    }
+    skill[] _skill_priority_order;
+
     /// <summary> The interactable object that we are currently interacting with. </summary>
     public character_interactable interaction => character_interactable.assigned_to(this);
 
@@ -434,6 +478,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         {
             transform.localScale = Vector3.one * height_scale.value;
             base.height = height_scale.value * 1.5f + 0.2f;
+        };
+
+        job_priorities.on_change = () =>
+        {
+            // Recalulate priority order
+            skill_priority_order = null;
         };
     }
 

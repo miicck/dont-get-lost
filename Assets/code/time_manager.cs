@@ -35,13 +35,14 @@ public class time_manager : networked
                 local_time_of_day = networked_time_of_day.value;
         };
 
-        day_number = new networked_variables.net_int();
-        day_number.on_change = () =>
+        networked_time_of_day.on_change_old_new = (old_val, new_val) =>
         {
-            if (day_number.initialized) // Don't trigger attack on initialization
+            // Trigger an attack at the start of each night
+            if (new_val > 1 && old_val <= 1 && networked_time_of_day.initialized)
                 attacker_entrypoint.trigger_scaled_attack();
         };
 
+        day_number = new networked_variables.net_int();
         manager = this;
     }
 

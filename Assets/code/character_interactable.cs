@@ -46,7 +46,20 @@ public abstract class character_interactable : has_path_elements,
         }
 
         if (current_proficiency == null)
+        {
             current_proficiency = new proficiency_info(c, this);
+
+            if (c is settler)
+            {
+                var s = c as settler;
+                if (s.skills[skill].level > 20)
+                    s.add_mood_effect("excellent_at");
+                else if (s.skills[skill].level > 10)
+                    s.add_mood_effect("great_at");
+                else if (s.skills[skill].level > 5)
+                    s.add_mood_effect("good_at");
+            }
+        }
 
         if (c.has_authority)
         {
@@ -95,10 +108,10 @@ public abstract class character_interactable : has_path_elements,
         {
             var s = (settler)c;
 
-            if (!skill.possible_when_under_attack && group_info.under_attack(s.group))
-                return false; // Not possible when under attack
+            if (skill.family != skill.SKILL_FAMILY.DEFENSIVE && group_info.under_attack(s.group) && s.can_defend)
+                return false; // Defenders can't do non-defensive tasks when town is under attack
 
-            if (s.starving && skill.name != "eating" && group_has_food_available_for(s))
+            if (s.starving && skill.family != skill.SKILL_FAMILY.EATING && group_has_food_available_for(s))
                 return false; // Not possible when starving/there is food available (unless this is an eating task)
         }
 
@@ -505,14 +518,13 @@ public abstract class character_interactable : has_path_elements,
         // Can't assign interactions on non-auth clients
         if (!c.has_authority) return null;
 
-        foreach (var sk in skill.all)
+        var to_search = c is settler ? (c as settler).skill_priority_order : skill.all;
+
+        foreach (var sk in to_search)
         {
-            if (c is settler)
-            {
-                // Skip visible skills that fail the settler priority test
-                var s = (settler)c;
-                if (sk.is_visible && !sk.priority_test(s)) continue;
-            }
+            if (sk.is_visible && c is settler)
+                if (Random.Range(0, 1f) < sk.skip_probability(c as settler))
+                    continue;
 
             if (!interactables.TryGetValue(sk, out List<character_interactable> possibilities)) continue;
             if (possibilities.Count == 0) continue;

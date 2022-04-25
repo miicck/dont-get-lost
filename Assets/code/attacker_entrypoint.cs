@@ -646,30 +646,19 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         // Get all valid entrypoints
         List<attacker_entrypoint> entries = new List<attacker_entrypoint>();
         foreach (var e in entrypoints)
-            if (e.path != null && e.path.state == path.STATE.COMPLETE)
-                entries.Add(e);
-        if (entries.Count == 0) return; // No entrypoints for an attack
-
-        // Attack the group with the most entrypoints
-        Dictionary<int, int> group_counts = new Dictionary<int, int>();
-        foreach (var e in entrypoints)
         {
-            if (e?.element == null) continue;
-            if (group_counts.ContainsKey(e.element.group)) group_counts[e.element.group] += 1;
-            else group_counts[e.element.group] = 1;
+            if (e.path == null) continue;
+            if (e.path.state != path.STATE.COMPLETE) continue;
+            if (!group_info.has_beds(e.element.group)) continue;
+            entries.Add(e);
         }
-        int group = utils.find_to_min(group_counts, (kv) => -kv.Value).Key;
-
-        // Remove any entrypoints that aren't of the correct group
-        for (int i = entries.Count - 1; i >= 0; --i)
-            if (entries[i].element.group != group)
-                entries.RemoveAt(i);
+        if (entries.Count == 0) return; // No entrypoints for an attack
 
         if (characters_to_spawn == null)
         {
             // Generate an attack scaled to the town
             float combat_level = 0;
-            foreach (var s in settler.get_settlers_by_group(group))
+            foreach (var s in settler.all_settlers())
                 combat_level += s.combat_level;
 
             List<string> to_spawn = new List<string>();
@@ -681,6 +670,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 combat_level -= att.character.combat_level;
                 to_spawn.Add(att.name);
             }
+
             characters_to_spawn = to_spawn;
         }
 
@@ -691,7 +681,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             entries[last_entrypoint_index].trigger_attack(c);
         }
 
-        foreach (var s in settler.get_settlers_by_group(group))
+        foreach (var s in settler.all_settlers())
             s.on_attack_begin();
     }
 

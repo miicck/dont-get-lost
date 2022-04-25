@@ -6,14 +6,28 @@ public class skill : MonoBehaviour
 {
     public int default_priority = 1;
     public bool is_visible = true;
-    public bool possible_when_under_attack = false;
+
+    public enum SKILL_FAMILY
+    {
+        DEFENSIVE,
+        EATING,
+        RECREATION,
+        PRODUCTION,
+    }
+    public SKILL_FAMILY family = SKILL_FAMILY.PRODUCTION;
 
     public string display_name => name.Replace("_", " ").ToLower().capitalize();
 
-    public virtual bool priority_test(settler s)
+    public float skip_probability(settler s)
     {
-        if (s == null) return false;
-        return priority_test(s.job_priorities[this]);
+        switch (s.job_priorities[this])
+        {
+            case PRIORITY.HIGH: return 0f;
+            case PRIORITY.MED: return 0.5f;
+            case PRIORITY.LOW: return 0.75f;
+            case PRIORITY.OFF: return 1f;
+            default: Debug.LogError("Unkown skill priority!"); return 0.5f;
+        }
     }
 
     //##############//
@@ -99,20 +113,6 @@ public class skill : MonoBehaviour
             case PRIORITY.LOW: return new Color(1f, 0.7f, 0.7f);
             case PRIORITY.MED: return new Color(0.7f, 0.7f, 1f);
             case PRIORITY.HIGH: return new Color(0.7f, 1f, 0.7f);
-            default: throw new System.Exception("Unkown priority level: " + p);
-        }
-    }
-
-    /// <summary> Returns true with a probability 
-    /// reflecting the given priority. </summary>
-    public static bool priority_test(PRIORITY p)
-    {
-        switch (p)
-        {
-            case PRIORITY.OFF: return false;
-            case PRIORITY.LOW: return Random.Range(0, 8) == 0;
-            case PRIORITY.MED: return Random.Range(0, 4) == 0;
-            case PRIORITY.HIGH: return Random.Range(0, 2) == 0;
             default: throw new System.Exception("Unkown priority level: " + p);
         }
     }

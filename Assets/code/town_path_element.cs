@@ -608,6 +608,8 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         });
     }
 
+    public static bool group_has_beds(int group) => groups_with_beds != null && groups_with_beds.Contains(group);
+
     public static HashSet<town_path_element> element_group(int group)
     {
         if (grouped_elements.TryGetValue(group, out HashSet<town_path_element> elms)) return elms;
@@ -965,6 +967,8 @@ public static class group_info
 
     public static character closest_attacker(Vector3 position, int group = -1) =>
         attacker_entrypoint.closest_attacker(position, group);
+
+    public static bool has_beds(int group) => town_path_element.group_has_beds(group);
 
     public static bool has_starvation(int group)
     {
