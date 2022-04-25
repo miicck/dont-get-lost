@@ -6,7 +6,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 {
     public const float TIME_TO_STARVE = 10f * 60f;
     public const float TIME_TO_REGEN = 120f;
-    public const float TIME_TO_TIRED = time_manager.DAY_LENGTH;
+    public const float TIME_TO_NEEDS_SLEEP = time_manager.DAY_LENGTH;
 
     public List<Renderer> top_underclothes = new List<Renderer>();
     public List<Renderer> bottom_underclothes = new List<Renderer>();
@@ -356,7 +356,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public override float position_lerp_speed() => 2f;
     public override bool persistant() => !is_dead;
     public bool starving => nutrition.metabolic_satisfaction <= 0;
-    public bool needs_sleep => tiredness.value > (mood_effect.TIREDNESS_TIRED + mood_effect.TIREDNESS_EXHAUSTED) / 2;
+    public bool needs_sleep => tiredness.value > mood_effect.TIREDNESS_NEEDS_SLEEP;
 
     public inventory inventory { get; private set; }
 
@@ -521,7 +521,10 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         // Invoke repeating callbacks that need authority
         InvokeRepeating("get_hungry", TIME_TO_STARVE / byte.MaxValue, TIME_TO_STARVE / byte.MaxValue);
         InvokeRepeating("regen_health", TIME_TO_REGEN / max_health, TIME_TO_REGEN / max_health);
-        InvokeRepeating("get_tired", TIME_TO_TIRED / 100f, TIME_TO_TIRED / 100f);
+
+        InvokeRepeating("get_tired",
+            TIME_TO_NEEDS_SLEEP / mood_effect.TIREDNESS_NEEDS_SLEEP,
+            TIME_TO_NEEDS_SLEEP / mood_effect.TIREDNESS_NEEDS_SLEEP);
     }
 
     public override void on_loose_authority()

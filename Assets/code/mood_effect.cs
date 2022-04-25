@@ -83,6 +83,8 @@ public class mood_effect : networked, IMoodEffect
     public const int TIREDNESS_RESTED = 25;
     public const int TIREDNESS_WELL_RESTED = 0;
 
+    public const int TIREDNESS_NEEDS_SLEEP = (TIREDNESS_TIRED + TIREDNESS_EXHAUSTED) / 2;
+
     static void add_tiredness_mood_effects(List<IMoodEffect> add_to, settler s)
     {
         // Compute the status-based mood effects on this settler
