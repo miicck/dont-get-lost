@@ -1044,25 +1044,6 @@ public class console : MonoBehaviour
             usage_example = "toggle_recording_mode"
         },
 
-        ["add_research_materials"] = new console_info
-        {
-            command = (args) =>
-            {
-                if (args.Length < 2) return console_error("Missing material argument!");
-                foreach (var m in research_material.all)
-                    if (m.name == args[1])
-                    {
-                        tech_tree.add_research_materials(m, 1);
-                        return true;
-                    }
-
-                return console_error("Unkown research material: " + args[1]);
-            },
-
-            description = "Add research materials of the given type.",
-            usage_example = "add_research_materials mechanical_materials"
-        },
-
         ["creative_mode"] = new console_info
         {
             command = (args) =>

@@ -36,14 +36,10 @@ public class technology : MonoBehaviour
         }
     }
 
-    public bool materials_available
+    public bool required_items_available
     {
         get
         {
-            foreach (var material in GetComponentsInChildren<research_material_ingredient>())
-                if (tech_tree.research_materials_count(material.material) < material.count)
-                    return false;
-
             if (player.current == null)
                 return false;
 

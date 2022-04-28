@@ -9,7 +9,6 @@ public class tech_tree : networked
     //############//
 
     public networked_variables.net_string_counts research_progress;
-    public networked_variables.net_string_counts research_materials;
     public networked_variables.net_string currently_researching;
 
     public override void on_create()
@@ -31,7 +30,6 @@ public class tech_tree : networked
     {
         base.on_init_network_variables();
         research_progress = new networked_variables.net_string_counts();
-        research_materials = new networked_variables.net_string_counts();
         currently_researching = new networked_variables.net_string(default_value: "");
 
         currently_researching.on_change = () =>
@@ -45,7 +43,6 @@ public class tech_tree : networked
         };
 
         research_progress.on_change = update_tech_tree_ui;
-        research_materials.on_change = update_tech_tree_ui;
     }
 
     // The tech tree is always loaded
@@ -68,9 +65,6 @@ public class tech_tree : networked
             Debug.LogError("Tried to set research before tech tree loaded");
             return;
         }
-
-        foreach (var material in t.GetComponentsInChildren<research_material_ingredient>())
-            loaded_tech_tree.research_materials[material.material.name] -= material.count;
 
         foreach (var item_ingredient in t.GetComponentsInChildren<item_ingredient>())
             player.current.inventory.remove(item_ingredient.item, item_ingredient.count);
@@ -101,28 +95,6 @@ public class tech_tree : networked
 
         string topic = loaded_tech_tree.currently_researching.value;
         perform_research(topic, amount);
-    }
-
-    public static void add_research_materials(research_material material, int count)
-    {
-        if (loaded_tech_tree == null)
-        {
-            Debug.LogError("Tried to add research materials before tech tree loaded");
-            return;
-        }
-
-        loaded_tech_tree.research_materials[material.name] += count;
-    }
-
-    public static int research_materials_count(research_material material)
-    {
-        if (loaded_tech_tree == null)
-        {
-            Debug.LogError("Tried to count research materials before tech tree loaded");
-            return 0;
-        }
-
-        return loaded_tech_tree.research_materials[material.name];
     }
 
     public static void perform_research(string topic, int amount)
@@ -285,10 +257,10 @@ public class tech_tree : networked
                     button_text.text = "Requirements not met";
                     button.interactable = false;
                 }
-                else if (!tech.materials_available)
+                else if (!tech.required_items_available)
                 {
-                    // Materials not available
-                    button_text.text = "Materials missing";
+                    // Items not available
+                    button_text.text = "Items missing";
                     button.interactable = false;
                 }
                 else
@@ -299,12 +271,6 @@ public class tech_tree : networked
                 }
             }
         }
-
-        // Update research material counts
-        var materials = tech_tree_ui.find_child_recursive("research_materials").GetComponent<RectTransform>();
-        foreach (RectTransform material in materials.transform)
-            material.GetComponentInChildren<UnityEngine.UI.Text>().text =
-                "" + loaded_tech_tree.research_materials[material.name];
     }
 
     public class technology_ui : MonoBehaviour, IMouseTextUI
@@ -323,25 +289,6 @@ public class tech_tree : networked
 
         // Create the tech tree UI
         tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
-
-        // Load the materials
-        var materials = tech_tree_ui.find_child_recursive("research_materials").GetComponent<RectTransform>();
-        var material_template = materials.Find("material").GetComponent<RectTransform>();
-
-        foreach (var m in research_material.all)
-        {
-            var material_ui = material_template.inst();
-            material_ui.transform.SetParent(materials);
-            material_ui.find_child_recursive("sprite").GetComponent<UnityEngine.UI.Image>().sprite = m.sprite;
-            material_ui.GetComponentInChildren<UnityEngine.UI.Text>().text = "0";
-            material_ui.name = m.name;
-
-            // Add mouse-over text
-            material_ui.gameObject.AddComponent<technology_ui>().text = m.name.Replace('_', ' ');
-        }
-
-        // Destroy the template
-        Destroy(material_template.gameObject);
 
         // Load the technologies + init coordinates
         tech_tree_layout_engine layout = new force_layout_engine(technology.all);
@@ -368,24 +315,13 @@ public class tech_tree : networked
             info_area.get_child_with_name<UnityEngine.UI.Text>("title").text = t.display_name.capitalize();
             info_area.get_child_with_name<UnityEngine.UI.Button>("research_button").onClick.AddListener(() => set_research(t));
 
-            // Create a material requirement entry for each research material needed
-            var material_requirement_template = info_area.Find("material_requirement");
-            foreach (var ingredient in t.GetComponentsInChildren<research_material_ingredient>())
-            {
-                var ing_requirement = material_requirement_template.inst();
-                ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
-                ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = ingredient.material.sprite;
-                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = ingredient.count.ToString();
-
-                // Add mouse-over text
-                ing_requirement.gameObject.AddComponent<technology_ui>().text = ingredient.material.name.Replace('_', ' ');
-            }
-
+            // Create a material requirement entry for each item ingredient
+            var material_requirement_template = info_area.Find("item_requirement");
             foreach (var item_ingredient in t.GetComponentsInChildren<item_ingredient>())
             {
                 var ing_requirement = material_requirement_template.inst();
                 ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
-                ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = item_ingredient.item.sprite;
+                ing_requirement.get_child_with_name<UnityEngine.UI.Image>("sprite").sprite = item_ingredient.item.sprite;
                 ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = item_ingredient.count.ToString();
 
                 // Add mouse-over text
