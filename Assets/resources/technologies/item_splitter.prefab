@@ -48,6 +48,7 @@ MonoBehaviour:
   depends_on:
   - {fileID: 3707283815685127039, guid: a51f112dffc6d8243a5fb9a96597a0b3, type: 3}
   sprite: {fileID: 21300000, guid: 83a35b2fac6f3254e8de69aa3e379951, type: 3}
+  description: 
 --- !u!114 &-8326198067697742635
 MonoBehaviour:
   m_ObjectHideFlags: 0

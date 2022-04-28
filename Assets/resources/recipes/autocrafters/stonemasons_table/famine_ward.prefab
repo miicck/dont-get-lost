@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 377656643341563206}
   - component: {fileID: 37089541926742898}
   - component: {fileID: -2905206771039401490}
+  - component: {fileID: -3253135080029365379}
   - component: {fileID: 4228508087393313574}
   m_Layer: 0
   m_Name: famine_ward
@@ -74,6 +75,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   item: {fileID: 2628296011002317326, guid: 95b2eb8bbcda14f4b846fb7a6b5b3567, type: 3}
+  count: 1
+--- !u!114 &-3253135080029365379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572618251870278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 6027353581098233284, guid: 2db95338cb6a29d44a8d920f475d78d0, type: 3}
   count: 1
 --- !u!114 &4228508087393313574
 MonoBehaviour:

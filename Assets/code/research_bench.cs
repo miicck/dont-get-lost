@@ -79,6 +79,7 @@ public class research_bench : character_walk_to_interactable, IPlayerInteractabl
         {
             if (ui == null)
                 ui = tech_tree.generate_tech_tree();
+            tech_tree.update_tech_tree_ui();
             ui.gameObject.SetActive(state);
         }
     }

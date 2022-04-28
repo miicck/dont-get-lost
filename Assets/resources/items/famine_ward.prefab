@@ -54,6 +54,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2052057326794137760}
   - component: {fileID: 5998591279346309877}
+  - component: {fileID: 5806370908706711533}
   m_Layer: 0
   m_Name: famine_ward
   m_TagString: Untagged
@@ -95,6 +96,20 @@ MonoBehaviour:
   plural: famine wards
   value: 0
   axes_scale: 1
+--- !u!114 &5806370908706711533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202081916499678499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 351243f2f7014e846ac009e3eeebf8df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  context_tip: open menu
+  menu_prefab: {fileID: 8636374090574993309, guid: 4b9f39aa95ef92647928cc2fe3847e58, type: 3}
 --- !u!1 &1572632957675270022
 GameObject:
   m_ObjectHideFlags: 0

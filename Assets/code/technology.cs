@@ -43,6 +43,14 @@ public class technology : MonoBehaviour
             foreach (var material in GetComponentsInChildren<research_material_ingredient>())
                 if (tech_tree.research_materials_count(material.material) < material.count)
                     return false;
+
+            if (player.current == null)
+                return false;
+
+            foreach (var item_ingredient in GetComponentsInChildren<item_ingredient>())
+                if (player.current.inventory.count(item_ingredient.item) < item_ingredient.count)
+                    return false;
+
             return true;
         }
     }

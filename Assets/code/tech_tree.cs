@@ -72,6 +72,9 @@ public class tech_tree : networked
         foreach (var material in t.GetComponentsInChildren<research_material_ingredient>())
             loaded_tech_tree.research_materials[material.material.name] -= material.count;
 
+        foreach (var item_ingredient in t.GetComponentsInChildren<item_ingredient>())
+            player.current.inventory.remove(item_ingredient.item, item_ingredient.count);
+
         loaded_tech_tree.currently_researching.value = t.name;
     }
 
@@ -239,7 +242,7 @@ public class tech_tree : networked
 
     public static bool research_complete(technology t) => research_complete(t.name);
 
-    static void update_tech_tree_ui()
+    public static void update_tech_tree_ui()
     {
         if (loaded_tech_tree == null)
             return;
@@ -376,6 +379,17 @@ public class tech_tree : networked
 
                 // Add mouse-over text
                 ing_requirement.gameObject.AddComponent<technology_ui>().text = ingredient.material.name.Replace('_', ' ');
+            }
+
+            foreach (var item_ingredient in t.GetComponentsInChildren<item_ingredient>())
+            {
+                var ing_requirement = material_requirement_template.inst();
+                ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
+                ing_requirement.get_child_with_name<UnityEngine.UI.Image>("material_sprite").sprite = item_ingredient.item.sprite;
+                ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = item_ingredient.count.ToString();
+
+                // Add mouse-over text
+                ing_requirement.gameObject.AddComponent<technology_ui>().text = item_ingredient.item.display_name;
             }
 
             // Destroy material requirement template

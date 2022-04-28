@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
+  - component: {fileID: 4535291808393283973}
   m_Layer: 0
   m_Name: tree_farming
   m_TagString: Untagged
@@ -47,3 +48,17 @@ MonoBehaviour:
   depends_on: []
   sprite: {fileID: 21300000, guid: 8f2cd854dd1b28c409af7b5c0b8d3ba5, type: 3}
   description: 
+--- !u!114 &4535291808393283973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9155860940823450190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57d67527a92c04e9ed28b649da4c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item: {fileID: 941463778279483019, guid: 0941d4af7eb1b7b4d97575b494d4712c, type: 3}
+  count: 1
