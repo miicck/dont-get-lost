@@ -56,7 +56,7 @@ public class research_bench : character_walk_to_interactable, IPlayerInteractabl
         if (!tech_tree.researching()) return "Not researching anything.";
 
         string project = tech_tree.current_research_project();
-        int perc = tech_tree.get_research_amount(project);
+        int perc = tech_tree.get_research_percent(project);
 
         return base.added_inspection_text() + "\nResearching " + project + " (" + perc + " % complete)";
     }

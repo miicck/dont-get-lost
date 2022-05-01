@@ -83,6 +83,24 @@ public class tech_tree : networked
         return loaded_tech_tree.research_progress[t.Replace(' ', '_')];
     }
 
+    public static int get_research_percent(string t)
+    {
+        if (loaded_tech_tree == null)
+        {
+            Debug.LogError("Tried to get research percent before tech tree loaded");
+            return 0;
+        }
+
+        var tech = technology.load(t);
+        if (tech == null)
+        {
+            Debug.LogError("Tried to get reserach percent of unkown technology: " + t);
+            return 0;
+        }
+
+        return get_research_amount(t) * 100 / tech.research_time;
+    }
+
     public static int get_research_amount(technology t) => get_research_amount(t.name);
 
     public static void perform_research(int amount)
@@ -108,8 +126,15 @@ public class tech_tree : networked
             return;
         }
 
+        var t = Resources.Load<technology>("technologies/" + topic);
+        if (t == null)
+        {
+            Debug.LogError("Tried to perform unkown research: " + topic);
+            return;
+        }    
+
         loaded_tech_tree.research_progress[topic] =
-            Mathf.Min(100, loaded_tech_tree.research_progress[topic] + amount);
+            Mathf.Min(t.research_time, loaded_tech_tree.research_progress[topic] + amount);
 
         // Unassign completed research
         if (current_research_complete())
@@ -129,7 +154,7 @@ public class tech_tree : networked
         }
 
         foreach (var t in technology.all)
-            loaded_tech_tree.research_progress[t.name] = 100;
+            loaded_tech_tree.research_progress[t.name] = t.research_time;
     }
 
     public static void lock_all_research()
@@ -207,9 +232,16 @@ public class tech_tree : networked
             return false;
         }
 
+        var t = Resources.Load<technology>("technologies/" + name);
+        if (t == null)
+        {
+            Debug.LogError("Tried to check compeltion of unkown research: " + name);
+            return false;
+        }
+
         return
             loaded_tech_tree.research_progress.contains_key(name) &&
-            loaded_tech_tree.research_progress[name] >= 100;
+            loaded_tech_tree.research_progress[name] >= t.research_time;
     }
 
     public static bool research_complete(technology t) => research_complete(t.name);
@@ -240,7 +272,7 @@ public class tech_tree : networked
             if (loaded_tech_tree.currently_researching.value == c.name)
             {
                 // Current research
-                button_text.text = progress + "/100";
+                button_text.text = progress + "/" + tech.research_time;
                 button.interactable = false;
             }
             else

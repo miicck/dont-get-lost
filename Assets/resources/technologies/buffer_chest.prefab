@@ -47,3 +47,5 @@ MonoBehaviour:
   depends_on:
   - {fileID: 3707283815685127039, guid: a51f112dffc6d8243a5fb9a96597a0b3, type: 3}
   sprite: {fileID: 21300000, guid: 41644c93ccd455c4697a51f51a9ff763, type: 3}
+  description: 
+  research_time: 50

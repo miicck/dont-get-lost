@@ -7,6 +7,7 @@ public class ladder_path_element : town_path_element
     public override settler_animations.animation settler_animation(settler s)
     {
         // If the ladder is sufficiently flat, no need animate
+        if (this == null) return null;
         if (Vector3.Angle(transform.up, Vector3.up) > 45) return null;
         return new climb_ladder(s);
     }

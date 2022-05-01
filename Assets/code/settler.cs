@@ -44,7 +44,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     {
         // I am a defender => I should stop what I'm doing to defend the town
         if (can_defend)
-            interaction.unassign();
+            interaction?.unassign();
     }
 
     protected override void on_death()

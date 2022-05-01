@@ -147,6 +147,7 @@ public class character_resource_gatherer : character_interactable_options, IAdds
         {
             if (harvest_options == null) return null;
             if (harvest_options.Count <= selected_option) return null;
+            if (selected_option < 0) return null;
             return harvest_options[selected_option];
         }
     }

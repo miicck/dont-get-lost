@@ -286,7 +286,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         foreach (var l in town_path_element.elements_in_room(path_element.room))
         {
             // Add new dispensers
-            var d = l.GetComponentInParent<item_dispenser>();
+            var d = l?.GetComponentInParent<item_dispenser>();
             if (d != null)
             {
                 bool already_found = false;
@@ -305,7 +305,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
             }
 
             // Look for fixtures
-            var b = l.GetComponentInParent<building_material>();
+            var b = l?.GetComponentInParent<building_material>();
             if (b == null) continue;
             for (int i = 0; i < found_fixtures.Count; ++i)
             {

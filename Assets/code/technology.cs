@@ -7,6 +7,7 @@ public class technology : MonoBehaviour
     public List<technology> depends_on;
     public Sprite sprite;
     public string description;
+    public int research_time = 100;
 
     public string display_name => name.Replace('_', ' ');
 
@@ -80,6 +81,7 @@ public class technology : MonoBehaviour
 
     public static technology load(string name)
     {
+        name = name.Replace(' ', '_');
         foreach (var t in all)
             if (t.name == name)
                 return t;
