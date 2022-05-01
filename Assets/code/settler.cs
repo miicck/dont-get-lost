@@ -77,8 +77,12 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         }
 
         // Don't eat if one of my friends is starving
-        if (!starving && group_info.has_starvation(group))
-            return false;
+        if (!starving && group_info.has_starvation(group, out settler other_starving))
+        {
+            var eat_inter = character_interactable.available_eating_interactions(other_starving);
+            if (eat_inter.Count < 2)
+                return false;
+        }
 
         return true;
     }

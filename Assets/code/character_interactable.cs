@@ -540,6 +540,15 @@ public abstract class character_interactable : has_path_elements,
         return null;
     }
 
+    public static HashSet<character_interactable> available_eating_interactions(settler s)
+    {
+        HashSet<character_interactable> ret = new HashSet<character_interactable>();
+        foreach (var i in interactables[Resources.Load<skill>("skills/eating")])
+            if (i.can_assign(s, out ASSIGN_FAILURE_MODE fail_mode))
+                ret.Add(i);
+        return ret;
+    }
+
     // Public static //
 
     public static character_interactable assigned_to(character c)

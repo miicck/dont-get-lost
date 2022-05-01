@@ -970,11 +970,16 @@ public static class group_info
 
     public static bool has_beds(int group) => town_path_element.group_has_beds(group);
 
-    public static bool has_starvation(int group)
+    public static bool has_starvation(int group, out settler first_starving_setter)
     {
         foreach (var s in settler.get_settlers_by_group(group))
             if (s.starving)
+            {
+                first_starving_setter = s;
                 return true;
+            }
+
+        first_starving_setter = null;
         return false;
     }
 
