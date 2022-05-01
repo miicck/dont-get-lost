@@ -212,6 +212,7 @@ items/rough_stone_wall 1 True
 items/banana_hat 1 True
 misc/time_manager Infinity True
 misc/boat 1 True
+items/banana 1 True
 items/coconut 1 True
 items/iron_boot 1 True
 items/bread 1 True

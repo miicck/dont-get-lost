@@ -780,6 +780,9 @@ public class jungle : biome
                 return world_object.load("tree_fern");
         }
 
+        if (random.range(0, 200) == 0)
+            return world_object.load("banana_tree");
+
         if (random.range(0, 100) == 0)
             return world_object.load(random, "mossy_log_jungle", "mossy_log_jungle_mushroom");
 
