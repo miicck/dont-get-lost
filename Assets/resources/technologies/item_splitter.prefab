@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
-  - component: {fileID: -8326198067697742635}
   m_Layer: 0
   m_Name: item_splitter
   m_TagString: Untagged
@@ -49,17 +48,3 @@ MonoBehaviour:
   - {fileID: 3707283815685127039, guid: a51f112dffc6d8243a5fb9a96597a0b3, type: 3}
   sprite: {fileID: 21300000, guid: 83a35b2fac6f3254e8de69aa3e379951, type: 3}
   description: 
---- !u!114 &-8326198067697742635
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9155860940823450190}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa552ac5d338ea64aaa6b40e92a7666f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  material: {fileID: 7570533861770929278, guid: 1414fc4c50a46a248b25e0de379ecaad, type: 3}
-  count: 10
