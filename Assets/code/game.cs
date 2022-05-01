@@ -444,7 +444,7 @@ public class game : MonoBehaviour
         return true;
     }
 
-    public const float DEFAULT_RENDER_RANGE = chunk.SIZE;
+    public const float DEFAULT_RENDER_RANGE = 100;
 
     /// <summary> The target render range, which the actual render range will lerp to. </summary>
     public static float render_range_target

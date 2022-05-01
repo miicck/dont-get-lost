@@ -27,6 +27,7 @@ public class options_menu : MonoBehaviour
 
     public UnityEngine.UI.ScrollRect scroll_rect;
     public RectTransform main_menu;
+    public UnityEngine.UI.Text render_range_text;
 
     /// <summary> Change the currenly open sub-menu. </summary>
     public void change_content(RectTransform content)
@@ -78,9 +79,24 @@ public class options_menu : MonoBehaviour
                 return;
     }
 
+    public void increase_render_range()
+    {
+        game.render_range_target += 10f;
+    }
+
+    public void decrease_render_range()
+    {
+        game.render_range_target -= 10f;
+    }
+
     public void open_help()
     {
         player.current?.force_interaction(new player.help_book_interaction());
+    }
+
+    private void Update()
+    {
+        render_range_text.text = "Render range (" + Mathf.RoundToInt(game.render_range_target) + ")";
     }
 
     //##############//

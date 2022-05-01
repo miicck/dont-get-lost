@@ -62,10 +62,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             " a few times to de-equip what you are holding " +
             "(the cursor will change to a white circle).");
 
-        tips.add("Your health will gradually regenerate as long as you are not too hungry.");
+        tips.add("Your health will gradually regenerate.");
 
-        tips.add("The green bar at the bottom of the screen is your health. " +
-            "The orange bar at the bottom of the screen shows how hungry you are.");
+        tips.add("The green bar at the bottom of the screen is your health.");
 
         tips.add("You can switch between first and third-person views by pressing " +
             controls.bind_name(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
