@@ -234,6 +234,7 @@ GameObject:
   - component: {fileID: 5773387098864005494}
   - component: {fileID: 6956580894177221246}
   - component: {fileID: 1225723960842957093}
+  - component: {fileID: 3981270158520474992}
   m_Layer: 0
   m_Name: ore_sorting_station
   m_TagString: Untagged
@@ -275,7 +276,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 8213e98dd752e844c94c72c3b1af6c9c, type: 3}
+  sprite: {fileID: 21300000, guid: 28adf98055b63944dbe35d7b3c806254, type: 3}
   plural: ore sorting stations
   value: 0
   axes_scale: 1
@@ -298,6 +299,19 @@ MonoBehaviour:
   - {fileID: 5464482740840503985, guid: 85e1459955b6c3a47b36986d9f121f62, type: 3}
   - {fileID: 5363578731448351423, guid: eb7220267a3ea70438b3ab658d846cd1, type: 3}
   - {fileID: 5464482740840503985, guid: 6beeab2e6c044fa4eb47e0ee4ef763ac, type: 3}
+--- !u!114 &3981270158520474992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1240567338121665042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: d886042e5cd8b1d44974d21603765a06, type: 3}
 --- !u!1 &2184937226318809333
 GameObject:
   m_ObjectHideFlags: 0

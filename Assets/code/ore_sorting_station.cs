@@ -34,23 +34,19 @@ public class ore_sorting_station : character_interactable_options
         input = GetComponentInChildren<item_input>();
     }
 
-    float work_done = 0;
-    int ores_sorted = 0;
+    float time_working = 0;
+    float work_done => time_working * current_proficiency.total_multiplier;
 
     protected override void on_arrive(character c)
     {
         base.on_arrive(c);
-
-        work_done = 0;
-        ores_sorted = 0;
+        time_working = 0;
     }
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
-        work_done += Time.deltaTime * current_proficiency.total_multiplier;
-
-        if (work_done < 1) return STAGE_RESULT.STAGE_UNDERWAY;
-        else work_done = 0;
+        time_working += Time.deltaTime;
+        if (work_done < stage + 1) return STAGE_RESULT.STAGE_UNDERWAY;
 
         var itm = input.release_next_item();
         if (itm != null)
@@ -80,7 +76,7 @@ public class ore_sorting_station : character_interactable_options
             }
         }
 
-        return ++ores_sorted > 5 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
+        return time_working > 10f ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_COMPLETE;
     }
 
     public static item sorted_ore_from_level(int level)
