@@ -49,6 +49,11 @@ public class catapult : siege_engine
         new_base.transform.rotation = transform.rotation;
         rotation_base.transform.SetParent(new_base);
         rotation_base = new_base;
+
+        // Start ready-to-fire
+        retraction_amount = 1f;
+        if (projectile == null)
+            Debug.LogError("Projectile is supposed to create itself!");
     }
 
     bool rotate_base_towards(Vector3 forward, float speed) => utils.rotate_towards(
@@ -93,7 +98,7 @@ public class catapult : siege_engine
 
     void prepare_to_fire()
     {
-        retraction_amount += Time.deltaTime / prep_time;
+        retraction_amount += current_proficiency.total_multiplier * Time.deltaTime / prep_time;
         rotate_base_towards(forward_target, base_rotation_speed);
     }
 
@@ -108,6 +113,7 @@ public class catapult : siege_engine
             // Loose projectile
             var proj = projectile;
             proj.target = target;
+            proj.damage = Mathf.FloorToInt(proj.damage * current_proficiency.total_multiplier);
             proj.transform.SetParent(null);
         }
     }
