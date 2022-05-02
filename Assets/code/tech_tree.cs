@@ -314,7 +314,7 @@ public class tech_tree : networked
     public static RectTransform generate_tech_tree()
     {
         const int SPACING = 196;
-        const int ARROW_WIDTH = 4;
+        const int LINE_WIDTH = 4;
 
         if (tech_tree_ui != null)
             return tech_tree_ui;
@@ -377,21 +377,38 @@ public class tech_tree : networked
         {
             foreach (var t in kv.Key.depends_on)
             {
+                // Create line
+                var line = new GameObject("line").AddComponent<RectTransform>();
+                line.anchorMin = new Vector2(0, 1);
+                line.anchorMax = new Vector2(0, 1);
+                var img = line.gameObject.AddComponent<UnityEngine.UI.Image>();
+                img.color = new Color(0, 0, 0, 0.4f);
+
+                // Parent/position/size line
+                line.SetParent(tech_template.parent);
+                line.SetAsFirstSibling();
+                Vector2 from = ui_elements[kv.Key].anchoredPosition;
+                Vector2 to = ui_elements[t].anchoredPosition;
+                line.anchoredPosition = (from + to) / 2f;
+                line.sizeDelta = new Vector2(LINE_WIDTH, (to - from).magnitude);
+                line.up = to - from;
+
                 // Create arrow
                 var arr = new GameObject("arrow").AddComponent<RectTransform>();
                 arr.anchorMin = new Vector2(0, 1);
                 arr.anchorMax = new Vector2(0, 1);
-                var img = arr.gameObject.AddComponent<UnityEngine.UI.Image>();
+                img = arr.gameObject.AddComponent<UnityEngine.UI.Image>();
                 img.color = new Color(0, 0, 0, 0.4f);
+                img.sprite = Resources.Load<Sprite>("sprites/simple_arrow");
 
-                // Parent/position/size arrow
+                // Parent/position/size line
                 arr.SetParent(tech_template.parent);
                 arr.SetAsFirstSibling();
-                Vector2 from = ui_elements[kv.Key].anchoredPosition;
-                Vector2 to = ui_elements[t].anchoredPosition;
+                from = ui_elements[kv.Key].anchoredPosition;
+                to = ui_elements[t].anchoredPosition;
                 arr.anchoredPosition = (from + to) / 2f;
-                arr.sizeDelta = new Vector2(ARROW_WIDTH, (to - from).magnitude);
-                arr.up = to - from;
+                arr.sizeDelta = new Vector2(64, 64);
+                arr.right = from - to;
             }
         }
 

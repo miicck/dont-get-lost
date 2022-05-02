@@ -46,3 +46,5 @@ TODO
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta
 - Maybe make attacks more frequent, so guards are a full-time job, but don't require the entire town?
 - Version of dining table where settlers choose food according to nutrition requirements
+- Newest settler should be the one to leave - perhaps centralise leave checking?
+- Limit on number of items market stall can sell (improved versions can sell more?)

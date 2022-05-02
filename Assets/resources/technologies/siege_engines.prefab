@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   depends_on:
-  - {fileID: 3707283815685127039, guid: ba673ddf1bc0e6c4a97cfe77348a646e, type: 3}
+  - {fileID: 3707283815685127039, guid: 2f6423ee82ff86c44bf59a689443dc73, type: 3}
   sprite: {fileID: 21300000, guid: 029235447c5c5174e9fa0a531c95eb21, type: 3}
   description: 
+  research_time: 100

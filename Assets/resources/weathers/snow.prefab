@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9105f82ae44280544a72b37cd8fa8b31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  probability: 0.25
+  probability: 0.1
   day_sun_color: {r: 0.38812745, g: 0.7206074, b: 0.9245283, a: 0}
   dawn_sun_color: {r: 0.3042453, g: 0.4499579, b: 0.5, a: 0}
   dusk_sun_color: {r: 0.40606087, g: 0.5650337, b: 0.6886792, a: 0}

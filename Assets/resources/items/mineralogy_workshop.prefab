@@ -268,6 +268,7 @@ GameObject:
   - component: {fileID: 4375678367541192128}
   - component: {fileID: 602386576938793431}
   - component: {fileID: 6348601307649852962}
+  - component: {fileID: 3405723176432496893}
   m_Layer: 0
   m_Name: mineralogy_workshop
   m_TagString: Untagged
@@ -330,6 +331,19 @@ MonoBehaviour:
   product_output: {fileID: 6105320858404419144}
   required_fixtures:
   - {fileID: 8369648623162074625, guid: 9ec7350c772f58444b8dea140291580a, type: 3}
+--- !u!114 &3405723176432496893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5224041513418071556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  technology: {fileID: 3707283815685127039, guid: 6299e9938c63893409d71eb05c22f242, type: 3}
 --- !u!1 &5903488485977434000
 GameObject:
   m_ObjectHideFlags: 0

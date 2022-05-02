@@ -142,7 +142,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2026644758334606422}
   - component: {fileID: 6695110599244550331}
-  - component: {fileID: -919863245840464105}
   - component: {fileID: -7197305386086455875}
   m_Layer: 0
   m_Name: reinforced_wood_panel
@@ -190,19 +189,6 @@ MonoBehaviour:
   plural: reinforced wood panels
   value: 11
   axes_scale: 1
---- !u!114 &-919863245840464105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2607104909629897362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54b1b4d3af9b439419defa8136ad50c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  technology: {fileID: 3707283815685127039, guid: ba673ddf1bc0e6c4a97cfe77348a646e, type: 3}
 --- !u!114 &-7197305386086455875
 MonoBehaviour:
   m_ObjectHideFlags: 0

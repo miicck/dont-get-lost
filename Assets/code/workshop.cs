@@ -41,7 +41,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         public town_path_element.path path { get; private set; }
     }
 
-    List<dispenser> dispensers = new List<dispenser>();
+    HashSet<dispenser> dispensers = new HashSet<dispenser>();
     class dispenser : IItemCollection
     {
         public dispenser(item_dispenser item_dispenser, town_path_element.path path)
@@ -272,9 +272,11 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         }
 
         // Remove dead dispensers
-        for (int i = dispensers.Count - 1; i >= 0; --i)
-            if (dispensers[i].item_dispenser == null)
-                dispensers.RemoveAt(i);
+        var new_dispensers = new HashSet<dispenser>();
+        foreach (var d in dispensers)
+            if (d.item_dispenser != null)
+                new_dispensers.Add(d);
+        dispensers = new_dispensers;
 
         // Remove invaid fixtures
         for (int i = 0; i < found_fixtures.Count; ++i)

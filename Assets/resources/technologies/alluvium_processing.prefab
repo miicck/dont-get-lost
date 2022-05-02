@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6762625628197149770}
   - component: {fileID: 3707283815685127039}
   m_Layer: 0
-  m_Name: reinforcement
+  m_Name: alluvium_processing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -45,5 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   depends_on:
-  - {fileID: 3707283815685127039, guid: 2f6423ee82ff86c44bf59a689443dc73, type: 3}
-  sprite: {fileID: 21300000, guid: 2c9f437e8f68b86459779dd7aa87b93e, type: 3}
+  - {fileID: 3707283815685127039, guid: 1c371747b3e49414c9997c8a3053da26, type: 3}
+  - {fileID: 3707283815685127039, guid: 885213669b30ee84e85a6eb6d4c793dd, type: 3}
+  sprite: {fileID: 21300000, guid: f4836b09648a15242a5cbcb73d378f3b, type: 3}
+  description: 
+  research_time: 100
