@@ -76,23 +76,20 @@ public class mineshaft : character_interactable_options, IAddsToInspectionText
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {
-        float delta_work = Time.deltaTime * current_proficiency.total_multiplier;
+        work_done += Time.deltaTime * current_proficiency.total_multiplier;
 
-        if (work_done + delta_work >= 1f && work_done < 1f)
+        if (work_done > stage)
         {
-            // This is the tick that will take us past mining
-            // time, create the item
             var itm = minable_items[selected_option];
             var op = output;
             production_tracker.register_product(itm);
             op.add_item(item.create(itm.name, op.transform.position,
                 op.transform.rotation, logistics_version: true));
 
-            return STAGE_RESULT.TASK_COMPLETE;
+            return STAGE_RESULT.STAGE_COMPLETE;
         }
 
-        work_done += delta_work;
-        return STAGE_RESULT.STAGE_UNDERWAY;
+        return stage > 5 ? STAGE_RESULT.TASK_COMPLETE : STAGE_RESULT.STAGE_UNDERWAY;
     }
 
     protected override List<proficiency> proficiencies(character c)

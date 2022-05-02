@@ -9,6 +9,9 @@ public class ore_sorting_station : character_interactable_options
     public List<item> ore_level_products = new List<item>();
     item_input input;
 
+    const float NEXT_ORE_PROB = 0.5f;
+    const float PRODUCT_PROB = 0.5f;
+
     public override string task_summary() => "Sorting ore";
     protected override string options_title => "Sorting recipes";
     protected override int options_count => 1;
@@ -65,14 +68,20 @@ public class ore_sorting_station : character_interactable_options
                 if (!int.TryParse(words[words.Length - 1], out int item_level))
                     item_level = 0;
 
-                // Create the next tier ore
-                var next_ore = sorted_ore_from_level(item_level + 1);
-                if (next_ore != null)
-                    secondary_output.add(next_ore, 1);
+                if (Random.Range(0, 1f) < NEXT_ORE_PROB)
+                {
+                    // Create the next tier ore
+                    var next_ore = sorted_ore_from_level(item_level + 1);
+                    if (next_ore != null)
+                        secondary_output.add(next_ore, 1);
+                }
 
-                // Create the output item
-                if (item_level >= 0 && item_level < ore_level_products.Count)
-                    primary_output.add(ore_level_products[item_level], 1);
+                if (Random.Range(0, 1f) < PRODUCT_PROB)
+                {
+                    // Create the output item
+                    if (item_level >= 0 && item_level < ore_level_products.Count)
+                        primary_output.add(ore_level_products[item_level], 1);
+                }
             }
         }
 
@@ -106,8 +115,8 @@ public class ore_sorting_station : character_interactable_options
         public float average_amount_produced(item i)
         {
             if (i == null) return 0;
-            if (output_ore != null && i.name == output_ore.name) return 1;
-            if (product != null && i.name == product.name) return 1;
+            if (output_ore != null && i.name == output_ore.name) return NEXT_ORE_PROB;
+            if (product != null && i.name == product.name) return PRODUCT_PROB;
             return 0;
         }
 
