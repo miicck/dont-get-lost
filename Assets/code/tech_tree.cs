@@ -131,7 +131,7 @@ public class tech_tree : networked
         {
             Debug.LogError("Tried to perform unkown research: " + topic);
             return;
-        }    
+        }
 
         loaded_tech_tree.research_progress[topic] =
             Mathf.Min(t.research_time, loaded_tech_tree.research_progress[topic] + amount);
@@ -683,24 +683,75 @@ class force_layout_engine : tech_tree_layout_engine
 {
     public force_layout_engine(IEnumerable<technology> technologies) : base(technologies) { }
 
+    bool should_merge(HashSet<technology> f1, HashSet<technology> f2)
+    {
+        foreach (var t1 in f1)
+            foreach (var t2 in f2)
+                if (t1.depends_on_set.Contains(t2) || t2.depends_on_set.Contains(t1))
+                    return true;
+        return false;
+    }
+
     public override Dictionary<technology, float[]> evaluate_coordinates()
     {
-        // Initilize the collection of nodes
-        var nodes = new List<node>();
-        float offset = 0;
+        // Start with one family per technology
+        var families = new List<HashSet<technology>>();
         foreach (var t in technologies)
-        {
-            nodes.Add(new node
-            {
-                technology = t,
-                x = t.depends_on.Count + offset,
-                y = offset,
-            });
+            families.Add(new HashSet<technology> { t });
 
-            offset += 0.1f;
+        // Merge families linked by dependency
+        while (true)
+        {
+            bool merge_occurred = false;
+            for (int i = 0; i < families.Count; ++i)
+                for (int j = i + 1; j < families.Count; ++j)
+                {
+                    var fi = families[i];
+                    var fj = families[j];
+
+                    if (should_merge(fi, fj))
+                    {
+                        // Merge family j into family i. Because i < j,
+                        // we only need to break out of the j loop.
+                        fi.UnionWith(fj);
+                        families.RemoveAt(j);
+                        merge_occurred = true;
+                        break;
+                    }
+                }
+
+            if (!merge_occurred)
+                break;
         }
 
-        // Will be updated with forces as we go
+
+
+        // Initilize the collection of nodes with well-seperated families
+        var nodes = new List<node>();
+        int sqrt_families = Mathf.CeilToInt(Mathf.Sqrt(families.Count));
+        int max_family_size = 0;
+        foreach (var f in families)
+            max_family_size = Mathf.Max(max_family_size, f.Count);
+        int sqrt_family_size = Mathf.CeilToInt(Mathf.Sqrt(max_family_size));
+
+        for (int i = 0; i < families.Count; ++i)
+        {
+            int x_family = i % sqrt_families;
+            int y_family = i / sqrt_families;
+
+            x_family *= sqrt_family_size;
+            y_family *= sqrt_family_size;
+
+            foreach (var t in families[i])
+                nodes.Add(new node
+                {
+                    technology = t,
+                    x = x_family + Random.Range(-0.3f, 0.3f) * sqrt_family_size,
+                    y = y_family + Random.Range(-0.3f, 0.3f) * sqrt_family_size
+                });
+        }
+
+        // Carry out 1000 newton iterations
         for (int iter = 0; iter < 1000; ++iter)
         {
             // Work out forces on nodes
