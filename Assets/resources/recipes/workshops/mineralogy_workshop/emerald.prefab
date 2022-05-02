@@ -76,4 +76,4 @@ MonoBehaviour:
   item: {fileID: 5677080509400142119, guid: 50095b08f0da0c4469b0b487c4c6ca82, type: 3}
   min_count: 1
   max_count: 1
-  one_in_chance: 256
+  one_in_chance: 128

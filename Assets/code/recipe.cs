@@ -195,43 +195,57 @@ public class recipe : MonoBehaviour, IRecipeInfo
         public float average_ingredients_value() => 0;
     }
 
-    public static List<KeyValuePair<string, IRecipeInfo[]>> all_recipies()
+    public static List<KeyValuePair<string, IEnumerable<IRecipeInfo>>> all_recipies()
     {
-        List<KeyValuePair<string, IRecipeInfo[]>> ret = new List<KeyValuePair<string, IRecipeInfo[]>>();
-        ret.Add(new KeyValuePair<string, IRecipeInfo[]>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
+
+
+        var ret = new List<KeyValuePair<string, IEnumerable<IRecipeInfo>>>();
+        ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>("by_hand", Resources.LoadAll<recipe>("recipes/by_hand")));
 
         foreach (var ac in Resources.LoadAll<auto_crafter>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/workbenches/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ac.name, Resources.LoadAll<recipe>("recipes/workbenches/" + ac.name)));
 
         foreach (var ac in Resources.LoadAll<auto_crafter>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/autocrafters/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ac.name, Resources.LoadAll<recipe>("recipes/autocrafters/" + ac.name)));
 
         foreach (var ac in Resources.LoadAll<farming_patch>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ac.name, Resources.LoadAll<recipe>("recipes/farming_spots/" + ac.name)));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ac.name, Resources.LoadAll<recipe>("recipes/farming_spots/" + ac.name)));
 
         foreach (var w in Resources.LoadAll<workshop>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(w.name + " (operated by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(w.name + " (operated by settlers)", Resources.LoadAll<recipe>("recipes/workshops/" + w.name)));
 
         foreach (var g in Resources.LoadAll<gradual_processor>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
 
         foreach (var ls in Resources.LoadAll<livestock_shelter>("items"))
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ls.name, new IRecipeInfo[] { ls }));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ls.name, new IRecipeInfo[] { ls }));
 
         foreach (var ih in Resources.LoadAll<item_harvest_spot>("items"))
         {
             List<IRecipeInfo> infos = new List<IRecipeInfo>();
             foreach (var i in ih.options)
                 infos.Add(new simple_item_product_info(i));
-            ret.Add(new KeyValuePair<string, IRecipeInfo[]>(ih.GetComponent<item>().display_name + " (operated by settlers)", infos.ToArray()));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ih.GetComponent<item>().display_name + " (operated by settlers)", infos.ToArray()));
         }
 
         foreach (var c in Resources.LoadAll<character>("characters"))
         {
             var r = c.looting_products_recipe();
             if (r != null)
-                ret.Add(new KeyValuePair<string, IRecipeInfo[]>(c.name, new IRecipeInfo[] { r }));
+                ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(c.name, new IRecipeInfo[] { r }));
         }
+
+        var mineshaftable_items = new List<IRecipeInfo>();
+        foreach (var i in Resources.LoadAll<item>("items"))
+            if (i.GetComponent<obtainable_in_mineshaft>() != null)
+                mineshaftable_items.Add(new simple_item_product_info(i));
+        ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>("mineshaft (operated by settlers)", mineshaftable_items));
+
+        foreach (var os in Resources.LoadAll<ore_sorting_station>("items"))
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(
+                os.GetComponent<item>().display_name,
+                os.recipe_infos()
+                ));
 
         return ret;
     }

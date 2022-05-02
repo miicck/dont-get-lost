@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2297160791965678879}
   - component: {fileID: 5464482740840503985}
   m_Layer: 0
-  m_Name: gold_ore
+  m_Name: sorted_ore_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,8 +46,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   is_client_side: 0
-  sprite: {fileID: 21300000, guid: 914774505c1ec4e4ab0e08dc263b7261, type: 3}
-  plural: gold ore
+  sprite: {fileID: 21300000, guid: 0e532b1e245f7b44c9575556969f7ac0, type: 3}
+  plural: sorted ore 2
   value: 2
 --- !u!1001 &581380012422511553
 PrefabInstance:
@@ -115,11 +115,11 @@ PrefabInstance:
     - target: {fileID: -4040093896508266011, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 66ba7255c8fda0641ad2420ed81aba45, type: 2}
+      objectReference: {fileID: 2100000, guid: 1828480d77f4af2439d7bdcc97f39e28, type: 2}
     - target: {fileID: -1212445537685685361, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
+      objectReference: {fileID: 2100000, guid: bf9c3006e88089249843e9d0f29d3884, type: 2}
     - target: {fileID: -927199367670048503, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
       propertyPath: m_Name
       value: ore
