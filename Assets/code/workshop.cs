@@ -202,7 +202,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
         {
             c.look_at(transform.position);
             if (c is settler)
-                work_anim = new settler_animations.simple_work((c as settler), 
+                work_anim = new settler_animations.simple_work((c as settler),
                     1f / current_proficiency.total_multiplier);
         }
 
@@ -283,10 +283,10 @@ public class workshop : character_interactable_options, IAddsToInspectionText
                     found_fixtures[i] = null;
 
         // Loop over all the elements in the room
-        foreach (var l in town_path_element.elements_in_room(path_element.room))
+        town_path_element.iterate_over_elements_in_room(path_element.room, (element) =>
         {
             // Add new dispensers
-            var d = l?.GetComponentInParent<item_dispenser>();
+            var d = element.GetComponentInParent<item_dispenser>();
             if (d != null)
             {
                 bool already_found = false;
@@ -299,26 +299,30 @@ public class workshop : character_interactable_options, IAddsToInspectionText
 
                 if (!already_found)
                 {
-                    var p = town_path_element.path.get(path_element, l);
+                    var p = town_path_element.path.get(path_element, element);
                     if (p != null) dispensers.Add(new dispenser(d, p));
                 }
             }
 
             // Look for fixtures
-            var b = l?.GetComponentInParent<building_material>();
-            if (b == null) continue;
-            for (int i = 0; i < found_fixtures.Count; ++i)
+            var b = element.GetComponentInParent<building_material>();
+            if (b != null)
             {
-                if (found_fixtures[i] != null) continue; // Already found
-                if (b.name != required_fixtures[i].name) continue; // Not the right building
-                var path = town_path_element.path.get(path_element, l);
-                if (path == null) continue; // Not pathable
+                for (int i = 0; i < found_fixtures.Count; ++i)
+                {
+                    if (found_fixtures[i] != null) continue; // Already found
+                    if (b.name != required_fixtures[i].name) continue; // Not the right building
+                    var path = town_path_element.path.get(path_element, element);
+                    if (path == null) continue; // Not pathable
 
-                // Found matching pathable fixture
-                found_fixtures[i] = new fixture(b, path);
-                break;
+                    // Found matching pathable fixture
+                    found_fixtures[i] = new fixture(b, path);
+                    break;
+                }
             }
-        }
+
+            return false;
+        });
 
         // Ensure all fixutres have been found
         foreach (var f in found_fixtures) if (f == null) return false;

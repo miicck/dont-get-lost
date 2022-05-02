@@ -616,10 +616,26 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         return new HashSet<town_path_element>();
     }
 
+    public delegate bool element_callback(town_path_element element);
+
+    public static void iterate_over_elements(int group, element_callback callback)
+    {
+        foreach (var e in element_group(group))
+            if (e != null && callback(e))
+                return;
+    }
+
     public static HashSet<town_path_element> elements_in_room(int room)
     {
         if (roomed_elements.TryGetValue(room, out HashSet<town_path_element> elms)) return elms;
         return new HashSet<town_path_element>();
+    }
+
+    public static void iterate_over_elements_in_room(int room, element_callback callback)
+    {
+        foreach (var e in elements_in_room(room))
+            if (e != null && callback(e))
+                return;
     }
 
     public static int largest_group()

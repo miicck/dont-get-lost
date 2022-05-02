@@ -8,16 +8,23 @@ public class connected_building_requirement : MonoBehaviour
 
     public bool satisfied(int group)
     {
-        foreach (var element in town_path_element.element_group(group))
+        building_material found = null;
+
+        town_path_element.iterate_over_elements(group, (element) =>
         {
             var b = element.GetComponentInParent<building_material>();
             if (b == null)
-                continue;
+                return false;
 
             if (b.name == building.name)
+            {
+                found = b;
                 return true;
-        }
+            }
 
-        return false;
+            return false;
+        });
+
+        return found != null;
     }
 }
