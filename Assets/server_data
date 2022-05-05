@@ -78,6 +78,8 @@ items/silver 1 True
 mood_effects/uncovered_bed 1 True
 items/mushroom 1 True
 items/crane 1 True
+items/stone_railing 1 True
+items/stone_stairs 1 True
 items/cabbage 1 True
 items/sawmill 1 True
 items/iron_axe 1 True
@@ -156,6 +158,7 @@ crops/wheat_planter 1 True
 items/gate 1 True
 items/sapling 1 True
 items/iron_platehelm 1 True
+items/stone_pillar 1 True
 items/titanium_pickaxe 1 True
 items/cheese_vat 1 True
 items/cauldron 1 True
@@ -174,6 +177,7 @@ crops/potato 1 True
 characters/skeleton 1 False
 items/lootbox 1 True
 items/piston_lift 1 True
+items/stone_slab 1 True
 items/wort 1 True
 items/mining_spot 1 True
 characters/small_smoke_spider 1 False

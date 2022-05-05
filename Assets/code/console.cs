@@ -20,7 +20,12 @@ public class console : MonoBehaviour
 
     public static bool world_generator_enabled { get; private set; } = true;
 
-    public static bool creative_mode { get; private set; }
+    public static bool creative_mode
+    {
+        get => _creative_mode || world.name == "test";
+        private set => _creative_mode = value;
+    }
+    static bool _creative_mode;
 
     public static Dictionary<string, console_info> commands = new Dictionary<string, console_info>
     {

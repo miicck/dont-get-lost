@@ -15,7 +15,7 @@ TODO
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Pickup/dropoff points for settlers to move items around?
 - Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
-- Make it more obvious which side of a ladder is the front
+- Make it more obvious which side of a ladder is the front?
 - Make time command work from non-auth clients
 - PvP hit markers
 - Update all the on_ methods in the networked class to be listeners that can be +='d (big job, but would
@@ -24,7 +24,6 @@ TODO
 - town_path_element.path spread load across multiple frames.
 - Settlers heads move over to their shoulder with time
 - Add cowering spots to various things (beds)
-- Make proficiency more important to quantities of materials obtained
 - Recreational tasks
 - Make trade carts actually move
 - Stop menus persisting when the object they refer to has been deleted
