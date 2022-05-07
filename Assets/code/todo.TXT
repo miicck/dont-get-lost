@@ -38,7 +38,6 @@ TODO
 - max simulataneous researchers
 - Setters sad if working uncovered
 - Make chest into an attachable component
-- Dining without roof bad
 - Tutorials restart at certain points (hit population cap => town monument?)
 - Buildings to speed up research
 - Mineshaftable-locations should be inspectable

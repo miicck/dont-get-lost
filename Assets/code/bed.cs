@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IDoesntCoverBeds { }
-
 public class bed : character_walk_to_interactable, IAddsToInspectionText
 {
     public const float TIREDNESS_RECOVERY_RATE = 100f / 60f;
@@ -18,12 +16,8 @@ public class bed : character_walk_to_interactable, IAddsToInspectionText
         {
             float covered = 0f;
             foreach (var t in covered_test_points)
-                foreach (var h in Physics.RaycastAll(t.position, Vector3.up))
-                {
-                    if (h.collider.gameObject.GetComponentInParent<IDoesntCoverBeds>() != null) continue;
+                if (weather.spot_is_covered(t.position))
                     covered += 1f;
-                    break;
-                }
             return covered / covered_test_points.Count;
         }
     }

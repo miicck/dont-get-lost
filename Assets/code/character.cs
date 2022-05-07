@@ -19,7 +19,7 @@ public interface IAcceptsDamage
 public class character : networked,
     INotPathBlocking, IDontBlockItemLogisitcs,
     IAcceptsDamage, IPlayerInteractable, IPathingAgent,
-    IDoesntCoverBeds, town_path_element.path.ITownWalker,
+    INotCoverFromElements, town_path_element.path.ITownWalker,
     IBlocksInteractionPropagation
 {
     //############################################//

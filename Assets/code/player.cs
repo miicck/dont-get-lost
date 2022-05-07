@@ -5,7 +5,7 @@ using System.Linq;
 
 
 public class player : networked_player, INotPathBlocking, ICanEquipArmour,
-    IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, IDoesntCoverBeds, INotSavedInStartupFile
+    IDontBlockItemLogisitcs, IAcceptsDamage, IPlayerInteractable, INotCoverFromElements, INotSavedInStartupFile
 {
     //###########//
     // CONSTANTS //

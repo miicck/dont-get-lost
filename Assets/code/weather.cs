@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface INotCoverFromElements { }
+
 public class weather : MonoBehaviour
 {
     public float probability = 1f;
@@ -213,5 +215,15 @@ public class weather : MonoBehaviour
             }
 
         weather_nodes.Add(e);
+    }
+
+    public static bool spot_is_covered(Vector3 position)
+    {
+        foreach (var h in Physics.RaycastAll(position, Vector3.up))
+        {
+            if (h.collider.gameObject.GetComponentInParent<INotCoverFromElements>() != null) continue;
+            return true;
+        }
+        return false;
     }
 }

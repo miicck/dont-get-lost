@@ -448,7 +448,16 @@ public abstract class character_interactable : has_path_elements,
                     if (old_user is character) on_unassign(old_user as character);
 
                     var new_user = networked.try_find_by_id(new_val, false);
-                    if (new_user is character) on_assign(new_user as character);
+                    if (new_user is character)
+                    {
+                        // Add mood effects from uncovered work spots
+                        if (new_user is settler)
+                            foreach (var me in GetComponentsInChildren<uncovered_mood_effect>())
+                                if (!weather.spot_is_covered(me.transform.position))
+                                    (new_user as settler).add_mood_effect(me.effect.name);
+
+                        on_assign(new_user as character);
+                    }
                 };
 
                 stage.on_change_old_new = on_stage_change;
@@ -650,6 +659,8 @@ public abstract class character_walk_to_interactable : character_interactable
                 arrived = true;
                 lerp_look(c, 1f); // Look at target
                 on_arrive(c);
+
+                // Check if this spot is covered
             }
 
             return on_interact_arrived(c, stage - 1);

@@ -209,6 +209,7 @@ items/gold_ore 1 True
 items/bun_hairstyle 1 True
 characters/nali_cow 1 False
 items/ruby_necklace 1 True
+mood_effects/ate_uncovered 1 True
 items/lilypad 1 True
 items/rutile 1 True
 items/apple 1 True
