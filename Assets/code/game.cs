@@ -135,8 +135,9 @@ public class game : MonoBehaviour
         server.update();
         client.update();
 
-        // Run town path updates
+        // Run various sub-system updates
         town_path_element.static_update();
+        settler.static_update();
 
         // Open/Close the console
         if (controls.triggered(controls.BIND.OPEN_CONSOLE)) console.open = true;

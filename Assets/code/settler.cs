@@ -14,11 +14,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform left_hand { get; private set; }
     public Transform right_hand { get; private set; }
 
-    const float TIME_BETWEEN_LEAVE_CHECKS = 5f;
-    const float TIME_WANTED_TO_LEAVE_BEFORE_LEAVE = 60f;
-
-    float time_next_leave_check;
-    float time_wanted_to_leave = 0f;
+    float time_had_reason_to_leave = 0f;
+    string reason_for_leaving = null;
 
     //###################//
     // CHARACTER CONTROL //
@@ -87,37 +84,11 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return true;
     }
 
-    public void check_if_should_leave()
+    bool wants_to_leave(out string reason)
     {
-        // Only check every TIME_BETWEEN_LEAVE_CHECKS seconds
-        if (Time.time < time_next_leave_check)
-            return;
-        time_next_leave_check = Time.time + TIME_BETWEEN_LEAVE_CHECKS;
-
-        if (should_leave(out string reason))
-        {
-            time_wanted_to_leave += TIME_BETWEEN_LEAVE_CHECKS;
-
-            if (time_wanted_to_leave > TIME_WANTED_TO_LEAVE_BEFORE_LEAVE)
-            {
-                temporary_object.create(60).gameObject.add_pinned_message(reason, Color.red);
-                delete();
-            }
-        }
-        else time_wanted_to_leave = 0;
-    }
-
-    bool should_leave(out string reason)
-    {
-        if (group_info.settlers(group).Count > group_info.bed_count(group))
-        {
-            reason = "The settler " + name + " left because there were too few beds!";
-            return true;
-        }
-
         if (total_mood() < -10)
         {
-            reason = "The settler " + name + " left because they were sad!";
+            reason = "Sadness";
             return true;
         }
 
@@ -132,9 +103,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     protected override void Start()
     {
         base.Start();
-
-        // Check should leave at a random time
-        time_next_leave_check = Time.time + Random.Range(1f, 2f) * TIME_BETWEEN_LEAVE_CHECKS;
 
         // Get my left/right hand transforms
         foreach (var al in GetComponentsInChildren<armour_locator>())
@@ -177,8 +145,6 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
         interaction?.interact(this);
 
-        check_if_should_leave();
-
         GetComponentInChildren<facial_expression>().expression = current_expression();
     }
 
@@ -215,6 +181,13 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         return ret;
     }
 
+    public string leaving_info()
+    {
+        if (reason_for_leaving == null)
+            return "Not planning to leave";
+        return "Planning to leave (" + reason_for_leaving + ") for " + Mathf.RoundToInt(time_had_reason_to_leave) + "s";
+    }
+
     player_interaction[] interactions;
     public override player_interaction[] player_interactions(RaycastHit hit)
     {
@@ -232,6 +205,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
                        "  " + Mathf.Round(tiredness.value) + "% tired\n" +
                        "  " + hunger_percent() + "% hungry\n" +
                        "  mood " + total_mood() + "\n" +
+                       leaving_info() + "\n"+
                        assignment_summary();
                 }
             }
@@ -636,6 +610,75 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
 
     const float TIME_BETWEEN_SPAWN_CHECKS = 60f;
     static float last_spawn_check = float.NegativeInfinity;
+    
+    const float TIME_BETWEEN_LEAVE_CHECKS = 5f;
+    const float TIME_LEAVING_BEFORE_EVICT = 60f;
+    static float last_leave_check = float.NegativeInfinity;
+
+    public static void static_update()
+    {
+        check_evict_settlers();
+    }
+
+    static void check_evict_settlers()
+    {
+        // Only check every TIME_BETWEEN_LEAVE_CHECKS seconds
+        if (Time.time < last_leave_check)
+            return;
+        last_leave_check = Time.time + TIME_BETWEEN_LEAVE_CHECKS;
+
+        Dictionary<int, HashSet<settler>> settlers_by_group = new Dictionary<int, HashSet<settler>>();
+        foreach (var s in settlers)
+        {
+            int group = s.group;
+            if (!settlers_by_group.ContainsKey(group))
+                settlers_by_group[group] = new HashSet<settler>();
+            settlers_by_group[group].Add(s);
+        }
+
+        foreach (var kv in settlers_by_group)
+        {
+            settler newest_settler = utils.find_to_min(kv.Value, (s) => -s.network_id);
+            bool too_few_beds = kv.Value.Count > group_info.bed_count(kv.Key);
+
+            foreach (var s in kv.Value)
+            {
+                // Newest settler should leave if overpopulated
+                if (s == newest_settler && too_few_beds)
+                {
+                    s.time_had_reason_to_leave += TIME_BETWEEN_LEAVE_CHECKS;
+                    s.reason_for_leaving = "Too few beds";
+                }
+
+                // Check if this settler wishes to leave of their own accord
+                else if (s.wants_to_leave(out string reason))
+                {
+                    s.time_had_reason_to_leave += TIME_BETWEEN_LEAVE_CHECKS;
+                    s.reason_for_leaving = reason;
+                }
+
+                // Settler shouldn't leave, reset timer
+                else
+                {
+                    s.time_had_reason_to_leave = 0f;
+                    s.reason_for_leaving = null;
+                }
+            }
+        }
+
+        // Evict settlers that need evicting
+        HashSet<settler> to_evict = new HashSet<settler>();
+        foreach (var s in settlers)
+            if (s.time_had_reason_to_leave > TIME_LEAVING_BEFORE_EVICT)
+                to_evict.Add(s);
+
+        foreach (var s in to_evict)
+        {
+            temporary_object.create(60).gameObject.add_pinned_message(
+                "The settler " + s.name + " left (" + s.reason_for_leaving + ")", Color.red);
+            s.delete();
+        }
+    }
 
     public static List<settler> all_settlers()
     {
@@ -673,10 +716,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         temporary_object.create(60f).gameObject.add_pinned_message(spawned.name.capitalize() + " has settled in the town!", Color.blue);
     }
 
-    new public static string info()
-    {
-        return "    Total settler count : " + settlers.Count;
-    }
+    new public static string info() => "    Total settler count : " + settlers.Count;
 }
 
 //###########//
