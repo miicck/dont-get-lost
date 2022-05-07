@@ -6,24 +6,8 @@ public class bed : character_walk_to_interactable, IAddsToInspectionText
 {
     public const float TIREDNESS_RECOVERY_RATE = 100f / 60f;
     public Transform sleep_orientation;
-    public List<Transform> covered_test_points = new List<Transform>();
 
     float delta_tired;
-
-    float covered_amt
-    {
-        get
-        {
-            float covered = 0f;
-            foreach (var t in covered_test_points)
-                if (weather.spot_is_covered(t.position))
-                    covered += 1f;
-            return covered / covered_test_points.Count;
-        }
-    }
-
-    public override string added_inspection_text() =>
-        base.added_inspection_text() + "\n" + ((int)(100 * covered_amt)) + "% covered";
 
     protected override bool ready_to_assign(character c) => (c is settler) && (c as settler).needs_sleep;
 
@@ -79,9 +63,6 @@ public class bed : character_walk_to_interactable, IAddsToInspectionText
             // Add mood effects
             var s = (settler)c;
             s.add_mood_effect("just_got_up");
-            float covered_amt = this.covered_amt;
-            if (covered_amt < 0.25f) s.add_mood_effect("uncovered_bed");
-            else if (covered_amt < 0.99f) s.add_mood_effect("partially_covered_bed");
         }
     }
 

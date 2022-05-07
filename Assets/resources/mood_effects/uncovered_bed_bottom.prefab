@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2146318417295402699}
   - component: {fileID: 7396305659482701798}
   m_Layer: 0
-  m_Name: partially_covered_bed
+  m_Name: uncovered_bed_bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,5 +47,5 @@ MonoBehaviour:
   is_client_side: 0
   timespan: 60
   _delta_mood: -5
-  _display_name: uncovered bed (partial)
-  _description: I slept in a bed that was only partially covered
+  _display_name: uncovered (foot)
+  _description: The foot of my bed is uncovered

@@ -75,7 +75,7 @@ items/mood_antenna 1 True
 items/corner_saw 1 True
 items/research_table 1 True
 items/silver 1 True
-mood_effects/uncovered_bed 1 True
+mood_effects/uncovered_bed_bottom 1 True
 items/mushroom 1 True
 items/crane 1 True
 items/stone_railing 1 True
@@ -134,7 +134,7 @@ items/diamond_necklace 1 True
 items/mineralogy_workshop 1 True
 items/carpentry_bench 1 True
 misc/networked_inventory_slot 1 True
-mood_effects/partially_covered_bed 1 True
+mood_effects/uncovered_bed_top 1 True
 items/vines 1 True
 inventories/market_stall 1 True
 items/iron_ore 1 True
