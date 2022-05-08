@@ -8,13 +8,12 @@ TODO
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Optimize chase paths
 	don't double back if thats what the player did
-	Make characters fall if they are following a chase path
+	Make characters fall if they are following a chase path over a cliff
 	Figure out how to stop enemies bunching up when chasing
 - Point-to-point connection building (e.g ropes for a rope bridge)
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
 - Pickup/dropoff points for settlers to move items around?
-- Make certain types of animal farms convert materials into products (e.g straw into milk via cows)
 - Make it more obvious which side of a ladder is the front?
 - Make time command work from non-auth clients
 - PvP hit markers

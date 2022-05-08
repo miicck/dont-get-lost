@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable, IAddsToInspectionText, IRecipeInfo
+public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable, IAddsToInspectionText
 {
     public character livestock_type;
     public int pasture_per_animal = 2;
@@ -12,6 +12,7 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
     town_path_element path_element => networked_element?.GetComponentInChildren<town_path_element>();
     character[] livestock => networked_element?.GetComponentsInChildren<character>();
     item_output output => GetComponentInChildren<item_output>();
+    item_input input => GetComponentInChildren<item_input>();
     float last_produce_time = float.MinValue;
 
     int connected_pasture = 0;
@@ -20,8 +21,9 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
     private void Update()
     {
         // Only update every 10 frames on auth client
-        if (Time.frameCount % 10 != 0) return;
+        // (offset by network id to share load between instances)
         if (!networked_element.has_authority) return;
+        if ((Time.frameCount + networked_element.network_id) % 10 != 0) return;
 
         // Work out how much pasture we have
         var room_elms = town_path_element.elements_in_room(path_element.room);
@@ -29,6 +31,8 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         disabled_by_other_shelter = false;
         foreach (var e in room_elms)
         {
+            if (e == null) continue;
+
             if (e.name == "pasture")
             {
                 connected_pasture += 1;
@@ -68,6 +72,25 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         if (dt > animal_produce_time / livestock.Count)
         {
             last_produce_time = Time.realtimeSinceStartup;
+
+            var recipe = GetComponent<recipe>();
+            if (!recipe.can_craft(input, out Dictionary<string, int> to_use))
+                return; // Don't have the neccassary ingredients
+
+            // Destroy used up items
+            for (int i = input.item_count - 1; i >= 0; --i)
+            {
+                var itm = input.peek_item(i);
+                if (itm == null) continue;
+
+                if (to_use.TryGetValue(itm.name, out int needed) && needed >= 1)
+                {
+                    to_use[itm.name] -= 1;
+                    var used = input.release_item(i);
+                    Destroy(used.gameObject);
+                }
+            }
+
             foreach (var p in GetComponents<item_product>())
                 p.create_in_node(output, track_production: true);
         }
@@ -141,18 +164,4 @@ public class livestock_shelter : MonoBehaviour, INonBlueprintable, INonEquipable
         public void on_end_control(character c) { }
         public string inspect_info() { return "Livestock"; }
     }
-
-    //#############//
-    // IRecipeInfo //
-    //#############//
-
-    public string recipe_book_string()
-    {
-        string str = item_product.product_quantities_list(GetComponents<item_product>());
-        str += " < time";
-        return str;
-    }
-
-    public float average_amount_produced(item i) => 1f;
-    public float average_ingredients_value() => 0f;
 }

@@ -119,8 +119,6 @@ public class town_level : MonoBehaviour
         return ret;
     }
 
-    string requirement_line(bool satisfied, string name) => "\n    [" + (satisfied ? "x" : " ") + "] " + name.capitalize();
-
     public bool unlocked(int group)
     {
         foreach (var kv in requirement_sets)

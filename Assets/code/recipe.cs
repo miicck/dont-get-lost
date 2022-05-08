@@ -218,7 +218,7 @@ public class recipe : MonoBehaviour, IRecipeInfo
             ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(g.name, Resources.LoadAll<recipe>("recipes/gradual_processors/" + g.name)));
 
         foreach (var ls in Resources.LoadAll<livestock_shelter>("items"))
-            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ls.name, new IRecipeInfo[] { ls }));
+            ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>(ls.name, ls.GetComponents<recipe>()));
 
         foreach (var ih in Resources.LoadAll<item_harvest_spot>("items"))
         {

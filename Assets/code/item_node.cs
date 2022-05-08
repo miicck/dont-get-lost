@@ -60,7 +60,7 @@ public abstract class item_node : MonoBehaviour,
 
     /// <summary> Called just before an item is added to my items list, in 
     /// case we want to delete it, rather than accept it. </summary>
-    protected virtual bool on_add_item(item i) { return true; }
+    protected virtual bool on_add_item(item i) => true;
 
     /// <summary> Release the <paramref name="i"/>th item from this node. </summary>
     public item release_item(int i)
@@ -82,8 +82,9 @@ public abstract class item_node : MonoBehaviour,
     /// <summary> Releases the first item from the from this node. </summary>
     public item release_next_item() { return release_item(0); }
 
-    public item peek_item(int i) { return i < items.Count && i >= 0 ? items[i] : null; }
-    public item peek_next_item() { return peek_item(0); }
+    public item peek_item(int i) => i < items.Count && i >= 0 ? items[i] : null;
+    public item peek_next_item() => peek_item(0);
+    public List<item> peek_all_items() => new List<item>(items);
 
     /// <summary> Releases all items from this node. </summary>
     public List<item> relesae_all_items()
