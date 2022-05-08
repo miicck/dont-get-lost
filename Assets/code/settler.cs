@@ -14,8 +14,8 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     public Transform left_hand { get; private set; }
     public Transform right_hand { get; private set; }
 
-    float time_had_reason_to_leave = 0f;
-    string reason_for_leaving = null;
+    public float time_had_reason_to_leave { get; private set; } = 0f;
+    public string reason_for_leaving { get; private set; } = null;
 
     //###################//
     // CHARACTER CONTROL //

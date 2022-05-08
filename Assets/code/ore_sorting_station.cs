@@ -108,9 +108,9 @@ public class ore_sorting_station : character_interactable_options
         }
 
         public string recipe_book_string() =>
-            input_ore.display_name + " -> " +
-            (product == null ? "" : product.display_name + " + ") +
-            output_ore.display_name;
+            (product == null ? "" : product.display_name + " + ") + 
+            output_ore.display_name + " < " + 
+            input_ore.display_name;
 
         public float average_amount_produced(item i)
         {

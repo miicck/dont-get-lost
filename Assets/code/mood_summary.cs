@@ -45,7 +45,18 @@ public class mood_summary : MonoBehaviour
             average_mood += s.total_mood();
         average_mood /= all_settlers.Count;
 
-        summary_text.text += "Average town mood: " + average_mood + "\n";
+        summary_text.text += "Average town mood: " + average_mood;
+
+        // Display info about settlers planning on leaving
+        string leaving_info = "";
+        foreach (var s in all_settlers)
+            if (s.reason_for_leaving != null)
+                leaving_info += "    " +
+                    s.name.capitalize() + ": " +
+                    s.reason_for_leaving +
+                    " (" + Mathf.RoundToInt(s.time_had_reason_to_leave) + "s)\n";
+        if (leaving_info.Length > 0)
+            summary_text.text += "\n\nSettlers planning on leaving:\n" + leaving_info;
 
         // Display mood effects by total contribution 
         summary_text.text += "\n\n";
