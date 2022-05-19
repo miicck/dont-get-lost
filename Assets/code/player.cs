@@ -1754,9 +1754,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public override void on_first_create()
     {
+        //respawn_point.value = new Vector3(92.7868f, 17, 97.69f);
+
         // Player starts in the middle of the first biome
-        respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL, biome.SIZE / 2);
+        respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL + 1f, biome.SIZE / 2);
         networked_position = respawn_point.value;
+
+        y_rotation.value = 117.15f;
 
         // Initialize hair/skin color
         net_hair_color.value = character_colors.random_hair_color();

@@ -247,6 +247,12 @@ public class recipe : MonoBehaviour, IRecipeInfo
                 os.recipe_infos()
                 ));
 
+        var tp = Resources.Load<GameObject>("misc/terrain_products");
+        var terrain_products = new List<simple_item_product_info>();
+        foreach (var p in tp.GetComponentsInChildren<item_product>())
+            terrain_products.Add(new simple_item_product_info(p.item));
+        ret.Add(new KeyValuePair<string, IEnumerable<IRecipeInfo>>("scavanging on the ground", terrain_products));
+
         return ret;
     }
 
