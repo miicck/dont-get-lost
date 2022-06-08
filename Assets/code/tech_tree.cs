@@ -416,10 +416,10 @@ public class tech_tree : networked
         Destroy(tech_template.gameObject);
 
         tech_tree_ui.SetParent(game.canvas.transform);
-        tech_tree_ui.set_left(128);
-        tech_tree_ui.set_right(128);
-        tech_tree_ui.set_top(128);
-        tech_tree_ui.set_bottom(128);
+        tech_tree_ui.set_left(0);
+        tech_tree_ui.set_right(0);
+        tech_tree_ui.set_top(0);
+        tech_tree_ui.set_bottom(0);
 
         update_tech_tree_ui();
 

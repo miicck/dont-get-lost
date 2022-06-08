@@ -6,18 +6,31 @@ public class world_menu_item_grid : MonoBehaviour
 {
     public bool reverse_direction = false;
 
-    class image_scroller : MonoBehaviour
+    class sprite_switcher : MonoBehaviour
     {
+        UnityEngine.UI.Image image;
+        RectTransform rect_transform;
         public bool reverse_direction = false;
 
-        RectTransform rect_transform;
-        UnityEngine.UI.Image image;
+        const float MIN_TIME_BETWEEN = 12f;
+        const float MAX_TIME_BETWEEN = 24f;
+
+        enum STAGE
+        {
+            WAITING,
+            DISAPEARING,
+            REAPPEARING
+        }
+        STAGE stage;
+        float next_time = 0;
 
         private void Start()
         {
-            rect_transform = GetComponent<RectTransform>();
-            image = GetComponent<UnityEngine.UI.Image>();
+            image = GetComponentInChildren<UnityEngine.UI.Image>();
+            rect_transform = image.GetComponent<RectTransform>();
             switch_sprite();
+            update_next_time();
+            next_time -= MIN_TIME_BETWEEN;
         }
 
         void switch_sprite()
@@ -28,42 +41,67 @@ public class world_menu_item_grid : MonoBehaviour
                 image.sprite = items[Random.Range(0, items.Length)].sprite;
         }
 
-        private void Update()
+        float speed => 64f * (reverse_direction ? -1f : 1f);
+
+        void update_next_time()
+        {
+            next_time = Time.time + Random.Range(MIN_TIME_BETWEEN, MAX_TIME_BETWEEN);
+        }
+
+        bool out_of_view()
         {
             if (reverse_direction)
-            {
-                rect_transform.anchoredPosition += 64 * Vector2.right * Time.deltaTime;
+                return rect_transform.anchoredPosition.y < -60f;
+            return rect_transform.anchoredPosition.y > 60f;
+        }
 
-                if (rect_transform.anchoredPosition.x > Screen.currentResolution.width)
-                {
-                    rect_transform.anchoredPosition = new Vector2(-64, 0);
-                    switch_sprite();
-                }
-            }
-            else
-            {
-                rect_transform.anchoredPosition -= 64 * Vector2.right * Time.deltaTime;
+        bool position_has_reset()
+        {
+            if (reverse_direction)
+                return rect_transform.anchoredPosition.y > 0f;
+            return rect_transform.anchoredPosition.y < 0f;
+        }
 
-                if (rect_transform.anchoredPosition.x < -64)
-                {
-                    rect_transform.anchoredPosition = new Vector2(Screen.currentResolution.width, 0);
-                    switch_sprite();
-                }
+        private void Update()
+        {
+            switch (stage)
+            {
+                case STAGE.WAITING:
+                    if (Time.time > next_time)
+                        stage = STAGE.DISAPEARING;
+                    return;
+
+                case STAGE.DISAPEARING:
+                    rect_transform.anchoredPosition += Vector2.up * Time.deltaTime * speed;
+                    if (out_of_view())
+                    {
+                        switch_sprite();
+                        stage = STAGE.REAPPEARING;
+                    }
+                    return;
+
+                case STAGE.REAPPEARING:
+                    rect_transform.anchoredPosition -= Vector2.up * Time.deltaTime * speed;
+                    if (position_has_reset())
+                    {
+                        stage = STAGE.WAITING;
+                        update_next_time();
+                    }
+                    return;
             }
         }
     }
 
     void Start()
     {
-        var template = transform.Find("image_template").GetComponent<UnityEngine.UI.Image>();
+        var template = transform.Find("image_template");
         template.transform.SetParent(null);
 
         for (int i = 0; i <= Screen.currentResolution.width / 64; ++i)
         {
             var image = template.inst();
             image.transform.SetParent(transform);
-            var scroller = image.gameObject.AddComponent<image_scroller>();
-            scroller.reverse_direction = reverse_direction;
+            image.gameObject.AddComponent<sprite_switcher>().reverse_direction = reverse_direction;
             image.GetComponent<RectTransform>().anchoredPosition = new Vector2(i * 64, 0);
         }
 
