@@ -44,3 +44,4 @@ TODO
 - Maybe make attacks more frequent, so guards are a full-time job, but don't require the entire town?
 - Version of dining table where settlers choose food according to nutrition requirements
 - Limit on number of items market stall can sell (improved versions can sell more?)
+- Global scroll speed controls
