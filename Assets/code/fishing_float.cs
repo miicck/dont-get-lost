@@ -10,6 +10,7 @@ public class fishing_float : MonoBehaviour
     public bool strikeable => (transform.position + Vector3.up * strike_line * height / 2).y < world.SEA_LEVEL;
     public float submerged_amount => Mathf.Clamp(1f - (transform.position.y + height * 0.5f - world.SEA_LEVEL) / height, 0f, 1f);
     public float water_depth => world.SEA_LEVEL - world.terrain_altitude(transform.position);
+    public bool under_terrain => world.terrain_altitude(transform.position) > transform.position.y;
 
     private void OnDrawGizmos()
     {
