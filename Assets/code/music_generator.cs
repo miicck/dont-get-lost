@@ -163,8 +163,10 @@ class walking_bass_line : note_generator
 
 public class music_generator : MonoBehaviour
 {
-    public const float BPM = 90;
+    public const float BPM = 80;
     static music_generator music_instance;
+
+    public float volume = 1f;
 
     float time = 0;
     int quarter_beat = 0;
@@ -222,7 +224,7 @@ public class music_generator : MonoBehaviour
             notes.AddRange(gen.generate_notes(quarter_beat));
 
         foreach (var n in notes)
-            n.volume *= 0.3f;
+            n.volume *= 0.2f * volume;
 
         foreach (var note in notes)
             NotePlayer.play(note);
