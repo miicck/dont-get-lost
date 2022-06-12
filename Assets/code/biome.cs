@@ -24,10 +24,7 @@ public abstract class biome : MonoBehaviour
     public System.Random random { get; private set; }
 
     /// <summary> Perlin noise, with a pattern specific to this biome. </summary>
-    protected float perlin(float x, float y)
-    {
-        return Mathf.PerlinNoise(x + this.x * 10f, y + this.z * 10f);
-    }
+    protected float perlin(float x, float y) => Mathf.PerlinNoise(x + this.x * 10f, y + this.z * 10f);
 
     /// <summary> The grid of points defining the biome. </summary>
     public point[,] grid = new point[SIZE, SIZE];
@@ -89,7 +86,7 @@ public abstract class biome : MonoBehaviour
         };
     }
 
-    /// <summary> Returns the chunk at the given location, if it has 
+    /// <summary> Returns the biome at the given location, if it has 
     /// been generated. Null otherwise. </summary>
     public static biome at(Vector3 location, bool generate = false)
     {
@@ -100,9 +97,8 @@ public abstract class biome : MonoBehaviour
         return biome.generate(c[0], c[1]);
     }
 
-    /// <summary> Check if the biome at x, z is within render range
-    /// (essentially testing if the render range circle 
-    ///  intersects the biome square). </summary>
+    /// <summary> Check if the biome at x, z is within render range (by testing 
+    /// if the render range circle intersects the biome square). </summary>
     static bool in_range(int x, int z)
     {
         Vector2 player_xz = new Vector2(
@@ -110,11 +106,7 @@ public abstract class biome : MonoBehaviour
             player.current.transform.position.z
         );
 
-        Vector2 this_xz = new Vector2(
-            SIZE * (x + 0.5f),
-            SIZE * (z + 0.5f)
-        );
-
+        Vector2 this_xz = new Vector2(SIZE * (x + 0.5f), SIZE * (z + 0.5f));
         return utils.circle_intersects_square(player_xz, game.render_range, this_xz, SIZE, SIZE);
     }
 
@@ -644,7 +636,10 @@ public abstract class biome : MonoBehaviour
         public world_object object_to_generate;
 
         /// <summary> Compute a weighted average of a list of points. </summary>
-        public static point blend(point[] terrain_points, point[] object_points, float[] terrain_weights, float[] object_weights, float random_number)
+        public static point blend(
+            point[] terrain_points, point[] object_points, 
+            float[] terrain_weights, float[] object_weights, 
+            float random_number)
         {
             point ret = new point
             {
