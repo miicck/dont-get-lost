@@ -334,7 +334,7 @@ public static class tutorial
                 () => build_requirement.create("noticeboard", 1, advance_stage),
 
                 () => confirm_window.create(
-                    "OK, now we have a notice board, we can assign a\n" +
+                    "OK, now we have a notice board, we can assign \n" +
                     "each settler individiaul priorities for each type\n" +
                     "of work (as indicated by a color on the noticeboard).\n" +
                     "Settlers have a skill level in each type of work \n" +
@@ -366,7 +366,7 @@ public static class tutorial
 
                         return false;
                     },
-                    on_complete: advance_stage),
+                    on_complete: () => advance_stage_delayed(2f)),
 
                 () => confirm_window.create(
                     "Now that you know the basics, it's up to you\n"+
@@ -384,6 +384,8 @@ public static class tutorial
     delegate tutorial_object tutorial_object_generator();
 
     public static void advance_stage() => player.call_when_current_player_available(() => player.current.advance_tutorial_stage());
+    public static void advance_stage_delayed(float delay) => player.current.Invoke("advance_tutorial_stage", delay);
+
     static tutorial_object tutorial_object;
 
     public static void set_stage(int stage)
