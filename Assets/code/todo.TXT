@@ -25,7 +25,7 @@ TODO
 - Add cowering spots to various things (beds)
 - Recreational tasks
 - Make trade carts actually move
-- Stop menus persisting when the object they refer to has been deleted
+- Stop menus persisting when the object they refer to has been deleted (done?)
 - Remove contract system?
 - Polar bears fall through floor on death/spawn underwater
 - generated trading camps
@@ -37,7 +37,6 @@ TODO
 - max simulataneous researchers
 - Setters sad if working uncovered
 - Make chest into an attachable component
-- Tutorials restart at certain points (hit population cap => town monument?)
 - Buildings to speed up research
 - Mineshaftable-locations should be inspectable
 - Tiers/different kinds of arboretum? - Fuel supply is often via arboreta

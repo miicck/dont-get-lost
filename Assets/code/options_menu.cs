@@ -161,6 +161,11 @@ public class options_menu : MonoBehaviour
                 AudioListener.volume = val;
                 break;
 
+            case "music_volume":
+                foreach (var mg in FindObjectsOfType<music_generator>())
+                    mg.volume = val;
+                break;
+
             case "field_of_view":
                 player.call_when_current_player_available(() =>
                 {

@@ -6,6 +6,7 @@ class note
 {
     public float pitch;
     public float volume;
+    public float fade_in_time;
 }
 
 static class scales
@@ -97,7 +98,8 @@ class random_multiples : note_generator
                     notes.Add(new note
                     {
                         pitch = random_pitch(scale),
-                        volume = 1f
+                        volume = 1f,
+                        fade_in_time = Random.Range(0.05f, 0.2f)
                     });
 
         normalize_chords(notes);
@@ -149,7 +151,8 @@ class walking_bass_line : note_generator
             new note()
             {
                 pitch = nth_pitch(scale, n) / 4,
-                volume = 1f
+                volume = 1f,
+                fade_in_time = 1f
             }
         };
     }
@@ -175,21 +178,23 @@ public class music_generator : MonoBehaviour
     class NotePlayer : MonoBehaviour
     {
         AudioSource source;
+        note note;
 
         private void Update()
         {
+            source.volume = Mathf.Min(source.volume + Time.deltaTime / note.fade_in_time, note.volume);
+
             if (!source.isPlaying)
                 Destroy(gameObject);
         }
 
-        public static void play(note note) => play(note.pitch, note.volume);
-
-        public static void play(float pitch, float volume)
+        public static void play(note note)
         {
             var player = new GameObject("Note").AddComponent<NotePlayer>();
+            player.note = note;
             player.source = player.gameObject.AddComponent<AudioSource>();
-            player.source.volume = volume;
-            player.source.pitch = pitch;
+            player.source.volume = note.fade_in_time > 0 ? 0 : note.volume;
+            player.source.pitch = note.pitch;
             player.source.PlayOneShot(Resources.Load<AudioClip>("sounds/music_generator/mandolin_c"));
             player.transform.SetParent(music_instance.transform);
         }
@@ -199,6 +204,7 @@ public class music_generator : MonoBehaviour
     {
         music_instance = this;
         set_generators(scales.blues_scale);
+        volume = options_menu.get_float("music_volume");
     }
 
     void set_generators(int[] scale)
