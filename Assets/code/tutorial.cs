@@ -373,8 +373,28 @@ public static class tutorial
                     "to expand your town as you wish. If you're stuck\n" +
                     "remember to check the hints in the bottom right\n" +
                     "of the screen, or have a look in the help book by\n" +
-                    "pressing "+controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK)+".\n\n"+
+                    "pressing "+controls.bind_name(controls.BIND.TOGGLE_HELP_BOOK) +
+                    ", or via the ESC menu.\n\n"+
                     "Good luck!",
+                    on_confirm: advance_stage),
+
+                // PAUSE HERE UNTIL POPULATION CAP HIT
+
+                () => custom_requirement.create(null,
+                    ()=> settler.all_settlers().Count >= town_level.BASE_POPULATION_CAP,
+                    on_complete: advance_stage),
+
+                () => confirm_window.create(
+                    "Your town has hit the current population cap.\n" +
+                    "You should build a town monument to see the\n" +
+                    "requirements for upgrading the population cap.",
+                    on_confirm: advance_stage),
+
+                () => build_requirement.create("town_monument", 1, on_complete: advance_stage),
+
+                () => confirm_window.create(
+                    "You should interact with the town monument to see\n" +
+                    "what you need to do to upgrade your town.",
                     on_confirm: advance_stage)
             };
             return _tutorial_stages;
@@ -643,12 +663,18 @@ class custom_requirement : tutorial_object
         requirement_test test,
         requirement_completion_callback on_complete)
     {
-        var rt = Resources.Load<RectTransform>("ui/custom_requirement").inst();
+        RectTransform rt;
+        if (hint == null)
+            rt = new GameObject("blank_requirement").AddComponent<RectTransform>();
+        else
+        {
+            rt = Resources.Load<RectTransform>("ui/custom_requirement").inst();
+            var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
+            text.text = hint;
+        }
+
         rt.SetParent(game.canvas.transform);
         rt.anchoredPosition = Vector3.zero;
-
-        var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
-        text.text = hint;
 
         var cr = rt.gameObject.AddComponent<custom_requirement>();
         cr.test = test;
