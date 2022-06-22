@@ -44,3 +44,6 @@ TODO
 - Version of dining table where settlers choose food according to nutrition requirements
 - Limit on number of items market stall can sell (improved versions can sell more?)
 - Global scroll speed controls
+- Subtutorials - the below should not really be order-dependant:
+	- Tutorial step for dining table (triggers when the player first makes one)
+	- Tutorial step for breadmaking (triggers when the player first researches breadmaking)
