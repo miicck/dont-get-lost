@@ -25,6 +25,29 @@ public class weather : MonoBehaviour
 
     static Dictionary<weather_effect, weather_effect> active_effects = new Dictionary<weather_effect, weather_effect>();
 
+    class weather_container : MonoBehaviour
+    {
+        public static weather_container instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new GameObject("weather_effects").AddComponent<weather_container>();
+                return _instance;
+            }
+        }
+        static weather_container _instance;
+
+        private void Start()
+        {
+            player.call_when_current_player_available(() =>
+            {
+                transform.SetParent(player.current.transform);
+                transform.localPosition = Vector3.zero;
+            });
+        }
+    }
+
     void mix(List<weather> weathers, List<float> weights)
     {
         weathers.RemoveAll((w) => w == null);
@@ -42,7 +65,7 @@ public class weather : MonoBehaviour
         daytime_saturation = average_float(get_list(weathers, (w) => w.daytime_saturation), weights);
         nighttime_saturation = average_float(get_list(weathers, (w) => w.nighttime_saturation), weights);
 
-        var effect_container = player.current.transform;
+        var effect_container = weather_container.instance.transform;
 
         // Create new weighted weather effects
         for (int i = 0; i < weathers.Count; ++i)

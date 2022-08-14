@@ -21,7 +21,9 @@ public static class tutorial
                 () => custom_requirement.create(
                     "Explore the frontier town.\n" +
                     "When you're ready, find a nice spot sufficiently\n" +
-                    "far away to build your first settlement!",
+                    "far away to build your first settlement!\n" +
+                    "Maybe have a look on the map by pressing "+
+                    controls.bind_name(controls.BIND.TOGGLE_MAP)+".",
                     () => player.current != null && !(player.current.biome is tutorial_island),
                     advance_stage),
 
@@ -211,7 +213,8 @@ public static class tutorial
                     }),
 
                 () => item_requirement_tracker.create(
-                    "Find a flax seed",
+                    "Find a flax seed.\n" +
+                    "Perhaps try scavenging on the ground.",
                     new Dictionary<string, int> {
                         ["flax_seed"] = 1
                     },
