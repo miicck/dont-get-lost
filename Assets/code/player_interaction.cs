@@ -272,12 +272,15 @@ public class interaction_set
     }
 
     /// <summary> Given a set of interactions, work out which are compatible
-    /// with this interaction_set, start/add them if they have been triggered. </summary>
+    /// with this interaction_set, start/add them if they have been triggered. 
+    /// If several interactions have the same keybind, the interaction which
+    /// is encountered latest when iterating over interactions will take priority. </summary>
     public void add_and_start_compatible(IEnumerable<player_interaction> interactions,
         player player, bool update_context_info = false)
     {
         // Get the possible interactions with unique keybinds
         var unique_interactions = new Dictionary<controls.control, player_interaction>();
+
         foreach (var i in interactions)
         {
             var c = controls.current_control(i.keybind);

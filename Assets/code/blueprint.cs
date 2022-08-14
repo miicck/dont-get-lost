@@ -399,18 +399,31 @@ public class blueprint : MonoBehaviour
 
     public building_material build_networked_version(bool remove_from_inv = true)
     {
-        // Check we have the building in inventory if required
-        if (remove_from_inv && !player.current.inventory.remove(building, 1)) return null;
+        var created = build_networked_version(
+            building,
+            building.transform.position,
+            building.transform.rotation,
+            remove_from_inv: remove_from_inv);
+        Destroy(gameObject);
+        return created;
+    }
 
-        player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f,
-            location: transform.position);
+    public static building_material build_networked_version(
+        building_material b,
+        Vector3 position,
+        Quaternion rotation,
+        bool remove_from_inv = true)
+    {
+        // Check we have the building in inventory if required
+        if (remove_from_inv && !player.current.inventory.remove(b, 1)) return null;
+
+        // Play the building sound
+        player.current.play_sound("sounds/hammer_wood", 0.9f, 1.1f, 0.5f, location: position);
 
         // Create a proper, networked version of the spawned object
-        var b = building;
-        var created = item.create(b.name, b.transform.position, b.transform.rotation,
+        var created = item.create(b.name, position, rotation,
             networked: true, register_undo: true) as building_material;
         created?.on_build();
-        Destroy(gameObject);
 
         // Satisfy building requirements
         build_requirement.on_build(created);

@@ -281,7 +281,8 @@ public class building_material : item, IPlayerInteractable
             interactions = new player_interaction[]
             {
                 new build_interaction(this),
-                new demolish_interaction(this)
+                new demolish_interaction(this),
+                new upgrade_interaction(this)
             };
         return interactions;
     }
@@ -353,6 +354,53 @@ public class building_material : item, IPlayerInteractable
             // Stop drawing debug-type things
             town_path_element.draw_links = false;
             item_node.display_enabled = false;
+        }
+    }
+
+    class upgrade_interaction : player_interaction, DisabledOnTutorialIsland
+    {
+        public building_material building { get; private set; }
+        public upgrade_interaction(building_material building) => this.building = building;
+        public override controls.BIND keybind => controls.BIND.ALT_USE_ITEM_2;
+        public override bool allow_held => true;
+        public override bool is_possible() => upgradeable_building != null;
+        public override string context_tip() => "Upgrade " + (upgradeable_building?.display_name) + " to " + building.display_name;
+
+        building_material upgradeable_building
+        {
+            get
+            {
+                if (player.current == null) return null;
+                var ray = player.current.camera_ray(BUILD_RANGE, out float dist);
+                var bm = utils.raycast_for_closest<building_material>(ray, out RaycastHit hit, max_distance: dist);
+                if (bm == null) return null;
+                var ub = bm.GetComponent<upgradeable_building>();
+                if (ub == null) return null;
+                if (!ub.can_upgrade(building)) return null;
+                return bm;
+            }
+        }
+
+        protected override bool on_start_interaction(player player)
+        {
+            // Don't do anything on non-auth clients 
+            if (!player.has_authority) return true;
+
+            var upgrading = upgradeable_building;
+
+            var built = blueprint.build_networked_version(
+                building,
+                upgrading.transform.position,
+                upgrading.transform.rotation,
+                remove_from_inv: true);
+
+            if (built != null)
+            {
+                player.current.inventory.add(upgrading, 1);
+                upgrading.delete();
+            }
+
+            return true;
         }
     }
 

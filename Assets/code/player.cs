@@ -145,10 +145,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         List<player_interaction> all_interactions = new List<player_interaction>();
 
+        // NOTE: The blow interactions are in reverse-priority order
+        //       if several interactions have the same keybind, the one
+        //       which is are added LAST to all_interactions will take priority.
+
         // Get UI interactions (only on authority client)
         if (has_authority)
             foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
                 all_interactions.AddRange(ui_inter.player_interactions(default));
+
+        // Add self interactions to list
+        all_interactions.AddRange(self_interactions);
 
         // Get equipped interactions
         if (equipped != null)
@@ -156,9 +163,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Get in-world interactable (only on authority client)
         if (has_authority) all_interactions.AddRange(raycast_for_interactions());
-
-        // Add self interactions to list
-        all_interactions.AddRange(self_interactions);
 
         // Remove interactions disabled on tutorial island
         if (current.biome is tutorial_island && !console.creative_mode)
