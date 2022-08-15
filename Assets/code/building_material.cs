@@ -38,7 +38,11 @@ public class building_material : item, IPlayerInteractable
             "To turn off snapping when placing a building, hold " +
             controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
             "This will also orient the building to the world " +
-            "axes, rather than to the parent building."
+            "axes, rather than to the parent building.",
+
+            "If you press "+controls.bind_name(controls.BIND.SELECT_ITEM_FROM_WORLD) +
+            " when looking at an existing building, you will equip matching buildings from " +
+            "your inventory."
         };
 
         string help_text = "";

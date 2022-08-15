@@ -4,6 +4,27 @@ using UnityEngine;
 
 public static class help_book
 {
+    /// <summary> Add a help topic to the help book. </summary>
+    /// <param name="topic"> The title of the topic. Can be a path of subtopics, seperated by '/'. </param>
+    /// <param name="help_text"> The help text that should be displayed. </param>
+    public static void add_entry(string topic, string help_text)
+    {
+        topic parent = root_topic;
+
+        var tree = topic.Split('/');
+
+        // Recurse down the topic tree, adding subtopics if neccassary
+        for (int i = 0; i < tree.Length; ++i)
+        {
+            tree[i] = tree[i].ToLower().capitalize_each_word();
+            if (parent.try_get_subtopic(tree[i], out topic t))
+                parent = t;
+            else
+                parent = new topic(tree[i], parent: parent,
+                    content: (i == tree.Length - 1) ? help_text : null);
+        }
+    }
+
     public static bool open
     {
         get => open_topic != null;
@@ -128,25 +149,4 @@ public static class help_book
         }
     }
     static topic _open_topic;
-
-    /// <summary> Add a help topic to the help book. </summary>
-    /// <param name="topic"> The title of the topic. </param>
-    /// <param name="help_text"> The help text that should be displayed. </param>
-    public static void add_entry(string topic, string help_text)
-    {
-        topic parent = root_topic;
-
-        var tree = topic.Split('/');
-
-        // Recurse down the topic tree, adding subtopics if neccassary
-        for (int i = 0; i < tree.Length; ++i)
-        {
-            tree[i] = tree[i].ToLower().capitalize_each_word();
-            if (parent.try_get_subtopic(tree[i], out topic t))
-                parent = t;
-            else
-                parent = new topic(tree[i], parent: parent,
-                    content: (i == tree.Length - 1) ? help_text : null);
-        }
-    }
 }
