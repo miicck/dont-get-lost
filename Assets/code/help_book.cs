@@ -6,105 +6,147 @@ public static class help_book
 {
     public static bool open
     {
-        get => menu.gameObject.activeInHierarchy;
+        get => open_topic != null;
         set
         {
-            menu.gameObject.SetActive(value);
+            if (open_topic.open == value)
+                return; // Already correct state
 
-            // Also close the page when the book is closed
-            if (!value)
-                page.gameObject.SetActive(false);
+            if (value)
+                // Open the root topic
+                open_topic = root_topic;
+            else
+                // Close the current topic
+                open_topic = null;
         }
     }
 
-    static RectTransform menu
+    public class topic
     {
-        get
+        public topic parent { get; private set; }
+        public string title { get; private set; }
+        public string content { get; private set; }
+
+        public bool try_get_subtopic(string title, out topic t) => _children.TryGetValue(title, out t);
+
+        Dictionary<string, topic> _children = new Dictionary<string, topic>();
+
+        public topic(string title, string content = null, topic parent = null)
         {
-            if (_menu == null)
+            this.parent = parent;
+            this.title = title;
+            this.content = content;
+
+            if (parent != null)
+                parent._children[title] = this;
+        }
+
+        public RectTransform ui
+        {
+            get
             {
-                // Create the menu + put it in the right place
-                _menu = Resources.Load<RectTransform>("ui/help_book").inst();
-                _menu.SetParent(game.canvas.transform);
-                _menu.anchoredPosition = Vector2.zero;
-
-                // Menu starts disabled
-                _menu.gameObject.SetActive(false);
-
-                _menu.find_child_recursive("HelpBookClose").
-                    GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
-                    {
-                        player.current?.force_interaction(null);
-                    });
-
-                // Find the template for creating topic entries
-                var topic_template = _menu.find_child_recursive("TopicEntry");
-
-                // Sort topics alphabetically
-                List<string> topics_sorted = new List<string>(topics.Keys);
-                topics_sorted.Sort();
-
-                foreach (string key in topics_sorted)
+                if (_ui == null)
                 {
-                    // Create copies of the template for each topic
-                    var entry = topic_template.inst();
-                    entry.transform.SetParent(topic_template.transform.parent);
-                    entry.GetComponentInChildren<UnityEngine.UI.Text>().text = key;
-                    entry.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
+                    // Create the menu & put it in the right place
+                    _ui = Resources.Load<RectTransform>("ui/help_book_page").inst();
+                    _ui.SetParent(game.canvas.transform);
+                    _ui.anchoredPosition = Vector2.zero;
+
+                    // Starts disabled
+                    _ui.gameObject.SetActive(false);
+
+                    // Setup the menu close action
+                    var close_button = _ui.find_child_recursive("HelpBookClose").GetComponentInChildren<UnityEngine.UI.Button>();
+                    close_button.onClick.AddListener(() => { player.current?.force_interaction(null); });
+
+                    // Setup the back action
+                    var back_button = _ui.find_child_recursive("HelpBookBack").GetComponentInChildren<UnityEngine.UI.Button>();
+                    if (parent == null)
+                        back_button.gameObject.SetActive(false);
+                    else
+                        back_button.onClick.AddListener(() => { open_topic = parent; });
+
+                    // Set the content title/text
+                    _ui.find_child_recursive("ContentTitle").GetComponent<UnityEngine.UI.Text>().text = title;
+                    _ui.find_child_recursive("ContentText").GetComponent<UnityEngine.UI.Text>().text = content;
+
+                    // Find template subtopic button
+                    var button_template = _ui.find_child_recursive("SubtopicButton").GetComponent<UnityEngine.UI.Button>();
+
+                    // Setup subtopic buttons
+                    foreach (var c in _children.Values)
                     {
-                        // Open the help book at this page
-                        page.gameObject.SetActive(true);
+                        // Create a copy of the button in the right container
+                        var button = button_template.inst();
+                        button.transform.SetParent(button_template.transform.parent);
 
-                        page.find_child_recursive("HelpBookPageTitle").
-                            GetComponentInChildren<UnityEngine.UI.Text>().text = key;
-                        page.find_child_recursive("HelpBookPageText").
-                            GetComponentInChildren<UnityEngine.UI.Text>().text = topics[key];
+                        // Setup the switch-topic button
+                        var c_copy_for_lambda = c;
+                        button.GetComponentInChildren<UnityEngine.UI.Text>().text = c.title;
+                        button.onClick.AddListener(() => { open_topic = c_copy_for_lambda; });
+                    }
 
-                        page.find_child_recursive("HelpBookPageClose").
-                            GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
-                            {
-                                page.gameObject.SetActive(false);
-                            });
-                    });
+                    // Destroy the template
+                    Object.Destroy(button_template.gameObject);
                 }
 
-                // Disable template
-                topic_template.gameObject.SetActive(false);
+                return _ui;
             }
-            return _menu;
+        }
+        RectTransform _ui;
+
+        public bool open
+        {
+            get => ui.gameObject.activeInHierarchy;
+            set => ui.gameObject.SetActive(value);
         }
     }
-    static RectTransform _menu;
 
-    static RectTransform page
+    // The top-level help topic, containing all subtopics
+    static topic root_topic = new topic("Help topics",
+        "Remember, if you don't know how to interact with somthing, look at it " +
+        "and check the text in the bottom right of the screen. The possible " +
+        "interactions also depend on what (if anything) you have equipped.");
+
+    static topic open_topic
     {
         get
         {
-            if (_page == null)
-            {
-                // Create a page
-                _page = Resources.Load<RectTransform>("ui/help_book_page").inst();
-                _page.SetParent(game.canvas.transform);
-                _page.anchoredPosition = Vector2.zero;
+            if (_open_topic == null)
+                _open_topic = root_topic;
+            return _open_topic;
+        }
+        set
+        {
+            // Close old topic
+            _open_topic.open = false;
 
-                // Page starts disabled
-                _page.gameObject.SetActive(false);
-            }
-            return _page;
+            // Set/open new topic
+            _open_topic = value;
+            if (_open_topic != null)
+                _open_topic.open = true;
         }
     }
-    static RectTransform _page;
-
-    static Dictionary<string, string> topics = new Dictionary<string, string>();
+    static topic _open_topic;
 
     /// <summary> Add a help topic to the help book. </summary>
     /// <param name="topic"> The title of the topic. </param>
     /// <param name="help_text"> The help text that should be displayed. </param>
     public static void add_entry(string topic, string help_text)
     {
-        topic = topic.ToLower().capitalize();
-        if (topics.ContainsKey(topic))
-            throw new System.Exception("Help topic " + topic + " already exists!");
-        topics[topic] = help_text;
+        topic parent = root_topic;
+
+        var tree = topic.Split('/');
+
+        // Recurse down the topic tree, adding subtopics if neccassary
+        for (int i = 0; i < tree.Length; ++i)
+        {
+            tree[i] = tree[i].ToLower().capitalize_each_word();
+            if (parent.try_get_subtopic(tree[i], out topic t))
+                parent = t;
+            else
+                parent = new topic(tree[i], parent: parent,
+                    content: (i == tree.Length - 1) ? help_text : null);
+        }
     }
 }

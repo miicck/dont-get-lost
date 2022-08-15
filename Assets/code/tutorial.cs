@@ -398,6 +398,18 @@ public static class tutorial
                 () => confirm_window.create(
                     "You should interact with the town monument to see\n" +
                     "what you need to do to upgrade your town.",
+                    on_confirm: advance_stage),
+
+                // PAUSE HERE UNTIL DINING TABLE BUILT
+
+                () => custom_requirement.create(null,
+                    () => Object.FindObjectOfType<dining_spot>() != null,
+                    on_complete: advance_stage),
+                    
+                () => confirm_window.create(
+                    "You've built a dining spot. If you put food dispensers \n" +
+                    "in the same room, settlers will automatically eat meals \n" +
+                    "with one ingredient from each dispenser.",
                     on_confirm: advance_stage)
             };
             return _tutorial_stages;

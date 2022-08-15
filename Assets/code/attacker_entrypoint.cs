@@ -534,7 +534,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             "connecting a forge designates that room as a foundry. Inpect the forge to see what other " +
             "buildings are needed to make a working foundry.";
 
-        help_book.add_entry("towns", help_text);
+        help_book.add_entry("towns/basics", help_text);
 
         // Add geometry change listener
         world.add_geometry_change_listener((regions) =>
