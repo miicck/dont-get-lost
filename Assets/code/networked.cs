@@ -21,6 +21,20 @@ public interface IExtendsNetworked
         public bool_callback on_forget;
         public networked_callback on_add_networked_child;
         public networked_callback on_delete_networked_child;
+
+        public static callbacks combine_callbacks(IEnumerable<callbacks> to_combine)
+        {
+            var ret = new callbacks();
+            foreach (var c in to_combine)
+            {
+                ret.init_networked_variables += c.init_networked_variables;
+                ret.on_auth_change += c.on_auth_change;
+                ret.on_forget += c.on_forget;
+                ret.on_add_networked_child += c.on_add_networked_child;
+                ret.on_delete_networked_child += c.on_delete_networked_child;
+            }
+            return ret;
+        }
     }
 }
 

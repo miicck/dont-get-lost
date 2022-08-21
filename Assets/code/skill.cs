@@ -130,7 +130,7 @@ public class skill : MonoBehaviour
                 if (Application.isPlaying)
                     for (int i = 0; i < _all.Length; ++i)
                         if (_all[i].default_priority != i)
-                            throw new System.Exception("Default priorites are not set correctly!");
+                            Debug.LogError("Default priorites are not set correctly!");
             }
             return _all;
         }

@@ -1,9 +1,3 @@
-Ongoing
-- Create unique sprites for everything
-- More foliage? (small plants/flowers)
-- Buildings take a wider variety of materials (too many plank+log+x buildings - 
-  would help with crafting menu clutter/introduce progression)
-
 TODO
 - Work out the exact swing-path of melee weapons in order to interpolate and detect collisions
 - Optimize chase paths
@@ -13,7 +7,6 @@ TODO
 - Point-to-point connection building (e.g ropes for a rope bridge)
 - Remove the off-by-one thing happenng with player.slot_equipped (not a bug, just
   at some points in the code is indexed from 0 and others from 1, which is mildly annoying).
-- Pickup/dropoff points for settlers to move items around?
 - Make it more obvious which side of a ladder is the front?
 - Make time command work from non-auth clients
 - PvP hit markers
@@ -47,3 +40,8 @@ TODO
 - Subtutorials - the below should not really be order-dependant:
 	- Tutorial step for dining table (triggers when the player first makes one)
 	- Tutorial step for breadmaking (triggers when the player first researches breadmaking)
+- More foliage? (small plants/flowers)
+- Buildings take a wider variety of materials (too many plank+log+x buildings - 
+  would help with crafting menu clutter/introduce progression)
+- Town name markers when far away
+- Debug save+exit/re-enter game

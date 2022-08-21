@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa822c40410bfa140821816bb4a2983b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  default_priority: 14
+  default_priority: 15
   is_visible: 1
-  possible_when_under_attack: 0
+  family: 3

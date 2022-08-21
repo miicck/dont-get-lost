@@ -154,12 +154,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             foreach (var ui_inter in utils.raycast_all_ui_under_mouse<IPlayerInteractable>())
                 all_interactions.AddRange(ui_inter.player_interactions(default));
 
-        // Get in-world interactable (only on authority client)
-        if (has_authority) all_interactions.AddRange(raycast_for_interactions());
-
         // Get equipped interactions
         if (equipped != null)
             all_interactions.AddRange(equipped?.item_uses());
+
+        // Get in-world interactable (only on authority client)
+        if (has_authority) all_interactions.AddRange(raycast_for_interactions());
 
         // Add self interactions to list
         all_interactions.AddRange(self_interactions);
