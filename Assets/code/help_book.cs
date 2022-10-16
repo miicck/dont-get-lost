@@ -18,10 +18,16 @@ public static class help_book
         {
             tree[i] = tree[i].ToLower().capitalize_each_word();
             if (parent.try_get_subtopic(tree[i], out topic t))
+                // Find this level of the neirarchy
                 parent = t;
             else
-                parent = new topic(tree[i], parent: parent,
-                    content: (i == tree.Length - 1) ? help_text : null);
+                // Create missing intermediate levels of the heirarchy
+                parent = new topic(tree[i], parent: parent);
+
+            // If this is the topic corresponding to this entry
+            // then set the content text
+            if (i == tree.Length - 1)
+                parent.content = help_text;
         }
     }
 
@@ -46,7 +52,7 @@ public static class help_book
     {
         public topic parent { get; private set; }
         public string title { get; private set; }
-        public string content { get; private set; }
+        public string content { get; set; }
 
         public bool try_get_subtopic(string title, out topic t) => _children.TryGetValue(title, out t);
 
@@ -94,8 +100,11 @@ public static class help_book
                     // Find template subtopic button
                     var button_template = _ui.find_child_recursive("SubtopicButton").GetComponent<UnityEngine.UI.Button>();
 
-                    // Setup subtopic buttons
-                    foreach (var c in _children.Values)
+                    // Setup subtopic buttons (alphabetical order)
+                    var subtopics = new List<topic>(_children.Values);
+                    subtopics.Sort((a, b) => a.title.CompareTo(b.title));
+
+                    foreach (var c in subtopics)
                     {
                         // Create a copy of the button in the right container
                         var button = button_template.inst();

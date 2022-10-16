@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class visiting_character : character, ICharacterController, IAddsToInspectionText
 {
+    static visiting_character()
+    {
+        help_book.add_entry("towns/visitors",
+            "Ocassionally, your town will recive visitors."
+        );
+    }
+
+
     public float visiting_time = 60f;
 
     protected override void Start() => visitors.Add(this);

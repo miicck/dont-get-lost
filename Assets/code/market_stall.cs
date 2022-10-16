@@ -4,6 +4,18 @@ using UnityEngine;
 
 public class market_stall : character_walk_to_interactable, IAddsToInspectionText
 {
+    static market_stall()
+    {
+        help_book.add_entry("towns/visitors/market stall",
+            "Certain visitors to a town can trade with a market stall. " +
+            "Items can be put into the market stall that you wish to sell " +
+            "(each market stall can sell only one type of item). A settler " +
+            "with the trading skill will then operate the stall, selling items " +
+            "to visitors. The coins generated will be output from the stall via " +
+            "a slot - so be sure to put something there to catch them!"
+            );
+    }
+
     public town_path_element shopkeeper_path_element;
     public market_stall_buy_from customer_interaction;
 
@@ -116,7 +128,7 @@ public class market_stall : character_walk_to_interactable, IAddsToInspectionTex
     settler_animations.simple_work work_anim;
 
     protected override void on_stage_change(int old_stage, int new_stage) => timer = 0;
-    protected override void on_arrive(character c) =>  work_anim = null;
+    protected override void on_arrive(character c) => work_anim = null;
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)
     {

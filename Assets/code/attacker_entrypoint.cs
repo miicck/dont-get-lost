@@ -514,7 +514,11 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
     static attacker_entrypoint()
     {
-        string help_text =
+        help_book.add_entry("towns",
+            "Settlers can settle in towns. See 'basics' for more details."
+            );
+
+        help_book.add_entry("towns/basics",
             "A town is defined as a collection of buildings that are connected by paths. " +
             "Only certain buildings can connect to the path network. The paths will only be " +
             "shown if you have a connectable building equipped - this is known as \"path-view\" mode.\n\n" +
@@ -532,9 +536,8 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
             "Rooms are seperated by certain objects such as doors, gates and ladders. " +
             "The function of a room depends on the buildings connected to that room. For example, " +
             "connecting a forge designates that room as a foundry. Inpect the forge to see what other " +
-            "buildings are needed to make a working foundry.";
-
-        help_book.add_entry("towns/basics", help_text);
+            "buildings are needed to make a working foundry."
+            );
 
         // Add geometry change listener
         world.add_geometry_change_listener((regions) =>
