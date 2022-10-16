@@ -10,6 +10,20 @@ public class console : MonoBehaviour
     static int command_history_position = 0;
     static int biome_tour_position = 0;
 
+    static console()
+    {
+        string help_text = "Console commands guide\n\n";
+
+        foreach (var c in commands)
+        {
+            help_text += "<b>" + c.Key + "</b>\n";
+            help_text += c.Value.description + "\n";
+            help_text += "<i>" + c.Value.usage_example + "</i>\n\n";
+        }
+
+        help_book.add_entry("Console", help_text);
+    }
+
     public delegate bool console_command(string[] args);
     public struct console_info
     {

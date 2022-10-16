@@ -121,9 +121,15 @@ public class town_level : MonoBehaviour
 
     public bool unlocked(int group)
     {
+        // Previous level needs to be unlocked
+        if (previous != null && !previous.unlocked(group))
+            return false;
+
+        // Requirements need to be satisfied
         foreach (var kv in requirement_sets)
             if (!kv.Value.satisfied(group))
                 return false;
+
         return true;
     }
 

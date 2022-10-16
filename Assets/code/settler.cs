@@ -603,7 +603,7 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
     // STATIC STUFF //
     //##############//
 
-    static HashSet<settler> settlers;
+    static HashSet<settler> settlers = new HashSet<settler>();
     public static int settler_count => settlers.Count;
     new public static void initialize() => settlers = new HashSet<settler>();
     public static settler find_to_min(utils.float_func<settler> f) => utils.find_to_min(settlers, f);

@@ -39,7 +39,7 @@ public class market_stall_buy_from : character_walk_to_interactable
 
     protected override void on_unassign(character c)
     {
-        customer = null;
+            customer = null;
     }
 
     protected override STAGE_RESULT on_interact_arrived(character c, int stage)

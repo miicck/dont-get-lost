@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class drop_off_point : MonoBehaviour, IPlayerInteractable
+public class drop_off_point : MonoBehaviour, IPlayerInteractable, IAddsToInspectionText
 {
     item_output output;
 
@@ -45,4 +45,6 @@ public class drop_off_point : MonoBehaviour, IPlayerInteractable
             };
         return _interactions;
     }
+
+    public string added_inspection_text() => "Drop off point ID: " + GetComponentInParent<networked>().network_id;
 }

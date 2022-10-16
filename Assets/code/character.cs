@@ -304,6 +304,17 @@ public class character : networked,
         Gizmos.DrawWireCube(transform.position, 2 * new Vector3(attack_range, 0, attack_range));
     }
 
+    private void OnDrawGizmosSelected()
+    {
+        if (town_path_element != null)
+        {
+            Gizmos.color = new Color(0, 1, 1, 0.5f);
+            Gizmos.matrix = town_path_element.transform.localToWorldMatrix;
+            Gizmos.DrawCube(Vector3.zero, new Vector3(1, 0.1f, 1));
+            Gizmos.matrix = Matrix4x4.identity;
+        }
+    }
+
     //############//
     // NETWORKING //
     //############//

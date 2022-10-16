@@ -679,6 +679,7 @@ public abstract class character_walk_to_interactable : character_interactable
         switch (path.walk(c, move_to_speed(c)))
         {
             case town_path_element.path.WALK_STATE.COMPLETE:
+                path = null;
                 return STAGE_RESULT.STAGE_COMPLETE;
 
             case town_path_element.path.WALK_STATE.UNDERWAY:
@@ -690,6 +691,7 @@ public abstract class character_walk_to_interactable : character_interactable
                 return STAGE_RESULT.STAGE_UNDERWAY;
 
             default:
+                path = null;
                 return STAGE_RESULT.TASK_FAILED;
         }
     }
