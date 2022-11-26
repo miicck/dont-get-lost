@@ -18,6 +18,7 @@ To setup a unity project for development, follow these steps:
     $ git checkout -t origin/master
     Re-open the unity editor/load the project
     ~~~~
+    - If it refuses to checkout origin/master because it would overwrite local files, delete the local file(s) mentioned and try again.
     - If you're working with a newer version of unity than the last commit in this project, unity may ask to do a 
     reimport. This should be fine. Note that using an older version than the last commit is not supported - update your engine.
     - It might also ask to disable the old input manager, which I still use. You should say no to this.
