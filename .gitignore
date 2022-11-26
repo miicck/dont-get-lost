@@ -7,7 +7,6 @@
 Assembly-CSharp.csproj
 Assets/resources/version_info*
 Assets/code/server
-Assets/Plugins*
 Library/
 Logs/
 Packages/
