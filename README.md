@@ -5,7 +5,7 @@ A procedurally generated video game.
 
 ## Developing
 To setup a unity project for development, follow these steps:
-1. Using the latest version of unity, create a new unity project using the *High Definition RP* (HDRP) template.
+1. Using the latest version of unity, create a new unity project using the *High Definition Render Pipeline* (3D HDRP) template.
 2. Replace the Assets/ and ProjectSettings/ folders (in their entirety) with a clone of this repository. <br>
     Linux steps:
     ~~~~
