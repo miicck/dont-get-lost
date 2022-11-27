@@ -795,11 +795,8 @@ public static class server
             return false;
         }
 
-        // Load the world (or the startup world)
-        if (System.IO.File.Exists(save_file()))
-            load();
-        else
-            load(startup_world: true);
+        // Load the world
+        load();
 
 #if STANDALONE_SERVER
         // Error out if the save file does not exist
@@ -989,19 +986,29 @@ public static class server
     // SAVING/LOADING //
     //################//
 
-    static void load(bool startup_world = false)
+    static void load()
     {
-        string fullpath = null;
+        bool steam_load = steam.file_exists(steam_save_file());
 
-        if (startup_world)
+        // Load from file
+        string fullpath = null;
+        if (steam_load || System.IO.File.Exists(local_save_file()))
+        {
+            fullpath = System.IO.Path.GetFullPath(local_save_file());
+
+            // Copy steam cloud save to local file
+            if (steam_load)
+                System.IO.File.WriteAllBytes(fullpath, steam.load_file(steam_save_file()));
+        }
+
+        // Load from startup file
+        else
         {
             if (new HashSet<string> { "test", "empty" }.Contains(savename.ToLower()))
                 return; // Don't load startup file for test/empty maps
 
-            fullpath = Application.streamingAssetsPath + "/startup.save";
+            fullpath = System.IO.Path.Join(Application.streamingAssetsPath, "/startup.save");
         }
-        else
-            fullpath = System.IO.Path.GetFullPath(save_file());
 
         using (var file = System.IO.File.OpenRead(fullpath))
         using (var decompress = new System.IO.Compression.GZipStream(file,
@@ -1074,7 +1081,7 @@ public static class server
     public static void save(bool autosave = false, bool is_startup = false)
     {
         // The file containing the savegame
-        string filename = autosave ? autosave_file() : save_file();
+        string filename = autosave ? local_autosave_file() : local_save_file();
 
         if (is_startup)
         {
@@ -1154,6 +1161,9 @@ public static class server
                 }
             });
         }
+
+        // Save also to steam cloud
+        steam.save_file(autosave ? steam_autosave_file() : steam_save_file(), System.IO.File.ReadAllBytes(filename));
     }
 
     /// <summary> The byte identifying which kind of 
@@ -1183,20 +1193,20 @@ public static class server
         return saves_dir;
     }
 
-    /// <summary> The file that this session is saved in. </summary>
-    public static string save_file()
-    {
-        return saves_dir() + "/" + savename + ".save";
-    }
+    /// <summary> The local file that this session is saved in. </summary>
+    public static string local_save_file() => System.IO.Path.Join(saves_dir(), savename + ".save");
 
-    /// <summary> The file that this session is autosaved to. </summary>
-    public static string autosave_file()
-    {
-        return saves_dir() + "/" + savename + "_autosave.save";
-    }
+    /// <summary> The steam file that this session is saved in. </summary>
+    public static string steam_save_file() => savename + ".save";
+
+    /// <summary> The local file that this session is autosaved to. </summary>
+    public static string local_autosave_file() => System.IO.Path.Join(saves_dir(), savename + "_autosave.save");
+
+    /// <summary> The steam file that this session is sautosaved to. </summary>
+    public static string steam_autosave_file() => savename + "_autosave.save";
 
     /// <summary> Get an array of all the save files on this machine. </summary>
-    public static string[] existing_saves(bool include_autosaves = false)
+    public static List<string> existing_local_saves(bool include_autosaves = false)
     {
         List<string> saves = new List<string>();
         foreach (var f in System.IO.Directory.GetFiles(saves_dir()))
@@ -1205,7 +1215,20 @@ public static class server
             if (!include_autosaves && f.Contains("autosave")) continue;
             saves.Add(f);
         }
-        return saves.ToArray();
+        return saves;
+    }
+
+    /// <summary> Get an array of all the save files on the steam cloud. </summary>
+    public static List<string> existing_steam_saves(bool include_autosaves = false)
+    {
+        List<string> saves = new List<string>();
+        foreach (var f in steam.list_files())
+        {
+            if (!f.EndsWith(".save")) continue;
+            if (!include_autosaves && f.Contains("autosave")) continue;
+            saves.Add(f);
+        }
+        return saves;
     }
 
     /// <summary> Returns true if the save with the given name already exists. </summary>

@@ -1193,6 +1193,37 @@ public class console : MonoBehaviour
 
             description = "Create the various manager objects containing always-loaded game state data.",
             usage_example = "create_manager_objects"
+        },
+
+        ["show_steam_cloud"] = new console_info
+        {
+            command = (args) =>
+            {
+                foreach (var file in steam.list_files())
+                    popup_message.create(file);
+                return true;
+            },
+
+            description = "List all existing steam cloud files.",
+            usage_example = "show_steam_cloud"
+        },
+
+        ["clear_steam_cloud"] = new console_info
+        {
+            command = (args) =>
+            {
+                foreach (var file in steam.list_files())
+                {
+                    if (steam.delete_file(file))
+                        popup_message.create($"Deleted: {file}");
+                    else
+                        popup_message.create($"Delete failed: {file}");
+                }
+                return true;
+            },
+
+            description = "Delete all steam cloud data.",
+            usage_example = "clear_steam_cloud"
         }
     };
 

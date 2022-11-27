@@ -87,15 +87,25 @@ public class world_menu : MonoBehaviour
         message.text = message_to_display;
         message_to_display = "";
 
-        // Find all the saved worlds
-        var world_files = server.existing_saves();
+        // Find saved worlds (defaulting to steam saves)
+        var world_files = server.existing_steam_saves();
+        var is_steam_world = new List<bool>();
+        foreach (var wf in world_files)
+            is_steam_world.Add(true);
+
+        foreach (var lf in server.existing_local_saves())
+            if (!world_files.Contains(System.IO.Path.GetFileName(lf)))
+            {
+                world_files.Add(lf);
+                is_steam_world.Add(false);
+            }
 
         var load_header = template_header.inst();
         load_header.text = "Load existing world";
-        if (world_files.Length == 0) load_header.text = "No existing worlds";
+        if (world_files.Count == 0) load_header.text = "No existing worlds";
         load_header.transform.SetParent(button_container);
 
-        int world_count = world_files.Length;
+        int world_count = world_files.Count;
 
         // Initialize username input field
         if (steam.connected)
@@ -108,13 +118,17 @@ public class world_menu : MonoBehaviour
             username_input.text = PlayerPrefs.GetString("username");
         }
 
-        foreach (var wf in world_files)
+        for (int i = 0; i < world_files.Count; ++i)
         {
+            var wf = world_files[i];
+            bool is_steam = is_steam_world[i];
+
             var button = template_world_button.inst();
             button.transform.SetParent(button_container);
+            string name = System.IO.Path.GetFileNameWithoutExtension(wf);
 
-            string[] splt = wf.Replace(".save", "").Split('/', '\\');
-            string name = splt[splt.Length - 1];
+            button.Find("disk").gameObject.SetActive(!is_steam);
+            button.Find("cloud").gameObject.SetActive(is_steam);
 
             var load_button = button.Find("load").GetComponent<Button>();
             load_button.GetComponentInChildren<Text>().text = name;
@@ -131,7 +145,10 @@ public class world_menu : MonoBehaviour
             delete_button.onClick.AddListener(() =>
             {
                 Destroy(button.gameObject);
-                System.IO.File.Delete(wf);
+                if (is_steam)
+                    steam.delete_file(System.IO.Path.GetFileName(wf));
+                else
+                    System.IO.File.Delete(wf);
                 Debug.Log(wf);
                 world_count -= 1;
                 if (world_count == 0)

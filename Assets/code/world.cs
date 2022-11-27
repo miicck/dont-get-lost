@@ -78,7 +78,7 @@ public class world : networked, INotSavedInStartupFile
                "    Generating chunks : " + chunk.chunks_generating + " (" +
                     chunk.enabled_and_generating + " enabled, limit render range at " +
                     chunk.generating_limit + ")\n" +
-               "    Save location     : " + server.save_file();
+               "    Save location     : " + server.local_save_file();
     }
 
 #if UNITY_EDITOR

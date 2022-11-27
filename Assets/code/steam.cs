@@ -41,6 +41,7 @@ public static class steam
             catch { return false; }
         }
     }
+
     public static ulong steam_id
     {
         get
@@ -48,6 +49,41 @@ public static class steam
             try { return Steamworks.SteamClient.SteamId.Value; }
             catch { return 0; }
         }
+    }
+
+    public static bool file_exists(string filename)
+    {
+        if (!connected) return false;
+        try { return Steamworks.SteamRemoteStorage.FileExists(filename); }
+        catch { return false; }
+    }
+
+    public static bool save_file(string filename, byte[] data)
+    {
+        if (!connected) return false;
+        try { return Steamworks.SteamRemoteStorage.FileWrite(filename, data); }
+        catch { return false; }
+    }
+
+    public static byte[] load_file(string filename)
+    {
+        if (!connected) return null;
+        try { return Steamworks.SteamRemoteStorage.FileRead(filename); }
+        catch { return null; }
+    }
+
+    public static bool delete_file(string filename)
+    {
+        if (!connected) return false;
+        try { return Steamworks.SteamRemoteStorage.FileDelete(filename); }
+        catch { return false; }
+    }
+
+    public static IEnumerable<string> list_files()
+    {
+        if (!connected) return new List<string> { };
+        try { return Steamworks.SteamRemoteStorage.Files; }
+        catch { return new List<string> { }; }
     }
 }
 
@@ -60,5 +96,11 @@ public static class steam
     public static string username() => PlayerPrefs.GetString("username");
     public static bool connected => false;
     public static ulong steam_id => 0;
+    public static bool file_exists(string filename) => false;
+    public static bool save_file(string filename, byte[] data) => false;
+    public static byte[] load_file(string filename) => null;
+    public static bool delete_file(string filename) => false;
+    public static IEnumerable<string> list_files() => new List<string> { };
+}
 }
 #endif
