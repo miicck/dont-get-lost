@@ -1162,8 +1162,9 @@ public static class server
             });
         }
 
-        // Save also to steam cloud
-        steam.save_file(autosave ? steam_autosave_file() : steam_save_file(), System.IO.File.ReadAllBytes(filename));
+        // Save also to steam cloud (not including autosaves)
+        if (!autosave)
+            steam.save_file(steam_save_file(), System.IO.File.ReadAllBytes(filename));
     }
 
     /// <summary> The byte identifying which kind of 
@@ -1201,9 +1202,6 @@ public static class server
 
     /// <summary> The local file that this session is autosaved to. </summary>
     public static string local_autosave_file() => System.IO.Path.Join(saves_dir(), savename + "_autosave.save");
-
-    /// <summary> The steam file that this session is sautosaved to. </summary>
-    public static string steam_autosave_file() => savename + "_autosave.save";
 
     /// <summary> Get an array of all the save files on this machine. </summary>
     public static List<string> existing_local_saves(bool include_autosaves = false)
