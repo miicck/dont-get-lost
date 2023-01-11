@@ -260,6 +260,10 @@ public class recipe : MonoBehaviour, IRecipeInfo
     {
         string text = "Recipes\n";
 
+        find = find.Trim().ToLower();
+        if (find.EndsWith("s")) // Find singular of plurals
+            find = find.Substring(0, find.Length - 1);
+
         // Add all recipes to the recipe book
         foreach (var kv in all_recipies())
         {
@@ -270,7 +274,7 @@ public class recipe : MonoBehaviour, IRecipeInfo
             foreach (var r in kv.Value)
             {
                 string line = r.recipe_book_string();
-                if (line.ToLower().Contains(find.ToLower()))
+                if (line.ToLower().Contains(find))
                 {
                     entry += "  " + line + "\n";
                     found = true;
