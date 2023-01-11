@@ -21,10 +21,10 @@ To setup a unity project for development, follow these steps:
     - If it refuses to checkout origin/master because it would overwrite local files, delete the local file(s) mentioned and try again.
     - If you're working with a newer version of unity than the last commit in this project, unity may ask to do a 
     reimport. This should be fine. Note that using an older version than the last commit is not supported - update your engine.
-    - It might also ask to disable the old input manager, which I still use. You should say no to this.
+    - It might also ask to disable the old input manager, which is still used. You should say no to this.
     - If it says that there are compilation errors, choose ignore. If they persist after the project loads, submit a bug report.
  
 3. Done! Try playing the Assets/scenes/world_menu scene and creating a new world. Note that, the first time 
 the world is rendered, it might look super weird for a few seconds while the shaders compile for the first time.
 
-Feel free to fire off merge requests with any changes you've made!
+Feel free to fire off merge requests with any fixes you've made!
