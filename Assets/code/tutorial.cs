@@ -87,7 +87,7 @@ public static class tutorial
                     " to open the recipe book \n" +
                     "and search for 'log splitter' in the top right.\n" +
                     "Press " + controls.bind_name(controls.BIND.LEAVE_MENU) + " to close the recipe book.",
-                    new Dictionary<string, int> {["log_splitter"] = 1}, advance_stage),
+                    new Dictionary<string, int> {["log_splitter"] = 1}, advance_stage, show_recipe_book_hint:false),
 
                 () => confirm_window.create(
                     "Good job. In order to build the log splitter, equip it the same way you did with the axe.",
@@ -114,7 +114,7 @@ public static class tutorial
                     "Check the recipe by pressing "+controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) + "\n" +
                     "The stone you need can be harvested from nearby rocks using the pickaxe.",
                     new Dictionary<string, int>{["furnace"] = 1},
-                    advance_stage),
+                    advance_stage, show_recipe_book_hint: false),
 
                 () => confirm_window.create(
                     "Good job - you're getting the hang of this!\n" +
@@ -182,8 +182,7 @@ public static class tutorial
                     advance_stage),
 
                 () => item_requirement_tracker.create(
-                    "Make wooden path (press "+
-                    controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK)+ " for the recipe)",
+                    "Make wooden path",
                     new Dictionary<string, int>{["wooden_path"] = 10},
                     advance_stage),
 

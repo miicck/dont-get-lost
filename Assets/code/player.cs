@@ -139,6 +139,25 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public interaction_set interactions { get; } = new interaction_set();
     public void force_interaction(player_interaction i) => interactions.force_interaction(this, i);
 
+    public class DisabledOnTutorialIslandPlaceholder : player_interaction
+    {
+        player_interaction disabled;
+
+        public DisabledOnTutorialIslandPlaceholder(player_interaction disabled)
+        {
+            this.disabled = disabled;
+        }
+
+        public override controls.BIND keybind => disabled.keybind;
+        public override string context_tip() => disabled.context_tip() + "(disabled in tutorial area)";
+
+        protected override bool on_start_interaction(player player)
+        {
+            popup_message.create("Interaction disabled - try going further from spawn");
+            return base.on_start_interaction(player);
+        }
+    }
+
     void add_interactions()
     {
         if (fly_mode) return; // Don't add interactions in fly mode
@@ -166,7 +185,19 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Remove interactions disabled on tutorial island
         if (current.biome is tutorial_island && !console.creative_mode)
-            all_interactions = new List<player_interaction>(all_interactions.Where((i) => !(i is DisabledOnTutorialIsland)));
+        {
+            var with_tutorial_disabling = new List<player_interaction>();
+            foreach (var i in all_interactions)
+            {
+                if (i is DisabledOnTutorialIsland)
+                {
+                    // Not allowed on tutorial island
+                    with_tutorial_disabling.Add(new DisabledOnTutorialIslandPlaceholder(i));
+                }
+                else with_tutorial_disabling.Add(i); // Allowed on tutorial island
+            }
+            all_interactions = with_tutorial_disabling;
+        }
 
         interactions.add_and_start_compatible(all_interactions, this, update_context_info: has_authority);
     }

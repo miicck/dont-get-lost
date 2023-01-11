@@ -29,7 +29,10 @@ public class item_requirement_tracker : tutorial_object
     }
     bool _is_complete;
 
-    public static item_requirement_tracker create(string hint_text, Dictionary<string, int> requirements, on_complete_func on_complete = null)
+    public static item_requirement_tracker create(
+        string hint_text, Dictionary<string, int> requirements,
+        on_complete_func on_complete = null,
+        bool show_recipe_book_hint = true)
     {
         var ui = Resources.Load<RectTransform>("ui/item_requirement_tracker").inst();
         ui.transform.SetParent(game.canvas.transform);
@@ -40,6 +43,9 @@ public class item_requirement_tracker : tutorial_object
         ret.text_trackers = new Dictionary<string, UnityEngine.UI.Text>();
         ret.on_complete = on_complete;
         ret.hint_text.text = hint_text;
+
+        if (show_recipe_book_hint)
+            ret.hint_text.text += "\nThe recipe book can be opened by pressing " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK);
 
         foreach (var kv in requirements)
         {
