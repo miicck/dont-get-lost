@@ -438,6 +438,7 @@ public abstract class biome : MonoBehaviour
             var method = typeof(biome).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
             var generate_method = method.MakeGenericMethod(t);
 
+#if UNITY_EDITOR
             // If the world is named after a biome, only generate that biome
             // (useful for testing)
             if (t.Name == biome_override)
@@ -446,6 +447,7 @@ public abstract class biome : MonoBehaviour
                 biome_list = new List<MethodInfo> { generate_method };
                 break;
             }
+#endif
 
             // Get biome info, if it exists
             var bi = (biome_info)t.GetCustomAttribute(typeof(biome_info));
@@ -468,12 +470,14 @@ public abstract class biome : MonoBehaviour
             var method = typeof(biome_modifier).GetMethod("generate", BindingFlags.NonPublic | BindingFlags.Static);
             var generate_method = method.MakeGenericMethod(t);
 
+#if UNITY_EDITOR
             if (t.Name == modifier_override)
             {
                 // Enforce the modifier override
                 modifier_list = new List<MethodInfo> { generate_method };
                 break;
             }
+#endif
 
             var bmi = (biome_mod_info)t.GetCustomAttribute(typeof(biome_mod_info));
             if (bmi != null)
@@ -637,8 +641,8 @@ public abstract class biome : MonoBehaviour
 
         /// <summary> Compute a weighted average of a list of points. </summary>
         public static point blend(
-            point[] terrain_points, point[] object_points, 
-            float[] terrain_weights, float[] object_weights, 
+            point[] terrain_points, point[] object_points,
+            float[] terrain_weights, float[] object_weights,
             float random_number)
         {
             point ret = new point

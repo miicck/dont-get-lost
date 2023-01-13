@@ -45,7 +45,7 @@ public class item_requirement_tracker : tutorial_object
         ret.hint_text.text = hint_text;
 
         if (show_recipe_book_hint)
-            ret.hint_text.text += "\nThe recipe book can be opened by pressing " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK);
+            ret.hint_text.text += "\nThe recipe book can be opened by pressing " + controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) + ".";
 
         foreach (var kv in requirements)
         {

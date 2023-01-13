@@ -1004,9 +1004,10 @@ public static class server
         // Load from startup file
         else
         {
+#if UNITY_EDITOR
             if (new HashSet<string> { "test", "empty" }.Contains(savename.ToLower()))
                 return; // Don't load startup file for test/empty maps
-
+#endif
             fullpath = System.IO.Path.Join(Application.streamingAssetsPath, "/startup.save");
         }
 
