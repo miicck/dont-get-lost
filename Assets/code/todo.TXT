@@ -48,3 +48,4 @@ TODO
 - Make it so all building stages in the tutorial have a hint about the recipe book
 - Add the recipe book to the ESC menu
 - Add a help entry about the recipe book
+- Inverted mouse y option
