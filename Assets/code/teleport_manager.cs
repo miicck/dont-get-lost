@@ -59,6 +59,12 @@ public class teleport_manager : networked
         var nearest = utils.find_to_min(destinations,
             (d) => (d.second.value - p.teleport_location.position).magnitude);
 
+        if (nearest == null) {
+            register_portal(p);
+            nearest = utils.find_to_min(destinations,
+                (d) => (d.second.value - p.teleport_location.position).magnitude);
+        }
+
         float dis = (nearest.second.value - p.teleport_location.position).magnitude;
         if (dis > 0.1f)
         {
@@ -75,6 +81,12 @@ public class teleport_manager : networked
     {
         var nearest = utils.find_to_min(destinations,
             (d) => (d.second.value - p.teleport_location.position).magnitude);
+
+        if (nearest == null) {
+            register_portal(p);
+            nearest = utils.find_to_min(destinations,
+                (d) => (d.second.value - p.teleport_location.position).magnitude);
+        }
 
         float dis = (nearest.second.value - p.teleport_location.position).magnitude;
         if (dis > 0.1f)
