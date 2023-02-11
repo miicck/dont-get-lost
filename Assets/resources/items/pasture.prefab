@@ -99,7 +99,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 787229495e198864ca96a2cb443f9d7b, type: 3}
-  plural: pasture
+  plural: pastures
   value: 6
   axes_scale: 1
 --- !u!114 &7348782335624950702
@@ -136,9 +136,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4807914957632271833}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 1, y: 0.05, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &4224308075563695876
@@ -291,6 +299,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 4657092578980884849}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 12da63783aef2794f90e7f799c577767, type: 3}
@@ -358,6 +367,9 @@ PrefabInstance:
       value: pasture
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 12da63783aef2794f90e7f799c577767, type: 3}
 --- !u!4 &2351081718338149818 stripped
 Transform:
