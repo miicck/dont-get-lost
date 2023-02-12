@@ -54,24 +54,38 @@ public class teleport_manager : networked
         destinations.remove_at(to_remove);
     }
 
-    public string attempt_rename_portal(portal p, string new_name)
+    networked_pair<net_string, net_vector3> lookup_portal_at_position(Vector3 position, portal fallback=null)
     {
         var nearest = utils.find_to_min(destinations,
-            (d) => (d.second.value - p.teleport_location.position).magnitude);
+            (d) => (d.second.value - position).magnitude);
 
-        if (nearest == null) {
-            register_portal(p);
+        if (nearest == null) 
+        {
+            if (fallback == null)
+            {
+                Debug.LogError("No portals, and no fallback during lookup!");
+                return null;
+            }
+
+            Debug.Log("Portal fallback triggered - a portal was not registered properly!");
+            register_portal(fallback);
             nearest = utils.find_to_min(destinations,
-                (d) => (d.second.value - p.teleport_location.position).magnitude);
+                (d) => (d.second.value - position).magnitude);
         }
 
-        float dis = (nearest.second.value - p.teleport_location.position).magnitude;
+        float dis = (nearest.second.value - position).magnitude;
         if (dis > 0.1f)
         {
-            Debug.LogError("Portal moved, or not registered?");
-            return "RENAME FAILED";
+            Debug.LogError("No registered portal at the requested location!");
+            return null;
         }
 
+        return nearest;
+    }
+
+    public string attempt_rename_portal(portal p, string new_name)
+    {
+        var nearest = lookup_portal_at_position(p.teleport_location.position, fallback: p);
         nearest.first.value = new_name;
         destinations.set_dirty();
         return nearest.first.value;
@@ -79,18 +93,7 @@ public class teleport_manager : networked
 
     public string get_portal_name(portal p)
     {
-        var nearest = utils.find_to_min(destinations,
-            (d) => (d.second.value - p.teleport_location.position).magnitude);
-
-        if (nearest == null) {
-            register_portal(p);
-            nearest = utils.find_to_min(destinations,
-                (d) => (d.second.value - p.teleport_location.position).magnitude);
-        }
-
-        float dis = (nearest.second.value - p.teleport_location.position).magnitude;
-        if (dis > 0.1f)
-            throw new System.Exception("Portal moved, or not registered?");
+        var nearest = lookup_portal_at_position(p.teleport_location.position, fallback: p);
         return nearest.first.value;
     }
 
