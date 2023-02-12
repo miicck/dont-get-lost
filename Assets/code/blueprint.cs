@@ -356,7 +356,10 @@ public class blueprint : MonoBehaviour
         // Don't allow translation into tutorial island
         var b = biome.at(v);
         if (b != null && b is tutorial_island)
+        {
+            popup_message.create("Can't translate buildings into tutorial area!");
             return;
+        }
 
         Vector3 delta = v - transform.position;
         accumulated_adjustment += delta.magnitude / 0.1f;
