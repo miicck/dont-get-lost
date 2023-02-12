@@ -47,16 +47,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 2987a9edb93f4734db7c46ece2a8cc0f, type: 3}
-  plural: banana hat
+  plural: banana hats
   value: 2
   location: 0
   handedness: 0
   size: {x: 1, y: 1, z: 1}
+  settler_can_generate_with: 0
 --- !u!1001 &1320769279409149959
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 2782077624410490445}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a8025c3b9f571b342b5ac844a9e7621a, type: 3}
@@ -128,6 +130,9 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a8025c3b9f571b342b5ac844a9e7621a, type: 3}
 --- !u!4 &1575954016634093548 stripped
 Transform:

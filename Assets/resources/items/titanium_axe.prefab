@@ -49,7 +49,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1f9d425231b7e2c45a97298b7ccf2dab, type: 3}
-  plural: iron axes
+  plural: titanium axes
   value: 50
   damage: 30
   swing_time: 0.5
@@ -66,10 +66,21 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5433202764079640904}
-  serializedVersion: 2
+  serializedVersion: 4
   m_Mass: 1
   m_Drag: 0
   m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
@@ -83,9 +94,17 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5433202764079640904}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 1
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
   m_Size: {x: 0.04, y: 0.08, z: 0.19}
   m_Center: {x: 0, y: 0.285, z: 0.035}
 --- !u!1001 &3013312221735352935
@@ -93,6 +112,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 5433202764079640911}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 006baccd66b65bb4897dfb2a3686c1fb, type: 3}
@@ -168,6 +188,9 @@ PrefabInstance:
       value: titanium_axe
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 006baccd66b65bb4897dfb2a3686c1fb, type: 3}
 --- !u!4 &3340499932407504268 stripped
 Transform:

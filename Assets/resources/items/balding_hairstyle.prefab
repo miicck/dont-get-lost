@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 61c769892efcfbb45b280d84bac26202, type: 3}
-  plural: dreadlocks hairstyles
+  plural: balding hairstyles
   value: 2
   location: 0
   handedness: 0
@@ -58,6 +58,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 2782077624410490445}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
@@ -125,6 +126,9 @@ PrefabInstance:
       value: balding_hairstyle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f3e8ce0a03a8c8f42b97b79bf0880fda, type: 3}
 --- !u!4 &3302198220009158079 stripped
 Transform:
