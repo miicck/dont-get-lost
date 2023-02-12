@@ -349,8 +349,14 @@ public class blueprint : MonoBehaviour
             if ((player.current.transform.position - v).magnitude > game.render_range)
                 return;
 
+        // Reject nan/inf translation
         for (int i = 0; i < 3; ++i)
             if (float.IsNaN(v[i]) || float.IsInfinity(v[i])) return;
+
+        // Don't allow translation into tutorial island
+        var b = biome.at(v);
+        if (b != null && b is tutorial_island)
+            return;
 
         Vector3 delta = v - transform.position;
         accumulated_adjustment += delta.magnitude / 0.1f;
