@@ -226,6 +226,7 @@ items/sapphire 1 True
 items/ladder 1 True
 inventories/chest 1 True
 inventories/settler_inventory 1 True
+items/baked_potato 1 True
 items/rough_stone_wall 1 True
 items/banana_hat 1 True
 items/potato_planter 1 True
