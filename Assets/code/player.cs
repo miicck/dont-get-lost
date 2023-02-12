@@ -1045,12 +1045,12 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity);
 
         if (!map_open)
-            x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity;
+            x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity  * (controls.invert_mouse_y ? -1 : 1);
         else
         {
             // In map, so up/down rotation isn't networked    
             float eye_x = eye_transform.localRotation.eulerAngles.x;
-            eye_x -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity;
+            eye_x -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity * (controls.invert_mouse_y ? -1 : 1);
             eye_x = Mathf.Clamp(eye_x, 0, 90);
             eye_transform.localRotation = Quaternion.Euler(eye_x, 0, 0);
         }

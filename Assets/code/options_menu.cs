@@ -260,6 +260,10 @@ public class options_menu : MonoBehaviour
                 controls.key_based_building = value;
                 break;
 
+            case "invert_mouse_y":
+                controls.invert_mouse_y = value;
+                break;
+
             default:
                 throw new System.Exception("Unkown bool option: " + name);
         }
