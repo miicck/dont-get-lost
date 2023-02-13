@@ -18,6 +18,12 @@ public class game : MonoBehaviour
     public GameObject loading_message;
     public GameObject controls_debug_panel;
 
+    static game()
+    {
+        // Generate community-provided documentation
+        community_documentation.generate();
+    }
+
     //#################//
     // UNITY CALLBACKS //
     //#################//
