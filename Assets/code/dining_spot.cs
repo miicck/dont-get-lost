@@ -214,7 +214,7 @@ public class dining_spot : character_walk_to_interactable, IAddsToInspectionText
     static dining_spot()
     {
         help_book.add_entry("towns/Dining spots",
-            "A room with a dining spot (e.g a dining table with chairs) allows you " +
+            "A room with a dining spot (e.g a dining table with chairs in its inventory) allows you " +
             "to control the diet of settlers. Settlers interacting with a given dining " +
             "spot will construct a meal consisting of one food item from each food dispenser " +
             "(e.g, a pantry) in the same room."
