@@ -34,7 +34,7 @@ public class food : MonoBehaviour
 
     public enum GROUP
     {
-        PROTIEN,
+        PROTEIN,
         CARBOHYDRATES,
         VITAMINS,
         FIBRE,
