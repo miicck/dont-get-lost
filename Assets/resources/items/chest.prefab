@@ -283,7 +283,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8762537085034036253}
-  - {fileID: 986823912078635995}
   - {fileID: 3559583511416019898}
   - {fileID: 5517838035504641237}
   - {fileID: 3393507599046203921}
@@ -292,6 +291,7 @@ Transform:
   - {fileID: 757111879404681462}
   - {fileID: 7134838803427212744}
   - {fileID: 8922733259962713583}
+  - {fileID: 986823912078635995}
   - {fileID: 2404787497281977318}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -553,6 +553,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6776418774877819747}
     m_Modifications:
     - target: {fileID: 3730966561557609311, guid: 2e05e35d4ec69d54984f305fe7b43f6a, type: 3}
@@ -604,6 +605,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 2e05e35d4ec69d54984f305fe7b43f6a, type: 3}
 --- !u!4 &8762537085034036253 stripped
 Transform:
