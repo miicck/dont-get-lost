@@ -18,12 +18,20 @@ public class inspect_info : MonoBehaviour
 
     public void turn_on(string text, Sprite primary, Sprite secondary)
     {
+        gameObject.SetActive(true); 
         info_text.text = text;
         image_upper.sprite = primary;
         image_upper.enabled = primary != null;
         image_lower.sprite = secondary;
         image_lower.enabled = secondary != null;
-        gameObject.SetActive(true);
+
+        foreach(var lg in GetComponentsInChildren<UnityEngine.UI.HorizontalOrVerticalLayoutGroup>())
+        {
+            // Force re-evaluation of layout groups
+            // to make inspect window expand to text
+            lg.enabled = false;
+            lg.enabled = true;
+        }
     }
 
     public void turn_off()
@@ -72,7 +80,9 @@ public class player_inspectable : player_interaction
             if (txt == null) continue;
             str += "\n" + txt.Trim();
         }
+
         inspect_info.turn_on(str, sprite?.Invoke(), secondary_sprite?.Invoke());
+        
     }
 
     protected override bool on_start_interaction(player player)
