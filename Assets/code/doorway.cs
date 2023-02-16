@@ -7,12 +7,13 @@ using UnityEngine;
 public class doorway : town_path_element, IAddsToInspectionText
 {
     public Transform door;
+    public Component detection_center;
     public AXIS door_axis;
     public float closed_angle;
     public float open_angle;
 
     int in_use_by = 0;
-    bool opening => in_use_by > 0 || (player.current != null && player.current.distance_to(this) < 2f);
+    bool opening => in_use_by > 0 || (player.current != null && player.current.distance_to(detection_center) < 2f);
     float door_angle = 0;
 
     public override void on_character_enter(character s) { ++in_use_by; }
