@@ -18,7 +18,7 @@ public abstract class character_interactable_options : character_walk_to_interac
         var ret = base.get_callbacks();
         ret.init_networked_variables += () =>
         {
-            option_index = new networked_variables.net_int(min_value: 0, max_value: options_count - 1);
+            option_index = new networked_variables.net_int();
         };
         return ret;
     }
@@ -57,9 +57,9 @@ public abstract class character_interactable_options : character_walk_to_interac
             this.options = options;
         }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
-            var ret = Resources.Load<RectTransform>("ui/resource_gatherer").inst();
+            var ret = Resources.Load<RectTransform>("ui/resource_gatherer").inst(parent);
             ret.GetComponentInChildren<UnityEngine.UI.Text>().text = options.options_title;
             return ret;
         }
@@ -75,7 +75,7 @@ public abstract class character_interactable_options : character_walk_to_interac
             for (int i = 0; i < options.options_count; ++i)
             {
                 // Create a button for each option
-                var trans = Resources.Load<RectTransform>("ui/resource_option_button").inst();
+                var trans = Resources.Load<RectTransform>("ui/resource_option_button").inst(content);
                 var but = trans.GetComponentInChildren<UnityEngine.UI.Button>();
                 var text = trans.GetComponentInChildren<UnityEngine.UI.Text>();
 
@@ -91,8 +91,6 @@ public abstract class character_interactable_options : character_walk_to_interac
                 var opt = options.get_option(i);
                 text.text = opt.text;
                 image.sprite = opt.sprite;
-
-                trans.SetParent(content);
 
                 if (i == options.option_index.value)
                 {
@@ -193,8 +191,8 @@ public class character_resource_gatherer : character_interactable_options, IAdds
 
         // Sort alphabetically by text
         harvest_options.Sort((a, b) =>
-            item_product.product_plurals_list(a.products).CompareTo(
-                item_product.product_plurals_list(b.products)));
+            product.product_plurals_list(a.products).CompareTo(
+            product.product_plurals_list(b.products)));
 
         menu_options = new List<option>();
         foreach (var h in harvest_options)
@@ -209,7 +207,7 @@ public class character_resource_gatherer : character_interactable_options, IAdds
     // settler_interactable_options //
     //##############################//
 
-    protected override option get_option(int i) { return menu_options[i]; }
+    protected override option get_option(int i) => menu_options[i];
     protected override int options_count => menu_options == null ? 0 : menu_options.Count;
     protected override string options_title => "Harvesting";
 
@@ -220,9 +218,9 @@ public class character_resource_gatherer : character_interactable_options, IAdds
     public override string added_inspection_text()
     {
         if (harvest_options == null) return "Waiting for chunks to generate";
-        return base.added_inspection_text() + "\n" +
-         ((harvesting == null) ? "Nothing in harvest range." :
-         "Harvesting " + item_product.product_plurals_list(harvesting.products));
+        if (harvest_options.Count == 0) return "Nothing in harvest range";
+        if (harvesting == null) return "No product selected";
+        return "Harvesting " + product.product_plurals_list(harvesting.products);
     }
 
     //######################//
