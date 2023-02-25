@@ -102,9 +102,8 @@ public class teleport_manager : networked
         var btn = Resources.Load<UnityEngine.UI.Button>("ui/teleport_button");
         foreach (var d in destinations)
         {
-            var b = btn.inst();
+            var b = btn.inst(parent);
             b.GetComponentInChildren<UnityEngine.UI.Text>().text = d.first.value;
-            b.transform.SetParent(parent);
 
             Vector3 target = d.second.value; // Copy for lambda
 

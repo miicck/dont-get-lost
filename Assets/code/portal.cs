@@ -34,9 +34,9 @@ public class portal : building_material, IPlayerInteractable
         portal portal;
         public menu(portal portal) : base(portal.display_name) { this.portal = portal; }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
-            var ui = Resources.Load<RectTransform>(portal.portal_ui()).inst();
+            var ui = Resources.Load<RectTransform>(portal.portal_ui()).inst(parent);
             var pr = ui.GetComponentInChildren<portal_renamer>();
 
             pr.field.onValueChanged.AddListener((new_val) =>

@@ -452,10 +452,15 @@ public abstract class left_player_menu : player_interaction
     }
     RectTransform _menu;
 
-    protected void close() { close_requested = true; }
+    protected void close() => close_requested = true;
 
     // IMPLEMENTATION //
-    abstract protected RectTransform create_menu();
+    virtual protected RectTransform create_menu() => create_menu(game.canvas.transform);
+    virtual protected RectTransform create_menu(Transform parent) => null;
+
+    // Switch to this to see which implementations override create_menu() rather than create_menu(parent)
+    //abstract protected RectTransform create_menu(Transform parent);
+
     protected virtual void on_open() { }
     protected virtual void on_close() { }
 }
