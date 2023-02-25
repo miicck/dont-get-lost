@@ -118,8 +118,7 @@ public static class production_tracker
         if (ui == null)
         {
             // Create the ui
-            ui = Resources.Load<RectTransform>("ui/production_info").inst();
-            ui.SetParent(game.canvas.transform);
+            ui = Resources.Load<RectTransform>("ui/production_info").inst(game.canvas.transform);
             ui.anchoredPosition = Vector2.zero;
 
             // Get the entry template (which remains disabled)
@@ -152,9 +151,8 @@ public static class production_tracker
         foreach (var kv in current_production())
         {
             // Create the entries for each item in production
-            var entry = entry_template.inst();
+            var entry = entry_template.inst(scroll_rect.content);
             entry.gameObject.SetActive(true);
-            entry.transform.SetParent(scroll_rect.content);
 
             entry.Find("sprite").GetComponent<UnityEngine.UI.Image>().sprite = kv.Key.sprite;
             entry.Find("name").GetComponent<UnityEngine.UI.Text>().text = kv.Key.plural;
