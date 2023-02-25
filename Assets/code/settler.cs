@@ -221,9 +221,9 @@ public class settler : character, IPlayerInteractable, ICanEquipArmour
         UnityEngine.UI.Text info_panel_text;
         settler settler;
 
-        public left_menu(settler settler) : base(settler.name) { this.settler = settler; }
-        public override inventory editable_inventory() { return settler.inventory; }
-        protected override RectTransform create_menu() { return settler.inventory.ui; }
+        public left_menu(settler settler) : base(settler.name) => this.settler = settler;
+        public override inventory editable_inventory() => settler.inventory;
+        protected override RectTransform create_menu(Transform parent) => settler.inventory.ui;
         protected override void on_open()
         {
             settler.players_interacting_with.value += 1;
