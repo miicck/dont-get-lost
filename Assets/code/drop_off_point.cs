@@ -23,9 +23,9 @@ public class drop_off_point : MonoBehaviour, IPlayerInteractable, IAddsToInspect
         drop_off_point point;
         public menu_interaction(string name, drop_off_point point) : base(name) { this.point = point; }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
-            var menu = Resources.Load<RectTransform>("ui/drop_off_point").inst();
+            var menu = Resources.Load<RectTransform>("ui/drop_off_point").inst(parent);
             var text = menu.find_child_recursive("drop_off_id_text")?.GetComponent<UnityEngine.UI.Text>();
             if (text == null)
                 Debug.LogError("No ID text field found in drop off point menu!");
