@@ -47,8 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   align_with_terrain_normal: 0
   y_rotation_mode: 2
-  min_scale: 0.5
-  max_scale: 2
   min_altitude: 16
   max_altitude: 128
   max_terrain_angle: 90
@@ -59,11 +57,13 @@ MonoBehaviour:
   randomize_color_on: {fileID: 0}
   min_scales: {x: 0.5, y: 0.5, z: 0.5}
   max_scales: {x: 2, y: 2, z: 2}
+  seperate_scale_factor: 0
 --- !u!1001 &9032106844973275349
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7462567937436525847}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 79cf5e305a2e7a840a446c34428f403d, type: 3}
@@ -135,7 +135,58 @@ PrefabInstance:
       value: overhanging_tree
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 79cf5e305a2e7a840a446c34428f403d, type: 3}
+--- !u!1 &8562502731468876465 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8391222552659086748, guid: 79cf5e305a2e7a840a446c34428f403d, type: 3}
+  m_PrefabInstance: {fileID: 9032106844973275349}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &504122634920431507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562502731468876465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00f4cd4a5d57c6468ee8388aa033fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  item: {fileID: 5958533926469463853, guid: 78b30285bd1d9cf41be0bf89194729eb, type: 3}
+  min_count: 1
+  max_count: 1
+  one_in_chance: 1
+--- !u!114 &1516882846157997632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562502731468876465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782ccdd8afe87cb4c9ac704d854fb086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  item: {fileID: 0}
+  tool_type: 0
+  tool_quality: 0
+--- !u!114 &1560103722237122849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8562502731468876465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ed761fd08a12c44ab18ca537bf9fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &8850351924864417598 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 79cf5e305a2e7a840a446c34428f403d, type: 3}
