@@ -20,6 +20,14 @@ public static class utils
         return ret;
     }
 
+    // Create an exact copy of the object t with the given parent
+    public static T inst<T>(this T t, Transform parent) where T : Object
+    {
+        var ret = Object.Instantiate(t, parent);
+        ret.name = t.name;
+        return ret;
+    }
+
     // Returns true if i is within size range
     public static bool in_range(int i, int size)
     {

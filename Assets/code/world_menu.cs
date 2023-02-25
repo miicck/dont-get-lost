@@ -75,13 +75,11 @@ public class world_menu : MonoBehaviour
 
     ulong user_id => steam.connected ? steam.steam_id : 0;
 
-    private void Start()
+    void setup_buttons()
     {
         // Ensure the mouse is visible
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-
-        hd_camera = menu_camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
 
         // Display the message, but reset it for next time
         message.text = message_to_display;
@@ -100,10 +98,9 @@ public class world_menu : MonoBehaviour
                 is_steam_world.Add(false);
             }
 
-        var load_header = template_header.inst();
+        var load_header = template_header.inst(button_container);
         load_header.text = "Load existing world";
         if (world_files.Count == 0) load_header.text = "No existing worlds";
-        load_header.transform.SetParent(button_container);
 
         int world_count = world_files.Count;
 
@@ -123,8 +120,7 @@ public class world_menu : MonoBehaviour
             var wf = world_files[i];
             bool is_steam = is_steam_world[i];
 
-            var button = template_world_button.inst();
-            button.transform.SetParent(button_container);
+            var button = template_world_button.inst(button_container);
             string name = System.IO.Path.GetFileNameWithoutExtension(wf);
 
             button.Find("disk").gameObject.SetActive(!is_steam);
@@ -156,17 +152,15 @@ public class world_menu : MonoBehaviour
             });
         }
 
-        var create_header = template_header.inst();
+        var create_header = template_header.inst(button_container);
         create_header.text = "Create new world";
-        create_header.transform.SetParent(button_container);
 
         // Move world name/seed inputs to bottom
         world_name_input.transform.SetAsLastSibling();
         world_seed_input.transform.SetAsLastSibling();
 
         // Create new world button
-        var new_world = template_button.inst();
-        new_world.transform.SetParent(button_container);
+        var new_world = template_button.inst(button_container);
         new_world.GetComponentInChildren<Text>().text = "New world";
         new_world.onClick.AddListener(() =>
         {
@@ -195,12 +189,10 @@ public class world_menu : MonoBehaviour
             game.create_and_host_world(name, seed, username, user_id);
         });
 
-        var join_header = template_header.inst();
+        var join_header = template_header.inst(button_container);
         join_header.text = "Join game over network";
-        join_header.transform.SetParent(button_container);
 
-        var join_button = template_button.inst();
-        join_button.transform.SetParent(button_container);
+        var join_button = template_button.inst(button_container);
         join_button.GetComponentInChildren<Text>().text = "Join";
         join_button.onClick.AddListener(() =>
         {
@@ -221,12 +213,10 @@ public class world_menu : MonoBehaviour
 
         update_steam_friends();
 
-        var quit_header = template_header.inst();
+        var quit_header = template_header.inst(button_container);
         quit_header.text = "";
-        quit_header.transform.SetParent(button_container);
 
-        var quit_button = template_button.inst();
-        quit_button.transform.SetParent(button_container);
+        var quit_button = template_button.inst(button_container);
         quit_button.GetComponentInChildren<Text>().text = "Quit game";
         quit_button.onClick.AddListener(() =>
         {
@@ -245,6 +235,12 @@ public class world_menu : MonoBehaviour
         InvokeRepeating("update_steam_friends", 1, 1);
     }
 
+    private void Start()
+    {
+        hd_camera = menu_camera.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+        setup_buttons();
+    }
+
     Text steam_friends_header;
     Dictionary<ulong, client.join_query> joinable_queries = new Dictionary<ulong, client.join_query>();
     Dictionary<ulong, string> joinable_queries_unames = new Dictionary<ulong, string>();
@@ -257,9 +253,8 @@ public class world_menu : MonoBehaviour
 
         if (steam_friends_header == null)
         {
-            steam_friends_header = template_header.inst();
+            steam_friends_header = template_header.inst(button_container);
             steam_friends_header.text = "Join steam friends";
-            steam_friends_header.transform.SetParent(button_container);
         }
 
         // Delete old steam information
@@ -315,7 +310,7 @@ public class world_menu : MonoBehaviour
                 var query = kv.Value;
 
                 ++friends_count;
-                var join_friend_button = template_button.inst();
+                var join_friend_button = template_button.inst(button_container);
                 join_friend_button.gameObject.SetActive(true);
                 join_friend_button.name = "steam_friend_" + id;
                 join_friend_button.GetComponentInChildren<Text>().text =
@@ -324,7 +319,6 @@ public class world_menu : MonoBehaviour
                 if (!query.result)
                     join_friend_button.colors = ui_colors.greyed_out_color_block(fade_duration: 0);
 
-                join_friend_button.transform.SetParent(button_container.transform);
                 join_friend_button.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
 
                 join_friend_button.onClick.AddListener(() =>
@@ -337,20 +331,18 @@ public class world_menu : MonoBehaviour
 
             if (friends_count == 0) // :'(
             {
-                var no_friends_header = template_header.inst();
+                var no_friends_header = template_header.inst(button_container);
                 no_friends_header.gameObject.SetActive(true);
                 no_friends_header.name = "steam_no_friends";
-                no_friends_header.transform.SetParent(button_container);
                 no_friends_header.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
                 no_friends_header.text = "No steam friends in-game";
             }
         }
         else
         {
-            var not_connected_header = template_header.inst();
+            var not_connected_header = template_header.inst(button_container);
             not_connected_header.gameObject.SetActive(true);
             not_connected_header.name = "steam_not_connected";
-            not_connected_header.transform.SetParent(button_container);
             not_connected_header.transform.SetSiblingIndex(steam_friends_header.transform.GetSiblingIndex() + 1);
             not_connected_header.text = "Not connected to steam";
         }
