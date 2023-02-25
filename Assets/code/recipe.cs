@@ -9,9 +9,9 @@ public class recipe : MonoBehaviour, IRecipeInfo
     public product[] products => GetComponents<product>();
     public ingredient[] ingredients => GetComponents<ingredient>();
 
-    public crafting_entry get_entry()
+    public crafting_entry get_entry(Transform parent)
     {
-        var ce = crafting_entry.create();
+        var ce = crafting_entry.create(parent);
         ce.image.sprite = products[0].sprite;
         ce.text.text = craft_string();
         return ce;

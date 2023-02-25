@@ -55,8 +55,7 @@ public class crafting_input : MonoBehaviour
 
             if (can_craft || saved_recipe_buttons.Contains(rec))
             {
-                var entry = rec.get_entry();
-                entry.transform.SetParent(options_go_here);
+                var entry = rec.get_entry(options_go_here);
                 saved_recipe_buttons.Add(rec);
 
                 if (can_craft) entry.button.onClick.AddListener(() =>

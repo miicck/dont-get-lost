@@ -225,20 +225,20 @@ public class auto_crafter : building_material, IPlayerInteractable
                 recipe_buttons[crafter.chosen_recipe.value].button.onClick.Invoke();
         }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
             if (crafter.outputs.Length == 0 || crafter.inputs.Length == 0)
                 return null;
 
             recipe_buttons = new crafting_entry[crafter.recipies.Length];
 
-            var left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst();
+            var left_menu = Resources.Load<RectTransform>("ui/autocrafter").inst(parent);
             var content = left_menu.GetComponentInChildren<UnityEngine.UI.ScrollRect>().content;
 
             for (int i = 0; i < crafter.recipies.Length; ++i)
             {
                 // Create the recipe selection button
-                recipe_buttons[i] = crafter.recipies[i].get_entry();
+                recipe_buttons[i] = crafter.recipies[i].get_entry(parent);
                 var button_i = recipe_buttons[i];
                 button_i.transform.SetParent(content);
 
