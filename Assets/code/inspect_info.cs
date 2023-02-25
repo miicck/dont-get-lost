@@ -110,8 +110,7 @@ public class player_inspectable : player_interaction
             // Create the inspect_info object if it doesn't already exist
             if (_inspect_info == null)
             {
-                _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst();
-                _inspect_info.transform.SetParent(game.canvas.transform);
+                _inspect_info = Resources.Load<inspect_info>("ui/inspect_info").inst(game.canvas.transform);
                 _inspect_info.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             }
 
