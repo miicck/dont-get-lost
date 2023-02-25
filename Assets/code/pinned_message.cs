@@ -19,8 +19,7 @@ public class pinned_message : MonoBehaviour
             if (ui == null)
             {
                 // Create the ui
-                ui = Resources.Load<RectTransform>("ui/pinned_message").inst();
-                ui.SetParent(game.canvas.transform);
+                ui = Resources.Load<RectTransform>("ui/pinned_message").inst(game.canvas.transform);
 
                 foreach (RectTransform child in ui)
                 {
