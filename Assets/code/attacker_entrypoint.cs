@@ -55,7 +55,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         // Don't do anything until the world has loaded
         if (game.loading) return;
 
-        if (!element.is_extremety)
+        if (element == null || !element.is_extremety)
         {
             // Only path from extremities
             draw_path = false;
