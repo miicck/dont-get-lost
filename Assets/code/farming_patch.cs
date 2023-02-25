@@ -119,10 +119,10 @@ public class farming_patch : building_with_inventory, IPlayerInteractable
     class menu : left_player_menu
     {
         farming_patch spot;
-        public menu(farming_patch spot) : base(spot.display_name) { this.spot = spot; }
-        protected override RectTransform create_menu() { return spot.inventory.ui; }
-        public override inventory editable_inventory() { return spot.inventory; }
-        protected override void on_open() { spot.update_growth(); }
+        public menu(farming_patch spot) : base(spot.display_name) => this.spot = spot;
+        protected override RectTransform create_menu(Transform parent) => spot.inventory.ui;
+        public override inventory editable_inventory() => spot.inventory;
+        protected override void on_open() => spot.update_growth();
     }
 }
 
