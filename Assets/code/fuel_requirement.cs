@@ -47,9 +47,9 @@ public class fuel_requirement : ingredient
             }
             else if (available <= required)
             {
-                // Use up all of this item
+                // Use up all of the available item
                 remaining -= itm.fuel_value * available;
-                in_use[itm.name] = kv.Value + already_in_use;
+                in_use[itm.name] = available + already_in_use;
             }
             else
             {
