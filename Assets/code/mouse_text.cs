@@ -19,7 +19,8 @@ public class mouse_text : MonoBehaviour
         if (player.current == null) return;
 
         transform.SetAsLastSibling(); // Stay on top
-        rect_transform.anchoredPosition = Input.mousePosition;
+
+        rect_transform.anchoredPosition = Input.mousePosition / game.canvas.scaleFactor;
 
         var elements = utils.raycast_all_ui_under_mouse<IMouseTextUI>();
         text_element.text = "";
