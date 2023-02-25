@@ -295,14 +295,12 @@ public class recipe : MonoBehaviour, IRecipeInfo
             if (_recipe_book == null)
             {
                 // Create the recipe book
-                _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst();
-                var text = _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>();
-
-                _recipe_book.transform.SetParent(game.canvas.transform);
+                _recipe_book = Resources.Load<RectTransform>("ui/recipe_book").inst(game.canvas.transform);     
                 _recipe_book.anchoredPosition = Vector2.zero; // Middle of screen
                 _recipe_book.gameObject.SetActive(false); // Recipe book starts closed
 
                 // Setup the find function
+                var text = _recipe_book.GetComponentInChildren<UnityEngine.UI.Text>();
                 var find = _recipe_book.GetComponentInChildren<UnityEngine.UI.InputField>();
                 find.text = recipe_book_text("");
                 find.onValueChanged.AddListener((val) =>
