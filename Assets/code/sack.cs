@@ -49,10 +49,10 @@ public class sack : networked, IPlayerInteractable
     class menu : left_player_menu
     {
         sack sack;
-        public menu(sack sack) : base(sack.display_name.value) { this.sack = sack; }
-        protected override RectTransform create_menu() { return sack.inventory.ui; }
-        public override inventory editable_inventory() { return sack.inventory; }
-        protected override void on_open() { menu.GetComponentInChildren<UnityEngine.UI.Text>().text = sack.display_name.value; }
+        public menu(sack sack) : base(sack.display_name.value) => this.sack = sack;
+        protected override RectTransform create_menu(Transform parent) => sack.inventory.ui;
+        public override inventory editable_inventory() => sack.inventory;
+        protected override void on_open() => menu.GetComponentInChildren<UnityEngine.UI.Text>().text = sack.display_name.value;
         protected override void on_close() { if (sack.inventory.is_empty()) sack.delete(); }
     }
 
