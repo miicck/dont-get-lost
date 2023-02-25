@@ -21,18 +21,16 @@ public class job_manager : MonoBehaviour, ISimpleMenuObject
             if (!s.is_visible) continue;
 
             // Create the header for this skill
-            var h = header_skill_template.inst();
-            h.SetParent(header_skill_template.parent);
+            var h = header_skill_template.inst(header_skill_template.parent);
             h.GetComponentInChildren<UnityEngine.UI.Text>().text = s.display_name.capitalize();
 
             // Create the skills in the row template
-            var r = row_skill_template.inst();
+            var r = row_skill_template.inst(row_skill_template.parent);
+            r.name = s.name;
 
             foreach (var b in r.GetComponentsInChildren<UnityEngine.UI.Button>())
                 b.gameObject.AddComponent<button_mouse_text>();
 
-            r.SetParent(row_skill_template.parent);
-            r.name = s.name;
         }
 
         // The skills are built and will not need
@@ -71,8 +69,7 @@ public class job_manager : MonoBehaviour, ISimpleMenuObject
         // Create a row for each settler
         foreach (var s in settler.all_settlers())
         {
-            var r = row_template.inst();
-            r.SetParent(row_template.parent);
+            var r = row_template.inst(row_template.parent);
 
             var name_button = r.Find("name_button").GetComponent<UnityEngine.UI.Button>();
             name_button.onClick.AddListener(() =>

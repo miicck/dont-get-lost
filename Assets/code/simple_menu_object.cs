@@ -38,8 +38,7 @@ public class simple_menu_object : MonoBehaviour, IPlayerInteractable
         {
             if (!ui_instances.TryGetValue(menu_object.menu_prefab, out RectTransform ui))
             {
-                ui = ui_instances[menu_object.menu_prefab] = menu_object.menu_prefab.inst();
-                ui.transform.SetParent(game.canvas.transform);
+                ui = ui_instances[menu_object.menu_prefab] = menu_object.menu_prefab.inst(game.canvas.transform);
                 ui.anchoredPosition = Vector2.zero;
             }
 
