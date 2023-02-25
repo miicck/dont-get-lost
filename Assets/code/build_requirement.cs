@@ -39,7 +39,7 @@ public class build_requirement : tutorial_object
         }
 
         // Create the build requirement UI
-        var br = Resources.Load<build_requirement>("ui/build_requirement").inst();
+        var br = Resources.Load<build_requirement>("ui/build_requirement").inst(game.canvas.transform);
         br.material = material;
         br.count = count;
         br.on_complete = on_complete;
@@ -50,7 +50,6 @@ public class build_requirement : tutorial_object
 
         // Position it
         var rt = br.GetComponent<RectTransform>();
-        rt.SetParent(game.canvas.transform);
         rt.anchoredPosition = Vector2.zero;
 
         // Register building requirement

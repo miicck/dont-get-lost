@@ -475,10 +475,12 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         foreach (var kv in group_bounds)
             foreach (var b in kv.Value)
             {
+                if (b == null) continue;
                 Gizmos.color = ui_colors.cycle[kv.Key % ui_colors.cycle.Length];
                 Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
                 foreach (var e in b)
                 {
+                    if (e == null) continue;
                     Gizmos.color = e.is_extremety ? Color.cyan : new Color(1, 0, 1);
                     Gizmos.DrawLine(b.bounds.center, e.transform.position);
                 }

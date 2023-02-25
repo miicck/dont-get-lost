@@ -20,8 +20,7 @@ public class equipped_item_requirement : tutorial_object
             return null;
         }
 
-        var rt = Resources.Load<RectTransform>("ui/equipped_item_requirement").inst();
-        rt.transform.SetParent(game.canvas.transform);
+        var rt = Resources.Load<RectTransform>("ui/equipped_item_requirement").inst(game.canvas.transform);
         rt.anchoredPosition = Vector2.zero;
         var ir = rt.GetComponent<equipped_item_requirement>();
         ir.equip_text.text = "Equip " + utils.a_or_an(item.display_name) + " " + item.display_name;

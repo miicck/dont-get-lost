@@ -480,8 +480,7 @@ class confirm_window : tutorial_object
 
     public static confirm_window create(string message, confirm_func on_confirm = null)
     {
-        var ui = Resources.Load<RectTransform>("ui/confirm_window").inst();
-        ui.transform.SetParent(game.canvas.transform);
+        var ui = Resources.Load<RectTransform>("ui/confirm_window").inst(game.canvas.transform);
         ui.anchoredPosition = Vector2.zero;
         ui.GetComponentInChildren<UnityEngine.UI.Text>().text = message;
         ui.GetComponentInChildren<UnityEngine.UI.Button>().onClick.AddListener(() =>
@@ -519,8 +518,7 @@ class basic_camp_requirement : tutorial_object
 
     public static basic_camp_requirement create(finished_func on_finish)
     {
-        var rt = Resources.Load<RectTransform>("ui/basic_camp_requirement").inst();
-        rt.SetParent(game.canvas.transform);
+        var rt = Resources.Load<RectTransform>("ui/basic_camp_requirement").inst(game.canvas.transform);
         rt.anchoredPosition = Vector3.zero;
         var bcr = rt.gameObject.AddComponent<basic_camp_requirement>();
         bcr.on_finish = on_finish;
@@ -631,8 +629,7 @@ class interact_requirement : tutorial_object
     public static interact_requirement create<T>(string hint_text, on_interact_func on_interact)
         where T : player_interaction
     {
-        var rt = Resources.Load<RectTransform>("ui/interaction_requirement").inst();
-        rt.SetParent(game.canvas.transform);
+        var rt = Resources.Load<RectTransform>("ui/interaction_requirement").inst(game.canvas.transform);
         rt.anchoredPosition = Vector3.zero;
 
         var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
@@ -679,17 +676,18 @@ class custom_requirement : tutorial_object
     {
         RectTransform rt;
         if (hint == null)
+        {
             rt = new GameObject("blank_requirement").AddComponent<RectTransform>();
+            rt.SetParent(game.canvas.transform);
+        }
         else
         {
-            rt = Resources.Load<RectTransform>("ui/custom_requirement").inst();
+            rt = Resources.Load<RectTransform>("ui/custom_requirement").inst(game.canvas.transform);
             var text = rt.GetComponentInChildren<UnityEngine.UI.Text>();
             text.text = hint;
         }
 
-        rt.SetParent(game.canvas.transform);
         rt.anchoredPosition = Vector3.zero;
-
         var cr = rt.gameObject.AddComponent<custom_requirement>();
         cr.test = test;
         cr.callback = on_complete;

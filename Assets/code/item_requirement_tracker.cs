@@ -34,8 +34,7 @@ public class item_requirement_tracker : tutorial_object
         on_complete_func on_complete = null,
         bool show_recipe_book_hint = true)
     {
-        var ui = Resources.Load<RectTransform>("ui/item_requirement_tracker").inst();
-        ui.transform.SetParent(game.canvas.transform);
+        var ui = Resources.Load<RectTransform>("ui/item_requirement_tracker").inst(game.canvas.transform);
         ui.anchoredPosition = Vector2.zero;
         var ret = ui.GetComponent<item_requirement_tracker>();
 
@@ -50,16 +49,17 @@ public class item_requirement_tracker : tutorial_object
         foreach (var kv in requirements)
         {
             var itm = Resources.Load<item>("items/" + kv.Key);
-            var requirement = ret.item_requirement_template.inst();
-            requirement.transform.SetParent(ret.item_requirement_template.parent);
+            var requirement = ret.item_requirement_template.inst(ret.item_requirement_template.parent);
             requirement.Find("sprite").GetComponent<UnityEngine.UI.Image>().sprite = itm.sprite;
             var txt = requirement.GetComponentInChildren<UnityEngine.UI.Text>();
             ret.text_trackers[kv.Key] = txt;
             txt.text = "0/" + kv.Value;
         }
 
+        // Destroy template objects
         ret.item_requirement_template.SetParent(null);
         Destroy(ret.item_requirement_template.gameObject);
+
         ret.set_inventory_listener();
         ret.update_satisfaction();
 
