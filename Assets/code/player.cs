@@ -1045,7 +1045,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             controls.delta(controls.BIND.LOOK_LEFT_RIGHT) * controls.mouse_look_sensitivity);
 
         if (!map_open)
-            x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity  * (controls.invert_mouse_y ? -1 : 1);
+            x_rotation.value -= controls.delta(controls.BIND.LOOK_UP_DOWN) * controls.mouse_look_sensitivity * (controls.invert_mouse_y ? -1 : 1);
         else
         {
             // In map, so up/down rotation isn't networked    
@@ -1935,35 +1935,19 @@ public class popup_message : MonoBehaviour
     // (in units of the screen height)
     public const float SCREEN_SPEED = 0.05f;
 
-    new RectTransform transform;
-    UnityEngine.UI.Text text;
+    new RectTransform transform => GetComponent<RectTransform>();
+    UnityEngine.UI.Text text => GetComponent<UnityEngine.UI.Text>();
     float start_time;
 
     public static popup_message create(string message)
     {
-        var m = new GameObject("message").AddComponent<popup_message>();
-        m.text = m.gameObject.AddComponent<UnityEngine.UI.Text>();
-
-        var canv = game.canvas;
-
-        m.transform = m.GetComponent<RectTransform>();
-        m.transform.SetParent(canv.transform);
-        m.transform.anchorMin = new Vector2(0.5f, 0.25f);
-        m.transform.anchorMax = new Vector2(0.5f, 0.25f);
-        m.transform.anchoredPosition = Vector2.zero;
-
-        m.transform.anchoredPosition -=
-            Vector2.up * 32f * canv.GetComponentsInChildren<popup_message>().Length;
-
-        m.text.font = Resources.Load<Font>("fonts/monospace");
-        m.text.text = message;
-        m.text.alignment = TextAnchor.MiddleCenter;
-        m.text.verticalOverflow = VerticalWrapMode.Overflow;
-        m.text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        m.text.fontSize = 32;
-        m.start_time = Time.realtimeSinceStartup;
-
-        return m;
+        var popup = Resources.Load<RectTransform>("ui/popup_message").
+            inst(game.canvas.transform).
+            gameObject.AddComponent<popup_message>();
+        popup.transform.anchoredPosition = -Vector2.up * 32f * game.canvas.GetComponentsInChildren<popup_message>().Length;
+        popup.start_time = Time.realtimeSinceStartup;
+        popup.text.text = message;
+        return popup;
     }
 
     private void Update()
