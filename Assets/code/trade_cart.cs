@@ -215,9 +215,9 @@ public class trade_cart : has_trade_hub, IAddsToInspectionText, IPlayerInteracta
             if (check_on_close) set_send_id();
         }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
-            var ui = Resources.Load<RectTransform>("ui/trade_cart").inst();
+            var ui = Resources.Load<RectTransform>("ui/trade_cart").inst(parent);
             input = ui.GetComponentInChildren<UnityEngine.UI.InputField>();
             input.onEndEdit.AddListener((new_val) => { set_send_id(); check_on_close = false; });
             input.onValueChanged.AddListener((s) => { check_on_close = true; });
