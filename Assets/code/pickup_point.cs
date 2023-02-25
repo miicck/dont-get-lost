@@ -51,9 +51,9 @@ public class pickup_point : character_walk_to_interactable, IExtendsNetworked, I
         pickup_point point;
         public menu_interaction(string name, pickup_point point) : base(name) { this.point = point; }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
-            var menu = Resources.Load<RectTransform>("ui/pick_up_point").inst();
+            var menu = Resources.Load<RectTransform>("ui/pick_up_point").inst(parent);
 
             var field = menu.GetComponentInChildren<UnityEngine.UI.InputField>();
             if (field == null)
