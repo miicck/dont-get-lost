@@ -84,8 +84,7 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
             if (ui == null)
             {
                 // Create/position the ui
-                ui = Resources.Load<RectTransform>("ui/trade_window").inst();
-                ui.SetParent(game.canvas.transform);
+                ui = Resources.Load<RectTransform>("ui/trade_window").inst(game.canvas.transform);
                 ui.anchoredPosition = Vector2.zero;
 
                 // Get the fields for the player name, trader name and how many coins each have
@@ -109,8 +108,7 @@ public abstract class trader : MonoBehaviour, IPlayerInteractable
 
                     // Create, position and initialize the trade entry for this item
                     var item = Resources.Load<item>("items/" + kv.Key);
-                    var entry = entry_template.inst();
-                    entry.transform.SetParent(entry_template.transform.parent);
+                    var entry = entry_template.inst(entry_template.transform.parent);
                     entry.initialize(item, kv.Value);
                     entry.on_change = () => update_ui(player);
                 }
