@@ -320,7 +320,7 @@ public class tech_tree : networked
             return tech_tree_ui;
 
         // Create the tech tree UI
-        tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst();
+        tech_tree_ui = Resources.Load<RectTransform>("ui/tech_tree").inst(game.canvas.transform);
 
         // Load the technologies + init coordinates
         tech_tree_layout_engine layout = new force_layout_engine(technology.all);
@@ -332,8 +332,7 @@ public class tech_tree : networked
         foreach (var kv in coords)
         {
             var t = kv.Key;
-            var tt = tech_template.inst().GetComponent<RectTransform>();
-            tt.SetParent(tech_template.parent);
+            var tt = tech_template.inst(tech_template.parent).GetComponent<RectTransform>();
 
             // Set spite
             var tech_sprite = tt.get_child_with_name<UnityEngine.UI.Image>("technology_sprite");
@@ -372,21 +371,19 @@ public class tech_tree : networked
             ui_elements[t] = tt;
         }
 
+        var line_template = content.GetChild(1);
+        var arrow_template = content.GetChild(2);
+
         // Draw dependence arrows
         foreach (var kv in coords)
         {
             foreach (var t in kv.Key.depends_on)
             {
                 // Create line
-                var line = new GameObject("line").AddComponent<RectTransform>();
-                line.anchorMin = new Vector2(0, 1);
-                line.anchorMax = new Vector2(0, 1);
-                var img = line.gameObject.AddComponent<UnityEngine.UI.Image>();
-                img.color = new Color(0, 0, 0, 0.4f);
-
-                // Parent/position/size line
-                line.SetParent(tech_template.parent);
+                var line = line_template.inst(tech_template.parent).GetComponent<RectTransform>();
                 line.SetAsFirstSibling();
+
+                // position/size line
                 Vector2 from = ui_elements[kv.Key].anchoredPosition;
                 Vector2 to = ui_elements[t].anchoredPosition;
                 line.anchoredPosition = (from + to) / 2f;
@@ -394,16 +391,10 @@ public class tech_tree : networked
                 line.up = to - from;
 
                 // Create arrow
-                var arr = new GameObject("arrow").AddComponent<RectTransform>();
-                arr.anchorMin = new Vector2(0, 1);
-                arr.anchorMax = new Vector2(0, 1);
-                img = arr.gameObject.AddComponent<UnityEngine.UI.Image>();
-                img.color = new Color(0, 0, 0, 0.4f);
-                img.sprite = Resources.Load<Sprite>("sprites/simple_arrow");
+                var arr = arrow_template.inst(tech_template.parent).GetComponent<RectTransform>();
+                arr.SetAsFirstSibling();
 
                 // Parent/position/size line
-                arr.SetParent(tech_template.parent);
-                arr.SetAsFirstSibling();
                 from = ui_elements[kv.Key].anchoredPosition;
                 to = ui_elements[t].anchoredPosition;
                 arr.anchoredPosition = (from + to) / 2f;
@@ -412,10 +403,16 @@ public class tech_tree : networked
             }
         }
 
-        tech_template.SetParent(null);
-        Destroy(tech_template.gameObject);
+        foreach (var template in new Transform[] {
+            tech_template,
+            line_template,
+            arrow_template
+        })
+        {
+            template.SetParent(null);
+            Destroy(template.gameObject);
+        }
 
-        tech_tree_ui.SetParent(game.canvas.transform);
         tech_tree_ui.set_left(0);
         tech_tree_ui.set_right(0);
         tech_tree_ui.set_top(0);
