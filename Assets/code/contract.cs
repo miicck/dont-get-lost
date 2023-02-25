@@ -128,10 +128,10 @@ public class contract : item
             return player.current.contracts.Count > 0;
         }
 
-        protected override RectTransform create_menu()
+        protected override RectTransform create_menu(Transform parent)
         {
             player.current.inventory.add_on_change_listener(() => refresh_contracts(player.current));
-            return Resources.Load<RectTransform>("ui/active_contracts").inst();
+            return Resources.Load<RectTransform>("ui/active_contracts").inst(parent);
         }
 
         public override bool allows_movement() { return true; }
