@@ -21,7 +21,7 @@ public class has_path_elements : MonoBehaviour
 }
 
 public abstract class character_interactable : has_path_elements,
-    INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked
+    INonBlueprintable, INonEquipable, IAddsToInspectionText, IExtendsNetworked, INonLogistical
 {
     /// <summary> The type of interaction this is. This will determine when 
     /// a character decides to use this interactable object. </summary>
