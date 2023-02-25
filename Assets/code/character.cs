@@ -565,9 +565,9 @@ public class character : networked,
         class loot_menu : left_player_menu
         {
             dead_character dc;
-            public loot_menu(dead_character dc) : base("dead " + dc.character.display_name) { this.dc = dc; }
-            protected override RectTransform create_menu() { return dc.character.loot?.ui; }
-            public override inventory editable_inventory() { return dc.character.loot; }
+            public loot_menu(dead_character dc) : base("dead " + dc.character.display_name) => this.dc = dc;
+            protected override RectTransform create_menu(Transform parent) => dc.character.loot?.ui;
+            public override inventory editable_inventory() => dc.character.loot;
         }
 
         void on_create(character to_copy)
