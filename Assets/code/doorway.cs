@@ -13,8 +13,18 @@ public class doorway : town_path_element, IAddsToInspectionText
     public float open_angle;
 
     int in_use_by = 0;
-    bool opening => in_use_by > 0 || (player.current != null && player.current.distance_to(detection_center) < 2f);
     float door_angle = 0;
+
+    bool opening
+    {
+        get
+        {
+            if (in_use_by > 0) return true;
+            if (player.current == null) return false;
+            if (detection_center == null) return player.current.distance_to(transform) < 2f;
+            return player.current.distance_to(detection_center) < 2f;
+        }
+    }
 
     public override void on_character_enter(character s) { ++in_use_by; }
     public override void on_character_leave(character s) { --in_use_by; }
