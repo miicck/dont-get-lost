@@ -165,19 +165,12 @@ public class inventory : networked, IItemCollection
     // Static constructor
     static inventory()
     {
-        List<string> inventory_tips = new List<string>
-        {
-            "The inventory can be accessed by pressing " + controls.bind_name(controls.BIND.OPEN_INVENTORY),
-            "To equip an item, it must be placed in the toolbar at the top of the inventory.",
-            "In order to craft, ingredients must be placed in the crafting area on the right hand side.",
-            "Item stacks can be split in half by right clicking."
-        };
-
-        string entry = "";
-        foreach (var t in inventory_tips)
-            entry += t + "\n\n";
-
-        help_book.add_entry("inventory", entry);
+        help_book.add_entry("inventory", () =>
+            "The inventory can be accessed by pressing " + controls.bind_name(controls.BIND.OPEN_INVENTORY) +
+            "\n\nTo equip an item, it must be placed in the toolbar at the top of the inventory." +
+            "\n\nIn order to craft, ingredients must be placed in the crafting area on the right hand side." +
+            "\n\nItem stacks can be split in half by right clicking."
+         );
     }
 
     void generate_ui()

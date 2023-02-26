@@ -7,7 +7,7 @@ public class visiting_character : character, ICharacterController, IAddsToInspec
     static visiting_character()
     {
         help_book.add_entry("towns/visitors",
-            "Ocassionally, your town will recive visitors."
+            () => "Ocassionally, your town will recive visitors."
         );
     }
 

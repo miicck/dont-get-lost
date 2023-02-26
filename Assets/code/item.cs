@@ -10,13 +10,6 @@ public class item : networked, IPlayerInteractable
 {
     public const float LOGISTICS_SIZE = 0.3f;
 
-    static item()
-    {
-        tips.add("To see if you can eat an item, hover over it and press " +
-                 controls.bind_name(controls.BIND.INSPECT) + " to check it's food value. " +
-                 "Equip it in your quckbar and left click to eat.");
-    }
-
     //###########//
     // VARIABLES //
     //###########//

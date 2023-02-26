@@ -515,11 +515,11 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     static attacker_entrypoint()
     {
         help_book.add_entry("towns",
-            "Settlers can settle in towns. See 'basics' for more details."
+            () => "Settlers can settle in towns. See 'basics' for more details."
             );
 
         help_book.add_entry("towns/basics",
-            "A town is defined as a collection of buildings that are connected by paths. " +
+            () => "A town is defined as a collection of buildings that are connected by paths. " +
             "Only certain buildings can connect to the path network. The paths will only be " +
             "shown if you have a connectable building equipped - this is known as \"path-view\" mode.\n\n" +
             "Entrypoints to the town will be automatically generated and are shown as " +

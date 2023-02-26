@@ -6,7 +6,7 @@ public class market_stall : character_walk_to_interactable, IAddsToInspectionTex
 {
     static market_stall()
     {
-        help_book.add_entry("towns/visitors/market stall",
+        help_book.add_entry("towns/visitors/market stall", () =>
             "Certain visitors to a town can trade with a market stall. " +
             "Items can be put into the market stall that you wish to sell " +
             "(each market stall can sell only one type of item). A settler " +

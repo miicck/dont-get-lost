@@ -7,7 +7,7 @@ public class workshop : character_interactable_options, IAddsToInspectionText
     static workshop()
     {
         help_book.add_entry("towns/Workshops",
-            "Workshops are rooms containing a collection of useful " +
+           () => "Workshops are rooms containing a collection of useful " +
             "tools for a specific purpose. A specific object " +
             "(e.g a forge) designates the type of workshop " +
             "(e.g a smithing workshop). This object can be inspected " +

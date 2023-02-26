@@ -21,7 +21,7 @@ public class console : MonoBehaviour
             help_text += "<i>" + c.Value.usage_example + "</i>\n\n";
         }
 
-        help_book.add_entry("Console", help_text);
+        help_book.add_entry("Console", () => help_text);
     }
 
     public delegate bool console_command(string[] args);

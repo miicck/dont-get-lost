@@ -4,12 +4,6 @@ using UnityEngine;
 
 public class scavangable : MonoBehaviour, IPlayerInteractable
 {
-    static scavangable()
-    {
-        tips.add("You can scavange for items if your hands are free. Press " +
-            controls.bind_name(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding.");
-    }
-
     item_product[] products => GetComponents<item_product>();
 
     //#####################//

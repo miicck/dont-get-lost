@@ -16,43 +16,48 @@ public class building_material : item, IPlayerInteractable
 
     static building_material()
     {
-        List<string> building_tips = new List<string>()
+        help_book.add_entry("building", () =>
         {
-            "When placing a building, you can cycle through the " +
-            "different starting orientations by pressing " +
-            controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " or by scrolling. " +
-            "This initial orientation will be saved when placing subsequent objects.",
+            List<string> building_tips = new List<string>()
+            {
+                "When placing a building, you can cycle through the " +
+                "different starting orientations by pressing " +
+                controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " or by scrolling. " +
+                "This initial orientation will be saved when placing subsequent objects.",
 
-            "Building materials can be deleted by right-clicking on them. " +
-            "If you have a building material equipped, " +
-            "only matching materials will be deleted.",
+                "Building materials can be deleted by right-clicking on them. " +
+                "If you have a building material equipped, " +
+                "only matching materials will be deleted.",
 
-            "When rotating a building, hold " +
-            controls.bind_name(controls.BIND.FINE_ROTATION) + " " +
-            "to allow rotating by any amount.",
+                "When rotating a building, hold " +
+                controls.bind_name(controls.BIND.FINE_ROTATION) + " " +
+                "to allow rotating by any amount.",
 
-            "If a building is rotated weirdly, press " +
-            controls.bind_name(controls.BIND.RELOCATE_BUILDING) + " " +
-            "to re-allign it to the world axes.",
+                "If a building is rotated weirdly, press " +
+                controls.bind_name(controls.BIND.RELOCATE_BUILDING) + " " +
+                "to re-allign it to the world axes.",
 
-            "To turn off snapping when placing a building, hold " +
-            controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
-            "This will also orient the building to the world " +
-            "axes, rather than to the parent building.",
+                "To turn off snapping when placing a building, hold " +
+                controls.bind_name(controls.BIND.IGNORE_SNAP_POINTS) + ". " +
+                "This will also orient the building to the world " +
+                "axes, rather than to the parent building.",
 
-            "If you press "+controls.bind_name(controls.BIND.SELECT_ITEM_FROM_WORLD) +
-            " when looking at an existing building, you will equip matching buildings from " +
-            "your inventory."
-        };
+                "If you press "+controls.bind_name(controls.BIND.SELECT_ITEM_FROM_WORLD) +
+                " when looking at an existing building, you will equip matching buildings from " +
+                "your inventory.",
 
-        string help_text = "";
-        foreach (var b in building_tips)
-        {
-            tips.add(b);
-            help_text += b + "\n\n";
-        }
+                "Items will flow downhill along gutters.",
 
-        help_book.add_entry("building", help_text);
+                "By clicking in the right spot when placing a gutter, " +
+                "you can snap to an output or input of a building."
+            };
+
+            string help_text = "";
+            foreach (var b in building_tips)
+                help_text += b + "\n\n";
+
+            return help_text;
+        });
     }
 
     //############//

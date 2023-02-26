@@ -4,10 +4,13 @@ using UnityEngine;
 
 public static class help_book
 {
+    public delegate string text_generator();
+
     /// <summary> Add a help topic to the help book. </summary>
     /// <param name="topic"> The title of the topic. Can be a path of subtopics, seperated by '/'. </param>
-    /// <param name="help_text"> The help text that should be displayed. </param>
-    public static void add_entry(string topic, string help_text)
+    /// <param name="help_text"> Function that will generate the help text to display 
+    /// (a generator so the help text can be dynamic). </param>
+    public static void add_entry(string topic, text_generator help_text_generator)
     {
         topic parent = root_topic;
 
@@ -27,7 +30,7 @@ public static class help_book
             // If this is the topic corresponding to this entry
             // then set the content text
             if (i == tree.Length - 1)
-                parent.content = help_text;
+                parent.generator = help_text_generator;
         }
     }
 
@@ -52,17 +55,17 @@ public static class help_book
     {
         public topic parent { get; private set; }
         public string title { get; private set; }
-        public string content { get; set; }
+        public text_generator generator { get; set; }
 
         public bool try_get_subtopic(string title, out topic t) => _children.TryGetValue(title, out t);
 
         Dictionary<string, topic> _children = new Dictionary<string, topic>();
 
-        public topic(string title, string content = null, topic parent = null)
+        public topic(string title, text_generator generator = null, topic parent = null)
         {
             this.parent = parent;
             this.title = title;
-            this.content = content;
+            this.generator = generator;
 
             if (parent != null)
                 parent._children[title] = this;
@@ -94,8 +97,7 @@ public static class help_book
 
                     // Set the content title/text
                     _ui.find_child_recursive("ContentTitle").GetComponent<UnityEngine.UI.Text>().text = title;
-                    _ui.find_child_recursive("ContentText").GetComponent<UnityEngine.UI.Text>().text = content;
-
+                    
                     // Find template subtopic button
                     var button_template = _ui.find_child_recursive("SubtopicButton").GetComponent<UnityEngine.UI.Button>();
 
@@ -118,6 +120,9 @@ public static class help_book
                     Object.Destroy(button_template.gameObject);
                 }
 
+                // Update content text
+                _ui.find_child_recursive("ContentText").GetComponent<UnityEngine.UI.Text>().text = generator();
+
                 return _ui;
             }
         }
@@ -131,7 +136,7 @@ public static class help_book
     }
 
     // The top-level help topic, containing all subtopics
-    static topic root_topic = new topic("Help topics",
+    static topic root_topic = new topic("Help topics", () => 
         "Remember, if you don't know how to interact with somthing, look at it " +
         "and check the text in the bottom right of the screen. The possible " +
         "interactions also depend on what (if anything) you have equipped.");

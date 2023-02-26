@@ -53,27 +53,33 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     static player()
     {
-        tips.add("You can change your hair color from the equipment " +
+        help_book.add_entry("Player", () =>
+            "You can change your hair color from the equipment " +
             "options menu (the cog in the top corner of the equipment" +
-            " section of your inventory).");
+            " section of your inventory)." +
 
-        tips.add("Certain actions can only be performed with free hands. Press " +
+            "\n\nCertain actions can only be performed with free hands. Press " +
             controls.bind_name(controls.BIND.QUICKBAR_1) +
             " a few times to de-equip what you are holding " +
-            "(the cursor will change to a white circle).");
+            "(the cursor will change to a white circle)." +
 
-        tips.add("Your health will gradually regenerate.");
+            "\n\nThe green bar at the bottom of the screen is your health." +
+            "Your health will gradually regenerate." +
 
-        tips.add("The green bar at the bottom of the screen is your health.");
+            "\n\nYou can switch between first and third-person views by pressing " +
+            controls.bind_name(controls.BIND.TOGGLE_THIRD_PERSON) + "." +
 
-        tips.add("You can switch between first and third-person views by pressing " +
-            controls.bind_name(controls.BIND.TOGGLE_THIRD_PERSON) + ".");
+            "\n\nTo see if you can eat an item, hover over it and press " +
+            controls.bind_name(controls.BIND.INSPECT) + " to check it's food value. " +
+            "Equip it in your quckbar and left click to eat." +
 
-        tips.add("Open the recipe book by pressing " +
-            controls.bind_name(controls.BIND.OPEN_RECIPE_BOOK) + ".");
+            "\n\nYou can scavange for items if your hands are free. Press " +
+            controls.bind_name(controls.BIND.QUICKBAR_1) + " a few times to de-equip what you are holding." +
 
-        tips.add("Look at a player and press " + controls.bind_name(controls.BIND.GIVE) +
-            " to give them the item you currently have equipped.");
+            "\n\nYou can inspect the object you are currently looking at by " +
+            "pressing " + controls.bind_name(controls.BIND.INSPECT) + ". This also " +
+            "works when hovering over items in your inventory."
+        );
     }
 
     //#################//

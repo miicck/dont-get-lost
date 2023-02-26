@@ -14,17 +14,32 @@ public static class controls
         set;
     }
 
-    static Dictionary<BIND, control> keybinds = default_keybinds();
+    static Dictionary<BIND, control> keybinds
+    {
+        get
+        {
+            if (_keybinds == null)
+                _keybinds = saved_keybinds();
+            return _keybinds;
+        }
+        set
+        {
+            _keybinds = value;
+            save_keybinds();
+        }
+    }
+    static Dictionary<BIND, control> _keybinds;
 
     static controls()
     {
-        tips.add("You can switch between using the mouse or keyboard to rotate/translate buildings in the options menu.");
-
-        string current_controls = "";
-        foreach (var kv in keybinds)
-            current_controls += kv.Key + " : " + bind_name(kv.Key).capitalize() + "\n";
-        current_controls = utils.allign_colons(current_controls);
-        help_book.add_entry("controls", current_controls);
+        help_book.add_entry("controls", () =>
+        {
+            string current_controls = "";
+            foreach (var kv in keybinds)
+                current_controls += kv.Key + " : " + bind_name(kv.Key).capitalize() + "\n";
+            current_controls = utils.allign_colons(current_controls);
+            return current_controls;
+        });
     }
 
     public abstract class control
@@ -75,6 +90,29 @@ public static class controls
 
         public override string name()
         {
+            if (names_forward == null) set_names_dictionaries();
+            return names_forward[key];
+        }
+
+        // Static stuff //
+
+        static Dictionary<KeyCode, string> names_forward;
+        static Dictionary<string, KeyCode> names_backward;
+
+        static void set_names_dictionaries()
+        {
+            names_forward = new Dictionary<KeyCode, string>();
+            names_backward = new Dictionary<string, KeyCode>();
+
+            foreach (KeyCode key in System.Enum.GetValues(typeof(KeyCode)))
+            {
+                names_forward[key] = key_name(key);
+                names_backward[names_forward[key]] = key;
+            }
+        }
+
+        static string key_name(KeyCode key)
+        {
             switch (key)
             {
                 case KeyCode.Alpha0: return "0";
@@ -97,6 +135,13 @@ public static class controls
                 case KeyCode.LeftShift: return "the shift key";
                 default: return key.ToString();
             }
+        }
+
+        public static control try_from_name(string name)
+        {
+            if (names_backward == null) set_names_dictionaries();
+            if (names_backward.ContainsKey(name)) return new key_control(names_backward[name]);
+            return null;
         }
     }
 
@@ -131,6 +176,17 @@ public static class controls
                 case BUTTON.RIGHT: return "right click";
                 case BUTTON.MIDDLE: return "middle click";
                 default: throw new System.Exception("Unkown mouse button!");
+            }
+        }
+
+        public static control try_from_name(string name)
+        {
+            switch (name)
+            {
+                case "left click": return new mouse_control(BUTTON.LEFT);
+                case "right click": return new mouse_control(BUTTON.RIGHT);
+                case "middle click": return new mouse_control(BUTTON.MIDDLE);
+                default: return null;
             }
         }
     }
@@ -325,6 +381,46 @@ public static class controls
         };
     }
 
+    static Dictionary<BIND, control> saved_keybinds()
+    {
+        var result = default_keybinds();
+
+        foreach (var b in new List<BIND>(result.Keys))
+        {
+            if (!is_reconfigurable(b))
+                continue; // No need to load keybinds that can't be configured
+
+            var loaded = PlayerPrefs.GetString("KEYBIND_" + b.ToString(), null);
+
+            if (loaded == null || loaded.Length == 0)
+                continue; // This keybind hasn't been set, use default value
+
+            control control =
+                mouse_control.try_from_name(loaded) ??
+                key_control.try_from_name(loaded);
+
+            if (control == null)
+            {
+                Debug.LogError("Unkown saved keybind: " + loaded);
+                continue;
+            }
+
+            result[b] = control;
+        }
+
+        return result;
+    }
+
+    static void save_keybinds()
+    {
+        foreach (BIND b in System.Enum.GetValues(typeof(BIND)))
+        {
+            if (!is_reconfigurable(b))
+                continue; // No need to save keybinds that can't be configured
+            PlayerPrefs.SetString("KEYBIND_" + b.ToString(), keybinds[b].name());
+        }
+    }
+
     /// <summary> Returns true if the given bind was triggered this frame. </summary>
     public static bool triggered(BIND bind)
     {
@@ -407,6 +503,38 @@ public static class controls
         }
     }
 
+    public static bool is_reconfigurable(BIND b)
+    {
+        switch (b)
+        {
+            case BIND.FORCED_INTERACTION:
+            case BIND.LOOK_LEFT_RIGHT:
+            case BIND.LOOK_UP_DOWN:
+            case BIND.LEAVE_MENU:
+            case BIND.CYCLE_QUICKBAR:
+            case BIND.ZOOM_MAP:
+            case BIND.CLOSE_CONSOLE:
+            case BIND.CHANGE_PIVOT:
+            case BIND.ROTATION_AMOUNT_X:
+            case BIND.ROTATION_AMOUNT_Y:
+            case BIND.FISHING_ROD_PULL:
+            case BIND.MANIPULATE_BUILDING_BACK:
+            case BIND.MANIPULATE_BUILDING_DOWN:
+            case BIND.MANIPULATE_BUILDING_FORWARD:
+            case BIND.MANIPULATE_BUILDING_LEFT:
+            case BIND.MANIPULATE_BUILDING_RIGHT:
+            case BIND.MANIPULATE_BUILDING_UP:
+            case BIND.BUILDING_TRANSLATION:
+            case BIND.ENTER_EXIT_CAVE:
+                // These keybinds are not settable
+                return false;
+
+            default:
+                // Most keybinds are settable
+                return true;
+        }
+    }
+
     /// <summary> Returns true if controls related to the player are enabled. </summary>
     static bool player_controls_enabled()
     {
@@ -435,5 +563,57 @@ public static class controls
                 ret += "    " + b.ToString() + "\n";
 
         return ret;
+    }
+
+    class keybind_capturerer : MonoBehaviour
+    {
+        public BIND setting;
+        public capture_callback callback;
+
+        control detect_next()
+        {
+            // Mosue buttons come first, beecause mouse buttons also appear as key codes
+            foreach (mouse_control.BUTTON b in System.Enum.GetValues(typeof(mouse_control.BUTTON)))
+                if (Input.GetMouseButtonDown((int)b))
+                    return new mouse_control(b);
+
+            foreach (KeyCode k in System.Enum.GetValues(typeof(KeyCode)))
+                if (Input.GetKeyDown(k))
+                    return new key_control(k);
+
+            return null;
+        }
+
+        private void Update()
+        {
+            var detected = detect_next();
+            if (detected != null)
+            {
+                keybinds[setting] = detected; // Set the keybind    
+                save_keybinds(); // Save the updated values
+                Destroy(gameObject); // Destroy this keybind capturer
+                disabled = false; // Re-enable controls
+                callback?.Invoke(); // Invoke callback
+            }
+        }
+    }
+
+    public delegate void capture_callback();
+
+    public static void capture_next(BIND bind_to_capture, capture_callback callback)
+    {
+        keybind_capturerer cap =
+            Object.FindObjectOfType<keybind_capturerer>() ??
+            new GameObject("keybind_capturer").AddComponent<keybind_capturerer>();
+
+        // Disable controls for now
+        disabled = true;
+        cap.setting = bind_to_capture;
+        cap.callback = callback;
+    }
+
+    public static void restore_defaults()
+    {
+        keybinds = default_keybinds();
     }
 }

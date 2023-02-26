@@ -6,12 +6,6 @@ using UnityEngine;
 /// the item logistics system. Can also be used by hand. </summary>
 public class auto_crafter : building_material, IPlayerInteractable
 {
-    static auto_crafter()
-    {
-        tips.add("The text at the top of the crafting menu will change when " +
-            "interacting with objects that allow crafting different recipes.");
-    }
-
     public float craft_time = 1f;
     public AudioClip custom_crafting_sound;
     public float custom_crafting_sound_volume = 1f;

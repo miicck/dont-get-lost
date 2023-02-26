@@ -9,13 +9,6 @@ public class inspect_info : MonoBehaviour
     public UnityEngine.UI.Image image_upper;
     public UnityEngine.UI.Image image_lower;
 
-    static inspect_info()
-    {
-        tips.add("You can inspect the object you are currently looking at by " +
-            "pressing " + controls.bind_name(controls.BIND.INSPECT) + ". This also " +
-            "works when hovering over items in your inventory.");
-    }
-
     public void turn_on(string text, Sprite primary, Sprite secondary)
     {
         gameObject.SetActive(true); 
