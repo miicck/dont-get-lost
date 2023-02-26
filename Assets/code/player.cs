@@ -316,7 +316,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public class inventory_interaction : menu_interaction
     {
         public override controls.BIND keybind => controls.BIND.OPEN_INVENTORY;
-        public override string context_tip() { return "toggle inventory"; }
+        public override string context_tip() => "toggle inventory";
         protected override void set_menu_state(player player, bool state)
         {
             player.inventory.open = state;
@@ -329,22 +329,22 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public class recipe_book_interaction : menu_interaction
     {
         public override controls.BIND keybind => controls.BIND.OPEN_RECIPE_BOOK;
-        public override string context_tip() { return "toggle recipe book"; }
-        protected override void set_menu_state(player player, bool state) { recipe.recipe_book.gameObject.SetActive(state); }
+        public override string context_tip() => "toggle recipe book";
+        protected override void set_menu_state(player player, bool state) => recipe.recipe_book.gameObject.SetActive(state);
     }
 
     public class options_menu_interaction : menu_interaction
     {
         public override controls.BIND keybind => controls.BIND.TOGGLE_OPTIONS;
-        public override string context_tip() { return "toggle options menu"; }
-        protected override void set_menu_state(player player, bool state) { options_menu.open = state; }
+        public override string context_tip() => "toggle options menu";
+        protected override void set_menu_state(player player, bool state) => options_menu.open = state;
     }
 
     public class production_menu_interaction : menu_interaction
     {
         public override controls.BIND keybind => controls.BIND.TOGGLE_PRODUCTION_INFO;
-        public override string context_tip() { return "toggle production menu"; }
-        protected override void set_menu_state(player player, bool state) { production_tracker.set_ui_state(state); }
+        public override string context_tip() => "toggle production menu";
+        protected override void set_menu_state(player player, bool state) => production_tracker.set_ui_state(state);
         public override bool continue_menu_interaction()
         {
             production_tracker.update_ui();
@@ -355,15 +355,15 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public class help_book_interaction : menu_interaction
     {
         public override controls.BIND keybind => controls.BIND.TOGGLE_HELP_BOOK;
-        public override string context_tip() { return "toggle help book"; }
-        protected override void set_menu_state(player player, bool state) { help_book.open = state; }
+        public override string context_tip() => "toggle help book";
+        protected override void set_menu_state(player player, bool state) => help_book.open = state;
     }
 
     public class first_third_person_interaction : player_interaction
     {
         public override controls.BIND keybind => controls.BIND.TOGGLE_THIRD_PERSON;
-        public override string context_tip() { return "toggle first/third person"; }
-        public override bool show_context_tip() { return false; }
+        public override string context_tip() => "toggle first/third person";
+        public override bool show_context_tip() => false;
 
         protected override bool on_start_interaction(player player)
         {
@@ -375,8 +375,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public class place_marker : player_interaction
     {
         public override controls.BIND keybind => controls.BIND.PLACE_MARKER;
-        public override string context_tip() { return "place marker"; }
-        public override bool show_context_tip() { return false; }
+        public override string context_tip() => "place marker";
+        public override bool show_context_tip() => false;
 
         protected override bool on_start_interaction(player player)
         {
@@ -389,8 +389,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     public class toggle_map : player_interaction
     {
         public override controls.BIND keybind => controls.BIND.TOGGLE_MAP;
-        public override string context_tip() { return "toggle map"; }
-        public override bool show_context_tip() { return false; }
+        public override string context_tip() => "toggle map";
+        public override bool show_context_tip() => false;
 
         protected override bool on_start_interaction(player player)
         {
@@ -403,15 +403,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     {
         public override controls.BIND keybind => controls.BIND.GET_NETWORK_INFO;
         public override bool allow_held => true;
-        public override string context_tip() { return "show network info for object"; }
-        public override bool show_context_tip() { return false; }
+        public override string context_tip() => "show network info for object";
+        public override bool show_context_tip() => false;
 
         RectTransform ui;
 
         protected override bool on_start_interaction(player player)
         {
-            ui = Resources.Load<RectTransform>("ui/simple_textbox").inst();
-            ui.SetParent(game.canvas.transform);
+            ui = Resources.Load<RectTransform>("ui/simple_textbox").inst(game.canvas.transform);
             ui.anchoredPosition = Vector2.zero;
             var txt = ui.GetComponentInChildren<UnityEngine.UI.Text>();
 
@@ -422,24 +421,17 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             return false;
         }
 
-        public override bool continue_interaction(player player)
-        {
-            return !triggered(player);
-        }
-
-        protected override void on_end_interaction(player player)
-        {
-            Destroy(ui.gameObject);
-        }
+        public override bool continue_interaction(player player) => !triggered(player);
+        protected override void on_end_interaction(player player) => Destroy(ui.gameObject);
     }
 
     //#################//
     // ICanEquipArmour //
     //#################//
 
-    public armour_locator[] armour_locators() { return GetComponentsInChildren<armour_locator>(); }
-    public float armour_scale() { return 1f; }
-    public Color hair_color() { return net_hair_color.value; }
+    public armour_locator[] armour_locators() => GetComponentsInChildren<armour_locator>();
+    public float armour_scale() => 1f;
+    public Color hair_color() => net_hair_color.value;
     public bool armour_visible(armour_piece.LOCATION location)
     {
         if (location == armour_piece.LOCATION.HEAD)
