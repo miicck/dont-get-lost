@@ -23,8 +23,7 @@ public class town_level_menu : MonoBehaviour
         {
             var level = levels[i];
 
-            var level_ui = town_level_template.inst();
-            level_ui.SetParent(town_level_template.parent);
+            var level_ui = town_level_template.inst(town_level_template.parent);
 
             level_uis[level] = new level_ui
             {
@@ -35,8 +34,7 @@ public class town_level_menu : MonoBehaviour
             if (i == levels.Length - 1)
                 continue; // Don't make an arrow after the last level
 
-            var level_arrow = arrow_template.inst();
-            level_arrow.transform.SetParent(arrow_template.parent);
+            var level_arrow = arrow_template.inst(arrow_template.parent);
         }
 
         // Destroy the templates
