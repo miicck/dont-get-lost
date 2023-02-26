@@ -75,8 +75,7 @@ public static class help_book
                 if (_ui == null)
                 {
                     // Create the menu & put it in the right place
-                    _ui = Resources.Load<RectTransform>("ui/help_book_page").inst();
-                    _ui.SetParent(game.canvas.transform);
+                    _ui = Resources.Load<RectTransform>("ui/help_book_page").inst(game.canvas.transform);
                     _ui.anchoredPosition = Vector2.zero;
 
                     // Starts disabled
@@ -107,8 +106,7 @@ public static class help_book
                     foreach (var c in subtopics)
                     {
                         // Create a copy of the button in the right container
-                        var button = button_template.inst();
-                        button.transform.SetParent(button_template.transform.parent);
+                        var button = button_template.inst(button_template.transform.parent);
 
                         // Setup the switch-topic button
                         var c_copy_for_lambda = c;
