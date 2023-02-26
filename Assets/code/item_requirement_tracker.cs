@@ -32,8 +32,14 @@ public class item_requirement_tracker : tutorial_object
     public static item_requirement_tracker create(
         string hint_text, Dictionary<string, int> requirements,
         on_complete_func on_complete = null,
-        bool show_recipe_book_hint = true)
+        bool show_recipe_book_hint = true,
+        bool remove_already_in_inventory = true)
     {
+        // Remove existing items if required
+        if (remove_already_in_inventory && player.current?.inventory != null)
+            foreach (var kv in requirements)
+                player.current.inventory.remove_all(kv.Key);
+
         var ui = Resources.Load<RectTransform>("ui/item_requirement_tracker").inst(game.canvas.transform);
         ui.anchoredPosition = Vector2.zero;
         var ret = ui.GetComponent<item_requirement_tracker>();

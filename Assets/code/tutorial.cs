@@ -206,10 +206,7 @@ public static class tutorial
                     "For settlers to move in, they need somewhere to sleep.\n"+
                     "To make a bed, we're going to need some linen.\n"+
                     "Linen is made from flax, which we can grow from a seed...\n",
-                    ()=>{
-                        player.current.inventory.remove_all("flax_seed");
-                        advance_stage();
-                    }),
+                    advance_stage),
 
                 () => item_requirement_tracker.create(
                     "Find a flax seed.\n" +
