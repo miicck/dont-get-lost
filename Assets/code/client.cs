@@ -409,7 +409,7 @@ public static class client
 
         // Send login message
         Debug.Log("Sending LOGIN message with username: " + username + " id: " + user_id);
-        queue_message(MESSAGE.LOGIN, username, user_id, version_control.version);
+        queue_message(MESSAGE.LOGIN, username, user_id, version_control.info.version);
 
         // Stop immediate server timeout
         last_server_time_local = (int)Time.realtimeSinceStartup;

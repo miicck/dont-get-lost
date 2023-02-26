@@ -4,15 +4,14 @@ using UnityEngine;
 
 public static class version_control
 {
-    public static string commit_hash { get; private set; }
-    public static string commit_date { get; private set; }
-    public static string version { get; private set; }
+    public static version_info info { get; private set; }
 
     static string find_git()
     {
         foreach (var to_try in new string[]
         {
             "git",
+            "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
             "C:\\Program Files\\Git\\cmd\\git.exe"
         })
             if (run(to_try, "--version") != null) return to_try;
@@ -29,37 +28,10 @@ public static class version_control
         // Generate server data
         generate_server_data();
 
-        // Get version info from git repo
-        string git = find_git();
-        if (git == null)
-        {
-            commit_hash = "Could not find git.";
-            commit_date = "Could not find git";
-            version = "Could not find git";
-            return;
-        }
-
-        commit_hash = run(git, "rev-parse HEAD").remove_special_characters();
-        string date_command = @"show --no-patch --no-notes --pretty='%cd' " +
-                              @"--date=format:'%Y.%m.%d.%H.%M.%S' " + commit_hash;
-
-        string formatted_date = run(git, date_command, env: new Dictionary<string, string> { ["TZ"] = "UTC" });
-        formatted_date = formatted_date.remove_special_characters(' ', ':').ToLower();
-
-        var split_date = formatted_date.Split('.');
-        commit_date = string.Format("{2}/{1}/{0} {3}:{4}:{5}", split_date);
-
-        version = string.Format("{0}.{1}.{2}.", split_date);
-        version += run(git, "rev-parse --short HEAD");
-
-        version = version.remove_special_characters();
-        commit_hash = commit_hash.remove_special_characters();
-        commit_date = commit_date.remove_special_characters(' ', ':', '/');
-
         GameObject version_prefab;
         string asset_path;
 
-        var found = Resources.Load("version_info");
+        var found = Resources.Load<version_info>("version_info");
         if (found != null)
         {
             // Load version asset from resources
@@ -71,44 +43,70 @@ public static class version_control
             // Create version asset
             asset_path = "Assets/resources/version_info.prefab";
             version_prefab = new GameObject("version_info");
-            new GameObject("1").transform.SetParent(version_prefab.transform);
-            new GameObject("2").transform.SetParent(version_prefab.transform);
-            new GameObject("3").transform.SetParent(version_prefab.transform);
+            version_prefab.AddComponent<version_info>();
         }
 
-        // Save new version asset as prefab (so it's hard-coded(ish) into the built game)
-        version_prefab.transform.GetChild(0).name = version;
-        version_prefab.transform.GetChild(1).name = commit_hash;
-        version_prefab.transform.GetChild(2).name = commit_date;
+        info = version_prefab.GetComponent<version_info>();
+        populate(info);
+
+        // Save prefab
         UnityEditor.PrefabUtility.SaveAsPrefabAsset(version_prefab, asset_path);
 
         // Free stuff
-        UnityEditor.PrefabUtility.UnloadPrefabContents(version_prefab);
-
-        Debug.Log("Updated version info to " + version);
-#else
-        // Get version info from prefab
-        var go = Resources.Load<GameObject>("version_info");
-        if (go == null)
+        if (found != null)
         {
-            version = "UNKOWN";
-            commit_hash = "UNKNOWN";
-            commit_date = "UNKNOWN";
+            // Unload prefab
+            UnityEditor.PrefabUtility.UnloadPrefabContents(version_prefab);
         }
         else
         {
-            version = go.transform.GetChild(0).name;
-            commit_hash = go.transform.GetChild(1).name;
-            commit_date = go.transform.GetChild(2).name;
+            // Destroy in-game object
+            Object.DestroyImmediate(version_prefab);
         }
+
+
+#else
+        // Get version info from prefab
+        info = Resources.Load<version_info>("version_info");
 #endif
     }
 
-    public static string info()
+    static void populate(version_info info)
     {
-        return "    Version     : " + version + "\n" +
-               "    Git commit  : " + commit_hash + "\n" +
-               "    Commit date : " + commit_date;
+        // Get version info from git repo
+        string git = find_git();
+        if (git == null)
+        {
+            info.commit_hash = "Could not find git.";
+            info.commit_date = "Could not find git";
+            info.version = "Could not find git";
+            return;
+        }
+
+        info.commit_hash = run(git, "rev-parse HEAD").remove_special_characters();
+        string date_command = @"show --no-patch --no-notes --pretty='%cd' " +
+                              @"--date=format:'%Y.%m.%d.%H.%M.%S' " + info.commit_hash;
+
+        string formatted_date = run(git, date_command, env: new Dictionary<string, string> { ["TZ"] = "UTC" });
+        formatted_date = formatted_date.remove_special_characters(' ', ':').ToLower();
+
+        var split_date = formatted_date.Split('.');
+        info.commit_date = string.Format("{2}/{1}/{0} {3}:{4}:{5}", split_date);
+
+        info.version = string.Format("{0}.{1}.{2}.", split_date);
+        info.version += run(git, "rev-parse --short HEAD");
+
+        info.version = info.version.remove_special_characters();
+        info.commit_hash = info.commit_hash.remove_special_characters();
+        info.commit_date = info.commit_date.remove_special_characters(' ', ':', '/');
+
+        info.contributors = run(git, "shortlog -sn HEAD").TrimEnd();
+
+        Debug.Log(
+            "Updated version info to " + info.version +
+            "\nUsing git:" + git +
+            "\nContributors:" + info.contributors
+            );
     }
 
     /// <summary> Run the given program, with the given 

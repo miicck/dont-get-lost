@@ -204,7 +204,7 @@ public class game : MonoBehaviour
         if (debug_panel.activeInHierarchy)
             debug_text.text = utils.allign_colons((
                 "\nVERSION\n" +
-                version_control.info() + "\n" +
+                version_control.info.formatted() + "\n" +
                 "\nWORLD\n" +
                 world.info() + "\n" +
                 "\nGRAPHICS\n" +

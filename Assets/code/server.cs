@@ -1713,7 +1713,7 @@ public static class server
 #if STANDALONE_SERVER
     public static string version => standalone_server.version;
 #else
-    public static string version => version_control.version;
+    public static string version => version_control.info.version;
 #endif
 
     //#########//
