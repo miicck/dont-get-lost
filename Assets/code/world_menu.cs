@@ -91,7 +91,7 @@ public class world_menu : MonoBehaviour
         foreach (var wf in world_files)
             is_steam_world.Add(true);
 
-        foreach (var lf in server.existing_local_saves())
+        foreach (var lf in server.existing_local_saves(include_autosaves: true))
             if (!world_files.Contains(System.IO.Path.GetFileName(lf)))
             {
                 world_files.Add(lf);
