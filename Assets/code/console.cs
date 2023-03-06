@@ -1090,6 +1090,20 @@ public class console : MonoBehaviour
             usage_example = "save"
         },
 
+        ["save_autosave"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (!server.started)
+                    return console_error("You are not the host!");
+                server.save(autosave: true);
+                return true;
+            },
+
+            description = "Mimic an autosave.",
+            usage_example = "save_autosave"
+        },
+
         ["save_startup"] = new console_info
         {
             command = (args) =>

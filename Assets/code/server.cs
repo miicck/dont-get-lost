@@ -1164,8 +1164,7 @@ public static class server
         }
 
         // Save also to steam cloud (not including autosaves)
-        if (!autosave)
-            steam.save_file(steam_save_file(), System.IO.File.ReadAllBytes(filename));
+        steam.save_file(steam_save_file(), System.IO.File.ReadAllBytes(filename));
     }
 
     /// <summary> The byte identifying which kind of 
@@ -1195,36 +1194,34 @@ public static class server
         return saves_dir;
     }
 
-    /// <summary> The local file that this session is saved in. </summary>
-    public static string local_save_file() => System.IO.Path.Join(saves_dir(), savename + ".save");
-
     /// <summary> The steam file that this session is saved in. </summary>
     public static string steam_save_file() => savename + ".save";
 
-    /// <summary> The local file that this session is autosaved to. </summary>
-    public static string local_autosave_file() => System.IO.Path.Join(saves_dir(), savename + "_autosave.save");
+    /// <summary> The local file that this session is saved in. </summary>
+    public static string local_save_file() => System.IO.Path.Join(saves_dir(), steam_save_file());
+
+    /// <summary> The local file that this session is autosaved to. This is the same file as a normal save. </summary>
+    public static string local_autosave_file() => local_save_file();
 
     /// <summary> Get an array of all the save files on this machine. </summary>
-    public static List<string> existing_local_saves(bool include_autosaves = false)
+    public static List<string> existing_local_saves()
     {
         List<string> saves = new List<string>();
         foreach (var f in System.IO.Directory.GetFiles(saves_dir()))
         {
             if (!f.EndsWith(".save")) continue;
-            if (!include_autosaves && f.Contains("autosave")) continue;
             saves.Add(f);
         }
         return saves;
     }
 
     /// <summary> Get an array of all the save files on the steam cloud. </summary>
-    public static List<string> existing_steam_saves(bool include_autosaves = false)
+    public static List<string> existing_steam_saves()
     {
         List<string> saves = new List<string>();
         foreach (var f in steam.list_files())
         {
             if (!f.EndsWith(".save")) continue;
-            if (!include_autosaves && f.Contains("autosave")) continue;
             saves.Add(f);
         }
         return saves;
