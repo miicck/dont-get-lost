@@ -55,6 +55,18 @@ public class tutorial_island : mangroves
         if (i == SIZE / 2 && j == SIZE / 2)
             p.object_to_generate = world_object.load("tutorial_island");
     }
+
+    public static bool is_blocking_interactions_at(Vector3 v)
+    {
+        if (console.creative_mode) 
+            return false; // Don't block in creative mode
+
+        var b = at(v);
+        if (b == null) 
+            return false; // Don't block if there isn't a biome here
+
+        return b is tutorial_island;
+    }
 }
 
 public class mangroves : biome

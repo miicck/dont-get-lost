@@ -354,8 +354,7 @@ public class blueprint : MonoBehaviour
             if (float.IsNaN(v[i]) || float.IsInfinity(v[i])) return;
 
         // Don't allow translation into tutorial island
-        var b = biome.at(v);
-        if (b != null && b is tutorial_island)
+        if (tutorial_island.is_blocking_interactions_at(v))
         {
             popup_message.create("Can't translate buildings into tutorial area!");
             return;
