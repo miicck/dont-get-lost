@@ -172,7 +172,8 @@ public class options_menu : MonoBehaviour
                 break;
 
             default:
-                throw new System.Exception("Unkown float option: " + name);
+                Debug.LogError("Unkown float option: " + name);
+                return;
         }
 
         PlayerPrefs.SetFloat(name, val);
@@ -257,8 +258,13 @@ public class options_menu : MonoBehaviour
                 controls.invert_mouse_y = value;
                 break;
 
+            case "unlimited_map_zoom":
+                controls.unlimted_map_zoom = value;
+                break;
+
             default:
-                throw new System.Exception("Unkown bool option: " + name);
+                Debug.LogError("Unkown bool option: " + name);
+                return;
         }
 
         PlayerPrefs.SetInt(name, value ? 1 : 0);

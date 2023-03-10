@@ -996,7 +996,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         if (scroll > 0)
             game.render_range_target /= 1.2f;
         else if (scroll < 0)
-            game.render_range_target *= 1.2f;
+        {
+            if (controls.unlimted_map_zoom || game.render_range_target < chunk.SIZE * 2.5f)
+                game.render_range_target *= 1.2f;
+        }
 
         camera.orthographicSize = game.render_range;
 

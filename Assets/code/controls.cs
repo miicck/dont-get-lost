@@ -7,6 +7,7 @@ public static class controls
     public static float mouse_look_sensitivity = 1f;
     public static bool key_based_building = false;
     public static bool invert_mouse_y = false;
+    public static bool unlimted_map_zoom = false;
 
     public static bool disabled
     {
