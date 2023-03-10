@@ -190,7 +190,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         all_interactions.AddRange(self_interactions);
 
         // Remove interactions disabled on tutorial island
-        if (current.biome is tutorial_island && !console.creative_mode)
+        if (tutorial_island.is_blocking_interactions_at(transform.position))
         {
             var with_tutorial_disabling = new List<player_interaction>();
             foreach (var i in all_interactions)
