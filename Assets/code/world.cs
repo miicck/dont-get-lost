@@ -25,7 +25,23 @@ public class world : networked, INotSavedInStartupFile
         networked_seed = new networked_variables.net_int();
         networked_name = new networked_variables.net_string();
         tutorial_disabled = new networked_variables.net_bool();
+
+        tutorial_disabled.on_change = () =>
+        {
+            player.call_when_current_player_available(() =>
+            {
+                if (!player.current.tutorial_started && !tutorial_disabled.value)
+                    // Start the tutorial
+                    player.current.set_tutorial_stage(0);
+            });
+        };
+
         static_world = this;
+    }
+
+    private void Start()
+    {
+
     }
 
     private void Update()
@@ -54,7 +70,7 @@ public class world : networked, INotSavedInStartupFile
     new public static string name => static_world.networked_name.value;
 
     // If the tutorial is enabled on this world
-    public static bool tutorial_enabled => !static_world.tutorial_disabled.value;
+    public static bool tutorial_enabled => static_world == null || !static_world.tutorial_disabled.value;
 
     public static float terrain_altitude(Vector3 v)
     {

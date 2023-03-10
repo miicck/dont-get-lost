@@ -993,8 +993,10 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Zoom the map
         float scroll = controls.delta(controls.BIND.ZOOM_MAP);
-        if (scroll > 0) game.render_range_target /= 1.2f;
-        else if (scroll < 0) game.render_range_target *= 1.2f;
+        if (scroll > 0)
+            game.render_range_target /= 1.2f;
+        else if (scroll < 0)
+            game.render_range_target *= 1.2f;
 
         camera.orthographicSize = game.render_range;
 
@@ -1448,13 +1450,14 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public ulong user_id { get; private set; }
 
-    public void start_networked_interaction(controls.BIND bind) { networked_interaction.value = (int)bind; }
-    public void end_networked_interaction(controls.BIND bind) { networked_interaction.value = -1; }
-    public bool networked_interaction_underway(controls.BIND bind) { return networked_interaction.value == (int)bind; }
+    public void start_networked_interaction(controls.BIND bind) => networked_interaction.value = (int)bind;
+    public void end_networked_interaction(controls.BIND bind) => networked_interaction.value = -1;
+    public bool networked_interaction_underway(controls.BIND bind) => networked_interaction.value == (int)bind;
 
-    public void advance_tutorial_stage() { tutorial_stage.value++; }
-    public void retreat_tutorial_stage() { tutorial_stage.value--; }
-    public void set_tutorial_stage(int stage) { tutorial_stage.value = stage; }
+    public void advance_tutorial_stage() => tutorial_stage.value++;
+    public void retreat_tutorial_stage() => tutorial_stage.value--;
+    public void set_tutorial_stage(int stage) => tutorial_stage.value = stage;
+    public bool tutorial_started => tutorial_stage.value >= 0;
 
     public void toggle_god_mode()
     {
@@ -1768,9 +1771,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         tutorial_stage = new networked_variables.net_int(default_value: -1);
         tutorial_stage.on_change = () =>
         {
-            if (!world.tutorial_enabled)
-                return; // Tutorial disabled on this world
-
             // We have to wait for current player to be set
             // (so we know if we have authority over this
             //  player or not)
@@ -1790,8 +1790,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
     public override void on_first_create()
     {
-        //respawn_point.value = new Vector3(92.7868f, 17, 97.69f);
-
         // Player starts in the middle of the first biome
         respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL + 1f, biome.SIZE / 2);
         networked_position = respawn_point.value;
@@ -1801,9 +1799,6 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         // Initialize hair/skin color
         net_hair_color.value = character_colors.random_hair_color();
         net_skin_color.value = character_colors.random_skin_color();
-
-        // Start the tutorial
-        tutorial_stage.value = 0;
 
         // Create the inventory object
         client.create(transform.position, "inventories/player_inventory", this);
