@@ -29,14 +29,15 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7363192133508873185}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -0.6000061, y: -421.19995}
-  m_SizeDelta: {x: 256, y: 256}
+  m_AnchoredPosition: {x: 0, y: -622}
+  m_SizeDelta: {x: 356.125, y: 356.125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6795771550786545428
 CanvasRenderer:
@@ -119,14 +120,15 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7363192133508873185}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -38.332687}
-  m_SizeDelta: {x: 302.3652, y: 56.8098}
+  m_AnchoredPosition: {x: 0, y: -36.52507}
+  m_SizeDelta: {x: 468.6672, y: 53.1946}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2309673215957119459
 CanvasRenderer:
@@ -169,8 +171,8 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "Build a basic camp. An example \ndesign is shown below. The requirements
-    are:"
+  m_Text: 'Build a basic camp. An example design is shown below. The requirements
+    are:'
 --- !u!1 &1420703956994927069
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,10 +199,11 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7363192133508873185}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
@@ -235,13 +238,14 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7363192133508873185}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -131.30733}
+  m_AnchoredPosition: {x: 0, y: -118.35}
   m_SizeDelta: {x: 265.4134, y: 110.4589}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5926469168048067788
@@ -326,6 +330,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 390076494972850441}
   - {fileID: 8146768904947100020}
@@ -337,7 +342,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 8, y: -8}
-  m_SizeDelta: {x: 300.8417, y: 573.9641}
+  m_SizeDelta: {x: 485.2199, y: 814.4462}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1174396533642252043
 CanvasRenderer:
@@ -405,14 +410,15 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7363192133508873185}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -232}
-  m_SizeDelta: {x: 302.3652, y: 96.405}
+  m_AnchoredPosition: {x: 0, y: -303.41}
+  m_SizeDelta: {x: 459.0265, y: 259.6584}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4163177567778222854
 CanvasRenderer:
@@ -455,6 +461,16 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Entrypoints are automatically generated and are shown as red paths going
-    off into the distance. These will be where visitors (but also attackers!) will
-    enter your town.
+  m_Text: 'The green paths show paths around town, inspect (press Tab) buildings
+    to check they are connected together. They should show the same "group" number.
+
+
+    The
+    planter will be operated by the settler and will output cabbages from the chute.
+    You can place gutters to direct them into the top of the pantry. Items always
+    flow downhill along gutters, so be sure to give them a bit of a slope!
+
+
+    Entrypoints
+    are automatically generated and are shown as red paths going off into the distance.
+    These will be where visitors (but also attackers!) will enter your town.'
