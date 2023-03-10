@@ -513,7 +513,7 @@ public static class server
 
             if (serializations.Count > i) serializations[i] = serial;
             else if (serializations.Count == i) serializations.Add(serial);
-            else throw new System.Exception("Tried to skip a serial!");
+            else Debug.LogError("Tried to skip a serial!");
         }
 
         /// <summary> Called when the serialization 
@@ -759,7 +759,11 @@ public static class server
 
 
     /// <summary> Start a server listening on the given port on the local machine. </summary>
-    public static bool start(string savename, string player_prefab, out string error_message)
+    public static bool start(
+        string savename,
+        string player_prefab,
+        out string error_message,
+        bool load_startup_world_if_new = true)
     {
         if (started)
         {
@@ -796,7 +800,7 @@ public static class server
         }
 
         // Load the world
-        load();
+        load(load_startup_world_if_new: load_startup_world_if_new);
 
 #if STANDALONE_SERVER
         // Error out if the save file does not exist
@@ -986,7 +990,7 @@ public static class server
     // SAVING/LOADING //
     //################//
 
-    static void load()
+    static void load(bool load_startup_world_if_new = true)
     {
         bool steam_load = steam.file_exists(steam_save_file());
 
@@ -1001,15 +1005,18 @@ public static class server
                 System.IO.File.WriteAllBytes(fullpath, steam.load_file(steam_save_file()));
         }
 
-        // Load from startup file
-        else
-        {
 #if UNITY_EDITOR
-            if (new HashSet<string> { "test", "empty" }.Contains(savename.ToLower()))
-                return; // Don't load startup file for test/empty maps
+        else if (new HashSet<string> { "test", "empty" }.Contains(savename.ToLower()))
+            return; // Don't load startup file for test/empty maps in the editor
 #endif
+
+        else if (!load_startup_world_if_new)
+            return; // Don't load startup file if we were told not to load it
+
+
+        else
+            // Load from startup file
             fullpath = System.IO.Path.Join(Application.streamingAssetsPath, "/startup.save");
-        }
 
         using (var file = System.IO.File.OpenRead(fullpath))
         using (var decompress = new System.IO.Compression.GZipStream(file,

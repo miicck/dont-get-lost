@@ -75,6 +75,8 @@ public class world_menu : MonoBehaviour
 
     ulong user_id => steam.connected ? steam.steam_id : 0;
 
+    public delegate void NewWorldCreator(bool enable_tutorial);
+
     void setup_buttons()
     {
         // Ensure the mouse is visible
@@ -159,10 +161,7 @@ public class world_menu : MonoBehaviour
         world_name_input.transform.SetAsLastSibling();
         world_seed_input.transform.SetAsLastSibling();
 
-        // Create new world button
-        var new_world = template_button.inst(button_container);
-        new_world.GetComponentInChildren<Text>().text = "New world";
-        new_world.onClick.AddListener(() =>
+        NewWorldCreator create_new_world = (enable_tutorial) =>
         {
             string username = get_username();
             if (username == null)
@@ -186,8 +185,17 @@ public class world_menu : MonoBehaviour
                     seed = get_hash(ws);
             }
 
-            game.create_and_host_world(name, seed, username, user_id);
-        });
+            game.create_and_host_world(name, seed, username, user_id, !enable_tutorial);
+        };
+
+        // Create new world button
+        var new_world = template_button.inst(button_container);
+        new_world.GetComponentInChildren<Text>().text = "New world";
+        new_world.onClick.AddListener(() => create_new_world(true));
+
+        var new_world_no_tutorial = template_button.inst(button_container);
+        new_world_no_tutorial.GetComponentInChildren<Text>().text = "New world (no tutorial)";
+        new_world_no_tutorial.onClick.AddListener(() => create_new_world(false));
 
         var join_header = template_header.inst(button_container);
         join_header.text = "Join game over network";

@@ -522,7 +522,7 @@ public abstract class biome : MonoBehaviour
         var rand = get_biome_rand_gen(x, z);
 
         biome b;
-        if (x == 0 && z == 0 && biome_list.Count > 1)
+        if (x == 0 && z == 0 && biome_list.Count > 1 && world.tutorial_enabled)
         {
             // Start in the tutorial island (if the biome override isn't in effect)
             b = generate<tutorial_island>(0, 0, rand);

@@ -12,6 +12,7 @@ public class world : networked, INotSavedInStartupFile
 
     public networked_variables.net_int networked_seed;
     public networked_variables.net_string networked_name;
+    public networked_variables.net_bool tutorial_disabled;
 
     public override float network_radius()
     {
@@ -23,6 +24,7 @@ public class world : networked, INotSavedInStartupFile
     {
         networked_seed = new networked_variables.net_int();
         networked_name = new networked_variables.net_string();
+        tutorial_disabled = new networked_variables.net_bool();
         static_world = this;
     }
 
@@ -50,6 +52,9 @@ public class world : networked, INotSavedInStartupFile
 
     // The name of the world
     new public static string name => static_world.networked_name.value;
+
+    // If the tutorial is enabled on this world
+    public static bool tutorial_enabled => !static_world.tutorial_disabled.value;
 
     public static float terrain_altitude(Vector3 v)
     {

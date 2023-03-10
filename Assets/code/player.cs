@@ -1768,6 +1768,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         tutorial_stage = new networked_variables.net_int(default_value: -1);
         tutorial_stage.on_change = () =>
         {
+            if (!world.tutorial_enabled)
+                return; // Tutorial disabled on this world
+
             // We have to wait for current player to be set
             // (so we know if we have authority over this
             //  player or not)

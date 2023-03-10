@@ -90,7 +90,11 @@ public class game : MonoBehaviour
             case startup_info.MODE.CREATE_AND_HOST:
 
                 // Start + join the server
-                if (!server.start(startup.world_name, "misc/player", out string error_message))
+                if (!server.start(
+                    startup.world_name,
+                    "misc/player",
+                    out string error_message,
+                    load_startup_world_if_new: !startup.tutorial_disabled))
                 {
                     am_hard_disconnecting = true;
                     on_client_disconnect(error_message);
@@ -106,6 +110,7 @@ public class game : MonoBehaviour
                     var w = (world)client.create(Vector3.zero, "misc/world");
                     w.networked_seed.value = startup.world_seed;
                     w.networked_name.value = startup.world_name;
+                    w.tutorial_disabled.value = startup.tutorial_disabled;
 
                     // Create the various always-loaded objects
                     create_manager_objects();
@@ -332,6 +337,8 @@ public class game : MonoBehaviour
         public string hostname;
         public int port;
 
+        public bool tutorial_disabled;
+
 #if FACEPUNCH_STEAMWORKS
         public Steamworks.SteamId id_to_join;
 #endif
@@ -383,7 +390,7 @@ public class game : MonoBehaviour
     }
 
     /// <summary> Create/host a new world. </summary>
-    public static void create_and_host_world(string world_name, int seed, string username, ulong user_id)
+    public static void create_and_host_world(string world_name, int seed, string username, ulong user_id, bool tutorial_disabled)
     {
         startup = new startup_info
         {
@@ -392,6 +399,7 @@ public class game : MonoBehaviour
             mode = startup_info.MODE.CREATE_AND_HOST,
             world_name = world_name,
             world_seed = seed,
+            tutorial_disabled = tutorial_disabled
         };
 
         UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("scenes/main");
