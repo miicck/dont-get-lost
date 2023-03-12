@@ -1238,6 +1238,24 @@ public class console : MonoBehaviour
 
             description = "Delete all steam cloud data.",
             usage_example = "clear_steam_cloud"
+        },
+
+        ["fill_inventory_with_crap"] = new console_info
+        {
+            command = (args) =>
+            {
+                if (player.current == null) return false;
+                var items = Resources.LoadAll<item>("items");
+                for (int n = 0; n < 100; ++n)
+                {
+                    var to_add = items[Random.Range(0, items.Length)];
+                    player.current.inventory.add(to_add, 1);
+                }
+                return true;
+            },
+
+            description = "Add random items to the player inventory.",
+            usage_example = "fill_inventory_with_crap"
         }
     };
 
