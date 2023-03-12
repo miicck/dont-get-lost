@@ -710,8 +710,36 @@ public abstract class biome : MonoBehaviour
 
         /// <summary> These rules will be applied to points just 
         /// before they are used in chunk generation. </summary>
-        public void apply_global_rules()
+        public void apply_global_rules(Vector3 world_pos)
         {
+            if (!world.tutorial_enabled)
+            {
+                // Create spawn island
+                const float SPAWN_ISLAND_OUTER_RADIUS = 30f;
+                const float SPAWN_ISLAND_INNER_RADIUS = 5f;
+
+                Vector3 delta_spawn = world_pos - player.new_player_spawn_location;
+                delta_spawn.y = 0;
+                if (delta_spawn.magnitude < SPAWN_ISLAND_OUTER_RADIUS)
+                {
+                    // Don't generate objects on spawn island
+                    object_to_generate = null;
+
+                    // Level terrain to beach
+                    float island_amount = 0;
+                    if (delta_spawn.magnitude < SPAWN_ISLAND_INNER_RADIUS)
+                        island_amount = 1;
+                    else if (delta_spawn.magnitude < SPAWN_ISLAND_OUTER_RADIUS)
+                    {
+                        float interp = (delta_spawn.magnitude - SPAWN_ISLAND_INNER_RADIUS) /
+                            (SPAWN_ISLAND_OUTER_RADIUS - SPAWN_ISLAND_INNER_RADIUS);
+                        island_amount = (Mathf.Cos(interp * Mathf.PI) + 1f) / 2f;
+                    }
+
+                    altitude = altitude * (1 - island_amount) + (world.SEA_LEVEL + 1) * island_amount;
+                }
+            }
+
             // Enforce beach color
             if (altitude < BEACH_START)
                 terrain_color = beach_color;

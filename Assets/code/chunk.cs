@@ -417,7 +417,7 @@ public class chunk : MonoBehaviour
             // try again next frame (note points_i has not yet been incremented)
             if (!valid) return false;
 
-            blended_points[i, j].apply_global_rules();
+            blended_points[i, j].apply_global_rules(world_pos);
         }
 
         ++points_i;

@@ -1791,10 +1791,13 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         all_players.Add(this);
     }
 
+    // Player starts in the middle of the first biome
+    public static Vector3 new_player_spawn_location => new Vector3(biome.SIZE / 2, world.SEA_LEVEL + 1f, biome.SIZE / 2);
+
     public override void on_first_create()
     {
-        // Player starts in the middle of the first biome
-        respawn_point.value = new Vector3(biome.SIZE / 2, world.SEA_LEVEL + 1f, biome.SIZE / 2);
+        // Set the initial player position
+        respawn_point.value = new_player_spawn_location;
         networked_position = respawn_point.value;
 
         y_rotation.value = 117.15f;
