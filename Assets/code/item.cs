@@ -76,7 +76,6 @@ public class item : networked, IPlayerInteractable
     {
         return new player_interaction[]
         {
-            new pick_up_interaction(this),
             new select_matching_interaction(this),
             new player_inspectable(transform)
             {
@@ -84,31 +83,6 @@ public class item : networked, IPlayerInteractable
                 sprite = () => sprite
             }
         };
-    }
-
-    class pick_up_interaction : player_interaction
-    {
-        item item;
-        public pick_up_interaction(item item) { this.item = item; }
-
-        public override controls.BIND keybind => controls.BIND.PICK_UP_ITEM;
-
-        public override bool is_possible()
-        {
-            return item != null && !item.is_logistics_version;
-        }
-
-        protected override bool on_start_interaction(player player)
-        {
-            player.play_sound("sounds/click_1", volume: 0.5f);
-            item.pick_up();
-            return true;
-        }
-
-        public override string context_tip()
-        {
-            return "pick up " + item.display_name;
-        }
     }
 
     protected class select_matching_interaction : player_interaction
