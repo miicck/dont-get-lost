@@ -45,6 +45,10 @@ public class wandering_trader : trader, IExtendsNetworked
             for (int n = 0; n < 25; ++n)
             {
                 var i = itms[Random.Range(0, itms.Length)];
+
+                if (i.GetComponentInChildren<not_available_from_trader>() != null)
+                    continue;
+
                 int val = Mathf.Max(i.value, 1);
                 int count = Mathf.Max(200 / val, 1);
                 stock[i.name] = count;
