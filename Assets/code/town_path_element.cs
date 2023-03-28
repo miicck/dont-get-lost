@@ -380,6 +380,25 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
         foreach (var kv in group_bounds)
             foreach (var b in kv.Value)
             {
+                Vector3 most_in_town_point = b.bounds.center;
+
+                List<town_bounds> overlapping = new List<town_bounds>();
+                foreach (var b2 in kv.Value)
+                    if (b2 != b && b2.bounds.Intersects(b.bounds))
+                        overlapping.Add(b2);
+
+                if (overlapping.Count > 0)
+                {
+                    // Work out average location of overlappiung town bounds
+                    most_in_town_point = Vector3.zero;
+                    foreach (var b2 in overlapping)
+                        most_in_town_point += b2.bounds.center;
+                    most_in_town_point /= overlapping.Count;
+
+                    // Most in-town point is closest point to the average of neighbours
+                    most_in_town_point = b.bounds.ClosestPoint(most_in_town_point);
+                }
+
                 float max_dis = float.NegativeInfinity;
                 town_path_element extreme = null;
                 foreach (var e in b)
@@ -388,7 +407,7 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                     e.bounded_group = b;
 
                     // Work out the direction out of town and distance from my group.
-                    e.out_of_town_direction = e.transform.position - b.bounds.center;
+                    e.out_of_town_direction = e.transform.position - most_in_town_point;
                     if (e.out_of_town_direction.magnitude > max_dis &&
                         e.GetComponentInChildren<attacker_entrypoint>() != null)
                     {
@@ -478,21 +497,16 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 if (b == null) continue;
                 Gizmos.color = ui_colors.cycle[kv.Key % ui_colors.cycle.Length];
                 Gizmos.DrawWireCube(b.bounds.center, b.bounds.size);
-                foreach (var e in b)
-                {
-                    if (e == null) continue;
-                    Gizmos.color = e.is_extremety ? Color.cyan : new Color(1, 0, 1);
-                    Gizmos.DrawLine(b.bounds.center, e.transform.position);
-                }
             }
     }
 
-    public static int group_at(Vector3 v)
+    public static int group_at(Vector3 v, bool find_nearest_if_not_inside = true)
     {
         if (group_bounds == null) return -1;
 
         int group = -1;
         float min_dis = float.PositiveInfinity;
+
         foreach (var kv in group_bounds)
         {
             foreach (var b in kv.Value)
@@ -501,16 +515,27 @@ public class town_path_element : MonoBehaviour, IAddsToInspectionText, INonLogis
                 if (b.bounds.Contains(v))
                     return kv.Key;
 
-                var dis = b.bounds.SqrDistance(v);
-                if (dis < min_dis)
+                if (find_nearest_if_not_inside)
                 {
-                    min_dis = dis;
-                    group = kv.Key;
+                    // Keep track of the nearest group
+                    var dis = b.bounds.SqrDistance(v);
+                    if (dis < min_dis)
+                    {
+                        min_dis = dis;
+                        group = kv.Key;
+                    }
                 }
             }
         }
 
         return group;
+    }
+
+    public static float distance_to_group(Vector3 v, int group)
+    {
+        if (!group_bounds.TryGetValue(group, out List<town_bounds> bounds))
+            return float.PositiveInfinity;
+        return Mathf.Sqrt(utils.find_to_min(bounds, (b) => b.bounds.SqrDistance(v)).bounds.SqrDistance(v));
     }
 
     //##################//

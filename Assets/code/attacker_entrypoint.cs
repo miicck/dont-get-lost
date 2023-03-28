@@ -5,6 +5,7 @@ using UnityEngine;
 public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintable, IExtendsNetworked, IAddsToInspectionText
 {
     public const float MIN_EXTERNAL_PATH_DISTANCE = 15f;
+    public const float TARGET_EXTERNAL_PATH_DISTANCE = 20f;
     public const float MAX_EXTERNAL_PATH_DISTANCE = 25f;
 
     const float MIN_TIME_BETWEEN_PATHS = 1f;
@@ -75,6 +76,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
 
             path = new random_path(transform.position, new agent(), endpoint_success,
                 midpoint_successful: midpoint_success,
+                midpoint_failed: midpoint_failed,
                 starting_direction: element.out_of_town_direction);
         }
 
@@ -108,19 +110,21 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 else
                 {
                     // Attempt to cut off path at first point in town
-                    for (int i = path.length - 1; i >= 0; --i)
-                    {
-                        var e = town_path_element.nearest_element(path[i], group: element.group);
-                        if (e.linkable_region.Contains(path[i]))
+                    // Is this misleading? path originates at a different element than it seems to.
+                    if (false)
+                        for (int i = path.length - 1; i >= 0; --i)
                         {
-                            List<Vector3> new_path = new List<Vector3>();
-                            for (int j = i; j < path.length; ++j)
-                                new_path.Add(path[j]);
-                            path = new explicit_path(new_path, new agent());
-                            refresh_drawn_path();
-                            return;
+                            var e = town_path_element.nearest_element(path[i], group: element.group);
+                            if (e.linkable_region.Contains(path[i]))
+                            {
+                                List<Vector3> new_path = new List<Vector3>();
+                                for (int j = i; j < path.length; ++j)
+                                    new_path.Add(path[j]);
+                                path = new explicit_path(new_path, new agent());
+                                refresh_drawn_path();
+                                return;
+                            }
                         }
-                    }
 
                     // Fallback, keep whole path
                     List<Vector3> whole_path = new List<Vector3>();
@@ -146,7 +150,15 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         }
     }
 
-    private void OnDrawGizmos() => path?.draw_gizmos();
+    private void OnDrawGizmos()
+    {
+        path?.draw_gizmos();
+        if (element.is_extremety)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(element.linkable_region.center, element.linkable_region.size);
+        }
+    }
 
     //#########//
     // PATHING //
@@ -161,8 +173,21 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         return terr != null;
     }
 
-    bool midpoint_success(Vector3 v) => (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE && point_on_terrain(v);
-    bool endpoint_success(Vector3 v) => (transform.position - v).magnitude > MIN_EXTERNAL_PATH_DISTANCE && point_on_terrain(v);
+    bool midpoint_failed(Vector3 v) => 
+        (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE; // Too far
+
+    bool endpoint_valid(Vector3 v) =>
+        town_path_element.group_at(v, find_nearest_if_not_inside: false) < 0 // Must be out of town
+        && town_path_element.distance_to_group(v, element.group) > MIN_EXTERNAL_PATH_DISTANCE
+        && town_path_element.distance_to_group(v, element.group) < MAX_EXTERNAL_PATH_DISTANCE
+        && point_on_terrain(v); // Must be on terrain
+
+    bool midpoint_success(Vector3 v) => 
+        town_path_element.distance_to_group(v, element.group) > TARGET_EXTERNAL_PATH_DISTANCE // Far enough to stop searching
+        && endpoint_valid(v);
+
+    bool endpoint_success(Vector3 v) => endpoint_valid(v);
+
 
     GameObject drawn_path;
     bool draw_path
