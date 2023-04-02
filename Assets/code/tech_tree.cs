@@ -350,8 +350,7 @@ public class tech_tree : networked
             var material_requirement_template = info_area.Find("item_requirement");
             foreach (var item_ingredient in t.GetComponentsInChildren<item_ingredient>())
             {
-                var ing_requirement = material_requirement_template.inst();
-                ing_requirement.transform.SetParent(material_requirement_template.transform.parent);
+                var ing_requirement = material_requirement_template.inst(material_requirement_template.transform.parent);
                 ing_requirement.get_child_with_name<UnityEngine.UI.Image>("sprite").sprite = item_ingredient.item.sprite;
                 ing_requirement.get_child_with_name<UnityEngine.UI.Text>("amount").text = item_ingredient.count.ToString();
 
