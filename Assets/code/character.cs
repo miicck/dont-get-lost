@@ -254,6 +254,7 @@ public class character : networked,
 
     protected virtual void OnDestroy()
     {
+        attacker_entrypoint.validate_attackers(being_destroyed: new HashSet<character> { this });
         town_path_element = null;
         characters.Remove(this);
     }
@@ -536,7 +537,7 @@ public class character : networked,
         if (dead_version == null && create_dead_body())
             dead_version = dead_character.create(this);
 
-        GetComponentInParent<attacker_entrypoint>()?.update_attack_message();
+        attacker_entrypoint.validate_attackers();
 
         on_death();
     }

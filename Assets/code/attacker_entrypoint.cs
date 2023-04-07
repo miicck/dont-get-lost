@@ -173,7 +173,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         return terr != null;
     }
 
-    bool midpoint_failed(Vector3 v) => 
+    bool midpoint_failed(Vector3 v) =>
         (transform.position - v).magnitude > MAX_EXTERNAL_PATH_DISTANCE; // Too far
 
     bool endpoint_valid(Vector3 v) =>
@@ -182,7 +182,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
         && town_path_element.distance_to_group(v, element.group) < MAX_EXTERNAL_PATH_DISTANCE
         && point_on_terrain(v); // Must be on terrain
 
-    bool midpoint_success(Vector3 v) => 
+    bool midpoint_success(Vector3 v) =>
         town_path_element.distance_to_group(v, element.group) > TARGET_EXTERNAL_PATH_DISTANCE // Far enough to stop searching
         && endpoint_valid(v);
 
@@ -488,7 +488,7 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                 if (c == null) return;
                 c.controller = new approach_controller(this, new attack_controller(this));
                 attackers.access_or_set(element.group, () => new HashSet<character>()).Add(c);
-                update_attack_message();
+                validate_attackers();
             },
 
             on_delete_networked_child = (child) =>
@@ -500,37 +500,9 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
                     hs.Remove(c);
                     if (hs.Count == 0) attackers.Remove(element.group);
                 }
-                update_attack_message();
+                validate_attackers();
             }
         };
-    }
-
-    public void update_attack_message()
-    {
-        if (attack_message != null)
-            Destroy(attack_message);
-
-        Dictionary<string, int> attacker_counts = new Dictionary<string, int>();
-        Dictionary<string, character> attacker_examples = new Dictionary<string, character>();
-        foreach (var kv in attackers)
-            foreach (var attacker in kv.Value)
-            {
-                if (attacker == null || attacker.is_dead) continue;
-                if (attacker_counts.ContainsKey(attacker.display_name))
-                    attacker_counts[attacker.display_name] += 1;
-                else attacker_counts[attacker.display_name] = 1;
-                attacker_examples[attacker.display_name] = attacker;
-            }
-
-        if (attacker_counts.Count == 0) return;
-
-        string message = "Under attack!\n(";
-        foreach (var kv in attacker_counts)
-            message += kv.Value + " " + (kv.Value > 1 ? attacker_examples[kv.Key].plural_name : kv.Key) + " ";
-        message = message.Trim();
-        message += ")";
-
-        attack_message = gameObject.add_pinned_message(message, Color.red);
     }
 
     //##############//
@@ -601,30 +573,64 @@ public class attacker_entrypoint : MonoBehaviour, INonEquipable, INonBlueprintab
     {
         entrypoints = new HashSet<attacker_entrypoint>();
         attackers = new Dictionary<int, HashSet<character>>();
-        town_path_element.add_on_groups_update_listener(() =>
-        {
-            // Re-evaluate attacker groups
-            var attackers_new = new Dictionary<int, HashSet<character>>();
-            foreach (var kv in attackers)
-                foreach (var a in kv.Value)
-                {
-                    if (a == null || a.is_dead)
-                        continue;
-
-                    var elm = a.GetComponentInParent<attacker_entrypoint>()?.element;
-                    if (elm == null)
-                    {
-                        Debug.LogError("Attacker had no element!");
-                        a.delete();
-                        continue;
-                    }
-
-                    attackers_new.access_or_set(elm.group, () => new HashSet<character>()).Add(a);
-                }
-            attackers = attackers_new;
-        });
-
+        town_path_element.add_on_groups_update_listener(() => validate_attackers());
         attacks_enabled = true;
+    }
+
+    public static void validate_attackers(HashSet<character> being_destroyed = null)
+    {
+        if (being_destroyed == null)
+            being_destroyed = new HashSet<character>();
+
+        // Re-evaluate attacker groups
+        var attackers_new = new Dictionary<int, HashSet<character>>();
+        foreach (var kv in attackers)
+            foreach (var a in kv.Value)
+            {
+                if (a == null || a.is_dead || being_destroyed.Contains(a))
+                    continue;
+
+                var elm = a.GetComponentInParent<attacker_entrypoint>()?.element;
+                if (elm == null)
+                {
+                    Debug.LogError("Attacker had no element!");
+                    a.delete();
+                    continue;
+                }
+
+                attackers_new.access_or_set(elm.group, () => new HashSet<character>()).Add(a);
+            }
+        attackers = attackers_new;
+
+        update_attack_message();
+    }
+
+    static void update_attack_message()
+    {
+        if (attack_message != null)
+            Destroy(attack_message.gameObject);
+
+        Dictionary<string, int> attacker_counts = new Dictionary<string, int>();
+        Dictionary<string, character> attacker_examples = new Dictionary<string, character>();
+        foreach (var kv in attackers)
+            foreach (var attacker in kv.Value)
+            {
+                if (attacker == null || attacker.is_dead) continue;
+                if (attacker_counts.ContainsKey(attacker.display_name))
+                    attacker_counts[attacker.display_name] += 1;
+                else attacker_counts[attacker.display_name] = 1;
+                attacker_examples[attacker.display_name] = attacker;
+            }
+
+        if (attacker_counts.Count == 0) return;
+
+        string message = "Under attack!\n(";
+        foreach (var kv in attacker_counts)
+            message += kv.Value + " " + (kv.Value > 1 ? attacker_examples[kv.Key].plural_name : kv.Key) + " ";
+        message = message.Trim();
+        message += ")";
+
+        attack_message = new GameObject("attack_message").add_pinned_message(message, Color.red);
     }
 
     public static void iterate_over_attackers(int group, group_info.attack_iterator f)

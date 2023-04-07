@@ -262,6 +262,9 @@ public class options_menu : MonoBehaviour
                 controls.unlimted_map_zoom = value;
                 break;
 
+            case "arachnophobia_mode":
+                break;
+
             default:
                 Debug.LogError("Unkown bool option: " + name);
                 return;
@@ -270,10 +273,7 @@ public class options_menu : MonoBehaviour
         PlayerPrefs.SetInt(name, value ? 1 : 0);
     }
 
-    public static bool get_bool(string name)
-    {
-        return PlayerPrefs.GetInt(name) > 0;
-    }
+    public static bool get_bool(string name) => PlayerPrefs.GetInt(name) > 0;
 
     /// <summary> Is the options menu currently open? </summary>
     public static bool open
