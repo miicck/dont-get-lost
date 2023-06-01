@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Net.NetworkInformation;
 
 #if STANDALONE_SERVER
 #else
@@ -19,7 +20,7 @@ public static class network_utils
     {
         // Message is of form [type, payload_length, payload]
         return concat_buffers(
-            new byte[] {message_type},
+            new byte[] { message_type },
             encode_int(payload.Length),
             payload
         );
@@ -144,23 +145,44 @@ public static class network_utils
         return str;
     }
 
+    delegate int address_prioritizer(System.Net.IPAddress address);
+
     /// <summary> Get the ip address of the local machine, as used by a server. </summary>
     public static System.Net.IPAddress local_ip_address()
     {
         // Find the local ip address to listen on
         var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
-        System.Net.IPAddress address = null;
+
+        var valid_addresses = new List<System.Net.IPAddress>();
         foreach (var ip in host.AddressList)
             if (ip.AddressFamily == AddressFamily.InterNetwork)
-            {
-                address = ip;
-                break;
-            }
+                valid_addresses.Add(ip);
 
-        if (address == null)
+        var interfaces = new Dictionary<System.Net.IPAddress, NetworkInterface>();
+
+        foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+            foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                if (valid_addresses.Contains(ip.Address))
+                    interfaces[ip.Address] = ni;
+
+        address_prioritizer prioritizer = (a) =>
+        {
+            // De-prioritize WSL
+            if (interfaces[a].Name.ToLower().Contains("wsl")) return 2;
+
+            // Prefer addresses starting with 192
+            if (a.ToString().StartsWith("192")) return -1;
+
+            // Normal priority
+            return 0;
+        };
+
+        valid_addresses.Sort((a, b) => prioritizer(a).CompareTo(prioritizer(b)));
+
+        if (valid_addresses.Count == 0)
             throw new System.Exception("No network adapters found!");
 
-        return address;
+        return valid_addresses[0];
     }
 
     /// <summary> Class for monitoring network traffic </summary>
