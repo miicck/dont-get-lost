@@ -3,6 +3,10 @@ A procedurally generated video game. Steam page: https://store.steampowered.com/
 
 ![](Assets/pictures/header_capsule.png?raw=true "Title")
 
+
+https://user-images.githubusercontent.com/8690175/235303997-36b86f85-c29f-4e2a-8779-5ed61af1a8de.mp4
+
+
 ## Developing
 To setup a unity project for development, follow these steps:
 1. Using the latest version of unity, create a new unity project using the *High Definition Render Pipeline* (3D HDRP) template.
