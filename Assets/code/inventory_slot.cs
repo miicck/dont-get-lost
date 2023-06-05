@@ -85,7 +85,7 @@ public class inventory_slot : MonoBehaviour, IPlayerInteractable, IMouseTextUI
 
     public player_interaction[] player_interactions(RaycastHit hit)
     {
-        return new player_interaction[] {new player_inspectable(transform)
+        return new player_interaction[] {new player_inspectable(transform, is_in_inventory: true)
         {
             text = () => item.item_quantity_info(item, count),
             sprite = () => item_image.sprite

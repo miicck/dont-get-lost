@@ -38,10 +38,20 @@ public interface IAddsToInspectionText
     public string added_inspection_text();
 }
 
+public interface IAddsToInspectionTextOutsideInventory : IAddsToInspectionText
+{
+
+}
+
 public class player_inspectable : player_interaction
 {
     Transform transform;
-    public player_inspectable(Transform attached_to) => transform = attached_to;
+    bool is_in_inventory;
+    public player_inspectable(Transform attached_to, bool is_in_inventory = false)
+    {
+        transform = attached_to;
+        this.is_in_inventory = is_in_inventory;
+    }
 
     public delegate string text_func();
     public text_func text;
@@ -69,6 +79,9 @@ public class player_inspectable : player_interaction
         string str = text?.Invoke();
         foreach (var add in added_inspect)
         {
+            if (is_in_inventory && add is IAddsToInspectionTextOutsideInventory)
+                continue;
+
             var txt = add.added_inspection_text();
             if (txt == null) continue;
             str += "\n" + txt.Trim();
