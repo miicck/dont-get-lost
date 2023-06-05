@@ -57,6 +57,9 @@ public class item_gutter : item_node
         // Can't link destroyed things
         if (this == null || other == null) return false;
 
+        // Can't link to perfectly vertical gutters
+        if (is_vertical) return false;
+
         Vector3 input_point = this.input_point(other.output_point);
         Vector3 delta = input_point - other.output_point;
 
@@ -84,6 +87,15 @@ public class item_gutter : item_node
         }
 
         return true;
+    }
+
+    bool is_vertical
+    {
+        get
+        {
+            Vector3 along = (end.position - start.position).normalized;
+            return new Vector2(along.x, along.z).magnitude < 1e-4f;
+        }
     }
 
     protected override bool can_output_to(item_node other)
