@@ -485,7 +485,8 @@ public class building_material : item, IPlayerInteractable
                         "Hold " + controls.bind_name(controls.BIND.BUILDING_TRANSLATION) + " to translate instead\n" +
                         "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) +
                         " to cycle initial orientations (purple spheres)\n" +
-                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping\n" +
+                        "Hold " + controls.bind_name(controls.BIND.SNAPPED_TRANSLATION) + " to enable translation snapping\n";
                 }
                 else
                 {
@@ -493,7 +494,8 @@ public class building_material : item, IPlayerInteractable
                         "Double tap " + controls.bind_name(keybind) + " to build, " + controls.bind_name(controls.BIND.ALT_USE_ITEM) + " to cancel\n" +
                         "Click and drag the arrows to translate, or the circles to rotate\n" +
                         "Scroll, or press " + controls.bind_name(controls.BIND.INCREMENT_PIVOT) + " to cycle initial orientations (purple spheres)\n" +
-                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping";
+                        "Hold " + controls.bind_name(controls.BIND.FINE_ROTATION) + " to disable rotation snapping\n" +
+                        "Hold " + controls.bind_name(controls.BIND.SNAPPED_TRANSLATION) + " to enable translation snapping\n";
                 }
             }
 

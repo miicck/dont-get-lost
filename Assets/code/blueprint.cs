@@ -217,18 +217,20 @@ public class blueprint : MonoBehaviour
             last_adjustment_played = 0;
         }
 
+        bool snap_translation = controls.held(controls.BIND.SNAPPED_TRANSLATION);
+
         switch (mouse_mode)
         {
             case MOUSE_MODE.X_TRANSLATE:
-                translate_to(utils.nearest_point_on_line(transform.right_ray(), cam_ray) - mouse_drag_offset);
+                translate_to(utils.nearest_point_on_line(transform.right_ray(), cam_ray) - mouse_drag_offset, snap: snap_translation);
                 break;
 
             case MOUSE_MODE.Y_TRANSLATE:
-                translate_to(utils.nearest_point_on_line(transform.up_ray(), cam_ray) - mouse_drag_offset);
+                translate_to(utils.nearest_point_on_line(transform.up_ray(), cam_ray) - mouse_drag_offset, snap: snap_translation);
                 break;
 
             case MOUSE_MODE.Z_TRANSLATE:
-                translate_to(utils.nearest_point_on_line(transform.forward_ray(), cam_ray) - mouse_drag_offset);
+                translate_to(utils.nearest_point_on_line(transform.forward_ray(), cam_ray) - mouse_drag_offset, snap: snap_translation);
                 break;
 
             case MOUSE_MODE.X_ROTATE:
@@ -342,8 +344,17 @@ public class blueprint : MonoBehaviour
         }
     }
 
-    void translate_to(Vector3 v)
+    void translate_to(Vector3 v, bool snap = false)
     {
+        if (snap)
+        {
+            Vector3 delta_local = transform.worldToLocalMatrix * (v - transform.position);
+            for (int i = 0; i < 3; ++i)
+                delta_local[i] = Mathf.RoundToInt(delta_local[i]);
+            v = transform.localToWorldMatrix * delta_local;
+            v += transform.position;
+        }
+
         // Don't allow translation beyond the render range
         if (player.current != null)
             if ((player.current.transform.position - v).magnitude > game.render_range)
