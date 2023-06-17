@@ -273,7 +273,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1da3aced4fcd5fe42a3b2f97165a8021, type: 3}
   plural: brewing barrels
-  value: 32
+  value: 21
   axes_scale: 1
   automatic_input: {fileID: 7042218251646886468}
   chest_inventory_prefab: inventories/brewing_barrel
@@ -661,6 +661,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5874614486117902051}
     m_Modifications:
     - target: {fileID: 3422414659337203919, guid: 13afabf665075a84d825645c36ec8dea, type: 3}
@@ -712,6 +713,7 @@ PrefabInstance:
       value: brewing_bubbles
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 13afabf665075a84d825645c36ec8dea, type: 3}
 --- !u!4 &3451256410489307095 stripped
 Transform:
@@ -728,6 +730,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5517745770260962896}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: bad01f5cbd4c4ae42bf034b15bd51070, type: 3}
@@ -811,6 +814,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 6d9f1b4850f19f343a7e9da59ef4ad17, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: bad01f5cbd4c4ae42bf034b15bd51070, type: 3}
 --- !u!4 &6170809943834182375 stripped
 Transform:

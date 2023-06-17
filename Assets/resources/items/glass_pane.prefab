@@ -238,7 +238,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 73f5f70dbf085e14288912000640ace4, type: 3}
   plural: glass panes
-  value: 6
+  value: 5
   axes_scale: 1
 --- !u!114 &97293679631775492
 MonoBehaviour:

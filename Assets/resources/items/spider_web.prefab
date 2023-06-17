@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6fdd8d7e4683771449e58a4d46f9a0df, type: 3}
   plural: spiderwebs
-  value: 2
+  value: 1
 --- !u!1001 &1655582936896740415
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 937079229864356976}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 8b6d5f3e9795d3c4395819fb8c79e21e, type: 3}
@@ -121,6 +122,7 @@ PrefabInstance:
       value: spider_web_1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 8b6d5f3e9795d3c4395819fb8c79e21e, type: 3}
 --- !u!4 &1257479106230025172 stripped
 Transform:

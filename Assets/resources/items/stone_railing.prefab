@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 96c96cdbcb71b5147a54bce641eeef0d, type: 3}
   plural: stone railings
-  value: 0
+  value: 6
   axes_scale: 1
 --- !u!1 &4275272390627382587
 GameObject:
@@ -267,6 +267,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3421591790008405400}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: b75433199bff25046af1859da70e4764, type: 3}
@@ -334,6 +335,7 @@ PrefabInstance:
       value: stone_railing
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: b75433199bff25046af1859da70e4764, type: 3}
 --- !u!4 &4377580839570943284 stripped
 Transform:

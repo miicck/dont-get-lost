@@ -96,7 +96,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 487834644d77c134f86dfc4417ab1965, type: 3}
   plural: triangular planks (equilateral)
-  value: 6
+  value: 5
   axes_scale: 1
 --- !u!114 &4611317896247789425
 MonoBehaviour:
@@ -204,6 +204,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 8437153672325417118}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 2c02e3e7447472541b4da2d08d119f36, type: 3}
@@ -259,6 +260,7 @@ PrefabInstance:
       value: planks_triangle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 2c02e3e7447472541b4da2d08d119f36, type: 3}
 --- !u!4 &8559688276363171020 stripped
 Transform:

@@ -54,6 +54,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 4347658890408287021}
     m_Modifications:
     - target: {fileID: 1523930455832985356, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
@@ -105,6 +106,7 @@ PrefabInstance:
       value: flax_plant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 4912031ec33de7b4bbcc2d9511b8a88e, type: 3}
 --- !u!4 &6728479496805775918 stripped
 Transform:

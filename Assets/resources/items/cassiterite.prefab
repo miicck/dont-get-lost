@@ -67,6 +67,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1995531316843802350}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 8a819e020daddc9408a5bbcc99a2274b, type: 3}
@@ -138,6 +139,7 @@ PrefabInstance:
       value: spiky_split_rock
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 8a819e020daddc9408a5bbcc99a2274b, type: 3}
 --- !u!4 &2671692481575869152 stripped
 Transform:

@@ -364,7 +364,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: b28c3d85c4ed5f24983aab5f0cc4c11c, type: 3}
   plural: spinning wheels
-  value: 21
+  value: 16
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 0}
@@ -419,6 +419,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3523382817892152261}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 201b2cd234e73464f870c4241c33e9e1, type: 3}
@@ -510,6 +511,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: f0ae527866269a84589f343eeccdc257, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 201b2cd234e73464f870c4241c33e9e1, type: 3}
 --- !u!1 &1267404285543893060 stripped
 GameObject:

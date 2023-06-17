@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 26d4581d09562c04aadcf55208a0348e, type: 3}
   plural: vitality crystals
-  value: 2
+  value: 744
 --- !u!114 &-170905640716045866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,6 +68,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3113739144136294167}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}
@@ -135,6 +136,7 @@ PrefabInstance:
       value: icosphere
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}
 --- !u!1 &5647983913718222358 stripped
 GameObject:

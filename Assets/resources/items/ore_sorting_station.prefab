@@ -278,7 +278,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 28adf98055b63944dbe35d7b3c806254, type: 3}
   plural: ore sorting stations
-  value: 0
+  value: 164
   axes_scale: 1
 --- !u!114 &1225723960842957093
 MonoBehaviour:

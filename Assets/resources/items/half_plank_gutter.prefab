@@ -224,6 +224,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5240705409357027426}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: fd61e667cb055f048ad0435c811b4b2e, type: 3}
@@ -291,6 +292,7 @@ PrefabInstance:
       value: plank_gutter
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: fd61e667cb055f048ad0435c811b4b2e, type: 3}
 --- !u!4 &7206341962205558033 stripped
 Transform:

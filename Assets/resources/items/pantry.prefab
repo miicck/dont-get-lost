@@ -380,7 +380,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 90a8ece4f146c0b4c916bb318f0241e5, type: 3}
   plural: pantries
-  value: 40
+  value: 31
   axes_scale: 1
 --- !u!114 &487338210768889780
 MonoBehaviour:
@@ -999,6 +999,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 9197721619695434446}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
@@ -1066,6 +1067,7 @@ PrefabInstance:
       value: funnel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
 --- !u!4 &443666975522738459 stripped
 Transform:
@@ -1077,6 +1079,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 9197721619695434446}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 0b6ca7eda96a79a4a83dc148befa085b, type: 3}
@@ -1144,6 +1147,7 @@ PrefabInstance:
       value: shelves
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 0b6ca7eda96a79a4a83dc148befa085b, type: 3}
 --- !u!4 &4017915100561426733 stripped
 Transform:

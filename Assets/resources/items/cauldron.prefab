@@ -260,7 +260,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: f1c6be7405c1a894fb5d719dc4ce0b03, type: 3}
   plural: cauldrons
-  value: 0
+  value: 64
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 0}
@@ -271,6 +271,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3761662044067089416}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a2520f2e22fd725449918f358deaed2b, type: 3}
@@ -330,6 +331,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 12f0c3563a4b97c4e82d89c3bc136836, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: a2520f2e22fd725449918f358deaed2b, type: 3}
 --- !u!4 &8678906867893791707 stripped
 Transform:

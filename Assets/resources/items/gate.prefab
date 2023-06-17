@@ -320,7 +320,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 52ad18ba1cd1f7a45baef2b6dc3418f1, type: 3}
   plural: gates
-  value: 21
+  value: 16
   axes_scale: 1
 --- !u!114 &1429737029068860935
 MonoBehaviour:
@@ -335,6 +335,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   door: {fileID: 1308421431336921640}
+  detection_center: {fileID: 0}
   door_axis: 1
   closed_angle: 0
   open_angle: -90
@@ -472,6 +473,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1308421431336921640}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9f9a164154b68c74e8ec9ee26582962a, type: 3}
@@ -543,6 +545,7 @@ PrefabInstance:
       value: gate
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 9f9a164154b68c74e8ec9ee26582962a, type: 3}
 --- !u!4 &564038736813551693 stripped
 Transform:

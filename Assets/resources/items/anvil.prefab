@@ -318,7 +318,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 3ae5fd98afc63b245bc9a08fee3ab930, type: 3}
   plural: anvils
-  value: 64
+  value: 45
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 0}
@@ -329,6 +329,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7264410171171831994}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: d550cb962eb18e148b3361af9830becf, type: 3}
@@ -396,6 +397,7 @@ PrefabInstance:
       value: anvil
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: d550cb962eb18e148b3361af9830becf, type: 3}
 --- !u!4 &6827189505462232685 stripped
 Transform:

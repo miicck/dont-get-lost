@@ -52,7 +52,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: a5c5e9604468d824f9f77542e34afba6, type: 3}
   plural: trampolines
-  value: 2
+  value: 1
   axes_scale: 1
 --- !u!1 &3146877120880591383
 GameObject:
@@ -235,6 +235,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6510601911198254934}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 80d9ae5c458af8344b1d2359787fb35b, type: 3}
@@ -306,6 +307,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: b3d6129ed7f5a9b47ac5c891282ee8d5, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 80d9ae5c458af8344b1d2359787fb35b, type: 3}
 --- !u!4 &3912157132515636885 stripped
 Transform:

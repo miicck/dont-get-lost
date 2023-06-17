@@ -52,7 +52,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: f5eed41281a3dfe4d8bda755598a186b, type: 3}
   plural: wheat plants
-  value: 2
+  value: 1
 --- !u!135 &5251273481651909910
 SphereCollider:
   m_ObjectHideFlags: 0

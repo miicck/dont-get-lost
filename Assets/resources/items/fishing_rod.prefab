@@ -80,7 +80,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 706525f6149735540afcd3bd8937e389, type: 3}
   plural: fishing rods
-  value: 23
+  value: 17
   rod_end: {fileID: 46895868383641198}
   max_cast_velocity: 20
 --- !u!1001 &7642945093126282334
@@ -88,6 +88,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5697117828122076778}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c10e94b6ca05a93478b415649934057d, type: 3}
@@ -179,6 +180,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c10e94b6ca05a93478b415649934057d, type: 3}
 --- !u!4 &7898059667751189429 stripped
 Transform:

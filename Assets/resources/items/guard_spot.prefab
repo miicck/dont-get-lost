@@ -55,7 +55,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 47fe2bec57f581d4d9e21d3220f83b3a, type: 3}
   plural: guard spots
-  value: 16
+  value: 12
   axes_scale: 1
 --- !u!114 &1199280322146720609
 MonoBehaviour:
@@ -307,6 +307,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 9198920161718181536}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 275d537ae903e7e4f91684e82d27c80f, type: 3}
@@ -382,6 +383,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 275d537ae903e7e4f91684e82d27c80f, type: 3}
 --- !u!4 &8657838396180603190 stripped
 Transform:

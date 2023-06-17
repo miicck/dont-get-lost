@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 71b1cfb1e5c8a8d4994384de8ec1c906, type: 3}
   plural: straw
-  value: 4
+  value: 3
 --- !u!114 &-7349155667042778540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,6 +68,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6750309391286344692}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 15c13952da75be348ac811b5ab9e285d, type: 3}
@@ -135,6 +136,7 @@ PrefabInstance:
       value: straw
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 15c13952da75be348ac811b5ab9e285d, type: 3}
 --- !u!4 &5125385990005190203 stripped
 Transform:

@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 85481b9e0c659a540a1178da7ba7af5e, type: 3}
   plural: titanium ore
-  value: 21
+  value: 31
 --- !u!1001 &2793182382097555654
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 873733730698940168}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
@@ -125,6 +126,7 @@ PrefabInstance:
       value: ore
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
 --- !u!4 &7186008177892412380 stripped
 Transform:

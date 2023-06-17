@@ -249,7 +249,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: f9a205fd6b7e05748a2139a7f7078f19, type: 3}
   plural: filter splitters
-  value: 29
+  value: 21
   axes_scale: 1
   automatic_input: {fileID: 0}
   chest_inventory_prefab: inventories/filter_splitter
@@ -501,6 +501,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 9147172946514347571}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e408c8e111bcf6443921c76999af6856, type: 3}
@@ -616,6 +617,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: f0ae527866269a84589f343eeccdc257, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: e408c8e111bcf6443921c76999af6856, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8202786847700197674}
+    - targetCorrespondingSourceObject: {fileID: -29035017028383645, guid: e408c8e111bcf6443921c76999af6856, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4870556833802423287}
+    - targetCorrespondingSourceObject: {fileID: -29035017028383645, guid: e408c8e111bcf6443921c76999af6856, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6623519421976879542}
   m_SourcePrefab: {fileID: 100100000, guid: e408c8e111bcf6443921c76999af6856, type: 3}
 --- !u!4 &327556614102849240 stripped
 Transform:

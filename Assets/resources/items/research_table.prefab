@@ -95,7 +95,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 722f307dcb79d9849a4a202d7736248e, type: 3}
   plural: research tables
-  value: 35
+  value: 29
   axes_scale: 1
 --- !u!114 &3456018246292443994
 MonoBehaviour:
@@ -416,6 +416,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 668196806005171635}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 55686c684b9d6774a9cde17bf4d79753, type: 3}
@@ -527,6 +528,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 55686c684b9d6774a9cde17bf4d79753, type: 3}
 --- !u!4 &5093827876494153349 stripped
 Transform:

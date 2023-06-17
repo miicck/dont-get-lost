@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 0b58e0fa00696eb4f838332a150c356c, type: 3}
   plural: lead
-  value: 9
+  value: 6
 --- !u!1001 &337560184477975992
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5736404582864522269}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: c1cd8e5c91b7c994f84b2fffd15c78c3, type: 3}
@@ -121,6 +122,7 @@ PrefabInstance:
       value: ingot
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c1cd8e5c91b7c994f84b2fffd15c78c3, type: 3}
 --- !u!4 &4743968251757309602 stripped
 Transform:

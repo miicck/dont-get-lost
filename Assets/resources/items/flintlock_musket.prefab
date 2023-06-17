@@ -261,7 +261,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: d21250f54d28fc24fa1222d45820fef2, type: 3}
   plural: flintlock muskets
-  value: 2
+  value: 1
   butt: {fileID: 3780049617420365419}
   sight: {fileID: 7145026216378741801}
   grip: {fileID: 4726273760403303435}
@@ -313,6 +313,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6937629005691972774}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7f40a22864f2679478c61e0826d05cef, type: 3}
@@ -412,6 +413,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 98329d721e400594598bb1af8e4be4e0, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 7f40a22864f2679478c61e0826d05cef, type: 3}
 --- !u!4 &6539973991729557007 stripped
 Transform:
@@ -423,6 +425,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6937629005691972774}
     m_Modifications:
     - target: {fileID: 3422414659337203919, guid: e2a1134ebcaea7a49a9537b7181c1443, type: 3}
@@ -474,6 +477,7 @@ PrefabInstance:
       value: musket_muzzle_flash
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: e2a1134ebcaea7a49a9537b7181c1443, type: 3}
 --- !u!4 &5295807143516297595 stripped
 Transform:
@@ -485,6 +489,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6937629005691972774}
     m_Modifications:
     - target: {fileID: 3422414659337203919, guid: 1a8b08198fc298e46ac2f1ffd8a8d397, type: 3}
@@ -536,6 +541,7 @@ PrefabInstance:
       value: musket_sparks
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 1a8b08198fc298e46ac2f1ffd8a8d397, type: 3}
 --- !u!4 &6779264346540901715 stripped
 Transform:

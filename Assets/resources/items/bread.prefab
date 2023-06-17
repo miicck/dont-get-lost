@@ -50,7 +50,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: eab68a5ad075af24fae2ae391ae97738, type: 3}
   plural: bread
-  value: 10
+  value: 8
 --- !u!114 &1450433148893580567
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,6 +82,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1159223540910737294}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: bc5c1724b4308a145be8c4977c79aedf, type: 3}
@@ -153,6 +154,7 @@ PrefabInstance:
       value: bread
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: bc5c1724b4308a145be8c4977c79aedf, type: 3}
 --- !u!4 &2252888198080655324 stripped
 Transform:

@@ -280,7 +280,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: ad4a51d836d1a84489b08a76b001682f, type: 3}
   plural: bars
-  value: 0
+  value: 41
   axes_scale: 1
   automatic_input: {fileID: 2201105474742870804}
   chest_inventory_prefab: inventories/bar
@@ -766,6 +766,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3302888111240262788}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 5f594a774da35d8498c3c8e5d8bbd364, type: 3}
@@ -873,6 +874,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: f0ae527866269a84589f343eeccdc257, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 5f594a774da35d8498c3c8e5d8bbd364, type: 3}
 --- !u!4 &264655683583510425 stripped
 Transform:
@@ -884,6 +886,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3302888111240262788}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: de06b417f5128f14e99b23c47c6f5bf5, type: 3}
@@ -955,6 +958,7 @@ PrefabInstance:
       value: materials_cupboard
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: de06b417f5128f14e99b23c47c6f5bf5, type: 3}
 --- !u!4 &7258111056674266002 stripped
 Transform:
@@ -966,6 +970,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3302888111240262788}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
@@ -1033,6 +1038,7 @@ PrefabInstance:
       value: funnel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
 --- !u!4 &7014124853822685603 stripped
 Transform:

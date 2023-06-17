@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: ec7986a73f67cfd4b9b2e6b7661691de, type: 3}
   plural: railcarts
-  value: 55
+  value: 40
   max_speed: 10
   acceleration: 1
 --- !u!114 &8683327572160283602
@@ -70,6 +70,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1576303610684081568}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: da3ccfa5a4e742e42a6b3750ac9c4854, type: 3}
@@ -137,6 +138,7 @@ PrefabInstance:
       value: railcart
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: da3ccfa5a4e742e42a6b3750ac9c4854, type: 3}
 --- !u!4 &8812241146942082003 stripped
 Transform:

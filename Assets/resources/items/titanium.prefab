@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: a845d0b72aa6434d8a755a160a81cbab, type: 3}
   plural: titanium
-  value: 36
+  value: 44
 --- !u!114 &-6436524187775706880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,6 +68,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5736404582864522269}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: c1cd8e5c91b7c994f84b2fffd15c78c3, type: 3}
@@ -135,6 +136,7 @@ PrefabInstance:
       value: ingot
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c1cd8e5c91b7c994f84b2fffd15c78c3, type: 3}
 --- !u!4 &4743968251757309602 stripped
 Transform:

@@ -413,7 +413,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: cef36dfc295db2c4d95d10b521ebc199, type: 3}
   plural: small crane boxes
-  value: 78
+  value: 59
   axes_scale: 1
 --- !u!114 &-2780174747112904903
 MonoBehaviour:
@@ -433,6 +433,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2902191210665055724}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a5480d6661bddc846b2d8f16ac22c6cf, type: 3}
@@ -524,6 +525,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 0e8f027ffda021540ac4e5a4e5654057, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: a5480d6661bddc846b2d8f16ac22c6cf, type: 3}
 --- !u!4 &2991283718191631953 stripped
 Transform:

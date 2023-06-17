@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: d8833c56444348043853978f53ef29c4, type: 3}
   plural: bananas
-  value: 0
+  value: 1
 --- !u!114 &5576483120843496625
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,6 +68,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 8981449075917072508}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: cc98412b9ff194743919f823ec941fb8, type: 3}
@@ -123,6 +124,7 @@ PrefabInstance:
       value: banana
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: cc98412b9ff194743919f823ec941fb8, type: 3}
 --- !u!4 &5047277720691108535 stripped
 Transform:

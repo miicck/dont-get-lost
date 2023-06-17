@@ -49,7 +49,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: d76d65f8793aeafe88f44bbf79c8f816, type: 3}
   plural: baked potatoes
-  value: 8
+  value: 4
 --- !u!114 &2795816702258397599
 MonoBehaviour:
   m_ObjectHideFlags: 0

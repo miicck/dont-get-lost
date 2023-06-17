@@ -720,6 +720,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
+    gravitySource: 0
     maxNumParticles: 1000
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
@@ -4116,6 +4117,7 @@ ParticleSystem:
         m_RotationOrder: 4
     minVertexDistance: 0.2
     textureMode: 0
+    textureScale: {x: 1, y: 1}
     ribbonCount: 1
     shadowBias: 0.5
     worldSpace: 0
@@ -5130,6 +5132,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7811858658946744358}
   - component: {fileID: 7308113517417530880}
+  - component: {fileID: -4532502783247947429}
   m_Layer: 0
   m_Name: portal
   m_TagString: Untagged
@@ -5178,9 +5181,22 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 4fa8240e6e3901749a72bf8699dd1dd5, type: 3}
   plural: portals
-  value: 2
+  value: 10000
   axes_scale: 1
   teleport_location: {fileID: 3247084226915459081}
+--- !u!114 &-4532502783247947429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7202117504032745851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff4a64c9e9b2d404887685f0942d52c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  value: 10000
 --- !u!1 &7523279688028667281
 GameObject:
   m_ObjectHideFlags: 0
@@ -5274,6 +5290,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7811858658946744358}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9d8b9c809cf65de48bb6c67637439337, type: 3}
@@ -5337,6 +5354,7 @@ PrefabInstance:
       value: portal
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 9d8b9c809cf65de48bb6c67637439337, type: 3}
 --- !u!4 &2654619084247282989 stripped
 Transform:

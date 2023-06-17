@@ -52,7 +52,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: a47eb0215e9d3fe4d9be674c3510af6b, type: 3}
   plural: corner saws
-  value: 2
+  value: 1
   axes_scale: 1
 --- !u!1 &2787652287099656152
 GameObject:
@@ -361,6 +361,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3709287341196605387}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 0f89d5f32e031a74a99fb15a4fc09242, type: 3}
@@ -456,6 +457,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0f89d5f32e031a74a99fb15a4fc09242, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608300117418527466}
   m_SourcePrefab: {fileID: 100100000, guid: 0f89d5f32e031a74a99fb15a4fc09242, type: 3}
 --- !u!1 &1147557286930489408 stripped
 GameObject:

@@ -147,7 +147,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: c9b91d7ed1cff6e429ab38adae8e6b77, type: 3}
   plural: nali cow sheds
-  value: 38
+  value: 32
   axes_scale: 1
 --- !u!114 &2722993017894668612
 MonoBehaviour:
@@ -735,6 +735,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6364318154603055067}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e7d50fbab1ef8ad43a124af0def84810, type: 3}
@@ -822,6 +823,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 6f3f9e5cf760d4315a77d38e543440bc, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: e7d50fbab1ef8ad43a124af0def84810, type: 3}
 --- !u!4 &8794331345587578148 stripped
 Transform:

@@ -369,7 +369,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6bc28b3cd121230458820c1436ea4482, type: 3}
   plural: mineshafts
-  value: 93
+  value: 70
   axes_scale: 1
 --- !u!114 &6089583144561588591
 MonoBehaviour:
@@ -592,6 +592,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1274302369444171957}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
@@ -695,6 +696,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 42a33789c4040524593f7d9ef68db75c, type: 3}
 --- !u!4 &5179288733629565799 stripped
 Transform:

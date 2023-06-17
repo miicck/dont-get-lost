@@ -70,6 +70,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6331750235442577479}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}
@@ -137,6 +138,7 @@ PrefabInstance:
       value: icosphere
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c2b0860f60ce65e4ba5d5aec1ba84a63, type: 3}
 --- !u!4 &2948311102103319381 stripped
 Transform:

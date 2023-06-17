@@ -141,7 +141,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 78378029f890ab34fa53bc35ca556c31, type: 3}
   plural: cheese vats
-  value: 39
+  value: 28
   axes_scale: 1
   automatic_input: {fileID: 7042218251646886468}
   chest_inventory_prefab: inventories/cheese_vat
@@ -481,6 +481,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5517745770260962896}
     m_Modifications:
     - target: {fileID: -8788076128805308467, guid: 149a22de8e6bdab49a8901133d9586ab, type: 3}
@@ -584,6 +585,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: d8c2b84a519739141806aa15cddc58ff, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 149a22de8e6bdab49a8901133d9586ab, type: 3}
 --- !u!4 &1194299094484218687 stripped
 Transform:

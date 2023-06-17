@@ -276,7 +276,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 53475a6cbf9325c4585e0ef430bd3440, type: 3}
   plural: forges
-  value: 107
+  value: 78
   axes_scale: 1
 --- !u!114 &3253182588662209181
 MonoBehaviour:
@@ -480,6 +480,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3449176402037872387}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
@@ -547,6 +548,10 @@ PrefabInstance:
       value: funnel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1332101554241267322}
   m_SourcePrefab: {fileID: 100100000, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
 --- !u!4 &4301737735706110122 stripped
 Transform:
@@ -558,6 +563,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3449176402037872387}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 297d48a40db6f7e42b9508a8861179b5, type: 3}
@@ -625,6 +631,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 85a2f9877129bc647b412fa16433c337, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 297d48a40db6f7e42b9508a8861179b5, type: 3}
 --- !u!4 &5033247255160546262 stripped
 Transform:

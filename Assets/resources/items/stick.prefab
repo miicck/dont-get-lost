@@ -661,7 +661,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: b8707173d183ceb4aaab62608b95b419, type: 3}
   plural: sticks
-  value: 4
+  value: 3
   axes_scale: 0.5
 --- !u!114 &1306811370722511685
 MonoBehaviour:
@@ -975,6 +975,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 278741605361968175}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: a1044a05ac2552b4d80055f8a3580417, type: 3}
@@ -1042,6 +1043,7 @@ PrefabInstance:
       value: stick
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: a1044a05ac2552b4d80055f8a3580417, type: 3}
 --- !u!4 &2783972646903933813 stripped
 Transform:

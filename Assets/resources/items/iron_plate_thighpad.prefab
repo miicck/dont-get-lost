@@ -48,7 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6a88b1c870b693043a1fbfc982346c75, type: 3}
   plural: iron plate thighpads
-  value: 41
+  value: 31
   location: 7
   handedness: 0
   size: {x: 1, y: 1, z: 1}
@@ -58,6 +58,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 8834072977516448138}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: cf9ab46b12ebafc4f87463f120d2cb9b, type: 3}
@@ -129,6 +130,7 @@ PrefabInstance:
       value: metal_thighpad
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: cf9ab46b12ebafc4f87463f120d2cb9b, type: 3}
 --- !u!4 &4718623458794669240 stripped
 Transform:

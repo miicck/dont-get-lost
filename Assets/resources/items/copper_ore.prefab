@@ -67,6 +67,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 925490920001156652}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 59788853406eeac40956967ea28e8d33, type: 3}
@@ -126,6 +127,7 @@ PrefabInstance:
       value: impregnated_rock
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 59788853406eeac40956967ea28e8d33, type: 3}
 --- !u!4 &434468498175486768 stripped
 Transform:

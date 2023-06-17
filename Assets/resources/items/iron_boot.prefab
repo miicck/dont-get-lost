@@ -48,7 +48,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 6dca2e4d8582d9b469e153eebeb71ec8, type: 3}
   plural: iron boots
-  value: 28
+  value: 21
   location: 9
   handedness: 0
   size: {x: 1, y: 1.5, z: 2.8}
@@ -58,6 +58,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6487539646362497885}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 05cce46ebf05b5244ba9ad7a9c4ec772, type: 3}
@@ -125,6 +126,7 @@ PrefabInstance:
       value: metal_boot
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 05cce46ebf05b5244ba9ad7a9c4ec772, type: 3}
 --- !u!4 &4228103987555797391 stripped
 Transform:

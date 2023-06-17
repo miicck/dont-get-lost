@@ -228,7 +228,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 8155a58d56a48d34396a6e012ccf2ac1, type: 3}
   plural: mineralogy tables
-  value: 18
+  value: 12
   axes_scale: 1
   craft_time: 1
   custom_crafting_sound: {fileID: 0}
@@ -641,6 +641,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2540576181700519537}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
@@ -708,6 +709,7 @@ PrefabInstance:
       value: bowl
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
 --- !u!4 &1346237512555034709 stripped
 Transform:
@@ -719,6 +721,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 12825078000228230}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
@@ -786,6 +789,7 @@ PrefabInstance:
       value: mound
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
 --- !u!4 &1206644118815306836 stripped
 Transform:
@@ -797,6 +801,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5294426089760704302}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
@@ -864,6 +869,7 @@ PrefabInstance:
       value: bowl
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
 --- !u!4 &2117965452418931679 stripped
 Transform:
@@ -875,6 +881,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2540576181700519537}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
@@ -942,6 +949,7 @@ PrefabInstance:
       value: mound
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
 --- !u!4 &2053258264399675947 stripped
 Transform:
@@ -953,6 +961,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1445706630756015600}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 864e0ad01721ec6408316da503f285fb, type: 3}
@@ -1024,6 +1033,7 @@ PrefabInstance:
       value: table
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 864e0ad01721ec6408316da503f285fb, type: 3}
 --- !u!4 &1873323370861331268 stripped
 Transform:
@@ -1035,6 +1045,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5294426089760704302}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
@@ -1102,6 +1113,7 @@ PrefabInstance:
       value: mound
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
 --- !u!4 &4533286861104487188 stripped
 Transform:
@@ -1113,6 +1125,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1974469198118522977}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
@@ -1180,6 +1193,7 @@ PrefabInstance:
       value: bowl
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
 --- !u!4 &5002252911823923311 stripped
 Transform:
@@ -1191,6 +1205,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7195923456938856211}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: 663df63c3e9bd65428ee71dc9aedde5b, type: 3}
@@ -1262,6 +1277,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 663df63c3e9bd65428ee71dc9aedde5b, type: 3}
 --- !u!4 &774077847148274046 stripped
 Transform:
@@ -1273,6 +1289,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 12825078000228230}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
@@ -1340,6 +1357,7 @@ PrefabInstance:
       value: bowl
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 211f8c9d6ca9c004b9aa26312d3064ac, type: 3}
 --- !u!4 &6907232325521431934 stripped
 Transform:
@@ -1351,6 +1369,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1974469198118522977}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
@@ -1418,6 +1437,7 @@ PrefabInstance:
       value: mound
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 650f9224d5df226449f420cff2a8228b, type: 3}
 --- !u!4 &7682724787188110188 stripped
 Transform:

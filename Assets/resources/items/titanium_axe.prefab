@@ -50,7 +50,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 1f9d425231b7e2c45a97298b7ccf2dab, type: 3}
   plural: titanium axes
-  value: 50
+  value: 58
   damage: 30
   swing_time: 0.5
   swing_length: 0.15

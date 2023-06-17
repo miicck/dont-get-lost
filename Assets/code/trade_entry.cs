@@ -108,7 +108,7 @@ public class trade_entry : MonoBehaviour
         sprite.sprite = item.sprite;
         item_text.text = item.plural;
         buy_price = item.value;
-        sell_price = (int)(item.value * 1.2f);
+        sell_price = item.value * 2;
 
         buy_button.onClick.AddListener(() => delta_stock -= 1);
         buy_more_button.onClick.AddListener(() => delta_stock -= 10);

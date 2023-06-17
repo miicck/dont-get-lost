@@ -749,6 +749,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6712449087804474299}
     m_Modifications:
     - target: {fileID: 3422414659337203919, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
@@ -800,6 +801,7 @@ PrefabInstance:
       value: furnace_fire
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 70575f6d3cbcc37479ee06757e16404e, type: 3}
 --- !u!4 &3495566257461925140 stripped
 Transform:
@@ -816,6 +818,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6712449087804474299}
     m_Modifications:
     - target: {fileID: -8770560461446232135, guid: 8a26e69f062d9924c84cbf3a1f6a2678, type: 3}
@@ -939,6 +942,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: ef23e1a6b828dbb469bf9aad7b7bc81a, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 8a26e69f062d9924c84cbf3a1f6a2678, type: 3}
 --- !u!4 &7765931243945625485 stripped
 Transform:

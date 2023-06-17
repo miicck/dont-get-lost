@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 2e5736d53b1160d4cb55336e4c09fc07, type: 3}
   plural: lillypads
-  value: 2
+  value: 1
 --- !u!1001 &8378710675557074159
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7679421885878977236}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
@@ -121,6 +122,7 @@ PrefabInstance:
       value: lillypad
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 70683f6c434ab944b9b574e603d6ce1a, type: 3}
 --- !u!4 &3548163850430050293 stripped
 Transform:

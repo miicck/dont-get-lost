@@ -311,7 +311,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: ce68e7b7cc1a33a478ae02e8c136db4d, type: 3}
   plural: stackable piston lifts
-  value: 47
+  value: 35
   axes_scale: 1
 --- !u!114 &1872174503583383172
 MonoBehaviour:
@@ -857,6 +857,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 8946902083556223009}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 33b574f0dc799944995b335ca598b212, type: 3}
@@ -932,6 +933,7 @@ PrefabInstance:
       value: stackable_piston_lift
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 33b574f0dc799944995b335ca598b212, type: 3}
 --- !u!4 &4340666105551392477 stripped
 Transform:

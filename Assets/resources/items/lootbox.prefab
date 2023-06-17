@@ -326,7 +326,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: c4911f4e450281646aa1dc91911bd56a, type: 3}
   plural: lootboxes
-  value: 81
+  value: 318
   axes_scale: 1
   automatic_input: {fileID: 7141389777453485819}
   chest_inventory_prefab: inventories/chest

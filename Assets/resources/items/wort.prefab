@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 0592c6b0170a9ac41b31dd07fc81cf03, type: 3}
   plural: wort
-  value: 8
+  value: 6
 --- !u!1001 &1180779600283463259
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 8971811871479263265}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: d4598498e6110c14e9a478a780a41b57, type: 3}
@@ -129,6 +130,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: f0ae527866269a84589f343eeccdc257, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: d4598498e6110c14e9a478a780a41b57, type: 3}
 --- !u!4 &1722699112346880432 stripped
 Transform:

@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 914774505c1ec4e4ab0e08dc263b7261, type: 3}
   plural: gold ore
-  value: 2
+  value: 40
 --- !u!1001 &581380012422511553
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2297160791965678879}
     m_Modifications:
     - target: {fileID: -4216859302048453862, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
@@ -125,6 +126,7 @@ PrefabInstance:
       value: ore
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: a6864bcbb9a2ddb47972838d3fa3669d, type: 3}
 --- !u!4 &5578779908905963739 stripped
 Transform:

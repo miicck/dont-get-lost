@@ -233,7 +233,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 4ce7f4ce1d904a44b8d1da07859d5ad0, type: 3}
   plural: carpentry benches
-  value: 34
+  value: 23
   axes_scale: 1
 --- !u!114 &1699498911953702173
 MonoBehaviour:
@@ -592,6 +592,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6862110386516180624}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
@@ -659,6 +660,10 @@ PrefabInstance:
       value: funnel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6922577743834124604}
   m_SourcePrefab: {fileID: 100100000, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
 --- !u!4 &6499972646546193689 stripped
 Transform:
@@ -670,6 +675,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 6862110386516180624}
     m_Modifications:
     - target: {fileID: -9130835489569866411, guid: 535c07381aee37b4fae6332b9bf917c3, type: 3}
@@ -797,6 +803,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 535c07381aee37b4fae6332b9bf917c3, type: 3}
 --- !u!4 &9110362699172120215 stripped
 Transform:

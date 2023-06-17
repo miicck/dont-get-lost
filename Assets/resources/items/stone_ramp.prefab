@@ -347,7 +347,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: c574093fc13fb964cb96c59c95dce305, type: 3}
   plural: stone ramps
-  value: 4
+  value: 6
   axes_scale: 1
 --- !u!1 &6631049756508945221
 GameObject:

@@ -234,7 +234,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 8c8f6239d066c2d4ca18a140b17f9b1d, type: 3}
   plural: ladders
-  value: 21
+  value: 16
   axes_scale: 1
 --- !u!114 &9141947211428673963
 MonoBehaviour:
@@ -355,6 +355,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 3441483242861332332}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: d16002377ab572a46b51327bfedc27ae, type: 3}
@@ -426,6 +427,7 @@ PrefabInstance:
       value: ladder (1)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: d16002377ab572a46b51327bfedc27ae, type: 3}
 --- !u!4 &92214390827477809 stripped
 Transform:

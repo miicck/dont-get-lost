@@ -147,7 +147,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 8922425f2a85d074092fa6fecf72e870, type: 3}
   plural: glowing signs
-  value: 2
+  value: 1
   axes_scale: 1
 --- !u!1 &3039060375140513067
 GameObject:

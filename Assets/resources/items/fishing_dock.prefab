@@ -123,6 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17ea1e688f6cb7944936beea1b0a9f7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  max_distance: 1
 --- !u!1 &1258241602014971853
 GameObject:
   m_ObjectHideFlags: 0
@@ -492,7 +493,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 58d7684677e3ca249bebadc8ca53f180, type: 3}
   plural: fishing docks
-  value: 56
+  value: 36
   axes_scale: 1
 --- !u!114 &4488149217651975118
 MonoBehaviour:
@@ -509,6 +510,7 @@ MonoBehaviour:
   skill: {fileID: 7915786716127770993, guid: d437e1bb925ad514587416eee0397a17, type: 3}
   options:
   - {fileID: 7941835153524549527, guid: 81b2a388cfa2d414baa71092aaf032b6, type: 3}
+  enabled_when_operating: []
   harvest_time: 1
 --- !u!114 &4151570933441879516
 MonoBehaviour:
@@ -572,6 +574,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2884264499349242224}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c10e94b6ca05a93478b415649934057d, type: 3}
@@ -667,6 +670,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c10e94b6ca05a93478b415649934057d, type: 3}
 --- !u!4 &1608851899981640084 stripped
 Transform:
@@ -678,6 +682,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2884264499349242224}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 558d99d0977f6f146b75fab102ecae05, type: 3}
@@ -749,6 +754,7 @@ PrefabInstance:
       value: stool
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 558d99d0977f6f146b75fab102ecae05, type: 3}
 --- !u!4 &1293010523306709756 stripped
 Transform:
@@ -760,6 +766,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2884264499349242224}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 2bbdf328f752cbd47b3f7cd5f2d9297e, type: 3}
@@ -823,6 +830,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bbdf328f752cbd47b3f7cd5f2d9297e, type: 3}
 --- !u!4 &2192126928602253483 stripped
 Transform:
@@ -834,6 +842,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2884264499349242224}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 1103e907347a78d4d8b48d4e66354091, type: 3}
@@ -905,6 +914,7 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 1103e907347a78d4d8b48d4e66354091, type: 3}
 --- !u!4 &4466276775241535577 stripped
 Transform:
@@ -916,6 +926,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 2884264499349242224}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
@@ -983,6 +994,7 @@ PrefabInstance:
       value: funnel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e7c8c812811acb41992006d9a5f57b1, type: 3}
 --- !u!4 &8489902619460025819 stripped
 Transform:

@@ -48,12 +48,13 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: afb5050c323ab3945aba6c8f7457709c, type: 3}
   plural: flour
-  value: 5
+  value: 4
 --- !u!1001 &2516702900284415496
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 5865365589815700442}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 76b1b84aaa7fadd4e927feeb15c70701, type: 3}
@@ -121,6 +122,7 @@ PrefabInstance:
       value: pile
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 76b1b84aaa7fadd4e927feeb15c70701, type: 3}
 --- !u!4 &2695306010789722595 stripped
 Transform:

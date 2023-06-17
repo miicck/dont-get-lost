@@ -443,7 +443,7 @@ MonoBehaviour:
   is_client_side: 0
   sprite: {fileID: 21300000, guid: 83a35b2fac6f3254e8de69aa3e379951, type: 3}
   plural: item splitters
-  value: 35
+  value: 28
   axes_scale: 1
 --- !u!114 &9083236677374905656
 MonoBehaviour:
@@ -603,6 +603,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 4186888739164722988}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: d5d72374fee165a42b744547d08865fc, type: 3}
@@ -694,6 +695,13 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 84664674c9b8943169def20882df8db7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4083501151425157549, guid: d5d72374fee165a42b744547d08865fc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4202183903110522180}
+    - targetCorrespondingSourceObject: {fileID: 4865064391339405807, guid: d5d72374fee165a42b744547d08865fc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1856693410287031396}
   m_SourcePrefab: {fileID: 100100000, guid: d5d72374fee165a42b744547d08865fc, type: 3}
 --- !u!4 &2107993015496443737 stripped
 Transform:

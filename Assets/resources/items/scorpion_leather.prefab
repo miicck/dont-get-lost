@@ -54,6 +54,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 1598070190947980100}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 3f552c35841f3c64ab29ed05ad377655, type: 3}
@@ -121,6 +122,7 @@ PrefabInstance:
       value: scorpion_leather
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 3f552c35841f3c64ab29ed05ad377655, type: 3}
 --- !u!4 &9039872505707035319 stripped
 Transform:
