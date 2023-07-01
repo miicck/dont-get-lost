@@ -435,7 +435,11 @@ public class character : networked,
     //###########//
 
     public void modify_awareness(int delta) { awareness.value += delta; }
-    public bool is_aware => awareness.value > 99;
+    public bool is_aware
+    {
+        get => awareness.value > 99;
+        set => awareness.value = value ? 100 : 0;
+    }
 
     healthbar awareness_meter
     {
@@ -1160,6 +1164,10 @@ public class attack_controller : ICharacterController
     bool striked_this_cycle = false;
     IAcceptsDamage to_damage;
 
+    Vector3 attack_start_location;
+    Vector3 attack_direction;
+    Vector3 attack_ground_normal;
+
     List<arm> arms;
     List<Transform> arm_targets;
 
@@ -1176,11 +1184,38 @@ public class attack_controller : ICharacterController
             a.to_grab = at;
             at.transform.position = a.shoulder.position + c.transform.forward * a.total_length / 2f;
         }
+
+        // Figure out the ground normal here
+        attack_ground_normal = Vector3.up;
+        foreach (var hit in Physics.RaycastAll(c.transform.position + Vector3.up, Vector3.down, 2f))
+        {
+            if (hit.transform.IsChildOf(target) || hit.transform.IsChildOf(c.transform))
+                continue;
+
+            attack_ground_normal = hit.normal;
+            break;
+        }
+
+        attack_start_location = c.transform.position;
+        attack_direction = target.transform.position - attack_start_location;
+        attack_direction -= Vector3.Project(attack_direction, attack_ground_normal);
+        attack_direction.Normalize();
     }
 
     public void control(character c)
     {
         attack_progress += Time.deltaTime / c.attack_time;
+
+        // Orient along attack direction
+        c.transform.forward = Vector3.Lerp(c.transform.forward, attack_direction, 0.2f);
+
+        // Strike curve approaches 1 at point of strike, 0 at start position
+        float strike_curve =
+            Mathf.Sin(Mathf.Pow(attack_progress, 2) * Mathf.PI) -
+            Mathf.Sin(attack_progress * Mathf.PI) / 3f;
+
+        const float curve_max_at = 0.74121f;
+
         if (attack_progress > 1f)
         {
             // Move to next cycle
@@ -1188,18 +1223,20 @@ public class attack_controller : ICharacterController
             attack_progress = 0f;
         }
 
-        if (!striked_this_cycle && attack_progress > 0.5f)
+        if (!striked_this_cycle && attack_progress > curve_max_at)
         {
             // Strike
             striked_this_cycle = true;
-            to_damage.take_damage(c.attack_damage);
+            if ((c.transform.position - target.transform.position).magnitude < c.attack_range)
+                to_damage.take_damage(c.attack_damage);
         }
 
-        // s = 1 at strike, s = 0  at start/end of attack cycle
-        float s = Mathf.Abs(Mathf.Sin(attack_progress * Mathf.PI));
-        Vector3 target_pos = target.position + target.forward * c.attack_range * (1.5f - 0.5f * s);
+        // Strike animation (i.e. lunge)
+        Vector3 target_pos = attack_start_location + attack_direction * strike_curve;
+        utils.move_towards(c.transform, target_pos, c.run_speed * Time.deltaTime);
 
         // Arm animation
+        float s = Mathf.Sin(attack_progress * Mathf.PI);
         for (int i = 0; i < arms.Count; ++i)
         {
             var a = arms[i];
@@ -1211,9 +1248,6 @@ public class attack_controller : ICharacterController
 
             at.position = a.shoulder.position + a.total_length * delta;
         }
-
-        utils.move_towards(c.transform, target_pos, c.run_speed * Time.deltaTime);
-        c.transform.forward = target.position - c.transform.position;
     }
 
     public void on_end_control(character c)
@@ -1251,14 +1285,16 @@ public class chase_controller : ICharacterController
         {
             if (c.distance_to(chasing) < c.attack_range)
             {
+                // Close enough to start attacking
                 attack = new attack_controller(c, chasing, to_damage);
                 path = null;
             }
         }
         else
         {
-            if (c.distance_to(chasing) > c.attack_range * 1.5f)
+            if (c.distance_to(chasing) > c.attack_range * 2f)
             {
+                // Far enough to cancel attacking
                 attack.on_end_control(c);
                 attack = null;
             }
@@ -1292,14 +1328,18 @@ public class chase_controller : ICharacterController
                         return;
                     }
 
-                    // Ensure the end isn't right next to the start
+                    // End right next to start => probably blocked by a wall
                     Vector3 delta = path[path.length - 1] - path[0];
-                    if (delta.magnitude < c.pathfinding_resolution) path = null;
+                    if (delta.magnitude < c.pathfinding_resolution)
+                        loose_interest(c);
                 }
             };
 
             // Unstick the character if we fail to find a valid start point
             path.on_invalid_start = () => c?.unstuck();
+
+            // No end found => loose interest
+            path.on_invalid_end = () => loose_interest(c);
 
             index = 0;
         }
@@ -1312,6 +1352,7 @@ public class chase_controller : ICharacterController
 
             case global::path.STATE.FAILED:
                 path = null;
+                loose_interest(c);
                 break;
 
             case global::path.STATE.COMPLETE:
@@ -1323,6 +1364,12 @@ public class chase_controller : ICharacterController
                 Debug.LogError("Unkown path state in chase_controller!");
                 break;
         }
+    }
+
+    void loose_interest(character c)
+    {
+        c.is_aware = false;
+        c.controller = new default_character_control();
     }
 
     void walk_path(character c)
@@ -1353,7 +1400,7 @@ public class chase_controller : ICharacterController
         path?.draw_gizmos();
     }
     public void draw_inspector_gui() { }
-    public string inspect_info() => "Chasing";
+    public string inspect_info() => attack == null ? "Chasing" : "Attacking";
 }
 
 public class default_character_control : ICharacterController
