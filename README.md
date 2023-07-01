@@ -1,5 +1,5 @@
 # Don't get lost
-A procedurally generated video game. Steam page: https://store.steampowered.com/app/1442360/Dont_get_lost/
+An open-source (GPL-3 or later) procedurally generated video game. Steam page: https://store.steampowered.com/app/1442360/Dont_get_lost/
 
 ![](Assets/pictures/header_capsule.png?raw=true "Title")
 
