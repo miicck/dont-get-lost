@@ -51,9 +51,9 @@ public class rail : MonoBehaviour
     {
         return utils.find_to_min(attached_to, (n) =>
         {
-            float dot = Vector3.Dot(direction, n.transform.position - transform.position);
-            if (dot < 0) return Mathf.Infinity;
-            return -dot;
+            float angle = Vector3.Angle(direction, n.transform.position - transform.position);
+            if (angle > 91f) return Mathf.Infinity;
+            return angle;
         });
     }
 
