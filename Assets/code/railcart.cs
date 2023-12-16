@@ -59,7 +59,10 @@ public class railcart : item
             next = current.next(player.eye_transform.forward);
 
             if (next == null)
-                return true; // No next rail found
+            {
+                popup_message.create("No next rail found!");
+                return true;
+            }    
 
             announce_stops();
 
@@ -83,7 +86,11 @@ public class railcart : item
             {
                 // We've arrived at the next rail, find the next next rail
                 rail next_next = next.next(next.transform.position - current.transform.position);
-                if (next_next == null) return true; // End of the line
+                if (next_next == null)
+                {
+                    popup_message.create("End of the line!");
+                    return true; // End of the line
+                }
 
                 // We've arrived at a station, decrement the number of stops left
                 if (current.GetComponentInParent<building_material>().name == "rail_stop")
