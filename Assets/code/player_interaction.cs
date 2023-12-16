@@ -428,12 +428,12 @@ public abstract class left_player_menu : player_interaction
     public override bool continue_interaction(player player)
     {
         // Left player menus close with the inventory.
-        return close_requested || inventory_opener.continue_interaction(player);
+        return close_requested || should_close_now() || inventory_opener.continue_interaction(player);
     }
 
     protected override void on_end_interaction(player player)
     {
-        if (menu != null)
+        if (_menu != null)
         {
             menu.gameObject.SetActive(false);
             on_close();
@@ -453,6 +453,8 @@ public abstract class left_player_menu : player_interaction
     RectTransform _menu;
 
     protected void close() => close_requested = true;
+
+    protected virtual bool should_close_now() => false;
 
     // IMPLEMENTATION //
     abstract protected RectTransform create_menu(Transform parent);

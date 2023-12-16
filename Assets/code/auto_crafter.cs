@@ -219,6 +219,12 @@ public class auto_crafter : building_material, IPlayerInteractable
                 recipe_buttons[crafter.chosen_recipe.value].button.onClick.Invoke();
         }
 
+        protected override bool should_close_now()
+        {
+            // Crafter has been destroyed
+            return crafter == null;
+        }
+
         protected override RectTransform create_menu(Transform parent)
         {
             if (crafter.outputs.Length == 0 || crafter.inputs.Length == 0)
