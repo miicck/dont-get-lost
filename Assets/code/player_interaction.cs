@@ -452,7 +452,7 @@ public abstract class left_player_menu : player_interaction
     }
     RectTransform _menu;
 
-    protected void close() => close_requested = true;
+    protected void request_close() => close_requested = true;
 
     protected virtual bool should_close_now() => false;
 

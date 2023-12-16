@@ -67,7 +67,7 @@ public class portal : building_material, IPlayerInteractable
             }
 
             // Load the new buttons
-            FindObjectOfType<teleport_manager>().create_buttons(content, close);
+            FindObjectOfType<teleport_manager>().create_buttons(content, request_close);
         }
     }
 
