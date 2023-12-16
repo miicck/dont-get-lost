@@ -979,12 +979,43 @@ namespace networked_variables
         public override string state_info() => "texture";
         public delegate void on_deserialize_func();
         public on_deserialize_func on_deserialize;
+        TextureUpdater updater;
 
         public networked_texture(int xsize, int ysize)
         {
             this.xsize = xsize;
             this.ysize = ysize;
             this.data = new Color[xsize, ysize];
+            this.updater = null;
+        }
+
+        public static networked_texture with_updateter(int xsize, int ysize, GameObject updater)
+        {
+            var result = new networked_texture(xsize, ysize);
+            result.updater = updater.AddComponent<TextureUpdater>();
+            result.updater.texture = result;
+            return result;
+        }
+
+        class TextureUpdater : MonoBehaviour
+        {
+            bool dirty = false;
+            public void set_dirty() => dirty = true;
+            public networked_texture texture;
+
+            private void Start()
+            {
+                InvokeRepeating("SlowUpdate", 1, 1);
+            }
+
+            private void SlowUpdate()
+            {
+                if (dirty)
+                {
+                    texture.set_dirty();
+                    dirty = false;
+                }
+            }
         }
 
         public override byte[] serialization()
@@ -1038,7 +1069,12 @@ namespace networked_variables
             {
                 if (x < 0 || x >= xsize || y < 0 || y >= ysize) return;
                 data[x, y] = value;
-                set_dirty();
+                if (updater == null)
+                    // Update immediately
+                    set_dirty();
+                else
+                    // Delegate update to updater
+                    updater.set_dirty();
             }
         }
     }

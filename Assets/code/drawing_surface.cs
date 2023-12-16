@@ -153,7 +153,8 @@ public class drawing_surface : MonoBehaviour, IPlayerInteractable, INonEquipable
         {
             init_networked_variables = () =>
             {
-                texture_data = new networked_variables.networked_texture(xsize, ysize);
+                texture_data = networked_variables.networked_texture.with_updateter(xsize, ysize, gameObject);
+
                 texture_data.on_deserialize += () =>
                 {
                     for (int x = 0; x < xsize; ++x)
