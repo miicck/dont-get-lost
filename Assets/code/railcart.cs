@@ -62,7 +62,7 @@ public class railcart : item
             {
                 popup_message.create("No next rail found!");
                 return true;
-            }    
+            }
 
             announce_stops();
 
@@ -85,7 +85,12 @@ public class railcart : item
             if (progress > 1f)
             {
                 // We've arrived at the next rail, find the next next rail
-                rail next_next = next.next(next.transform.position - current.transform.position);
+
+                Vector3 next_foward = next.transform.forward;
+                if (Vector3.Dot(next_foward, next.transform.position - current.transform.position) < 0)
+                    next_foward = -next_foward;
+
+                rail next_next = next.next(next_foward);
                 if (next_next == null)
                 {
                     popup_message.create("End of the line!");
