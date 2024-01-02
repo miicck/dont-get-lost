@@ -1413,7 +1413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bob_amplitude: 0
-  lean_into_run_amount: 0
+  lean_into_run_amount: 20
   lean_with_arms_amount: 0
   lean_lerp_speed: 5
   lean_velocity_scale: 5

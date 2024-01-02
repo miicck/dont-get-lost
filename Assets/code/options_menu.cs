@@ -265,6 +265,9 @@ public class options_menu : MonoBehaviour
             case "arachnophobia_mode":
                 break;
 
+            case "motion_sickness_mode":
+                break;
+
             default:
                 Debug.LogError("Unkown bool option: " + name);
                 return;

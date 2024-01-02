@@ -25,7 +25,9 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
     // Movement
     public const float BASE_SPEED = 4f;
     public const float ACCELERATION_TIME = 0.1f;
+    public const float ACCELERATION_TIME_MOTION_SICKNESS_MODE = 0.01f;
     public const float ACCELERATION = BASE_SPEED / ACCELERATION_TIME;
+    public const float ACCELERATION_MOTION_SICKNESS_MODE = BASE_SPEED / ACCELERATION_TIME_MOTION_SICKNESS_MODE;
     public const float CROUCH_SPEED_MOD = 0.25f;
     public const float SLOW_WALK_SPEED_MOD = 0.05f;
     public const float ROTATION_SPEED = 90f;
@@ -660,6 +662,16 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
         velocity -= velocity * amt_submerged * WATER_DRAG * Time.deltaTime;
     }
 
+    public float acceleration
+    {
+        get
+        {
+            if (options_menu.get_bool("motion_sickness_mode"))
+                return ACCELERATION_MOTION_SICKNESS_MODE;
+            return ACCELERATION;
+        }
+    }
+
     void normal_move()
     {
         if (!interactions.movement_allowed) return;
@@ -676,21 +688,19 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
 
         // Control forward/back velocity
         if (controls.held(controls.BIND.WALK_FORWARD))
-            velocity += transform.forward * ACCELERATION * Time.deltaTime;
+            velocity += transform.forward * acceleration * Time.deltaTime;
         else if (controls.held(controls.BIND.WALK_BACKWARD))
-            velocity -= transform.forward * ACCELERATION * Time.deltaTime;
+            velocity -= transform.forward * acceleration * Time.deltaTime;
         else
             velocity -= friction_attenuation * Vector3.Project(velocity, transform.forward);
 
         // Control left/right veloctiy
         if (controls.held(controls.BIND.STRAFE_RIGHT))
-            velocity += camera.transform.right * ACCELERATION * Time.deltaTime;
+            velocity += camera.transform.right * acceleration * Time.deltaTime;
         else if (controls.held(controls.BIND.STRAFE_LEFT))
-            velocity -= camera.transform.right * ACCELERATION * Time.deltaTime;
+            velocity -= camera.transform.right * acceleration * Time.deltaTime;
         else
             velocity -= friction_attenuation * Vector3.Project(velocity, camera.transform.right);
-
-        move += velocity * Time.deltaTime;
 
         // Ensure speed in x-z plane does not exceed movement speed
         float xz = new Vector3(velocity.x, 0, velocity.z).magnitude;
@@ -699,6 +709,8 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
             velocity.x *= speed / xz;
             velocity.z *= speed / xz;
         }
+
+        move += velocity * Time.deltaTime;
 
         // In water, allow climbing out
         if (transform.position.y < world.SEA_LEVEL &&
@@ -713,7 +725,7 @@ public class player : networked_player, INotPathBlocking, ICanEquipArmour,
                     controller.radius, transform.forward, controller.radius))
                 {
                     if (h.transform.IsChildOf(transform)) continue;
-                    velocity.y += ACCELERATION * Time.deltaTime;
+                    velocity.y += acceleration * Time.deltaTime;
                     break;
                 }
         }

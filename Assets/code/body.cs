@@ -58,7 +58,10 @@ public class body : MonoBehaviour
         // Work out how much we want to lean
         float lean_target = 0f;
         float vdot = Vector3.Dot(legs[0].velocity, transform.forward);
-        lean_target += lean_into_run_amount * utils.tanh(vdot / lean_velocity_scale);
+
+        if (!options_menu.get_bool("motion_sickness_mode"))
+            lean_target += lean_into_run_amount * utils.tanh(vdot / lean_velocity_scale);
+
         float av_in_front = 0;
         foreach (var a in arms) av_in_front += a.in_front_amount;
         av_in_front /= arms.Length;
