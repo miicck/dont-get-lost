@@ -868,6 +868,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 2
     m_TransformParent: {fileID: 7394371374394546293}
     m_Modifications:
     - target: {fileID: -9210516305528018342, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
@@ -999,6 +1000,58 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: ea8ea701a55ce3643b240c3f4523dfd7, type: 2}
     m_RemovedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1243445300402941354, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4526353838282237447}
+    - targetCorrespondingSourceObject: {fileID: 1243445300402941354, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7402341499051162137}
+    - targetCorrespondingSourceObject: {fileID: 1243445300402941354, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3338868827391555639}
+    - targetCorrespondingSourceObject: {fileID: -6081470830831867213, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 215766171088802296}
+    - targetCorrespondingSourceObject: {fileID: -6081470830831867213, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 427515057557113534}
+    - targetCorrespondingSourceObject: {fileID: -4944042216379711726, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4422479424257849208}
+    - targetCorrespondingSourceObject: {fileID: -4944042216379711726, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1732146131926473377}
+    - targetCorrespondingSourceObject: {fileID: -2700179675219609316, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5658518432907292771}
+    - targetCorrespondingSourceObject: {fileID: 5500908501445446501, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 223116006227563574}
+    - targetCorrespondingSourceObject: {fileID: 5500908501445446501, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8027081073885553261}
+    - targetCorrespondingSourceObject: {fileID: 4343220529959527327, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2881678541375529830}
+    - targetCorrespondingSourceObject: {fileID: 9106966256743715265, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2970067472678127119}
+    - targetCorrespondingSourceObject: {fileID: -79207429436689766, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4704762562270523283}
+    - targetCorrespondingSourceObject: {fileID: -293382982213764383, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6439638547524218375}
+    - targetCorrespondingSourceObject: {fileID: 6044274638053525520, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 858946485064013865}
+    - targetCorrespondingSourceObject: {fileID: -3116825363616822889, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1835435174006329582}
+    - targetCorrespondingSourceObject: {fileID: -226266057568486980, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8308352950272198232}
   m_SourcePrefab: {fileID: 100100000, guid: 54d24b003143ef043a765d08c4d535da, type: 3}
 --- !u!1 &156540025634760964 stripped
 GameObject:
@@ -1360,7 +1413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bob_amplitude: 0
-  lean_into_run_amount: 20
+  lean_into_run_amount: 0
   lean_with_arms_amount: 0
   lean_lerp_speed: 5
   lean_velocity_scale: 5
