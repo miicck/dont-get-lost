@@ -1,4 +1,3 @@
-﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -292,11 +291,20 @@ public class inventory : networked, IItemCollection
                 {
                     if (isn.item_name == mi.item.name)
                     {
-                        // Add the mouse item to the slot
-                        isn.add(mi.item, mi.count);
-                        mi.count = 0;
+                        if (right_click)
+                        {
+                            // Add 1 of the mouse item to the slot
+                            isn.add(mi.item, 1);
+                            mi.count--;
+                        }
+                        else
+                        {
+                            // Add the mouse item to the slot
+                            isn.add(mi.item, mi.count);
+                            mi.count = 0;
+                        }
                     }
-                    else
+                    else if(!right_click)
                     {
                         // Switch the mouse item with that in the slot
                         if (slots[slot_index].accepts(mi.item))
@@ -358,8 +366,17 @@ public class inventory : networked, IItemCollection
             // Create a networked slot with the corresponding info
             var isn = (inventory_slot_networked)client.create(
                 transform.position, "misc/networked_inventory_slot", this);
-            isn.set_item_count_index(mi.item, mi.count, slot_index);
-            mi.count = 0;
+            if (right_click)
+            {
+                isn.set_item_count_index(mi.item, 1, slot_index);
+                mi.count--;
+            }
+            else
+            {
+                isn.set_item_count_index(mi.item, mi.count, slot_index);
+                mi.count = 0;
+
+            }
         }
     }
 
